@@ -3,917 +3,839 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PC Assembly - 업무 관리</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>PC Assembly - 업무관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:       #0d1117;
-  --bg2:      #161b22;
-  --bg3:      #1c2128;
-  --border:   #30363d;
-  --text:     #e6edf3;
-  --muted:    #7d8590;
-  --accent:   #2f81f7;
-  --accent2:  #3fb950;
-  --warn:     #d29922;
-  --danger:   #f85149;
-  --purple:   #bc8cff;
-  --radius:   10px;
-  --font:     'Noto Sans KR', sans-serif;
-  --mono:     'JetBrains Mono', monospace;
+:root{
+  --bg:#f4f6f8;--bg2:#fff;--bg3:#f0f2f5;--border:#d0d7de;
+  --text:#1a1f2e;--muted:#5a6474;--accent:#1565c0;--al:#e3f0ff;
+  --green:#2e7d32;--gl:#e8f5e9;--orange:#e65100;--ol:#fff3e0;
+  --red:#c62828;--rl:#ffebee;--purple:#6a1b9a;--gold:#f57f17;
+  --font:'Noto Sans KR',sans-serif;--mono:'JetBrains Mono',monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;min-height:100vh;}
+.hidden{display:none!important;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#1976d2;}
+.btn-success{background:var(--green);color:#fff;}.btn-success:hover{background:#388e3c;}
+.btn-danger{background:var(--red);color:#fff;}.btn-danger:hover{background:#d32f2f;}
+.btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm{padding:4px 10px;font-size:11px;}.btn-xs{padding:2px 7px;font-size:10px;}
 
-/* ── 공통 ── */
-.hidden { display: none !important; }
-.btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 9px 18px; border-radius: var(--radius);
-  border: none; cursor: pointer; font-family: var(--font);
-  font-size: 14px; font-weight: 500; transition: all .15s;
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: #388bfd; }
-.btn-success { background: var(--accent2); color: #0d1117; }
-.btn-success:hover { background: #56d364; }
-.btn-danger  { background: var(--danger); color: #fff; }
-.btn-danger:hover  { background: #ff7b72; }
-.btn-ghost  { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-.btn-ghost:hover  { color: var(--text); border-color: var(--muted); }
-.btn-sm { padding: 5px 12px; font-size: 12px; }
+/* 로그인 */
+#page-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1565c0,#0d47a1);}
+.login-box{width:380px;background:#fff;border-radius:16px;padding:44px 40px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo .ico{width:60px;height:60px;background:var(--accent);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:14px;}
+.login-logo h1{font-size:20px;font-weight:700;}
+.login-logo p{font-size:12px;color:var(--muted);margin-top:4px;}
+.fg{margin-bottom:16px;}
+.fg label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.5px;}
+.fg input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;transition:border-color .15s;}
+.fg input:focus{outline:none;border-color:var(--accent);}
+.login-btn{width:100%;padding:13px;font-size:14px;border-radius:8px;margin-top:4px;}
+.login-err{color:var(--red);font-size:12px;text-align:center;margin-top:10px;min-height:18px;}
 
-input, select, textarea {
-  width: 100%; padding: 10px 14px;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--text);
-  font-family: var(--font); font-size: 14px;
-  transition: border-color .15s;
-}
-input:focus, select:focus, textarea:focus {
-  outline: none; border-color: var(--accent);
-}
-select option { background: var(--bg3); }
+/* 앱 */
+#page-app{display:flex;flex-direction:column;min-height:100vh;}
+.app-header{background:var(--accent);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.15);position:sticky;top:0;z-index:300;}
+.app-header .logo{font-size:15px;font-weight:700;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.user-badge{display:flex;align-items:center;gap:8px;font-size:12px;opacity:.9;}
+.user-badge strong{font-size:13px;opacity:1;}
+.avatar{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.btn-logout{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 12px;font-size:11px;}
+.btn-logout:hover{background:rgba(255,255,255,.25);}
+.app-nav{background:#fff;border-bottom:2px solid var(--border);padding:0 20px;display:flex;}
+.nav-tab{padding:11px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);margin-bottom:-2px;}
+.nav-tab:hover{color:var(--accent);}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+.app-content{flex:1;padding:16px 20px;}
 
-.card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 20px;
-}
-.tag {
-  display: inline-block; padding: 2px 9px;
-  border-radius: 20px; font-size: 11px; font-weight: 500;
-}
-.tag-blue   { background: #1f3a5f; color: #79c0ff; }
-.tag-green  { background: #1a3d2b; color: #56d364; }
-.tag-orange { background: #3d2b0a; color: #ffa657; }
-.tag-purple { background: #2d1f47; color: var(--purple); }
-.tag-red    { background: #3d1a1a; color: #ff7b72; }
+/* 정보바 */
+.info-bar{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.info-item{display:flex;align-items:center;gap:7px;}
+.info-item label{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;}
+.info-item input[type=date]{padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:12px;}
+.info-divider{width:1px;height:28px;background:var(--border);}
+.gauge-wrap{display:flex;align-items:center;gap:7px;}
+.gauge-bar{width:110px;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;}
+.gauge-fill{height:100%;border-radius:4px;transition:width .5s;background:var(--green);}
+.gauge-pct{font-family:var(--mono);font-size:12px;font-weight:600;min-width:44px;}
+.score-badge{background:var(--al);color:var(--accent);font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 10px;border-radius:6px;}
+.hol-badge{background:var(--rl);color:var(--red);font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;}
+.sat-badge{background:var(--al);color:var(--accent);font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;}
+.ot-inp{width:60px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:12px;text-align:center;}
+.meal-chk{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;}
 
-/* ── 토스트 ── */
-#toast {
-  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-  background: var(--bg3); border: 1px solid var(--border);
-  padding: 12px 22px; border-radius: 30px;
-  font-size: 14px; z-index: 9999;
-  transition: opacity .3s; opacity: 0; pointer-events: none;
-}
-#toast.show { opacity: 1; }
-#toast.ok   { border-color: var(--accent2); color: var(--accent2); }
-#toast.err  { border-color: var(--danger);  color: var(--danger); }
+/* 액션바 */
+.action-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.action-bar .spacer{flex:1;}
 
-/* ── 로그인 화면 ── */
-#page-login {
-  min-height: 100vh; display: flex;
-  align-items: center; justify-content: center;
-}
-.login-box {
-  width: 380px; padding: 44px 40px;
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 16px;
-}
-.login-logo {
-  text-align: center; margin-bottom: 32px;
-}
-.login-logo .logo-icon {
-  width: 56px; height: 56px; background: var(--accent);
-  border-radius: 14px; display: inline-flex;
-  align-items: center; justify-content: center;
-  font-size: 26px; margin-bottom: 14px;
-}
-.login-logo h1 { font-size: 20px; font-weight: 700; }
-.login-logo p  { font-size: 13px; color: var(--muted); margin-top: 4px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; letter-spacing: .5px; }
-.login-btn { width: 100%; padding: 13px; font-size: 15px; margin-top: 8px; border-radius: var(--radius); }
-.login-err { color: var(--danger); font-size: 13px; text-align: center; margin-top: 10px; }
+/* 테이블 */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table.wt{border-collapse:collapse;white-space:nowrap;}
+table.wt th.gh{font-size:10px;font-weight:700;padding:5px 4px;text-align:center;border-bottom:1px solid rgba(0,0,0,.1);border-right:1px solid rgba(0,0,0,.1);}
+.gh-base{background:#455a64;color:#fff;}
+.gh-move{background:#1565c0;color:#fff;}
+.gh-case{background:#2e7d32;color:#fff;}
+.gh-cooler{background:#6a1b9a;color:#fff;}
+.gh-cc{background:#00695c;color:#fff;}
+.gh-os{background:#e65100;color:#fff;}
+.gh-ship{background:#0277bd;color:#fff;}
+.gh-opt{background:#558b2f;color:#fff;}
+.gh-diff{background:#ad1457;color:#fff;}
+.gh-pack{background:#4527a0;color:#fff;}
+.gh-result{background:#1b5e20;color:#fff;}
+table.wt th.ch{background:#f8f9fa;color:var(--muted);font-size:10px;font-weight:600;padding:5px 4px;text-align:center;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;z-index:10;}
+table.wt td{padding:2px 3px;border-bottom:1px solid #f0f0f0;border-right:1px solid #f0f0f0;text-align:center;vertical-align:middle;font-size:12px;}
+table.wt tr:hover td{background:#fafbff;}
+td.row-num{background:#f8f9fa;color:var(--muted);font-size:10px;font-family:var(--mono);width:28px;min-width:28px;}
+td.order-cell input{width:110px;padding:3px 6px;border:1px solid transparent;border-radius:4px;font-size:11px;font-family:var(--mono);background:transparent;text-align:center;}
+td.order-cell input:focus{border-color:var(--accent);background:#fff;outline:none;}
+.qty-wrap{display:flex;align-items:center;justify-content:center;gap:2px;}
+.qty-btn{width:18px;height:18px;border:1px solid var(--border);border-radius:3px;background:#fff;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+.qty-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.qty-val{width:28px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:600;border:none;background:transparent;}
+.tgl{padding:2px 5px;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:10px;font-weight:500;background:#fff;color:var(--muted);transition:all .1s;white-space:nowrap;display:inline-block;}
+.tgl:hover{border-color:var(--accent);color:var(--accent);}
+.tgl.on{color:#fff;border-color:transparent;}
+.tgl.t-assembly.on{background:#455a64;}
+.tgl.t-move.on{background:#1565c0;}
+.tgl.t-case.on{background:#2e7d32;}
+.tgl.t-cooler.on{background:#6a1b9a;}
+.tgl.t-os.on{background:#e65100;}
+.tgl.t-ship.on{background:#0277bd;}
+.toggle-group{display:flex;gap:2px;justify-content:center;flex-wrap:nowrap;}
+.num-input{width:34px;padding:2px 3px;border:1px solid var(--border);border-radius:3px;font-size:11px;font-family:var(--mono);text-align:center;background:#fff;}
+.num-input:focus{outline:none;border-color:var(--accent);}
+.num-input::-webkit-inner-spin-button{opacity:0;}
+.memo-input{width:100px;padding:2px 6px;border:1px solid transparent;border-radius:4px;font-size:11px;background:transparent;}
+.memo-input:focus{border-color:var(--accent);background:#fff;outline:none;}
+td.score-cell{font-family:var(--mono);font-weight:700;color:var(--accent);background:var(--al)!important;font-size:12px;}
+td.score-cell.special{color:var(--orange);background:var(--ol)!important;}
+.summary-row{background:#e8f5e9;}
+.summary-row td{border-bottom:2px solid var(--border)!important;font-size:11px;font-weight:600;}
 
-/* ── 앱 레이아웃 ── */
-#page-app { display: flex; flex-direction: column; min-height: 100vh; }
+/* 지원업무 */
+.support-bar{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.support-bar h3{font-size:13px;font-weight:700;margin-bottom:12px;}
+.support-grid{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;}
+.support-item{display:flex;flex-direction:column;gap:4px;}
+.support-item label{font-size:11px;font-weight:600;color:var(--muted);}
+.support-item input{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:13px;text-align:center;}
+.support-item input:focus{outline:none;border-color:var(--accent);}
 
-/* 상단 헤더 */
-.app-header {
-  background: var(--bg2); border-bottom: 1px solid var(--border);
-  padding: 0 24px; height: 56px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 100;
-}
-.app-header .logo { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-.app-header .logo span { color: var(--accent); }
-.header-right { display: flex; align-items: center; gap: 16px; }
-.user-badge {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13px; color: var(--muted);
-}
-.user-badge strong { color: var(--text); }
-.avatar {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--accent); display: flex; align-items: center;
-  justify-content: center; font-size: 12px; font-weight: 700; color: #fff;
-}
+/* 통계 */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.stat-card .s-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+.stat-card .s-value{font-family:var(--mono);font-size:26px;font-weight:700;}
+.s-value.blue{color:var(--accent);}.s-value.green{color:var(--green);}
+.s-value.orange{color:var(--orange);}.s-value.purple{color:var(--purple);}
+.stat-card .s-sub{font-size:11px;color:var(--muted);margin-top:4px;}
 
-/* 탭 네비 */
-.app-nav {
-  background: var(--bg2); border-bottom: 1px solid var(--border);
-  padding: 0 24px; display: flex; gap: 4px;
-}
-.nav-tab {
-  padding: 12px 18px; font-size: 13px; font-weight: 500;
-  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
-  transition: all .15s; background: none; border-top: none;
-  border-left: none; border-right: none; font-family: var(--font);
-}
-.nav-tab:hover  { color: var(--text); }
-.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* 관리자 */
+.admin-filters{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.emp-table-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table.et{border-collapse:collapse;width:100%;}
+table.et th{background:#f8f9fa;font-size:11px;font-weight:600;color:var(--muted);padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);}
+table.et td{padding:10px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:middle;}
+table.et tr:hover td{background:#fafbff;}
+.emp-gauge-bar{width:100px;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;}
+.emp-gauge-fill{height:100%;border-radius:3px;}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:700;}
+.r1{background:#ffd700;color:#7a5700;}.r2{background:#c0c0c0;color:#444;}.r3{background:#cd7f32;color:#fff;}
 
-/* 메인 콘텐츠 */
-.app-content { flex: 1; padding: 28px 24px; max-width: 1100px; margin: 0 auto; width: 100%; }
+/* 설정 */
+.settings-section{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.settings-section h3{font-size:14px;font-weight:700;margin-bottom:16px;}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:8px;gap:12px;}
+.s-name{font-size:13px;font-weight:500;}.s-dept{font-size:11px;color:var(--muted);}
+.hol-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--rl);border-radius:6px;margin-bottom:6px;}
 
-/* ── 입력 폼 ── */
-.section-title {
-  font-size: 16px; font-weight: 700; margin-bottom: 20px;
-  display: flex; align-items: center; gap: 8px;
-}
-.section-title::before {
-  content: ''; width: 4px; height: 18px;
-  background: var(--accent); border-radius: 2px; display: block;
-}
-
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
-.form-full { grid-column: 1 / -1; }
-
-.check-group { display: flex; flex-wrap: wrap; gap: 8px; }
-.check-item {
-  display: flex; align-items: center; gap: 7px;
-  background: var(--bg3); border: 1px solid var(--border);
-  padding: 8px 14px; border-radius: 8px; cursor: pointer;
-  font-size: 13px; transition: all .15s; user-select: none;
-}
-.check-item:hover { border-color: var(--accent); }
-.check-item.selected { background: #1f3a5f; border-color: var(--accent); color: #79c0ff; }
-.check-item input { display: none; }
-
-/* 환산 미리보기 */
-.score-preview {
-  background: var(--bg3); border: 1px solid var(--accent);
-  border-radius: var(--radius); padding: 18px 24px;
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 20px;
-}
-.score-big {
-  font-family: var(--mono); font-size: 36px; font-weight: 600;
-  color: var(--accent);
-}
-.score-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-/* ── 현황판 ── */
-.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
-.stat-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 20px;
-}
-.stat-card .label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-.stat-card .value { font-family: var(--mono); font-size: 28px; font-weight: 600; }
-.stat-card .value.green  { color: var(--accent2); }
-.stat-card .value.blue   { color: var(--accent); }
-.stat-card .value.orange { color: var(--warn); }
-
-/* 달성률 바 */
-.progress-wrap { margin-top: 12px; }
-.progress-bar {
-  height: 6px; background: var(--bg3);
-  border-radius: 3px; overflow: hidden;
-}
-.progress-fill {
-  height: 100%; background: var(--accent2);
-  border-radius: 3px; transition: width .6s ease;
-}
-
-/* 데이터 테이블 */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead th {
-  background: var(--bg3); color: var(--muted);
-  font-size: 11px; font-weight: 500; letter-spacing: .5px;
-  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
-tbody tr:hover { background: var(--bg3); }
-tbody td { padding: 10px 14px; color: var(--text); white-space: nowrap; }
-tbody td .mono { font-family: var(--mono); }
-
-/* ── 관리자 ── */
-.admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.emp-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 18px;
-  transition: border-color .15s;
-}
-.emp-card:hover { border-color: var(--accent); }
-.emp-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.emp-avatar {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: var(--accent); display: flex;
-  align-items: center; justify-content: center;
-  font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0;
-}
-.emp-name { font-weight: 600; font-size: 15px; }
-.emp-id   { font-size: 12px; color: var(--muted); font-family: var(--mono); }
-.emp-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.emp-stat { background: var(--bg3); border-radius: 8px; padding: 10px; }
-.emp-stat .s-label { font-size: 11px; color: var(--muted); }
-.emp-stat .s-value { font-family: var(--mono); font-size: 18px; font-weight: 600; margin-top: 2px; }
-
-/* 월 선택 */
-.month-picker {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
-}
-.month-picker label { font-size: 13px; color: var(--muted); }
-.month-picker input { width: 160px; }
-
-/* 로딩 */
-.loading {
-  display: flex; align-items: center; justify-content: center;
-  padding: 60px; color: var(--muted); font-size: 14px; gap: 10px;
-}
-.spinner {
-  width: 20px; height: 20px;
-  border: 2px solid var(--border); border-top-color: var(--accent);
-  border-radius: 50%; animation: spin .7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* 반응형 */
-@media (max-width: 640px) {
-  .form-grid, .form-grid.three, .stat-grid { grid-template-columns: 1fr; }
-  .app-content { padding: 16px; }
-}
+/* 공통 */
+.month-pick{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.month-pick label{font-size:12px;font-weight:600;color:var(--muted);}
+.month-pick input[type=month]{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:12px;}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);gap:10px;}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:40px;color:var(--muted);}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:30px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+#toast.show{opacity:1;}#toast.ok{background:var(--green);color:#fff;}
+#toast.err{background:var(--red);color:#fff;}#toast.info{background:var(--accent);color:#fff;}
+select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:12px;background:#fff;}
 </style>
 </head>
 <body>
 
-<!-- ▶ 로그인 페이지 -->
 <div id="page-login">
   <div class="login-box">
     <div class="login-logo">
-      <div class="logo-icon">🖥️</div>
+      <div class="ico">🖥️</div>
       <h1>PC Assembly Build</h1>
       <p>인원별 업무 관리 시스템</p>
     </div>
-    <div class="form-group">
-      <label>사번</label>
-      <input type="text" id="inp-empid" placeholder="예: EMP001" autocomplete="off">
-    </div>
-    <div class="form-group">
-      <label>이름</label>
-      <input type="text" id="inp-name" placeholder="예: 홍길동">
-    </div>
+    <div class="fg"><label>사번</label><input type="text" id="inp-empid" placeholder="예: EMP001" autocomplete="off"></div>
+    <div class="fg"><label>이름</label><input type="text" id="inp-name" placeholder="예: 홍길동"></div>
     <button class="btn btn-primary login-btn" onclick="doLogin()">로그인</button>
     <div id="login-err" class="login-err"></div>
   </div>
 </div>
 
-<!-- ▶ 메인 앱 -->
 <div id="page-app" class="hidden">
-  <!-- 헤더 -->
   <header class="app-header">
-    <div class="logo">🖥️ <span>PCAssembly</span> Build</div>
+    <div class="logo">🖥️ PC Assembly Build</div>
     <div class="header-right">
       <div class="user-badge">
-        <div class="avatar" id="user-avatar"></div>
-        <div>
-          <strong id="user-name-display"></strong>
-          <div style="font-size:11px;" id="user-id-display"></div>
-        </div>
+        <div class="avatar" id="hdr-av"></div>
+        <div><strong id="hdr-name"></strong> <span id="hdr-role" style="font-size:11px;opacity:.8;"></span></div>
+        <span style="opacity:.4;margin:0 4px;">|</span>
+        <span id="hdr-id" style="font-family:var(--mono);font-size:11px;"></span>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="doLogout()">로그아웃</button>
+      <button class="btn btn-logout" onclick="doLogout()">로그아웃</button>
     </div>
   </header>
 
-  <!-- 탭 네비 -->
-  <nav class="app-nav" id="app-nav">
-    <button class="nav-tab active" onclick="showTab('input')">📝 업무 입력</button>
-    <button class="nav-tab" onclick="showTab('dashboard')">📊 내 현황</button>
-    <button class="nav-tab hidden" id="tab-admin" onclick="showTab('admin')">👑 관리자</button>
+  <nav class="app-nav">
+    <button class="nav-tab active" onclick="showTab('input',this)">📝 업무 입력</button>
+    <button class="nav-tab" onclick="showTab('stats',this)">📊 내 통계</button>
+    <button class="nav-tab hidden" id="tab-admin-btn" onclick="showTab('admin',this)">👥 전체 현황</button>
+    <button class="nav-tab hidden" id="tab-settings-btn" onclick="showTab('settings',this)">⚙️ 설정</button>
   </nav>
 
-  <!-- 콘텐츠 -->
   <main class="app-content">
 
-    <!-- ── 업무 입력 탭 ── -->
+    <!-- 업무 입력 -->
     <div id="tab-input">
-      <div class="section-title">업무 데이터 입력</div>
-
-      <div class="card" style="margin-bottom:16px;">
-        <div class="form-grid three" style="margin-bottom:16px;">
-          <div class="form-group">
-            <label>작업 날짜</label>
-            <input type="date" id="f-date">
-          </div>
-          <div class="form-group">
-            <label>수량</label>
-            <input type="number" id="f-qty" value="1" min="1" max="99" oninput="calcScore()">
-          </div>
-          <div class="form-group">
-            <label>조립 구분</label>
-            <select id="f-assembly" onchange="calcScore()">
-              <option value="">선택</option>
-              <option value="일반">일반</option>
-              <option value="특수/프리">특수/프리</option>
-              <option value="추천/웍스">추천/웍스</option>
-              <option value="출고">출고</option>
-              <option value="반조">반조</option>
-            </select>
+      <div class="info-bar">
+        <div class="info-item">
+          <label>작업일자</label>
+          <input type="date" id="work-date" onchange="onDateChange()">
+        </div>
+        <span id="day-badge"></span>
+        <div class="info-divider"></div>
+        <div class="info-item">
+          <label>팀 야근(분)</label>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="number" id="team-ot-view" class="ot-inp" value="0" readonly style="background:#f5f5f5;">
+            <span id="team-ot-admin-wrap" class="hidden" style="display:flex;align-items:center;gap:4px;">
+              <input type="number" id="team-ot-edit" class="ot-inp" value="0" min="0" oninput="document.getElementById('team-ot-view').value=this.value">
+              <button class="btn btn-primary btn-xs" onclick="saveTeamOT()">저장</button>
+            </span>
           </div>
         </div>
-
-        <!-- 제품 이동 -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">제품 이동</label>
-          <div class="check-group" id="chk-move">
-            <label class="check-item" onclick="selectOne(this,'chk-move')"><input type="radio" name="move" value="방문" onchange="calcScore()">방문 <span class="tag tag-blue">0.33</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-move')"><input type="radio" name="move" value="퀵+당일" onchange="calcScore()">퀵+당일 <span class="tag tag-blue">0.66</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-move')"><input type="radio" name="move" value="안정화+택배" onchange="calcScore()">안정화+택배 <span class="tag tag-blue">1.0</span></label>
+        <div class="info-item">
+          <label>내 야근(분)</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" id="my-ot" class="ot-inp" value="0" min="0" oninput="calcGauge()">
+            <label class="meal-chk"><input type="checkbox" id="meal-chk" onchange="calcGauge()"> 식사(-10분)</label>
           </div>
         </div>
-
-        <!-- 케이스 등급 -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">케이스 등급</label>
-          <div class="check-group" id="chk-case">
-            <label class="check-item" onclick="selectOne(this,'chk-case')"><input type="radio" name="case" value="A" onchange="calcScore()">A급 <span class="tag tag-green">12분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-case')"><input type="radio" name="case" value="B" onchange="calcScore()">B급 <span class="tag tag-green">18분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-case')"><input type="radio" name="case" value="C" onchange="calcScore()">C급 <span class="tag tag-green">23분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-case')"><input type="radio" name="case" value="D" onchange="calcScore()">D급 <span class="tag tag-orange">27분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-case')"><input type="radio" name="case" value="E" onchange="calcScore()">E급 <span class="tag tag-orange">30분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-case')"><input type="radio" name="case" value="F" onchange="calcScore()">F급 <span class="tag tag-red">35분</span></label>
+        <div class="info-divider"></div>
+        <div class="info-item"><label>오늘 합계</label><div class="score-badge" id="today-score">0.000</div></div>
+        <div class="info-item"><label>월 합계</label><div class="score-badge" id="month-score">0.000</div></div>
+        <div class="info-item">
+          <label>달성률</label>
+          <div class="gauge-wrap">
+            <div class="gauge-bar"><div class="gauge-fill" id="gauge-fill" style="width:0%"></div></div>
+            <div class="gauge-pct" id="gauge-pct" style="color:var(--green)">0%</div>
           </div>
         </div>
+        <div class="info-item" style="margin-left:auto;"><label>목표</label><span id="target-display" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--muted);">16</span></div>
+      </div>
 
-        <!-- 쿨러 등급 -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">쿨러 등급</label>
-          <div class="check-group" id="chk-cooler">
-            <label class="check-item" onclick="selectOne(this,'chk-cooler')"><input type="radio" name="cooler" value="A" onchange="calcScore()">쿨러A <span class="tag tag-green">3.5분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-cooler')"><input type="radio" name="cooler" value="B" onchange="calcScore()">쿨러B <span class="tag tag-green">6분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-cooler')"><input type="radio" name="cooler" value="C" onchange="calcScore()">쿨러C <span class="tag tag-green">9분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-cooler')"><input type="radio" name="cooler" value="D" onchange="calcScore()">쿨러D <span class="tag tag-orange">14분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-cooler')"><input type="radio" name="cooler" value="E" onchange="calcScore()">쿨러E <span class="tag tag-orange">18분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-cooler')"><input type="radio" name="cooler" value="F" onchange="calcScore()">쿨러F <span class="tag tag-red">22분</span></label>
-          </div>
-        </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="addRow()">+ 행 추가</button>
+        <button class="btn btn-success" onclick="saveAll()">💾 전체 저장</button>
+        <button class="btn btn-ghost" onclick="loadMyData()">🔄 새로고침</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ 출력</button>
+      </div>
 
-        <!-- 케이스+쿨러 -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">케이스 쿨러</label>
-          <div class="check-group" id="chk-casecooler">
-            <label class="check-item" onclick="selectOne(this,'chk-casecooler')"><input type="radio" name="casecooler" value="A" onchange="calcScore()">케이스쿨러A <span class="tag tag-green">2.6분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-casecooler')"><input type="radio" name="casecooler" value="B" onchange="calcScore()">케이스쿨러B <span class="tag tag-green">3.5분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-casecooler')"><input type="radio" name="casecooler" value="C" onchange="calcScore()">케이스쿨러C <span class="tag tag-orange">4.2분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-casecooler')"><input type="radio" name="casecooler" value="제거" onchange="calcScore()">쿨러제거 <span class="tag tag-blue">2분</span></label>
-          </div>
-        </div>
+      <div class="table-wrap">
+        <table class="wt" id="work-table">
+          <thead>
+            <tr>
+              <th class="gh gh-base" rowspan="2" style="min-width:28px;">#</th>
+              <th class="gh gh-base" colspan="3">기본정보</th>
+              <th class="gh gh-move" colspan="1">제품이동</th>
+              <th class="gh gh-case" colspan="1">케이스</th>
+              <th class="gh gh-cooler" colspan="1">쿨러</th>
+              <th class="gh gh-cc" colspan="6">케이스쿨러</th>
+              <th class="gh gh-os" colspan="6">운영체제</th>
+              <th class="gh gh-ship" colspan="3">출고+완충</th>
+              <th class="gh gh-opt" colspan="5">제조+옵션변경</th>
+              <th class="gh gh-diff" colspan="4">조립+난이도추가</th>
+              <th class="gh gh-pack" colspan="3">반조+개포</th>
+              <th class="gh gh-result" colspan="2">결과</th>
+              <th class="gh gh-base" rowspan="2">관리</th>
+            </tr>
+            <tr>
+              <th class="ch" style="min-width:110px;">주문번호</th>
+              <th class="ch" style="min-width:210px;">조립구분</th>
+              <th class="ch" style="min-width:52px;">수량</th>
+              <th class="ch" style="min-width:130px;">이동유형</th>
+              <th class="ch" style="min-width:150px;">등급</th>
+              <th class="ch" style="min-width:150px;">등급</th>
+              <th class="ch">A</th><th class="ch">B</th><th class="ch">C</th><th class="ch">D</th><th class="ch">E</th><th class="ch">제거</th>
+              <th class="ch">O/S</th><th class="ch">D+M</th><th class="ch">재인증</th><th class="ch">안정화</th><th class="ch">안+삭</th><th class="ch">B+Up</th>
+              <th class="ch">검+기</th><th class="ch">완충1</th><th class="ch">완충2</th>
+              <th class="ch">옵1</th><th class="ch">옵2</th><th class="ch">옵3</th><th class="ch">옵4</th><th class="ch">옵5</th>
+              <th class="ch">난1</th><th class="ch">난2</th><th class="ch">난3</th><th class="ch">특/추</th>
+              <th class="ch">반조</th><th class="ch">개포</th><th class="ch">반조진행</th>
+              <th class="ch" style="min-width:64px;">환산점수</th>
+              <th class="ch" style="min-width:90px;">메모</th>
+            </tr>
+          </thead>
+          <tbody id="work-tbody"></tbody>
+          <tfoot>
+            <tr class="summary-row">
+              <td colspan="3" style="text-align:right;padding-right:8px;color:var(--muted);">합계</td>
+              <td id="sum-qty" style="font-family:var(--mono);"></td>
+              <td colspan="28"></td>
+              <td id="sum-score" style="font-family:var(--mono);color:var(--green);font-size:13px;"></td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
-        <!-- 운영체제 -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">운영체제</label>
-          <div class="check-group" id="chk-os">
-            <label class="check-item" onclick="selectOne(this,'chk-os')"><input type="radio" name="os" value="OS" onchange="calcScore()">O/S <span class="tag tag-blue">7분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-os')"><input type="radio" name="os" value="D+M" onchange="calcScore()">D+M <span class="tag tag-blue">10분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-os')"><input type="radio" name="os" value="재인증" onchange="calcScore()">재인증 <span class="tag tag-blue">10분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-os')"><input type="radio" name="os" value="안정화" onchange="calcScore()">안정화 <span class="tag tag-blue">6분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-os')"><input type="radio" name="os" value="안+삭" onchange="calcScore()">안+삭 <span class="tag tag-blue">8분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-os')"><input type="radio" name="os" value="B+Up" onchange="calcScore()">B+Up <span class="tag tag-blue">1.5분</span></label>
-          </div>
-        </div>
-
-        <!-- 출고+완충 -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">출고 + 완충</label>
-          <div class="check-group" id="chk-ship">
-            <label class="check-item" onclick="selectOne(this,'chk-ship')"><input type="radio" name="ship" value="검+기" onchange="calcScore()">검+기 <span class="tag tag-green">4분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-ship')"><input type="radio" name="ship" value="완충1" onchange="calcScore()">완충1 <span class="tag tag-green">3분</span></label>
-            <label class="check-item" onclick="selectOne(this,'chk-ship')"><input type="radio" name="ship" value="완충2" onchange="calcScore()">완충2 <span class="tag tag-orange">5분</span></label>
-          </div>
-        </div>
-
-        <!-- 옵션 추가/변경 (복수선택) -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">옵션 추가/변경 <span style="color:var(--accent);font-size:11px;">(복수선택 가능)</span></label>
-          <div class="check-group" id="chk-opt">
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="옵1" onchange="calcScore()">추가변경1 <span class="tag tag-blue">1분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="옵2" onchange="calcScore()">추가변경2 <span class="tag tag-blue">3분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="옵3" onchange="calcScore()">추가변경3 <span class="tag tag-blue">4분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="옵4" onchange="calcScore()">추가변경4 <span class="tag tag-blue">2분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="옵5" onchange="calcScore()">추가변경5 <span class="tag tag-orange">5분</span></label>
-          </div>
-        </div>
-
-        <!-- 난이도 추가 (복수선택) -->
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">난이도 + 추가 <span style="color:var(--accent);font-size:11px;">(복수선택 가능)</span></label>
-          <div class="check-group" id="chk-diff">
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="난1" onchange="calcScore()">난이도상1 <span class="tag tag-orange">1.5분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="난2" onchange="calcScore()">난이도상2 <span class="tag tag-orange">2분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="난3" onchange="calcScore()">난이도상3 <span class="tag tag-orange">4분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="특/추" onchange="calcScore()">특수추가 <span class="tag tag-red">10분</span></label>
-          </div>
-        </div>
-
-        <!-- 반조+포장 (복수선택) -->
-        <div style="margin-bottom:20px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">반조 + 포장</label>
-          <div class="check-group" id="chk-pack">
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="반조받음" onchange="calcScore()">반조받음 <span class="tag tag-red">-3분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="개인포장" onchange="calcScore()">개인포장 <span class="tag tag-green">5분</span></label>
-            <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="반조진행" onchange="calcScore()">반조진행 <span class="tag tag-blue">3분</span></label>
-          </div>
-        </div>
-
-        <!-- 특이사항 -->
-        <div style="margin-bottom:20px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">특이사항 메모</label>
-          <textarea id="f-memo" rows="2" placeholder="특이사항이 있으면 입력하세요"></textarea>
-        </div>
-
-        <!-- 환산 점수 미리보기 -->
-        <div class="score-preview">
-          <div>
-            <div class="score-big" id="score-display">0.00</div>
-            <div class="score-label">환산 점수 (30분 = 1.0점 기준)</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">예상 소요시간</div>
-            <div style="font-family:var(--mono);font-size:20px;" id="time-display">0분</div>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
-          <button class="btn btn-ghost" onclick="resetForm()">초기화</button>
-          <button class="btn btn-success" onclick="submitWork()">💾 저장하기</button>
+      <div class="support-bar">
+        <h3>📦 지원 업무 (당일)</h3>
+        <div class="support-grid">
+          <div class="support-item"><label>포장지원(건)</label><input type="number" id="s-pack" value="0" min="0"></div>
+          <div class="support-item"><label>정리지원(건)</label><input type="number" id="s-sort" value="0" min="0"></div>
+          <div class="support-item"><label>청소(분)</label><input type="number" id="s-clean" value="0" min="0"></div>
+          <div class="support-item"><label>담당구역(분)</label><input type="number" id="s-area" value="0" min="0"></div>
+          <div class="support-item"><label>불량처리(건)</label><input type="number" id="s-defect" value="0" min="0"></div>
+          <div class="support-item"><label>기타시간(분)</label><input type="number" id="s-etc" value="0" min="0"></div>
+          <div class="support-item" style="align-self:flex-end;"><button class="btn btn-primary" onclick="saveSupport()">저장</button></div>
         </div>
       </div>
     </div>
 
-    <!-- ── 내 현황 탭 ── -->
-    <div id="tab-dashboard" class="hidden">
-      <div class="month-picker">
+    <!-- 내 통계 -->
+    <div id="tab-stats" class="hidden">
+      <div class="month-pick">
         <label>조회 월</label>
-        <input type="month" id="dash-month">
-        <button class="btn btn-primary btn-sm" onclick="loadDashboard()">조회</button>
+        <input type="month" id="stats-month">
+        <button class="btn btn-primary btn-sm" onclick="loadStats()">조회</button>
       </div>
-
       <div class="stat-grid">
-        <div class="stat-card">
-          <div class="label">총 처리 건수</div>
-          <div class="value blue" id="d-count">-</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px;">건</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">총 환산 점수</div>
-          <div class="value green" id="d-score">-</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px;">점</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">목표 달성률</div>
-          <div class="value orange" id="d-rate">-</div>
-          <div class="progress-wrap">
-            <div class="progress-bar"><div class="progress-fill" id="d-progress" style="width:0%"></div></div>
-          </div>
-        </div>
+        <div class="stat-card"><div class="s-label">총 처리건수</div><div class="s-value blue" id="st-count">-</div><div class="s-sub">건</div></div>
+        <div class="stat-card"><div class="s-label">총 환산점수</div><div class="s-value green" id="st-score">-</div><div class="s-sub">점</div></div>
+        <div class="stat-card"><div class="s-label">평가평균 (팀야근기준)</div><div class="s-value orange" id="st-eval">-</div><div class="s-sub">점/일</div></div>
+        <div class="stat-card"><div class="s-label">실제평균 (본인근무기준)</div><div class="s-value purple" id="st-real">-</div><div class="s-sub">점/일</div></div>
       </div>
-
-      <div class="card">
-        <div class="section-title" style="margin-bottom:16px;">이번달 입력 내역</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>날짜</th>
-                <th>조립구분</th>
-                <th>케이스</th>
-                <th>쿨러</th>
-                <th>운영체제</th>
-                <th>환산점수</th>
-                <th>특이사항</th>
-                <th>삭제</th>
-              </tr>
-            </thead>
-            <tbody id="d-table-body">
-              <tr><td colspan="8" class="loading">조회 버튼을 눌러주세요</td></tr>
-            </tbody>
-          </table>
+      <div class="stat-card" style="margin-bottom:16px;">
+        <div class="s-label" style="margin-bottom:10px;">목표 달성률</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="flex:1;height:16px;background:#e0e0e0;border-radius:8px;overflow:hidden;">
+            <div id="st-gauge" style="height:100%;background:var(--green);border-radius:8px;transition:width .6s;width:0%;"></div>
+          </div>
+          <span id="st-rate" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green);min-width:56px;"></span>
+          <span id="st-workdays" style="font-size:12px;color:var(--muted);"></span>
         </div>
       </div>
     </div>
 
-    <!-- ── 관리자 탭 ── -->
+    <!-- 전체 현황 -->
     <div id="tab-admin" class="hidden">
-      <div class="month-picker">
-        <label>조회 월</label>
-        <input type="month" id="admin-month">
-        <button class="btn btn-primary btn-sm" onclick="loadAdmin()">조회</button>
+      <div class="admin-filters">
+        <div class="month-pick" style="margin-bottom:0;">
+          <label>조회 월</label>
+          <input type="month" id="admin-month">
+          <button class="btn btn-primary btn-sm" onclick="loadAdmin()">조회</button>
+        </div>
+        <select id="dept-filter" onchange="filterAdmin()"><option value="">전체 부서</option></select>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ 출력</button>
+        </div>
       </div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <div class="section-title" style="margin:0;">인원별 업무 현황</div>
-        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV 다운로드</button>
+      <div class="emp-table-wrap">
+        <table class="et">
+          <thead>
+            <tr>
+              <th style="width:36px;">순위</th>
+              <th>사번</th><th>이름</th><th>부서</th>
+              <th>처리건수</th><th>근무일수</th><th>총점수</th>
+              <th>평가평균</th><th>실제평균</th><th>달성률</th><th>게이지</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody"><tr><td colspan="11" class="loading">조회 버튼을 눌러주세요</td></tr></tbody>
+        </table>
       </div>
+    </div>
 
-      <div id="admin-grid" class="admin-grid">
-        <div class="loading"><div class="spinner"></div>조회 버튼을 눌러주세요</div>
+    <!-- 설정 -->
+    <div id="tab-settings" class="hidden">
+      <div class="settings-section">
+        <h3>⏰ 팀 야근 시간 설정</h3>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <input type="date" id="ot-date" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <input type="number" id="ot-min" placeholder="야근시간(분)" min="0" style="width:130px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:12px;">
+          <button class="btn btn-primary" onclick="saveOT()">저장</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>🎯 인원별 업무 목표 설정</h3>
+        <div class="settings-grid" id="target-grid"><div class="loading"><div class="spinner"></div>로딩중...</div></div>
+      </div>
+      <div class="settings-section">
+        <h3>🚶 인원별 제품이동시간 설정 <span style="font-size:11px;font-weight:400;color:var(--muted);">(점수값, 예: 0.33)</span></h3>
+        <div class="settings-grid" id="move-grid"><div class="loading"><div class="spinner"></div>로딩중...</div></div>
+      </div>
+      <div class="settings-section hidden" id="holiday-section">
+        <h3>📅 공휴일 설정 <span style="font-size:11px;font-weight:400;color:var(--muted);">(×1.25 적용)</span></h3>
+        <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;">
+          <input type="date" id="hol-date" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <input type="text" id="hol-name" placeholder="공휴일명" style="width:150px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <button class="btn btn-primary" onclick="addHoliday()">추가</button>
+        </div>
+        <div id="holiday-list"></div>
       </div>
     </div>
 
   </main>
 </div>
-
-<!-- 토스트 -->
 <div id="toast"></div>
 
 <script>
-// ── 설정 ──────────────────────────────────────────────────────
-const API_URL = 'https://script.google.com/macros/s/AKfycbzDlrmhr3xKciixpq2-ScHzc0d3Ld-B_A35yF-VPEBRmSVZ01Z467qwc4Hf1iPLM7NCpw/exec'; // ← 나중에 교체
-
-// 환산 점수표 (분 단위 → /30 = 점수)
-const SCORES = {
-  move:   { '방문': 0.33, '퀵+당일': 0.66, '안정화+택배': 1.0 },
-  case:   { 'A': 12, 'B': 18, 'C': 23, 'D': 27, 'E': 30, 'F': 35 },
-  cooler: { 'A': 3.5, 'B': 6, 'C': 9, 'D': 14, 'E': 18, 'F': 22 },
-  casecooler: { 'A': 2.6, 'B': 3.5, 'C': 4.2, '제거': 2 },
-  os:     { 'OS': 7, 'D+M': 10, '재인증': 10, '안정화': 6, '안+삭': 8, 'B+Up': 1.5 },
-  ship:   { '검+기': 4, '완충1': 3, '완충2': 5 },
-  opt:    { '옵1': 1, '옵2': 3, '옵3': 4, '옵4': 2, '옵5': 5 },
-  diff:   { '난1': 1.5, '난2': 2, '난3': 4, '특/추': 10 },
-  pack:   { '반조받음': -3, '개인포장': 5, '반조진행': 3 }
+const API='https://script.google.com/macros/s/AKfycbzDlrmhr3xKciixpq2-ScHzc0d3Ld-B_A35yF-VPEBRmSVZ01Z467qwc4Hf1iPLM7NCpw/exec';
+const SCORE={
+  case:{A:12,B:18,C:23,D:27,E:30,F:35},
+  cooler:{A:3.5,B:6,C:9,D:14,E:18,F:22},
+  cc:{A:2.6,B:3.5,C:4.2,D:15,E:20,'제거':2},
+  osMin:[7,10,10,6,8,1.5],
+  shipMin:[4,3,5],
+  opt:[1,3,4,2,5],
+  diff:[1.5,2,4,10],
+  pack:[-3,5,3]
 };
-const GOAL = 16; // 월 목표 점수
+let user=null,settings={},otData={},holidays=[],employees=[],adminData=[],myTarget=16,myMoveTime=0.33,monthScore=0;
 
-// ── 상태 ──────────────────────────────────────────────────────
-let currentUser = null;
-let adminData = [];
-
-// ── 초기화 ────────────────────────────────────────────────────
-window.onload = () => {
-  const saved = sessionStorage.getItem('pcb_user');
-  if (saved) {
-    currentUser = JSON.parse(saved);
-    enterApp();
-  }
-  // 날짜 기본값
-  document.getElementById('f-date').value = today();
-  const m = todayMonth();
-  document.getElementById('dash-month').value = m;
-  document.getElementById('admin-month').value = m;
+window.onload=()=>{
+  const s=sessionStorage.getItem('pcb_u');
+  if(s){user=JSON.parse(s);enterApp();}
+  document.getElementById('inp-empid').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('inp-name').focus();});
+  document.getElementById('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 };
 
-function today() {
-  return new Date().toISOString().split('T')[0];
-}
-function todayMonth() {
-  return new Date().toISOString().slice(0, 7);
-}
-
-// ── 로그인 ────────────────────────────────────────────────────
-async function doLogin() {
-  const empId = document.getElementById('inp-empid').value.trim();
-  const name  = document.getElementById('inp-name').value.trim();
-  if (!empId || !name) { showErr('사번과 이름을 입력해주세요.'); return; }
-
-  document.getElementById('login-err').textContent = '';
-  try {
-    const res = await api({ action: 'login', empId, name });
-    if (res.success) {
-      currentUser = res;
-      sessionStorage.setItem('pcb_user', JSON.stringify(res));
-      enterApp();
-    } else {
-      showErr(res.message || '로그인 실패');
-    }
-  } catch(e) {
-    showErr('서버 연결 실패. 잠시 후 다시 시도하세요.');
-  }
+async function doLogin(){
+  const empId=document.getElementById('inp-empid').value.trim();
+  const name=document.getElementById('inp-name').value.trim();
+  if(!empId||!name){document.getElementById('login-err').textContent='사번과 이름을 입력하세요.';return;}
+  document.getElementById('login-err').textContent='로그인 중...';
+  try{
+    const r=await api({action:'login',empId,name});
+    if(r.success){user=r;sessionStorage.setItem('pcb_u',JSON.stringify(r));enterApp();}
+    else document.getElementById('login-err').textContent=r.message;
+  }catch(e){document.getElementById('login-err').textContent='서버 연결 실패';}
 }
 
-function showErr(msg) {
-  document.getElementById('login-err').textContent = msg;
-}
+function doLogout(){sessionStorage.removeItem('pcb_u');location.reload();}
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !document.getElementById('page-login').classList.contains('hidden')) doLogin();
-});
-
-function enterApp() {
+function enterApp(){
   document.getElementById('page-login').classList.add('hidden');
   document.getElementById('page-app').classList.remove('hidden');
-  document.getElementById('user-name-display').textContent = currentUser.name;
-  document.getElementById('user-id-display').textContent = currentUser.empId;
-  document.getElementById('user-avatar').textContent = currentUser.name[0];
-
-  if (currentUser.role === 'admin') {
-    document.getElementById('tab-admin').classList.remove('hidden');
+  document.getElementById('hdr-av').textContent=user.name[0];
+  document.getElementById('hdr-name').textContent=user.name;
+  document.getElementById('hdr-id').textContent=user.empId;
+  document.getElementById('hdr-role').textContent=user.role==='superadmin'?'[슈퍼관리자]':user.role==='admin'?'[관리자]':'';
+  if(user.role==='admin'||user.role==='superadmin'){
+    document.getElementById('tab-admin-btn').classList.remove('hidden');
+    document.getElementById('tab-settings-btn').classList.remove('hidden');
+    document.getElementById('team-ot-admin-wrap').classList.remove('hidden');
   }
+  if(user.role==='superadmin') document.getElementById('holiday-section').classList.remove('hidden');
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('work-date').value=today;
+  document.getElementById('stats-month').value=today.slice(0,7);
+  document.getElementById('admin-month').value=today.slice(0,7);
+  const otd=document.getElementById('ot-date');if(otd)otd.value=today;
+  loadInitial();
 }
 
-function doLogout() {
-  sessionStorage.removeItem('pcb_user');
-  location.reload();
+async function loadInitial(){
+  const [sr,or,hr,er]=await Promise.all([
+    api({action:'getSettings'}),api({action:'getOvertime'}),
+    api({action:'getHolidays'}),api({action:'getEmployees'})
+  ]);
+  if(sr.success)settings=sr.data;
+  if(or.success)otData=or.data;
+  if(hr.success)holidays=hr.data;
+  if(er.success)employees=er.data;
+  const my=settings[user.empId];
+  myTarget=my?my.target:16;myMoveTime=my?my.moveTime:0.33;
+  document.getElementById('target-display').textContent=myTarget;
+  onDateChange();loadMyData();
 }
 
-// ── 탭 전환 ───────────────────────────────────────────────────
-function showTab(tab) {
-  ['input','dashboard','admin'].forEach(t => {
-    document.getElementById('tab-' + t)?.classList.add('hidden');
+function onDateChange(){
+  const d=document.getElementById('work-date').value;if(!d)return;
+  const dt=new Date(d),day=dt.getDay();
+  const isSat=day===6,isSun=day===0,isHol=holidays.some(h=>h.date===d);
+  const badge=document.getElementById('day-badge');
+  if(isSun||isHol) badge.innerHTML=`<span class="hol-badge">🔴 ${isHol?holidays.find(h=>h.date===d)?.name||'공휴일':'일요일'} (×1.25)</span>`;
+  else if(isSat) badge.innerHTML='<span class="sat-badge">🔵 토요일 (×1.25)</span>';
+  else badge.innerHTML='';
+  const ot=otData[d]||0;
+  document.getElementById('team-ot-view').value=ot;
+  const e=document.getElementById('team-ot-edit');if(e)e.value=ot;
+  loadMyData();
+}
+
+function showTab(tab,el){
+  ['input','stats','admin','settings'].forEach(t=>{const x=document.getElementById('tab-'+t);if(x)x.classList.add('hidden');});
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(tab==='stats')loadStats();
+  if(tab==='admin')loadAdmin();
+  if(tab==='settings')loadSettingsTab();
+}
+
+async function api(params){
+  const url=new URL(API);
+  Object.entries(params).forEach(([k,v])=>url.searchParams.append(k,String(v)));
+  const r=await fetch(url.toString());return r.json();
+}
+
+function parseBarcode(raw){
+  if(!raw)return raw;
+  const s=raw.trim();
+  if(s[0]==='1')return s.substring(1,9);
+  if(s[0]==='2')return s.substring(1,10);
+  return s;
+}
+
+function isSpecialDay(d){
+  if(!d)return false;
+  const dt=new Date(d),day=dt.getDay();
+  if(day===0||day===6)return true;
+  return holidays.some(h=>h.date===d);
+}
+
+function addRow(data){
+  const tbody=document.getElementById('work-tbody');
+  const idx=tbody.children.length;
+  const sp=isSpecialDay(document.getElementById('work-date').value);
+  const tr=document.createElement('tr');
+  tr.dataset.rowIdx=data?._rowIndex||'';
+  tr.dataset.saved=data?'1':'0';
+  const asmTypes=['일반','특수','프리미엄','추천','웍스','출고','반조'];
+  const moveTypes=['방문','퀵+당일','안정화+택배'];
+  const caseGrades=['A','B','C','D','E','F'];
+  const coolerGrades=['A','B','C','D','E','F'];
+  const ccKeys=['A','B','C','D','E','제거'];
+  const osLabels=['O/S','D+M','재인증','안정화','안+삭','B+Up'];
+  const osKeys=['OS','D+M','재인증','안정화','안+삭','B+Up'];
+  const shipLabels=['검+기','완충1','완충2'];
+  const shipKeys=['검+기','완충1','완충2'];
+  tr.innerHTML=`
+    <td class="row-num">${idx+1}</td>
+    <td class="order-cell"><input type="text" class="f-order" placeholder="주문번호/바코드" value="${data?.['주문번호']||''}" onblur="this.value=parseBarcode(this.value)"></td>
+    <td><div class="toggle-group">${asmTypes.map(v=>`<span class="tgl t-assembly ${data?.['조립구분']===v?'on':''}" onclick="toggleSingle(this)">${v}</span>`).join('')}</div></td>
+    <td><div class="qty-wrap">
+      <button class="qty-btn" onclick="changeQty(this,-1)">−</button>
+      <input type="number" class="qty-val f-qty" value="${data?.['수량']||1}" min="1" max="99" oninput="calcRow(this.closest('tr'))">
+      <button class="qty-btn" onclick="changeQty(this,1)">+</button>
+    </div></td>
+    <td><div class="toggle-group">${moveTypes.map(v=>`<span class="tgl t-move ${data?.['제품이동']===v?'on':''}" onclick="toggleSingle(this)">${v}</span>`).join('')}</div></td>
+    <td><div class="toggle-group">${caseGrades.map(v=>`<span class="tgl t-case ${data?.['케이스']===v?'on':''}" onclick="toggleSingle(this)">${v}</span>`).join('')}</div></td>
+    <td><div class="toggle-group">${coolerGrades.map(v=>`<span class="tgl t-cooler ${data?.['쿨러']===v?'on':''}" onclick="toggleSingle(this)">${v}</span>`).join('')}</div></td>
+    ${ccKeys.map((v,i)=>`<td><input type="number" class="num-input f-cc" data-key="${v}" value="${data?.[`CC_${v}`]||0}" min="0" max="99" oninput="calcRow(this.closest('tr'))"></td>`).join('')}
+    ${osKeys.map((v,i)=>`<td><span class="tgl t-os ${data?.[`OS_${v}`]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}">${osLabels[i]}</span></td>`).join('')}
+    ${shipKeys.map((v,i)=>`<td><span class="tgl t-ship ${data?.[`SHIP_${v}`]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}">${shipLabels[i]}</span></td>`).join('')}
+    ${[0,1,2,3,4].map(i=>`<td><input type="number" class="num-input f-opt" data-idx="${i}" value="${data?.[`OPT_옵${i+1}`]||0}" min="0" max="99" oninput="calcRow(this.closest('tr'))"></td>`).join('')}
+    ${['난1','난2','난3','특/추'].map((v,i)=>`<td><input type="number" class="num-input f-diff" data-idx="${i}" value="${data?.[`DIFF_${v}`]||0}" min="0" max="99" oninput="calcRow(this.closest('tr'))"></td>`).join('')}
+    ${['반조받음','개인포장','반조진행'].map((v,i)=>`<td><input type="number" class="num-input f-pack" data-idx="${i}" value="${data?.[`PACK_${v}`]||0}" min="0" max="99" oninput="calcRow(this.closest('tr'))"></td>`).join('')}
+    <td class="score-cell${sp?' special':''}">0.000</td>
+    <td><input type="text" class="memo-input f-memo" value="${data?.['특이사항']||''}" placeholder="메모"></td>
+    <td><button class="btn btn-danger btn-xs" onclick="deleteRow(this)">삭제</button></td>
+  `;
+  tr.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>setTimeout(()=>calcRow(tr),10)));
+  tr.querySelectorAll('.num-input,.f-qty').forEach(i=>i.addEventListener('input',()=>calcRow(tr)));
+  tbody.appendChild(tr);
+  calcRow(tr);updateSummary();
+  return tr;
+}
+
+function toggleSingle(el){
+  const g=el.closest('.toggle-group'),was=el.classList.contains('on');
+  g.querySelectorAll('.tgl').forEach(t=>t.classList.remove('on'));
+  if(!was)el.classList.add('on');
+  calcRow(el.closest('tr'));
+}
+function toggleMulti(el){el.classList.toggle('on');calcRow(el.closest('tr'));}
+function changeQty(btn,d){
+  const inp=btn.closest('.qty-wrap').querySelector('.qty-val');
+  inp.value=Math.max(1,Math.min(99,(parseInt(inp.value)||1)+d));
+  calcRow(btn.closest('tr'));
+}
+
+function calcRow(tr){
+  let min=0;
+  const qty=parseInt(tr.querySelector('.f-qty')?.value)||1;
+  const caseEl=tr.querySelector('.t-case.on');if(caseEl)min+=SCORE.case[caseEl.textContent]||0;
+  const coolerEl=tr.querySelector('.t-cooler.on');if(coolerEl)min+=SCORE.cooler[coolerEl.textContent]||0;
+  tr.querySelectorAll('.f-cc').forEach(inp=>{const c=parseInt(inp.value)||0;if(c>0)min+=(SCORE.cc[inp.dataset.key]||0)*c;});
+  tr.querySelectorAll('.t-os.on').forEach(el=>{min+=SCORE.osMin[parseInt(el.dataset.idx)]||0;});
+  tr.querySelectorAll('.t-ship.on').forEach(el=>{min+=SCORE.shipMin[parseInt(el.dataset.idx)]||0;});
+  tr.querySelectorAll('.f-opt').forEach(inp=>{min+=(SCORE.opt[parseInt(inp.dataset.idx)]||0)*(parseInt(inp.value)||0);});
+  tr.querySelectorAll('.f-diff').forEach(inp=>{min+=(SCORE.diff[parseInt(inp.dataset.idx)]||0)*(parseInt(inp.value)||0);});
+  tr.querySelectorAll('.f-pack').forEach(inp=>{min+=(SCORE.pack[parseInt(inp.dataset.idx)]||0)*(parseInt(inp.value)||0);});
+  const moveEl=tr.querySelector('.t-move.on');
+  let score=(min/30*qty)+(moveEl?myMoveTime:0);
+  const d=document.getElementById('work-date').value;
+  if(isSpecialDay(d))score*=1.25;
+  score=Math.max(0,Math.round(score*1000)/1000);
+  const cell=tr.querySelector('.score-cell');
+  if(cell){cell.textContent=score.toFixed(3);cell.className='score-cell'+(isSpecialDay(d)?' special':'');}
+  updateSummary();return score;
+}
+
+function updateSummary(){
+  let ts=0,tq=0;
+  document.querySelectorAll('#work-tbody tr').forEach(tr=>{
+    const sc=tr.querySelector('.score-cell');if(sc)ts+=parseFloat(sc.textContent)||0;
+    const qi=tr.querySelector('.f-qty');if(qi)tq+=parseInt(qi.value)||0;
   });
-  document.getElementById('tab-' + tab).classList.remove('hidden');
-
-  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-  event.target.classList.add('active');
-
-  if (tab === 'dashboard') loadDashboard();
-  if (tab === 'admin') loadAdmin();
+  ts=Math.round(ts*1000)/1000;
+  document.getElementById('sum-score').textContent=ts.toFixed(3);
+  document.getElementById('sum-qty').textContent=tq;
+  document.getElementById('today-score').textContent=ts.toFixed(3);
+  const total=monthScore+ts;
+  document.getElementById('month-score').textContent=total.toFixed(3);
+  const rate=Math.min(200,total/myTarget*100);
+  const fill=document.getElementById('gauge-fill');
+  fill.style.width=Math.min(100,rate)+'%';
+  fill.className='gauge-fill'+(rate>=100?' over':rate>=70?' warn':'');
+  const pct=document.getElementById('gauge-pct');
+  pct.textContent=rate.toFixed(1)+'%';
+  pct.style.color=rate>=100?'var(--accent)':rate>=70?'var(--gold)':'var(--green)';
 }
+function calcGauge(){updateSummary();}
 
-// ── 체크박스 조작 ─────────────────────────────────────────────
-function selectOne(el, groupId) {
-  document.querySelectorAll('#' + groupId + ' .check-item').forEach(i => i.classList.remove('selected'));
-  el.classList.toggle('selected');
-  // 이미 선택된 라디오를 다시 클릭하면 해제
-  const radio = el.querySelector('input[type=radio]');
-  if (radio && el.classList.contains('selected')) radio.checked = true;
-  else if (radio) radio.checked = false;
-  calcScore();
-}
-
-function toggleCheck(el) {
-  el.classList.toggle('selected');
-  const cb = el.querySelector('input[type=checkbox]');
-  if (cb) cb.checked = el.classList.contains('selected');
-  calcScore();
-}
-
-// ── 점수 계산 ─────────────────────────────────────────────────
-function calcScore() {
-  let minutes = 0;
-  const qty = parseInt(document.getElementById('f-qty').value) || 1;
-
-  const getRadio = name => {
-    const el = document.querySelector(`input[name="${name}"]:checked`);
-    return el ? el.value : null;
-  };
-  const getChecks = groupId => {
-    const checked = [];
-    document.querySelectorAll('#' + groupId + ' input[type=checkbox]:checked').forEach(el => checked.push(el.value));
-    return checked;
-  };
-
-  // 라디오 항목들
-  const moveVal = getRadio('move');
-  if (moveVal && SCORES.move[moveVal]) minutes += SCORES.move[moveVal] * 30; // move는 이미 점수라 30 곱하지 않음
-  // 실제로는 move가 분이 아닌 점수이므로 별도 처리
-  let moveScore = moveVal ? (SCORES.move[moveVal] || 0) : 0;
-
-  const caseVal = getRadio('case');
-  const coolerVal = getRadio('cooler');
-  const caseCoolerVal = getRadio('casecooler');
-  const osVal = getRadio('os');
-  const shipVal = getRadio('ship');
-
-  // 분 계산
-  let totalMin = 0;
-  if (caseVal)      totalMin += (SCORES.case[caseVal] || 0);
-  if (coolerVal)    totalMin += (SCORES.cooler[coolerVal] || 0);
-  if (caseCoolerVal) totalMin += (SCORES.casecooler[caseCoolerVal] || 0);
-  if (osVal)        totalMin += (SCORES.os[osVal] || 0);
-  if (shipVal)      totalMin += (SCORES.ship[shipVal] || 0);
-
-  getChecks('chk-opt').forEach(v => { totalMin += (SCORES.opt[v] || 0); });
-  getChecks('chk-diff').forEach(v => { totalMin += (SCORES.diff[v] || 0); });
-  getChecks('chk-pack').forEach(v => { totalMin += (SCORES.pack[v] || 0); });
-
-  // 수량 * 분 → 점수 + 이동 점수
-  const score = (totalMin / 30 * qty) + moveScore;
-
-  document.getElementById('score-display').textContent = Math.max(0, score).toFixed(2);
-  document.getElementById('time-display').textContent = (totalMin * qty).toFixed(0) + '분';
-  return { score: Math.max(0, score).toFixed(2), totalMin };
-}
-
-// ── 폼 초기화 ─────────────────────────────────────────────────
-function resetForm() {
-  document.getElementById('f-qty').value = 1;
-  document.getElementById('f-assembly').value = '';
-  document.getElementById('f-memo').value = '';
-  document.getElementById('f-date').value = today();
-  document.querySelectorAll('.check-item').forEach(el => el.classList.remove('selected'));
-  document.querySelectorAll('.check-item input').forEach(el => el.checked = false);
-  calcScore();
-}
-
-// ── 저장 ──────────────────────────────────────────────────────
-async function submitWork() {
-  if (!currentUser) return;
-
-  const getRadioVal = name => {
-    const el = document.querySelector(`input[name="${name}"]:checked`);
-    return el ? el.value : '';
-  };
-  const getCheckVals = groupId => {
-    const vals = [];
-    document.querySelectorAll('#' + groupId + ' input[type=checkbox]:checked').forEach(el => vals.push(el.value));
-    return vals.join(',');
-  };
-
-  const { score } = calcScore();
-
-  const params = {
-    action: 'saveWork',
-    empId: currentUser.empId,
-    name: currentUser.name,
-    workDate: document.getElementById('f-date').value,
-    assemblyType: document.getElementById('f-assembly').value,
-    qty: document.getElementById('f-qty').value,
-    moveType: getRadioVal('move'),
-    caseGrade: getRadioVal('case'),
-    coolerGrade: getRadioVal('cooler'),
-    caseCooler: getRadioVal('casecooler'),
-    osType: getRadioVal('os'),
-    shipBuffer: getRadioVal('ship'),
-    optionChange: getCheckVals('chk-opt'),
-    difficulty: getCheckVals('chk-diff'),
-    halfPack: getCheckVals('chk-pack'),
-    totalScore: score,
-    memo: document.getElementById('f-memo').value
-  };
-
-  try {
-    const res = await api(params);
-    if (res.success) {
-      toast('저장되었습니다! 🎉', 'ok');
-      resetForm();
-    } else {
-      toast(res.message || '저장 실패', 'err');
-    }
-  } catch(e) {
-    toast('서버 오류가 발생했습니다.', 'err');
+async function deleteRow(btn){
+  const tr=btn.closest('tr');
+  const rowIdx=tr.dataset.rowIdx;
+  if(rowIdx&&tr.dataset.saved==='1'){
+    if(!confirm('저장된 데이터를 삭제할까요?'))return;
+    const d=document.getElementById('work-date').value;
+    const ym=d.slice(0,7).replace('-','_');
+    const r=await api({action:'deleteWork',empId:user.empId,rowIndex:rowIdx,yyyymm:ym});
+    if(!r.success){toast(r.message||'삭제 실패','err');return;}
   }
+  tr.remove();
+  document.querySelectorAll('#work-tbody tr').forEach((r,i)=>r.querySelector('.row-num').textContent=i+1);
+  updateSummary();toast('삭제되었습니다.','ok');
 }
 
-// ── 대시보드 로드 ─────────────────────────────────────────────
-async function loadDashboard() {
-  const yyyymm = document.getElementById('dash-month').value.replace('-', '_');
-  const tbody = document.getElementById('d-table-body');
-  tbody.innerHTML = '<tr><td colspan="8"><div class="loading"><div class="spinner"></div>로딩중...</div></td></tr>';
-
-  try {
-    const res = await api({ action: 'getStats', empId: currentUser.empId, yyyymm });
-    if (!res.success) { toast('조회 실패', 'err'); return; }
-
-    document.getElementById('d-count').textContent = res.totalCount;
-    document.getElementById('d-score').textContent = res.totalScore.toFixed(2);
-    const rate = Math.min(100, (res.totalScore / GOAL * 100)).toFixed(1);
-    document.getElementById('d-rate').textContent = rate + '%';
-    document.getElementById('d-progress').style.width = rate + '%';
-
-    // 내 데이터 상세
-    const res2 = await api({ action: 'getMyData', empId: currentUser.empId, yyyymm });
-    if (!res2.success || !res2.data.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">데이터 없음</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = res2.data.map(r => `
-      <tr>
-        <td>${String(r['날짜']).substring(0,10)}</td>
-        <td><span class="tag tag-blue">${r['조립구분']||'-'}</span></td>
-        <td>${r['케이스']||'-'}</td>
-        <td>${r['쿨러']||'-'}</td>
-        <td>${r['운영체제']||'-'}</td>
-        <td><span class="mono" style="color:var(--accent2)">${Number(r['환산합계']).toFixed(2)}</span></td>
-        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${r['특이사항']||'-'}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteRow(${r['_rowIndex']},'${yyyymm}')">삭제</button></td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    toast('오류: ' + e.message, 'err');
+async function saveAll(){
+  const d=document.getElementById('work-date').value;
+  const ym=d.slice(0,7).replace('-','_');
+  const trs=document.querySelectorAll('#work-tbody tr');
+  if(!trs.length){toast('입력된 데이터가 없습니다.','err');return;}
+  let saved=0;
+  for(const tr of trs){
+    const p=buildParams(tr,d,ym);if(!p)continue;
+    const rowIdx=tr.dataset.rowIdx,isSaved=tr.dataset.saved==='1';
+    let r;
+    if(isSaved&&rowIdx)r=await api({...p,action:'updateWork',rowIndex:rowIdx,yyyymm:ym});
+    else{r=await api({...p,action:'saveWork'});if(r.success)tr.dataset.saved='1';}
+    if(r.success)saved++;
   }
+  toast(saved+'건 저장 완료!','ok');loadMyData();
 }
 
-async function deleteRow(rowIndex, yyyymm) {
-  if (!confirm('이 항목을 삭제할까요?')) return;
-  const res = await api({ action: 'deleteWork', empId: currentUser.empId, rowIndex, yyyymm });
-  if (res.success) { toast('삭제 완료', 'ok'); loadDashboard(); }
-  else toast(res.message, 'err');
+function buildParams(tr,d,ym){
+  const otMin=parseInt(document.getElementById('my-ot').value)||0;
+  const hasMeal=document.getElementById('meal-chk').checked?'1':'0';
+  const getOn=cls=>{const el=tr.querySelector('.'+cls+'.on');return el?el.textContent:'';};
+  const getMulti=cls=>{const r={};tr.querySelectorAll('.'+cls).forEach((el,i)=>{r[i]=el.classList.contains('on')?'1':'0';});return r;};
+  const os=getMulti('t-os'),ship=getMulti('t-ship');
+  const cc=tr.querySelectorAll('.f-cc'),opt=tr.querySelectorAll('.f-opt');
+  const diff=tr.querySelectorAll('.f-diff'),pack=tr.querySelectorAll('.f-pack');
+  const score=parseFloat(tr.querySelector('.score-cell')?.textContent)||0;
+  return {
+    empId:user.empId,name:user.name,role:user.role,workDate:d,yyyymm:ym,
+    orderNo:tr.querySelector('.f-order')?.value||'',
+    assemblyType:getOn('t-assembly'),qty:tr.querySelector('.f-qty')?.value||1,
+    moveType:getOn('t-move'),caseGrade:getOn('t-case'),coolerGrade:getOn('t-cooler'),
+    cc_A:cc[0]?.value||0,cc_B:cc[1]?.value||0,cc_C:cc[2]?.value||0,
+    cc_D:cc[3]?.value||0,cc_E:cc[4]?.value||0,'cc_제거':cc[5]?.value||0,
+    os_0:os[0],os_1:os[1],os_2:os[2],os_3:os[3],os_4:os[4],os_5:os[5],
+    ship_0:ship[0],ship_1:ship[1],ship_2:ship[2],
+    opt_0:opt[0]?.value||0,opt_1:opt[1]?.value||0,opt_2:opt[2]?.value||0,
+    opt_3:opt[3]?.value||0,opt_4:opt[4]?.value||0,
+    diff_0:diff[0]?.value||0,diff_1:diff[1]?.value||0,
+    diff_2:diff[2]?.value||0,diff_3:diff[3]?.value||0,
+    pack_0:pack[0]?.value||0,pack_1:pack[1]?.value||0,pack_2:pack[2]?.value||0,
+    totalScore:score,memo:tr.querySelector('.f-memo')?.value||'',
+    overtimeMin:otMin,hasMeal,
+    packSupport:document.getElementById('s-pack')?.value||0,
+    sortSupport:document.getElementById('s-sort')?.value||0,
+    cleaning:document.getElementById('s-clean')?.value||0,
+    area:document.getElementById('s-area')?.value||0,
+    defect:document.getElementById('s-defect')?.value||0,
+    etcTime:document.getElementById('s-etc')?.value||0
+  };
 }
 
-// ── 관리자 로드 ───────────────────────────────────────────────
-async function loadAdmin() {
-  if (currentUser.role !== 'admin') return;
-  const yyyymm = document.getElementById('admin-month').value.replace('-', '_');
-  const grid = document.getElementById('admin-grid');
-  grid.innerHTML = '<div class="loading"><div class="spinner"></div>로딩중...</div>';
-
-  try {
-    const res = await api({ action: 'getAllStats', role: 'admin', empId: currentUser.empId, yyyymm });
-    if (!res.success) { toast('조회 실패', 'err'); return; }
-    adminData = res.data;
-
-    if (!res.data.length) {
-      grid.innerHTML = '<div class="loading">데이터 없음</div>';
-      return;
-    }
-
-    const colors = ['#2f81f7','#3fb950','#bc8cff','#d29922','#f0883e','#79c0ff'];
-    grid.innerHTML = res.data.map((emp, i) => {
-      const rate = Math.min(100, (emp.totalScore / GOAL * 100)).toFixed(1);
-      const color = colors[i % colors.length];
-      return `
-        <div class="emp-card">
-          <div class="emp-card-header">
-            <div class="emp-avatar" style="background:${color}">${emp.name[0]}</div>
-            <div>
-              <div class="emp-name">${emp.name}</div>
-              <div class="emp-id">${emp.empId}</div>
-            </div>
-          </div>
-          <div class="emp-stats">
-            <div class="emp-stat">
-              <div class="s-label">총 처리건</div>
-              <div class="s-value" style="color:${color}">${emp.count}</div>
-            </div>
-            <div class="emp-stat">
-              <div class="s-label">환산점수</div>
-              <div class="s-value" style="color:${color}">${emp.totalScore.toFixed(1)}</div>
-            </div>
-            <div class="emp-stat">
-              <div class="s-label">평균점수</div>
-              <div class="s-value">${emp.avgScore.toFixed(2)}</div>
-            </div>
-            <div class="emp-stat">
-              <div class="s-label">달성률</div>
-              <div class="s-value">${rate}%</div>
-            </div>
-          </div>
-          <div class="progress-wrap" style="margin-top:12px;">
-            <div class="progress-bar">
-              <div class="progress-fill" style="width:${rate}%;background:${color}"></div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  } catch(e) {
-    toast('오류: ' + e.message, 'err');
-  }
+async function loadMyData(){
+  const d=document.getElementById('work-date').value;
+  const ym=d.slice(0,7).replace('-','_');
+  const r=await api({action:'getMyData',empId:user.empId,yyyymm:ym});
+  if(!r.success)return;
+  monthScore=0;
+  const tbody=document.getElementById('work-tbody');tbody.innerHTML='';
+  const todayRows=r.data.filter(row=>String(row['날짜']).substring(0,10)===d);
+  r.data.filter(row=>String(row['날짜']).substring(0,10)!==d).forEach(row=>{monthScore+=Number(row['환산합계'])||0;});
+  todayRows.forEach(row=>addRow(row));
+  updateSummary();
 }
 
-function exportCSV() {
-  if (!adminData.length) { toast('먼저 조회해주세요', 'err'); return; }
-  const header = '사번,이름,처리건수,총환산점수,평균점수';
-  const rows = adminData.map(e => `${e.empId},${e.name},${e.count},${e.totalScore},${e.avgScore}`);
-  const csv = '\uFEFF' + [header, ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `업무통계_${document.getElementById('admin-month').value}.csv`;
-  a.click();
+async function saveSupport(){toast('지원업무 저장됨','ok');}
+
+async function saveTeamOT(){
+  const d=document.getElementById('work-date').value;
+  const min=document.getElementById('team-ot-edit').value;
+  const r=await api({action:'setOvertime',empId:user.empId,name:user.name,role:user.role,workDate:d,overtimeMin:min});
+  if(r.success){otData[d]=parseInt(min);document.getElementById('team-ot-view').value=min;toast('팀 야근시간 저장됨','ok');}
+  else toast(r.message,'err');
 }
 
-// ── API 호출 ──────────────────────────────────────────────────
-async function api(params) {
-  const url = new URL(API_URL);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.append(k, v));
-  const res = await fetch(url.toString());
-  return res.json();
+async function loadStats(){
+  const m=document.getElementById('stats-month').value.replace('-','_');
+  const r=await api({action:'getStats',empId:user.empId,yyyymm:m});
+  if(!r.success)return;
+  document.getElementById('st-count').textContent=r.totalCount;
+  document.getElementById('st-score').textContent=r.totalScore.toFixed(2);
+  document.getElementById('st-eval').textContent=r.evalAvg.toFixed(2);
+  document.getElementById('st-real').textContent=r.realAvg.toFixed(2);
+  const rate=r.target>0?Math.min(200,r.totalScore/r.target*100):0;
+  document.getElementById('st-gauge').style.width=Math.min(100,rate)+'%';
+  document.getElementById('st-rate').textContent=rate.toFixed(1)+'%';
+  document.getElementById('st-workdays').textContent='근무 '+r.workDays+'일';
 }
 
-// ── 토스트 ────────────────────────────────────────────────────
-function toast(msg, type='ok') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show ' + type;
-  setTimeout(() => { el.className = ''; }, 2500);
+async function loadAdmin(){
+  const m=document.getElementById('admin-month').value.replace('-','_');
+  document.getElementById('admin-tbody').innerHTML='<tr><td colspan="11" class="loading"><div class="spinner"></div>로딩중...</td></tr>';
+  const r=await api({action:'getAllStats',empId:user.empId,role:user.role,yyyymm:m});
+  if(!r.success){toast(r.message,'err');return;}
+  adminData=r.data;
+  const depts=[...new Set(employees.map(e=>e.dept).filter(Boolean))];
+  const sel=document.getElementById('dept-filter');
+  sel.innerHTML='<option value="">전체 부서</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');
+  renderAdmin(adminData);
+}
+
+function filterAdmin(){
+  const dept=document.getElementById('dept-filter').value;
+  renderAdmin(dept?adminData.filter(e=>employees.find(em=>em.empId===e.empId)?.dept===dept):adminData);
+}
+
+function renderAdmin(data){
+  const tbody=document.getElementById('admin-tbody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="11" class="empty">데이터 없음</td></tr>';return;}
+  tbody.innerHTML=data.map((e,i)=>{
+    const rate=Math.min(200,e.achieveRate);
+    const rb=i<3?`<span class="rank-badge r${i+1}">${i+1}</span>`:`<span style="color:var(--muted);font-size:12px;">${i+1}</span>`;
+    const dept=employees.find(em=>em.empId===e.empId)?.dept||'';
+    const bc=rate>=100?'var(--accent)':rate>=70?'var(--gold)':'var(--green)';
+    return `<tr>
+      <td style="text-align:center;">${rb}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${e.empId}</td>
+      <td style="font-weight:600;">${e.name}</td>
+      <td style="color:var(--muted);">${dept}</td>
+      <td style="text-align:center;font-family:var(--mono);">${e.count}</td>
+      <td style="text-align:center;font-family:var(--mono);">${e.workDays}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:700;color:var(--accent);">${e.totalScore.toFixed(2)}</td>
+      <td style="text-align:center;font-family:var(--mono);color:var(--orange);">${e.evalAvg.toFixed(2)}</td>
+      <td style="text-align:center;font-family:var(--mono);color:var(--purple);">${e.realAvg.toFixed(2)}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:600;">${e.achieveRate.toFixed(1)}%</td>
+      <td><div style="display:flex;align-items:center;gap:6px;">
+        <div class="emp-gauge-bar"><div class="emp-gauge-fill" style="width:${Math.min(100,rate)}%;background:${bc};height:100%;border-radius:3px;"></div></div>
+        <span style="font-size:11px;color:var(--muted);">${Math.min(100,rate).toFixed(0)}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function exportCSV(){
+  if(!adminData.length){toast('먼저 조회해주세요','err');return;}
+  const h='사번,이름,부서,처리건수,근무일수,총환산점수,평가평균,실제평균,달성률';
+  const rows=adminData.map(e=>{const dept=employees.find(em=>em.empId===e.empId)?.dept||'';return `${e.empId},${e.name},${dept},${e.count},${e.workDays},${e.totalScore},${e.evalAvg},${e.realAvg},${e.achieveRate}%`;});
+  const csv='\uFEFF'+[h,...rows].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`업무통계_${document.getElementById('admin-month').value}.csv`;a.click();
+}
+
+async function loadSettingsTab(){
+  if(!employees.length){const r=await api({action:'getEmployees'});if(r.success)employees=r.data;}
+  if(!Object.keys(settings).length){const r=await api({action:'getSettings'});if(r.success)settings=r.data;}
+  const tg=document.getElementById('target-grid');
+  tg.innerHTML=employees.map(e=>{const s=settings[e.empId]||{target:16,moveTime:0.33};
+    return `<div class="setting-row"><div><div class="s-name">${e.name}</div><div class="s-dept">${e.empId} · ${e.dept}</div></div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <input type="number" value="${s.target}" min="1" max="100" id="tgt-${e.empId}" style="width:70px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:12px;text-align:center;">
+      <button class="btn btn-primary btn-xs" onclick="saveTarget('${e.empId}')">저장</button>
+    </div></div>`;}).join('');
+  const mg=document.getElementById('move-grid');
+  mg.innerHTML=employees.map(e=>{const s=settings[e.empId]||{target:16,moveTime:0.33};
+    return `<div class="setting-row"><div><div class="s-name">${e.name}</div><div class="s-dept">${e.dept}</div></div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <input type="number" step="0.01" value="${s.moveTime}" min="0" max="2" id="mv-${e.empId}" style="width:70px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:12px;text-align:center;">
+      <button class="btn btn-primary btn-xs" onclick="saveMoveTime('${e.empId}')">저장</button>
+    </div></div>`;}).join('');
+  loadHolidays();
+}
+
+async function saveTarget(empId){
+  const val=document.getElementById('tgt-'+empId)?.value;
+  const r=await api({action:'setTarget',empId:user.empId,role:user.role,targetEmpId:empId,target:val});
+  if(r.success){toast('목표 저장됨','ok');if(empId===user.empId){myTarget=Number(val);document.getElementById('target-display').textContent=val;}}
+  else toast(r.message,'err');
+}
+async function saveMoveTime(empId){
+  const val=document.getElementById('mv-'+empId)?.value;
+  const r=await api({action:'setMoveTime',empId:user.empId,role:user.role,targetEmpId:empId,moveTime:val});
+  if(r.success){toast('이동시간 저장됨','ok');if(empId===user.empId)myMoveTime=Number(val);}
+  else toast(r.message,'err');
+}
+async function saveOT(){
+  const d=document.getElementById('ot-date').value,min=document.getElementById('ot-min').value;
+  const r=await api({action:'setOvertime',empId:user.empId,name:user.name,role:user.role,workDate:d,overtimeMin:min});
+  if(r.success){otData[d]=parseInt(min);toast('야근시간 저장됨','ok');}else toast(r.message,'err');
+}
+async function loadHolidays(){
+  const r=await api({action:'getHolidays'});if(!r.success)return;
+  holidays=r.data;
+  const list=document.getElementById('holiday-list');if(!list)return;
+  list.innerHTML=holidays.length?holidays.map(h=>`<div class="hol-item"><span>${h.date} <strong>${h.name}</strong></span><button class="btn btn-danger btn-xs" onclick="delHoliday(${h.rowIndex})">삭제</button></div>`).join(''):'<div style="color:var(--muted);font-size:12px;">등록된 공휴일 없음</div>';
+}
+async function addHoliday(){
+  const d=document.getElementById('hol-date').value,n=document.getElementById('hol-name').value;
+  if(!d){toast('날짜를 선택하세요','err');return;}
+  const r=await api({action:'setHoliday',empId:user.empId,role:user.role,date:d,holName:n,name:user.name});
+  if(r.success){toast('공휴일 추가됨','ok');loadHolidays();}else toast(r.message,'err');
+}
+async function delHoliday(rowIndex){
+  if(!confirm('삭제할까요?'))return;
+  const r=await api({action:'deleteHoliday',empId:user.empId,role:user.role,rowIndex});
+  if(r.success){toast('삭제됨','ok');loadHolidays();}
+}
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show '+type;
+  setTimeout(()=>el.className='',2500);
 }
 </script>
 </body>
