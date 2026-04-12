@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0060)file:///K:/%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C/index_2.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PC조립 작업추적</title>
 <style>
@@ -144,7 +144,7 @@ td.del-cell{width:28px;min-width:28px;}
 .qty-sel:focus{outline:none;border-color:var(--accent);}
 
 /* 토글 버튼 */
-.tgl{padding:1px 4px;border:1px solid #ccc;border-radius:3px;cursor:pointer;font-size:10px;font-weight:600;background:#f5f5f5;color:#666;transition:all .1s;display:inline-block;line-height:1.4;user-select:none;}
+.tgl{padding:1px 4px;border:1px solid #ccc;border-radius:3px;cursor:pointer;font-size:10px;font-weight:600;background:#f5f5f5;color:#666;transition:all .1s;display:inline-block;line-height:1.4;user-select:none;min-width:14px;min-height:16px;}
 .tgl:hover{border-color:var(--accent);color:var(--accent);}
 .tgl.on{color:#fff;border-color:transparent;}
 .tgl.t-asm.on{background:#455a64;}
@@ -298,11 +298,11 @@ select,input[type=date],input[type=month]{font-family:var(--font);}
   <header class="app-header">
     <div class="logo">🖥️ PC조립 작업추적</div>
     <div class="hdr-tabs">
-      <button class="hdr-tab active" onclick="showTab('input',this)">📝 일별 입력</button>
-      <button class="hdr-tab" onclick="showTab('stats',this)">📊 월간 통계</button>
-      <button class="hdr-tab hidden" id="tab-attend-btn" onclick="showTab('attend',this)">🕐 근태관리</button>
-      <button class="hdr-tab hidden" id="tab-admin-btn" onclick="showTab('admin',this)">👥 전체 현황</button>
-      <button class="hdr-tab hidden" id="tab-settings-btn" onclick="showTab('settings',this)">⚙️ 설정</button>
+      <button class="hdr-tab active" onclick="showTab(&#39;input&#39;,this)">📝 일별 입력</button>
+      <button class="hdr-tab" onclick="showTab(&#39;stats&#39;,this)">📊 월간 통계</button>
+      <button class="hdr-tab hidden" id="tab-attend-btn" onclick="showTab(&#39;attend&#39;,this)">🕐 근태관리</button>
+      <button class="hdr-tab hidden" id="tab-admin-btn" onclick="showTab(&#39;admin&#39;,this)">👥 전체 현황</button>
+      <button class="hdr-tab hidden" id="tab-settings-btn" onclick="showTab(&#39;settings&#39;,this)">⚙️ 설정</button>
     </div>
     <div class="hdr-right">
       <div class="user-info"><strong id="hdr-name"></strong> <span id="hdr-role"></span> | <span id="hdr-id" style="font-family:var(--mono);font-size:10px;"></span></div>
@@ -339,11 +339,23 @@ select,input[type=date],input[type=month]{font-family:var(--font);}
       <span class="ib-label">🌙 야근</span>
       <select class="ib-select" id="my-ot-sel" onchange="calcAll()">
         <option value="0">0분</option>
+        <option value="10">10분</option>
+        <option value="20">20분</option>
         <option value="30">30분</option>
+        <option value="40">40분</option>
+        <option value="50">50분</option>
         <option value="60">60분</option>
+        <option value="70">70분</option>
+        <option value="80">80분</option>
         <option value="90">90분</option>
+        <option value="100">100분</option>
+        <option value="110">110분</option>
         <option value="120">120분</option>
+        <option value="130">130분</option>
+        <option value="140">140분</option>
         <option value="150">150분</option>
+        <option value="160">160분</option>
+        <option value="170">170분</option>
         <option value="180">180분</option>
       </select>
     </div>
@@ -351,7 +363,8 @@ select,input[type=date],input[type=month]{font-family:var(--font);}
       <span class="ib-label">🍽️ 식사</span>
       <select class="ib-select" id="meal-sel" onchange="calcAll()">
         <option value="0">-</option>
-        <option value="1">식사(-10분)</option>
+        <option value="1">O (식사함)</option>
+        <option value="2">X (식사안함)</option>
       </select>
     </div>
     <div class="ib-item">
@@ -991,14 +1004,14 @@ function addRow(data) {
     <td class="row-num">${idx+1}</td>
     <td class="del-cell"><button class="del-btn" onclick="deleteRow(this)" title="이 행 삭제">✕</button></td>
     <td class="order-cell">
-      <input type="text" class="order-inp f-order" placeholder="주문번호/바코드"
+      <input type="text" class="order-inp f-order" placeholder="주문번호"
         value="${data?.['주문번호']||''}"
         oninput="onOrderInput(this)"
         onblur="this.value=parseBarcode(this.value)">
     </td>
     <td>
       <div class="toggle-group">
-        ${ASM_TYPES.map(v=>`<span class="tgl t-asm ${v===asmOn?'on':''}" onclick="toggleSingle(this)">${v}</span>`).join('')}
+        ${ASM_TYPES.map(v=>`<span class="tgl t-asm ${v===asmOn?'on':''}" data-group="asm" data-val="${v}" onclick="toggleSingle(this)" title="${v}"></span>`).join('')}
       </div>
     </td>
     <td>
@@ -1006,9 +1019,9 @@ function addRow(data) {
         ${qtyOpts}
       </select>
     </td>
-    ${MOVE_TYPES.map(v=>`<td class="colg-move"><span class="tgl t-move ${v===moveOn?'on':''}" onclick="toggleSingle(this)">${v==='방문'?'방\n문':v==='퀵+당일'?'퀵\n당일':'안\n택'}</span></td>`).join('')}
-    ${CASE_GRADES.map(v=>`<td class="colg-case"><span class="tgl t-case ${v===caseOn?'on':''}" onclick="toggleSingle(this)">${v}</span></td>`).join('')}
-    ${COOLER_GRADES.map(v=>`<td class="colg-cooler"><span class="tgl t-cooler ${v===coolOn?'on':''}" onclick="toggleSingle(this)">${v}</span></td>`).join('')}
+    ${MOVE_TYPES.map(v=>`<td class="colg-move"><span class="tgl t-move ${v===moveOn?'on':''}" data-group="move" data-val="${v}" onclick="toggleSingle(this)" title="${v}"></span></td>`).join('')}
+    ${CASE_GRADES.map(v=>`<td class="colg-case"><span class="tgl t-case ${v===caseOn?'on':''}" data-group="case" data-val="${v}" onclick="toggleSingle(this)">${v}</span></td>`).join('')}
+    ${COOLER_GRADES.map(v=>`<td class="colg-cooler"><span class="tgl t-cooler ${v===coolOn?'on':''}" data-group="cooler" data-val="${v}" onclick="toggleSingle(this)">${v}</span></td>`).join('')}
     ${CC_KEYS.map(v=>`<td class="colg-cc"><input type="number" class="num-inp f-cc" data-key="${v}" value="${data?.['CC_'+v]||0}" min="0" max="99" oninput="onNumInput(this)"></td>`).join('')}
     ${OS_KEYS.map((v,i)=>`<td class="colg-os"><span class="tgl t-os ${osVals[i]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}">${v}</span></td>`).join('')}
     ${SHIP_KEYS.map((v,i)=>`<td class="colg-ship"><span class="tgl t-ship ${shVals[i]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}">${v}</span></td>`).join('')}
@@ -1073,11 +1086,12 @@ function resetEmptyRows() {
 
 // ── 토글 ───────────────────────────────────────────────────
 function toggleSingle(el) {
-  const g = el.closest('.toggle-group');
+  const tr  = el.closest('tr');
+  const grp = el.dataset.group; // 같은 그룹끼리 단일선택
   const was = el.classList.contains('on');
-  g.querySelectorAll('.tgl').forEach(t => t.classList.remove('on'));
+  // 같은 그룹 내 모두 off
+  tr.querySelectorAll(`.tgl[data-group="${grp}"]`).forEach(t => t.classList.remove('on'));
   if (!was) el.classList.add('on');
-  const tr = el.closest('tr');
   calcRow(tr);
   debounceSave(tr);
 }
@@ -1104,8 +1118,8 @@ function onInputChange(el) {
 function calcRow(tr) {
   let min = 0;
   const qty = parseInt(tr.querySelector('.f-qty')?.value)||1;
-  const caseEl = tr.querySelector('.t-case.on'); if (caseEl) min += SCORE.case[caseEl.textContent]||0;
-  const coolEl = tr.querySelector('.t-cooler.on'); if (coolEl) min += SCORE.cooler[coolEl.textContent]||0;
+  const caseEl = tr.querySelector('.t-case.on'); if (caseEl) min += SCORE.case[caseEl.dataset.val||caseEl.textContent]||0;
+  const coolEl = tr.querySelector('.t-cooler.on'); if (coolEl) min += SCORE.cooler[coolEl.dataset.val||coolEl.textContent]||0;
   tr.querySelectorAll('.f-cc').forEach(inp => {
     const c = parseInt(inp.value)||0;
     if (c>0) min += (SCORE.cc[inp.dataset.key]||0)*c;
@@ -1261,7 +1275,7 @@ function buildParams(tr, d, ym) {
   if (!order?.trim()) return null;
   const otMin   = parseInt(document.getElementById('my-ot-sel').value)||0;
   const hasMeal = document.getElementById('meal-sel').value==='1'?'1':'0';
-  const getOn   = cls => { const el=tr.querySelector('.'+cls+'.on'); return el?el.textContent.trim().replace(/\n/g,''):''};
+  const getOn   = cls => { const el=tr.querySelector('.'+cls+'.on'); return el?(el.dataset.val||el.textContent.trim().replace(/\n/g,'')):''};;
   const os   = [0,1,2,3,4,5].map(i=>tr.querySelectorAll('.t-os')[i]?.classList.contains('on')?'1':'0');
   const ship = [0,1,2].map(i=>tr.querySelectorAll('.t-ship')[i]?.classList.contains('on')?'1':'0');
   const cc   = tr.querySelectorAll('.f-cc');
@@ -1639,7 +1653,14 @@ async function loadSettingsTab() {
     if (el) el.classList.toggle('hidden', !isSA);
   });
 
-  if (!employees.length) { const r=await api({action:'getEmployees'}); if(r.success) employees=r.data; }
+  if (!employees.length) { 
+    const r=await api({action:'getEmployees'}); 
+    if(r.success) employees=r.data;
+    if(!employees.length) { 
+      document.getElementById('target-grid').innerHTML='<p style="color:var(--muted);padding:16px;">등록된 인원이 없습니다. Google Apps Script에서 setupSheets()를 실행해주세요.</p>';
+      return;
+    }
+  }
   if (!settings || !Object.keys(settings).length) { const r=await api({action:'getSettings'}); if(r.success) settings=r.data; }
   if (!groups.length) { const r=await api({action:'getGroups'}); if(r.success) groups=r.data; }
 
@@ -1900,5 +1921,6 @@ function toast(msg, type='ok') {
   setTimeout(() => el.className='', 2500);
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
