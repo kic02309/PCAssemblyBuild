@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PC조립 작업추적</title>
+<title>조립팀 업무데이터</title>
 <style>
 :root{
   --bg:#f0f2f5;--bg2:#fff;--bg3:#f8f9fa;--border:#d0d7de;--border2:#e8eaed;
@@ -41,10 +41,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:12
 #page-app{display:flex;flex-direction:column;min-height:100vh;}
 
 /* 최상단 헤더 */
-.app-header{background:#0d47a1;color:#fff;padding:0 16px;height:40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:400;}
-.app-header .logo{font-size:14px;font-weight:700;letter-spacing:-.3px;}
+.app-header{background:#0d47a1;color:#fff;padding:0 16px;height:44px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:400;}
+.app-header .logo{font-size:16px;font-weight:700;letter-spacing:-.3px;}
 .hdr-tabs{display:flex;height:100%;}
-.hdr-tab{padding:0 16px;height:100%;display:flex;align-items:center;font-size:12px;cursor:pointer;color:rgba(255,255,255,.75);border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);}
+.hdr-tab{padding:0 16px;height:100%;display:flex;align-items:center;font-size:13px;cursor:pointer;color:rgba(255,255,255,.75);border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);}
 .hdr-tab:hover{color:#fff;background:rgba(255,255,255,.1);}
 .hdr-tab.active{color:#fff;border-bottom-color:#90caf9;}
 .hdr-right{display:flex;align-items:center;gap:10px;}
@@ -73,6 +73,22 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:12
 .gauge-fill{height:100%;border-radius:4px;transition:width .5s;background:#66bb6a;}
 .gauge-pct{font-family:var(--mono);font-size:11px;font-weight:700;min-width:42px;}
 
+/* 합계바 */
+.summary-bar{background:#0a1628;color:#fff;padding:0 16px;height:52px;flex-shrink:0;display:flex;align-items:center;gap:20px;border-bottom:2px solid #1565c0;}
+.sum-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.sum-label2{font-size:10px;opacity:.6;font-weight:600;letter-spacing:.5px;}
+.sum-val{font-family:var(--mono);font-size:18px;font-weight:700;}
+.sum-val.blue{color:#64b5f6;}
+.sum-val.green{color:#69f0ae;}
+.sum-val.orange{color:#ffb74d;}
+.big-gauge-wrap{flex:1;display:flex;align-items:center;gap:12px;margin:0 10px;}
+.big-gauge-label{font-size:11px;opacity:.7;font-weight:600;white-space:nowrap;}
+.big-gauge-bar{flex:1;height:22px;background:rgba(255,255,255,.1);border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,.15);position:relative;}
+.big-gauge-fill{height:100%;border-radius:11px;transition:width .6s cubic-bezier(.4,0,.2,1);position:relative;}
+.big-gauge-fill::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,.15) 0%,rgba(255,255,255,.05) 100%);border-radius:11px;}
+.big-gauge-pct{font-family:var(--mono);font-size:20px;font-weight:700;min-width:70px;text-align:right;}
+.sum-sep{width:1px;height:36px;background:rgba(255,255,255,.15);}
+
 /* 지원업무 바 */
 .support-bar{background:#263238;color:#fff;padding:0 12px;height:36px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
 .sb-label{font-size:10px;opacity:.7;font-weight:600;white-space:nowrap;}
@@ -96,7 +112,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:12
 /* ── 메인 테이블 ── */
 .table-outer{overflow-x:auto;flex:1;}
 table.wt{border-collapse:collapse;white-space:nowrap;font-size:11px;}
-table.wt th.gh{font-size:10px;font-weight:700;padding:4px 3px;text-align:center;border-bottom:1px solid rgba(0,0,0,.15);border-right:1px solid rgba(0,0,0,.12);color:#fff;position:sticky;top:0;z-index:20;}
+table.wt th.gh{font-size:11px;font-weight:700;padding:6px 4px;text-align:center;border-bottom:2px solid rgba(0,0,0,.25);border-right:2px solid rgba(0,0,0,.2);color:#fff;position:sticky;top:0;z-index:20;}
 table.wt th.gh.collapsible{cursor:pointer;user-select:none;}
 table.wt th.gh.collapsible:hover{filter:brightness(1.15);}
 .gh-base{background:var(--gh-base);}
@@ -111,7 +127,7 @@ table.wt th.gh.collapsible:hover{filter:brightness(1.15);}
 .gh-pack{background:var(--gh-pack);}
 .gh-result{background:var(--gh-result);}
 
-table.wt th.ch{background:#37474f;color:#cfd8dc;font-size:10px;font-weight:600;padding:3px 3px;text-align:center;border-bottom:1px solid rgba(0,0,0,.2);border-right:1px solid rgba(0,0,0,.15);position:sticky;top:28px;z-index:19;white-space:pre-line;line-height:1.2;}
+table.wt th.ch{background:#37474f;color:#cfd8dc;font-size:11px;font-weight:600;padding:5px 3px;text-align:center;border-bottom:2px solid rgba(0,0,0,.3);border-right:1px solid rgba(0,0,0,.2);position:sticky;top:32px;z-index:19;white-space:pre-line;line-height:1.3;}
 .ch-time{display:block;font-size:9px;color:#90a4ae;font-weight:400;margin-top:1px;}
 
 /* 합계행 */
@@ -119,7 +135,7 @@ table.wt tr.sum-row td{background:#1b2a1b;color:#a5d6a7;font-weight:700;font-fam
 table.wt tr.sum-row td.sum-label{color:#81c784;text-align:right;padding-right:6px;}
 
 /* 데이터행 */
-table.wt td{padding:2px 3px;border-bottom:1px solid #eef0f2;border-right:1px solid #eef0f2;text-align:center;vertical-align:middle;height:28px;}
+table.wt td{padding:3px 3px;border-bottom:1px solid #dee1e6;border-right:1px solid #dee1e6;text-align:center;vertical-align:middle;height:32px;}
 table.wt tbody tr:hover td{background:#f0f4ff;}
 table.wt tbody tr.active-row td{background:#fff9e6;}
 table.wt tbody tr.memo-open td{background:#f5f0ff;}
@@ -159,6 +175,9 @@ td.del-cell{width:28px;min-width:28px;}
 .num-inp{width:30px;padding:2px 2px;border:1px solid var(--border);border-radius:3px;font-size:11px;font-family:var(--mono);text-align:center;background:#fff;}
 .num-inp:focus{outline:none;border-color:var(--accent);}
 .num-inp::-webkit-inner-spin-button{opacity:0;}
+.num-sel{width:36px;padding:1px 1px;border:1px solid var(--border);border-radius:3px;font-size:11px;font-family:var(--mono);text-align:center;background:#fff;cursor:pointer;}
+.num-sel:focus{outline:none;border-color:var(--accent);}
+.num-sel.nz{background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32;font-weight:700;}
 .num-inp.nonzero{background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32;font-weight:700;}
 
 /* 점수셀 */
@@ -296,7 +315,7 @@ select,input[type=date],input[type=month]{font-family:var(--font);}
 <!-- 앱 -->
 <div id="page-app" class="hidden">
   <header class="app-header">
-    <div class="logo">🖥️ PC조립 작업추적</div>
+    <div class="logo">🖥️ 조립팀 업무데이터</div>
     <div class="hdr-tabs">
       <button class="hdr-tab active" onclick="showTab('input',this)">📝 일별 입력</button>
       <button class="hdr-tab" onclick="showTab('stats',this)">📊 월간 통계</button>
@@ -391,6 +410,32 @@ select,input[type=date],input[type=month]{font-family:var(--font);}
       <span class="ib-label">팀야근</span>
       <input type="number" class="ib-input" id="team-ot-inp" value="0" min="0" style="width:52px;" onchange="saveTeamOT()">
       <span class="ib-label">분</span>
+    </div>
+  </div>
+
+  <!-- 합계바 -->
+  <div class="summary-bar" id="summary-bar">
+    <div class="sum-item">
+      <span class="sum-label2">조립수량</span>
+      <span class="sum-val blue" id="sum-asm-qty">0</span>
+    </div>
+    <div class="sum-sep"></div>
+    <div class="sum-item">
+      <span class="sum-label2">환산합계</span>
+      <span class="sum-val green" id="sum-score-top">0.000</span>
+    </div>
+    <div class="sum-sep"></div>
+    <div class="sum-item">
+      <span class="sum-label2">목표</span>
+      <span class="sum-val orange" id="sum-target-top">16</span>
+    </div>
+    <div class="sum-sep"></div>
+    <div class="big-gauge-wrap">
+      <span class="big-gauge-label">오늘 달성률</span>
+      <div class="big-gauge-bar">
+        <div class="big-gauge-fill" id="big-gauge-fill" style="width:0%;background:#66bb6a;"></div>
+      </div>
+      <span class="big-gauge-pct" id="big-gauge-pct" style="color:#a5d6a7;">0%</span>
     </div>
   </div>
 
@@ -749,9 +794,9 @@ function showTab(tab, el) {
 
   const ibar = document.getElementById('input-action-bar');
   const sbar = document.querySelector('.support-bar');
-  const infobar = document.querySelector('.info-bar');
-  if (tab==='input') { if(ibar) ibar.style.display=''; if(sbar) sbar.style.display=''; }
-  else { if(ibar) ibar.style.display='none'; if(sbar) sbar.style.display='none'; }
+  const sumbar = document.getElementById('summary-bar');
+  if (tab==='input') { if(ibar) ibar.style.display=''; if(sbar) sbar.style.display=''; if(sumbar) sumbar.style.display=''; }
+  else { if(ibar) ibar.style.display='none'; if(sbar) sbar.style.display='none'; if(sumbar) sumbar.style.display='none'; }
 
   if (tab==='stats')    loadStats();
   if (tab==='admin')    loadAdmin();
@@ -829,13 +874,13 @@ function buildTableHeader() {
   // 케이스
   ['A','B','C','D','E','F'].forEach(k => {
     const min = getScoreMin('case', k);
-    r2 += `<th class="ch colg-case" ${makeTooltipAttr('case', k)}>케${k}<span class="ch-time">${formatMin(min)}</span></th>`;
+    r2 += `<th class="ch colg-case" ${makeTooltipAttr('case', k)}>${k}<span class="ch-time">${formatMin(min)}</span></th>`;
   });
 
   // 쿨러
   ['A','B','C','D','E','F'].forEach(k => {
     const min = getScoreMin('cooler', k);
-    r2 += `<th class="ch colg-cooler" ${makeTooltipAttr('cooler', k)}>쿨${k}<span class="ch-time">${formatMin(min)}</span></th>`;
+    r2 += `<th class="ch colg-cooler" ${makeTooltipAttr('cooler', k)}>${k}<span class="ch-time">${formatMin(min)}</span></th>`;
   });
 
   // 케이스쿨러
@@ -898,8 +943,12 @@ function buildTableHeader() {
 }
 
 function makeAsmHeader() {
-  // 조립구분 헤더만 - 세로텍스트는 첫 헤더에만
-  return `<th class="ch" style="min-width:110px;">조립구분</th>`;
+  const asmLabels = ['일반','특수','프리','추천','웍스','출고','반조'];
+  return `<th class="ch" style="min-width:160px;">
+    <div style="display:flex;gap:2px;justify-content:center;flex-wrap:nowrap;">
+      ${asmLabels.map(v=>`<span style="font-size:9px;padding:1px 3px;background:rgba(255,255,255,0.15);border-radius:2px;color:#cfd8dc;">${v}</span>`).join('')}
+    </div>
+  </th>`;
 }
 
 function makeTooltipAttr(cat, key) {
@@ -1022,11 +1071,11 @@ function addRow(data) {
     ${MOVE_TYPES.map(v=>`<td class="colg-move"><span class="tgl t-move ${v===moveOn?'on':''}" data-group="move" data-val="${v}" onclick="toggleSingle(this)" title="${v}"></span></td>`).join('')}
     ${CASE_GRADES.map(v=>`<td class="colg-case"><span class="tgl t-case ${v===caseOn?'on':''}" data-group="case" data-val="${v}" onclick="toggleSingle(this)">${v}</span></td>`).join('')}
     ${COOLER_GRADES.map(v=>`<td class="colg-cooler"><span class="tgl t-cooler ${v===coolOn?'on':''}" data-group="cooler" data-val="${v}" onclick="toggleSingle(this)">${v}</span></td>`).join('')}
-    ${CC_KEYS.map(v=>`<td class="colg-cc"><input type="number" class="num-inp f-cc" data-key="${v}" value="${data?.['CC_'+v]||0}" min="0" max="99" oninput="onNumInput(this)"></td>`).join('')}
-    ${OS_KEYS.map((v,i)=>`<td class="colg-os"><span class="tgl t-os ${osVals[i]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}">${v}</span></td>`).join('')}
-    ${SHIP_KEYS.map((v,i)=>`<td class="colg-ship"><span class="tgl t-ship ${shVals[i]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}">${v}</span></td>`).join('')}
-    ${OPT_KEYS.map((v,i)=>`<td class="colg-opt"><input type="number" class="num-inp f-opt" data-idx="${i}" value="${data?.['OPT_'+i]||0}" min="0" max="99" oninput="onNumInput(this)"></td>`).join('')}
-    ${DIFF_KEYS.map((v,i)=>`<td class="colg-diff"><input type="number" class="num-inp f-diff" data-idx="${i}" value="${data?.['DIFF_'+i]||0}" min="0" max="99" oninput="onNumInput(this)"></td>`).join('')}
+    ${CC_KEYS.map(v=>{const val=data?.['CC_'+v]||0;const opts=Array.from({length:31},(_,i)=>i).map(n=>`<option value="${n}"${n==val?' selected':''}>${n}</option>`).join('');return `<td class="colg-cc"><select class="num-sel f-cc" data-key="${v}" onchange="onNumInput(this)">${opts}</select></td>`;}).join('')}
+    ${OS_KEYS.map((v,i)=>`<td class="colg-os"><span class="tgl t-os ${osVals[i]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}" title="${v}"></span></td>`).join('')}
+    ${SHIP_KEYS.map((v,i)=>`<td class="colg-ship"><span class="tgl t-ship ${shVals[i]?'on':''}" onclick="toggleMulti(this)" data-idx="${i}" title="${v}"></span></td>`).join('')}
+    ${OPT_KEYS.map((v,i)=>{const val=data?.['OPT_'+i]||0;const opts=Array.from({length:31},(_,j)=>j).map(n=>`<option value="${n}"${n==val?' selected':''}>${n}</option>`).join('');return `<td class="colg-opt"><select class="num-sel f-opt" data-idx="${i}" onchange="onNumInput(this)">${opts}</select></td>`;}).join('')}
+    ${DIFF_KEYS.map((v,i)=>{const val=data?.['DIFF_'+i]||0;const opts=Array.from({length:31},(_,j)=>j).map(n=>`<option value="${n}"${n==val?' selected':''}>${n}</option>`).join('');return `<td class="colg-diff"><select class="num-sel f-diff" data-idx="${i}" onchange="onNumInput(this)">${opts}</select></td>`;}).join('')}
     ${PACK_KEYS.map((v,i)=>`<td class="colg-pack"><input type="number" class="num-inp f-pack" data-idx="${i}" value="${data?.['PACK_'+i]||0}" min="0" max="99" oninput="onNumInput(this)"></td>`).join('')}
     <td class="score-cell ${isSpec?'special':''} zero">0.000</td>
     <td>
@@ -1104,6 +1153,7 @@ function toggleMulti(el) {
 function onNumInput(inp) {
   const v = parseInt(inp.value)||0;
   inp.classList.toggle('nonzero', v > 0);
+  inp.classList.toggle('nz', v > 0);
   const tr = inp.closest('tr');
   calcRow(tr);
   debounceSave(tr);
@@ -1162,8 +1212,34 @@ function updateSummary() {
   ts = Math.round(ts*1000)/1000;
   document.getElementById('ib-today').textContent = ts.toFixed(3);
   document.getElementById('ib-qty').textContent   = tq;
-  document.getElementById('sum-row-qty').textContent   = tq + '개';
-  document.getElementById('sum-row-score').textContent = ts.toFixed(3) + '점';
+  const sqEl=document.getElementById('sum-row-qty');if(sqEl)sqEl.textContent=tq+'개';
+  const ssEl=document.getElementById('sum-row-score');if(ssEl)ssEl.textContent=ts.toFixed(3)+'점';
+
+  // 합계바 업데이트 (출고/반조 제외한 조립수량)
+  let asmQty=0;
+  document.querySelectorAll('#work-tbody tr.data-row').forEach(tr=>{
+    const asmEl=tr.querySelector('.tgl[data-group="asm"].on');
+    const asmVal=asmEl?.dataset.val||'';
+    if(asmVal&&asmVal!=='출고'&&asmVal!=='반조'){
+      const q=parseInt(tr.querySelector('.f-qty')?.value)||1;
+      asmQty+=q;
+    }
+  });
+  const sumAsmEl=document.getElementById('sum-asm-qty');if(sumAsmEl)sumAsmEl.textContent=asmQty;
+  const sumScoreEl=document.getElementById('sum-score-top');if(sumScoreEl)sumScoreEl.textContent=ts.toFixed(3);
+  const sumTgtEl=document.getElementById('sum-target-top');if(sumTgtEl)sumTgtEl.textContent=myTarget;
+
+  // 빅 게이지
+  const bigRate=myTarget>0?Math.min(200,ts/myTarget*100):0;
+  const bigFill=document.getElementById('big-gauge-fill');
+  const bigPct=document.getElementById('big-gauge-pct');
+  if(bigFill){
+    bigFill.style.width=Math.min(100,bigRate)+'%';
+    if(bigRate>=100){bigFill.style.background='linear-gradient(90deg,#1565c0,#42a5f5)';if(bigPct)bigPct.style.color='#90caf9';}
+    else if(bigRate>=70){bigFill.style.background='linear-gradient(90deg,#e65100,#ffb74d)';if(bigPct)bigPct.style.color='#ffb74d';}
+    else{bigFill.style.background='linear-gradient(90deg,#1b5e20,#69f0ae)';if(bigPct)bigPct.style.color='#a5d6a7';}
+  }
+  if(bigPct)bigPct.textContent=bigRate.toFixed(1)+'%';
 
   // 평가/실제 계산
   const otMin   = parseInt(document.getElementById('my-ot-sel').value)||0;
