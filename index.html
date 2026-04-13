@@ -597,7 +597,7 @@ select,input[type=date],input[type=month]{font-family:var(--font);font-size:13px
 <div id="toast"></div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbzDlrmhr3xKciixpq2-ScHzc0d3Ld-B_A35yF-VPEBRmSVZ01Z467qwc4Hf1iPLM7NCpw/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwcyR6dd2RgED-_X6-L2JH7_sRHHJHh1nfskjRtgkzzNd0WshcQfL1z4SRF4CPXpea0rA/exec';
 
 // ── 전역 상태 ──────────────────────────────────────────────
 let user = null;
@@ -998,8 +998,8 @@ function addRow(data) {
   tr.dataset.saved    = data ? '1' : '0';
 
   // 수량 셀 - 드롭다운 + 직접입력
-  const qtyVal = data?.['수량'] || 1;
-  const qtyOpts = Array.from({length:50},(_,i)=>i+1).map(n=>`<option value="${n}" ${n==qtyVal?'selected':''}>${n}</option>`).join('');
+  const qtyVal = data?.['수량'] || 0;
+  const qtyOpts = Array.from({length:51},(_,i)=>i).map(n=>`<option value="${n}" ${n==qtyVal?'selected':''}>${n}</option>`).join('');
 
   // 체크박스 그룹 빌더
   const asmOn  = data?.['조립구분'] || '';
@@ -1128,7 +1128,7 @@ function onInputChange(el) {
 // ── 점수 계산 ───────────────────────────────────────────────
 function calcRow(tr) {
   let min = 0;
-  const qty = parseInt(tr.querySelector('.f-qty')?.value)||1;
+  const qty = parseInt(tr.querySelector('.f-qty')?.value)||0;
   const caseEl = tr.querySelector('.t-case.on'); if (caseEl) min += SCORE.case[caseEl.dataset.val||caseEl.textContent]||0;
   const coolEl = tr.querySelector('.t-cooler.on'); if (coolEl) min += SCORE.cooler[coolEl.dataset.val||coolEl.textContent]||0;
   tr.querySelectorAll('.f-cc').forEach(inp => {
@@ -1141,16 +1141,16 @@ function calcRow(tr) {
   tr.querySelectorAll('.f-diff').forEach(inp => { min += ((Object.values(SCORE.diff))[parseInt(inp.dataset.idx)]||0)*(parseInt(inp.value)||0); });
   tr.querySelectorAll('.f-pack').forEach(inp => { min += ((Object.values(SCORE.pack))[parseInt(inp.dataset.idx)]||0)*(parseInt(inp.value)||0); });
 
+  // 제품이동도 시간(분) 기준으로 min에 합산 → 전체를 /30 환산
   const moveEl = tr.querySelector('.t-move.on');
-  let moveScore = 0;
   if (moveEl) {
     const mt = moveEl.textContent.trim().replace('\n','');
-    if (mt.includes('방')) moveScore = mySetting.moveVisit;
-    else if (mt.includes('퀵')||mt.includes('당')) moveScore = mySetting.moveQuick;
-    else moveScore = mySetting.moveStable;
+    if (mt.includes('방')) min += mySetting.moveVisit;
+    else if (mt.includes('퀵')||mt.includes('당')) min += mySetting.moveQuick;
+    else min += mySetting.moveStable;
   }
 
-  let score = (min/30*qty) + moveScore;
+  let score = min / 30 * qty;
   const d = document.getElementById('work-date').value;
   if (isSpecialDay(d)) score *= 1.25;
   score = Math.max(0, Math.round(score*1000)/1000);
@@ -1297,7 +1297,7 @@ function buildParams(tr, d, ym) {
   return {
     empId:user.empId, name:user.name, role:user.role, workDate:d, yyyymm:ym,
     orderNo:order, assemblyType:getOn('t-asm'),
-    qty:tr.querySelector('.f-qty')?.value||1,
+    qty:tr.querySelector('.f-qty')?.value||0,
     moveType:getOn('t-move'), caseGrade:getOn('t-case'), coolerGrade:getOn('t-cooler'),
     cc_A:cc[0]?.value||0, cc_B:cc[1]?.value||0, cc_C:cc[2]?.value||0, 'cc_제거':cc[3]?.value||0,
     os_0:os[0],os_1:os[1],os_2:os[2],os_3:os[3],os_4:os[4],os_5:os[5],
@@ -1857,7 +1857,16 @@ async function loadScoreTableGrid() {
 
 async function updateScoreItem(cat, key, min) {
   const r = await api({action:'updateScoreItem',empId:user.empId,cat,key,min});
-  if (r.success) { toast('저장됨','ok'); updateScoreFromTable(); }
+  if (r.success) {
+    toast('저장됨','ok');
+    // 서버에서 최신 기준표 다시 로드
+    const str = await api({action:'getScoreTable'});
+    if (str.success) { scoreTable = str.data; updateScoreFromTable(); }
+    // 헤더 시간 표시 갱신
+    buildTableHeader();
+    // 기존 데이터행 전체 재계산
+    document.querySelectorAll('#work-tbody tr.data-row').forEach(tr => calcRow(tr));
+  }
   else toast(r.message,'err');
 }
 
