@@ -574,13 +574,27 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
     clearTimeout(toast._t); toast._t = setTimeout(() => (t.className = ''), err ? 3800 : 2200);
   }
+  // 같은 요청을 다시 보내도 결과가 같은 것만 자동 재시도
+  const SAFE_RETRY = new Set(['me', 'getDay', 'saveDay', 'deleteDay', 'getMonth', 'setTarget', 'listUsers', 'listDates', 'ping', 'login', 'logout']);
   async function api(action, data) {
     if (!API_URL || API_URL.indexOf('__API') === 0) throw new Error('설치가 끝나지 않았습니다: index.html 의 API_URL 을 설정하세요');
-    let res;
-    try {
-      const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(Object.assign({ action, token: S.token }, data || {})) });
-      res = await r.json();
-    } catch (e) { throw new Error('서버에 연결할 수 없습니다. 인터넷 연결을 확인해 주세요'); }
+    const body = JSON.stringify(Object.assign({ action, token: S.token }, data || {}));
+    const tries = SAFE_RETRY.has(action) ? 4 : 1;
+    let res = null, last = '';
+    for (let t = 0; t < tries; t++) {
+      if (t) await new Promise(r => setTimeout(r, 700 * t + Math.random() * 500));
+      try {
+        const r = await fetch(API_URL, { method: 'POST', body });
+        const txt = await r.text();
+        try { res = JSON.parse(txt); break; }
+        catch (e) { last = 'google'; console.warn('[업무데이터] 서버 응답 오류', r.status, txt.slice(0, 300)); }
+      } catch (e) { last = navigator.onLine === false ? 'offline' : 'net'; console.warn('[업무데이터] 연결 오류', e); }
+    }
+    if (!res) {
+      if (last === 'offline') throw new Error('인터넷이 끊겼습니다. 연결을 확인해 주세요');
+      if (tries === 1) throw new Error('구글 서버 응답이 잠시 불안정합니다. 결과를 확인한 뒤 다시 눌러주세요');
+      throw new Error('구글 서버 응답이 잠시 불안정합니다 (자동 재시도 ' + tries + '회 실패). 잠시 후 다시 해주세요');
+    }
     if (!res.ok) {
       if (/로그인이 (필요|만료)/.test(res.msg || '')) { logout(true); }
       throw new Error(res.msg || '오류');
@@ -1390,6 +1404,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   const addDaysStr = (s, k) => C.addDays(s, k);
   function bindPeriodPanel() {
     const upd = r => { S.periods = r.periods; S.manageYm = null; S.mMode = 'month'; renderManage(); };
+    const refreshAfterFail = async () => { try { const m = await api('me'); S.periods = m.periods; S.manageYm = null; renderManage(); } catch (e) { } };
     const b = id => $('#' + id);
     if (b('popen')) b('popen').onclick = async () => {
       try { upd(await api('openPeriod', { ym: b('pym').value, start: b('pst').value })); toast('기간을 시작했습니다'); } catch (e) { toast(e.message, true); }
@@ -1408,7 +1423,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       try { upd(await api('cancelClose')); toast('마감을 취소했습니다'); } catch (e) { toast(e.message, true); }
     };
     b('padd').onclick = async () => {
-      try { upd(await api('addPastPeriod', { ym: b('aym').value, start: b('ast').value, end: b('aen').value })); toast('지난 달 기간을 추가했습니다'); } catch (e) { toast(e.message, true); }
+      try { upd(await api('addPastPeriod', { ym: b('aym').value, start: b('ast').value, end: b('aen').value })); toast('지난 달 기간을 추가했습니다'); } catch (e) { toast(e.message, true); refreshAfterFail(); }
     };
     b('pwipe').onclick = () => modal(`<h3 style="color:var(--red)">테스트 데이터 전체 삭제</h3>
       <div style="line-height:1.6">모든 인원의 <b>입력 데이터, 월 목표, 월 기간</b>이 전부 삭제됩니다. 계정(이름·비밀번호)은 남습니다.<br>되돌릴 수 없습니다. 계속하려면 <b>전체삭제</b> 라고 입력하세요.</div>
