@@ -136,6 +136,7 @@ table.list tr.click:hover td{background:#f5f8ff}
 .modal .fld{margin-bottom:10px}.modal input,.modal select{width:100%}
 .modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .2s}
+#perf{position:fixed;right:10px;bottom:6px;font-size:11px;color:#8a94a6;z-index:5;pointer-events:none}
 #toast.show{opacity:1}#toast.err{background:var(--red)}
 .section-t{font-size:15px;font-weight:700;margin:18px 0 8px}
 .lock{background:var(--red-soft);color:var(--red);border:1px solid #f3c7c7;padding:8px 12px;border-radius:8px;margin-bottom:10px;font-weight:700}
@@ -232,13 +233,15 @@ table.bimp tr.bdet>td{background:#f7f9fb;padding:8px 10px 12px 40px}table.bimp .
 <body>
 <div id="app"></div>
 <div id="toast"></div>
+<div id="perf"></div>
 <div id="np"></div>
 <div id="tip"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 /* ============================================================
- * ▼▼▼ 설치할 때 이 한 줄만 바꾸세요 (구글 앱스스크립트 웹앱 주소) ▼▼▼ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT6APlhOQuI8sJkJAsoDUKlYRWhNDuQhStP4ZVYKJMlfMN/exec';
+ * ▼▼▼ 설치할 때 이 두 줄만 바꾸세요 (Supabase 프로젝트 주소와 공개 키) ▼▼▼ */
+const SB_URL = 'https://yadjslslmprglcquyets.supabase.co';
+const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 /* ============================================================ */
 </script>
 <script>/* =========================================================
@@ -583,25 +586,36 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     clearTimeout(toast._t); toast._t = setTimeout(() => (t.className = ''), err ? 3800 : 2200);
   }
   // 같은 요청을 다시 보내도 결과가 같은 것만 자동 재시도
-  const SAFE_RETRY = new Set(['me', 'getDay', 'saveDay', 'deleteDay', 'getMonth', 'setTarget', 'listUsers', 'listDates', 'ping', 'login', 'logout']);
+  const SAFE_RETRY = new Set(['me', 'getDay', 'saveDay', 'deleteDay', 'getMonth', 'getPeriodDays', 'setTarget', 'listUsers', 'listDates', 'ping', 'login', 'logout', 'register', 'backup']);
+  const API_HEADERS = () => { const h = { apikey: SB_KEY, 'Content-Type': 'application/json' }; if (/^eyJ/.test(SB_KEY)) h.Authorization = 'Bearer ' + SB_KEY; return h; };
+  function perf(action, ms, sms) {
+    const el = $('#perf'); if (!el || !S.me || S.me.role !== '관리자') return;
+    el.textContent = '응답 ' + (ms / 1000).toFixed(2) + '초' + (sms != null ? ' (서버 ' + (sms / 1000).toFixed(2) + ')' : '') + ' · ' + action;
+  }
   async function api(action, data) {
-    if (!API_URL || API_URL.indexOf('__API') === 0) throw new Error('설치가 끝나지 않았습니다: index.html 의 API_URL 을 설정하세요');
-    const body = JSON.stringify(Object.assign({ action, token: S.token }, data || {}));
-    const tries = SAFE_RETRY.has(action) ? 4 : 1;
-    let res = null, last = '';
-    for (let t = 0; t < tries; t++) {
-      if (t) await new Promise(r => setTimeout(r, 700 * t + Math.random() * 500));
+    if (!SB_URL || SB_URL.indexOf('__') === 0) throw new Error('설치가 끝나지 않았습니다: index.html 의 SB_URL / SB_KEY 를 설정하세요');
+    const body = JSON.stringify({ req: Object.assign({ action, token: S.token }, data || {}) });
+    const tries = SAFE_RETRY.has(action) ? 3 : 1;
+    let res = null, last = '', fatal = '';
+    for (let t = 0; t < tries && !res && !fatal; t++) {
+      if (t) await new Promise(r => setTimeout(r, 600 * t + Math.random() * 400));
+      const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 20000), t0 = performance.now();
       try {
-        const r = await fetch(API_URL, { method: 'POST', body });
-        const txt = await r.text();
-        try { res = JSON.parse(txt); break; }
-        catch (e) { last = 'google'; console.warn('[업무데이터] 서버 응답 오류', r.status, txt.slice(0, 300)); }
-      } catch (e) { last = navigator.onLine === false ? 'offline' : 'net'; console.warn('[업무데이터] 연결 오류', e); }
+        const r = await fetch(SB_URL + '/rest/v1/rpc/api', { method: 'POST', headers: API_HEADERS(), body, signal: ac.signal });
+        const txt = await r.text(); let j = null;
+        try { j = JSON.parse(txt); } catch (e) { }
+        if (r.ok && j && typeof j === 'object' && 'ok' in j) { res = j; perf(action, performance.now() - t0, j._ms); }
+        else if (r.status === 401 || r.status === 403) fatal = '서버 접속 키가 맞지 않습니다 (index.html 의 SB_KEY 확인)';
+        else if (r.status === 404) fatal = '서버 기능이 설치되지 않았습니다 (Supabase SQL 설치 확인)';
+        else { last = 'server'; console.warn('[업무데이터] 서버 응답 오류', r.status, txt.slice(0, 300)); }
+      } catch (e) { last = navigator.onLine === false ? 'offline' : e.name === 'AbortError' ? 'timeout' : 'net'; console.warn('[업무데이터] 연결 오류', e); }
+      finally { clearTimeout(tm); }
     }
+    if (fatal) throw new Error(fatal);
     if (!res) {
       if (last === 'offline') throw new Error('인터넷이 끊겼습니다. 연결을 확인해 주세요');
-      if (tries === 1) throw new Error('구글 서버 응답이 잠시 불안정합니다. 결과를 확인한 뒤 다시 눌러주세요');
-      throw new Error('구글 서버 응답이 잠시 불안정합니다 (자동 재시도 ' + tries + '회 실패). 잠시 후 다시 해주세요');
+      if (tries === 1) throw new Error('서버 연결이 잠시 불안정합니다. 결과를 확인한 뒤 다시 눌러주세요');
+      throw new Error('서버 연결이 잠시 불안정합니다 (자동 재시도 ' + tries + '회 실패). 잠시 후 다시 해주세요');
     }
     if (!res.ok) {
       if (/로그인이 (필요|만료)/.test(res.msg || '')) {
@@ -656,8 +670,11 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     </div>`;
     $$('.tabs button').forEach(b => (b.onclick = () => renderLogin(b.dataset.t)));
     const go = $('#go');
+    const rid = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);   // 같은 등록을 여러 번 보내도 계정은 하나
+    let busy = false;
     const submit = async () => {
-      go.disabled = true;
+      if (busy) return;                                                                   // 기다리는 중 연타·Enter 무시
+      busy = true; go.disabled = true; const label = go.textContent; go.textContent = '처리 중…';
       try {
         let r;
         if (tab === 'login') {
@@ -665,12 +682,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
           if (r.newPin) toast('새 비밀번호로 설정되었습니다');
         } else {
           if ($('#rp').value !== $('#rp2').value) throw new Error('비밀번호 확인이 다릅니다');
-          r = await api('register', { name: $('#rn').value, group: $('#rg').value, pin: $('#rp').value });
-          if (r.renamed) await confirmBox('같은 이름이 있어서 <b>' + esc(r.renamed) + '</b>(으)로 등록되었습니다.<br>다음부터 이 이름으로 로그인하세요.', '알겠습니다');
+          r = await api('register', { name: $('#rn').value, group: $('#rg').value, pin: $('#rp').value, rid });
+          if (r.again) await confirmBox('이미 등록된 계정 <b>' + esc(r.me.name) + '</b>(으)로 로그인합니다.<br>다음부터는 [로그인] 탭에서 이 이름으로 들어오세요.', '알겠습니다');
+          else if (r.renamed) await confirmBox('같은 이름이 있어서 <b>' + esc(r.renamed) + '</b>(으)로 등록되었습니다.<br>다음부터 이 이름으로 로그인하세요.', '알겠습니다');
         }
         S.token = r.token; sessionStorage.setItem('tk', r.token);
-        await boot();
-      } catch (e) { toast(e.message, true); go.disabled = false; }
+        await boot(r);
+      } catch (e) { toast(e.message, true); busy = false; go.disabled = false; go.textContent = label; }
     };
     go.onclick = submit;
     $$('input', APP).forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }));
@@ -738,7 +756,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
 
   // ------------------------------------------------ 일일 입력
   // 한 달치를 한 번 받아 두고(S.pc) 날짜 이동은 화면에서 바로
-  const PC_TTL = 120000;
+  const PC_TTL = 60000;
   const pcKey = (uid, ym) => uid + '|' + ym;
   function dropPc(uid) { Object.keys(S.pc || {}).forEach(k => { if (!uid || k.indexOf(uid + '|') === 0) delete S.pc[k]; }); }
   async function loadDay(date) {
@@ -1310,7 +1328,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     if (!S.dirty || !S.day || !S.day.canEdit || !S.token) return;
     const doc = S.day.doc;
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined })) });
-    try { fetch(API_URL, { method: 'POST', keepalive: true, body: JSON.stringify({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean) }) }); S.dirty = false; } catch (e) { }
+    try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean) }) }); S.dirty = false; } catch (e) { }
   }
   window.addEventListener('pagehide', flushOnClose);
   window.addEventListener('beforeunload', e => { if (S.dirty) { flushOnClose(); } });
@@ -1326,13 +1344,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     S.monthYm = ym;
     main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
     let r;
-    const u0 = who(), pc = S.pc && S.pc[pcKey(u0.id, ym)];
-    if (pc && Date.now() - pc.t < PC_TTL) {        // 입력 화면에서 받아 둔 한 달치를 그대로 사용
-      r = { user: u0, period: pc.period, target: pc.target, canEdit: pc.canEdit, canSetTarget: pc.canSetTarget,
-        days: Object.keys(pc.days).sort().map(d => ({ date: d, doc: pc.days[d].doc })) };
-    } else {
-      try { r = await api('getMonth', { userId: u0.id, ym }); } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
-    }
+    const u0 = who();
+    try { r = await api('getMonth', { userId: u0.id, ym }); } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }   // 매니저가 고친 내용·목표까지 항상 최신으로
     const items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc) }));
     const m = C.calcMonth(items, r.target);
     const over = r.days.length > C.MAX_DAYS;
@@ -1402,7 +1415,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     if (cached) drawManage(cached, ym, true); else main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
     let r;
     try {
-      r = S.mMode === 'range' ? await api('listUsers', { start: S.mRange.start, end: S.mRange.end }) : await api('listUsers', { ym });
+      const pf = S.mMode !== 'range' && S._mpf && S._mpf[key];
+      r = (pf && await pf) || (S.mMode === 'range' ? await api('listUsers', { start: S.mRange.start, end: S.mRange.end }) : await api('listUsers', { ym }));
       if (S.mMode === 'month') S.manageYm = ym;
     } catch (e) {
       if (cached && S._mkey === key) { const st = $('#mstale'); if (st) st.textContent = '갱신 실패 — 이전 목록'; toast(e.message, true); return; }
@@ -1499,7 +1513,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
         <td class="num">${xym ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td>${c8 == null ? '<span class="muted">-</span>' : `<div class="mini"><i class="${rateCls(c8)}" style="width:${Math.min(100, c8 * 100)}%"></i></div><b class="${rateCls(c8)}t">${pct(c8)}</b>`}</td>
-        <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' && u.role === '일반' ? '<button data-a="pin" class="danger">비번</button>' : ''}</td></tr>`;
+        <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' && u.role === '일반' ? '<button data-a="pin" class="danger">비번</button><button data-a="ren">이름</button><button data-a="del" class="danger">삭제</button>' : ''}</td></tr>`;
       }).join('') || '<tr><td colspan="11" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
     $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; renderMList(r); }));
@@ -1525,6 +1539,21 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       } else if (b.dataset.a === 'pin') {
         if (!(await confirmBox(esc(u.name) + ' 님의 비밀번호를 초기화할까요?<br><span class="muted">다음 로그인 때 입력하는 4자리가 새 비밀번호가 됩니다.</span>', '초기화'))) return;
         try { await api('resetPin', { userId: u.id }); toast('초기화했습니다'); } catch (e) { toast(e.message, true); }
+      } else if (b.dataset.a === 'ren') {
+        modal(`<h3>이름 변경</h3><div class="fld"><label>새 이름 (${esc(u.name)} → )</label><input id="rnm" value="${esc(u.name)}" autocomplete="off"></div>
+          <div class="muted">입력한 데이터는 그대로 이 사람에게 남습니다. 다음 로그인부터 새 이름을 씁니다.</div>
+          <div class="acts"><button data-n>취소</button><button class="primary" data-y>변경</button></div>`, (bg, close) => {
+          const inp = $('#rnm', bg); inp.focus(); inp.select();
+          $('[data-n]', bg).onclick = close;
+          const doIt = async () => {
+            try { const x = await api('renameUser', { userId: u.id, name: inp.value }); close(); toast(u.name + ' → ' + x.name); S._mcache = {}; renderManage(); } catch (e) { toast(e.message, true); }
+          };
+          $('[data-y]', bg).onclick = doIt; inp.addEventListener('keydown', e => { if (e.key === 'Enter') doIt(); });
+        });
+      } else if (b.dataset.a === 'del') {
+        const n = u.items.length;
+        if (!(await confirmBox('<b>' + esc(u.name) + '</b> (' + esc(u.group) + ') 계정을 삭제할까요?<br><span class="muted">이 사람이 입력한 모든 달의 데이터와 목표도 함께 지워지며 되돌릴 수 없습니다.</span>' + (n ? '<br><b style="color:var(--red)">이번 기간에 입력한 데이터 ' + n + '일이 있습니다.</b>' : ''), '삭제'))) return;
+        try { const x = await api('deleteUser', { userId: u.id }); toast(u.name + ' 삭제 (데이터 ' + x.rows + '일)'); S._mcache = {}; renderManage(); } catch (e) { toast(e.message, true); }
       }
     }));
   }
@@ -1589,7 +1618,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       <div class="row" style="margin-top:14px;gap:10px">
         ${lastClosed ? `<button id="pcancel">최근 마감 취소 (${ymLabel(lastClosed.ym)})</button>` : ''}
         <span style="flex:1"></span>
-        ${S.me.role === '관리자' ? '<button id="pcc" title="구글 시트를 직접 고쳤거나 화면 숫자가 이상할 때">🔄 서버 기억 새로고침</button>' : ''}
+        ${S.me.role === '관리자' ? '<button id="pbk" title="선택한 귀속월의 계정·기간·목표·일일 데이터 전체를 파일로 저장 (매달 마감 후 보관 권장)">💾 백업 받기</button>' : ''}
         <button class="danger" id="pwipe">테스트 데이터 전체 삭제</button>
       </div>
       <div class="row" style="gap:14px;align-items:flex-end;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)">
@@ -1624,8 +1653,14 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       if (!(await confirmBox('가장 최근 마감을 취소하고 그 달을 다시 진행 상태로 돌립니다.<br>그 뒤에 자동으로 열렸던 다음 달 기간은 삭제됩니다 (입력 데이터는 지워지지 않음).', '마감 취소'))) return;
       try { upd(await api('cancelClose')); toast('마감을 취소했습니다'); } catch (e) { toast(e.message, true); }
     };
-    if (b('pcc')) b('pcc').onclick = async () => {
-      try { await api('clearCache'); S._mcache = {}; S.pc = {}; toast('서버 기억을 비웠습니다. 다음 조회는 시트에서 새로 읽습니다'); renderManage(); } catch (e) { toast(e.message, true); }
+    if (b('pbk')) b('pbk').onclick = async () => {
+      const ym = S.manageYm || (curPeriod() || {}).ym;
+      if (!ym) return toast('귀속월이 없습니다', true);
+      try {
+        const r = await api('backup', { ym }); delete r.ok; delete r._ms;
+        saveBlob(new Blob([JSON.stringify(r)], { type: 'application/json' }), '업무데이터_백업_' + ym + '_' + S.today + '.json');
+        toast(ymLabel(ym) + ' 백업 ' + r.days.length + '건을 받았습니다');
+      } catch (e) { toast(e.message, true); }
     };
     b('padd').onclick = async () => {
       try { upd(await api('addPastPeriod', { ym: b('aym').value, start: b('ast').value, end: b('aen').value })); toast('지난 달 기간을 추가했습니다'); } catch (e) { toast(e.message, true); refreshAfterFail(); }
@@ -1642,16 +1677,24 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   }
 
   // ------------------------------------------------ 시작
-  async function boot() {
+  // 매니저·관리자 : 관리 목록을 뒤에서 미리 받아 둠 → [관리] 누르면 바로 보임
+  function prefetchManage() {
+    const ym = (curPeriod() || {}).ym; if (!ym || !isManager()) return;
+    const key = 'M|' + ym; S._mcache = S._mcache || {}; S._mpf = S._mpf || {};
+    if (S._mcache[key] || S._mpf[key]) return;
+    S._mpf[key] = api('listUsers', { ym }).then(r => { if (!S._mcache[key]) S._mcache[key] = r; return r; }).catch(() => null).finally(() => { delete S._mpf[key]; });
+  }
+  async function boot(pre) {
     if (!S.token) return renderLogin();
     try {
-      const r = await api('me', { withDay: true });
+      const r = pre && pre.me ? pre : await api('me', { withDay: true });
       S.me = r.me; S.periods = r.periods; S.today = r.today || S.today;
       S.pc = {};
       if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {} };
       let d0 = S.today;
       try { const pend = JSON.parse(sessionStorage.getItem('pending') || 'null'); if (pend && pend.uid === S.me.id && pend.date) d0 = pend.date; } catch (e) { }
       shell(); go('input', { date: d0 });
+      if (isManager()) setTimeout(prefetchManage, 600);
     } catch (e) { if (S.token) { toast(e.message, true); } renderLogin(); }
   }
   boot();
