@@ -604,7 +604,11 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       throw new Error('구글 서버 응답이 잠시 불안정합니다 (자동 재시도 ' + tries + '회 실패). 잠시 후 다시 해주세요');
     }
     if (!res.ok) {
-      if (/로그인이 (필요|만료)/.test(res.msg || '')) { logout(true); }
+      if (/로그인이 (필요|만료)/.test(res.msg || '')) {
+        // 로그인 만료 때 저장 못 한 입력은 잠시 보관했다가 다시 로그인하면 복구
+        try { if (S.dirty && S.day && S.day.canEdit) sessionStorage.setItem('pending', JSON.stringify({ uid: who().id, date: S.date, doc: S.day.doc })); } catch (e) { }
+        logout(true);
+      }
       throw new Error(res.msg || '오류');
     }
     return res;
@@ -761,6 +765,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
         : { doc, exists: false, period: null, canEdit: false, canSetTarget: false, target: 0, savedAt: '', savedBy: '' };
       S.dirty = false;
       renderDay();
+      try {
+        const pend = JSON.parse(sessionStorage.getItem('pending') || 'null');
+        if (pend && pend.uid === u.id && pend.date === date && S.day.canEdit) {
+          sessionStorage.removeItem('pending'); S.day.doc = pend.doc; renderDay(); changed();
+          toast('로그인 만료 전에 저장 못 한 내용을 복구했습니다 (곧 자동 저장)');
+        }
+      } catch (e) { }
     } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; }
   }
 
@@ -1315,7 +1326,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     S.monthYm = ym;
     main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
     let r;
-    try { r = await api('getMonth', { userId: who().id, ym }); } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    const u0 = who(), pc = S.pc && S.pc[pcKey(u0.id, ym)];
+    if (pc && Date.now() - pc.t < PC_TTL) {        // 입력 화면에서 받아 둔 한 달치를 그대로 사용
+      r = { user: u0, period: pc.period, target: pc.target, canEdit: pc.canEdit, canSetTarget: pc.canSetTarget,
+        days: Object.keys(pc.days).sort().map(d => ({ date: d, doc: pc.days[d].doc })) };
+    } else {
+      try { r = await api('getMonth', { userId: u0.id, ym }); } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    }
     const items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc) }));
     const m = C.calcMonth(items, r.target);
     const over = r.days.length > C.MAX_DAYS;
@@ -1346,7 +1363,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     </div>`;
     $('#ym').onchange = e => renderMonth(e.target.value);
     $('#tg').onchange = async e => {
-      try { await api('setTarget', { userId: who().id, ym, target: +e.target.value }); toast('목표를 저장했습니다'); renderMonth(ym); }
+      try { await api('setTarget', { userId: who().id, ym, target: +e.target.value }); if (pc) pc.target = +e.target.value; toast('목표를 저장했습니다'); renderMonth(ym); }
       catch (err) { toast(err.message, true); }
     };
     $$('tr[data-d]').forEach(tr => (tr.onclick = () => go('input', { date: tr.dataset.d })));
@@ -1375,19 +1392,32 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     const main = $('#main');
     if (!S.periods.length && !S.me.period) { main.innerHTML = '<div class="warn">아직 월 기간이 없습니다.</div>'; return; }
     S.mMode = S.mMode || 'month'; S.mView = S.mView || 'list'; S.mSort = S.mSort || { k: 'group', d: 1 };
-    let r = null;
     const ym = S.manageYm || (curPeriod() || {}).ym;
     if (!S.mRange) S.mRange = { start: C.addDays(S.today, -6), end: S.today };
-    if (ym || S.mMode === 'range') {
-      main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
-      try {
-        r = S.mMode === 'range' ? await api('listUsers', { start: S.mRange.start, end: S.mRange.end }) : await api('listUsers', { ym });
-        if (S.mMode === 'month') S.manageYm = ym;
-      } catch (e) {
-        main.innerHTML = '<div class="warn">' + esc(e.message) + '</div><button id="mback">돌아가기</button>';
-        $('#mback').onclick = () => { S.mMode = 'month'; renderManage(); }; return;
-      }
+    if (!(ym || S.mMode === 'range')) return drawManage(null, ym, false);
+    // 직전에 본 목록을 먼저 보여주고, 뒤에서 새로 받아 바뀐 게 있으면 다시 그림
+    const key = S.mMode === 'range' ? 'R|' + S.mRange.start + '|' + S.mRange.end : 'M|' + ym;
+    S._mcache = S._mcache || {}; S._mkey = key;
+    const cached = S._mcache[key];
+    if (cached) drawManage(cached, ym, true); else main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
+    let r;
+    try {
+      r = S.mMode === 'range' ? await api('listUsers', { start: S.mRange.start, end: S.mRange.end }) : await api('listUsers', { ym });
+      if (S.mMode === 'month') S.manageYm = ym;
+    } catch (e) {
+      if (cached && S._mkey === key) { const st = $('#mstale'); if (st) st.textContent = '갱신 실패 — 이전 목록'; toast(e.message, true); return; }
+      main.innerHTML = '<div class="warn">' + esc(e.message) + '</div><button id="mback">돌아가기</button>';
+      $('#mback').onclick = () => { S.mMode = 'month'; renderManage(); }; return;
     }
+    const same = cached && JSON.stringify(cached) === JSON.stringify(r);
+    S._mcache[key] = same ? cached : r;
+    if (S.view !== 'manage' || S._mkey !== key) return;
+    if (same) { const st = $('#mstale'); if (st) st.remove(); return; }
+    drawManage(r, ym, false);
+  }
+  function drawManage(r, ym, stale) {
+    const main = $('#main');
+    const ppOpen = !!($('details.pp') && $('details.pp').open);
     let html = '';
     if (r) {
       const xym = r.period ? r.period.ym : null;
@@ -1415,6 +1445,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
         ${S.mMode === 'month' ? `<select id="mym">${periodOptions(ym)}</select>${periodChip(r.period)}`
           : `<input type="date" id="rs" value="${S.mRange.start}"> ~ <input type="date" id="re" value="${S.mRange.end}"><button class="primary" id="rgo">조회</button>
              <span class="muted">${xym ? '목표는 ' + ymLabel(xym) + ' 기준' : '해당 기간의 귀속월 없음'}</span>`}
+        ${stale ? '<span class="chip" id="mstale">갱신 중…</span>' : ''}
         <select id="mg"><option value="">전체 그룹</option>${r.groups.map(g => `<option ${g === S.manageGroup ? 'selected' : ''}>${g}</option>`).join('')}</select>
         <span style="flex:1"></span>
         <div class="seg"><button data-mv="list" class="${S.mView === 'list' ? 'on' : ''}">인원별 목록</button><button data-mv="board" class="${S.mView === 'board' ? 'on' : ''}">일자별 현황판</button></div>
@@ -1446,7 +1477,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       S._musers = r.users;
       $('#bimp').onclick = bulkImport;
     }
-    if (S.me.period && S.mMode === 'month') bindPeriodPanel();
+    if (S.me.period && S.mMode === 'month') { bindPeriodPanel(); if (ppOpen && $('details.pp')) $('details.pp').open = true; }
   }
   function openUser(u, what, date, xym) {
     const tgt = { id: u.id, name: u.name, group: u.group, role: u.role };
@@ -1479,6 +1510,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       try {
         await api('setTarget', { userId: u.id, ym: xym, target: v });
         u.target = v; u.m = C.calcMonth(u.items, v); dropPc(u.id);
+        const o = r.users.find(x => x.id === u.id); if (o) o.target = v;
         toast(u.name + ' ' + ymLabel(xym) + ' 목표 ' + v); renderMList(r);
       } catch (e) { toast(e.message, true); sel.value = u.target || ''; sel.disabled = false; }
     }));
@@ -1557,6 +1589,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       <div class="row" style="margin-top:14px;gap:10px">
         ${lastClosed ? `<button id="pcancel">최근 마감 취소 (${ymLabel(lastClosed.ym)})</button>` : ''}
         <span style="flex:1"></span>
+        ${S.me.role === '관리자' ? '<button id="pcc" title="구글 시트를 직접 고쳤거나 화면 숫자가 이상할 때">🔄 서버 기억 새로고침</button>' : ''}
         <button class="danger" id="pwipe">테스트 데이터 전체 삭제</button>
       </div>
       <div class="row" style="gap:14px;align-items:flex-end;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)">
@@ -1572,7 +1605,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   const nextYmOf = ym => { let [y, m] = ym.split('-').map(Number); m++; if (m > 12) { m = 1; y++; } return y + '-' + C.pad(m); };
   const addDaysStr = (s, k) => C.addDays(s, k);
   function bindPeriodPanel() {
-    const upd = r => { S.periods = r.periods; S.manageYm = null; S.mMode = 'month'; renderManage(); };
+    const upd = r => { S.periods = r.periods; S.manageYm = null; S.mMode = 'month'; S._mcache = {}; S.pc = {}; renderManage(); };
     const refreshAfterFail = async () => { try { const m = await api('me'); S.periods = m.periods; S.manageYm = null; renderManage(); } catch (e) { } };
     const b = id => $('#' + id);
     if (b('popen')) b('popen').onclick = async () => {
@@ -1590,6 +1623,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     if (b('pcancel')) b('pcancel').onclick = async () => {
       if (!(await confirmBox('가장 최근 마감을 취소하고 그 달을 다시 진행 상태로 돌립니다.<br>그 뒤에 자동으로 열렸던 다음 달 기간은 삭제됩니다 (입력 데이터는 지워지지 않음).', '마감 취소'))) return;
       try { upd(await api('cancelClose')); toast('마감을 취소했습니다'); } catch (e) { toast(e.message, true); }
+    };
+    if (b('pcc')) b('pcc').onclick = async () => {
+      try { await api('clearCache'); S._mcache = {}; S.pc = {}; toast('서버 기억을 비웠습니다. 다음 조회는 시트에서 새로 읽습니다'); renderManage(); } catch (e) { toast(e.message, true); }
     };
     b('padd').onclick = async () => {
       try { upd(await api('addPastPeriod', { ym: b('aym').value, start: b('ast').value, end: b('aen').value })); toast('지난 달 기간을 추가했습니다'); } catch (e) { toast(e.message, true); refreshAfterFail(); }
@@ -1609,9 +1645,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   async function boot() {
     if (!S.token) return renderLogin();
     try {
-      const r = await api('me');
+      const r = await api('me', { withDay: true });
       S.me = r.me; S.periods = r.periods; S.today = r.today || S.today;
-      shell(); go('input', { date: S.today });
+      S.pc = {};
+      if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {} };
+      let d0 = S.today;
+      try { const pend = JSON.parse(sessionStorage.getItem('pending') || 'null'); if (pend && pend.uid === S.me.id && pend.date) d0 = pend.date; } catch (e) { }
+      shell(); go('input', { date: d0 });
     } catch (e) { if (S.token) { toast(e.message, true); } renderLogin(); }
   }
   boot();
