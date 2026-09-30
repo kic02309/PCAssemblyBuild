@@ -221,6 +221,12 @@ details.pp{margin-top:12px}details.pp>summary{cursor:pointer;font-size:15px;font
 .modal.wide{width:min(900px,94vw)}
 table.imp td{padding:5px 10px}table.imp input[type=date]{padding:3px 5px}
 .ist.ok{color:var(--green);font-weight:700}.ist.warn{color:#a15c00;font-weight:700}.ist.bad{color:var(--red);font-weight:700}
+.energy .tgv{font-size:15px;padding:3px 10px;background:#eef1f5;border-radius:6px}
+table.mlist select.mtg{padding:3px 4px;font-weight:700;background:#fffbe6}
+table.bimp td{padding:6px 8px}table.bimp td.bfn{max-width:300px;overflow:hidden;text-overflow:ellipsis}
+table.bimp select.bus{max-width:190px}table.bimp select.bus.miss{border-color:var(--red);background:var(--red-soft)}
+table.bimp tr.bdet>td{background:#f7f9fb;padding:8px 10px 12px 40px}table.bimp .bdt{padding:3px 8px;font-size:12px}
+.modal input[type=checkbox]{width:auto;margin:0}
 </style>
 </head>
 <body>
@@ -428,10 +434,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       v.F4 = num(doc.ot); v.G4 = doc.meal || '-';
       if (num(doc.asmOt)) v.H7 = num(doc.asmOt);
       OTHER.forEach(([k]) => { if (num((doc.other || {})[k])) v[k] = num(doc.other[k]); });
-      const rows = (doc.rows || []).filter(r => r && String(r.o || '').trim());
+      const rows = (doc.rows || []).filter(r => r && (String(r.o || '').trim() || r.memo));
       rows.slice(0, MAX_ROWS).forEach((r, i) => {
         const rr = 14 + i;
-        v['A' + rr] = String(r.o);
+        if (String(r.o || '').trim()) v['A' + rr] = String(r.o);
         if (r.q !== '' && r.q != null) v['B' + rr] = num(r.q);
         COLS.forEach(x => { const mv = (r.m || {})[x.c]; if (mv) v[x.c + rr] = x.kind === 'num' ? num(mv) : 1; });
         if (r.memo) v['AU' + rr] = r.memo;
@@ -520,8 +526,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       const doc = { kind: hol ? '휴일' : '평일', days: nm(hol ? V.D4 : V.C4) || 1, ot: nm(V.F4), meal: ['O', 'X'].includes(String(V.G4 || '').trim()) ? String(V.G4).trim() : '-', asmOt: nm(V.H7), other: {}, rows: [] };
       OTHER.forEach(([k]) => { const v = nm(V[k]); if (v) doc.other[k] = v; });
       for (let r = 14; r <= 133; r++) {
-        let o = V['A' + r]; if (o == null || String(o).trim() === '') continue;
-        if (typeof o === 'number') o = String(Math.round(o) === o ? o : o);
+        let o = V['A' + r]; const hasMemo = V['AU' + r] != null && String(V['AU' + r]).trim() !== '';
+        if ((o == null || String(o).trim() === '') && !hasMemo) continue;   // 주문번호도 메모도 없으면 건너뜀
+        if (o == null) o = '';
+        if (typeof o === 'number') o = String(o);
         const row = { o: String(o).trim(), q: V['B' + r] == null ? '' : nm(V['B' + r]), m: {}, memo: V['AU' + r] ? String(V['AU' + r]) : '' };
         COLS.forEach(x => {
           const v = V[x.c + r]; if (v == null || String(v).trim() === '') return;
@@ -667,7 +675,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   async function logout(silent) {
     if (!silent && S.dirty) await saveNow();
     if (!silent) { try { await api('logout'); } catch (e) { } }
-    S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false;
+    S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S.pc = {};
     sessionStorage.removeItem('tk');
     renderLogin();
   }
@@ -725,16 +733,32 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   }
 
   // ------------------------------------------------ 일일 입력
+  // 한 달치를 한 번 받아 두고(S.pc) 날짜 이동은 화면에서 바로
+  const PC_TTL = 120000;
+  const pcKey = (uid, ym) => uid + '|' + ym;
+  function dropPc(uid) { Object.keys(S.pc || {}).forEach(k => { if (!uid || k.indexOf(uid + '|') === 0) delete S.pc[k]; }); }
   async function loadDay(date) {
-    const main = $('#main');
-    main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
+    const main = $('#main'), u = who();
+    S.pc = S.pc || {};
+    let p = periodOf(date), pc = p ? S.pc[pcKey(u.id, p.ym)] : null;
     try {
-      const r = await api('getDay', { userId: who().id, date });
+      if (!pc || Date.now() - pc.t > PC_TTL) {
+        if (!$('#grid')) main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
+        else { const ss = $('#ss'); if (ss) { ss.className = 'save-state ing'; ss.textContent = '불러오는 중…'; } }
+        const r = await api('getPeriodDays', { userId: u.id, date });
+        if (r.periods) S.periods = r.periods;
+        if (r.period) {
+          pc = { t: Date.now(), period: r.period, target: r.target, canEdit: r.canEdit, canSetTarget: r.canSetTarget, days: r.days || {} };
+          S.pc[pcKey(u.id, r.period.ym)] = pc;
+        } else pc = null;
+      }
       S.date = date;
-      const doc = r.doc || C.emptyDay(date);
+      const d = pc && pc.days[date];
+      const doc = d && d.doc ? JSON.parse(JSON.stringify(d.doc)) : C.emptyDay(date);
       doc.rows = (doc.rows || []).map(x => ({ o: x.o || '', q: x.q == null ? '' : x.q, m: x.m || {}, memo: x.memo || '' }));
       doc.other = doc.other || {};
-      S.day = { doc, exists: !!r.doc, period: r.period, canEdit: r.canEdit, target: r.target, savedAt: r.savedAt, savedBy: r.savedBy };
+      S.day = pc ? { doc, exists: !!d, period: pc.period, canEdit: pc.canEdit, canSetTarget: pc.canSetTarget, target: pc.target, savedAt: d ? d.at : '', savedBy: d ? d.by : '', pc }
+        : { doc, exists: false, period: null, canEdit: false, canSetTarget: false, target: 0, savedAt: '', savedBy: '' };
       S.dirty = false;
       renderDay();
     } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; }
@@ -768,7 +792,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     ${lockMsg ? '<div class="' + (D.period ? 'lock' : 'warn') + '">' + lockMsg + '</div>' : ''}
     <div class="energy" id="energy">
       <div class="el"><b>개인목표 달성</b><span>월 목표</span>
-        <select id="etg" ${D.period ? '' : 'disabled'}><option value="">선택</option>${C.TARGETS.map(t => `<option ${t === D.target ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        ${D.canSetTarget ? `<select id="etg" ${D.period ? '' : 'disabled'}><option value="">선택</option>${C.TARGETS.map(t => `<option ${t === D.target ? 'selected' : ''}>${t}</option>`).join('')}</select>`
+          : `<b class="tgv">${D.target || '미설정'}</b>`}</div>
       <div class="eb"><i id="efill"></i><span id="etxt"></span><em class="m90"></em><em class="m50"></em></div>
       <div class="ep" id="epct"></div>
     </div>
@@ -792,9 +817,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
         $('.gridwrap').scrollTop = 1e6;
       };
     }
-    $('#etg').onchange = async e => {
+    if ($('#etg')) $('#etg').onchange = async e => {
       const v = +e.target.value; if (!v || !D.period) return;
-      try { await api('setTarget', { userId: who().id, ym: D.period.ym, target: v }); D.target = v; refreshCalc(); toast(ymLabel(D.period.ym) + ' 목표를 ' + v + '(으)로 저장했습니다'); }
+      try { await api('setTarget', { userId: who().id, ym: D.period.ym, target: v }); D.target = v; if (D.pc) D.pc.target = v; refreshCalc(); toast(ymLabel(D.period.ym) + ' 목표를 ' + v + '(으)로 저장했습니다'); }
       catch (err) { toast(err.message, true); e.target.value = D.target || ''; }
     };
     buildTops(); buildGrid(); refreshCalc(); showSaveState();
@@ -891,6 +916,135 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   }
 
 
+
+  // ---- 여러 명 엑셀 한꺼번에 가져오기 (관리 화면) ----
+  function impStatus(x, all, existing) {
+    if (!x.date) return { k: 'bad', t: '날짜 확인 필요', dis: true };
+    if (!periodOf(x.date)) return { k: 'bad', t: '월 기간 없음', dis: true };
+    if (all.filter(y => y.date === x.date).length > 1) return { k: 'warn', t: '날짜 중복', dis: false, off: true };
+    if (x.date > S.today) return { k: 'warn', t: '미래 날짜 — 시트 이름 확인', dis: false, off: true };
+    if (existing.has(x.date)) return { k: 'warn', t: '이미 웹에 있음', dis: false, off: true, exist: true };
+    return { k: 'ok', t: '새로 넣음', dis: false };
+  }
+  function matchUser(fname, users) {
+    const base = fname.replace(/\.[^.]+$/, '').replace(/\s+/g, '');
+    let best = [], len = 0;
+    users.forEach(u => { const n = u.name.replace(/\s+/g, ''); if (n && base.indexOf(n) >= 0) { if (n.length > len) { best = [u]; len = n.length; } else if (n.length === len) best.push(u); } });
+    return best.length === 1 ? best[0] : null;
+  }
+  async function existingFor(uid, items) {
+    const ds = items.map(x => x.date).filter(Boolean).sort();
+    if (!ds.length || !uid) return new Set();
+    const en = ds[ds.length - 1], st = ds[0] < C.addDays(en, -85) ? C.addDays(en, -85) : ds[0];
+    return new Set((await api('listDates', { userId: uid, start: st, end: en })).dates);
+  }
+  function bulkImport() {
+    const fi = document.createElement('input'); fi.type = 'file'; fi.multiple = true; fi.accept = '.xlsm,.xlsx';
+    fi.onchange = async () => {
+      const files = Array.from(fi.files || []); if (!files.length) return;
+      const users = (S._musers || []).slice().sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      const close = modal('<h3>📥 여러 명 엑셀 가져오기</h3><div id="banal" class="muted">파일 분석 중… 0/' + files.length + '</div>', null, 'wide');
+      const list = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i], el = $('#banal'); if (el) el.textContent = '파일 분석 중… ' + (i + 1) + '/' + files.length + ' ' + f.name;
+        const it = { file: f.name, user: matchUser(f.name, users), items: [], existing: new Set(), err: '' };
+        try { it.items = (await C.parseWorkbook(JSZip, await f.arrayBuffer(), S.today)).sort((a, b) => (a.date || '9') < (b.date || '9') ? -1 : 1); if (!it.items.length) it.err = '날짜 시트 없음'; }
+        catch (e) { it.err = '파일을 읽지 못함'; }
+        if (it.user && !it.err) { try { it.existing = await existingFor(it.user.id, it.items); } catch (e) { it.err = e.message; } }
+        list.push(it);
+      }
+      close(); showBulk(list, users);
+    };
+    fi.click();
+  }
+  function showBulk(list, users) {
+    let overwrite = false;
+    const recalc = it => { it.items.forEach(x => { const s = impStatus(x, it.items, it.existing); x.on = !s.dis && (!s.off || (overwrite && s.exist)); }); };
+    list.forEach(it => { recalc(it); it.on = !!it.user && !it.err && it.items.some(x => x.on); });
+    const counts = it => { const c = { ok: 0, ex: 0, chk: 0, sel: 0 }; it.items.forEach(x => { const s = impStatus(x, it.items, it.existing); if (s.k === 'ok') c.ok++; else if (s.exist) c.ex++; else c.chk++; if (x.on) c.sel++; }); return c; };
+    const uopts = sel => '<option value="">— 인원 선택 —</option>' + users.map(u => `<option value="${u.id}" ${sel && sel.id === u.id ? 'selected' : ''}>${esc(u.name)} (${esc(u.group)})</option>`).join('');
+    const rowHtml = (it, i) => {
+      const c = counts(it);
+      return `<tr data-f="${i}" class="bf"><td><input type="checkbox" class="bon" ${it.on ? 'checked' : ''} ${!it.user || it.err ? 'disabled' : ''}></td>
+        <td class="bfn" title="${esc(it.file)}">${esc(it.file)}</td>
+        <td><select class="bus ${it.user ? '' : 'miss'}">${uopts(it.user)}</select></td>
+        <td class="num">${it.items.length}</td><td class="num ist ok">${c.ok}</td><td class="num ist warn">${c.ex}</td><td class="num ist ${c.chk ? 'bad' : ''}">${c.chk}</td>
+        <td class="num"><b>${c.sel}</b>일</td>
+        <td>${it.err ? `<span class="ist bad">${esc(it.err)}</span>` : `<button class="bdt">상세 ▾</button>`}</td></tr>
+        <tr class="bdet hide" data-d="${i}"><td colspan="9"></td></tr>`;
+    };
+    const detHtml = (it) => '<table class="list imp"><thead><tr><th></th><th>시트</th><th>날짜</th><th>구분</th><th class="num">주문</th><th class="num">평가평균</th><th>상태</th></tr></thead><tbody>' +
+      it.items.map((x, j) => { const s = impStatus(x, it.items, it.existing), c = C.calcDay(x.doc, 0);
+        return `<tr data-j="${j}"><td><input type="checkbox" class="don" ${x.on ? 'checked' : ''} ${s.dis ? 'disabled' : ''}></td><td>${esc(x.sheet)}</td><td><input type="date" class="ddt" value="${x.date}"></td><td>${esc(x.doc.kind)}</td><td class="num">${c.orders}</td><td class="num">${f2(c.f7)}</td><td class="ist ${s.k}">${s.t}</td></tr>`; }).join('') + '</tbody></table>';
+    modal(`<h3>📥 여러 명 엑셀 가져오기 — 파일 ${list.length}개</h3>
+      <div class="muted" style="margin-bottom:6px">파일 이름의 이름으로 인원을 자동으로 찾았습니다. 못 찾은 파일(빨간 칸)은 인원을 직접 고르세요. 이미 웹에 있는 날짜는 기본으로 건너뜁니다.</div>
+      <label style="display:inline-flex;gap:6px;align-items:center;margin-bottom:6px"><input type="checkbox" id="bow"> 이미 웹에 있는 날짜도 엑셀 내용으로 덮어쓰기</label>
+      <div style="max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:8px">
+      <table class="list bimp"><thead><tr><th><input type="checkbox" id="ball"></th><th>파일</th><th>인원</th><th class="num">날짜</th><th class="num">새로</th><th class="num">이미 있음</th><th class="num">확인 필요</th><th class="num">넣을 날짜</th><th></th></tr></thead>
+      <tbody id="bbody"></tbody></table></div>
+      <div class="row" style="margin-top:10px"><span class="muted" id="bcnt"></span><span style="flex:1"></span><span class="progress hide" id="bpg"><i></i></span><span class="muted" id="bpt"></span></div>
+      <div class="acts"><button data-c>닫기</button><button class="primary" data-s>가져오기</button></div>`, (bg, close) => {
+      const body = $('#bbody', bg);
+      const total = () => ($('#bcnt', bg).textContent = '선택 ' + list.filter(it => it.on).length + '명 · ' + list.filter(it => it.on).reduce((s, it) => s + it.items.filter(x => x.on).length, 0) + '일');
+      const draw = () => { body.innerHTML = list.map(rowHtml).join(''); bind(); total(); };
+      const bindDet = (it, i, td) => {
+        td.innerHTML = detHtml(it);
+        $$('tr[data-j]', td).forEach(tr => {
+          const x = it.items[+tr.dataset.j];
+          $('.don', tr).onchange = e => { x.on = e.target.checked; redrawRow(i, true); };
+          $('.ddt', tr).onchange = async e => {
+            x.date = e.target.value;
+            if (x.date && it.user && !it.existing.has(x.date)) { try { if ((await api('listDates', { userId: it.user.id, start: x.date, end: x.date })).dates.length) it.existing.add(x.date); } catch (er) { } }
+            const s = impStatus(x, it.items, it.existing); x.on = !s.dis && (!s.off || (overwrite && s.exist)); redrawRow(i, true);
+          };
+        });
+      };
+      const redrawRow = (i, keepOpen) => {
+        const it = list[i], tr = $(`tr.bf[data-f="${i}"]`, bg), det = $(`tr.bdet[data-d="${i}"]`, bg), open = !det.classList.contains('hide');
+        const tmp = document.createElement('tbody'); tmp.innerHTML = rowHtml(it, i);
+        tr.replaceWith(tmp.children[0]); det.replaceWith(tmp.children[0]);
+        bindRow(i); if (keepOpen && open) { const d = $(`tr.bdet[data-d="${i}"]`, bg); d.classList.remove('hide'); bindDet(it, i, $('td', d)); }
+        total();
+      };
+      const bindRow = i => {
+        const it = list[i], tr = $(`tr.bf[data-f="${i}"]`, bg);
+        $('.bon', tr).onchange = e => { it.on = e.target.checked; total(); };
+        $('.bus', tr).onchange = async e => {
+          it.user = users.find(u => u.id === e.target.value) || null; it.existing = new Set();
+          if (it.user && !it.err) { try { it.existing = await existingFor(it.user.id, it.items); } catch (er) { toast(er.message, true); } }
+          recalc(it); it.on = !!it.user && it.items.some(x => x.on); redrawRow(i, true);
+        };
+        const bt = $('.bdt', tr); if (bt) bt.onclick = () => { const d = $(`tr.bdet[data-d="${i}"]`, bg); d.classList.toggle('hide'); if (!d.classList.contains('hide')) bindDet(it, i, $('td', d)); };
+      };
+      const bind = () => list.forEach((it, i) => bindRow(i));
+      draw();
+      $('#bow', bg).onchange = e => { overwrite = e.target.checked; list.forEach(recalc); draw(); };
+      $('#ball', bg).onchange = e => { list.forEach(it => { if (it.user && !it.err) it.on = e.target.checked; }); draw(); };
+      $('[data-c]', bg).onclick = () => { close(); renderManage(); };
+      $('[data-s]', bg).onclick = async () => {
+        const jobs = []; const who2 = {};
+        list.filter(it => it.on && it.user).forEach(it => it.items.filter(x => x.on && x.date).forEach(x => jobs.push({ it, x })));
+        list.filter(it => it.on && it.user).forEach(it => { who2[it.user.id] = (who2[it.user.id] || 0) + 1; });
+        if (Object.values(who2).some(n => n > 1)) return toast('같은 인원에게 파일 두 개 이상이 선택되었습니다. 인원을 확인하세요', true);
+        if (!jobs.length) return toast('넣을 날짜가 없습니다', true);
+        if (!(await confirmBox(Object.keys(who2).length + '명 · ' + jobs.length + '일을 가져옵니다.', '가져오기'))) return;
+        const btn = $('[data-s]', bg); btn.disabled = true; $('#bpg', bg).classList.remove('hide');
+        let ok = 0; const fails = [];
+        for (let k = 0; k < jobs.length; k++) {
+          const { it, x } = jobs[k]; $('#bpt', bg).textContent = (k + 1) + '/' + jobs.length + ' ' + it.user.name + ' ' + dLabel(x.date);
+          try { await api('saveDay', { userId: it.user.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc) }); ok++; it.existing.add(x.date); x.on = false; }
+          catch (e) { fails.push(it.user.name + ' ' + dLabel(x.date) + ': ' + e.message); }
+          $('#bpg i', bg).style.width = ((k + 1) / jobs.length * 100) + '%';
+        }
+        list.forEach(it => { if (it.user) dropPc(it.user.id); it.on = false; });
+        draw(); btn.disabled = false;
+        $('#bpt', bg).textContent = '완료 ' + ok + '일' + (fails.length ? ' · 실패 ' + fails.length + '일' : '');
+        if (fails.length) modal('<h3>일부 실패</h3><div style="max-height:40vh;overflow:auto;line-height:1.7">' + fails.map(esc).join('<br>') + '</div><div class="acts"><button data-c>닫기</button></div>', (b2, c2) => ($('[data-c]', b2).onclick = c2));
+        else toast(ok + '일을 가져왔습니다');
+      };
+    }, 'wide');
+  }
+
   // ---- 기존 엑셀 가져오기 (매니저·관리자) ----
   function importXlsx() {
     const fi = document.createElement('input'); fi.type = 'file'; fi.accept = '.xlsm,.xlsx';
@@ -968,6 +1122,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
           catch (e) { fails.push(dLabel(x.date) + ': ' + e.message); }
           $('#ipg i', bg).style.width = ((i + 1) / sel.length * 100) + '%';
         }
+        dropPc(u.id);
         $('#ipt', bg).textContent = '완료 ' + ok + '일' + (fails.length ? ' · 실패 ' + fails.length + '일' : '');
         $('#ibody', bg).innerHTML = rowsHtml(); bind(); cnt(); btn.disabled = false;
         if (fails.length) toast('일부 실패: ' + fails[0], true); else toast(ok + '일을 가져왔습니다');
@@ -1075,7 +1230,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     const rate = c.c8 == null ? 0 : Math.max(0, c.c8), w = Math.min(100, rate * 100);
     const fill = $('#efill'), cls = c.c8 == null ? 'none' : rate >= 0.9 ? 'hi' : rate <= 0.5 ? 'lo' : 'mid';
     fill.style.width = w + '%'; fill.className = cls;
-    $('#etxt').textContent = D.target ? '평가평균 ' + f2(c.f7) + '  /  목표 ' + D.target : '월 목표를 선택하면 달성률이 표시됩니다';
+    $('#etxt').textContent = D.target ? '평가평균 ' + f2(c.f7) + '  /  목표 ' + D.target : (D.canSetTarget ? '월 목표를 선택하면 달성률이 표시됩니다' : '월 목표 미설정 — 담당 매니저에게 문의하세요');
     $('#epct').textContent = D.target ? pct(c.c8) : '-';
     $('#epct').className = 'ep ' + cls;
     $('#stats').innerHTML = `
@@ -1124,6 +1279,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
     try {
       const r = await api('saveDay', { userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean) });
       S.day.savedAt = r.savedAt; S.day.savedBy = r.savedBy; S.day.exists = true;
+      if (S.day.pc) S.day.pc.days[S.date] = { doc: JSON.parse(JSON.stringify(clean)), at: r.savedAt, by: r.savedBy };
       if (JSON.stringify(doc) === snapshotDirty) S.dirty = false;
       S.saving = false; showSaveState();
       if (manual) toast('저장했습니다');
@@ -1135,7 +1291,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
   }
   async function delDay() {
     if (!(await confirmBox(dLabel(S.date) + ' 데이터를 통째로 삭제할까요?<br><span class="muted">엑셀로 받을 때 이 날짜 시트가 빠집니다.</span>', '삭제'))) return;
-    try { await api('deleteDay', { userId: who().id, date: S.date }); S.dirty = false; toast('삭제했습니다'); loadDay(S.date); }
+    try { await api('deleteDay', { userId: who().id, date: S.date }); if (S.day.pc) delete S.day.pc.days[S.date]; S.dirty = false; toast('삭제했습니다'); loadDay(S.date); }
     catch (e) { toast(e.message, true); }
   }
   // 창을 닫을 때 저장 안 된 내용이 있으면 마지막으로 한 번 더 보냄 (keepalive)
@@ -1263,6 +1419,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
         <span style="flex:1"></span>
         <div class="seg"><button data-mv="list" class="${S.mView === 'list' ? 'on' : ''}">인원별 목록</button><button data-mv="board" class="${S.mView === 'board' ? 'on' : ''}">일자별 현황판</button></div>
         <span class="progress hide" id="pg"><i></i></span><span class="muted" id="pgt"></span>
+        <button id="bimp" title="인원별 기존 엑셀 파일을 여러 개 골라 한꺼번에 넣습니다 (파일 이름의 이름으로 인원 자동 찾기)">📥 여러 명 엑셀 가져오기</button>
         <button id="zip" ${xym ? '' : 'disabled'}>⬇ 엑셀 전체 (zip)</button>
       </div>
       <div class="sumrow">
@@ -1286,6 +1443,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
       if ($('#rgo')) $('#rgo').onclick = () => { S.mRange = { start: $('#rs').value, end: $('#re').value }; renderManage(); };
       $('#mg').onchange = e => { S.manageGroup = e.target.value; renderManage(); };
       $('#zip').onclick = () => xym && zipAll(xym);
+      S._musers = r.users;
+      $('#bimp').onclick = bulkImport;
     }
     if (S.me.period && S.mMode === 'month') bindPeriodPanel();
   }
@@ -1306,13 +1465,23 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwls0hpbyPZDB05r_8zB9pT
         const stale = u.last && u.last < C.addDays(today, -2), has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
         return `<tr data-u="${u.id}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}</td><td>${esc(u.group)}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : '입력 없음'}</td>
-        <td class="num">${u.target || '<span class="muted">-</span>'}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
+        <td class="num">${xym ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td>${c8 == null ? '<span class="muted">-</span>' : `<div class="mini"><i class="${rateCls(c8)}" style="width:${Math.min(100, c8 * 100)}%"></i></div><b class="${rateCls(c8)}t">${pct(c8)}</b>`}</td>
         <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' && u.role === '일반' ? '<button data-a="pin" class="danger">비번</button>' : ''}</td></tr>`;
       }).join('') || '<tr><td colspan="11" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
     $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; renderMList(r); }));
+    $$('.mlist select.mtg').forEach(sel => (sel.onchange = async () => {
+      const u = S._mlist.find(x => x.id === sel.closest('tr').dataset.u), v = +sel.value;
+      if (!v) { sel.value = u.target || ''; return; }
+      sel.disabled = true;
+      try {
+        await api('setTarget', { userId: u.id, ym: xym, target: v });
+        u.target = v; u.m = C.calcMonth(u.items, v); dropPc(u.id);
+        toast(u.name + ' ' + ymLabel(xym) + ' 목표 ' + v); renderMList(r);
+      } catch (e) { toast(e.message, true); sel.value = u.target || ''; sel.disabled = false; }
+    }));
     $$('.mlist tr[data-u] button').forEach(b => (b.onclick = async () => {
       const u = S._mlist.find(x => x.id === b.closest('tr').dataset.u);
       if (b.dataset.a === 'day') openUser(u, 'day', u.last);
