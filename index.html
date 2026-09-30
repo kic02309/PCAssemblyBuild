@@ -136,6 +136,8 @@ table.list tr.click:hover td{background:#f5f8ff}
 .modal .fld{margin-bottom:10px}.modal input,.modal select{width:100%}
 .modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .2s}
+.gtbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:8px 12px;background:#fffbe6;border:1px solid #f0e2a8;border-radius:8px;font-size:13px}.gtbar select{padding:3px 6px}
+.chks{display:flex;flex-wrap:wrap;gap:6px 16px;padding:4px 0}.chks label{display:flex;align-items:center;gap:5px;font-size:14px;color:inherit;margin:0}
 #perf{position:fixed;right:10px;bottom:6px;font-size:11px;color:#8a94a6;z-index:5;pointer-events:none}
 #toast.show{opacity:1}#toast.err{background:var(--red)}
 .section-t{font-size:15px;font-weight:700;margin:18px 0 8px}
@@ -219,7 +221,7 @@ table.bd td.e{background:#fff}
 table.bd tfoot td{position:sticky;bottom:0;background:#e9edf2;font-weight:700;border-top:2px solid #8792a3}
 table.bd tfoot .bn{z-index:3;background:#dfe5ec}
 details.pp{margin-top:12px}details.pp>summary{cursor:pointer;font-size:15px;font-weight:700;padding:8px 2px;list-style:revert}details.pp>.card{margin-top:6px}
-.modal.wide{width:min(900px,94vw)}
+.modal.wide{width:min(900px,94vw)}.modal.md{width:min(480px,94vw)}.modal .acts button{white-space:nowrap}
 table.imp td{padding:5px 10px}table.imp input[type=date]{padding:3px 5px}
 .ist.ok{color:var(--green);font-weight:700}.ist.warn{color:#a15c00;font-weight:700}.ist.bad{color:var(--red);font-weight:700}
 .energy .tgv{font-size:15px;padding:3px 10px;background:#eef1f5;border-radius:6px}
@@ -1475,6 +1477,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <div><span>달성 50% 이하</span><b class="t-lo">${lo}명</b></div>
         <div><span>목표 미설정</span><b>${act.length - withT.length}명</b></div>
       </div>
+      ${S.mView === 'list' && S.mMode === 'month' && xym ? `<div class="gtbar"><b>그룹 목표 한꺼번에</b>
+        <select id="gtg">${r.groups.filter(g => g !== '팀장').map(g => `<option ${g === S.manageGroup ? 'selected' : ''}>${g}</option>`).join('')}</select> 일반 인원 전체를
+        <select id="gtv"><option value="">목표 선택</option>${C.TARGETS.map(t => `<option>${t}</option>`).join('')}</select>(으)로 <button id="gtgo">적용</button>
+        <span class="muted">${ymLabel(xym)} 목표 · 적용 후 사람별로 다시 바꿀 수 있습니다</span></div>` : ''}
       <div id="mbody"></div>`;
     }
     if (S.me.period && S.mMode === 'month') html += periodPanel();
@@ -1490,6 +1496,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       $('#zip').onclick = () => xym && zipAll(xym);
       S._musers = r.users;
       $('#bimp').onclick = bulkImport;
+      if ($('#gtgo')) $('#gtgo').onclick = async () => {
+        const g = $('#gtg').value, v = $('#gtv').value;
+        if (!v) return toast('목표를 선택하세요', true);
+        const n = r.users.filter(u => u.group === g && u.role === '일반').length;
+        if (!n) return toast(g + '에 일반 인원이 없습니다', true);
+        if (!(await confirmBox('<b>' + esc(g) + '</b> 일반 인원 <b>' + n + '명</b>의 ' + ymLabel(xym) + ' 목표를 <b>' + v + '</b>(으)로 정합니다.<br><span class="muted">이미 정해 둔 사람의 목표도 바뀝니다.</span>', '적용'))) return;
+        try { const x = await api('setTargetGroup', { group: g, ym: xym, target: v }); toast(g + ' ' + x.count + '명 목표 ' + v); S._mcache = {}; S.pc = {}; renderManage(); } catch (e) { toast(e.message, true); }
+      };
     }
     if (S.me.period && S.mMode === 'month') { bindPeriodPanel(); if (ppOpen && $('details.pp')) $('details.pp').open = true; }
   }
@@ -1513,7 +1527,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <td class="num">${xym ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td>${c8 == null ? '<span class="muted">-</span>' : `<div class="mini"><i class="${rateCls(c8)}" style="width:${Math.min(100, c8 * 100)}%"></i></div><b class="${rateCls(c8)}t">${pct(c8)}</b>`}</td>
-        <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' && u.role === '일반' ? '<button data-a="pin" class="danger">비번</button><button data-a="ren">이름</button><button data-a="del" class="danger">삭제</button>' : ''}</td></tr>`;
+        <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' ? '<button data-a="edit" title="이름·그룹·권한 변경, 비밀번호 초기화, 계정 삭제">✎ 편집</button>' : ''}</td></tr>`;
       }).join('') || '<tr><td colspan="11" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
     $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; renderMList(r); }));
@@ -1536,26 +1550,46 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         b.disabled = true;
         try { const mr = await api('getMonth', { userId: u.id, ym: xym }); await downloadXlsx(mr.user, xym, mr.target, mr.days); } catch (e) { toast(e.message, true); }
         b.disabled = false;
-      } else if (b.dataset.a === 'pin') {
-        if (!(await confirmBox(esc(u.name) + ' 님의 비밀번호를 초기화할까요?<br><span class="muted">다음 로그인 때 입력하는 4자리가 새 비밀번호가 됩니다.</span>', '초기화'))) return;
-        try { await api('resetPin', { userId: u.id }); toast('초기화했습니다'); } catch (e) { toast(e.message, true); }
-      } else if (b.dataset.a === 'ren') {
-        modal(`<h3>이름 변경</h3><div class="fld"><label>새 이름 (${esc(u.name)} → )</label><input id="rnm" value="${esc(u.name)}" autocomplete="off"></div>
-          <div class="muted">입력한 데이터는 그대로 이 사람에게 남습니다. 다음 로그인부터 새 이름을 씁니다.</div>
-          <div class="acts"><button data-n>취소</button><button class="primary" data-y>변경</button></div>`, (bg, close) => {
-          const inp = $('#rnm', bg); inp.focus(); inp.select();
-          $('[data-n]', bg).onclick = close;
-          const doIt = async () => {
-            try { const x = await api('renameUser', { userId: u.id, name: inp.value }); close(); toast(u.name + ' → ' + x.name); S._mcache = {}; renderManage(); } catch (e) { toast(e.message, true); }
-          };
-          $('[data-y]', bg).onclick = doIt; inp.addEventListener('keydown', e => { if (e.key === 'Enter') doIt(); });
-        });
-      } else if (b.dataset.a === 'del') {
-        const n = u.items.length;
-        if (!(await confirmBox('<b>' + esc(u.name) + '</b> (' + esc(u.group) + ') 계정을 삭제할까요?<br><span class="muted">이 사람이 입력한 모든 달의 데이터와 목표도 함께 지워지며 되돌릴 수 없습니다.</span>' + (n ? '<br><b style="color:var(--red)">이번 기간에 입력한 데이터 ' + n + '일이 있습니다.</b>' : ''), '삭제'))) return;
-        try { const x = await api('deleteUser', { userId: u.id }); toast(u.name + ' 삭제 (데이터 ' + x.rows + '일)'); S._mcache = {}; renderManage(); } catch (e) { toast(e.message, true); }
-      }
+      } else if (b.dataset.a === 'edit') editUser(u);
     }));
+  }
+  // 관리자 : 인원 편집 (이름·그룹·권한·담당 그룹, 비밀번호 초기화, 계정 삭제)
+  function editUser(u) {
+    const GL = C.GROUP_LIST.concat(['팀장']), self = u.id === S.me.id, mg0 = u.mg || [];
+    const opt = (list, v) => list.map(x => `<option ${x === v ? 'selected' : ''}>${x}</option>`).join('');
+    modal(`<h3>인원 편집 — ${esc(u.name)}</h3>
+      <div class="fld"><label>이름</label><input id="eu_n" value="${esc(u.name)}" autocomplete="off"></div>
+      <div class="fld"><label>소속 그룹</label><select id="eu_g">${opt(GL, u.group)}</select></div>
+      <div class="fld"><label>권한${self ? ' (본인 권한은 바꿀 수 없음)' : ''}</label><select id="eu_r" ${self ? 'disabled' : ''}>${opt(['일반', '매니저', '관리자'], u.role)}</select></div>
+      <div class="fld" id="eu_mgw"><label>담당 그룹 (매니저가 보고 고칠 수 있는 그룹)</label>
+        <div class="chks">${C.GROUP_LIST.map(g => `<label><input type="checkbox" value="${g}" ${mg0.includes(g) ? 'checked' : ''}>${g}</label>`).join('')}</div></div>
+      <div class="muted" style="line-height:1.6">· 그룹을 바꾸면 지난 기록까지 새 그룹 매니저에게 보이고, 이전 그룹 매니저에게는 안 보입니다.<br>· 입력한 데이터는 그대로 이 사람에게 남습니다.</div>
+      <div class="acts" style="justify-content:space-between">
+        <div style="display:flex;gap:8px">${u.role !== '관리자' ? '<button data-pin>비밀번호 초기화</button>' : ''}${u.role === '일반' ? '<button class="danger" data-del>계정 삭제</button>' : ''}</div>
+        <div style="display:flex;gap:8px"><button data-n>취소</button><button class="primary" data-y>저장</button></div>
+      </div>`, (bg, close) => {
+      const role = $('#eu_r', bg), mgw = $('#eu_mgw', bg);
+      const sync = () => mgw.classList.toggle('hide', role.value !== '매니저'); sync(); role.onchange = sync;
+      const done = msg => { close(); toast(msg); S._mcache = {}; S.pc = {}; renderManage(); };
+      $('[data-n]', bg).onclick = close;
+      $('[data-y]', bg).onclick = async () => {
+        const mg = $$('.chks input:checked', bg).map(x => x.value);
+        try {
+          const x = await api('updateUser', { userId: u.id, name: $('#eu_n', bg).value, group: $('#eu_g', bg).value, role: role.value, mg });
+          if (self) { S.me.name = x.user.name; S.me.group = x.user.group; shell(); setNav(); }
+          done(x.user.name + ' 저장 (' + x.user.group + ' · ' + x.user.role + (x.user.mg.length ? ' · 담당 ' + x.user.mg.join(',') : '') + ')');
+        } catch (e) { toast(e.message, true); }
+      };
+      if ($('[data-pin]', bg)) $('[data-pin]', bg).onclick = async () => {
+        if (!(await confirmBox(esc(u.name) + ' 님의 비밀번호를 초기화할까요?<br><span class="muted">다음 로그인 때 입력하는 4자리가 새 비밀번호가 됩니다.</span>', '초기화'))) return;
+        try { await api('resetPin', { userId: u.id }); done(u.name + ' 비밀번호 초기화'); } catch (e) { toast(e.message, true); }
+      };
+      if ($('[data-del]', bg)) $('[data-del]', bg).onclick = async () => {
+        const n = (u.items || []).length;
+        if (!(await confirmBox('<b>' + esc(u.name) + '</b> (' + esc(u.group) + ') 계정을 삭제할까요?<br><span class="muted">이 사람이 입력한 모든 달의 데이터와 목표도 함께 지워지며 되돌릴 수 없습니다.</span>' + (n ? '<br><b style="color:var(--red)">이번 기간에 입력한 데이터 ' + n + '일이 있습니다.</b>' : ''), '삭제'))) return;
+        try { const x = await api('deleteUser', { userId: u.id }); done(u.name + ' 삭제 (데이터 ' + x.rows + '일)'); } catch (e) { toast(e.message, true); }
+      };
+    }, 'md');
   }
   function renderBoard(r) {
     const list = S._mlist, end = r.range.end > S.today ? S.today : r.range.end, dates = [];
