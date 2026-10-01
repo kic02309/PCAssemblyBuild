@@ -176,6 +176,7 @@ table.grid td.n input,table.grid tbody td.c3 input{cursor:pointer}
 .energy .ep{font-size:26px;font-weight:800;min-width:96px;text-align:right;font-variant-numeric:tabular-nums}
 .energy .ep.hi{color:#1e63c4}.energy .ep.mid{color:#b58800}.energy .ep.lo{color:#d32f2f}.energy .ep.none{color:#9aa4b2}
 .stats{grid-template-columns:repeat(5,minmax(120px,1fr))!important}
+.stats.s6{grid-template-columns:repeat(6,minmax(120px,1fr))!important}
 /* 제목 설명 말풍선 */
 #tip{position:fixed;z-index:160;max-width:340px;background:#1f2a3a;color:#fff;border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.28);pointer-events:none;display:none;white-space:normal}
 #tip.show{display:block}
@@ -849,8 +850,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       };
     }
     if ($('#etg')) $('#etg').onchange = async e => {
-      const v = +e.target.value; if (!v || !D.period) return;
-      try { await api('setTarget', { userId: who().id, ym: D.period.ym, target: v }); D.target = v; if (D.pc) D.pc.target = v; refreshCalc(); toast(ymLabel(D.period.ym) + ' 목표를 ' + v + '(으)로 저장했습니다'); }
+      const v = +e.target.value || 0; if (!D.period) return;
+      try { await api('setTarget', { userId: who().id, ym: D.period.ym, target: v }); D.target = v; if (D.pc) D.pc.target = v; refreshCalc(); toast(ymLabel(D.period.ym) + (v ? ' 목표를 ' + v + '(으)로 저장했습니다' : ' 목표를 지웠습니다')); }
       catch (err) { toast(err.message, true); e.target.value = D.target || ''; }
     };
     buildTops(); buildGrid(); refreshCalc(); showSaveState();
@@ -1363,7 +1364,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     </div>
     ${over ? '<div class="warn">입력된 날짜가 ' + r.days.length + '일로 엑셀 통계 시트 한도(30일)를 넘습니다. 앞의 30일만 엑셀에 들어갑니다.</div>' : ''}
     ${!r.target ? '<div class="warn">월 목표가 선택되지 않아 달성률이 표시되지 않습니다. 위에서 월 목표를 선택하세요.</div>' : ''}
-    <div class="stats">
+    <div class="stats s6">
       <div class="stat"><div class="k">평가 평균</div><div class="v">${f2(m.f7)}</div></div>
       <div class="stat"><div class="k">달성률</div><div class="v">${r.target ? pct(m.c8) : '-'}</div>${m.c8 != null ? `<div class="bar"><i class="${m.c8 >= 0.9 ? 'hi' : m.c8 <= 0.5 ? 'lo' : ''}" style="width:${Math.min(100, m.c8 * 100)}%"></i></div>` : ''}</div>
       <div class="stat"><div class="k">실제 평균</div><div class="v">${f2(m.i7)}</div></div>
@@ -1378,7 +1379,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     </div>`;
     $('#ym').onchange = e => renderMonth(e.target.value);
     $('#tg').onchange = async e => {
-      try { await api('setTarget', { userId: who().id, ym, target: +e.target.value }); if (pc) pc.target = +e.target.value; toast('목표를 저장했습니다'); renderMonth(ym); }
+      const v = +e.target.value || 0;
+      try { await api('setTarget', { userId: who().id, ym, target: v }); dropPc(who().id); toast(v ? '목표를 저장했습니다' : '목표를 지웠습니다'); renderMonth(ym); }
       catch (err) { toast(err.message, true); }
     };
     $$('tr[data-d]').forEach(tr => (tr.onclick = () => go('input', { date: tr.dataset.d })));
@@ -1532,14 +1534,13 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       </tbody></table></div>`;
     $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; renderMList(r); }));
     $$('.mlist select.mtg').forEach(sel => (sel.onchange = async () => {
-      const u = S._mlist.find(x => x.id === sel.closest('tr').dataset.u), v = +sel.value;
-      if (!v) { sel.value = u.target || ''; return; }
+      const u = S._mlist.find(x => x.id === sel.closest('tr').dataset.u), v = +sel.value || 0;   // '-' = 목표 지우기
       sel.disabled = true;
       try {
         await api('setTarget', { userId: u.id, ym: xym, target: v });
         u.target = v; u.m = C.calcMonth(u.items, v); dropPc(u.id);
         const o = r.users.find(x => x.id === u.id); if (o) o.target = v;
-        toast(u.name + ' ' + ymLabel(xym) + ' 목표 ' + v); renderMList(r);
+        toast(u.name + ' ' + ymLabel(xym) + (v ? ' 목표 ' + v : ' 목표 지움')); renderMList(r);
       } catch (e) { toast(e.message, true); sel.value = u.target || ''; sel.disabled = false; }
     }));
     $$('.mlist tr[data-u] button').forEach(b => (b.onclick = async () => {
