@@ -136,6 +136,7 @@ table.list tr.click:hover td{background:#f5f8ff}
 .modal .fld{margin-bottom:10px}.modal input,.modal select{width:100%}
 .modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .2s}
+table.rt td{padding:4px 8px}table.rt input{padding:4px 6px}table.rt input.rm{width:70px;text-align:right}table.rt input.rtp{width:100%;min-width:380px}table.rt input.chg{background:#fff4c2;border-color:#e0b400;font-weight:700}
 .gtbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:8px 12px;background:#fffbe6;border:1px solid #f0e2a8;border-radius:8px;font-size:13px}.gtbar select{padding:3px 6px}
 .chks{display:flex;flex-wrap:wrap;gap:6px 16px;padding:4px 0}.chks label{display:flex;align-items:center;gap:5px;font-size:14px;color:inherit;margin:0}
 #perf{position:fixed;right:10px;bottom:6px;font-size:11px;color:#8a94a6;z-index:5;pointer-events:none}
@@ -269,6 +270,13 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     ['AS', 'num', '반조\n받음', -3], ['AT', 'num', '개인\n포장', 5],
   ].map(([c, kind, label, min]) => ({ c, kind, label, min, rate: min / 30 }));
   const COL = {}; COLS.forEach(x => (COL[x.c] = x));
+  // 항목별 분 : 기본값(원본 엑셀) + 관리자가 귀속월별로 바꾼 값
+  const DEFAULT_MINS = {}; COLS.forEach(x => (DEFAULT_MINS[x.c] = x.min));
+  function minsMap(over) {
+    const m = Object.assign({}, DEFAULT_MINS);
+    if (over) for (const k in over) if (k in m && over[k] !== '' && over[k] != null && isFinite(+over[k])) m[k] = +over[k];
+    return m;
+  }
 
   const GROUPS = [
     ['조립 구분', 'C', 'G'], ['운송 방법', 'H', 'J'], ['케이스', 'K', 'P'], ['쿨러', 'Q', 'V'], ['케이스 쿨러', 'W', 'Z'],
@@ -313,8 +321,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   // ---- 하루 계산 (엑셀 날짜 시트 1~10행과 동일) ----
-  function calcDay(doc, target) {
-    const r10 = {}, r9 = {};
+  function calcDay(doc, target, mins) {
+    const M = minsMap(mins), rt = c => M[c] / 30;
+    const r10 = {}, r9 = {}, t = {}; let gq = 0;
     COLS.forEach(x => (r10[x.c] = 0));
     ['C', 'D', 'E', 'F', 'G'].forEach(c => (r9[c] = 0));
     (doc.rows || []).forEach(row => {
@@ -327,12 +336,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         if (x.kind === 'type') return;
         const v = m[x.c];
         if (!v) return;
-        if (x.kind === 'ship') { r10[x.c] += 1; score += x.rate; }
-        else if (x.kind === 'num') { r10[x.c] += num(v); score += x.rate * num(v); }
-        else { r10[x.c] += q; score += x.rate * q; }
+        const n = x.kind === 'ship' ? 1 : x.kind === 'num' ? num(v) : q;
+        r10[x.c] += n; score += rt(x.c) * n;
+        if (typeCol) t[x.c] = (t[x.c] || 0) + n;          // 조립구분이 있는 줄의 개수 (점수 바뀌어도 다시 계산할 수 있게)
       });
       if (typeCol) {
-        if (typeCol === 'G') score += q * 0.1;
+        if (typeCol === 'G') { score += q * 0.1; gq += q; }
         r9[typeCol] += score;
       }
     });
@@ -348,20 +357,30 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const f6 = work + hol + num(doc.asmOt) / 60 / 8.5;
     const f7 = f6 ? (sumType + w7) / f6 : 0;
     const c8 = target ? f7 / target : null;
-    return { r9, r10, w7, e2, g2, e4, f6, f7, c8, otherMin, qty: g2, orders: (doc.rows || []).filter(r => r && String(r.o || '').trim()).length };
+    return { r9, r10, t, gq, w7, e2, g2, e4, f6, f7, c8, otherMin, qty: g2, orders: (doc.rows || []).filter(r => r && String(r.o || '').trim()).length };
   }
 
   // 서버에 함께 저장하는 요약 (관리 화면 월 집계용)
-  function daySummary(doc) {
-    const d = calcDay(doc, 0);
+  function daySummary(doc, mins) {
+    const d = calcDay(doc, 0, mins);
     const r10 = {}; COLS.forEach(x => { if (d.r10[x.c]) r10[x.c] = d.r10[x.c]; });
     const o = {}; OTHER.forEach(([k]) => { if (num((doc.other || {})[k])) o[k] = num(doc.other[k]); });
-    return { r10, e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, kind: doc.kind };
+    return { r10, t: d.t, gq: d.gq, d: num(doc.days), e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, kind: doc.kind };
+  }
+  // 저장된 요약으로 그날 기본환산·평가평균을 그 달 점수로 다시 계산 (예전 요약은 저장값 사용)
+  function sumDay(s, mins) {
+    if (!s || !s.t) return { e2: num(s && s.e2), f7: num(s && s.f7) };
+    const M = minsMap(mins); let sc = num(s.gq) * 0.1;
+    for (const c in s.t) sc += num(s.t[c]) * (M[c] || 0) / 30;
+    const w7 = OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30;
+    const e2 = sc + w7, f6 = num(s.d) + num(s.h7) / 60 / 8.5;
+    return { e2, f7: f6 ? e2 / f6 : 0 };
   }
 
   // ---- 월 계산 (엑셀 통계 시트와 동일) ----
   // items: [{date:'yyyy-mm-dd', sum: daySummary}]  (날짜순)
-  function calcMonth(items, target) {
+  function calcMonth(items, target, mins) {
+    const M = minsMap(mins);
     items = items.slice().sort((a, b) => a.date < b.date ? -1 : 1).slice(0, MAX_DAYS);
     let c4 = 0, d4 = 0; const osum = {}; OTHER.forEach(([k]) => (osum[k] = 0));
     const r10 = {}; COLS.forEach(x => (r10[x.c] = 0));
@@ -372,15 +391,16 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       OTHER.forEach(([k]) => (osum[k] += num((s.o || {})[k])));
       COLS.forEach(x => (r10[x.c] += num((s.r10 || {})[x.c])));
       sumAU += num(s.e4); sumAV += num(s.h7); if (num(s.e4) > 0) otCount++;
-      const aw = (dow === 6 || dow === 0) && num(s.e2) ? num(s.e2) * 0.25 : 0;
+      const sd = sumDay(s, mins);
+      const aw = (dow === 6 || dow === 0) && sd.e2 ? sd.e2 * 0.25 : 0;
       sumAW += aw;
-      return { date: it.date, dow, f7: num(s.f7), e2: num(s.e2), e4: num(s.e4), h7: num(s.h7), n: s.n || 0, kind: s.kind, aw };
+      return { date: it.date, dow, f7: sd.f7, e2: sd.e2, e4: num(s.e4), h7: num(s.h7), n: s.n || 0, kind: s.kind, aw };
     });
     const days = items.length;
     const otherTotal = OTHER.reduce((a, [k]) => a + osum[k], 0);
     const w7 = days ? (otherTotal / 30) / days : 0;
     let sumH_AT = 0;
-    COLS.forEach(x => { if (x.kind !== 'type') sumH_AT += r10[x.c] * x.rate; });
+    COLS.forEach(x => { if (x.kind !== 'type') sumH_AT += r10[x.c] * M[x.c] / 30; });
     const cd = c4 + d4;
     const g4 = cd ? sumAW / cd : 0;
     const f6 = cd + sumAV / 60 / 8.5;
@@ -418,13 +438,27 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       return '<c r="' + ref + '"' + s + ' t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
     });
   }
+  // 3행(분) 값을 그 달 점수로 바꿈 (날짜 시트·통계 시트 모두 숫자로)
+  function setMinsRow(xml, M) {
+    COLS.forEach(x => {
+      if (x.kind === 'type') return;
+      xml = xml.replace(new RegExp('<c r="' + x.c + '3"( s="\\d+")?(?:/>|>(?:(?!</c>).)*</c>)'), (m, st) => '<c r="' + x.c + '3"' + (st || '') + '><v>' + M[x.c] + '</v></c>');
+    });
+    return xml;
+  }
+  function setTips(xml, tips) {
+    if (!tips) return xml;
+    return xml.replace(/<hyperlink ref="([A-Z]+)13"([^>]*?) tooltip="[^"]*"/g, (m, c, mid) => tips[c] ? '<hyperlink ref="' + c + '13"' + mid + ' tooltip="' + esc(tips[c]) + '"' : m);
+  }
   function colN(c) { let n = 0; for (const ch of c) n = n * 26 + ch.charCodeAt(0) - 64; return n; }
 
   async function buildXlsx(JSZip, templateB64, info) {
     // info: {name, ym:'2026-11', target, days:[{date, doc}]}
     const tpl = await JSZip.loadAsync(templateB64, { base64: true });
     const T = async p => tpl.file(p).async('string');
-    const [stat, start, end, day] = await Promise.all([T('tpl/stat.xml'), T('tpl/start.xml'), T('tpl/end.xml'), T('tpl/day.xml')]);
+    let [stat, start, end, day] = await Promise.all([T('tpl/stat.xml'), T('tpl/start.xml'), T('tpl/end.xml'), T('tpl/day.xml')]);
+    const M = minsMap(info.mins);
+    day = setTips(setMinsRow(day, M), info.tips); stat = setMinsRow(stat, M);
     const days = info.days.slice().sort((a, b) => a.date < b.date ? -1 : 1).slice(0, MAX_DAYS);
     const out = new JSZip();
     const F = (p, d) => out.file(p, d, { createFolders: false });
@@ -453,12 +487,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       xml = xml.split("'__SHEET__'!").join("'" + nm + "'!");
       if (doc.kind === '휴일') xml = xml.replace('<dimension ', '<sheetPr><tabColor rgb="FFFF0000"/></sheetPr><dimension ');
       sheets.push({ name: nm, xml });
-      monthItems.push({ date: it.date, sum: daySummary(doc) });
+      monthItems.push({ date: it.date, sum: daySummary(doc, info.mins) });
     }
     sheets.push({ name: '끝', xml: end });
 
     // 통계 시트 : 매크로(Worksheet_Activate)가 채우던 값을 그대로 채움
-    const mc = calcMonth(monthItems, num(info.target));
+    const mc = calcMonth(monthItems, num(info.target), info.mins);
     const sv = {};
     days.forEach((it, i) => (sv['A' + (14 + i)] = serial(it.date)));
     if (num(info.target)) sv.C2 = num(info.target);
@@ -555,7 +589,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   root.Core = {
-    COLS, COL, GROUPS, EXCLUSIVE, TIPS, TARGETS, OT_LIST, OTHER, GROUP_LIST, MAX_ROWS, BASE_ROWS, MAX_DAYS,
+    COLS, COL, DEFAULT_MINS, minsMap, sumDay, GROUPS, EXCLUSIVE, TIPS, TARGETS, OT_LIST, OTHER, GROUP_LIST, MAX_ROWS, BASE_ROWS, MAX_DAYS,
     num, normOrder, emptyDay, calcDay, daySummary, calcMonth, buildXlsx, fileName,
     ymd, addDays, WD, sheetName, serial, pad, parseWorkbook,
   };
@@ -651,6 +685,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   const curPeriod = () => S.periods.find(p => p.status === '진행') || S.periods[S.periods.length - 1] || null;
   const isManager = () => S.me && S.me.role !== '일반';
   const who = () => S.target || S.me;
+  // 항목별 분 : 그 귀속월(또는 그 이전 가장 가까운 달)에 정한 값, 없으면 기본값
+  const rateSet = ym => { let best = null; (S.rates || []).forEach(r => { if (ym && r.ym <= ym && (!best || r.ym > best.ym)) best = r; }); return best; };
+  const minsYm = ym => (rateSet(ym) || {}).mins || null;
+  const tipsYm = ym => Object.assign({}, C.TIPS, (rateSet(ym) || {}).tips || {});
+  const ymOfDate = d => (periodOf(d) || {}).ym || String(d || '').slice(0, 7);
+  const minsOf = d => minsYm(ymOfDate(d));
 
   // ------------------------------------------------ 로그인
   function renderLogin(tab) {
@@ -772,6 +812,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         else { const ss = $('#ss'); if (ss) { ss.className = 'save-state ing'; ss.textContent = '불러오는 중…'; } }
         const r = await api('getPeriodDays', { userId: u.id, date });
         if (r.periods) S.periods = r.periods;
+        if (r.rates) S.rates = r.rates;
         if (r.period) {
           pc = { t: Date.now(), period: r.period, target: r.target, canEdit: r.canEdit, canSetTarget: r.canSetTarget, days: r.days || {} };
           S.pc[pcKey(u.id, r.period.ym)] = pc;
@@ -889,6 +930,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   function buildGrid() {
     const D = S.day, doc = D.doc, ro = !D.canEdit, cols = C.COLS.filter(x => x.label !== '-');
+    const MN = C.minsMap(minsOf(S.date)), TP = tipsYm(ymOfDate(S.date));
     const gStart = {}; C.GROUPS.forEach(g => (gStart[g[1]] = 1));
     const gOf = {}; C.GROUPS.forEach((g, gi) => C.COLS.forEach(x => { if (colIdx(x.c) >= colIdx(g[1]) && colIdx(x.c) <= colIdx(g[2])) gOf[x.c] = gi; }));
     let h1 = '<tr><th class="stk c0" rowspan="3"></th><th class="stk c1" rowspan="3">#</th><th class="stk c2" rowspan="3">주문번호</th><th class="stk c3" rowspan="3">수량</th>';
@@ -901,9 +943,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     cols.forEach(x => {
       const g = (gStart[x.c] ? ' gs' : '') + ' gc g' + gOf[x.c];
       const grpName = (C.GROUPS[gOf[x.c]] || [''])[0];
-      const tip = '<b>' + esc(grpName) + ' · ' + esc(x.label.replace('\n', '')) + '</b>' + (x.kind === 'type' || x.kind === 'ship' ? '' : ' <span class="tm">' + (x.min > 0 ? '+' : '') + x.min + '분' + (x.kind === 'num' ? ' × 개수' : x.kind === 'chk' || x.kind === 'case' || x.kind === 'cool' ? ' × 수량' : '') + '</span>') + (C.TIPS[x.c] ? '<div>' + esc(C.TIPS[x.c]) + '</div>' : '');
-      h2 += `<th class="${g}${C.TIPS[x.c] ? ' hastip' : ''}" data-tip="${esc(tip)}">${esc(x.label)}</th>`;
-      h3 += `<th class="${g}">${x.kind === 'type' || x.kind === 'ship' ? '' : (x.min > 0 ? '+' : '') + x.min + '분'}</th>`;
+      const tip = '<b>' + esc(grpName) + ' · ' + esc(x.label.replace('\n', '')) + '</b>' + (x.kind === 'type' || (x.kind === 'ship' && !MN[x.c]) ? '' : ' <span class="tm">' + (MN[x.c] > 0 ? '+' : '') + MN[x.c] + '분' + (x.kind === 'num' ? ' × 개수' : x.kind === 'chk' || x.kind === 'case' || x.kind === 'cool' ? ' × 수량' : '') + '</span>') + (TP[x.c] ? '<div>' + esc(TP[x.c]) + '</div>' : '');
+      h2 += `<th class="${g}${TP[x.c] ? ' hastip' : ''}" data-tip="${esc(tip)}">${esc(x.label)}</th>`;
+      h3 += `<th class="${g}">${x.kind === 'type' || (x.kind === 'ship' && !MN[x.c]) ? '' : (MN[x.c] > 0 ? '+' : '') + MN[x.c] + '분'}</th>`;
     });
     h2 += '</tr>'; h3 += '</tr>';
     let body = '';
@@ -1006,7 +1048,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <tr class="bdet hide" data-d="${i}"><td colspan="9"></td></tr>`;
     };
     const detHtml = (it) => '<table class="list imp"><thead><tr><th></th><th>시트</th><th>날짜</th><th>구분</th><th class="num">주문</th><th class="num">평가평균</th><th>상태</th></tr></thead><tbody>' +
-      it.items.map((x, j) => { const s = impStatus(x, it.items, it.existing), c = C.calcDay(x.doc, 0);
+      it.items.map((x, j) => { const s = impStatus(x, it.items, it.existing), c = C.calcDay(x.doc, 0, minsOf(x.date));
         return `<tr data-j="${j}"><td><input type="checkbox" class="don" ${x.on ? 'checked' : ''} ${s.dis ? 'disabled' : ''}></td><td>${esc(x.sheet)}</td><td><input type="date" class="ddt" value="${x.date}"></td><td>${esc(x.doc.kind)}</td><td class="num">${c.orders}</td><td class="num">${f2(c.f7)}</td><td class="ist ${s.k}">${s.t}</td></tr>`; }).join('') + '</tbody></table>';
     modal(`<h3>📥 여러 명 엑셀 가져오기 — 파일 ${list.length}개</h3>
       <div class="muted" style="margin-bottom:6px">파일 이름의 이름으로 인원을 자동으로 찾았습니다. 못 찾은 파일(빨간 칸)은 인원을 직접 고르세요. 이미 웹에 있는 날짜는 기본으로 건너뜁니다.</div>
@@ -1064,7 +1106,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         let ok = 0; const fails = [];
         for (let k = 0; k < jobs.length; k++) {
           const { it, x } = jobs[k]; $('#bpt', bg).textContent = (k + 1) + '/' + jobs.length + ' ' + it.user.name + ' ' + dLabel(x.date);
-          try { await api('saveDay', { userId: it.user.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc) }); ok++; it.existing.add(x.date); x.on = false; }
+          try { await api('saveDay', { userId: it.user.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc, minsOf(x.date)) }); ok++; it.existing.add(x.date); x.on = false; }
           catch (e) { fails.push(it.user.name + ' ' + dLabel(x.date) + ': ' + e.message); }
           $('#bpg i', bg).style.width = ((k + 1) / jobs.length * 100) + '%';
         }
@@ -1111,7 +1153,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     };
     items.forEach(x => { const s = st(x, items); x.on = !s.dis && !s.off; });
     const rowsHtml = () => items.map((x, i) => {
-      const s = st(x, items), c = C.calcDay(x.doc, 0);
+      const s = st(x, items), c = C.calcDay(x.doc, 0, minsOf(x.date));
       if (s.dis) x.on = false;
       return `<tr data-i="${i}"><td><input type="checkbox" ${x.on ? 'checked' : ''} ${s.dis ? 'disabled' : ''}></td><td>${esc(x.sheet)}</td>
         <td><input type="date" value="${x.date}" class="idt"></td><td>${esc(x.doc.kind)}</td><td class="num">${c.orders}</td><td class="num">${f2(c.f7)}</td>
@@ -1150,7 +1192,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         let ok = 0; const fails = [];
         for (let i = 0; i < sel.length; i++) {
           const x = sel[i]; $('#ipt', bg).textContent = (i + 1) + '/' + sel.length + ' ' + dLabel(x.date);
-          try { await api('saveDay', { userId: u.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc) }); ok++; existing.add(x.date); x.on = false; }
+          try { await api('saveDay', { userId: u.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc, minsOf(x.date)) }); ok++; existing.add(x.date); x.on = false; }
           catch (e) { fails.push(dLabel(x.date) + ': ' + e.message); }
           $('#ipg i', bg).style.width = ((i + 1) / sel.length * 100) + '%';
         }
@@ -1258,7 +1300,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   function refreshCalc() {
-    const D = S.day, c = C.calcDay(D.doc, D.target);
+    const D = S.day, MN = C.minsMap(minsOf(S.date)), c = C.calcDay(D.doc, D.target, MN);
     const rate = c.c8 == null ? 0 : Math.max(0, c.c8), w = Math.min(100, rate * 100);
     const fill = $('#efill'), cls = c.c8 == null ? 'none' : rate >= 0.9 ? 'hi' : rate <= 0.5 ? 'lo' : 'mid';
     fill.style.width = w + '%'; fill.className = cls;
@@ -1280,7 +1322,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const a = $('#f10_' + x.c), b = $('#f9_' + x.c);
       if (a) a.textContent = c.r10[x.c] ? +c.r10[x.c].toFixed(2) : '';
       if (b) {
-        const v = x.kind === 'type' ? c.r9[x.c] : c.r10[x.c] * x.rate;
+        const v = x.kind === 'type' ? c.r9[x.c] : c.r10[x.c] * MN[x.c] / 30;
         b.textContent = v ? f2(v) : '';
       }
     });
@@ -1309,7 +1351,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined })) });
     const snapshotDirty = JSON.stringify(doc);
     try {
-      const r = await api('saveDay', { userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean) });
+      const r = await api('saveDay', { userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) });
       S.day.savedAt = r.savedAt; S.day.savedBy = r.savedBy; S.day.exists = true;
       if (S.day.pc) S.day.pc.days[S.date] = { doc: JSON.parse(JSON.stringify(clean)), at: r.savedAt, by: r.savedBy };
       if (JSON.stringify(doc) === snapshotDirty) S.dirty = false;
@@ -1331,7 +1373,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     if (!S.dirty || !S.day || !S.day.canEdit || !S.token) return;
     const doc = S.day.doc;
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined })) });
-    try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean) }) }); S.dirty = false; } catch (e) { }
+    try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) }) }); S.dirty = false; } catch (e) { }
   }
   window.addEventListener('pagehide', flushOnClose);
   window.addEventListener('beforeunload', e => { if (S.dirty) { flushOnClose(); } });
@@ -1349,8 +1391,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     let r;
     const u0 = who();
     try { r = await api('getMonth', { userId: u0.id, ym }); } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }   // 매니저가 고친 내용·목표까지 항상 최신으로
-    const items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc) }));
-    const m = C.calcMonth(items, r.target);
+    const MY = minsYm(ym), items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, MY) }));
+    const m = C.calcMonth(items, r.target, MY);
     const over = r.days.length > C.MAX_DAYS;
     main.innerHTML = `
     <div class="toolbar">
@@ -1391,7 +1433,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     };
   }
   async function makeXlsxBlob(user, ym, target, days) {
-    const z = await C.buildXlsx(JSZip, TEMPLATE_B64, { name: user.name, ym, target, days });
+    const z = await C.buildXlsx(JSZip, TEMPLATE_B64, { name: user.name, ym, target, days, mins: minsYm(ym), tips: (rateSet(ym) || {}).tips });
     return z.generateAsync({ type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   }
   function saveBlob(blob, name) {
@@ -1440,9 +1482,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     if (r) {
       const xym = r.period ? r.period.ym : null;
       const list = r.users.filter(u => !S.manageGroup || u.group === S.manageGroup).map(u => {
-        const m = C.calcMonth(u.items, u.target);
+        const m = C.calcMonth(u.items, u.target, minsYm(xym));
         let qty = 0, conv = 0;
-        u.items.forEach(it => { const s = it.sum || {}, r10 = s.r10 || {}; qty += C.num(r10.C) + C.num(r10.D) + C.num(r10.E) + C.num(r10.F) + C.num(r10.G); conv += C.num(s.e2); });
+        u.items.forEach(it => { const s = it.sum || {}, r10 = s.r10 || {}; qty += C.num(r10.C) + C.num(r10.D) + C.num(r10.E) + C.num(r10.F) + C.num(r10.G); conv += C.sumDay(s, minsOf(it.date)).e2; });
         return Object.assign({ m, qty, conv, days: m.c4 + m.d4 }, u);
       });
       const SK = {
@@ -1538,7 +1580,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       sel.disabled = true;
       try {
         await api('setTarget', { userId: u.id, ym: xym, target: v });
-        u.target = v; u.m = C.calcMonth(u.items, v); dropPc(u.id);
+        u.target = v; u.m = C.calcMonth(u.items, v, minsYm(xym)); dropPc(u.id);
         const o = r.users.find(x => x.id === u.id); if (o) o.target = v;
         toast(u.name + ' ' + ymLabel(xym) + (v ? ' 목표 ' + v : ' 목표 지움')); renderMList(r);
       } catch (e) { toast(e.message, true); sel.value = u.target || ''; sel.disabled = false; }
@@ -1553,6 +1595,48 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         b.disabled = false;
       } else if (b.dataset.a === 'edit') editUser(u);
     }));
+  }
+  // 기간관리 권한자 : 항목별 분(점수)·설명 설정 (귀속월부터 적용)
+  function editRates() {
+    const yms = Array.from(new Set(S.periods.map(p => p.ym).concat((S.rates || []).map(r => r.ym)))).sort();
+    const last = yms[yms.length - 1] || S.today.slice(0, 7); yms.push(nextYmOf(last));
+    const opts = Array.from(new Set(yms)).sort().reverse();
+    const def = (curPeriod() || {}).ym || last;
+    const grpOf = c => (C.GROUPS.find(g => colIdx(c) >= colIdx(g[1]) && colIdx(c) <= colIdx(g[2])) || [''])[0];
+    const cols = C.COLS.filter(x => x.kind !== 'type' && x.label !== '-');
+    modal(`<h3>⚙ 항목 점수(분) 설정</h3>
+      <div class="row" style="gap:10px;align-items:center;margin-bottom:8px"><b>적용 귀속월</b><select id="rym" style="width:auto">${opts.map(y => `<option value="${y}" ${y === def ? 'selected' : ''}>${ymLabel(y)}부터</option>`).join('')}</select><span class="muted" id="rbase"></span></div>
+      <div style="max-height:58vh;overflow:auto;border:1px solid var(--line);border-radius:8px"><table class="list rt"><thead><tr><th>구분</th><th>항목</th><th class="num">기본</th><th>분</th><th>설명 (말풍선)</th></tr></thead><tbody id="rbody"></tbody></table></div>
+      <div class="muted" style="margin-top:8px;line-height:1.6">· 고른 귀속월부터 다음 설정이 있는 달 전까지 적용됩니다. 그 이전 달 기록·평가는 바뀌지 않습니다.<br>· 칸을 비우면 기본값(원본 엑셀)으로 계산합니다. 화면·월 통계·관리 목록·내려받는 엑셀에 모두 반영됩니다.<br>· 다른 인원의 화면에는 날짜를 이동하거나 다시 로그인하면 반영됩니다.</div>
+      <div class="acts" style="justify-content:space-between"><div><button class="danger" id="rdel">이 달 설정 삭제</button></div><div style="display:flex;gap:8px"><button data-n>닫기</button><button class="primary" data-y>저장</button></div></div>`, (bg, close) => {
+      const draw = () => {
+        const ym = $('#rym', bg).value, set = rateSet(ym), M = C.minsMap(set && set.mins), TP = tipsYm(ym), own = set && set.ym === ym;
+        $('#rbase', bg).textContent = own ? '이 달 설정 (' + set.by + ' · ' + set.at + ')' : set ? ymLabel(set.ym) + ' 설정을 이어받는 중' : '기본값 사용 중';
+        $('#rdel', bg).disabled = !own;
+        $('#rbody', bg).innerHTML = cols.map(x => `<tr data-c="${x.c}"><td class="muted">${esc(grpOf(x.c))}</td><td><b>${esc(x.label.replace('\n', ''))}</b> <span class="muted">${x.c}</span></td><td class="num muted">${x.min}</td>
+          <td><input class="rm${M[x.c] !== x.min ? ' chg' : ''}" inputmode="decimal" value="${M[x.c]}"></td><td><input class="rtp${(TP[x.c] || '') !== (C.TIPS[x.c] || '') ? ' chg' : ''}" value="${esc(TP[x.c] || '')}" maxlength="300"></td></tr>`).join('');
+        $$('#rbody input.rm', bg).forEach(i => (i.oninput = () => { const x = C.COL[i.closest('tr').dataset.c]; i.classList.toggle('chg', i.value.trim() !== '' && +i.value !== x.min); }));
+      };
+      draw(); $('#rym', bg).onchange = draw; $('[data-n]', bg).onclick = close;
+      const done = (r, msg) => { S.rates = r.rates; S.pc = {}; S._mcache = {}; close(); toast(msg); renderManage(); };
+      $('[data-y]', bg).onclick = async () => {
+        const ym = $('#rym', bg).value, mins = {}, tips = {}; let bad = '';
+        $$('#rbody tr', bg).forEach(tr => {
+          const c = tr.dataset.c, x = C.COL[c], v = $('.rm', tr).value.trim(), t = $('.rtp', tr).value.trim();
+          if (v !== '') { if (!isFinite(+v)) bad = x.label.replace('\n', ''); else if (+v !== x.min) mins[c] = +v; }
+          if (t !== (C.TIPS[c] || '')) tips[c] = t;
+        });
+        if (bad) return toast(bad + ' : 숫자를 입력하세요', true);
+        const n = Object.keys(mins).length;
+        if (!(await confirmBox('<b>' + ymLabel(ym) + '부터</b> 적용합니다.<br>기본값과 다른 항목 <b>' + n + '개</b>' + (Object.keys(tips).length ? ', 설명 변경 ' + Object.keys(tips).length + '개' : '') + '<br><span class="muted">' + ymLabel(ym) + ' 이전 달의 평가는 바뀌지 않습니다.</span>', '저장'))) return;
+        try { done(await api('setRates', { ym, mins, tips }), ymLabel(ym) + '부터 항목 점수를 적용했습니다'); } catch (e) { toast(e.message, true); }
+      };
+      $('#rdel', bg).onclick = async () => {
+        const ym = $('#rym', bg).value;
+        if (!(await confirmBox(ymLabel(ym) + ' 설정을 삭제합니다.<br><span class="muted">이 달부터는 이전 달 설정(없으면 기본값)으로 계산됩니다.</span>', '삭제'))) return;
+        try { done(await api('deleteRates', { ym }), ymLabel(ym) + ' 설정을 삭제했습니다'); } catch (e) { toast(e.message, true); }
+      };
+    }, 'wide');
   }
   // 관리자 : 인원 편집 (이름·그룹·권한·담당 그룹, 비밀번호 초기화, 계정 삭제)
   function editUser(u) {
@@ -1603,7 +1687,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <table class="bd"><thead><tr><th class="bn">이름</th>${dates.map(d => { const w = new Date(d + 'T00:00:00').getDay(); return `<th class="${w === 6 ? 'sat' : w === 0 ? 'sun' : ''}">${+d.slice(8)}<small>${C.WD[w]}</small></th>`; }).join('')}<th class="bt">근무일</th><th class="bt">평가평균</th><th class="bt">달성률</th></tr></thead><tbody>
       ${list.map(u => `<tr data-u="${u.id}"><td class="bn"><b>${esc(u.name)}</b><small>${esc(u.group)}${u.target ? ' · 목표 ' + u.target : ''}</small></td>${dates.map(d => {
         const s = byU[u.id][d]; if (!s) return `<td class="e" data-d="${d}"></td>`;
-        const v = C.num(s.f7), rc = u.target ? rateCls(v / u.target) : 'r-no';
+        const v = C.sumDay(s, minsOf(d)).f7, rc = u.target ? rateCls(v / u.target) : 'r-no';
         return `<td class="${rc}" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 평가평균 ${f2(v)}${u.target ? ' (' + pct(v / u.target) + ')' : ''} · 주문 ${s.n || 0}건">${(Math.round(v * 10) / 10).toFixed(1)}</td>`;
       }).join('')}<td class="bt">${u.items.length ? u.days : '-'}</td><td class="bt"><b>${u.items.length ? f2(u.m.f7) : '-'}</b></td><td class="bt ${u.target && u.items.length ? rateCls(u.m.c8) + 't' : ''}">${u.target && u.items.length ? pct(u.m.c8) : '-'}</td></tr>`).join('') || '<tr><td class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody><tfoot><tr><td class="bn">입력 인원</td>${dates.map(d => `<td>${cnt[d] || ''}</td>`).join('')}<td class="bt" colspan="3"></td></tr></tfoot></table></div>`;
@@ -1653,6 +1737,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <div class="row" style="margin-top:14px;gap:10px">
         ${lastClosed ? `<button id="pcancel">최근 마감 취소 (${ymLabel(lastClosed.ym)})</button>` : ''}
         <span style="flex:1"></span>
+        <button id="prt" title="항목별 분(점수)과 설명 말풍선을 귀속월부터 바꿉니다">⚙ 항목 점수 설정</button>
         ${S.me.role === '관리자' ? '<button id="pbk" title="선택한 귀속월의 계정·기간·목표·일일 데이터 전체를 파일로 저장 (매달 마감 후 보관 권장)">💾 백업 받기</button>' : ''}
         <button class="danger" id="pwipe">테스트 데이터 전체 삭제</button>
       </div>
@@ -1688,6 +1773,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       if (!(await confirmBox('가장 최근 마감을 취소하고 그 달을 다시 진행 상태로 돌립니다.<br>그 뒤에 자동으로 열렸던 다음 달 기간은 삭제됩니다 (입력 데이터는 지워지지 않음).', '마감 취소'))) return;
       try { upd(await api('cancelClose')); toast('마감을 취소했습니다'); } catch (e) { toast(e.message, true); }
     };
+    if (b('prt')) b('prt').onclick = editRates;
     if (b('pbk')) b('pbk').onclick = async () => {
       const ym = S.manageYm || (curPeriod() || {}).ym;
       if (!ym) return toast('귀속월이 없습니다', true);
@@ -1723,7 +1809,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     if (!S.token) return renderLogin();
     try {
       const r = pre && pre.me ? pre : await api('me', { withDay: true });
-      S.me = r.me; S.periods = r.periods; S.today = r.today || S.today;
+      S.me = r.me; S.periods = r.periods; S.today = r.today || S.today; S.rates = r.rates || [];
       S.pc = {};
       if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {} };
       let d0 = S.today;
