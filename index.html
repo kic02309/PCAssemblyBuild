@@ -664,6 +664,9 @@ button.big{padding:9px 18px;font-size:14.5px;font-weight:800}
 /* 백업 */
 .bktbl td:last-child{text-align:right;white-space:nowrap}
 main.loading,#main.loading{pointer-events:none;opacity:.55;transition:opacity .15s}
+.hrw input.bad{border-color:#d32f2f!important;background:#fdecea!important}
+.lvsatsum{padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;line-height:1.7;margin-bottom:12px}
+.hrw td{overflow-wrap:anywhere}
 .btn-file{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:#fff;font-weight:600;cursor:pointer}
 .btn-file:hover{background:#f4f6fa}
 </style>
@@ -1794,7 +1797,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const owners = (d.owners || {})[my.grp] || [];
     return `<div class="card lvmc"><div class="lvmt"><b>내 신청 내역</b><span class="muted">${owners.length ? A.esc(my.grp) + ' 확인 : ' + A.esc(owners.join(', ')) : '담당 매니저 없음 → 바로 관리자'}</span></div>
       ${mine.length ? mine.map(l => { const st = stOf(l); return `<div class="lvmi"><div class="t"><b>${mdw(l.d1)}${l.d2 !== l.d1 ? ' ~ ' + mdw(l.d2) : ''}${l.h ? ' ' + l.h : ''}</b><span class="muted">${LC.leaveDays(l, L.ix.H)}일</span><span style="flex:1"></span><span class="lst ${ST[st][0]}">${ST[st][1]}</span></div>
-        <div class="r">${A.esc(l.r || '')}</div>${l.n ? `<div class="nt">💬 ${A.esc(l.n)}</div>` : ''}${st === '신청' && !isClosed(LC.ymOf(l.d1)) ? `<div class="a"><button data-cx="${l.id}" class="sm">신청 취소</button></div>` : ''}</div>`; }).join('') : '<div class="muted" style="padding:10px 0">최근 신청이 없습니다</div>'}
+        <div class="r">${A.esc(l.r || '')}</div>${l.n ? `<div class="nt">💬 ${A.esc(l.n)}</div>` : ''}${st === '신청' && !isClosed(LC.ymOf(l.d1)) ? `<div class="a"><button data-cx="${l.id}" class="sm">신청 취소</button></div>` : st !== '신청' && st !== '확정' ? '<div class="muted" style="font-size:12px;margin-top:4px">매니저 확인이 끝나 직접 취소할 수 없습니다 · 바꾸려면 매니저나 관리자에게 말씀하세요</div>' : ''}</div>`; }).join('') : '<div class="muted" style="padding:10px 0">최근 신청이 없습니다</div>'}
     </div>
     <div class="card lvmc"><div class="lvmt"><b>내 토요근무</b></div>
       ${duty.length ? duty.map(u => { const w = sw.find(x => x.d === u.d && x.st === '요청'), done = sw.filter(x => x.d === u.d && x.st !== '요청').pop();
@@ -1810,7 +1813,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const d = D();
     A.$$('[data-cx]').forEach(b => (b.onclick = async () => {
       const l = d.leaves.find(x => x.id === b.dataset.cx);
-      if (!(await A.confirmBox(mdw(l.d1) + (l.d2 !== l.d1 ? ' ~ ' + mdw(l.d2) : '') + ' 신청을 취소할까요?', '신청 취소'))) return;
+      if (!(await A.confirmBox(mdw(l.d1) + (l.d2 !== l.d1 ? ' ~ ' + mdw(l.d2) : '') + ' 신청을 취소할까요?', '신청 취소', '닫기'))) return;
       try { await A.api('lvCancel', { id: l.id }); d.leaves = d.leaves.filter(x => x.id !== l.id); A.toast('신청을 취소했습니다'); refresh(); } catch (e) { A.toast(e.message, true); }
     }));
     A.$$('[data-sw]').forEach(b => (b.onclick = () => swapModal(b.dataset.sw)));
@@ -1851,7 +1854,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       info(); setTimeout(() => $('#rqr').focus(), 30);
       $('[data-n]').onclick = close;
       $('[data-y]').onclick = async () => {
-        const btn = $('[data-y]'); if (btn.disabled) return; btn.disabled = true;      // 두 번 눌러도 한 번만
+        const btn = $('[data-y]'); if (btn.disabled) return;
+        if ($('#rqd1').value < A.S.today && !(await A.confirmBox('<b>지난 날짜</b>(' + mdw($('#rqd1').value) + ')를 신청합니다. 날짜가 맞나요?', '맞습니다', '다시 볼게요'))) return;
+        btn.disabled = true;      // 두 번 눌러도 한 번만
         try {
           const r = await A.api('lvRequest', { d1: $('#rqd1').value, d2: $('#rqd2').value, half, reason: $('#rqr').value.trim() });
           d.leaves = d.leaves.concat(r.leaves); close(); A.toast('신청했습니다' + (r.leaves[0].st === '파트확인' ? ' (관리자에게 바로 전달)' : '')); refresh();
@@ -1863,7 +1868,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // ------------------------------------------------------------ 인원 : 토요근무 바꾸기 요청 창
   function swapModal(sd) {
     const d = D(), my = myStaff(), u = (d.duty || []).find(x => x.d === sd && x.s === my.id) || {};
-    const sats = []; [1, 2, 3, 4, 5, 6, -1, -2].forEach(k => { const x = LC.addDays(sd, 7 * k); if (x >= A.S.today && !isClosed(LC.ymOf(x))) sats.push(x); });
+    const sats = []; [-2, -1, 1, 2, 3, 4, 5, 6].forEach(k => { const x = LC.addDays(sd, 7 * k); if (x >= A.S.today && !isClosed(LC.ymOf(x)) && !(d.duty || []).some(z => z.d === x && z.s === my.id)) sats.push(x); });   // 날짜 순 · 이미 근무하는 토요일 빼고
     const alts = []; for (let k = -5; k <= 8; k++) { const x = LC.addDays(sd, k); if (LC.isWork(x, L.ix.H)) alts.push(x); }
     A.modal(`<h3>토요근무 바꾸기 요청</h3>
       <div class="lvinfo">내 토요근무 : <b>${mdw(sd)}</b> · ${u.a ? '대체휴무 ' + mdw(u.a) : '대체휴무 미정'}</div>
@@ -1873,7 +1878,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <label class="swopt"><input type="radio" name="swk" value="alt"><span>대체휴무 날짜만 바꾸기</span><select id="swal">${alts.map(x => `<option value="${x}" ${x === u.a ? 'selected' : ''}>${mdw(x)}</option>`).join('')}</select></label>
       </div>
       <datalist id="swnl">${staffList().map(s => `<option value="${A.esc(s.name)}">`).join('')}</datalist>
-      <div class="fld"><label>사유</label><input id="swr" maxlength="200" placeholder="예) 가족 행사 · 이여울 님과 조율함"></div>
+      <div class="fld"><label>사유 (필수)</label><input id="swr" maxlength="200" placeholder="예) 가족 행사 · 이여울 님과 조율함"></div>
       <div class="muted" style="font-size:12.5px;line-height:1.6">상대방과 먼저 조율한 뒤 요청하세요 → <b>관리자에게 바로</b> 전달됩니다. 반영 전까지는 원래 토요일 근무가 유지됩니다.</div>
       <div class="acts"><button data-n>취소</button><button class="primary" data-y>요청</button></div>`, (bg, close) => {
       const $ = s => A.$(s, bg);
@@ -1881,6 +1886,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       $('[data-y]').onclick = async () => {
         const k = (A.$('input[name=swk]:checked', bg) || {}).value;
         const req = { d: sd, kind: k, reason: $('#swr').value.trim() };
+        if (!req.reason) { A.toast('사유를 입력하세요 (누구와 조율했는지 등)', true); $('#swr').focus(); return; }
         if (k === 'move') req.to = $('#swto').value;
         if (k === 'alt') req.to = $('#swal').value;
         if (k === 'swap') { req.other = $('#swo').value.trim(); req.otherD = $('#swod').value; }
@@ -2026,8 +2032,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     A.$$('[data-gm]').forEach(a => (a.onclick = e => { e.preventDefault(); const ny = +a.dataset.gm.slice(0, 4); L.ym = a.dataset.gm; if (ny !== L.year) render(L.main); else draw(); }));
     A.$$('[data-pe]').forEach(b => (b.onclick = () => partEditModal(d.leaves.find(x => x.id === b.dataset.pe))));
     if (A.$('#pcf')) A.$('#pcf').onclick = async () => {
+      if (L.pcBusy) return; L.pcBusy = true; setTimeout(() => (L.pcBusy = false), 800);
       if (!(await A.confirmBox(`<b>${A.esc(gl)} ${ymLab(L.ym)} 신청 ${list.length}건</b>을 최종 확인하고 관리자에게 넘깁니다.<br><span class="muted">넘긴 뒤에는 인원이 직접 취소할 수 없습니다.</span>`, '최종 확인'))) return;
+      L.pcBusy = true;
       try { const r = await A.api('lvPartConfirm', { ids: list.map(x => x.id) }); list.forEach(x => { x.st = '파트확인'; x.pb = me().name; }); A.toast(r.n + '건을 관리자에게 넘겼습니다'); refresh(); } catch (e) { A.toast(e.message, true); }
+      finally { setTimeout(() => (L.pcBusy = false), 800); }
     };
   }
   function partEditModal(x) {
@@ -2176,7 +2185,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         ${can ? '<button class="primary" id="lvaN">빈 주 자동 배정</button><button id="lvaA">전체 다시 배정</button>' : ''}
         ${d.canEdit && pendSw.length ? `<button id="lvgsw">바꾸기 요청 ${pendSw.length}건 보기</button>` : ''}
       </div>
-      <div class="lvsum">D 위 인원 <b>${sm.doneUp} / ${sm.nUp}</b>명 배정${sm.nUp - sm.doneUp > 0 ? ' <span class="muted">(미배정 ' + (sm.nUp - sm.doneUp) + '명 → 다음 달 우선)</span>' : ''} · D등급 ${sm.doneD}명 · 등급별 ${Object.entries(sm.byGrade).map(([k, v]) => k + ' ' + v).join(' · ')}
+      <div class="lvsatsum">D 위 인원 <b>${sm.doneUp} / ${sm.nUp}</b>명 배정${sm.nUp - sm.doneUp > 0 ? ' <span class="muted">(미배정 ' + (sm.nUp - sm.doneUp) + '명 → 다음 달 우선)</span>' : ''} · D등급 ${sm.doneD}명 · 등급별 ${Object.entries(sm.byGrade).map(([k, v]) => k + ' ' + v).join(' · ')}
         <span class="muted"> · 이름 색 : <b class="c2">2회</b> <b class="c3">3회 이상</b> · 주당 구성 ${((kv().slots || []).filter(Boolean)).length}칸</span></div>
       <div class="lvsg">${weeks.map(col).join('') || '<div class="warn">배정 묶음에 토요일이 없습니다. 위에서 토요일을 고르세요.</div>'}</div>
       <datalist id="lvsn">${staffList().map(s => `<option value="${A.esc(s.name)}">${A.esc(s.grade || '')} ${A.esc(s.grp || '')}</option>`).join('')}</datalist>`;
@@ -2305,7 +2314,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
           <div class="card"><b>매니저 표시 명단</b> <span class="muted">(파란 글씨 · 엑셀 AZ열)</span>
             <input id="lvmgr" value="${A.esc((K.managers || []).join(', '))}" style="width:100%;margin-top:6px"><button id="lvmg" style="margin-top:6px">저장</button></div>
           <div class="card"><b>공휴일</b> <span class="muted">(달력 빨간 표시 · 연차일수에서 제외)</span>
-            <div class="lvhol">${hol.map(h => `<span class="lc big">${md(h.d)} ${A.esc(h.n)} <b data-hd="${h.d}">✕</b></span>`).join('')}</div>
+            <div class="lvhol">${hol.map(h => `<span class="lc big">${h.d.slice(0, 4) !== String(L.year) ? h.d.slice(2, 4) + '년 ' : ''}${md(h.d)} ${A.esc(h.n)} <b data-hd="${h.d}">✕</b></span>`).join('')}</div>
             <div class="row" style="gap:6px;margin-top:6px"><input type="date" id="lvhd"><input id="lvhn" placeholder="이름 (예: 회사 휴무)" style="width:160px"><button id="lvha">추가</button></div></div>
         </div>
       </div>`;
@@ -2716,7 +2725,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // 관리자 : 업무데이터(웹) → 그 달 원본으로 반영 (엑셀로 올린 달은 그대로 둠)
   async function syncWeb(month, force) {
     const p = (A.S.periods || []).find(x => x.ym === month);
-    if (!p || !admin()) return null;
+    if (!p) return null;                                                // 매니저 : 서버가 담당 파트 인원만 바꿔 넣음
     const r = await api('listUsers', { ym: month });
     const C = A.C, rows = [];
     r.users.forEach(u => {
@@ -2732,10 +2741,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     return x;
   }
   async function autoSync(month) {
-    if (!admin() || (META.locks || {})[month]) return;
+    if ((META.locks || {})[month]) return;
     if (ST.synced[month] && Date.now() - ST.synced[month] < 10 * 60000) return;
     try {
-      const probe = await api('hrMonth', { month, part: (META.parts[0] || {}).name || '' });
+      const probe = await api('hrMonth', { month, part: admin() ? (META.parts[0] || {}).name || '' : (ST.part || META.myParts[0] || '') });
       const src = probe.rawSrc || {};
       if (src.n && src.src === 'upload') { ST.synced[month] = Date.now(); return; }
       await syncWeb(month);
@@ -2754,7 +2763,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     ST.month = ST.month || META.current || META.months[0];
     if (!META.months.includes(ST.month) && META.months.length) ST.month = META.months[0];
     if (!ST.part || !(admin() ? META.parts.some(p => p.name === ST.part) : META.myParts.includes(ST.part))) ST.part = admin() ? (META.parts[0] || {}).name : META.myParts[0];
-    if (admin()) { const ld = main.querySelector('.muted'); if (ld) ld.textContent = '업무데이터 반영 중…'; await autoSync(ST.month); }   // 탭을 누르기 전에 끝냄
+    { const ld = main.querySelector('.muted'); if (ld) ld.textContent = '업무데이터 반영 중…'; await autoSync(ST.month); }   // 탭을 누르기 전에 끝냄 (매니저는 담당 파트만)
     if (stale()) return;
     const tabs = admin() ? TABS_ADMIN : TABS_MGR;
     if (tab && tabs.some(t => t[0] === tab)) ST.tab = tab;
@@ -2768,7 +2777,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const v = e.target.value; e.target.value = ST.month;
       if (!(await guard())) return;
       ST.month = v; e.target.value = v; ST.sel = null; lockChip();
-      if (admin()) { body().innerHTML = '<div class="muted" style="padding:20px">업무데이터 반영 중…</div>'; await autoSync(v); }
+      body().innerHTML = '<div class="muted" style="padding:20px">업무데이터 반영 중…</div>'; await autoSync(v);
       go(ST.tab);
     };
     lockChip();
@@ -2902,7 +2911,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <button class="primary big" id="saveDone" ${locked ? 'disabled' : ''}>작성 완료</button></div></section>`;
     renderSide(x);
     const bd = $('#scoreBody');
-    bd.querySelectorAll('input').forEach(inp => (inp.oninput = () => { touch(); updTotals(); }));
+    const chk = inp => {                                                     // 만점·0점 밖이면 바로 빨갛게
+      const it = items.find(i => i.no === +inp.dataset.no); if (!it) return;
+      const v = inp.value === '' ? null : Number(inp.value), mx = it.sign < 0 ? 100 : num(it.max);
+      const bad = v !== null && (!isFinite(v) || v < 0 || (mx !== null && v > mx));
+      inp.classList.toggle('bad', bad); inp.title = bad ? (v < 0 ? '0 이상으로 입력하세요' : '최대 ' + mx + '점입니다') : '';
+      if (bad && inp._warned !== inp.value) { inp._warned = inp.value; toast(it.name + ' : ' + inp.title, 1); }
+    };
+    bd.querySelectorAll('input').forEach(inp => { chk(inp); inp.oninput = () => { chk(inp); touch(); updTotals(); }; });
     bd.querySelectorAll('[data-apply]').forEach(b => (b.onclick = () => { const no = +b.dataset.apply; bd.querySelector(`input[data-no="${no}"]`).value = x.refs[no - 1]; touch(); updTotals(); }));
     $('#applyAll').onclick = () => { items.forEach(it => { const r = x.refs[it.no - 1]; if (r !== null) bd.querySelector(`input[data-no="${it.no}"]`).value = r; }); touch(); updTotals(); toast('참고 점수를 넣었습니다. 확인 후 [작성 완료]를 누르세요'); };
     const cnt = id => { const el = $('#' + id), c = $('#' + id + 'c'); if (el && c) { c.textContent = el.value.length + '/' + MAXC; c.classList.toggle('full', el.value.length >= MAXC); } };
@@ -3150,7 +3166,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     if (!Object.keys(ded).length) { ded['지각'] = 5; ded['조퇴'] = 2; ded['결근'] = 10; }
     const me = A.S.me.name;
     body().innerHTML = `<div class="toolbar hrbar">${parts.length > 1 || admin() ? `<select id="atPart" style="width:auto">${admin() ? '<option value="">전체 파트</option>' : ''}${parts.map(p => `<option ${p === ST.attPart ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select>` : `<b>${esc(ST.part)}</b>`}
-        <span class="muted">${ymLab(r.month)} (${esc(r.range.start.slice(5))} ~ ${esc(r.range.end.slice(5))}) · 기록 ${r.list.length}건 · 내용은 매니저·관리자만 봅니다 (인원은 월 통계에서 횟수만)</span>
+        <span class="muted">${ymLab(r.month)} (${esc(r.range.start.slice(5))} ~ ${r.range.end >= A.S.today ? '진행 중' : esc(r.range.end.slice(5))}) · 기록 ${r.list.length}건 · 내용은 매니저·관리자만 봅니다 (인원은 월 통계에서 횟수만)</span>
         <span style="flex:1"></span>${r.locked && !admin() ? '<span class="chip closed">🔒 마감</span>' : '<button class="primary big" id="atAdd">+ 근태 입력</button>'}</div>
       <div class="dgrid atg"><section class="card dsec"><div class="dst"><b>기록</b><span class="muted">그때그때 입력 · 기록한 매니저와 관리자만 고칠 수 있음</span></div>
         <table class="tbl"><thead><tr><th>날짜</th><th>이름</th><th>구분</th><th>내용 (본인에게 안 보임)</th><th>기록자</th><th></th></tr></thead><tbody>
@@ -3178,7 +3194,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       bg.querySelectorAll('[data-k]').forEach(b => (b.onclick = () => { kind = b.dataset.k; bg.querySelectorAll('[data-k]').forEach(x => x.classList.toggle('on', x === b)); }));
       bg.querySelector('[data-n]').onclick = close;
       bg.querySelector('[data-y]').onclick = async () => {
-        const btn = bg.querySelector('[data-y]'); if (btn.disabled) return; btn.disabled = true;
+        const btn = bg.querySelector('[data-y]'); if (btn.disabled) return;
+        const nm = bg.querySelector('#atN').value, dd = bg.querySelector('#atD').value;
+        const same = (r.list || []).filter(t => t.name === nm && t.d === dd && (!ed || t.id !== ed.id));
+        if (same.length && !(await A.confirmBox(`<b>${esc(nm)}</b> ${esc(dd)} 에 이미 <b>${esc(same.map(t => t.kind).join(', '))}</b> 기록이 있습니다.<br>${same.some(t => t.kind === kind) ? '같은 기록을 또 넣으면 감점이 두 번 됩니다. ' : ''}그래도 저장할까요?`, '저장'))) return;
+        btn.disabled = true;
         try { await api('hrAttSave', { id: ed ? ed.id : '', name: bg.querySelector('#atN').value, kind, d: bg.querySelector('#atD').value, memo: bg.querySelector('#atM').value.trim() }); close(); toast('저장했습니다'); viewAtt(); }
         catch (e) { toast(e.message, 1); btn.disabled = false; }
       };
@@ -3552,6 +3572,8 @@ function sortByOrder(list, order) {
 }
 
 
+// 엑셀 날짜 : 그 날짜 0시(UTC)로 넣어야 엑셀에서 하루 빠지지 않음 (한국 시간 0시 = UTC 전날 15시)
+function xlDate(v) { const t = String(v).slice(0, 10).split('-').map(Number); return new Date(Date.UTC(t[0], t[1] - 1, t[2])); }
 // 인적사항 파일(9월 최종 파일 또는 지난달 받은 엑셀)에서 사람별 인적사항·사진 읽기 — 브라우저 안에서만 읽고 어디에도 올리지 않음
 async function readInfoFile(file) {
   const ab = await file.arrayBuffer();
@@ -3636,7 +3658,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts) {
           const r = b.rows[i] || {};
           const x = r['이름'] ? recBy[nk(r['이름'])] : null;
           const tot = x && x.rec && x.rec['합계'] !== '' && x.rec['합계'] !== undefined ? Number(x.rec['합계']) : '';
-          const vals = [null, r['직급'] || '', r['이름'] || '', r['사번'] ? (isFinite(r['사번']) ? Number(r['사번']) : r['사번']) : '', r['계약월'] ? new Date(r['계약월'] + 'T00:00:00') : '', tot];
+          const vals = [null, r['직급'] || '', r['이름'] || '', r['사번'] ? (isFinite(r['사번']) ? Number(r['사번']) : r['사번']) : '', r['계약월'] ? xlDate(r['계약월']) : '', tot];
           for (let k = 0; k < 6; k++) {
             const c = ws.getCell(row + i, c0 + k);
             if (k > 0) c.value = vals[k];
@@ -3740,7 +3762,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts) {
     // 인적사항 (개인정보는 웹에 없으므로 빈칸)
     ws.getCell('F1').value = p.name;
     ws.getCell('F2').value = p.role || '사원';
-    if (ord['계약월']) ws.getCell('F3').value = new Date(String(ord['계약월']).slice(0, 10) + 'T00:00:00');
+    if (ord['계약월']) ws.getCell('F3').value = xlDate(ord['계약월']);
     ws.getCell('L1').value = ord['직급'] === '계약직' ? '계약직' : '정규직';
     const pi = (info && info[nk(p.name)]) || null;
     if (pi) {
@@ -3989,6 +4011,11 @@ async function addCharts(buf, jobs) {
     }
     return res;
   }
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const bgs = document.querySelectorAll('.modal-bg'); const top = bgs[bgs.length - 1]; if (!top) return;
+    const cx = top.querySelector('[data-n], [data-c]'); if (cx) cx.click(); else top.remove();
+  });
   function modal(html, onMount, cls) {
     const bg = document.createElement('div'); bg.className = 'modal-bg' + (/\bdrawer\b/.test(cls || '') ? ' dr' : '');
     bg.innerHTML = '<div class="modal ' + (cls || '') + '">' + html + '</div>';
@@ -3998,9 +4025,9 @@ async function addCharts(buf, jobs) {
     onMount && onMount(bg, close);
     return close;
   }
-  function confirmBox(msg, okText) {
+  function confirmBox(msg, okText, noText) {
     return new Promise(res => {
-      modal('<h3>확인</h3><div style="line-height:1.6">' + msg + '</div><div class="acts"><button data-n>취소</button><button class="primary" data-y>' + (okText || '확인') + '</button></div>', (bg, close) => {
+      modal('<h3>확인</h3><div style="line-height:1.6">' + msg + '</div><div class="acts"><button data-n>' + (noText || '취소') + '</button><button class="primary" data-y>' + (okText || '확인') + '</button></div>', (bg, close) => {
         $('[data-n]', bg).onclick = () => { close(); res(false); };
         $('[data-y]', bg).onclick = () => { close(); res(true); };
       });
@@ -4062,7 +4089,12 @@ async function addCharts(buf, jobs) {
       } catch (e) { toast(e.message, true); busy = false; go.disabled = false; go.textContent = label; }
     };
     go.onclick = submit;
-    $$('input', APP).forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }));
+    $$('input', APP).forEach(i => i.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const nx = i.id === 'ln' ? $('#lp') : i.id === 'rn' ? $('#rp') : i.id === 'rp' ? $('#rp2') : null;   // 다음 칸이 비어 있으면 그리로
+      if (nx && !nx.value) { e.preventDefault(); nx.focus(); return; }
+      submit();
+    }));
     const first = $('input', APP); first && first.focus();
   }
   async function logout(silent) {
@@ -4079,7 +4111,7 @@ async function addCharts(buf, jobs) {
     document.querySelectorAll('.modal-bg, .hr-ov').forEach(x => x.remove()); try { hidePad(); } catch (e) { }
     if (window.Leave) window.Leave.reset();
     if (window.HR) window.HR.reset();
-    sessionStorage.removeItem('tk');
+    sessionStorage.removeItem('tk'); try { sessionStorage.removeItem('lastView'); } catch (e) { }
     renderLogin();
   }
 
@@ -4146,7 +4178,7 @@ async function addCharts(buf, jobs) {
     updateBadge();
   }
   function setNav() {
-    $$('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
+    $$('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === S.view && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
       p.innerHTML = `<div class="proxy">✎ ${esc(S.target.name)} (${esc(S.target.group)}) 님의 데이터를 보고 있습니다 <button id="back">인원 목록으로 돌아가기</button></div>`;
@@ -4166,6 +4198,7 @@ async function addCharts(buf, jobs) {
     if (lay !== S.layout) shell(lay);
     if (lay === 'side') S.lastSide = view;
     S.view = view; setNav();
+    try { sessionStorage.setItem('lastView', view); if (!(opt && opt._pop) && (history.state || {}).v !== view) history.pushState({ v: view }, ''); } catch (e) { }
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
     if (view === 'manage') return renderManage();
@@ -4176,8 +4209,15 @@ async function addCharts(buf, jobs) {
   }
   // 저장 안 된 입력이 있으면 먼저 저장 · 실패하면 그래도 넘어갈지 물어봄 (true = 넘어가도 됨)
   async function saveFirst() {
-    if (!S.dirty) return true;
-    if (await saveNow()) return true;
+    if (!S.dirty && !S.saving) return true;
+    const main = $('#main');
+    if (main) { if (document.activeElement && main.contains(document.activeElement)) document.activeElement.blur(); main.classList.add('loading'); }   // 저장하는 동안 옛 화면에 입력하지 않게
+    let ok = true;
+    try {
+      while (S.saving) await new Promise(r => setTimeout(r, 120));
+      for (let k = 0; ok && S.dirty && k < 3; k++) ok = await saveNow();
+    } finally { if (main) main.classList.remove('loading'); }
+    if (ok && !S.dirty) return true;
     if (await confirmBox('<b>저장하지 못한 입력</b>이 있습니다 (인터넷 확인).<br>이동하면 이 입력은 사라집니다. 그래도 이동할까요?', '그래도 이동')) { S.dirty = false; clearTimeout(S.timer); return true; }
     return false;
   }
@@ -4189,6 +4229,7 @@ async function addCharts(buf, jobs) {
       <div class="fld"><label>새 비밀번호 확인</label><input id="n2" type="password" maxlength="4" inputmode="numeric"></div>
       <div class="acts"><button data-c>취소</button><button class="primary" data-s>변경</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
+      $$('input', bg).forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') $('[data-s]', bg).click(); }));
       $('[data-s]', bg).onclick = async () => {
         try {
           if ($('#n', bg).value !== $('#n2', bg).value) throw new Error('새 비밀번호 확인이 다릅니다');
@@ -4256,12 +4297,14 @@ async function addCharts(buf, jobs) {
     const nRows = Math.min(C.MAX_ROWS, Math.max(C.BASE_ROWS, Math.ceil((lastFilled(doc) + 1) / 5) * 5));
     while (doc.rows.length < nRows) doc.rows.push({ o: '', q: '', m: {}, memo: '' });
     const lockMsg = !D.period ? '이 날짜는 월 기간이 아직 설정되지 않아 입력할 수 없습니다. (관리자가 기간을 열어야 합니다)'
-      : ro ? (D.period.status === '마감' ? '마감된 달입니다. 수정이 필요하면 담당 매니저에게 요청하세요.' : '보기 전용입니다.') : '';
+      : ro ? (D.period.status === '마감' ? '마감된 달입니다. 수정이 필요하면 담당 매니저에게 요청하세요.' : '보기 전용입니다.')
+      : D.period.status === '마감' ? '⚠ 마감된 달을 고치고 있습니다 (관리자 · 담당 매니저만 가능). 저장하면 마감된 자료가 바뀝니다.'
+      : S.date > S.today ? '⚠ 오늘보다 뒤의 날짜입니다. 날짜가 맞는지 확인하세요.' : '';
     const main = $('#main');
     main.innerHTML = `
     <div class="toolbar">
       <button id="prev" title="이전 날">◀</button>
-      <input type="date" id="dt" class="date" value="${S.date}">
+      <input type="date" id="dt" class="date" value="${S.date}" min="2020-01-01" max="2099-12-31">
       <button id="next" title="다음 날">▶</button>
       <button id="today">오늘</button>
       <b style="font-size:15px;margin:0 4px">${dLabel(S.date)}</b>
@@ -4271,7 +4314,7 @@ async function addCharts(buf, jobs) {
       ${isManager() ? '<button id="imp" title="기존 개인 업무데이터 엑셀(.xlsm/.xlsx)의 날짜 시트를 읽어서 넣습니다">📥 엑셀 가져오기</button>' : ''}
       ${ro ? '' : '<button class="primary" id="save">저장</button><button class="danger" id="del">이 날짜 삭제</button>'}
     </div>
-    ${lockMsg ? '<div class="' + (D.period ? 'lock' : 'warn') + '">' + lockMsg + '</div>' : ''}
+    ${lockMsg ? '<div class="' + (D.period && ro ? 'lock' : 'warn') + '">' + lockMsg + '</div>' : ''}
     <div class="erow"><div class="energy" id="energy">
       <div class="el"><b>개인목표 달성</b><span>월 목표</span>
         ${D.canSetTarget ? `<select id="etg" ${D.period ? '' : 'disabled'}><option value="">선택</option>${C.TARGETS.map(t => `<option ${t === D.target ? 'selected' : ''}>${t}</option>`).join('')}</select>`
@@ -4285,7 +4328,7 @@ async function addCharts(buf, jobs) {
     <div class="below">${ro ? '' : '<button id="more">+ 5줄 추가</button>'}<span class="muted" id="rowinfo"></span>
       <span class="muted" style="margin-left:auto">칸 클릭 = V 표시/해제 · 주문번호 칸에서 Enter = 다음 줄 · 파란 주문번호 = 메모 있음</span></div>`;
     if ($('#imp')) $('#imp').onclick = importXlsx;
-    $('#dt').onchange = e => { const v = e.target.value; if (v >= '2020-01-01' && v <= '2099-12-31') switchDay(v); };   // 연도를 치는 중(0002…)이면 기다림
+    $('#dt').onchange = e => { const v = e.target.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v) && v >= '2020-01-01' && v <= '2099-12-31') switchDay(v); };   // 연도를 치는 중(0002…·20260…)이면 기다림
     $('#prev').onclick = () => switchDay(C.addDays(S.date, -1));
     $('#next').onclick = () => switchDay(C.addDays(S.date, 1));
     $('#today').onclick = () => switchDay(S.today);
@@ -4309,7 +4352,7 @@ async function addCharts(buf, jobs) {
   function lastFilled(doc) { let k = -1; doc.rows.forEach((r, i) => { if (r && (String(r.o || '').trim() || r.memo)) k = i; }); return k; }
 
   async function switchDay(date) {
-    if (S.dirty) { const ok = await saveNow(); if (!ok) return; }
+    if (!(await saveFirst())) return;
     loadDay(date);
   }
 
@@ -4333,8 +4376,8 @@ async function addCharts(buf, jobs) {
     bind('days', v => (doc.days = +v));
     bind('ot', v => (doc.ot = +v));
     bind('meal', v => (doc.meal = v));
-    $('#asmOt').oninput = e => { doc.asmOt = C.num(e.target.value); changed(); };
-    $$('.oth').forEach(i => (i.oninput = e => { const v = C.num(e.target.value); if (v) doc.other[i.dataset.k] = v; else delete doc.other[i.dataset.k]; changed(); }));
+    $('#asmOt').oninput = e => { doc.asmOt = clampIn(e.target, 720); changed(); };
+    $$('.oth').forEach(i => (i.oninput = e => { const v = clampIn(e.target, 720); if (v) doc.other[i.dataset.k] = v; else delete doc.other[i.dataset.k]; changed(); }));
   }
 
   function buildGrid() {
@@ -4387,7 +4430,9 @@ async function addCharts(buf, jobs) {
     if (g._bound) return;                                                   // [+5줄 추가] 때 같은 처리가 겹겹이 붙지 않게
     g._bound = true;
     g.addEventListener('input', onGridInput);
-    g.addEventListener('focusin', e => { const t = e.target; if (t.dataset.n || t.dataset.f === 'q') showPad(t); });
+    g.addEventListener('focusin', e => { const t = e.target; if (t.dataset.n || t.dataset.f === 'q') { showPad(t); setTimeout(() => { try { if (document.activeElement === t) t.select(); } catch (er) { } }, 0); } });
+    g.addEventListener('mouseup', e => { const t = e.target; if ((t.dataset.n || t.dataset.f === 'q') && t.selectionStart === t.selectionEnd && t.value && t._sel !== 1) { t._sel = 1; t.select(); e.preventDefault(); } });
+    g.addEventListener('focusout', e => { if (e.target) e.target._sel = 0; });
     g.addEventListener('focusout', () => setTimeout(() => { if (!padHold) hidePad(); }, 120));
     g.addEventListener('change', onGridChange);
     g.addEventListener('keydown', e => {
@@ -4452,7 +4497,7 @@ async function addCharts(buf, jobs) {
       const c = counts(it);
       return `<tr data-f="${i}" class="bf"><td><input type="checkbox" class="bon" ${it.on ? 'checked' : ''} ${!it.user || it.err ? 'disabled' : ''}></td>
         <td class="bfn" title="${esc(it.file)}">${esc(it.file)}</td>
-        <td><select class="bus ${it.user ? '' : 'miss'}">${uopts(it.user)}</select></td>
+        <td><select class="bus ${it.user ? '' : 'miss'}">${uopts(it.user)}</select>${it.user ? '' : '<div class="muted" style="font-size:11.5px">파일 이름과 같은 계정이 없음 (아직 [처음 등록] 안 했으면 먼저 등록)</div>'}</td>
         <td class="num">${it.items.length}</td><td class="num ist ok">${c.ok}</td><td class="num ist warn">${c.ex}</td><td class="num ist ${c.chk ? 'bad' : ''}">${c.chk}</td>
         <td class="num"><b>${c.sel}</b>일</td>
         <td>${it.err ? `<span class="ist bad">${esc(it.err)}</span>` : `<button class="bdt">상세 ▾</button>`}</td></tr>
@@ -4460,7 +4505,7 @@ async function addCharts(buf, jobs) {
     };
     const detHtml = (it) => '<table class="list imp"><thead><tr><th></th><th>시트</th><th>날짜</th><th>구분</th><th class="num">주문</th><th class="num">평가평균</th><th>상태</th></tr></thead><tbody>' +
       it.items.map((x, j) => { const s = impStatus(x, it.items, it.existing), c = C.calcDay(x.doc, 0, minsOf(x.date));
-        return `<tr data-j="${j}"><td><input type="checkbox" class="don" ${x.on ? 'checked' : ''} ${s.dis ? 'disabled' : ''}></td><td>${esc(x.sheet)}</td><td><input type="date" class="ddt" value="${x.date}"></td><td>${esc(x.doc.kind)}</td><td class="num">${c.orders}</td><td class="num">${f2(c.f7)}</td><td class="ist ${s.k}">${s.t}</td></tr>`; }).join('') + '</tbody></table>';
+        return `<tr data-j="${j}"><td><input type="checkbox" class="don" ${x.on ? 'checked' : ''} ${s.dis ? 'disabled' : ''}></td><td>${esc(x.sheet)}</td><td><input type="date" class="ddt" value="${x.date}" style="width:150px"></td><td>${esc(x.doc.kind)}</td><td class="num">${c.orders}</td><td class="num">${f2(c.f7)}</td><td class="ist ${s.k}">${s.t}</td></tr>`; }).join('') + '</tbody></table>';
     modal(`<h3>📥 여러 명 엑셀 가져오기 — 파일 ${list.length}개</h3>
       <div class="muted" style="margin-bottom:6px">파일 이름의 이름으로 인원을 자동으로 찾았습니다. 못 찾은 파일(빨간 칸)은 인원을 직접 고르세요. 이미 웹에 있는 날짜는 기본으로 건너뜁니다.</div>
       <label style="display:inline-flex;gap:6px;align-items:center;margin-bottom:6px"><input type="checkbox" id="bow"> 이미 웹에 있는 날짜도 엑셀 내용으로 덮어쓰기</label>
@@ -4512,7 +4557,8 @@ async function addCharts(buf, jobs) {
         list.filter(it => it.on && it.user).forEach(it => { who2[it.user.id] = (who2[it.user.id] || 0) + 1; });
         if (Object.values(who2).some(n => n > 1)) return toast('같은 인원에게 파일 두 개 이상이 선택되었습니다. 인원을 확인하세요', true);
         if (!jobs.length) return toast('넣을 날짜가 없습니다', true);
-        if (!(await confirmBox(Object.keys(who2).length + '명 · ' + jobs.length + '일을 가져옵니다.', '가져오기'))) return;
+        const inClosed = jobs.filter(j => (periodOf(j.x.date) || {}).status === '마감');
+        if (!(await confirmBox(Object.keys(who2).length + '명 · ' + jobs.length + '일을 가져옵니다.' + (inClosed.length ? `<br><b style="color:var(--red)">⚠ 그중 ${inClosed.length}일은 마감된 달(${[...new Set(inClosed.map(j => ymLabel(periodOf(j.x.date).ym)))].join(', ')})입니다.</b> 그 달 백업을 받아 두었다면 다시 받으세요.` : ''), '가져오기'))) return;
         const btn = $('[data-s]', bg); btn.disabled = true; $('#bpg', bg).classList.remove('hide');
         let ok = 0; const fails = [];
         for (let k = 0; k < jobs.length; k++) {
@@ -4663,15 +4709,23 @@ async function addCharts(buf, jobs) {
   })();
   function colIdx(c) { let n = 0; for (const ch of c) n = n * 26 + ch.charCodeAt(0) - 64; return n; }
 
+  // 숫자만 · 상한을 넘으면 상한으로 (오타 하나로 평가가 크게 바뀌지 않게)
+  function clampIn(t, max) {
+    let v = String(t.value || '').replace(/[^0-9]/g, '');
+    if (v !== t.value) t.value = v;
+    let n = v === '' ? 0 : parseInt(v, 10);
+    if (n > max) { n = max; t.value = String(max); toast('최대 ' + max + '까지 입력할 수 있습니다', true); }
+    return n;
+  }
   function onGridInput(e) {
     const t = e.target, tr = t.closest('tr'); if (!tr) return;
     const r = S.day.doc.rows[+tr.dataset.i];
-    if (t.dataset.f === 'q') { r.q = t.value.trim() === '' ? '' : C.num(t.value); }
+    if (t.dataset.f === 'q') { const n = clampIn(t, 999); r.q = t.value === '' ? '' : n; }
     else if (t.dataset.f === 'memo') { r.memo = t.value; tr.querySelector('td.o').classList.toggle('memo', !!t.value); }
     else if (t.dataset.f === 'o') { r.o = t.value; }
     else if (t.dataset.n) {
       if (!String(r.o).trim() && t.value) { toast('주문번호부터 입력하세요', true); t.value = ''; return; }
-      const v = C.num(t.value); if (v) r.m[t.dataset.n] = v; else delete r.m[t.dataset.n];
+      const v = clampIn(t, 999); if (v) r.m[t.dataset.n] = v; else delete r.m[t.dataset.n];
       t.parentNode.classList.toggle('on', !!v);
     }
     changed();
@@ -4823,7 +4877,7 @@ async function addCharts(buf, jobs) {
       <button class="primary" id="xl">⬇ 엑셀 다운로드 (.xlsx)</button>
     </div>
     ${over ? '<div class="warn">입력된 날짜가 ' + r.days.length + '일로 엑셀 통계 시트 한도(30일)를 넘습니다. 앞의 30일만 엑셀에 들어갑니다.</div>' : ''}
-    ${!r.target ? '<div class="warn">월 목표가 선택되지 않아 달성률이 표시되지 않습니다. 위에서 월 목표를 선택하세요.</div>' : ''}
+    ${!r.target ? '<div class="warn">월 목표가 정해지지 않아 달성률이 표시되지 않습니다. ' + (r.canSetTarget ? '위에서 월 목표를 선택하세요.' : '담당 매니저에게 월 목표를 정해 달라고 하세요.') + '</div>' : ''}
     <div class="stats s6">
       <div class="stat"><div class="k">평가 평균</div><div class="v">${f2(m.f7)}</div></div>
       <div class="stat"><div class="k">달성률</div><div class="v">${r.target ? pct(m.c8) : '-'}</div>${m.c8 != null ? `<div class="bar"><i class="${m.c8 >= 0.9 ? 'hi' : m.c8 <= 0.5 ? 'lo' : ''}" style="width:${Math.min(100, m.c8 * 100)}%"></i></div>` : ''}</div>
@@ -5055,12 +5109,13 @@ async function addCharts(buf, jobs) {
   function rateCls(v) { return v == null ? '' : v >= 0.9 ? 'r-hi' : v <= 0.5 ? 'r-lo' : 'r-mid'; }
   function renderMList(r) {
     const xym = r.period ? r.period.ym : null, list = S._mlist, today = S.today;
+    let prevWork = C.addDays(today, -1); while ([0, 6].includes(new Date(prevWork + 'T00:00:00').getDay())) prevWork = C.addDays(prevWork, -1);   // 월요일엔 금요일
     const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}</th>`;
     $('#mbody').innerHTML = `
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' ? 236 : 190}px)">
-      <table class="list mlist"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '총 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률')}<th></th></tr></thead><tbody>
+      <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '총 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률')}<th></th></tr></thead><tbody>
       ${list.map(u => {
-        const stale = u.last && u.last < C.addDays(today, -2), has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
+        const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
         return `<tr data-u="${u.id}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인할 수 없음 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${esc(u.group)}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : '입력 없음'}</td>
         <td class="num">${xym ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
@@ -5069,7 +5124,7 @@ async function addCharts(buf, jobs) {
         <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' ? '<button data-a="edit" title="이름·그룹·권한 변경, 비밀번호 초기화, 계정 삭제">편집</button>' : ''}</td></tr>`;
       }).join('') || '<tr><td colspan="11" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
-    $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; renderMList(r); }));
+    $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; drawManage(r, S.manageYm || (r.period || {}).ym, false); }));
     $$('.mlist select.mtg').forEach(sel => (sel.onchange = async () => {
       const u = S._mlist.find(x => x.id === sel.closest('tr').dataset.u), v = +sel.value || 0;   // '-' = 목표 지우기
       sel.disabled = true;
@@ -5254,10 +5309,11 @@ async function addCharts(buf, jobs) {
         <div class="row"><span class="muted" style="flex:1">${(S.rates || []).length ? '설정된 달 : ' + S.rates.map(r => ymLabel(r.ym)).join(', ') : '지금은 기본값(원본 엑셀)으로 계산 중'}</span><button class="primary" id="prt">항목별 분 · 설명 열기</button></div></section>` : ''}
       ${me.role === '관리자' ? `<section class="card scard"><div class="sct"><b>인원 명단 (조직도)</b><span>여기 있는 이름만 [처음 등록] 가능 · 그룹은 명단에서 자동</span></div>
         <div id="rsbox"><div class="muted">불러오는 중…</div></div></section>` : ''}
-      ${me.role === '관리자' ? `<section class="card scard"><div class="sct"><b>월 백업 · 오래된 달 정리</b><span>한 달 단위로 업무데이터 · 연차 · 인사평가를 파일 1개로 · 마감 후 받아 두세요</span></div>
+      </div>
+      ${me.role === '관리자' ? `<section class="card scard" style="grid-column:1/-1"><div class="sct"><b>월 백업 · 오래된 달 정리</b><span>한 달 단위로 업무데이터 · 연차 · 인사평가를 파일 1개로 · 마감 후 받아 두세요</span></div>
         <div id="bkbox"><div class="muted">불러오는 중…</div></div>
         ${me.period ? '<div class="row" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)"><span class="muted" style="flex:1">운영 전 시험 데이터를 지울 때만 사용 (일일 입력 · 목표 · 기간)</span><button class="danger" id="pwipe">데이터 전체 삭제…</button></div>' : ''}</section>` : ''}
-      </div></div></div>`;
+      </div></div>`;
     if (me.period) bindPeriodPanel();
     if ($('#prt')) $('#prt').onclick = editRates;
     if ($('#bkbox')) drawBackup();
@@ -5336,7 +5392,7 @@ async function addCharts(buf, jobs) {
         ${goneAcct.length ? `<div class="note">명단에서 빠지는 사람 중 계정이 있는 ${goneAcct.length}명은 로그인은 계속 됩니다. 퇴사자라면 [명단 보기 · 고치기]의 "명단 외 계정"에서 정리하세요.</div>` : ''}
       </div>
       ${dup.length ? '<div class="acts"><button data-c>닫기</button></div>' : `<div class="muted" style="margin-top:8px">명단을 이 파일 내용으로 바꿉니다. 계속하려면 <b>적용</b>이라고 입력하세요.</div>
-      <div class="fld" style="margin-top:6px"><input id="cf" placeholder="적용"></div><div class="acts"><button data-c>취소</button><button class="primary" data-s>적용</button></div>`}`, (bg, close) => {
+      <div class="fld" style="margin-top:6px"><input id="cf" placeholder="여기에 직접 입력"></div><div class="acts"><button data-c>취소</button><button class="primary" data-s>적용</button></div>`}`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
       const sb = $('[data-s]', bg); if (!sb) return;
       sb.onclick = async () => {
@@ -5349,12 +5405,13 @@ async function addCharts(buf, jobs) {
   function rosterModal() {
     let q = '';
     modal(`<div class="dhd"><div><h3>인원 명단 (조직도)</h3><span class="muted">여기 있는 이름만 [처음 등록] 가능 · 이름은 관리툴 이름 그대로 (예: 김동일2)</span></div><button data-n>닫기</button></div>
-      <div class="row" style="gap:8px;margin:8px 0"><input id="rsq" placeholder="이름 · 그룹 검색" style="flex:1"><button class="primary" id="rsadd">+ 한 명 추가</button></div>
+      <div class="row" style="gap:8px;margin:8px 0"><input id="rsq" placeholder="이름 · 그룹 검색" style="flex:1"><select id="rsf"><option value="">전체</option><option value="y">등록함</option><option value="n">아직 등록 안 함</option></select><button class="primary" id="rsadd">+ 한 명 추가</button></div>
       <div id="rsbody" style="max-height:62vh;overflow:auto"></div>`, (bg, close) => {
       $$('[data-n]', bg).forEach(x => (x.onclick = () => { close(); drawRoster(); }));
       const draw = () => {
         const r = S._roster, k = normName(q);
-        const rows = r.rows.filter(x => !k || x.name.includes(k) || (x.grp || '').includes(k));
+        const fv = ($('#rsf', bg) || {}).value || '';
+        const rows = r.rows.filter(x => (!k || x.name.includes(k) || (x.grp || '').includes(k)) && (!fv || (fv === 'y') === !!x.acct));
         $('#rsbody', bg).innerHTML = `<table class="list rstbl"><thead><tr>${RS_COLS.map(c => `<th>${c[1]}</th>`).join('')}<th>계정</th><th></th></tr></thead><tbody>
           ${rows.map(x => `<tr><td><b>${esc(x.disp || x.name)}</b></td>${RS_COLS.slice(1).map(([c]) => `<td${c === 'grp' && !r.groups.includes(x.grp) ? ' class="t-lo"' : ''}>${esc(x[c] || '')}</td>`).join('')}
             <td>${x.acct ? '등록됨' + (x.acct.group !== x.grp ? ` <small class="t-lo">(계정 ${esc(x.acct.group)})</small>` : '') + (x.acct.role !== '일반' ? ` <small>${esc(x.acct.role)}</small>` : '') : '<span class="muted">미등록</span>'}</td>
@@ -5389,6 +5446,7 @@ async function addCharts(buf, jobs) {
         }));
       };
       $('#rsq', bg).oninput = e => { q = e.target.value; draw(); };
+      $('#rsf', bg).onchange = () => draw();
       $('#rsadd', bg).onclick = () => rosterEdit(null, draw);
       draw();
     }, 'wide');
@@ -5432,7 +5490,7 @@ async function addCharts(buf, jobs) {
     }));
     $$('[data-bd]', box).forEach(b => (b.onclick = () => modal(`<h3 style="color:var(--red)">${ymLabel(b.dataset.bd)} 지우기</h3>
       <div style="line-height:1.6">이 달의 <b>일일 입력 · 목표 · 기간 · 연차 · 토요근무 · 인사평가 · 근태</b>가 서버에서 지워집니다.<br>받아 둔 백업 파일로만 되살릴 수 있습니다. 계속하려면 <b>삭제</b>라고 입력하세요.</div>
-      <div class="fld" style="margin-top:10px"><input id="cf" placeholder="삭제"></div><div class="acts"><button data-c>취소</button><button class="danger" data-s>지우기</button></div>`, (bg, close) => {
+      <div class="fld" style="margin-top:10px"><input id="cf" placeholder="여기에 직접 입력"></div><div class="acts"><button data-c>취소</button><button class="danger" data-s>지우기</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
       $('[data-s]', bg).onclick = async () => {
         try { const x = await api('bkDelete', { ym: b.dataset.bd, confirm: $('#cf', bg).value.trim() }); S.periods = x.periods; S._mcache = {}; S.pc = {}; close(); toast(ymLabel(x.deleted) + '을(를) 지웠습니다'); renderSettings(); }
@@ -5443,8 +5501,8 @@ async function addCharts(buf, jobs) {
       const f = e.target.files[0]; if (!f) return;
       let data; try { data = JSON.parse(await f.text()); } catch (err) { return toast('백업 파일을 읽지 못했습니다', true); }
       if (!data || data.app !== '조립팀 업무데이터' || !data.ym) return toast('업무데이터 백업 파일이 아닙니다', true);
-      modal(`<h3>${ymLabel(data.ym)} 복원</h3><div style="line-height:1.6">백업 시각 ${esc(data.at || '')}<br>일일 ${(data.days || []).length}건 · 연차 ${(data.leaves || []).length}건 · 평가 ${(data.hrRec || []).length}건을 되살립니다. 지금 있는 같은 기록은 백업 내용으로 바뀝니다.<br>계속하려면 <b>복원</b>이라고 입력하세요.</div>
-        <div class="fld" style="margin-top:10px"><input id="cf" placeholder="복원"></div><div class="acts"><button data-c>취소</button><button class="primary" data-s>복원</button></div>`, (bg, close) => {
+      modal(`<h3>${ymLabel(data.ym)} 복원</h3><div style="line-height:1.6">백업 시각 ${esc(data.at || '')}<br>일일 ${(data.days || []).length}건 · 연차 ${(data.leaves || []).length}건 · 평가 ${(data.hrRec || []).length}건을 되살립니다.<br>지운 달(자료가 비어 있는 달)에만 복원됩니다. 자료가 남아 있는 달이면 복원이 거절됩니다.<br>계속하려면 <b>복원</b>이라고 입력하세요.</div>
+        <div class="fld" style="margin-top:10px"><input id="cf" placeholder="여기에 직접 입력"></div><div class="acts"><button data-c>취소</button><button class="primary" data-s>복원</button></div>`, (bg, close) => {
         $('[data-c]', bg).onclick = close;
         $('[data-s]', bg).onclick = async () => {
           try { const x = await api('bkRestore', { data, confirm: $('#cf', bg).value.trim() }); S.periods = x.periods; S._mcache = {}; S.pc = {}; close(); toast(`${ymLabel(x.ym)} 복원 : 일일 ${x.days}건${x.skipped ? ' (계정 없는 ' + x.skipped + '건 제외)' : ''} · 연차 ${x.leaves} · 평가 ${x.hr}`); renderSettings(); }
@@ -5474,22 +5532,24 @@ async function addCharts(buf, jobs) {
     if (b('pclose')) b('pclose').onclick = async () => {
       const ym = b('pym').value, st = b('pst').value, en = b('pen').value;
       if (!en) return toast('마감일을 선택하세요', true);
-      if (!(await confirmBox(`<b>${ymLabel(ym)}</b> (${st} ~ ${en}) 을 마감합니다.<br>다음 달은 ${C.addDays(en, 1)} 부터 자동으로 시작됩니다.`, '마감'))) return;
+      if (!(await confirmBox(`<b>${ymLabel(ym)}</b> (${st} ~ ${en}) 을 마감합니다.<br>다음 달은 ${C.addDays(en, 1)} 부터 자동으로 시작됩니다.` +
+        (en >= S.today ? `<br><b style="color:var(--red)">⚠ 마감일(${en})이 아직 지나지 않았습니다. 인원들이 ${en}까지의 입력을 더 이상 고칠 수 없게 됩니다.</b>` : ''), '마감'))) return;
       try { upd(await api('closePeriod', { ym, start: st, end: en })); toast('마감했습니다'); } catch (e) { toast(e.message, true); }
     };
     if (b('pedit')) b('pedit').onclick = async () => {
       try { upd(await api('editOpen', { ym: b('pym').value, start: b('pst').value })); toast('수정했습니다'); } catch (e) { toast(e.message, true); }
     };
     if (b('pcancel')) b('pcancel').onclick = async () => {
-      if (!(await confirmBox('가장 최근 마감을 취소하고 그 달을 다시 진행 상태로 돌립니다.<br>그 뒤에 자동으로 열렸던 다음 달 기간은 삭제됩니다 (입력 데이터는 지워지지 않음).', '마감 취소'))) return;
+      const lc = S.periods.filter(p => p.status === '마감').pop(), op = S.periods.find(p => p.status === '진행');
+      if (!(await confirmBox(`가장 최근 마감(<b>${lc ? ymLabel(lc.ym) : ''}</b>)을 취소하고 다시 진행 상태로 돌립니다.` + (op ? `<br>그 뒤에 자동으로 열린 <b>${ymLabel(op.ym)}</b> 기간은 없어지고, 그 기간에 입력한 날짜는 ${lc ? ymLabel(lc.ym) : '이전 달'}로 합쳐집니다 (입력 자체는 지워지지 않음).` : ''), '마감 취소'))) return;
       try { upd(await api('cancelClose')); toast('마감을 취소했습니다'); } catch (e) { toast(e.message, true); }
     };
     b('padd').onclick = async () => {
       try { upd(await api('addPastPeriod', { ym: b('aym').value, start: b('ast').value, end: b('aen').value })); toast('지난 달 기간을 추가했습니다'); } catch (e) { toast(e.message, true); refreshAfterFail(); }
     };
     if (b('pwipe')) b('pwipe').onclick = () => modal(`<h3 style="color:var(--red)">데이터 전체 삭제</h3>
-      <div style="line-height:1.6">모든 인원의 <b>일일 입력, 월 목표, 월 기간, 인사평가 근태 기록</b>이 전부 삭제됩니다 (연차·토요 · 인사평가 기록 · 계정은 그대로).<br>운영 시작 전 시험 데이터를 지울 때 <b>한 번만</b> 쓰세요.<br>되돌릴 수 없습니다. 계속하려면 <b>전체삭제</b> 라고 입력하세요.</div>
-      <div class="fld" style="margin-top:10px"><input id="cf" placeholder="전체삭제"></div>
+      <div style="line-height:1.6"><b>지워지는 것</b> : 모든 인원의 일일 입력 · 월 목표 · 월 기간 · 인사평가 <u>근태</u> 기록<br><b>남는 것</b> : 계정 · 조직도 명단 · 연차·토요 · 인사평가 점수·평가 기록<br>운영 시작 전 시험 데이터를 지울 때 <b>한 번만</b> 쓰세요.<br>되돌릴 수 없습니다. 계속하려면 <b>전체삭제</b> 라고 입력하세요.</div>
+      <div class="fld" style="margin-top:10px"><input id="cf" placeholder="여기에 직접 입력"></div>
       <div class="acts"><button data-c>취소</button><button class="danger" data-s>삭제</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
       $('[data-s]', bg).onclick = async () => {
@@ -5517,11 +5577,22 @@ async function addCharts(buf, jobs) {
       let d0 = S.today;
       try { const pend = JSON.parse(sessionStorage.getItem('pending') || 'null'); if (pend && pend.uid === S.me.id && pend.date) d0 = pend.date; } catch (e) { }
       const pend0 = d0 !== S.today;
-      const v0 = isManager() && !pend0 ? 'dash' : 'input';
-      S.layout = null; shell(layoutOf(v0)); go(v0, { date: d0 });
+      let v0 = isManager() && !pend0 ? 'dash' : 'input';
+      try {                                                               // 새로고침(F5) : 보던 화면 그대로
+        const lv = sessionStorage.getItem('lastView'), me = S.me;
+        const okv = ['input', 'month', 'leave'].concat(isManager() ? ['dash', 'manage'] : []).concat(me.hr ? ['hr'] : []).concat(me.role === '관리자' || me.period ? ['settings'] : []);
+        if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
+        history.replaceState({ v: v0 }, '');
+      } catch (e) { }
+      S.layout = null; shell(layoutOf(v0)); go(v0, { date: d0, _pop: true });
       if (isManager()) setTimeout(() => { prefetchManage(); if (window.Leave) window.Leave.prefetch().then(updateBadge).catch(() => { }); }, 600);
     } catch (e) { if (S.token) { toast(e.message, true); } renderLogin(); }
   }
+  window.addEventListener('popstate', async e => {               // 브라우저 [뒤로] : 앱 안의 이전 화면으로
+    const v = e.state && e.state.v; if (!S.me || !v || v === S.view) return;
+    if (S.target && v !== 'input') { if (!(await saveFirst())) { history.pushState({ v: S.view }, ''); return; } S.target = null; S.day = null; }
+    go(v, { _pop: true });
+  });
   if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager });
   if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel });
   boot();
