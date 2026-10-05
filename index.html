@@ -663,6 +663,7 @@ button.big{padding:9px 18px;font-size:14.5px;font-weight:800}
 @media print{.lay>.side,.hrt,.ph,.no-print{display:none!important}.hr-ov{position:static;background:none;padding:0}.hr-modal{padding:0}}
 /* 백업 */
 .bktbl td:last-child{text-align:right;white-space:nowrap}
+main.loading,#main.loading{pointer-events:none;opacity:.55;transition:opacity .15s}
 .btn-file{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:#fff;font-weight:600;cursor:pointer}
 .btn-file:hover{background:#f4f6fa}
 </style>
@@ -1607,7 +1608,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const y = +L.ym.slice(0, 4);
     if (!L.data || L.year !== y) {
       main.innerHTML = (A.isManager() ? '<div class="ph"><h1>연차 · 토요</h1></div>' : '') + '<div class="muted" style="padding:30px">불러오는 중…</div>';
-      try { await load(y); } catch (e) { main.innerHTML = '<div class="warn" style="margin:20px">' + A.esc(e.message) + '</div>'; return; }
+      try { await load(y); } catch (e) { if (A.S.view === 'leave' && L.main === main) main.innerHTML = '<div class="warn" style="margin:20px">' + A.esc(e.message) + '</div>'; return; }
+      if (A.S.view !== 'leave' || L.main !== main || !document.body.contains(main)) return;   // 기다리는 동안 다른 화면으로 옮김
       return draw();
     }
     draw();
@@ -1963,22 +1965,29 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       ['#lvd1', '#lvd2', '#lvh'].forEach(s => ($(s).onchange = () => { if (s === '#lvd1' && $('#lvd2').value < $('#lvd1').value) $('#lvd2').value = $('#lvd1').value; info(); }));
       drawPick(); info();
       $('[data-n]').onclick = close;
+      let saving = false;
       const save = async conf => {
+        if (saving) return;                                    // 두 번 눌러 같은 연차가 두 번 생기지 않게
         if (!ed && $('#lvnm').value.trim()) addName();
         if (!picked.length) return A.toast('이름을 고르세요', true);
         const req = { d1: $('#lvd1').value, d2: $('#lvd2').value, half: $('#lvh').value, reason: $('#lvr').value.trim(), train: $('#lvtr').checked };
         if (ed) req.note = $('#lvnote').value.trim();
+        saving = true; let r = null;
         try {
-          const r = ed ? await A.api('lvSaveLeave', Object.assign(req, { id: ed.id, staffId: ed.s })) : await A.api('lvSaveLeave', Object.assign(req, { staffIds: picked }));
-          if (conf) { await A.api('lvConfirm', { ids: r.leaves.map(x => x.id) }); r.leaves.forEach(x => (x.st = '확정')); }
+          r = ed ? await A.api('lvSaveLeave', Object.assign(req, { id: ed.id, staffId: ed.s })) : await A.api('lvSaveLeave', Object.assign(req, { staffIds: picked }));
           if (ed) d.leaves = d.leaves.filter(x => x.id !== ed.id);
-          d.leaves = d.leaves.concat(r.leaves); close(); A.toast((ed ? (conf ? '수정 + 확정' : '수정') : r.leaves.length + '명 등록') + ' 완료'); refresh();
-        } catch (e) { A.toast(e.message, true); }
+          d.leaves = d.leaves.concat(r.leaves);
+          if (conf) { await A.api('lvConfirm', { ids: r.leaves.map(x => x.id) }); r.leaves.forEach(x => (x.st = '확정')); }
+          close(); A.toast((ed ? (conf ? '수정 + 확정' : '수정') : r.leaves.length + '명 등록') + ' 완료'); refresh();
+        } catch (e) {
+          if (r) { close(); A.toast('저장은 됐지만 확정하지 못했습니다 : ' + e.message, true); refresh(); }   // 저장된 건 다시 만들지 않음
+          else { A.toast(e.message, true); saving = false; }
+        }
       };
       $('[data-y]').onclick = () => save(false);
       if ($('[data-yc]')) $('[data-yc]').onclick = () => save(true);
       if ($('[data-del]')) $('[data-del]').onclick = async () => {
-        if (!(await A.confirmBox((staffById(ed.s) || {}).name + ' ' + md(ed.d1) + (ed.d2 !== ed.d1 ? '~' + md(ed.d2) : '') + ' 연차를 삭제할까요?' + (ed.rb ? '<br><span class="muted">인원이 신청한 건입니다. 삭제하면 인원 화면에서도 사라집니다.</span>' : ''), '삭제'))) return;
+        if (!(await A.confirmBox(A.esc((staffById(ed.s) || {}).name || '') + ' ' + md(ed.d1) + (ed.d2 !== ed.d1 ? '~' + md(ed.d2) : '') + ' 연차를 삭제할까요?' + (ed.rb ? '<br><span class="muted">인원이 신청한 건입니다. 삭제하면 인원 화면에서도 사라집니다.</span>' : ''), '삭제'))) return;
         try { await A.api('lvDelLeave', { id: ed.id }); d.leaves = d.leaves.filter(x => x.id !== ed.id); close(); A.toast('삭제했습니다'); refresh(); } catch (e) { A.toast(e.message, true); }
       };
     }, 'md');
@@ -2132,7 +2141,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   // ------------------------------------------------------------ 토요근무
   const batchDates = ym => ((kv().batches || {})[ym] || LC.monthSaturdays(ym)).slice().sort();
-  const cumScore = weeks => { const sc = {}, y = weeks[0] ? weeks[0].slice(0, 4) : String(L.year); (D().duty || []).forEach(u => { if (!weeks.includes(u.d) && u.d.slice(0, 4) === y) sc[u.s] = (sc[u.s] || 0) + 1; }); return sc; };
+  const cumScore = weeks => { const sc = {}, y = L.ym ? L.ym.slice(0, 4) : String(L.year); /* 배정하는 달의 연도 기준 */ (D().duty || []).forEach(u => { if (!weeks.includes(u.d) && u.d.slice(0, 4) === y) sc[u.s] = (sc[u.s] || 0) + 1; }); return sc; };
   function drawSat() {
     const d = D(), can = d.canEdit && !isClosed(L.ym), weeks = batchDates(L.ym), H = L.ix.H;
     const cnt = {}; weeks.forEach(w => (L.ix.duty[w] || []).forEach(u => (cnt[u.s] = (cnt[u.s] || 0) + 1)));
@@ -2301,7 +2310,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         </div>
       </div>`;
     A.$('#lvsq').oninput = e => { L.setQ = e.target.value; const p = e.target.selectionStart; drawSet(); const i = A.$('#lvsq'); i.focus(); i.setSelectionRange(p, p); };
-    const saveRow = async tr => {
+    const saveRow = tr => (tr._q = (tr._q || Promise.resolve()).then(() => saveRow1(tr)));   // 한 줄씩 차례로 (새 줄이 두 번 생기지 않게)
+    const saveRow1 = async tr => {
       const g = c => A.$('.' + c, tr), s = d.staff.find(x => x.id === tr.dataset.id) || {};
       const st = { id: tr.dataset.id.startsWith('new') ? '' : tr.dataset.id, name: g('f-name').value.trim(), grp: g('f-grp').value.trim(), title: g('f-title').value.trim(), grade: g('f-grade').value,
         off: g('f-off').value, roster: g('f-roster').checked, status: g('f-status').value.trim(), grant: g('f-grant').value.trim(), empno: g('f-empno').value.trim(), rank: g('f-rank').value.trim(),
@@ -2394,7 +2404,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     fi.click();
   }
 
-  window.Leave = { init, render, prefetch, counts: () => L.counts, reset: () => { L.data = null; L.year = null; L.counts = null; L.tab = null; L.ym = null; L.part = ''; } };
+  window.Leave = { init, render, prefetch, counts: () => L.counts, reset: () => { L.data = null; L.year = null; L.counts = null; L.tab = null; L.ym = null; L.part = ''; L.recQ = ''; L.setQ = ''; L.showPend = true; L.sumSort = null; L.main = null; L.ix = null; } };
 })();
 </script>
 <script>/* 인사평가 계산 (예전 구글 앱스 스크립트 Code.gs 의 buildMonth_ · items_ · orderRows_ 를 그대로 옮김) */
@@ -2738,11 +2748,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   async function render(main, tab) {
     if (!(await guard())) return;                                   // 같은 메뉴를 다시 눌러도 저장 안 한 점수 확인
     main.innerHTML = '<div class="ph"><h1>인사평가</h1></div><div class="muted" style="padding:30px">불러오는 중…</div>';
-    try { META = await api('hrMeta'); } catch (e) { main.innerHTML = '<div class="ph"><h1>인사평가</h1></div><div class="warn" style="margin:20px">' + esc(e.message) + '</div>'; return; }
+    const seq = ST.rseq = (ST.rseq || 0) + 1, stale = () => seq !== ST.rseq || A.S.view !== 'hr' || !document.body.contains(main);   // 기다리는 동안 다른 화면으로 옮김
+    try { META = await api('hrMeta'); } catch (e) { if (!stale()) main.innerHTML = '<div class="ph"><h1>인사평가</h1></div><div class="warn" style="margin:20px">' + esc(e.message) + '</div>'; return; }
+    if (stale()) return;
     ST.month = ST.month || META.current || META.months[0];
     if (!META.months.includes(ST.month) && META.months.length) ST.month = META.months[0];
     if (!ST.part || !(admin() ? META.parts.some(p => p.name === ST.part) : META.myParts.includes(ST.part))) ST.part = admin() ? (META.parts[0] || {}).name : META.myParts[0];
     if (admin()) { const ld = main.querySelector('.muted'); if (ld) ld.textContent = '업무데이터 반영 중…'; await autoSync(ST.month); }   // 탭을 누르기 전에 끝냄
+    if (stale()) return;
     const tabs = admin() ? TABS_ADMIN : TABS_MGR;
     if (tab && tabs.some(t => t[0] === tab)) ST.tab = tab;
     if (!ST.tab || !tabs.some(t => t[0] === ST.tab)) ST.tab = tabs[0][0];
@@ -3423,8 +3436,11 @@ function parseAcc(ws) {
     $('#svOrder').onclick = async () => { if (await saveTable('보고순서', H.orderRows(readTable('보고순서'), CFG['명단']))) cfgOrder(); };
   }
   function viewImport() {
-    cfgb().innerHTML = `<div class="card"><h2>구글 시트 가져오기 (처음 한 번)</h2>
-      <div class="banner info">예전 인사평가 사이트의 구글 시트 "조립팀 인사보고"를 <b>파일 → 다운로드 → Microsoft Excel(.xlsx)</b>로 받아서 넣으세요.<br>설정 · 파트 · 명단 · 항목 · 등급목표 · 점유율표 · 감점기준 · 보고순서 · 원본(업무데이터) · 평가기록 · 마감 · 수정기록을 그대로 옮깁니다. 관리자·파트 비밀번호는 옮기지 않습니다.</div>
+    cfgb().innerHTML = `<div class="card"><h2>구글 시트 가져오기</h2>
+      <div class="banner info">예전 인사평가 사이트의 구글 시트 "조립팀 인사보고"를 <b>파일 → 다운로드 → Microsoft Excel(.xlsx)</b>로 받아서 넣으세요.<br>
+        · <b>전체 바꾸기</b> (처음 한 번) : 설정 · 파트 · 명단 · 항목 · 등급목표 · 점유율표 · 감점기준 · 보고순서 · 원본 · 평가기록 · 마감 · 수정기록을 통째로 옮깁니다.<br>
+        · <b>고른 달만</b> (예: 예전 사이트에서 끝낸 10월) : 그 달의 원본 · 평가기록 · 마감 · 수정기록만 바꿉니다. 웹에서 고친 설정 · 명단 · 다른 달 · 근태는 그대로입니다.<br>
+        관리자·파트 비밀번호는 옮기지 않습니다.</div>
       <input type="file" id="imFile" accept=".xlsx"><div id="imPrev" style="margin-top:12px"></div></div>`;
     let T = null;
     $('#imFile').onchange = async e => {
@@ -3435,24 +3451,49 @@ function parseAcc(ws) {
         if (!T['명단'].length || !T['항목'].length) throw new Error('"명단" · "항목" 시트가 없습니다. 인사평가 구글 시트가 맞는지 확인하세요');
         if (T['항목'].length !== 10) throw new Error('"항목" 시트는 10줄이어야 합니다 (지금 ' + T['항목'].length + '줄)');
         ['명단', '보고순서'].forEach(t => { const seen = {}; T[t].forEach(r => { const k = H.normName(r['이름']); if (!k) return; if (seen[k]) throw new Error(`"${t}" 시트에 이름이 두 번 있습니다 : ${r['이름']}`); seen[k] = 1; }); });
-        const months = [...new Set(T['평가기록'].map(r => r['평가월']))].sort();
+        const months = [...new Set(T['평가기록'].map(r => String(r['평가월'] || '').slice(0, 7)).filter(Boolean))].sort();
+        let webHas = false; try { const cf = await api('hrCfg'); webHas = !!((cf['명단'] || []).length); } catch (e2) { }   // 웹에 이미 명단이 있으면 '고른 달만'이 기본
+        const webMonths = webHas ? ['y'] : [];
         $('#imPrev').innerHTML = `<table class="tbl" style="max-width:560px"><tr><th>표</th><th class="r">줄</th></tr>${Object.keys(T).map(k => `<tr><td>${k}</td><td class="r">${T[k].length}</td></tr>`).join('')}</table>
           <div class="muted" style="margin:8px 0">평가기록 ${months.length ? months[0] + ' ~ ' + months[months.length - 1] : '-'}</div>
-          <div class="warn">⚠ 지금 웹에 있는 <b>인사평가 자료(기준·명단·평가기록·근태 제외)가 모두 이 파일 내용으로 바뀝니다.</b> 계속하려면 아래 칸에 <b>가져오기</b>를 입력하세요.</div>
+          <div style="margin:6px 0 10px;display:flex;gap:22px;font-weight:600"><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="imMode" value="months" ${webMonths.length ? 'checked' : ''}> 고른 달만</label>
+            <label style="display:flex;gap:6px;align-items:center"><input type="radio" name="imMode" value="all" ${webMonths.length ? '' : 'checked'}> 전체 바꾸기 (처음 한 번)</label></div>
+          <div id="imMonths" class="chks" style="margin-bottom:8px">${months.slice().reverse().map((m, i) => `<label><input type="checkbox" value="${m}" ${i === 0 ? 'checked' : ''}>${ymLab(m)}</label>`).join('')}</div>
+          <div class="warn" id="imWarn"></div>
           <div class="row" style="margin-top:8px"><input id="imCf" placeholder="여기에 직접 입력 : 가져오기" style="width:220px"><button class="primary" id="imBtn">가져오기</button></div>`;
+        const mode = () => (document.querySelector('input[name=imMode]:checked') || {}).value;
+        const picked = () => [...document.querySelectorAll('#imMonths input:checked')].map(x => x.value);
+        const sync = () => {
+          const all = mode() === 'all';
+          $('#imMonths').style.display = all ? 'none' : '';
+          $('#imWarn').innerHTML = all
+            ? '⚠ <b>지금 웹에 있는 인사평가 자료가 모두 이 파일 내용으로 바뀝니다</b> (기준 · 명단 · 파트 · 평가기록 · 마감 · 수정기록 · 사고 자료). <b>근태 기록만</b> 그대로 남습니다. 계속하려면 <b>가져오기</b>를 입력하세요.'
+            : '⚠ 고른 달(<b>' + (picked().map(ymLab).join(', ') || '없음') + '</b>)의 원본 · 평가기록 · 마감 · 수정기록 · 사고 자료만 이 파일 내용으로 바뀝니다. 나머지는 그대로입니다. 계속하려면 <b>가져오기</b>를 입력하세요.';
+        };
+        document.querySelectorAll('input[name=imMode], #imMonths input').forEach(x => (x.onchange = sync)); sync();
         $('#imBtn').onclick = async () => {
           if ($('#imCf').value.normalize('NFC').replace(/\s+/g, '') !== '가져오기') { toast('가져오기 네 글자를 입력하세요', 1); return; }
+          const all = mode() === 'all', ms = picked();
+          if (!all && !ms.length) { toast('가져올 달을 고르세요', 1); return; }
+          const inM = r => all || ms.includes(String(r['평가월'] || '').slice(0, 7));
+          const step = all ? '전체' : ms.map(ymLab).join(', ');
           try {
             busy(true, '가져오는 중…');
             await api('hrImport', { step: 'start', confirm: '가져오기' });
-            const kv = {}; ['설정', '파트', '명단', '항목', '등급목표', '점유율표', '감점기준', '보고순서'].forEach(t => (kv[t] = T[t]));
-            await api('hrImport', { step: 'kv', tables: kv, confirm: '가져오기' });
+            if (all) {
+              const kv = {}; ['설정', '파트', '명단', '항목', '등급목표', '점유율표', '감점기준', '보고순서'].forEach(t => (kv[t] = T[t]));
+              await api('hrImport', { step: 'kv', tables: kv, confirm: '가져오기' });
+            } else await api('hrImport', { step: 'months', months: ms, confirm: '가져오기' });
             const chunk = async (st, rows, n) => { for (let i = 0; i < rows.length; i += n) { busy(true, `가져오는 중… ${st} ${Math.min(i + n, rows.length)}/${rows.length}`); await api('hrImport', { step: st, rows: rows.slice(i, i + n) }); } };
-            await chunk('raw', T['원본'], 300); await chunk('recs', T['평가기록'], 150); await chunk('locks', T['마감'], 500); await chunk('logs', T['수정기록'], 500);
-            META = await api('hrMeta'); refreshMonthSel();
-            $('#imPrev').innerHTML = `<div class="banner info">가져오기 완료 · 평가기록 ${T['평가기록'].length}건 · 명단 ${T['명단'].length}명</div>`;
+            const recs = T['평가기록'].filter(inM);
+            await chunk('raw', T['원본'].filter(inM), 300); await chunk('recs', recs, 150); await chunk('locks', T['마감'].filter(inM), 500); await chunk('logs', T['수정기록'].filter(inM), 500);
+            ST.synced = {}; META = await api('hrMeta'); refreshMonthSel();
+            $('#imPrev').innerHTML = `<div class="banner info">가져오기 완료 (${esc(step)}) · 평가기록 ${recs.length}건${all ? ' · 명단 ' + T['명단'].length + '명' : ''}</div>`;
             toast('가져오기 완료');
-          } catch (err) { toast(err.message, 1); } finally { busy(false); }
+          } catch (err) {
+            $('#imPrev').insertAdjacentHTML('afterbegin', `<div class="banner lock">⚠ 가져오기가 중간에 멈췄습니다 : ${esc(err.message)}<br><b>같은 파일로 [가져오기]를 한 번 더</b> 하세요. 다시 하면 처음부터 깨끗하게 맞춰집니다.</div>`);
+            toast(err.message, 1);
+          } finally { busy(false); }
         };
       } catch (err) { $('#imPrev').innerHTML = `<div class="banner lock">${esc(err.message)}</div>`; }
     };
@@ -3873,7 +3914,7 @@ async function addCharts(buf, jobs) {
   }
 
   document.addEventListener('click', e => { const t = e.target; if (t && t.matches && t.matches('.hrw input[type=month]') && t.showPicker) { try { t.showPicker(); } catch (er) { } } });
-  function reset() { clearTimeout(ST.timer); Object.assign(ST, { tab: null, month: null, part: null, data: null, sel: null, dirty: false, timer: null, meta: null, synced: {}, attPart: undefined, cfgSub: undefined }); META = null; CFG = null; }
+  function reset() { clearTimeout(ST.timer); Object.assign(ST, { tab: null, month: null, part: null, data: null, sel: null, dirty: false, timer: null, meta: null, synced: {}, attPart: undefined, cfgSub: undefined, rseq: (ST.rseq || 0) + 1 }); META = null; CFG = null; }
   window.HR = { init, render, guard, reset, myAttLine, get dirty() { return ST.dirty; } };
 })();
 </script>
@@ -3989,7 +4030,7 @@ async function addCharts(buf, jobs) {
         <div class="fld"><label>이름</label><input id="ln" autocomplete="off" placeholder="예) 홍길동"></div>
         <div class="fld"><label>비밀번호 (숫자 4자리)</label><input id="lp" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
         <button class="primary" id="go">로그인</button>
-        <div class="note">· 공용 PC입니다. 다 쓰면 꼭 <b>[로그아웃]</b>을 눌러주세요.<br>· 비밀번호를 잊었으면 관리자에게 초기화를 요청하세요.<br>· 이름은 조직도(출근부)에 있는 그대로 입력합니다 (예: 김동일2).</div>` : `
+        <div class="note">· 공용 PC입니다. 다 쓰면 꼭 <b>[로그아웃]</b>을 눌러주세요.<br>· 비밀번호를 잊었거나 처음 쓰는 매니저는 관리자에게 <b>임시 비밀번호</b>를 받으세요.<br>· 이름은 조직도(출근부)에 있는 그대로 입력합니다 (예: 김동일2).</div>` : `
         <div class="fld"><label>이름 (조직도 이름 그대로)</label><input id="rn" autocomplete="off" placeholder="예) 홍길동 · 김동일2"></div>
         <div class="fld"><label>비밀번호 (숫자 4자리)</label><input id="rp" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
         <div class="fld"><label>비밀번호 확인</label><input id="rp2" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
@@ -4008,6 +4049,7 @@ async function addCharts(buf, jobs) {
         if (tab === 'login') {
           r = await api('login', { name: $('#ln').value, pin: $('#lp').value });
           if (r.newPin) toast('새 비밀번호로 설정되었습니다');
+          if (r.mustChange) S._mustChange = true;
         } else {
           if ($('#rp').value !== $('#rp2').value) throw new Error('비밀번호 확인이 다릅니다');
           r = await api('register', { name: $('#rn').value, pin: $('#rp').value, rid });
@@ -4016,6 +4058,7 @@ async function addCharts(buf, jobs) {
         }
         S.token = r.token; sessionStorage.setItem('tk', r.token);
         await boot(r);
+        if (S._mustChange) { S._mustChange = false; changePin('관리자가 준 <b>임시 비밀번호</b>입니다. 본인만 아는 새 번호로 바꿔 주세요.'); }
       } catch (e) { toast(e.message, true); busy = false; go.disabled = false; go.textContent = label; }
     };
     go.onclick = submit;
@@ -4024,9 +4067,16 @@ async function addCharts(buf, jobs) {
   }
   async function logout(silent) {
     if (!silent && S.view === 'hr' && window.HR && !(await window.HR.guard())) return;
-    if (!silent && S.dirty) await saveNow();
+    if (!silent && S.dirty && !(await saveNow())) {
+      if (!(await confirmBox('<b>저장하지 못한 입력</b>이 있습니다 (인터넷 확인).<br>그래도 로그아웃하면 이 입력은 사라집니다.', '그래도 로그아웃'))) return;
+    }
     if (!silent) { try { await api('logout'); } catch (e) { } }
+    clearTimeout(S.timer);
     S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
+    // 공용 PC : 다음 사람에게 앞사람이 보던 날짜·달·필터·창이 남지 않게
+    S.date = null; S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
+    S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
+    document.querySelectorAll('.modal-bg, .hr-ov').forEach(x => x.remove()); try { hidePad(); } catch (e) { }
     if (window.Leave) window.Leave.reset();
     if (window.HR) window.HR.reset();
     sessionStorage.removeItem('tk');
@@ -4084,13 +4134,15 @@ async function addCharts(buf, jobs) {
         <div class="content"><div id="proxy"></div><main id="main" class="pg"></main></div>
       </div>`;
     }
-    $$('[data-v]').forEach(b => (b.onclick = () => {
+    $$('[data-v]').forEach(b => (b.onclick = async () => {
+      const leaveProxy = b.dataset.v === 'back' || (S.target && b.dataset.v === 'input');
+      if (leaveProxy && S.target && !(await saveFirst())) return;              // 대신 입력한 내용을 먼저 저장
       if (b.dataset.v === 'back') { if (S.target) { S.target = null; S.day = null; } return go(S.lastSide || 'dash'); }
       if (S.target && b.dataset.v === 'input') { S.target = null; S.day = null; }
       go(b.dataset.v);
     }));
     $('#lo').onclick = () => logout();
-    $('#pw').onclick = changePin;
+    $('#pw').onclick = () => changePin();
     updateBadge();
   }
   function setNav() {
@@ -4098,7 +4150,7 @@ async function addCharts(buf, jobs) {
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
       p.innerHTML = `<div class="proxy">✎ ${esc(S.target.name)} (${esc(S.target.group)}) 님의 데이터를 보고 있습니다 <button id="back">인원 목록으로 돌아가기</button></div>`;
-      $('#back').onclick = async () => { if (S.dirty) await saveNow(); S.target = null; S.day = null; go(isManager() ? (S.lastSide || 'manage') : S.view); };
+      $('#back').onclick = async () => { if (!(await saveFirst())) return; S.target = null; S.day = null; go(isManager() ? (S.lastSide || 'manage') : S.view); };
     } else p.innerHTML = '';
   }
   // 왼쪽 메뉴 연차 숫자 : 내가 처리할 것 (관리자 = 확정 대기 + 토요 요청, 매니저 = 우리 파트 확인 전 신청)
@@ -4109,7 +4161,7 @@ async function addCharts(buf, jobs) {
   }
   async function go(view, opt) {
     if (S.view === 'hr' && view !== 'hr' && window.HR && !(await window.HR.guard())) { setNav(); return; }   // 인사평가 저장 안 한 점수
-    if (S.dirty) await saveNow();
+    if (!(await saveFirst())) { setNav(); return; }
     const lay = layoutOf(view);
     if (lay !== S.layout) shell(lay);
     if (lay === 'side') S.lastSide = view;
@@ -4122,9 +4174,16 @@ async function addCharts(buf, jobs) {
     if (view === 'leave') { $('#proxy').innerHTML = ''; return window.Leave.render($('#main'), opt && opt.tab); }
     if (view === 'hr') { $('#proxy').innerHTML = ''; return window.HR.render($('#main'), opt && opt.tab); }
   }
+  // 저장 안 된 입력이 있으면 먼저 저장 · 실패하면 그래도 넘어갈지 물어봄 (true = 넘어가도 됨)
+  async function saveFirst() {
+    if (!S.dirty) return true;
+    if (await saveNow()) return true;
+    if (await confirmBox('<b>저장하지 못한 입력</b>이 있습니다 (인터넷 확인).<br>이동하면 이 입력은 사라집니다. 그래도 이동할까요?', '그래도 이동')) { S.dirty = false; clearTimeout(S.timer); return true; }
+    return false;
+  }
   const pageHead = (title, mid, right) => `<div class="ph"><h1>${title}</h1>${mid || ''}<span style="flex:1"></span>${right || ''}</div>`;
-  function changePin() {
-    modal(`<h3>비밀번호 변경</h3>
+  function changePin(msg) {
+    modal(`<h3>비밀번호 변경</h3>${typeof msg === 'string' ? '<div class="note" style="margin-bottom:10px">' + msg + '</div>' : ''}
       <div class="fld"><label>현재 비밀번호</label><input id="o" type="password" maxlength="4" inputmode="numeric"></div>
       <div class="fld"><label>새 비밀번호 (숫자 4자리)</label><input id="n" type="password" maxlength="4" inputmode="numeric"></div>
       <div class="fld"><label>새 비밀번호 확인</label><input id="n2" type="password" maxlength="4" inputmode="numeric"></div>
@@ -4146,14 +4205,20 @@ async function addCharts(buf, jobs) {
   const pcKey = (uid, ym) => uid + '|' + ym;
   function dropPc(uid) { Object.keys(S.pc || {}).forEach(k => { if (!uid || k.indexOf(uid + '|') === 0) delete S.pc[k]; }); }
   async function loadDay(date) {
-    const main = $('#main'), u = who();
+    const main = $('#main'), u = who(), seq = S.loadSeq = (S.loadSeq || 0) + 1;
+    const stale = () => seq !== S.loadSeq || S.view !== 'input' || !S.me || who().id !== u.id;
     S.pc = S.pc || {};
     let p = periodOf(date), pc = p ? S.pc[pcKey(u.id, p.ym)] : null;
     try {
       if (!pc || Date.now() - pc.t > PC_TTL) {
         if (!$('#grid')) main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
-        else { const ss = $('#ss'); if (ss) { ss.className = 'save-state ing'; ss.textContent = '불러오는 중…'; } }
+        else {
+          const ss = $('#ss'); if (ss) { ss.className = 'save-state ing'; ss.textContent = '불러오는 중…'; }
+          if (document.activeElement && main.contains(document.activeElement)) document.activeElement.blur();
+          main.classList.add('loading');                                   // 불러오는 동안 옛 화면에 입력하지 않게
+        }
         const r = await api('getPeriodDays', { userId: u.id, date });
+        if (stale()) return;                                               // 그 사이 다른 날짜·사람·화면으로 옮김
         if (r.periods) S.periods = r.periods;
         if (r.rates) S.rates = r.rates;
         if (r.period) {
@@ -4177,7 +4242,8 @@ async function addCharts(buf, jobs) {
           toast('로그인 만료 전에 저장 못 한 내용을 복구했습니다 (곧 자동 저장)');
         }
       } catch (e) { }
-    } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; }
+    } catch (e) { if (!stale()) main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; }
+    finally { if (seq === S.loadSeq) main.classList.remove('loading'); }
   }
 
   function periodChip(p) {
@@ -4219,7 +4285,7 @@ async function addCharts(buf, jobs) {
     <div class="below">${ro ? '' : '<button id="more">+ 5줄 추가</button>'}<span class="muted" id="rowinfo"></span>
       <span class="muted" style="margin-left:auto">칸 클릭 = V 표시/해제 · 주문번호 칸에서 Enter = 다음 줄 · 파란 주문번호 = 메모 있음</span></div>`;
     if ($('#imp')) $('#imp').onclick = importXlsx;
-    $('#dt').onchange = e => e.target.value && switchDay(e.target.value);
+    $('#dt').onchange = e => { const v = e.target.value; if (v >= '2020-01-01' && v <= '2099-12-31') switchDay(v); };   // 연도를 치는 중(0002…)이면 기다림
     $('#prev').onclick = () => switchDay(C.addDays(S.date, -1));
     $('#next').onclick = () => switchDay(C.addDays(S.date, 1));
     $('#today').onclick = () => switchDay(S.today);
@@ -4318,6 +4384,8 @@ async function addCharts(buf, jobs) {
       const td = e.target.closest('td.mk'); if (td) return toggle(td);
       const b = e.target.closest('[data-clr]'); if (b) return clearRow(+b.closest('tr').dataset.i);
     };
+    if (g._bound) return;                                                   // [+5줄 추가] 때 같은 처리가 겹겹이 붙지 않게
+    g._bound = true;
     g.addEventListener('input', onGridInput);
     g.addEventListener('focusin', e => { const t = e.target; if (t.dataset.n || t.dataset.f === 'q') showPad(t); });
     g.addEventListener('focusout', () => setTimeout(() => { if (!padHold) hidePad(); }, 120));
@@ -4690,25 +4758,30 @@ async function addCharts(buf, jobs) {
     if (!S.dirty && !manual) return true;
     if (S.saving) { await new Promise(r => setTimeout(r, 300)); return saveNow(manual); }
     S.saving = true; showSaveState();
-    const doc = S.day.doc;
+    const day = S.day, date = S.date, uid = who().id, doc = day.doc;
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined })) });
     const snapshotDirty = JSON.stringify(doc);
     try {
-      const r = await api('saveDay', { userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) });
-      S.day.savedAt = r.savedAt; S.day.savedBy = r.savedBy; S.day.exists = true;
-      if (S.day.pc) S.day.pc.days[S.date] = { doc: JSON.parse(JSON.stringify(clean)), at: r.savedAt, by: r.savedBy };
-      if (JSON.stringify(doc) === snapshotDirty) S.dirty = false;
-      S.saving = false; showSaveState();
+      const r = await api('saveDay', { userId: uid, date, doc: clean, sum: C.daySummary(clean, minsOf(date)) });
+      day.savedAt = r.savedAt; day.savedBy = r.savedBy; day.exists = true;
+      if (day.pc) day.pc.days[date] = { doc: JSON.parse(JSON.stringify(clean)), at: r.savedAt, by: r.savedBy };
+      if (S.day === day && JSON.stringify(doc) === snapshotDirty) S.dirty = false;
+      S.saving = false; if (S.day === day) showSaveState();
       if (manual) toast('저장했습니다');
       return true;
     } catch (e) {
-      S.saving = false; showSaveState(e.message); toast('저장 실패: ' + e.message, true);
+      S.saving = false; if (S.day === day) showSaveState(e.message); toast('저장 실패: ' + e.message, true);
+      if (S.day === day && S.dirty && S.token) { clearTimeout(S.timer); S.timer = setTimeout(() => saveNow(), 15000); }   // 잠시 뒤 다시 시도
       return false;
     }
   }
   async function delDay() {
     if (!(await confirmBox(dLabel(S.date) + ' 데이터를 통째로 삭제할까요?<br><span class="muted">엑셀로 받을 때 이 날짜 시트가 빠집니다.</span>', '삭제'))) return;
-    try { await api('deleteDay', { userId: who().id, date: S.date }); if (S.day.pc) delete S.day.pc.days[S.date]; S.dirty = false; toast('삭제했습니다'); loadDay(S.date); }
+    clearTimeout(S.timer);
+    while (S.saving) await new Promise(r => setTimeout(r, 150));          // 보내는 중인 저장이 끝난 뒤 지움
+    clearTimeout(S.timer); S.dirty = false;
+    const day = S.day, date = S.date;
+    try { await api('deleteDay', { userId: who().id, date }); if (day.pc) delete day.pc.days[date]; toast('삭제했습니다'); if (S.day === day) loadDay(date); }
     catch (e) { toast(e.message, true); }
   }
   // 창을 닫을 때 저장 안 된 내용이 있으면 마지막으로 한 번 더 보냄 (keepalive)
@@ -4732,8 +4805,10 @@ async function addCharts(buf, jobs) {
     S.monthYm = ym;
     main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
     let r;
-    const u0 = who();
-    try { r = await api('getMonth', { userId: u0.id, ym }); } catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }   // 매니저가 고친 내용·목표까지 항상 최신으로
+    const u0 = who(), seq = S.monthSeq = (S.monthSeq || 0) + 1;
+    const stale = () => seq !== S.monthSeq || S.view !== 'month' || !S.me || who().id !== u0.id;
+    try { r = await api('getMonth', { userId: u0.id, ym }); } catch (e) { if (!stale()) main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    if (stale()) return;                                                 // 기다리는 동안 다른 사람·화면으로 옮김   // 매니저가 고친 내용·목표까지 항상 최신으로
     const MY = minsYm(ym), items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, MY) }));
     const m = C.calcMonth(items, r.target, MY);
     const over = r.days.length > C.MAX_DAYS;
@@ -4986,7 +5061,7 @@ async function addCharts(buf, jobs) {
       <table class="list mlist"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '총 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률')}<th></th></tr></thead><tbody>
       ${list.map(u => {
         const stale = u.last && u.last < C.addDays(today, -2), has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
-        return `<tr data-u="${u.id}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${esc(u.group)}</td>
+        return `<tr data-u="${u.id}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인할 수 없음 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${esc(u.group)}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : '입력 없음'}</td>
         <td class="num">${xym ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
@@ -5070,7 +5145,7 @@ async function addCharts(buf, jobs) {
         <div class="chks">${C.GROUP_LIST.map(g => `<label><input type="checkbox" value="${g}" ${mg0.includes(g) ? 'checked' : ''}>${g}</label>`).join('')}</div></div>
       <label class="dck"><input type="checkbox" id="eu_la" ${u.la || u.role === '관리자' ? 'checked' : ''} ${u.role === '관리자' ? 'disabled' : ''}><span><b>연차·토요근무 확정 권한</b><small>관리자처럼 연차 확정 · 토요 배정 · 마감 가능 (관리자는 항상 가능)</small></span></label>
       <div class="dnote">그룹을 바꾸면 지난 기록까지 새 그룹 매니저에게 보이고, 이전 그룹 매니저에게는 안 보입니다. 입력한 데이터는 그대로 남습니다.</div>
-      <div style="display:flex;gap:8px">${u.role !== '관리자' ? '<button data-pin>비밀번호 초기화</button>' : ''}${u.role === '일반' ? '<button class="danger" data-del>계정 삭제</button>' : ''}</div>
+      <div style="display:flex;gap:8px">${u.role !== '관리자' ? '<button data-pin>' + (u.nopin ? '임시 비밀번호 정하기' : '비밀번호 초기화 (임시 번호)') + '</button>' : ''}${u.role === '일반' ? '<button class="danger" data-del>계정 삭제</button>' : ''}</div>
       <div class="grow"></div>
       <div class="acts"><button data-n>취소</button><button class="primary" data-y>저장</button></div>`, (bg, close) => {
       const role = $('#eu_r', bg), mgw = $('#eu_mgw', bg);
@@ -5086,10 +5161,16 @@ async function addCharts(buf, jobs) {
           done(x.user.name + ' 저장 (' + x.user.group + ' · ' + x.user.role + (x.user.mg.length ? ' · 담당 ' + x.user.mg.join(',') : '') + ')');
         } catch (e) { toast(e.message, true); }
       };
-      if ($('[data-pin]', bg)) $('[data-pin]', bg).onclick = async () => {
-        if (!(await confirmBox(esc(u.name) + ' 님의 비밀번호를 초기화할까요?<br><span class="muted">다음 로그인 때 입력하는 4자리가 새 비밀번호가 됩니다.</span>', '초기화'))) return;
-        try { await api('resetPin', { userId: u.id }); done(u.name + ' 비밀번호 초기화'); } catch (e) { toast(e.message, true); }
-      };
+      if ($('[data-pin]', bg)) $('[data-pin]', bg).onclick = () => modal(`<h3>${esc(u.name)} 임시 비밀번호</h3>
+        <div class="fld"><label>임시 비밀번호 (숫자 4자리)</label><input id="tp" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+        <div class="note">본인에게 이 번호를 알려 주세요. 로그인하면 새 번호로 바꾸라는 안내가 나옵니다.</div>
+        <div class="acts"><button data-c>취소</button><button class="primary" data-s>정하기</button></div>`, (bg2, close2) => {
+        $('[data-c]', bg2).onclick = close2; $('#tp', bg2).focus();
+        $('[data-s]', bg2).onclick = async () => {
+          const v = $('#tp', bg2).value.trim(); if (!/^\d{4}$/.test(v)) return toast('숫자 4자리를 넣으세요', true);
+          try { await api('resetPin', { userId: u.id, pin: v }); close2(); done(u.name + ' 임시 비밀번호를 정했습니다'); } catch (e) { toast(e.message, true); }
+        };
+      });
       if ($('[data-del]', bg)) $('[data-del]', bg).onclick = async () => {
         const n = (u.items || []).length;
         if (!(await confirmBox('<b>' + esc(u.name) + '</b> (' + esc(u.group) + ') 계정을 삭제할까요?<br><span class="muted">이 사람이 입력한 모든 달의 데이터와 목표도 함께 지워지며 되돌릴 수 없습니다.</span>' + (n ? '<br><b style="color:var(--red)">이번 기간에 입력한 데이터 ' + n + '일이 있습니다.</b>' : ''), '삭제'))) return;
@@ -5135,7 +5216,7 @@ async function addCharts(buf, jobs) {
   function periodBody() {
     const open = S.periods.find(p => p.status === '진행');
     const lastClosed = S.periods.filter(p => p.status === '마감').pop();
-    const nextYm = open ? open.ym : (lastClosed ? nextYmOf(lastClosed.ym) : S.today.slice(0, 7));
+    const nextYm = open ? open.ym : (lastClosed ? nextYmOf(lastClosed.ym) : ymForStart(C.addDays(S.today, 1)));
     return `
       <table class="list" style="margin-bottom:12px"><thead><tr><th>귀속월</th><th>시작일</th><th>마감일</th><th>상태</th></tr></thead><tbody>
       ${S.periods.slice().reverse().slice(0, 6).map(p => `<tr><td><b>${ymLabel(p.ym)}</b></td><td>${p.start}</td><td>${p.end || '-'}</td><td>${periodChip(p)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">기간 없음</td></tr>'}
@@ -5337,9 +5418,9 @@ async function addCharts(buf, jobs) {
       ${r.months.slice().reverse().map(x => `<tr><td><b>${ymLabel(x.ym)}</b>${x.oldest ? ' <span class="muted">(가장 오래됨)</span>' : ''}</td><td class="muted">${esc(st(x))}</td>
         <td class="num">${x.days}</td><td class="num">${x.leaves}</td><td class="num">${x.hrRecs}</td>
         <td>${x.backupAt ? esc(x.backupAt.slice(5, 16)) + ' · ' + esc(x.backupBy) + (x.changed ? ' <b class="t-lo">· 바뀜 → 다시 백업</b>' : '') : '<span class="muted">없음</span>'}</td>
-        <td><button data-bk="${x.ym}">⬇ 백업</button>${x.oldest ? ` <button class="danger" data-bd="${x.ym}" ${x.canDelete ? '' : 'disabled title="가장 오래된 달 · 지난 달 · 마감 · 백업 후 변경 없음일 때만"'}>이 달 지우기</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">데이터가 없습니다</td></tr>'}
+        <td><button data-bk="${x.ym}">⬇ 백업</button>${x.oldest ? ` <button class="danger" data-bd="${x.ym}" ${x.canDelete ? '' : 'disabled title="가장 오래된 달 · 12개월 지난 달 · 마감 · 백업 후 변경 없음일 때만"'}>이 달 지우기</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">데이터가 없습니다</td></tr>'}
       </tbody></table></div>
-      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">지우기는 가장 오래된 지난 달이 마감되고 백업한 뒤 바뀐 내용이 없을 때만 켜집니다.</span>
+      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">지우기는 <b>12개월이 지난</b> 가장 오래된 달이 마감되고 백업한 뒤 바뀐 내용이 없을 때만 켜집니다.</span>
         <label class="btn-file"><input type="file" id="bkfile" accept=".json" hidden><span>백업 파일로 복원…</span></label></div>`;
     $$('[data-bk]', box).forEach(b => (b.onclick = async () => {
       const ym = b.dataset.bk; b.disabled = true;
@@ -5372,15 +5453,24 @@ async function addCharts(buf, jobs) {
       });
     };
   }
+  // 시작일로 귀속월 짐작 : 15일 이후에 시작하면 다음 달 (예: 10/23 시작 → 11월)
+  const ymForStart = st => { if (!st) return ''; const ym = st.slice(0, 7); return +st.slice(8, 10) >= 15 ? nextYmOf(ym) : ym; };
   const nextYmOf = ym => { let [y, m] = ym.split('-').map(Number); m++; if (m > 12) { m = 1; y++; } return y + '-' + C.pad(m); };
   const addDaysStr = (s, k) => C.addDays(s, k);
   function bindPeriodPanel() {
     const upd = r => { S.periods = r.periods; S.manageYm = null; S.mMode = 'month'; S._mcache = {}; S.pc = {}; renderSettings(); };
     const refreshAfterFail = async () => { try { const m = await api('me'); S.periods = m.periods; S.manageYm = null; renderSettings(); } catch (e) { } };
     const b = id => $('#' + id);
-    if (b('popen')) b('popen').onclick = async () => {
-      try { upd(await api('openPeriod', { ym: b('pym').value, start: b('pst').value })); toast('기간을 시작했습니다'); } catch (e) { toast(e.message, true); }
-    };
+    if (b('popen')) {
+      b('pst').onchange = () => { const g = ymForStart(b('pst').value); if (g && !S.periods.length) b('pym').value = g; };
+      b('popen').onclick = async () => {
+        const ym = b('pym').value, st = b('pst').value;
+        if (!ym || !st) return toast('귀속월과 시작일을 넣으세요', true);
+        const g = ymForStart(st);
+        if (!(await confirmBox(`<b>${ymLabel(ym)}</b> 을(를) <b>${st}</b> 부터 시작합니다.` + (g && g !== ym ? `<br><b style="color:var(--red)">⚠ 시작일로 보면 보통 ${ymLabel(g)} 입니다. 귀속월을 다시 확인하세요.</b>` : ''), '시작'))) return;
+        try { upd(await api('openPeriod', { ym, start: st })); toast('기간을 시작했습니다'); } catch (e) { toast(e.message, true); }
+      };
+    }
     if (b('pclose')) b('pclose').onclick = async () => {
       const ym = b('pym').value, st = b('pst').value, en = b('pen').value;
       if (!en) return toast('마감일을 선택하세요', true);
@@ -5398,7 +5488,7 @@ async function addCharts(buf, jobs) {
       try { upd(await api('addPastPeriod', { ym: b('aym').value, start: b('ast').value, end: b('aen').value })); toast('지난 달 기간을 추가했습니다'); } catch (e) { toast(e.message, true); refreshAfterFail(); }
     };
     if (b('pwipe')) b('pwipe').onclick = () => modal(`<h3 style="color:var(--red)">데이터 전체 삭제</h3>
-      <div style="line-height:1.6">모든 인원의 <b>입력 데이터, 월 목표, 월 기간</b>이 전부 삭제됩니다 (연차·토요 자료는 그대로). 계정(이름·비밀번호)은 남습니다.<br>되돌릴 수 없습니다. 계속하려면 <b>전체삭제</b> 라고 입력하세요.</div>
+      <div style="line-height:1.6">모든 인원의 <b>일일 입력, 월 목표, 월 기간, 인사평가 근태 기록</b>이 전부 삭제됩니다 (연차·토요 · 인사평가 기록 · 계정은 그대로).<br>운영 시작 전 시험 데이터를 지울 때 <b>한 번만</b> 쓰세요.<br>되돌릴 수 없습니다. 계속하려면 <b>전체삭제</b> 라고 입력하세요.</div>
       <div class="fld" style="margin-top:10px"><input id="cf" placeholder="전체삭제"></div>
       <div class="acts"><button data-c>취소</button><button class="danger" data-s>삭제</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
