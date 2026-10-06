@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>조립팀 업무데이터</title>
+<script>try { if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) { }
+window.addEventListener('load', () => { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'; document.head.appendChild(l); });</script>
 <style>
 :root{
   --bg:#f3f5f8;--panel:#fff;--ink:#1d2430;--sub:#5f6b7a;--line:#d9dee6;--line2:#eef1f5;
@@ -567,7 +569,7 @@ button.big{padding:9px 18px;font-size:14.5px;font-weight:800}
 .hrw .dgrid{display:grid;gap:14px}.hrw .atg{grid-template-columns:1.6fr 1fr}
 .hrw .kpis{margin-bottom:0}
 .hrw .pcards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.hrw .pcard{padding:12px 14px;cursor:pointer}.hrw .pcard:hover{border-color:#9db8e8}
+.hrw .pcard{padding:12px 14px;cursor:pointer;border-top:4px solid var(--gc,#cbd5e1);background:linear-gradient(color-mix(in srgb,var(--gc,#cbd5e1) 7%,#fff),#fff 46px)}.hrw .pcard:hover{border-color:#9db8e8}
 .hrw .pcard .t{display:flex;align-items:baseline;gap:6px}.hrw .pcard .t b{font-size:15px}.hrw .pcard .t span{color:#7d8898;font-size:12.5px}
 .hrw .pcard .bar{height:8px;background:#eef1f5;border-radius:4px;margin:10px 0 6px;overflow:hidden}.hrw .pcard .bar i{display:block;height:100%;background:#2f9e5b;border-radius:4px}
 .hrw .pcard .s{display:flex;justify-content:space-between;font-size:12.5px;color:#5b6880}.hrw .pcard .s b{color:#16213a}
@@ -761,6 +763,478 @@ tr.ghd > td > span { color: #4b5563; margin-right: 14px; }
 .admbtn{border-color:#f3c48a!important;color:#b45309!important}
 .tkr{display:grid;grid-template-columns:34px 34px 1fr 44px 34px;gap:6px;align-items:center;margin-bottom:6px}
 @media (max-width:1400px){.ddgroups{grid-template-columns:repeat(3,1fr)}.ddkpis{grid-template-columns:repeat(3,1fr)}}
+/* ===================== v25 디자인 (갤럭시 One UI 느낌 · B안) ===================== */
+:root{--bg:#f2f3f7;--panel:#fff;--line:#e4e7ee;--line2:#f0f2f6;--blue:#1d6bf3;--blue-soft:#e9f1ff;--head:#f6f7fa;--chip:#eceef3;--chiph:#e1e4eb;--field:#f0f2f6;
+  --font:"Pretendard Variable",Pretendard,"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;--r:22px;--sh:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --nav1:#13254b;--nav2:#0d1a36}
+html,body{background:var(--bg);font-size:14px;letter-spacing:-.15px}
+.content,.lay{background:var(--bg)}
+.card,.dsec,.kpi,.scard{border:0!important;border-radius:var(--r);box-shadow:var(--sh)}
+.pgb{padding:8px 30px 48px}
+.ph{height:84px;background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border-bottom:0;padding:0 30px}
+.ph h1{font-size:27px;font-weight:800;letter-spacing:-.8px}
+button{border:0;background:var(--chip);border-radius:999px;padding:7px 16px;font-weight:600;transition:background .15s,transform .1s,box-shadow .15s}
+button:hover{background:var(--chiph);border-color:transparent}
+button:active:not(:disabled){transform:scale(.97)}
+button.primary{background:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(29,107,243,.25)}
+button.primary:hover{background:var(--blue);filter:brightness(1.08)}
+button.danger{background:#fdeceb;color:#d92d20;border:0}
+button.ghost{background:transparent}
+button.sm{padding:5px 12px}
+input,select,textarea{border:1px solid transparent;background:var(--field);border-radius:12px;padding:7px 11px;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid #9cc0ff;outline-offset:-1px;background:var(--panel)}
+input[type=checkbox],input[type=radio]{accent-color:var(--blue)}
+.kpi{padding:20px 22px}.kpi b{font-size:32px}
+.ddgc{border-radius:var(--r)!important}.ddgh{border-top-width:5px}
+.ddoi,.ddac,.act{border:0;background:var(--head);border-radius:16px}
+.ddtr,.gbar .tr,.bar{border-radius:99px}.ddtr i{border-radius:99px}
+.chip,.ddst,.badge{border-radius:99px}
+.modal{border-radius:28px!important;box-shadow:0 20px 60px rgba(16,24,40,.25);animation:v25pop .2s ease}
+.modal-bg{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.seg{border:0;background:#e6e8ee;border-radius:99px;padding:3px;gap:2px;overflow:visible}
+.seg button{border:0!important;border-radius:99px;background:transparent;color:#4a5263;padding:6px 14px;box-shadow:none}
+.seg button.on{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.pgb>*{animation:v25up .28s ease both}
+@keyframes v25up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes v25pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pgb>*,.modal{animation:none}}
+/* 왼쪽 메뉴 : 남색 · 둥글게 떠 있음 */
+.side{margin:12px 0 12px 12px;height:calc(100vh - 24px);top:12px;border-radius:28px;background:linear-gradient(180deg,var(--nav1),var(--nav2));box-shadow:0 10px 30px rgba(13,26,54,.25)}
+.side .brand{font-size:19px;padding:8px 12px 26px}
+.side nav button{border-radius:16px;padding:12px 14px}
+.side nav button.on{background:#2a6df4;box-shadow:0 6px 16px rgba(42,109,244,.35)}
+.side nav button.adm{box-shadow:none;background:transparent}
+.side nav button.adm:hover{background:rgba(245,158,11,.14)}
+.side nav button.adm.on{background:#c2560c;color:#fff;box-shadow:0 6px 16px rgba(194,86,12,.35)}
+.side nav button .at{border:0;background:rgba(253,186,116,.16)}
+.side nav button.on .at{background:rgba(255,255,255,.2);color:#fff}
+.side .sbtn button{border:0;background:rgba(255,255,255,.08);border-radius:99px;color:#dbe3f1}
+.side .sbtn button:hover{background:rgba(255,255,255,.16)}
+.side .sbtn .thm{flex:0 0 38px}
+.thm{display:inline-flex;align-items:center;justify-content:center}.thm svg{width:16px;height:16px}.side .sbtn .thm{padding:6px 0}header .me .thm{padding:6px 10px}.lthm svg{width:20px;height:20px}
+/* 위쪽 메뉴 (사원 · 입력 화면) */
+header{height:58px;background:linear-gradient(90deg,var(--nav1),var(--nav2));margin:10px 12px 0;border-radius:22px;top:10px;box-shadow:0 8px 24px rgba(13,26,54,.2)}
+header .logo{font-size:16.5px;padding-left:6px}
+header nav{gap:4px}
+header nav button{border:0;border-radius:99px;padding:8px 16px;color:#c3cde0;background:transparent}
+header nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+header nav button.on{background:#2a6df4;color:#fff;border-bottom:0;box-shadow:0 6px 16px rgba(42,109,244,.35)}
+header nav button.back{border-radius:99px;padding:8px 14px}
+header .me button{border:0;background:rgba(255,255,255,.08);border-radius:99px;color:#dbe3f1}
+header .me button:hover{background:rgba(255,255,255,.16)}
+header .me .tag{background:rgba(255,255,255,.12);border-radius:99px}
+/* 로그인 */
+.login2{background:var(--bg);position:relative}
+.lhero{background:linear-gradient(160deg,var(--nav1),var(--nav2))}
+.login2 .login{border-radius:28px}
+.login .tabs button{border-radius:0;background:transparent}
+.lthm{position:absolute;top:18px;right:18px;width:42px;height:42px;padding:0;font-size:18px}
+/* 관리자 설정 고르기 */
+.hub{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:1100px;margin:30px auto 0}
+.hubc{position:relative;text-align:left;background:var(--panel);border-radius:28px;padding:30px 30px 26px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:14px;min-height:300px;border:0;color:var(--ink);font-weight:400}
+.hubc:hover{background:var(--panel);transform:translateY(-3px);box-shadow:0 14px 34px rgba(16,24,40,.12)}
+.hubc .ic{width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center}
+.hubc .ic svg{width:32px;height:32px}
+.hubc h2{margin:6px 0 0;font-size:24px;font-weight:800;letter-spacing:-.5px}
+.hubc p{margin:0;color:var(--sub);font-size:15px;line-height:1.6}
+.hubc .st{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.hubc .st span{background:var(--line2);border-radius:99px;padding:6px 12px;font-size:13.5px;font-weight:700}
+.hubc .go{position:absolute;right:26px;top:30px;width:40px;height:40px;border-radius:99px;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:22px}
+.hubc.p .ic{background:#e9f1ff;color:#1d6bf3}.hubc.s .ic{background:#fff1e6;color:#c2410c}
+.ph .bk{width:38px;height:38px;border-radius:99px;padding:0;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;flex:none}
+@media (max-width:1000px){.hub{grid-template-columns:1fr}}
+/* DARK-AUTO-START */
+/* ---- 다크 자동 변환 (gen_dark.py) ---- */
+html[data-theme=dark] input:focus,html[data-theme=dark] select:focus{border-color:#32425c}
+html[data-theme=dark] .proxy{background:#3a331e;border-bottom:1px solid #5d5232;color:#fff0ca}
+html[data-theme=dark] .chip.none{background:#382b1d;color:#ffdcae}
+html[data-theme=dark] .stat{background:#1a1c20;border:1px solid #343e4c}
+html[data-theme=dark] .stat .k{color:#ccd4e0}
+html[data-theme=dark] .inputs{border-color:#343e4c}
+html[data-theme=dark] .fld label{color:#ccd4e0}
+html[data-theme=dark] .fld input.min{background:#36321c}
+html[data-theme=dark] .gridwrap{background:#1a1c20;border:1px solid #384352}
+html[data-theme=dark] table.grid th,html[data-theme=dark] table.grid td{border-right:1px solid #2f3b4b;border-bottom:1px solid #2e3847}
+html[data-theme=dark] table.grid thead th{background:#202a36;color:#e6eaf2}
+html[data-theme=dark] table.grid thead tr:nth-child(1) th{border-bottom:1px solid #384352}
+html[data-theme=dark] table.grid thead tr:nth-child(3) th{color:#ccd4e0}
+html[data-theme=dark] .g0{--gh:#243446;--gb:#1b2734}
+html[data-theme=dark] .g1{--gh:#274b47;--gb:#1b3531}
+html[data-theme=dark] .g2{--gh:#463124;--gb:#34251b}
+html[data-theme=dark] .g3{--gh:#253f49;--gb:#1b2d34}
+html[data-theme=dark] .g4{--gh:#254931;--gb:#1b3423}
+html[data-theme=dark] .g5{--gh:#2e2243;--gb:#241a33}
+html[data-theme=dark] .g6{--gh:#42222d;--gb:#331a24}
+html[data-theme=dark] .g7{--gh:#432922;--gb:#331f1a}
+html[data-theme=dark] .g8{--gh:#334925;--gb:#25341b}
+html[data-theme=dark] .g9{--gh:#3e2243;--gb:#2f1a33}
+html[data-theme=dark] .g10{--gh:#422222;--gb:#331a1a}
+html[data-theme=dark] table.grid .stk{background-color:#1a1c20}
+html[data-theme=dark] table.grid thead .stk{background:#232d3a}
+html[data-theme=dark] table.grid .c1{color:#ccd4e0}
+html[data-theme=dark] table.grid tbody td.c2,html[data-theme=dark] table.grid tbody td.c3{background-color:#36321c}
+html[data-theme=dark] table.grid td input{color:#e6eaf2}
+html[data-theme=dark] table.grid td input:focus{background:#1a1c20}
+html[data-theme=dark] table.grid tbody td.mk.on{color:#fff8e0}
+html[data-theme=dark] table.grid td.n input{color:#bbd6fa}
+html[data-theme=dark] table.grid tbody td.n.on{background-color:#222e42}
+html[data-theme=dark] table.grid tbody tr.b5 td{border-bottom:2px solid #4a5361}
+html[data-theme=dark] table.grid tfoot td{background:#202a36}
+html[data-theme=dark] table.grid tfoot tr:nth-child(2) td{color:#9ebff1;border-top:1px solid #343e4c}
+html[data-theme=dark] table.grid tfoot td.stk{background:#232d3a}
+html[data-theme=dark] table.list{background:#1a1c20}
+html[data-theme=dark] table.list tr.click:hover td{background:#1a2132}
+html[data-theme=dark] .sat{color:#9ebff1}
+html[data-theme=dark] .modal{background:#1a1c20}
+html[data-theme=dark] table.rt input.chg{background:#403a21}
+html[data-theme=dark] .gtbar{background:#36321c;border:1px solid #564e2e}
+html[data-theme=dark] #perf{color:#aeb8cb}
+html[data-theme=dark] .lock{border:1px solid #4e2a2a}
+html[data-theme=dark] .warn{background:#382e1d;color:#ffe4ba;border:1px solid #594a30}
+html[data-theme=dark] #np{background:#1a1c20}
+html[data-theme=dark] #np .t{color:#ccd4e0}
+html[data-theme=dark] #np button{border-color:#343e4c}
+html[data-theme=dark] #np button.cur{background:#222e42}
+html[data-theme=dark] #np button.more{color:#ccd4e0}
+html[data-theme=dark] table.grid.pad tbody tr:hover td.n::after,html[data-theme=dark] table.grid.pad tbody tr:hover td.c3::after{color:#e5e8eb}
+html[data-theme=dark] .energy{background:#1a1c20;border:1px solid #343e4c}
+html[data-theme=dark] .energy .el span{color:#ccd4e0}
+html[data-theme=dark] .energy .el select{background:#36321c}
+html[data-theme=dark] .energy .eb{background:#212a37}
+html[data-theme=dark] .energy .eb span{color:#e6eaf2}
+html[data-theme=dark] .energy .ep.hi{color:#9cbff2}
+html[data-theme=dark] .energy .ep.mid{color:#ffe8a4}
+html[data-theme=dark] .energy .ep.lo{color:#eb9292}
+html[data-theme=dark] .seg button+button{border-left:1px solid #384352}
+html[data-theme=dark] .sumrow>div{background:#1a1c20;border:1px solid #343e4c}
+html[data-theme=dark] .sumrow span{color:#ccd4e0}
+html[data-theme=dark] .sumrow em{color:#ccd4e0}
+html[data-theme=dark] .t-hi{color:#9cbff2}
+html[data-theme=dark] .t-lo{color:#eb9292}
+html[data-theme=dark] table.mlist th.sort:hover{color:#e6eaf2}
+html[data-theme=dark] table.mlist th.on{color:#9ebff1}
+html[data-theme=dark] table.mlist tbody tr:nth-child(even) td{background:#1a2632}
+html[data-theme=dark] table.mlist tbody tr:hover td{background:#1c2636}
+html[data-theme=dark] .rtag{background:#1e2939;color:#ccd4e0}
+html[data-theme=dark] .mini{background:#212a37}
+html[data-theme=dark] .legend i.r-no{background:#252e39}
+html[data-theme=dark] .r-hit{color:#9cbff2}
+html[data-theme=dark] .r-midt{color:#ffecb2}
+html[data-theme=dark] .r-lot{color:#eb9292}
+html[data-theme=dark] table.bd th,html[data-theme=dark] table.bd td{border-right:1px solid #2c3846;border-bottom:1px solid #2c3846}
+html[data-theme=dark] table.bd thead th{background:#202a36}
+html[data-theme=dark] table.bd thead th small{color:#ccd4e0}
+html[data-theme=dark] table.bd thead th.sat,html[data-theme=dark] table.bd thead th.sat small{color:#9ebff1}
+html[data-theme=dark] table.bd thead th.sun,html[data-theme=dark] table.bd thead th.sun small{color:#eb9292}
+html[data-theme=dark] table.bd .bn{background:#1a1c20;border-right:2px solid #4a5361}
+html[data-theme=dark] table.bd thead .bn{background:#232d3a}
+html[data-theme=dark] table.bd .bn small{color:#ccd4e0}
+html[data-theme=dark] table.bd .bt{background:#1c2533}
+html[data-theme=dark] table.bd thead .bt{background:#232d3a}
+html[data-theme=dark] table.bd td.r-hi{background:#202b3e;color:#b7d0f9}
+html[data-theme=dark] table.bd td.r-mid{background:#443e23;color:#fff2ca}
+html[data-theme=dark] table.bd td.r-lo{background:#3c1f1f;color:#f2b0b0}
+html[data-theme=dark] table.bd td.r-no{background:#1f2834}
+html[data-theme=dark] table.bd td.e{background:#1a1c20}
+html[data-theme=dark] table.bd tfoot td{background:#202a36;border-top:2px solid #4a5361}
+html[data-theme=dark] table.bd tfoot .bn{background:#232d3a}
+html[data-theme=dark] .ist.warn{color:#ffdcae}
+html[data-theme=dark] .energy .tgv{background:#1f2834}
+html[data-theme=dark] table.mlist select.mtg{background:#36321c}
+html[data-theme=dark] table.bimp tr.bdet>td{background:#1a2632}
+html[data-theme=dark] .lvcal{background:#1a1c20;border:1px solid #384352}
+html[data-theme=dark] .lvhd div{background:#202a36;border-right:1px solid #2f3b4b;border-bottom:1px solid #384352}
+html[data-theme=dark] .lvhd div.sat{color:#9ebff1}
+html[data-theme=dark] .lvwk{border-bottom:1px solid #2f3b4b}
+html[data-theme=dark] .lvd{border-right:1px solid #2c3846;background:#1a1c20}
+html[data-theme=dark] .lvd.other{background:#1f242f}
+html[data-theme=dark] .lvd.hol{background:#331a1a}
+html[data-theme=dark] .lvd.over{background:#321a1a}
+html[data-theme=dark] .lvd.sat{background:#1a2333}
+html[data-theme=dark] .lvd.sat .lvh b{color:#9ebff1}
+html[data-theme=dark] .lvd.selc{background:#1d2839!important}
+html[data-theme=dark] .lvh .cnt{color:#bdc7d4}
+html[data-theme=dark] .lc{background:#1f2834;border:1px solid #303b49;color:#e6eaf2}
+html[data-theme=dark] .lc small{color:#bdc7d4}
+html[data-theme=dark] .lc.tr{background:#3a351e;border-color:#5e5633}
+html[data-theme=dark] .lc.half{background:#1a1c20}
+html[data-theme=dark] .lc.mgr{color:#9dc1ff}
+html[data-theme=dark] .lc.alt::before{color:#ccd4e0}
+html[data-theme=dark] .lvq button{background:#1a2433}
+html[data-theme=dark] .lvchk.sm{background:#1a1c20}
+html[data-theme=dark] .lvinfo{background:#1a2533;border:1px solid #28374a}
+html[data-theme=dark] .lvw{color:#f2b0b0}
+html[data-theme=dark] .lvzt{background:#1a1c20}
+html[data-theme=dark] .lvz td.rs{color:#ccd4e0}
+html[data-theme=dark] .lvz .tag{background:#1f2834;color:#ccd4e0}
+html[data-theme=dark] .lvz .tag.tr{background:#443e23;color:#fff2ca}
+html[data-theme=dark] .mgrt{color:#9dc1ff}
+html[data-theme=dark] .lvsum{background:#1a1c20;border:1px solid #343e4c}
+html[data-theme=dark] .lvsr:hover{background:#1a2132}
+html[data-theme=dark] .lvsr b.c2{color:#ffd3a5}
+html[data-theme=dark] .lvsum b.c2{color:#ffd3a5}
+html[data-theme=dark] .gb{background:#1f2834;color:#ccd4e0}
+html[data-theme=dark] .gb.g-파트장{background:#403121;color:#ffd9ba}
+html[data-theme=dark] .gb.g-매니저{background:#1e283a;color:#9dc1ff}
+html[data-theme=dark] .gb.g-A{background:#203d27;color:#c0f2d0}
+html[data-theme=dark] .gb.g-B{background:#1c2736;color:#9ebff1}
+html[data-theme=dark] .gb.g-C{background:#281c35;color:#c5ace3}
+html[data-theme=dark] .gb.g-D{background:#212934;color:#bdc7d4}
+html[data-theme=dark] table.lvsum2 th.on{color:#9ebff1}
+html[data-theme=dark] .lvset2 .fld span{color:#ccd4e0}
+html[data-theme=dark] table.lvst2 tr.saved td{background:#1d3925}
+html[data-theme=dark] .lvslots label{color:#ccd4e0}
+html[data-theme=dark] .lvhol .lc{background:#331a1a;border-color:#4e2a2a}
+html[data-theme=dark] .kpi span{color:#c3ccde}
+html[data-theme=dark] .kpi b small{color:#c3ccde}
+html[data-theme=dark] .kpi em{color:#c3ccde}
+html[data-theme=dark] .dst a{color:#99b8f3}
+html[data-theme=dark] .todo{border:1px solid #273549}
+html[data-theme=dark] .todo span{color:#d5dcee}
+html[data-theme=dark] .gbar .tr{background:#1c2636}
+html[data-theme=dark] .mrow{border-bottom:1px solid #253145}
+html[data-theme=dark] .mrow .av{background:#1c2636;color:#d5dcee}
+html[data-theme=dark] .sct span{color:#c3ccde}
+html[data-theme=dark] .dck{border:1px solid #273549}
+html[data-theme=dark] .dck small{color:#c3ccde}
+html[data-theme=dark] .dnote{color:#c3ccde;background:#1a2432}
+html[data-theme=dark] .mcb{border-bottom:1px solid #303c4f}
+html[data-theme=dark] .mbar i{background:#29354f}
+html[data-theme=dark] .mbar em{color:#d5dcee}
+html[data-theme=dark] .mbar small{color:#c3ccde}
+html[data-theme=dark] .mtl{border-top:2px dashed #4f5764}
+html[data-theme=dark] .mtl span{color:#c3ccde;background:#1a1c20}
+html[data-theme=dark] .lvtabs{background:#1a1c20;border-bottom:1px solid #273549}
+html[data-theme=dark] .lvtabs button{color:#c3ccde}
+html[data-theme=dark] .lvtabs button.on{color:#e1e7f5;border-bottom-color:#405378}
+html[data-theme=dark] .lvfilter .lb,html[data-theme=dark] .lvlegend .lb{color:#c3ccde}
+html[data-theme=dark] .pill.on{border-color:#405378}
+html[data-theme=dark] .lvsurvey{background:#3a331e;border:1px solid #5d5232;color:#fff0ca}
+html[data-theme=dark] .lvcal2{background:#1a1c20;border:1px solid #2f3d50}
+html[data-theme=dark] .lvhd2 div{background:#1b2334;border-right:1px solid #2c3846;border-bottom:1px solid #2f3d50}
+html[data-theme=dark] .lvhd2 div.sat{color:#99b8f3}
+html[data-theme=dark] .lvwk2{border-bottom:1px solid #2c3846}
+html[data-theme=dark] .lvd2{border-right:1px solid #263346;background:#1a1c20}
+html[data-theme=dark] .lvd2.other{background:#1c2330}
+html[data-theme=dark] .lvd2.hol{background:#321a1a}
+html[data-theme=dark] .lvd2.sat{background:#1c1d22}
+html[data-theme=dark] .lvd2.sat .dn{color:#99b8f3}
+html[data-theme=dark] .lvd2.selc{background:#1d2839!important}
+html[data-theme=dark] .lvd2 .n{color:#c3ccde;background:#202731}
+html[data-theme=dark] .lvd2 .n.red{background:#351b1b;color:#f4a9a4}
+html[data-theme=dark] .altrow{border-top:1px dashed #2f3948}
+html[data-theme=dark] .altrow .lb{color:#e5e8eb}
+html[data-theme=dark] .lv{background:#1a1c20;border:1px solid #37404e;color:#e1e7f5}
+html[data-theme=dark] .lv i{background:#222935;color:#ccd4e0}
+html[data-theme=dark] .lv.tr{background:#1e3a25;border-color:#2e5538;color:#d1f2da}
+html[data-theme=dark] .lv.req{border:1.5px dashed #495160;color:#bac4d6}
+html[data-theme=dark] .lv.mgr{border:1.5px solid #776040;color:#ffe8c8}
+html[data-theme=dark] .lv.m,html[data-theme=dark] .sw.m{color:#9dc1ff}
+html[data-theme=dark] .lv.me.req{background:#1a1c20;color:#e1e7f5}
+html[data-theme=dark] .lv.me.mgr{background:#1a1c20;color:#ffe8c8;border:2px solid #776040}
+html[data-theme=dark] .sw{color:#e1e7f5}
+html[data-theme=dark] .wk0{background:#2c4021}
+html[data-theme=dark] .wk1{background:#1e2a3b}
+html[data-theme=dark] .wk2{background:#3c2b1f}
+html[data-theme=dark] .wk3{background:#413a22}
+html[data-theme=dark] .wk4{background:#261d38}
+html[data-theme=dark] .sb.wk0{color:#daf3d1}
+html[data-theme=dark] .sb.wk1{color:#bed3f5}
+html[data-theme=dark] .sb.wk2{color:#f8d7c1}
+html[data-theme=dark] .sb.wk3{color:#fff2ca}
+html[data-theme=dark] .sb.wk4{color:#d1c0ed}
+html[data-theme=dark] .lst.req{background:#1c2636;color:#c3ccde}
+html[data-theme=dark] .lst.mgr{background:#392e1d;color:#ffe7c2}
+html[data-theme=dark] .lst.ok{background:#203d29;color:#c8f2d6}
+html[data-theme=dark] .nt{background:#1a2433;color:#ccd4e0}
+html[data-theme=dark] .lvmi{border:1px solid #2c3846}
+html[data-theme=dark] .lvmi .r{color:#d3dbe5}
+html[data-theme=dark] .segr{border:1px solid #384352}
+html[data-theme=dark] .segr button{background:#1a1c20}
+html[data-theme=dark] .segr button+button{border-left:1px solid #384352}
+html[data-theme=dark] .swopt{border:1px solid #2c3846}
+html[data-theme=dark] .tag.tr{background:#443e23;color:#fff2ca}
+html[data-theme=dark] .cnt{background:#1c2636;color:#c3ccde}
+html[data-theme=dark] .cnt.hi{background:#351b1b;color:#f4a9a4}
+html[data-theme=dark] .lvgo{background:#1a2333;border-top:1px solid #2a384f}
+html[data-theme=dark] .mgrid b{color:#c3ccde}
+html[data-theme=dark] .mc{background:#1a2433;color:#d5dcee}
+html[data-theme=dark] .mc small{color:#bac4d6}
+html[data-theme=dark] .mc.h1{background:#1c2736}
+html[data-theme=dark] .mc.h2{background:#392e1d}
+html[data-theme=dark] .mc.h3{background:#3a1e1e;color:#f3afac}
+html[data-theme=dark] .mc.hol{background:#321a1a}
+html[data-theme=dark] .swc{border:1px solid #2c3846}
+html[data-theme=dark] .ck{border-bottom:1px solid #2a333f}
+html[data-theme=dark] .ck.ok{color:#c8f2d6}
+html[data-theme=dark] .ck.bad{color:#f4a9a4}
+html[data-theme=dark] .ck.warn{color:#ffe4ba}
+html[data-theme=dark] .lvpre{background:#1a1c20}
+html[data-theme=dark] .lvz2 .lvzt{background:#1a1c20}
+html[data-theme=dark] .lvz2 td.rs{color:#ccd4e0}
+html[data-theme=dark] .lvhd2 .sub{color:#e5e8eb}
+html[data-theme=dark] .lvd2 .dbody .rw.ar{border-left:1px dashed #303a4a}
+html[data-theme=dark] .sw.al{background:#392b1d;color:#ffe6c8}
+html[data-theme=dark] .sw i{color:#f3d2b1}
+html[data-theme=dark] .lvd2.sat .satc{color:#99b8f3}
+html[data-theme=dark] .lvd2.sat .satc span{color:#a0b4da}
+html[data-theme=dark] .lvd2.sat:hover{background:#1b2434}
+html[data-theme=dark] .sw.st{background:#1d2737;color:#bed3f5}
+html[data-theme=dark] .satg b{color:#c3ccde}
+html[data-theme=dark] .lvsum .pbar:hover{background:#1b2534}
+html[data-theme=dark] .lvsum .pbar.on{background:#1d2737}
+html[data-theme=dark] .lvsum .pbar i{background:#1f2834}
+html[data-theme=dark] .lvsum .sub{color:#e5e8eb}
+html[data-theme=dark] .lvsum .okl{color:#c1f2d0}
+html[data-theme=dark] .lvsum .warnl{color:#fbcaa5}
+html[data-theme=dark] .hrt{border-bottom:1px solid #2c3846;background:#1a1c20}
+html[data-theme=dark] .hrt button{color:#bac4d6}
+html[data-theme=dark] .hrt button.on{color:#e1e7f5;border-bottom-color:#405378}
+html[data-theme=dark] .hrw .muted{color:#b5bfcf}
+html[data-theme=dark] .hrw .badge{background:#1f2834;color:#c3ccde}
+html[data-theme=dark] .hrw .badge.done{background:#1e3a27;color:#c1f2d0}
+html[data-theme=dark] .hrw .badge.draft{background:#3a311e;color:#ffe0b2}
+html[data-theme=dark] .hrw .badge.none{background:#351b1b;color:#f4a9a4}
+html[data-theme=dark] .hrw .badge.lead{background:#261c37;color:#b59ce3}
+html[data-theme=dark] .hrw .tag{background:#1f2834;color:#c3ccde}
+html[data-theme=dark] .hrw .banner.lock{background:#351b1b;color:#f4a9a4;border:1px solid #4e2a2a}
+html[data-theme=dark] .hrw .banner.info{background:#1b2434;color:#c0ddf5;border:1px solid #28364b}
+html[data-theme=dark] .hrw .banner.warn{background:#362d1c;color:#ffe0ba;border:1px solid #55462e}
+html[data-theme=dark] .hrw .warn-t{color:#fbcaa5}
+html[data-theme=dark] .hrw .tbl th{background:#1b2334;color:#c3ccde;border-bottom:1px solid #2c3846}
+html[data-theme=dark] .hrw .tbl td{border-bottom:1px solid #273343}
+html[data-theme=dark] .hrw .tbl td.dif{background:#39321d;color:#ffe0b2}
+html[data-theme=dark] .hrw .pcard{border-top:4px solid var(--gc,#2e3d50);background:linear-gradient(color-mix(in srgb,var(--gc,#273443) 7%,#1a1c20),#1a1c20 46px)}
+html[data-theme=dark] .hrw .pcard:hover{border-color:#31405b}
+html[data-theme=dark] .hrw .pcard .t span{color:#e5e8eb}
+html[data-theme=dark] .hrw .pcard .bar{background:#1f2834}
+html[data-theme=dark] .hrw .pcard .s{color:#bac4d6}
+html[data-theme=dark] .hrw .pcard .s b{color:#e1e7f5}
+html[data-theme=dark] .hrw table.sum th{background:#1b2334;color:#c3ccde;border-bottom:1px solid #2c3846}
+html[data-theme=dark] .hrw table.sum td{border-bottom:1px solid #273343}
+html[data-theme=dark] .hrw table.sum td.sc{color:#99b8f3}
+html[data-theme=dark] .hrw table.sum td.low{color:#f4a9a4}
+html[data-theme=dark] .hrw table.sum tbody tr:hover td{background:#1a2332}
+html[data-theme=dark] .hrw table.sum tbody tr.on td{background:#1c2536}
+html[data-theme=dark] .hrw table.sum tfoot td{background:#1b2334}
+html[data-theme=dark] .hrw .chipg{background:#202731;color:#c3ccde}
+html[data-theme=dark] .hrw .dbox{border:1px solid #2c3846}
+html[data-theme=dark] .hrw .dbox.p .h{color:#99b8f3}
+html[data-theme=dark] .hrw .dbox.a .h{color:#fbcaa5}
+html[data-theme=dark] .hrw .dbox.x .h{color:#f4a9a4}
+html[data-theme=dark] .hrw .dbox .g span{color:#e5e8eb}
+html[data-theme=dark] .hrw .dbox .g b{color:#e1e7f5}
+html[data-theme=dark] .hrw .dbox .dn{color:#e5e8eb}
+html[data-theme=dark] .hrw table.score th{color:#c3ccde;background:#1b2334;border-bottom:1px solid #2c3846}
+html[data-theme=dark] .hrw table.score td{border-bottom:1px solid #273343}
+html[data-theme=dark] .hrw table.score td.grp{color:#e5e8eb}
+html[data-theme=dark] .hrw table.score td.nm span{color:#e5e8eb}
+html[data-theme=dark] .hrw table.score input{border:1px solid #685d38;background:#35311c}
+html[data-theme=dark] .hrw table.score tr.diff input{background:#453e24}
+html[data-theme=dark] .hrw table.score tr.minus td{background:#1a2433}
+html[data-theme=dark] .hrw table.score td.ref b{color:#99b8f3}
+html[data-theme=dark] .hrw table.score td.ref span{color:#e5e8eb}
+html[data-theme=dark] .hrw .total{background:#1a2333}
+html[data-theme=dark] .hrw .total b{color:#99b8f3}
+html[data-theme=dark] .hrw table.ctb{border:1px solid #2f3d50}
+html[data-theme=dark] .hrw table.ctb th{background:#1b2334;color:#c3ccde;border:1px solid #2c3948}
+html[data-theme=dark] .hrw table.ctb td{border:1px solid #2c3948}
+html[data-theme=dark] .hrw table.ctb td.v select{border:1px solid #685d38;background:#35311c}
+html[data-theme=dark] .hrw table.ctb .ln input{border:1px solid #685d38;background:#35311c}
+html[data-theme=dark] .hrw table.ctb .ln em.full{color:#f4a9a4}
+html[data-theme=dark] .hrw .svbar{border-top:1px solid #2c3846;background:#1a1c20}
+html[data-theme=dark] .hrw .savest{background:#1f2834;color:#c3ccde}
+html[data-theme=dark] .hrw .savest.ok{background:#1e3a27;color:#c1f2d0}
+html[data-theme=dark] .hrw .savest.wait{background:#3a311e;color:#ffe0b2}
+html[data-theme=dark] .hrw .savest.err{background:#351b1b;color:#f4a9a4}
+html[data-theme=dark] .hrw .akind.l{background:#3a311e;color:#ffe0b2}
+html[data-theme=dark] .hrw .akind.e{background:#1c2536;color:#99b8f3}
+html[data-theme=dark] .hrw .akind.x{background:#351b1b;color:#f4a9a4}
+html[data-theme=dark] .hrw .akind.d{background:#261c37;color:#b59ce3}
+html[data-theme=dark] .segk button.on{border-color:#405378}
+html[data-theme=dark] .attl{border-left:4px solid #73603e}
+html[data-theme=dark] .cnt3 span{background:#1b2334}
+html[data-theme=dark] .hrw table.edit th{background:#1b2334;border:1px solid #2c3846}
+html[data-theme=dark] .hrw table.edit td{border:1px solid #273343}
+html[data-theme=dark] .hrw table.edit input:focus,html[data-theme=dark] .hrw table.edit select:focus,html[data-theme=dark] .hrw table.edit textarea:focus{border-color:#405378;background:#1a1c20}
+html[data-theme=dark] .hrw table.edit tr.sel td{background:#37311d}
+html[data-theme=dark] .hrw .guide{border:1px solid #2a384d;background:#1a2632}
+html[data-theme=dark] .hrw .guide .m{background:#1a1c20}
+html[data-theme=dark] .hrw .guide .m.on{background:#37311d}
+html[data-theme=dark] .hrw .guide .m .ex{color:#c3ccde}
+html[data-theme=dark] .hrw .guide .note{border-top:1px dashed #2c3c51;color:#c3ccde}
+html[data-theme=dark] .hrw .infof{border:1px dashed #374253}
+html[data-theme=dark] .hr-modal{background:#1a1c20}
+html[data-theme=dark] .hr-busy{background:rgba(26,28,32,0.6);color:#88adf3}
+html[data-theme=dark] .hrw .hist details{border:1px solid #2c3846}
+html[data-theme=dark] .hrw .hist th,html[data-theme=dark] .hrw .hist td{border:1px solid #2c3846}
+html[data-theme=dark] .hrw .hist .hm label{color:#e5e8eb}
+html[data-theme=dark] .hrw .pv .hd{background:#2b3e20}
+html[data-theme=dark] .hrw .pv .lb{background:#1f2d3c}
+html[data-theme=dark] .hrw .pv .gr{background:#212328}
+html[data-theme=dark] .hrw .pv .bl{background:#243646}
+html[data-theme=dark] .hrw .pv svg{border:1px solid #3e3e3e;background:#1a1c20}
+html[data-theme=dark] .hrw input.bad{border-color:#784141!important;background:#351e1c!important}
+html[data-theme=dark] .orgbox span{background:#1d2738}
+html[data-theme=dark] .orgmg{background:#1d2738;border:1px solid #2e3c50}
+html[data-theme=dark] .orgnm{background:#212c40;border:1px solid #2e3c50}
+html[data-theme=dark] .orgt td{border:1px solid #2f3948}
+html[data-theme=dark] .orgt td.no{color:#e5e8eb}
+html[data-theme=dark] .orgt tr[data-n]:hover td{outline:1px solid #405678}
+html[data-theme=dark] .ok-pl td,html[data-theme=dark] .orglg .ok-pl{background:#1e2a3a}
+html[data-theme=dark] .ok-off td,html[data-theme=dark] .orglg .ok-off{background:#351e1c;color:#ed9a9a}
+html[data-theme=dark] .lvsatsum{background:#1a1c20}
+html[data-theme=dark] .btn-file{background:#1a1c20}
+html[data-theme=dark] .btn-file:hover{background:#1b2334}
+html[data-theme=dark] tr.ghd > td{background:color-mix(in srgb, var(--gc) 9%, #1a1c20);border-top:2px solid color-mix(in srgb, var(--gc) 45%, #303030)}
+html[data-theme=dark] tr.ghd > td > b:first-child{color:#e2e8f1}
+html[data-theme=dark] tr.ghd > td > span{color:#cad2dd}
+html[data-theme=dark] .side nav button.on .at{border-color:#303030}
+html[data-theme=dark] .ddinfo{background:#1b2434;border:1px solid #29364c;color:#b0caf1}
+html[data-theme=dark] .ddtodo .todo{background:#1a1c20}
+html[data-theme=dark] .ddk .v.warnv{color:#fbcaa5}
+html[data-theme=dark] .ddstack{background:#1b2635}
+html[data-theme=dark] .ddlg span.hatch::before{background:repeating-linear-gradient(135deg,#999 0 2px,#1a1c20 2px 4px)}
+html[data-theme=dark] .ddh small{color:#e5e8eb}
+html[data-theme=dark] .ddtr{background:#1f2834}
+html[data-theme=dark] .ddtr i.o{background-image:repeating-linear-gradient(135deg,rgba(26,28,32,0.6) 0 3px,transparent 3px 6px)!important}
+html[data-theme=dark] .ddpn{background:#1a2433;border:1px solid #273343}
+html[data-theme=dark] .ddpn .x{color:#e5e8eb}
+html[data-theme=dark] .ddgh{background:color-mix(in srgb,var(--gc) 7%,#1a1c20)}
+html[data-theme=dark] .ddpr{border-bottom:1px solid #263141}
+html[data-theme=dark] .ddpr .n i.hf{color:#ed9a9a}
+html[data-theme=dark] .ddst.lv{background:#351b1b;color:#ed9a9a}
+html[data-theme=dark] .ddst.ck{background:#291c37;color:#b490ee}
+html[data-theme=dark] .ddst.up{background:#1d3925;color:#c0f2d0}
+html[data-theme=dark] .ddst.no{background:#494425;color:#fff5ca}
+html[data-theme=dark] .ddst.ch{background:#212934;color:#bdc7d4}
+html[data-theme=dark] .ddnotes .nt{border-bottom:1px solid #273343}
+html[data-theme=dark] .apb{background:#1a1c20}
+html[data-theme=dark] .apb.has{background:#1d3925;border-color:#2f573a}
+html[data-theme=dark] .asgsel{background:#1c2736}
+html[data-theme=dark] .asgt small{color:#e5e8eb}
+html[data-theme=dark] .asgtb button.un{color:#bdc7d4}
+html[data-theme=dark] .asgtb button.lvb{color:#ed9a9a;border-color:#502b2b}
+html[data-theme=dark] .asgtb button.ckb{color:#b490ee;border-color:#392a4e}
+html[data-theme=dark] .admbtn{border-color:#5c4932!important;color:#fbcaa5!important}
+
+/* DARK-AUTO-END */
+/* ===================== 다크 모드 (글씨는 흰색) ===================== */
+html[data-theme=dark]{color-scheme:dark;--bg:#0e1014;--panel:#1a1c21;--ink:#ffffff;--sub:#d5dae3;--line:#2e323a;--line2:#262930;--head:#22252b;--blue:#4b8bff;--blue-soft:#1d2a44;
+  --red:#ff6b61;--red-soft:#3a1f1e;--green:#5fd08d;--green-soft:#17301f;--yellow:#4a4216;--yellow-ink:#f5df7a;--chip:#2a2d34;--chiph:#343843;--field:#24272e;--memo:#3d5a8a;
+  --sh:none;--nav1:#151d30;--nav2:#0f1420}
+html[data-theme=dark] body{color:var(--ink)}
+html[data-theme=dark] .muted{color:var(--sub)}
+html[data-theme=dark] button{color:var(--ink)}
+html[data-theme=dark] button.primary{color:#fff}
+html[data-theme=dark] button.danger{background:#3a1f1e;color:#ff8a80}
+html[data-theme=dark] .seg{background:#24272e}html[data-theme=dark] .seg button{color:#d5dae3}html[data-theme=dark] .seg button.on{background:#3a3e47;color:#fff}
+html[data-theme=dark] input:focus,html[data-theme=dark] select:focus{outline-color:#4b8bff}
+html[data-theme=dark] .ph{background:color-mix(in srgb,var(--bg) 84%,transparent)}
+html[data-theme=dark] .hubc.p .ic{background:#1d2a44;color:#8fb6ff}html[data-theme=dark] .hubc.s .ic{background:#3a2616;color:#ffa865}
+html[data-theme=dark] .hubc:hover{box-shadow:0 14px 34px rgba(0,0,0,.5)}
+html[data-theme=dark] .modal{box-shadow:0 20px 60px rgba(0,0,0,.6)}
+html[data-theme=dark] .side{box-shadow:0 10px 30px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -3231,7 +3705,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <div class="card kpi"><span>${ymLab(d.month)} 근태 기록</span><b>${attN}<small> 건</small></b><em>${H.ATT_KINDS.map(k => k + ' ' + (att[k] || 0)).join(' · ')}</em></div></div>
       <div class="banner ${src.n ? 'info' : 'warn'}" style="margin:12px 0">${src.n ? `업무데이터 ${src.n}명 · ${src.src === 'web' ? '업무데이터에서 자동 반영' : '업무통계 엑셀로 올림'} (${esc(src.at)})${noData ? ` · 업무데이터 없는 인원 ${noData}명` : ''}` : '이 달의 업무데이터가 아직 없습니다 → [데이터] 탭'}</div>
       <section class="dsec" style="margin:4px 0 14px"><div class="dst" style="margin-bottom:10px"><b>파트별 진행</b><span class="muted">누르면 그 파트 평가 입력으로</span></div>
-        <div class="pcards">${byPart.map(b => `<div class="card pcard" data-pp="${esc(b.p.name)}"><div class="t"><b>${esc(b.p.name)}</b><span>${esc(b.p.manager)}</span><span style="flex:1"></span>
+        <div class="pcards">${byPart.map(b => `<div class="card pcard" data-pp="${esc(b.p.name)}" style="--gc:${A.gcol(b.p.name)}"><div class="t"><b><span class="gdot" style="background:${A.gcol(b.p.name)}"></span>${esc(b.p.name)}</b><span>${esc(b.p.manager)}</span><span style="flex:1"></span>
           ${b.n && b.done === b.n ? '<span class="badge done">완료</span>' : b.done + b.draft ? '<span class="badge draft">진행중</span>' : '<span class="badge none">시작 전</span>'}</div>
           <div class="bar"><i style="width:${b.n ? b.done / b.n * 100 : 0}%"></i></div><div class="s"><span>완료 <b>${b.done}</b> / ${b.n}명</span><span>작성중 ${b.draft} · 미작성 ${b.n - b.done - b.draft}</span></div></div>`).join('')}</div></section>
       <section class="card dsec"><div class="dst"><b>인원별</b><span style="flex:1"></span>
@@ -4191,7 +4665,7 @@ async function addCharts(buf, jobs) {
   function renderLogin(tab) {
     tab = tab || 'login';
     APP.innerHTML = `
-    <div class="login2"><section class="lhero"><div class="lbr"><b>조립팀 업무데이터</b><span>PC ASSEMBLY WORK</span></div>
+    <div class="login2">${thmBtn('lthm')}<section class="lhero"><div class="lbr"><b>조립팀 업무데이터</b><span>PC ASSEMBLY WORK</span></div>
       <div><h1>반갑습니다.<br>오늘 하루도 화이팅!</h1><p>일일 입력부터 연차 신청까지</p></div>
       <div class="lft"><span>일일 입력</span><span>월 통계 · 엑셀</span><span>연차 · 토요근무</span></div></section>
     <section class="lform"><div class="login card">
@@ -4267,9 +4741,11 @@ async function addCharts(buf, jobs) {
     pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
     hr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11l2 2 4-4M9 17h6"/></svg>',
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>',
-    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>',
   };
-  const SIDE_VIEWS = ['dash', 'manage', 'people', 'leave', 'hr', 'settings'];
+  const SIDE_VIEWS = ['dash', 'manage', 'people', 'leave', 'hr', 'settings', 'admin'];
   const canSettings = () => !!(S.me && (S.me.period || S.me.role === '관리자'));
   const layoutOf = view => isManager() && SIDE_VIEWS.includes(view) ? 'side' : 'top';
   function shell(layout) {
@@ -4285,7 +4761,7 @@ async function addCharts(buf, jobs) {
           ${isManager() ? '' : '<button data-v="leave">연차 · 토요</button>'}
         </nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">${esc(m.group)} · ${esc(m.role)}</span>
-          <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button></div>
+          <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
       <div id="proxy"></div>
       <main id="main"></main>`;
@@ -4299,14 +4775,13 @@ async function addCharts(buf, jobs) {
             ${nb('dash', '일일 업무현황', IC.dash)}
             ${nb('input', '업무데이터 입력', IC.pen)}
             ${m.hr ? nb('att', '근태 입력', IC.clock) : ''}
-            ${m.role === '관리자' ? nb('people', '인원 현황/관리', IC.ppl, '', 1) : ''}
             ${nb('leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}
             ${m.hr ? nb('hr', '인사평가', IC.hr) : ''}
-            ${canSettings() ? nb('settings', '관리자 설정', IC.gear, '', 1) : ''}
+            ${canSettings() ? nb(m.role === '관리자' ? 'admin' : 'settings', '관리자 설정', IC.gear, '', 1) : ''}
           </nav>
           <div class="grow"></div>
           <div class="who"><span class="av">${esc(m.name.slice(0, 1))}</span><div><b>${esc(m.name)}</b><span>${esc(m.group)} · ${esc(m.role)}</span></div></div>
-          <div class="sbtn"><button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button></div>
+          <div class="sbtn"><button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
         </aside>
         <div class="content"><div id="proxy"></div><main id="main" class="pg"></main></div>
       </div>`;
@@ -4324,7 +4799,7 @@ async function addCharts(buf, jobs) {
     updateBadge();
   }
   function setNav() {
-    $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === S.view || (b.dataset.v === 'dash' && S.view === 'manage')) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
+    $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === S.view || (b.dataset.v === 'dash' && S.view === 'manage') || (b.dataset.v === 'admin' && (S.view === 'settings' || S.view === 'people'))) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
       p.innerHTML = `<div class="proxy">✎ ${esc(S.target.name)} (${esc(S.target.group)}) 님의 데이터를 보고 있습니다 <button id="back">인원 목록으로 돌아가기</button></div>`;
@@ -4350,6 +4825,7 @@ async function addCharts(buf, jobs) {
     if (view === 'manage') return renderManage();
     if (view === 'dash') return renderDash();
     if (view === 'settings') return renderSettings();
+    if (view === 'admin') return S.me.role === '관리자' ? renderAdminHub() : go('settings');
     if (view === 'people') { $('#proxy').innerHTML = ''; return renderPeople(opt && opt.tab); }
     if (view === 'leave') { $('#proxy').innerHTML = ''; return window.Leave.render($('#main'), opt && opt.tab); }
     if (view === 'hr') { $('#proxy').innerHTML = ''; return window.HR.render($('#main'), opt && opt.tab); }
@@ -4369,6 +4845,19 @@ async function addCharts(buf, jobs) {
     return false;
   }
   const pageHead = (title, mid, right) => `<div class="ph"><h1>${title}</h1>${mid || ''}<span style="flex:1"></span>${right || ''}</div>`;
+  // 관리자 설정 안쪽 화면 머리 : ‹ 고르기 화면으로 + 옆 화면 바로 가기 (관리자만)
+  const admHead = (title, cur, mid, right) => S.me.role !== '관리자' ? pageHead(title, mid, right)
+    : `<div class="ph"><button class="bk" data-go="admin" title="관리자 설정으로">‹</button><h1>${title}</h1><div class="seg admseg"><button data-go="people" class="${cur === 'people' ? 'on' : ''}">인원 현황/관리</button><button data-go="settings" class="${cur === 'settings' ? 'on' : ''}">기간 · 백업 · 설정</button></div>${mid || ''}<span style="flex:1"></span>${right || ''}</div>`;
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-go]'); if (b && S.me && !b.classList.contains('on')) go(b.dataset.go); });
+  // 다크 / 밝은 모드 (이 PC에서 기억)
+  const isDark = () => document.documentElement.dataset.theme === 'dark';
+  const thmBtn = cls => `<button class="thm ${cls || ''}" title="다크 / 밝은 모드">${isDark() ? IC.sun : IC.moon}</button>`;
+  function setTheme(t) {
+    if (t === 'dark') document.documentElement.dataset.theme = 'dark'; else delete document.documentElement.dataset.theme;
+    try { localStorage.setItem('theme', t); } catch (e) { }
+    $$('.thm').forEach(b => (b.innerHTML = t === 'dark' ? IC.sun : IC.moon));
+  }
+  document.addEventListener('click', e => { if (e.target.closest && e.target.closest('.thm')) setTheme(isDark() ? 'light' : 'dark'); });
   function changePin(msg, force) {
     modal(`<h3>비밀번호 변경</h3>${typeof msg === 'string' ? '<div class="note" style="margin-bottom:10px">' + msg + '</div>' : ''}
       <div class="fld"><label>현재 비밀번호</label><input id="o" type="password" maxlength="4" inputmode="numeric"></div>
@@ -5744,21 +6233,33 @@ async function addCharts(buf, jobs) {
         <button id="padd">마감 상태로 추가</button>
       </div></details>`;
   }
+  // 관리자 설정 : 고르기 화면 (인원 현황/관리 · 기간 · 백업 · 설정)
+  function renderAdminHub() {
+    const main = $('#main'), cp = curPeriod();
+    main.innerHTML = pageHead('관리자 설정', '<span class="muted" style="font-size:14px">관리자만 보이는 메뉴입니다 · 할 일을 고르세요</span>') + `<div class="pgb"><div class="hub">
+      <button class="hubc p" data-go="people"><span class="go">›</span><div class="ic">${IC.ppl}</div><h2>인원 현황 / 관리</h2>
+        <p>인원 추가 · 수정 · 퇴사 처리<br>조직도 · 그룹 · 직책 · 계정 권한 · 임시 비밀번호</p><div class="st" id="hbp"><span>불러오는 중…</span></div></button>
+      <button class="hubc s" data-go="settings"><span class="go">›</span><div class="ic">${IC.gear}</div><h2>기간 · 백업 · 설정</h2>
+        <p>월 기간 열기 · 마감 · 항목별 분<br>월 백업 · 지운 자료 보관함 · 자동 백업 열쇠</p><div class="st" id="hbs"><span>${cp ? esc(ymLabel(cp.ym)) + ' ' + (cp.status === '진행' ? '진행중' : esc(cp.status)) : '기간 없음'}</span></div></button></div></div>`;
+    const tk = S.token;
+    api('people').then(P => { if (tk !== S.token || S.view !== 'admin' || !$('#hbp')) return; S._ppl = P; const reg = P.rows.filter(x => x.acct).length;
+      $('#hbp').innerHTML = `<span>명단 ${P.rows.length}명</span><span>등록 ${reg}</span><span>미등록 ${P.rows.length - reg}</span>`; }).catch(() => { if ($('#hbp')) $('#hbp').innerHTML = ''; });
+    api('autoBkKey').then(r => { if (S.view !== 'admin' || !$('#hbs')) return;
+      $('#hbs').insertAdjacentHTML('beforeend', `<span>자동 백업 ${r.on ? '켜짐' + (r.last ? ' · ' + esc(r.last.slice(5, 16)) : '') : '<b class="t-lo">꺼짐</b>'}</span>`); }).catch(() => { });
+  }
   function renderSettings() {
     const main = $('#main'), me = S.me;
     const ymOpts = S.periods.slice().reverse().map(p => `<option value="${p.ym}">${ymLabel(p.ym)}</option>`).join('');
-    main.innerHTML = pageHead('설정', '<span class="muted">관리자만 보이는 메뉴입니다</span>') + `<div class="pgb"><div class="sgrid">
+    main.innerHTML = admHead('기간 · 백업 · 설정', 'settings', me.role === '관리자' ? '' : '<span class="muted">월 기간 설정 권한</span>') + `<div class="pgb"><div class="sgrid">
       ${me.period ? `<section class="card scard"><div class="sct"><b>월 기간 · 마감</b><span>귀속월 열기 · 마감 · 기간 수정</span></div>${periodBody()}</section>` : ''}
       <div class="scol">
       ${me.period ? `<section class="card scard"><div class="sct"><b>항목별 분 · 설명</b><span>귀속월마다 다르게 적용 · 항목 이름은 바꿀 수 없음 (엑셀 양식 유지)</span></div>
         <div class="row"><span class="muted" style="flex:1">${(S.rates || []).length ? '설정된 달 : ' + S.rates.map(r => ymLabel(r.ym)).join(', ') : '지금은 기본값(원본 엑셀)으로 계산 중'}</span><button class="primary" id="prt">항목별 분 · 설명 열기</button></div></section>` : ''}
-      ${me.role === '관리자' ? `<section class="card scard"><div class="sct"><b>인원 명단 · 조직도</b><span>왼쪽 메뉴 [인원 관리]로 옮겼습니다 (기본 · 계정 · 연차 · 인사평가 · 조직도를 한 곳에서)</span></div>
-        <div class="row"><span class="muted" style="flex:1">명단에 있는 이름만 [처음 등록] 가능 · 그룹은 명단에서 자동</span><button class="primary" id="gopeople">인원 관리 열기</button></div></section>` : ''}
       </div>
       ${me.role === '관리자' ? `<section class="card scard" style="grid-column:1/-1"><div class="sct"><b>월 백업 · 오래된 달 정리</b><span>한 달 단위로 업무데이터 · 연차 · 인사평가를 파일 1개로 · 마감 후 받아 두세요</span></div>
         <div id="bkbox"><div class="muted">불러오는 중…</div></div>
         <div class="row" style="margin-top:12px"><span class="muted" style="flex:1">지우거나 통째로 바꾼 자료(계정 삭제 · 하루 삭제 · 연차 엑셀 가져오기 · 인사평가 가져오기 · 데이터 전체 삭제 등)는 180일 동안 보관됩니다</span><button id="trashb">🗂 지운 자료 보관함</button></div>
-        <div class="row" style="margin-top:12px"><span class="muted" style="flex:1" id="abst">자동 백업 (매주) : 확인 중…</span><button id="abkey">🔑 자동 백업 열쇠</button></div>
+        <div class="row" style="margin-top:12px"><span class="muted" style="flex:1" id="abst">자동 백업 (매일) : 확인 중…</span><button id="abkey">🔑 자동 백업 열쇠</button></div>
         ${me.period && me.role === '관리자' ? '<div class="row" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)"><span class="muted" style="flex:1">운영 전 시험 데이터를 지울 때만 사용 (일일 입력 · 목표 · 기간 · 근태 · 일일 현황 입력)</span><button class="danger" id="pwipe">데이터 전체 삭제…</button></div>' : ''}</section>` : ''}
       </div></div>`;
     if (me.period) bindPeriodPanel();
@@ -5766,7 +6267,6 @@ async function addCharts(buf, jobs) {
     if ($('#bkbox')) drawBackup();
     if ($('#trashb')) $('#trashb').onclick = trashModal;
     if ($('#abkey')) { $('#abkey').onclick = autoBkModal; autoBkStatus(); }
-    if ($('#gopeople')) $('#gopeople').onclick = () => go('people');
   }
   // ---- 인원 명단 (조직도) : 등록 허용 명단 ----
   const RS_COLS = [['name', '이름'], ['grp', '그룹'], ['title', '직책'], ['rank', '직급'], ['level', '레벨'], ['status', '상태'], ['job', '세부직무'], ['empno', '사번']];
@@ -5921,14 +6421,14 @@ async function addCharts(buf, jobs) {
   async function autoBkStatus() {
     const el = $('#abst'); if (!el) return;
     try { const r = await api('autoBkKey');
-      el.innerHTML = !r.on ? '자동 백업 (매주) : <b class="t-lo">꺼짐</b> · 열쇠를 만들어 GitHub 비공개 저장소에 넣으면 켜집니다'
-        : '자동 백업 (매주) : <b>켜짐</b> · 마지막 자동 백업 ' + (r.last ? '<b>' + esc(r.last.slice(0, 16)) + '</b> (' + r.lastRows.toLocaleString() + '행)' + (Date.now() - new Date(r.last.replace(' ', 'T') + '+09:00') > 9 * 864e5 ? ' <b class="t-lo">· 9일 넘게 안 됨 → GitHub 확인</b>' : '') : '<span class="t-lo">아직 없음</span>');
+      el.innerHTML = !r.on ? '자동 백업 (매일) : <b class="t-lo">꺼짐</b> · 열쇠를 만들어 GitHub 비공개 저장소에 넣으면 켜집니다'
+        : '자동 백업 (매일) : <b>켜짐</b> · 마지막 자동 백업 ' + (r.last ? '<b>' + esc(r.last.slice(0, 16)) + '</b> (' + r.lastRows.toLocaleString() + '행)' + (Date.now() - new Date(r.last.replace(' ', 'T') + '+09:00') > 2 * 864e5 ? ' <b class="t-lo">· 2일 넘게 안 됨 → GitHub 확인</b>' : '') : '<span class="t-lo">아직 없음</span>');
     } catch (e) { el.textContent = '자동 백업 : ' + e.message; }
   }
   async function autoBkModal() {
     let r; try { r = await api('autoBkKey'); } catch (e) { return toast(e.message, true); }
     modal(`<h3>🔑 자동 백업 열쇠</h3><div style="line-height:1.7">
-      매주 일요일 새벽, 비공개 GitHub 저장소가 이 열쇠로 <b>전체 자료</b>를 받아 날짜별 파일로 쌓습니다.<br>
+      매일 새벽 1시, 비공개 GitHub 저장소가 이 열쇠로 <b>전체 자료</b>를 받아 날짜별 파일로 쌓습니다.<br>
       이 열쇠로는 <b>읽기만</b> 됩니다 (고치기 · 지우기 · 로그인 불가). 비밀번호는 백업에 들어가지 않습니다.<br>
       ${r.on ? `지금 열쇠 : ${esc(r.made.slice(0, 16))} · ${esc(r.madeBy)} 만듦<br><b class="t-lo">새로 만들면 예전 열쇠는 바로 못 쓰게 됩니다</b> → GitHub 비밀값도 새 열쇠로 바꿔야 합니다.` : '아직 열쇠가 없습니다.'}
       <div id="about" style="margin-top:10px"></div></div>
@@ -6091,15 +6591,15 @@ async function addCharts(buf, jobs) {
   }));
   async function renderPeople(tab) {
     const main = $('#main'); if (tab) S.pTab = tab; if (!S.pTab) { try { S.pTab = sessionStorage.getItem('pTab'); } catch (e) { } } S.pTab = S.pTab === 'org' ? 'org' : 'list';
-    main.innerHTML = pageHead('인원 관리', '<span class="muted">한 사람의 기본 · 계정 · 연차 · 인사평가를 한 곳에서</span>') + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
+    main.innerHTML = admHead('인원 현황 / 관리', 'people') + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
     const tk = S.token;
-    try { S._ppl = await api('people'); } catch (e) { main.innerHTML = pageHead('인원 관리') + '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    try { S._ppl = await api('people'); } catch (e) { main.innerHTML = admHead('인원 현황 / 관리', 'people') + '<div class="warn">' + esc(e.message) + '</div>'; return; }
     if (tk !== S.token || S.view !== 'people') return;
     drawPeople();
   }
   function drawPeople() {
     const P = S._ppl, rows = P.rows, reg = rows.filter(x => x.acct).length;
-    $('#main').innerHTML = pageHead('인원 관리', `<span class="muted">명단 ${rows.length}명 · 등록 ${reg} · 아직 등록 안 함 ${rows.length - reg}${P.extra.length ? ' · <b class="t-lo">명단 외 계정 ' + P.extra.length + '</b>' : ''}</span>`,
+    $('#main').innerHTML = admHead('인원 현황 / 관리', 'people', `<span class="muted">명단 ${rows.length}명 · 등록 ${reg} · 아직 등록 안 함 ${rows.length - reg}${P.extra.length ? ' · <b class="t-lo">명단 외 계정 ' + P.extra.length + '</b>' : ''}</span>`,
       `<div class="seg"><button data-pt="list" class="${S.pTab === 'list' ? 'on' : ''}">명단</button><button data-pt="org" class="${S.pTab === 'org' ? 'on' : ''}">조직도</button></div>`) + '<div class="pgb" id="pbody"></div>';
     $$('[data-pt]').forEach(b => (b.onclick = () => { S.pTab = b.dataset.pt; try { sessionStorage.setItem('pTab', S.pTab); } catch (e) { } drawPeople(); }));
     if (S.pTab === 'org') drawOrg(); else drawPList();
@@ -6375,7 +6875,7 @@ async function addCharts(buf, jobs) {
       let v0 = isManager() && !pend0 ? 'dash' : 'input';
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = ['input', 'month', 'leave', 'dash'].concat(isManager() ? ['manage'] : []).concat(me.role === '관리자' ? ['people'] : []).concat(me.hr ? ['hr'] : []).concat(me.role === '관리자' || me.period ? ['settings'] : []);
+        const okv = ['input', 'month', 'leave', 'dash'].concat(isManager() ? ['manage'] : []).concat(me.role === '관리자' ? ['people', 'admin'] : []).concat(me.hr ? ['hr'] : []).concat(me.role === '관리자' || me.period ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
