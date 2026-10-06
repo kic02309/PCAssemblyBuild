@@ -665,6 +665,28 @@ button.big{padding:9px 18px;font-size:14.5px;font-weight:800}
 .bktbl td:last-child{text-align:right;white-space:nowrap}
 main.loading,#main.loading{pointer-events:none;opacity:.55;transition:opacity .15s}
 .hrw input.bad{border-color:#d32f2f!important;background:#fdecea!important}
+/* 인원 관리 · 조직도 */
+.orgwrap{overflow:auto;padding:16px}
+.orgtitle{text-align:center;font-size:22px;font-weight:800;letter-spacing:6px;margin:4px 0 10px}
+.orgtop{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px}
+.orgbox{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;min-width:170px;cursor:default}
+.orgbox span{background:#e8edf5;padding:5px 10px;font-weight:700;font-size:12.5px;min-width:46px;text-align:center}.orgbox b{padding:5px 14px;flex:1;text-align:center}
+.orgbox.tl{cursor:pointer}.orgbox.tl span{background:#1b2a4a;color:#fff}
+.orgrow{display:flex;gap:10px;align-items:flex-start;min-width:max-content}
+.orgblk{display:flex;flex-direction:column;gap:0}
+.orgmg{background:#e8edf5;border:1px solid #c9d2e0;text-align:center;font-weight:700;font-size:12px;padding:4px 6px;white-space:nowrap}
+.orgnm{background:#d5ddeb;border:1px solid #c9d2e0;border-top:none;text-align:center;font-weight:800;font-size:12.5px;padding:4px 6px;margin-bottom:4px;white-space:nowrap}
+.orgcols{display:flex;gap:4px}
+.orgt{border-collapse:collapse;font-size:12px}
+.orgt td{border:1px solid #d9dee6;padding:2px 6px;height:21px;white-space:nowrap;text-align:center}
+.orgt td.no{color:#8a94a3;font-size:11px;width:22px}.orgt td.nm{min-width:58px;font-weight:600;text-align:center}
+.orgt tr[data-n]{cursor:pointer}.orgt tr[data-n]:hover td{outline:1px solid #2f6fd6}
+.ok-mg td,.orglg .ok-mg{background:#2f6fd6;color:#fff;font-weight:700}
+.ok-pl td,.orglg .ok-pl{background:#dce9fb;font-weight:700}
+.ok-off td,.orglg .ok-off{background:#fdecea;color:#c62828}
+.orgsum .orgt td.nm{text-align:left}.orgsum .orgt td.num{text-align:right;font-weight:700;min-width:36px}
+.orglg{display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:12px}.orglg span{padding:3px 8px;border-radius:4px;text-align:center}
+.plist td{white-space:nowrap}
 .lvsatsum{padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;line-height:1.7;margin-bottom:12px}
 .hrw td{overflow-wrap:anywhere}
 .btn-file{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:#fff;font-weight:600;cursor:pointer}
@@ -2298,12 +2320,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const own = d.owners || {};
     body().innerHTML = `
       <div class="lvset">
-        <div class="card"><div class="toolbar"><b>인원 (토요 명단 + 조직도)</b> <span class="muted">${d.staff.length}명 · 토요 명단 ${d.staff.filter(s => s.roster).length}명</span>
-          <input id="lvsq" placeholder="이름·그룹·등급 검색" value="${A.esc(q)}" style="width:170px"><button id="lvsadd">+ 인원 추가</button>
-          <span class="muted">칸을 고치면 바로 저장 · 업무데이터 계정과 <b>이름</b>으로 연결 (같은 이름이어야 본인이 신청 가능)</span></div>
-          <div style="max-height:calc(100vh - 330px);overflow:auto"><table class="list lvst2"><thead><tr><th>이름</th><th>그룹</th><th>직책</th><th>등급</th><th>토요제외</th><th>토요명단</th><th>상태</th><th>부여일수</th><th>사번</th><th>직급</th><th>레벨</th><th>세부직무</th><th>순번</th><th></th></tr></thead>
-          <tbody>${list.map(row).join('')}</tbody></table></div>
-          <datalist id="lvgl">${['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원', '출력', '영상', '팀장'].map(g => `<option>${g}</option>`).join('')}</datalist></div>
+        <div class="card"><div class="toolbar"><b>인원 (토요 명단)</b> <span class="muted">${d.staff.filter(s => s.roster).length}명 · 이름 · 그룹 · 연차 등급 · 토요명단 · 부여일수는 <b>[인원 관리]</b>에서 한 번에 고칩니다</span>
+          <span style="flex:1"></span>${A.S.me && A.S.me.role === '관리자' ? '<button class="primary" id="lvgoppl">인원 관리로 가기</button>' : ''}</div>
+          <div style="max-height:calc(100vh - 330px);overflow:auto"><table class="list"><thead><tr><th>이름</th><th>그룹</th><th>직책</th><th>연차 등급</th><th>토요제외</th><th>토요명단</th><th>상태</th><th class="num">부여일수</th></tr></thead>
+          <tbody>${list.filter(s => s.roster || s.status !== '퇴사').map(s => `<tr><td><b>${A.esc(s.name)}</b></td><td>${A.esc(s.grp || '')}</td><td>${A.esc(s.title || '')}</td><td>${A.esc(s.grade || '')}</td><td>${A.esc(s.off || '')}</td><td>${s.roster ? '✓' : '-'}</td><td>${A.esc(s.status || '')}</td><td class="num">${s.grant == null ? '' : s.grant}</td></tr>`).join('')}</tbody></table></div></div>
         <div class="lvset2">
           <div class="card"><b>파트별 1차 확인 담당</b> <span class="muted">(인원 관리 › 편집 › 담당 그룹에서 바꿈)</span>
             <div class="lvown2">${['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원', '출력', '영상'].map(g => `<span><b>${g}</b> ${(own[g] || []).length ? A.esc(own[g].join(', ')) : '<span class="muted">없음 → 바로 관리자</span>'}</span>`).join('')}</div></div>
@@ -2318,7 +2338,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
             <div class="row" style="gap:6px;margin-top:6px"><input type="date" id="lvhd"><input id="lvhn" placeholder="이름 (예: 회사 휴무)" style="width:160px"><button id="lvha">추가</button></div></div>
         </div>
       </div>`;
-    A.$('#lvsq').oninput = e => { L.setQ = e.target.value; const p = e.target.selectionStart; drawSet(); const i = A.$('#lvsq'); i.focus(); i.setSelectionRange(p, p); };
+    if (A.$('#lvgoppl')) A.$('#lvgoppl').onclick = () => A.go('people');
+    if (A.$('#lvsq')) A.$('#lvsq').oninput = e => { L.setQ = e.target.value; const p = e.target.selectionStart; drawSet(); const i = A.$('#lvsq'); i.focus(); i.setSelectionRange(p, p); };
     const saveRow = tr => (tr._q = (tr._q || Promise.resolve()).then(() => saveRow1(tr)));   // 한 줄씩 차례로 (새 줄이 두 번 생기지 않게)
     const saveRow1 = async tr => {
       const g = c => A.$('.' + c, tr), s = d.staff.find(x => x.id === tr.dataset.id) || {};
@@ -2341,7 +2362,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         try { await A.api('lvDelStaff', { id: s.id }); d.staff = d.staff.filter(x => x.id !== s.id); reindex(); drawSet(); } catch (e) { A.toast(e.message, true); }
       };
     });
-    A.$('#lvsadd').onclick = () => {
+    if (A.$('#lvsadd')) A.$('#lvsadd').onclick = () => {
       const tb = A.$('.lvst2 tbody'), tmp = document.createElement('tbody');
       tmp.innerHTML = row({ id: 'new' + Date.now(), name: '', roster: true }); const tr = tmp.firstElementChild; tb.prepend(tr);
       A.$$('input,select', tr).forEach(el => (el.onchange = () => saveRow(tr))); A.$('.x', tr).onclick = () => tr.remove(); A.$('.f-name', tr).focus();
@@ -2714,7 +2735,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   // ------------------------------------------------------------ 서버
-  const api = (a, b) => A.api(a, b || {});
+  // 읽기 요청이 끝나기 전에 다른 탭을 누르면 옛 탭 화면이 새 탭을 덮지 않게 (응답을 버림)
+  const READS = ['hrAtt', 'hrCfg', 'hrHistory', 'hrLog', 'hrMonth', 'hrMyAtt', 'listUsers'], NEVER = () => new Promise(() => {});
+  const api = (a, b) => {
+    const p = A.api(a, b || {}); if (!READS.includes(a)) return p;
+    const s = ST.tseq; return p.then(r => (s === ST.tseq ? r : NEVER()), e => (s === ST.tseq ? Promise.reject(e) : NEVER()));
+  };
   async function getMonth(month, part) {
     const r = await api('hrMonth', { month, part: part || '' });
     const b = H.build(r);
@@ -2789,7 +2815,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   async function go(tab) {
     if (!(await guard())) return;
-    ST.dirty = false; ST.tab = tab;
+    ST.dirty = false; ST.tab = tab; ST.tseq = (ST.tseq || 0) + 1;
     document.querySelectorAll('#hrTabs [data-hrt]').forEach(b => b.classList.toggle('on', b.dataset.hrt === tab));
     if (!admin() && !['eval', 'att', 'mypart'].includes(tab)) tab = 'eval';
     ({ overview: viewOverview, eval: viewEval, mypart: viewMyPart, att: viewAtt, data: viewData, cfg: viewCfg, close: viewClose, log: viewLog })[tab]();
@@ -3382,7 +3408,7 @@ function parseAcc(ws) {
   async function viewCfg() {
     ST.cfgSub = ST.cfgSub || 'crit';
     body().innerHTML = `<div class="subt">${CFG_SUBS.map(([k, t]) => `<button data-cs="${k}" class="pill ${k === ST.cfgSub ? 'on' : ''}">${t}</button>`).join('')}</div><div id="cfgb"><div class="muted">불러오는 중…</div></div>`;
-    body().querySelectorAll('[data-cs]').forEach(b => (b.onclick = () => { ST.cfgSub = b.dataset.cs; viewCfg(); }));
+    body().querySelectorAll('[data-cs]').forEach(b => (b.onclick = () => { ST.cfgSub = b.dataset.cs; ST.tseq = (ST.tseq || 0) + 1; viewCfg(); }));
     if (ST.cfgSub === 'import') return viewImport();
     try { await loadCfg(); } catch (e) { toast(e.message, 1); return; }
     ({ crit: cfgCrit, roster: cfgRoster, order: cfgOrder })[ST.cfgSub]();
@@ -3429,15 +3455,16 @@ function parseAcc(ws) {
     const users = new Set();
     cfgb().innerHTML = `
       <div class="card"><h2>명단 (파트장 · 사원)</h2>
-        <div class="banner info">등급을 바꾸면 그 사람의 목표수량이 바로 바뀝니다. 업무데이터 이름이 다르면(예: 정 준 ↔ 정준) "원본이름"에 업무데이터의 이름을 적어주세요. 평가하지 않는 인원은 "사용"을 N으로 두면 목록에서 빠지고 기록은 남습니다.</div>
-        ${editTable('명단', CFG['명단'], { w: { 이름: 80, 원본이름: 80, 비고: 120 }, blank: { 사용: 'Y', 직책: '사원' } })}
-        <div class="actions"><button class="primary" id="svRoster">명단 저장</button></div></div>
+        <div class="banner info">평가 대상 · 인사평가 등급(목표수량) · 원본이름 · 파트(=조직도 그룹)는 왼쪽 메뉴 <b>[인원 관리]</b>에서 사람별로 고칩니다. 여기서는 보기만 합니다.
+          <button class="sm" id="hrGoPpl" style="margin-left:8px">인원 관리로 가기</button></div>
+        <div style="max-height:52vh;overflow:auto"><table class="tbl"><tr><th>이름</th><th>파트</th><th>직책</th><th>등급</th><th>원본이름</th><th>사용</th><th>비고</th></tr>
+        ${(CFG['명단'] || []).map(r => `<tr><td>${esc(r['이름'])}</td><td>${esc(r['파트'])}</td><td>${esc(r['직책'])}</td><td>${esc(r['등급'])}</td><td>${esc(r['원본이름'])}</td><td>${esc(r['사용'])}</td><td>${esc(r['비고'])}</td></tr>`).join('')}</table></div></div>
       <div class="card"><h2>파트 · 담당 매니저</h2>
         <div class="banner info">담당 매니저는 <b>업무데이터 로그인 이름과 똑같이</b> 적으세요. 그 매니저가 로그인하면 왼쪽 메뉴에 [인사평가]가 생기고 이 파트만 보고 입력합니다. (예전 파트 비밀번호는 쓰지 않습니다)</div>
         ${editTable('파트', CFG['파트'], { w: { 파트: 80, 담당매니저: 80, 순서: 40 } })}
         <div class="actions"><button class="primary" id="svPart">파트 저장</button></div></div>`;
-    wireTable('명단', { blank: { 사용: 'Y', 직책: '사원' } }); wireTable('파트');
-    $('#svRoster').onclick = () => saveTable('명단', readTable('명단'));
+    wireTable('파트');
+    $('#hrGoPpl').onclick = () => A.go && A.go('people');
     $('#svPart').onclick = () => saveTable('파트', readTable('파트'));
   }
   function cfgOrder() {
@@ -4125,7 +4152,7 @@ async function addCharts(buf, jobs) {
     hr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11l2 2 4-4M9 17h6"/></svg>',
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
   };
-  const SIDE_VIEWS = ['dash', 'manage', 'leave', 'hr', 'settings'];
+  const SIDE_VIEWS = ['dash', 'manage', 'people', 'leave', 'hr', 'settings'];
   const canSettings = () => !!(S.me && (S.me.period || S.me.role === '관리자'));
   const layoutOf = view => isManager() && SIDE_VIEWS.includes(view) ? 'side' : 'top';
   function shell(layout) {
@@ -4153,7 +4180,8 @@ async function addCharts(buf, jobs) {
           <div class="brand">조립팀 업무데이터</div>
           <nav>
             ${nb('dash', '대시보드', IC.dash)}
-            ${nb('manage', m.role === '관리자' ? '인원 관리' : '인원 현황', IC.ppl)}
+            ${nb('manage', '업무 현황', IC.dash.replace('rx="1.5"', 'rx="3"'))}
+            ${m.role === '관리자' ? nb('people', '인원 관리', IC.ppl) : ''}
             ${nb('leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}
             ${m.hr ? nb('hr', '인사평가', IC.hr) : ''}
             ${nb('input', '내 일일 입력', IC.pen)}
@@ -4204,6 +4232,7 @@ async function addCharts(buf, jobs) {
     if (view === 'manage') return renderManage();
     if (view === 'dash') return renderDash();
     if (view === 'settings') return renderSettings();
+    if (view === 'people') { $('#proxy').innerHTML = ''; return renderPeople(opt && opt.tab); }
     if (view === 'leave') { $('#proxy').innerHTML = ''; return window.Leave.render($('#main'), opt && opt.tab); }
     if (view === 'hr') { $('#proxy').innerHTML = ''; return window.HR.render($('#main'), opt && opt.tab); }
   }
@@ -5058,7 +5087,7 @@ async function addCharts(buf, jobs) {
       const withT = act.filter(u => u.target);
       const hi = withT.filter(u => u.m.c8 >= 0.9).length, lo = withT.filter(u => u.m.c8 <= 0.5).length;
       const rangeTxt = r.range.start.slice(5).replace('-', '/') + ' ~ ' + (r.range.end > S.today ? S.today : r.range.end).slice(5).replace('-', '/');
-      html += pageHead(S.me.role === '관리자' ? '인원 관리' : '인원 현황') + `<div class="pgb">
+      html += pageHead('업무 현황') + `<div class="pgb">
       <div class="toolbar">
         <div class="seg"><button data-mm="month" class="${S.mMode === 'month' ? 'on' : ''}">귀속월</button><button data-mm="range" class="${S.mMode === 'range' ? 'on' : ''}">기간 지정</button></div>
         ${S.mMode === 'month' ? `<select id="mym">${periodOptions(ym)}</select>${periodChip(r.period)}`
@@ -5307,8 +5336,8 @@ async function addCharts(buf, jobs) {
       <div class="scol">
       ${me.period ? `<section class="card scard"><div class="sct"><b>항목별 분 · 설명</b><span>귀속월마다 다르게 적용 · 항목 이름은 바꿀 수 없음 (엑셀 양식 유지)</span></div>
         <div class="row"><span class="muted" style="flex:1">${(S.rates || []).length ? '설정된 달 : ' + S.rates.map(r => ymLabel(r.ym)).join(', ') : '지금은 기본값(원본 엑셀)으로 계산 중'}</span><button class="primary" id="prt">항목별 분 · 설명 열기</button></div></section>` : ''}
-      ${me.role === '관리자' ? `<section class="card scard"><div class="sct"><b>인원 명단 (조직도)</b><span>여기 있는 이름만 [처음 등록] 가능 · 그룹은 명단에서 자동</span></div>
-        <div id="rsbox"><div class="muted">불러오는 중…</div></div></section>` : ''}
+      ${me.role === '관리자' ? `<section class="card scard"><div class="sct"><b>인원 명단 · 조직도</b><span>왼쪽 메뉴 [인원 관리]로 옮겼습니다 (기본 · 계정 · 연차 · 인사평가 · 조직도를 한 곳에서)</span></div>
+        <div class="row"><span class="muted" style="flex:1">명단에 있는 이름만 [처음 등록] 가능 · 그룹은 명단에서 자동</span><button class="primary" id="gopeople">인원 관리 열기</button></div></section>` : ''}
       </div>
       ${me.role === '관리자' ? `<section class="card scard" style="grid-column:1/-1"><div class="sct"><b>월 백업 · 오래된 달 정리</b><span>한 달 단위로 업무데이터 · 연차 · 인사평가를 파일 1개로 · 마감 후 받아 두세요</span></div>
         <div id="bkbox"><div class="muted">불러오는 중…</div></div>
@@ -5317,7 +5346,7 @@ async function addCharts(buf, jobs) {
     if (me.period) bindPeriodPanel();
     if ($('#prt')) $('#prt').onclick = editRates;
     if ($('#bkbox')) drawBackup();
-    if ($('#rsbox')) drawRoster();
+    if ($('#gopeople')) $('#gopeople').onclick = () => go('people');
   }
   // ---- 인원 명단 (조직도) : 등록 허용 명단 ----
   const RS_COLS = [['name', '이름'], ['grp', '그룹'], ['title', '직책'], ['rank', '직급'], ['level', '레벨'], ['status', '상태'], ['job', '세부직무'], ['empno', '사번']];
@@ -5352,6 +5381,7 @@ async function addCharts(buf, jobs) {
   async function drawRoster() {
     const box = $('#rsbox'); if (!box) return;
     let r; try { r = await api('roster'); } catch (e) { box.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    if (!document.body.contains(box)) return;
     S._roster = r;
     const reg = r.rows.filter(x => x.acct).length, diff = r.rows.filter(x => x.acct && x.acct.group !== x.grp).length;
     box.innerHTML = (r.rows.length ? `<div class="kv2" style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px">
@@ -5386,7 +5416,7 @@ async function addCharts(buf, jobs) {
         ${p.bad.length ? `<div class="warn">이름 형식이 맞지 않아 뺀 행 : ${esc(p.bad.join(', '))}</div>` : ''}
         <div>새로 추가 <b>${add.length}</b>명</div>${li(add, x => esc(x.name) + ' <small>' + esc(x.grp) + '</small>')}
         <div>정보 바뀜 <b>${chg.length}</b>명</div>${li(chg, x => { const o = old[normName(x.name)]; return esc(x.name) + (o.grp !== x.grp ? ' <small>' + esc(o.grp) + '→' + esc(x.grp) + '</small>' : ''); })}
-        <div>명단에서 빠짐 <b>${gone.length}</b>명 <span class="muted">(더 이상 새로 등록할 수 없음 · 이미 있는 계정·기록은 그대로)</span></div>${li(gone, x => esc(x.name) + (x.acct ? ' <small>계정 있음</small>' : ''))}
+        <div>명단에서 빠짐 = 퇴사 처리 <b>${gone.length}</b>명 <span class="muted">(새 등록 막힘 · 토요 명단 · 인사평가 대상에서 빠짐 · 계정 · 기록은 그대로)</span></div>${li(gone, x => esc(x.name) + (x.acct ? ' <small>계정 있음</small>' : ''))}
         ${badG.length ? `<div class="warn">그룹을 알 수 없는 인원 ${badG.length}명 (${esc(badG.slice(0, 10).map(x => x.name + ':' + (x.grp || '빈칸')).join(', '))}) — 이 사람들은 [처음 등록]이 안 됩니다.</div>` : ''}
         ${acctDiff.length ? `<div class="note">이미 등록된 계정 중 그룹이 명단과 다른 사람 ${acctDiff.length}명 : ${esc(acctDiff.map(x => x.name + '(계정 ' + old[normName(x.name)].acct.group + ' → 명단 ' + x.grp + ')').join(', '))}<br>계정 그룹은 자동으로 바꾸지 않습니다. 필요하면 [인원 관리]에서 고치세요.</div>` : ''}
         ${goneAcct.length ? `<div class="note">명단에서 빠지는 사람 중 계정이 있는 ${goneAcct.length}명은 로그인은 계속 됩니다. 퇴사자라면 [명단 보기 · 고치기]의 "명단 외 계정"에서 정리하세요.</div>` : ''}
@@ -5397,7 +5427,7 @@ async function addCharts(buf, jobs) {
       const sb = $('[data-s]', bg); if (!sb) return;
       sb.onclick = async () => {
         if (sb.disabled) return; sb.disabled = true;
-        try { await api('rosterSave', { mode: 'replace', confirm: $('#cf', bg).value.trim(), rows: p.rows }); close(); toast('명단 ' + p.rows.length + '명을 적용했습니다'); drawRoster(); }
+        try { await api('rosterSave', { mode: 'replace', confirm: $('#cf', bg).value.trim(), rows: p.rows }); close(); toast('명단 ' + p.rows.length + '명을 적용했습니다'); if (S.view === 'people') renderPeople(); else drawRoster(); }
         catch (e) { toast(e.message, true); sb.disabled = false; }
       };
     }, 'wide');
@@ -5471,6 +5501,7 @@ async function addCharts(buf, jobs) {
   async function drawBackup() {
     const box = $('#bkbox'); if (!box) return;
     let r; try { r = await api('bkList'); } catch (e) { box.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    if (!document.body.contains(box)) return;                              // 기다리는 동안 다른 화면으로 옮김
     const st = x => [x.period ? '업무 ' + x.period : '', x.hr === null || x.hr === undefined ? '' : (x.hr ? '인사평가 마감' : '인사평가 진행'), x.lvClosed ? '연차 마감' : ''].filter(Boolean).join(' · ') || '-';
     box.innerHTML = `<div style="max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px"><table class="list bktbl"><thead><tr><th>달</th><th>상태</th><th class="num">일일</th><th class="num">연차</th><th class="num">평가</th><th>마지막 백업</th><th></th></tr></thead><tbody>
       ${r.months.slice().reverse().map(x => `<tr><td><b>${ymLabel(x.ym)}</b>${x.oldest ? ' <span class="muted">(가장 오래됨)</span>' : ''}</td><td class="muted">${esc(st(x))}</td>
@@ -5558,6 +5589,275 @@ async function addCharts(buf, jobs) {
     });
   }
 
+  // ================================================================ 인원 관리 (관리자) : 한 사람 = 한 줄
+  const ORG_DEF = {
+    title: '조 립 팀   조 직 도', top: [{ rank: '이사', name: '이광영' }], resign: 0,
+    blocks: [{ name: '1그룹 (특수 & 프리미엄)', cols: [['1그룹']], min: 20 }, { name: '2그룹 (일반)', cols: [['2그룹']], min: 20 }, { name: '3그룹 (일반 & 대량)', cols: [['3그룹']], min: 20 },
+      { name: '4그룹 (일반 & 추천)', cols: [['4그룹']], min: 20 }, { name: '5그룹 (라인 / 제조)', cols: [['라인'], ['제조']], min: 20 },
+      { name: '안정화 & O/S', cols: [['안정화']], min: 0 }, { name: '출력 & 재고 & 지원', cols: [['출력', '지원', '영상']], min: 0 }],
+  };
+  const orgCfg = () => { const o = Object.assign({}, ORG_DEF, (S._ppl && S._ppl.org) || {}); if (!Array.isArray(o.blocks) || !o.blocks.length) o.blocks = ORG_DEF.blocks; if (!Array.isArray(o.top)) o.top = ORG_DEF.top; return o; };
+  const LV = ['A', 'B', 'C', 'D'];
+  const pRank = r => r.title === '팀장' ? -1 : r.title === '매니저' ? 0 : ['육아', '병가'].includes(r.status) ? 9 : r.title === '파트장' ? 1 : LV.includes(r.level) ? 2 + LV.indexOf(r.level) : 6;
+  const pSort = (a, b) => pRank(a) - pRank(b) || ((a.seq == null ? 1e9 : a.seq) - (b.seq == null ? 1e9 : b.seq)) || (a.ord - b.ord);
+  const orgC3 = r => r.title === '매니저' ? '매니저' : ['계약', '육아', '병가'].includes(r.status) ? r.status : (r.level || r.job || '');
+  const orgC4 = r => r.title === '매니저' ? '매' : r.title === '파트장' ? '파트' : (r.job || '');
+  const orgKind = r => r.title === '팀장' ? 'tl' : r.title === '매니저' ? 'mg' : ['육아', '병가'].includes(r.status) ? 'off' : r.title === '파트장' ? 'pl' : '';
+  function orgData() {
+    const rows = (S._ppl.rows || []).slice().sort(pSort), cfg = orgCfg();
+    const blocks = cfg.blocks.map(b => {
+      const cols = b.cols.map(gs => rows.filter(r => gs.includes(r.grp)));
+      const mg = []; cols.forEach(c => c.filter(r => r.title === '매니저').forEach(r => mg.push(r.disp || r.name)));
+      return { name: b.name, cols, mgr: b.mgr || (mg.length ? '매니저 : ' + mg.join('/') : ''), n: Math.max(b.min || 0, ...cols.map(c => c.length)) };
+    });
+    const st = rows.filter(r => r.title !== '팀장' && r.title !== '매니저' && r.title !== '파트장' && !['육아', '병가'].includes(r.status));
+    const cnt = f => rows.filter(f).length, job = j => st.filter(r => (j === '안정화' ? r.job === '안정' : r.job === j)).length;
+    const total = rows.length, contract = cnt(r => r.status === '계약'), sick = cnt(r => r.status === '병가'), baby = cnt(r => r.status === '육아'), acc = cnt(r => r.status === '사고처리');
+    const sum = [['팀장', cnt(r => r.title === '팀장')], ['매니저', cnt(r => r.title === '매니저')], ['파트장', cnt(r => r.title === '파트장')], ['조립', job('조립')], ['지원', job('지원')], ['영상', job('영상')],
+      ['출력', job('출력')], ['안정화', job('안정화')], ['사고처리', acc], ['인원', total], ['정규직', total - contract], ['계약직', contract], ['총인원', total], ['퇴사예정', +cfg.resign || 0],
+      ['병가', sick], ['육아', baby], ['실근무인원', total - sick - baby - acc]];
+    return { cfg, blocks, sum, heads: rows.filter(r => r.title === '팀장') };
+  }
+  let _libs = {};
+  const loadLib = (name, url) => window[name] ? Promise.resolve(window[name]) : (_libs[name] = _libs[name] || new Promise((ok, no) => {
+    const sc = document.createElement('script'); sc.src = url; sc.onload = () => ok(window[name]); sc.onerror = () => { _libs[name] = null; no(new Error('엑셀 도구를 불러오지 못했습니다 (인터넷 확인)')); }; document.head.appendChild(sc);
+  }));
+  async function renderPeople(tab) {
+    const main = $('#main'); if (tab) S.pTab = tab; S.pTab = S.pTab || 'list';
+    main.innerHTML = pageHead('인원 관리', '<span class="muted">한 사람의 기본 · 계정 · 연차 · 인사평가를 한 곳에서</span>') + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
+    const tk = S.token;
+    try { S._ppl = await api('people'); } catch (e) { main.innerHTML = pageHead('인원 관리') + '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    if (tk !== S.token || S.view !== 'people') return;
+    drawPeople();
+  }
+  function drawPeople() {
+    const P = S._ppl, rows = P.rows, reg = rows.filter(x => x.acct).length;
+    $('#main').innerHTML = pageHead('인원 관리', `<span class="muted">명단 ${rows.length}명 · 등록 ${reg} · 아직 등록 안 함 ${rows.length - reg}${P.extra.length ? ' · <b class="t-lo">명단 외 계정 ' + P.extra.length + '</b>' : ''}</span>`,
+      `<div class="seg"><button data-pt="list" class="${S.pTab === 'list' ? 'on' : ''}">명단</button><button data-pt="org" class="${S.pTab === 'org' ? 'on' : ''}">조직도</button></div>`) + '<div class="pgb" id="pbody"></div>';
+    $$('[data-pt]').forEach(b => (b.onclick = () => { S.pTab = b.dataset.pt; drawPeople(); }));
+    if (S.pTab === 'org') drawOrg(); else drawPList();
+  }
+  function drawPList() {
+    const P = S._ppl, q = normName(S.pQ || ''), g = S.pG || '', f = S.pF || '';
+    const rows = P.rows.filter(x => (!q || x.name.includes(q)) && (!g || x.grp === g) && (!f || (f === 'y') === !!x.acct || (f === 'hr' && x.hr_use) || (f === 'sat' && x.in_roster))).slice()
+      .sort((a, b) => (P.groups.indexOf(a.grp) - P.groups.indexOf(b.grp)) || pSort(a, b));
+    const acc = x => !x.acct ? '<span class="muted">미등록</span>' : (x.acct.role !== '일반' ? '<span class="rtag">' + esc(x.acct.role) + '</span> ' : '') + (x.acct.nopin ? '<span class="rtag" style="background:#fdecea;color:#c62828">비밀번호 없음</span>' : x.acct.tmp ? '<span class="rtag">임시 비밀번호</span>' : '등록됨');
+    $('#pbody').innerHTML = `<div class="toolbar">
+        <input id="pq" placeholder="이름 검색" value="${esc(S.pQ || '')}" style="width:150px">
+        <select id="pg"><option value="">전체 그룹</option>${P.groups.map(x => `<option ${x === g ? 'selected' : ''}>${x}</option>`).join('')}</select>
+        <select id="pf"><option value="">전체</option><option value="y" ${f === 'y' ? 'selected' : ''}>등록함</option><option value="n" ${f === 'n' ? 'selected' : ''}>아직 등록 안 함</option><option value="hr" ${f === 'hr' ? 'selected' : ''}>인사평가 대상</option><option value="sat" ${f === 'sat' ? 'selected' : ''}>토요 명단</option></select>
+        <span class="muted">${rows.length}명</span><span style="flex:1"></span>
+        <label class="btn-file" title="처음 한 번 조직도 엑셀(조립팀 시트)로 명단을 채울 때만"><input type="file" id="rsfile" accept=".xlsm,.xlsx,.xls" hidden><span>조직도 엑셀로 한 번에 넣기…</span></label>
+        <button class="primary" id="padd">+ 인원 추가</button></div>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 230px)"><table class="list plist" style="min-width:1100px"><thead><tr>
+        <th>이름</th><th>그룹</th><th>직책</th><th>직급</th><th>레벨</th><th>상태</th><th>세부직무</th><th>사번</th><th>연차 등급</th><th>토요</th><th>평가 등급</th><th>계정</th></tr></thead><tbody>
+      ${rows.map(x => `<tr data-n="${esc(x.name)}" style="cursor:pointer"><td><b>${esc(x.disp || x.name)}</b></td><td>${esc(x.grp)}</td><td>${esc(x.title)}</td><td>${esc(x.rank)}</td><td>${esc(x.level)}</td>
+        <td>${esc(x.status)}</td><td>${esc(x.job)}</td><td>${esc(x.empno)}</td><td>${esc(x.lv_grade)}</td><td>${x.in_roster ? '✓' : '<span class="muted">-</span>'}</td>
+        <td>${x.hr_use ? esc(x.hr_grade || '-') : '<span class="muted">대상 아님</span>'}</td><td>${acc(x)}</td></tr>`).join('') || '<tr><td colspan="12" class="muted" style="padding:20px">없음</td></tr>'}
+      </tbody></table></div>
+      ${P.extra.length ? `<div class="card" style="margin-top:14px"><h4 style="margin:0 0 6px">명단 외 계정 <span class="muted">${P.extra.length}개 · 명단에 없는 이름으로 만들어진 계정 (테스트 · 중복 · 퇴사)</span></h4>
+        <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>권한</th><th class="num">입력일수</th><th>마지막 입력</th><th></th></tr></thead><tbody>
+        ${P.extra.map(u => `<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.group)}</td><td>${esc(u.role)}</td><td class="num">${u.days}</td><td>${esc(u.last || '-')}</td>
+          <td style="white-space:nowrap"><button data-rn="${esc(u.id)}">이름 바꾸기</button>${u.role === '일반' ? ` <button class="danger" data-ud="${esc(u.id)}">계정 삭제</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+    const redraw = () => { const p = $('#pq').selectionStart; drawPList(); const i = $('#pq'); i.focus(); try { i.setSelectionRange(p, p); } catch (e) { } };
+    $('#pq').oninput = e => { S.pQ = e.target.value; redraw(); };
+    $('#pg').onchange = e => { S.pG = e.target.value; drawPList(); };
+    $('#pf').onchange = e => { S.pF = e.target.value; drawPList(); };
+    $('#padd').onclick = () => personEdit(null);
+    $$('.plist tbody tr[data-n]').forEach(tr => (tr.onclick = () => personEdit(P.rows.find(x => x.name === tr.dataset.n))));
+    $('#rsfile').onchange = async e => {
+      const fl = e.target.files[0]; e.target.value = ''; if (!fl) return;
+      let p; try { p = await readRosterFile(fl); } catch (err) { return toast('읽기 실패 : ' + err.message, true); }
+      if (!p.rows.length) return toast('명단에 이름이 없습니다', true);
+      rosterPreview(p, { rows: P.rows.map(x => Object.assign({}, x)), groups: P.groups });
+    };
+    $$('[data-rn]').forEach(b => (b.onclick = () => {
+      const u = P.extra.find(y => y.id === b.dataset.rn);
+      modal(`<h3>${esc(u.name)} 이름 바꾸기</h3><div class="fld"><label>새 이름</label><input id="nn" value="${esc(u.name)}" autocomplete="off"></div>
+        <div class="note">같은 이름의 계정이 이미 있으면 바꿀 수 없습니다. 중복 계정이면 기록을 확인한 뒤 삭제하세요.</div>
+        <div class="acts"><button data-c>취소</button><button class="primary" data-s>바꾸기</button></div>`, (bg2, close2) => {
+        $('[data-c]', bg2).onclick = close2;
+        $('[data-s]', bg2).onclick = async () => { try { const x = await api('renameUser', { userId: u.id, name: $('#nn', bg2).value }); close2(); toast(u.name + ' → ' + x.name); S._mcache = {}; renderPeople(); } catch (er) { toast(er.message, true); } };
+      });
+    }));
+    $$('[data-ud]').forEach(b => (b.onclick = async () => {
+      const u = P.extra.find(y => y.id === b.dataset.ud);
+      if (!(await confirmBox('<b>' + esc(u.name) + '</b> (' + esc(u.group) + ') 계정을 삭제할까요?<br><span class="muted">이 계정이 입력한 모든 달의 데이터와 목표도 함께 지워지며 되돌릴 수 없습니다.</span>' + (u.days ? '<br><b style="color:var(--red)">입력한 데이터 ' + u.days + '일이 있습니다.</b>' : ''), '삭제'))) return;
+      try { const x = await api('deleteUser', { userId: u.id }); toast(u.name + ' 삭제 (데이터 ' + x.rows + '일)'); S._mcache = {}; renderPeople(); } catch (er) { toast(er.message, true); }
+    }));
+  }
+  // 한 사람 편집 : 기본 · 계정 · 연차 · 인사평가
+  function personEdit(x) {
+    const P = S._ppl, v = x || { grp: S.pG || '', title: '사원', rank: '사원', in_roster: true, hr_use: true }, a = v.acct;
+    const opt = (list, val, blank) => (blank ? '<option value=""></option>' : '') + list.concat(val && !list.includes(val) ? [val] : []).map(o => `<option ${o === (val || '') ? 'selected' : ''}>${esc(o)}</option>`).join('');
+    const inp = (id, label, val, w) => `<div class="fld" ${w ? `style="flex:${w}"` : ''}><label>${label}</label><input id="${id}" value="${esc(val == null ? '' : val)}" autocomplete="off"></div>`;
+    let tab = 'base';
+    modal(`<div class="dhd"><div><h3>${x ? esc(x.disp || x.name) : '인원 추가'}</h3><span class="muted">${x ? esc(x.grp) + ' · ' + esc(x.title) : '조직도에 새 사람을 넣습니다 (등록은 본인이 [처음 등록]에서)'}</span></div><button data-n>닫기</button></div>
+      <div class="seg" style="margin:4px 0 10px"><button data-tb="base" class="on">기본 (조직도)</button><button data-tb="acct">계정</button><button data-tb="lv">연차 · 토요</button><button data-tb="hr">인사평가</button></div>
+      <div data-pane="base">
+        <div class="row" style="gap:8px">${inp('p_name', '이름 (관리툴 이름 그대로)', v.disp || v.name, 2)}${inp('p_empno', '사번', v.empno, 2)}</div>
+        <div class="row" style="gap:8px"><div class="fld" style="flex:1"><label>그룹</label><select id="p_grp">${opt(P.groups, v.grp, true)}</select></div>
+          <div class="fld" style="flex:1"><label>직책</label><select id="p_title">${opt(['팀장', '매니저', '파트장', '사원'], v.title, true)}</select></div>
+          <div class="fld" style="flex:1"><label>직급</label><select id="p_rank">${opt(['팀장', '매니저', '사원', '계약직'], v.rank, true)}</select></div></div>
+        <div class="row" style="gap:8px"><div class="fld" style="flex:1"><label>레벨 (조직도)</label><select id="p_level">${opt(LV, v.level, true)}</select></div>
+          <div class="fld" style="flex:1"><label>상태</label><select id="p_status">${opt(['육아', '계약', '병가', '사고처리'], v.status, true)}</select></div>
+          <div class="fld" style="flex:1"><label>세부직무</label><select id="p_job">${opt(['조립', '지원', '안정', '출력', '영상'], v.job, true)}</select></div>
+          ${inp('p_seq', '순번 (조직도 안 순서)', v.seq, 1)}</div>
+        <div class="note">그룹을 바꾸면 업무 현황 · 연차 · 인사평가(파트)에 바로 반영됩니다. 이름을 바꾸면 계정 이름과 연차 · 인사평가 기록의 이름도 함께 바뀝니다.</div>
+      </div>
+      <div data-pane="acct" class="hide">${!x ? '<div class="note">저장한 뒤 본인이 로그인 화면 [처음 등록]에서 이름 + 비밀번호 4자리로 등록합니다.</div>'
+        : !a ? '<div class="note">아직 등록하지 않았습니다. 본인이 로그인 화면 [처음 등록]에서 이름 + 비밀번호 4자리로 등록하면 됩니다.</div>'
+        : `<div class="fld"><label>권한${a.self ? ' (본인 권한은 바꿀 수 없음)' : ''}</label><select id="a_role" ${a.self ? 'disabled' : ''}>${opt(['일반', '매니저', '관리자'], a.role)}</select></div>
+          <div class="fld" id="a_mgw"><label>담당 그룹 (업무 현황 · 연차 1차 확인)</label><div class="chks">${C.GROUP_LIST.map(gg => `<label><input type="checkbox" value="${gg}" ${(a.mg || []).includes(gg) ? 'checked' : ''}>${gg}</label>`).join('')}</div></div>
+          <label class="dck"><input type="checkbox" id="a_la" ${a.la || a.role === '관리자' ? 'checked' : ''} ${a.role === '관리자' ? 'disabled' : ''}><span><b>연차·토요근무 확정 권한</b><small>관리자처럼 연차 확정 · 토요 배정 · 마감 가능</small></span></label>
+          <div class="row" style="gap:8px;margin-top:6px">${a.role !== '관리자' ? `<button data-pin>${a.nopin ? '임시 비밀번호 정하기' : '비밀번호 초기화 (임시 번호)'}</button>` : ''}${a.role === '일반' ? '<button class="danger" data-adel>계정 삭제</button>' : ''}
+          <span class="muted">${a.nopin ? '비밀번호 없음 — 로그인할 수 없습니다' : a.tmp ? '임시 비밀번호 상태 (본인이 아직 안 바꿈)' : ''}</span></div>`}</div>
+      <div data-pane="lv" class="hide">
+        <div class="row" style="gap:8px"><div class="fld" style="flex:1"><label>연차 등급 (토요근무 배정 기준)</label><select id="p_lvg">${opt(P.lvGrades, v.lv_grade, true)}</select></div>
+          <div class="fld" style="flex:1"><label>토요제외</label><select id="p_off">${opt(['직무제외', '계약', '육아휴직', '병가', '근무제외'], v.sat_off, true)}</select></div></div>
+        <label class="dck"><input type="checkbox" id="p_sat" ${v.in_roster !== false ? 'checked' : ''}><span><b>토요 명단에 포함</b><small>끄면 토요근무 배정 · 연차 인원표에서 빠짐</small></span></label>
+        <div class="row" style="gap:8px">${inp('p_grant', '연차 부여일수', v.grant_days, 1)}${inp('p_memo', '메모 (관리자만)', v.memo, 3)}</div></div>
+      <div data-pane="hr" class="hide">${P.hrOn ? '' : '<div class="note">인사평가 자료를 아직 가져오지 않았습니다. 여기 값은 저장해 두었다가 가져온 뒤 반영됩니다.</div>'}
+        <label class="dck"><input type="checkbox" id="p_hru" ${v.hr_use !== false ? 'checked' : ''}><span><b>인사평가 대상</b><small>끄면 평가 목록에서 빠지고 지난 기록은 남음</small></span></label>
+        <div class="row" style="gap:8px"><div class="fld" style="flex:1"><label>인사평가 등급 (목표수량)</label><select id="p_hrg">${opt(P.hrGrades, v.hr_grade, true)}</select></div>
+          ${inp('p_alias', '원본이름 (업무데이터 이름이 다를 때)', v.hr_alias, 2)}</div>
+        ${inp('p_hnote', '비고', v.hr_note)}
+        <div class="note">파트는 그룹(${esc(v.grp || '-')})을 따릅니다. 담당 매니저는 [인사평가 → 기준 · 명단 → 파트]에서 정합니다.</div></div>
+      <div class="grow"></div>
+      <div class="acts">${x ? '<button class="danger" data-del style="margin-right:auto">퇴사 처리</button>' : ''}<button data-n>취소</button><button class="primary" data-y>저장</button></div>`, (bg, close) => {
+      const sw = t => { tab = t; $$('[data-tb]', bg).forEach(b => b.classList.toggle('on', b.dataset.tb === t)); $$('[data-pane]', bg).forEach(p => p.classList.toggle('hide', p.dataset.pane !== t)); };
+      $$('[data-tb]', bg).forEach(b => (b.onclick = () => sw(b.dataset.tb)));
+      $$('[data-n]', bg).forEach(b => (b.onclick = close));
+      const role = $('#a_role', bg), la = $('#a_la', bg), mgw = $('#a_mgw', bg);
+      const syncA = () => { if (!role) return; mgw.classList.toggle('hide', role.value !== '매니저'); la.disabled = role.value === '관리자'; if (la.disabled) la.checked = true; }; syncA(); if (role) role.onchange = syncA;
+      // 직책 · 상태 · 세부직무를 고르면 연차 등급을 같이 제안
+      const sug = () => { const r = { title: $('#p_title', bg).value, status: $('#p_status', bg).value, job: $('#p_job', bg).value, level: $('#p_level', bg).value };
+        const gtxt = r.title === '매니저' ? '매니저' : r.title === '파트장' ? '파트장' : r.status === '육아' ? '육아휴직' : r.status === '병가' ? '병가휴가' : r.status === '계약' ? '계약' : ({ 출력: '출력', 안정: '안정화', 지원: '정리', 영상: '영상' })[r.job] || r.level;
+        if (!x) { $('#p_lvg', bg).value = gtxt; if (!$('#p_hrg', bg).value || !x) $('#p_hrg', bg).value = ['조립'].includes(r.job) || !r.job ? r.level : ''; $('#p_hru', bg).checked = ['사원', '파트장'].includes(r.title) && r.status !== '계약'; } };
+      ['#p_title', '#p_status', '#p_job', '#p_level'].forEach(s => ($(s, bg).onchange = sug)); if (!x) sug();
+      if ($('[data-pin]', bg)) $('[data-pin]', bg).onclick = () => tempPin({ id: a.id, name: v.name }, () => renderPeople());
+      if ($('[data-adel]', bg)) $('[data-adel]', bg).onclick = async () => {
+        if (!(await confirmBox('<b>' + esc(v.name) + '</b> 계정을 삭제할까요?<br><span class="muted">이 계정이 입력한 모든 일일 데이터와 목표가 함께 지워지며 되돌릴 수 없습니다. 명단은 그대로입니다 (다시 [처음 등록] 가능).</span>', '삭제'))) return;
+        try { const r = await api('deleteUser', { userId: a.id }); close(); toast(v.name + ' 계정 삭제 (데이터 ' + r.rows + '일)'); S._mcache = {}; renderPeople(); } catch (e) { toast(e.message, true); }
+      };
+      if ($('[data-del]', bg)) $('[data-del]', bg).onclick = async () => {
+        if (!(await confirmBox(`<b>${esc(v.disp || v.name)}</b>을(를) 퇴사 처리할까요?<br><span class="muted">명단 · 조직도 · 토요 명단 · 인사평가 대상에서 빠집니다. 지난 기록과 계정은 남습니다 (계정은 [계정] 탭에서 따로 삭제).</span>`, '퇴사 처리'))) return;
+        try { S._ppl = await api('personDel', { name: v.name }); close(); toast(v.name + ' 퇴사 처리'); drawPeople(); } catch (e) { toast(e.message, true); }
+      };
+      let busy = false;
+      $('[data-y]', bg).onclick = async () => {
+        if (busy) return; busy = true;
+        const val = id => ($('#' + id, bg) || {}).value;
+        const p = { name: val('p_name').trim(), empno: val('p_empno').trim(), grp: val('p_grp'), title: val('p_title'), rank: val('p_rank'), level: val('p_level'), status: val('p_status'), job: val('p_job'),
+          seq: val('p_seq').trim(), lvGrade: val('p_lvg'), satOff: val('p_off'), inRoster: $('#p_sat', bg).checked, grant: val('p_grant').trim(), memo: val('p_memo').trim(),
+          hrUse: $('#p_hru', bg).checked, hrGrade: val('p_hrg'), hrAlias: val('p_alias').trim(), hrNote: val('p_hnote').trim() };
+        try {
+          const r = await api('personSave', { old: x ? x.name : '', p });
+          if (a && role) {                                                    // 계정 권한 · 담당 그룹
+            const mg = $$('#a_mgw .chks input:checked', bg).map(c => c.value), nla = role.value === '관리자' ? !!a.la : la.checked;
+            if (role.value !== a.role || nla !== !!a.la || (role.value === '매니저' && mg.join() !== (a.mg || []).join()))
+              await api('updateUser', { userId: a.id, name: r.saved, group: p.grp || a.group, role: role.value, mg: role.value === '매니저' ? mg : [], leaveAdmin: nla });
+          }
+          S._ppl = (a && role) ? await api('people') : r;
+          if (a && a.self) { const m = await api('me'); S.me = m.me; shell(S.layout); setNav(); }
+          close(); toast((p.name || '') + ' 저장했습니다'); S._mcache = {}; drawPeople();
+        } catch (e) { toast(e.message, true); busy = false; }
+      };
+    }, 'drawer');
+  }
+  function tempPin(u, after) {
+    modal(`<h3>${esc(u.name)} 임시 비밀번호</h3>
+      <div class="fld"><label>임시 비밀번호 (숫자 4자리)</label><input id="tp" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+      <div class="note">본인에게 이 번호를 알려 주세요. 로그인하면 새 번호로 바꾸라는 안내가 나옵니다.</div>
+      <div class="acts"><button data-c>취소</button><button class="primary" data-s>정하기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close; $('#tp', bg).focus();
+      $('[data-s]', bg).onclick = async () => {
+        const v = $('#tp', bg).value.trim(); if (!/^\d{4}$/.test(v)) return toast('숫자 4자리를 넣으세요', true);
+        try { await api('resetPin', { userId: u.id, pin: v }); close(); toast(u.name + ' 임시 비밀번호를 정했습니다'); after && after(); } catch (e) { toast(e.message, true); }
+      };
+    });
+  }
+  // ---- 조직도 (웹) : 엑셀 조직도 시트와 같은 배치
+  function drawOrg() {
+    const D = orgData(), cfg = D.cfg;
+    const cell = r => r ? `<tr class="ok-${orgKind(r)}" data-n="${esc(r.name)}"><td class="no"></td><td class="nm">${esc(r.disp || r.name)}</td><td>${esc(orgC3(r))}</td><td>${esc(orgC4(r))}</td></tr>` : '';
+    const col = (list, n) => { let h = ''; for (let i = 0; i < n; i++) { const r = list[i]; h += r ? cell(r).replace('<td class="no"></td>', `<td class="no">${i + 1}</td>`) : `<tr class="empty"><td class="no">${i + 1}</td><td></td><td></td><td></td></tr>`; } return h; };
+    $('#pbody').innerHTML = `<div class="toolbar"><span class="muted">이름을 누르면 그 사람을 고칠 수 있습니다 · 배치 : 매니저 → 파트장 → 사원(레벨 A→D) → 육아·병가 (같은 등급 안에서는 순번)</span><span style="flex:1"></span>
+        <button id="orgcfg">조직도 제목 · 블록 설정</button><button class="primary" id="orgxl">⬇ 조직도 엑셀</button></div>
+      <div class="card orgwrap"><div class="orgtitle">${esc(cfg.title)}</div>
+        <div class="orgtop">${cfg.top.map(t => `<div class="orgbox"><span>${esc(t.rank)}</span><b>${esc(t.name)}</b></div>`).join('')}${D.heads.map(r => `<div class="orgbox tl" data-n="${esc(r.name)}"><span>팀장</span><b>${esc(r.disp || r.name)}</b></div>`).join('')}</div>
+        <div class="orgrow">${D.blocks.map(b => `<div class="orgblk"><div class="orgmg">${esc(b.mgr)}</div><div class="orgnm">${esc(b.name)}</div>
+            <div class="orgcols">${b.cols.map(c => `<table class="orgt">${col(c, b.n)}</table>`).join('')}</div></div>`).join('')}
+          <div class="orgblk orgsum"><div class="orgmg">&nbsp;</div><div class="orgnm">조립팀 인원현황</div><table class="orgt">${D.sum.map(([k, n]) => `<tr><td class="nm">${k}</td><td class="num">${n}</td></tr>`).join('')}</table>
+            <div class="orglg"><span class="ok-mg">매니저</span><span class="ok-pl">파트장</span><span class="ok-off">육아 · 병가</span></div></div></div></div>`;
+    $$('#pbody [data-n]').forEach(t => (t.onclick = () => personEdit(S._ppl.rows.find(x => x.name === t.dataset.n))));
+    $('#orgxl').onclick = orgExcel;
+    $('#orgcfg').onclick = orgCfgEdit;
+  }
+  function orgCfgEdit() {
+    const c = orgCfg();
+    modal(`<h3>조직도 제목 · 블록 설정</h3>
+      <div class="fld"><label>제목</label><input id="oc_t" value="${esc(c.title)}"></div>
+      <div class="fld"><label>맨 위 칸 (팀장 위) — 한 줄에 "직급 이름"</label><textarea id="oc_top" rows="2">${esc(c.top.map(t => t.rank + ' ' + t.name).join('\n'))}</textarea></div>
+      <div class="fld"><label>퇴사예정 인원 (인원현황 표시용)</label><input id="oc_r" inputmode="numeric" value="${esc(c.resign || 0)}"></div>
+      <div class="fld"><label>블록 — 한 줄에 "블록 이름 | 그룹들 (쉼표, 칸 나눔은 /)" · 예) 5그룹 (라인 / 제조) | 라인/제조</label>
+        <textarea id="oc_b" rows="8">${esc(c.blocks.map(b => b.name + ' | ' + b.cols.map(x => x.join(',')).join('/')).join('\n'))}</textarea></div>
+      <div class="acts"><button data-r style="margin-right:auto">기본값으로</button><button data-c>취소</button><button class="primary" data-s>저장</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      const save = async org => { try { S._ppl.org = (await api('orgCfgSave', { org })).org; close(); toast('조직도 설정을 저장했습니다'); drawPeople(); } catch (e) { toast(e.message, true); } };
+      $('[data-r]', bg).onclick = () => save({});
+      $('[data-s]', bg).onclick = () => {
+        const top = $('#oc_top', bg).value.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const i = l.indexOf(' '); return i > 0 ? { rank: l.slice(0, i), name: l.slice(i + 1).trim() } : { rank: '', name: l }; });
+        const blocks = $('#oc_b', bg).value.split('\n').map(l => l.trim()).filter(Boolean).map((l, i) => { const [n, g] = l.split('|'); const cols = String(g || '').split('/').map(x => x.split(',').map(y => y.trim()).filter(Boolean)).filter(x => x.length); return { name: (n || '').trim(), cols, min: i < 5 ? 20 : 0 }; }).filter(b => b.name && b.cols.length);
+        if (!blocks.length) return toast('블록을 한 줄 이상 적으세요', true);
+        save({ title: $('#oc_t', bg).value.trim() || ORG_DEF.title, top, resign: +$('#oc_r', bg).value || 0, blocks });
+      };
+    }, 'md');
+  }
+  // ---- 조직도 엑셀 (웹 조직도와 같은 모양)
+  async function orgExcel() {
+    const btn = $('#orgxl'); btn.disabled = true;
+    try {
+      const EJ = await loadLib('ExcelJS', 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js');
+      const D = orgData(), wb = new EJ.Workbook(), name = S.today.slice(2, 4) + '년' + S.today.slice(5, 7) + '월';
+      const ws = wb.addWorksheet(name, { pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1, paperSize: 9, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } }, views: [{ showGridLines: false }] });
+      const F = 'Malgun Gothic', thin = { style: 'thin', color: { argb: 'FF9AA4B2' } }, box = { top: thin, left: thin, bottom: thin, right: thin };
+      const fill = c => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: c } });
+      const KIND = { mg: { f: 'FF2F6FD6', c: 'FFFFFFFF', b: true }, pl: { f: 'FFDCE9FB', c: 'FF1F2D3D', b: true }, off: { f: 'FFFDECEA', c: 'FFC62828' }, tl: { f: 'FF1B2A4A', c: 'FFFFFFFF', b: true } };
+      // 열 배치 : 블록마다 [번호 · 이름 · 등급 · 직무] + 빈 칸
+      let c0 = 2; const starts = [];
+      D.blocks.forEach(b => { const s = []; b.cols.forEach(() => { s.push(c0); c0 += 4; }); starts.push(s); c0 += 1; });
+      const sumC = c0, lastC = sumC + 1;
+      for (let c = 1; c <= lastC; c++) ws.getColumn(c).width = 2.2;
+      starts.forEach(s => s.forEach(c => { ws.getColumn(c).width = 3.6; ws.getColumn(c + 1).width = 8.6; ws.getColumn(c + 2).width = 5.2; ws.getColumn(c + 3).width = 5.2; }));
+      ws.getColumn(sumC).width = 10; ws.getColumn(sumC + 1).width = 6;
+      const put = (r, c, v, st) => { const x = ws.getCell(r, c); x.value = v; x.font = Object.assign({ name: F, size: 9 }, st && st.font); x.alignment = { vertical: 'middle', horizontal: (st && st.h) || 'center' }; if (st && st.fill) x.fill = fill(st.fill); if (st && st.border !== false) x.border = box; return x; };
+      // 제목 · 맨 위
+      const mid = Math.max(2, Math.round(lastC / 2) - 6);
+      ws.mergeCells(1, mid, 2, mid + 12); put(1, mid, D.cfg.title, { font: { size: 18, bold: true }, border: false });
+      let rr = 3; D.cfg.top.concat(D.heads.map(h => ({ rank: '팀장', name: h.disp || h.name, tl: 1 }))).forEach(t => {
+        put(rr, mid + 4, t.rank, { font: { bold: true }, fill: t.tl ? 'FF1B2A4A' : 'FFE8EDF5', font2: 0 }); if (t.tl) ws.getCell(rr, mid + 4).font = { name: F, size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
+        ws.mergeCells(rr, mid + 5, rr, mid + 8); put(rr, mid + 5, t.name, { font: { bold: true, size: 10 } }); rr += 2;
+      });
+      const hr = Math.max(8, rr + 1), br = hr + 2, r0 = br + 1;
+      D.blocks.forEach((b, i) => {
+        const s = starts[i], first = s[0], last = s[s.length - 1] + 3;
+        ws.mergeCells(hr, first, hr, last); put(hr, first, b.mgr, { font: { bold: true }, fill: 'FFE8EDF5' });
+        ws.mergeCells(br, first, br, last); put(br, first, b.name, { font: { bold: true, size: 10 }, fill: 'FFD5DDEB' });
+        b.cols.forEach((list, k) => { for (let j = 0; j < b.n; j++) { const p = list[j], c = s[k], kd = p ? KIND[orgKind(p)] : null; const st = kd ? { fill: kd.f, font: { color: { argb: kd.c }, bold: !!kd.b, size: p.title === '매니저' ? 9 : 8 } } : { font: { size: 8 } };
+          put(r0 + j, c, j + 1, { font: { size: 8, color: { argb: 'FF6B7785' } } }); put(r0 + j, c + 1, p ? (p.disp || p.name) : '', st); put(r0 + j, c + 2, p ? orgC3(p) : '', st); put(r0 + j, c + 3, p ? orgC4(p) : '', st); } });
+      });
+      ws.mergeCells(br, sumC, br, sumC + 1); put(br, sumC, '조립팀 인원현황', { font: { bold: true, size: 10 }, fill: 'FFD5DDEB' });
+      D.sum.forEach(([k, n], j) => { const bold = ['인원', '총인원', '실근무인원'].includes(k); put(r0 + j, sumC, k, { font: { bold } }); put(r0 + j, sumC + 1, n, { font: { bold } }); });
+      const lg = r0 + D.sum.length + 1;
+      ws.mergeCells(lg, sumC, lg, sumC + 1); put(lg, sumC, '색상 안내', { font: { bold: true } });
+      [['매니저', 'mg'], ['파트장', 'pl'], ['육아 · 병가', 'off']].forEach(([t, k], j) => { ws.mergeCells(lg + 1 + j, sumC, lg + 1 + j, sumC + 1); const kd = KIND[k]; put(lg + 1 + j, sumC, t, { fill: kd.f, font: { color: { argb: kd.c }, bold: !!kd.b } }); });
+      for (let r = r0; r < r0 + Math.max(...D.blocks.map(b => b.n), D.sum.length); r++) ws.getRow(r).height = 15;
+      saveBlob(new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), '조립팀 조직도_' + name + '.xlsx');
+      toast('조직도 엑셀을 받았습니다');
+    } catch (e) { toast(e.message, true); } finally { btn.disabled = false; }
+  }
+
   // ------------------------------------------------ 시작
   // 매니저·관리자 : 관리 목록을 뒤에서 미리 받아 둠 → [관리] 누르면 바로 보임
   function prefetchManage() {
@@ -5580,7 +5880,7 @@ async function addCharts(buf, jobs) {
       let v0 = isManager() && !pend0 ? 'dash' : 'input';
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = ['input', 'month', 'leave'].concat(isManager() ? ['dash', 'manage'] : []).concat(me.hr ? ['hr'] : []).concat(me.role === '관리자' || me.period ? ['settings'] : []);
+        const okv = ['input', 'month', 'leave'].concat(isManager() ? ['dash', 'manage'] : []).concat(me.role === '관리자' ? ['people'] : []).concat(me.hr ? ['hr'] : []).concat(me.role === '관리자' || me.period ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -5594,7 +5894,7 @@ async function addCharts(buf, jobs) {
     go(v, { _pop: true });
   });
   if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager });
-  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel });
+  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go });
   boot();
 })();
 </script>
