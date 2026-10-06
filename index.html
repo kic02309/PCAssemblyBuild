@@ -1598,6 +1598,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
   const staffById = id => (L.ix.S || {})[id];
   const staffList = () => D().staff.slice().sort((a, b) => LC.ko(a.name, b.name));
+  const curList = () => staffList().filter(s => s.cur !== false);        // 지금 명단에 있는 사람만 (이름 고르기 · 인원 목록)
   const capOf = d => { const c = (kv().caps || {})[LC.dow(d)]; return c ? +c : 0; };
   const isMgr = name => L.ix.managers.has(name);
   const satColor = sat => { let i = LC.tableSaturdays(LC.ymOf(sat)).indexOf(sat); if (i < 0) i = LC.tableSaturdays(nextYm(LC.ymOf(sat), -1)).indexOf(sat); return 'wk' + (i < 0 ? 0 : i % 5); };
@@ -1899,7 +1900,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <label class="swopt"><input type="radio" name="swk" value="swap"><span>다른 사람과 맞바꾸기</span><input id="swo" list="swnl" placeholder="조율한 사람 이름" style="width:130px"><input type="date" id="swod" title="그 사람 토요일 (있으면)" style="width:140px"></label>
         <label class="swopt"><input type="radio" name="swk" value="alt"><span>대체휴무 날짜만 바꾸기</span><select id="swal">${alts.map(x => `<option value="${x}" ${x === u.a ? 'selected' : ''}>${mdw(x)}</option>`).join('')}</select></label>
       </div>
-      <datalist id="swnl">${staffList().map(s => `<option value="${A.esc(s.name)}">`).join('')}</datalist>
+      <datalist id="swnl">${curList().map(s => `<option value="${A.esc(s.name)}">`).join('')}</datalist>
       <div class="fld"><label>사유 (필수)</label><input id="swr" maxlength="200" placeholder="예) 가족 행사 · 이여울 님과 조율함"></div>
       <div class="muted" style="font-size:12.5px;line-height:1.6">상대방과 먼저 조율한 뒤 요청하세요 → <b>관리자에게 바로</b> 전달됩니다. 반영 전까지는 원래 토요일 근무가 유지됩니다.</div>
       <div class="acts"><button data-n>취소</button><button class="primary" data-y>요청</button></div>`, (bg, close) => {
@@ -1921,7 +1922,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // ------------------------------------------------------------ 연차 보기 · 등록 · 수정 (관리자)
   function leaveModal(o) {
     const d = D(), ed = o.edit, can = d.canEdit;
-    const S = staffList();
+    const S = o.edit ? staffList() : curList();
     if (ed && !can) {                                                   // 보기 전용 (인원·매니저)
       const s = staffById(ed.s) || {}, st = stOf(ed), mine = myStaff() && ed.s === myStaff().id;
       A.modal(`<h3>${A.esc(s.name || '')} <span class="muted" style="font-size:13px;font-weight:400">${A.esc(s.grp || '')}</span></h3>
@@ -2166,7 +2167,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     };
     body().innerHTML = `<div class="toolbar"><input id="lvq" placeholder="이름·사유 검색" value="${A.esc(q)}" style="width:200px"><span class="muted">일수 = 이 달 안의 평일 수 (공휴일 제외, 반차 0.5) · 토요 = 이 달 토요근무 횟수 · 엑셀은 원본 양식(3구역) 그대로</span></div>
       <div class="lvzs2">${PARTS.map(box).join('')}</div>`;
-    A.$('#lvq').oninput = e => { L.recQ = e.target.value; const pos = e.target.selectionStart; drawRec(); const i = A.$('#lvq'); i.focus(); i.setSelectionRange(pos, pos); };
+    { const q = A.$('#lvq'), upd = () => { L.recQ = q.value; const pos = q.selectionStart; drawRec(); const i = A.$('#lvq'); i.focus(); i.setSelectionRange(pos, pos); };
+      q.oninput = e => { if (!e.isComposing) upd(); }; q.addEventListener('compositionend', upd); }   // 한글 조합 중에는 다시 그리지 않음
     A.$$('.lvz2 tr[data-l]').forEach(tr => (tr.onclick = () => leaveModal({ edit: d.leaves.find(x => x.id === tr.dataset.l) })));
   }
 
@@ -2210,7 +2212,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <div class="lvsatsum">D 위 인원 <b>${sm.doneUp} / ${sm.nUp}</b>명 배정${sm.nUp - sm.doneUp > 0 ? ' <span class="muted">(미배정 ' + (sm.nUp - sm.doneUp) + '명 → 다음 달 우선)</span>' : ''} · D등급 ${sm.doneD}명 · 등급별 ${Object.entries(sm.byGrade).map(([k, v]) => k + ' ' + v).join(' · ')}
         <span class="muted"> · 이름 색 : <b class="c2">2회</b> <b class="c3">3회 이상</b> · 주당 구성 ${((kv().slots || []).filter(Boolean)).length}칸</span></div>
       <div class="lvsg">${weeks.map(col).join('') || '<div class="warn">배정 묶음에 토요일이 없습니다. 위에서 토요일을 고르세요.</div>'}</div>
-      <datalist id="lvsn">${staffList().map(s => `<option value="${A.esc(s.name)}">${A.esc(s.grade || '')} ${A.esc(s.grp || '')}</option>`).join('')}</datalist>`;
+      <datalist id="lvsn">${curList().map(s => `<option value="${A.esc(s.name)}">${A.esc(s.grade || '')} ${A.esc(s.grp || '')}</option>`).join('')}</datalist>`;
     if (A.$('#lvgsw')) A.$('#lvgsw').onclick = () => { L.tab = 'conf'; draw(); };
     if (!can) return;
     const save = async ws => {
@@ -2309,7 +2311,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   function drawSet() {
     const d = D(), K = kv(), caps = K.caps || {};
     const q = (L.setQ || '').trim();
-    const list = staffList().filter(s => !q || s.name.includes(q) || (s.grp || '').includes(q) || (s.grade || '') === q);
+    const list = curList().filter(s => !q || s.name.includes(q) || (s.grp || '').includes(q) || (s.grade || '') === q);
     const sel = (cls, opts, v) => `<select class="${cls}">${opts.map(o => `<option ${o === (v || '') ? 'selected' : ''}>${o}</option>`).join('')}${v && !opts.includes(v) ? `<option selected>${A.esc(v)}</option>` : ''}</select>`;
     const row = s => `<tr data-id="${s.id}"><td><input class="f-name" value="${A.esc(s.name)}"></td><td><input class="f-grp w6" value="${A.esc(s.grp || '')}" list="lvgl"></td><td><input class="f-title w6" value="${A.esc(s.title || '')}"></td>
       <td>${sel('f-grade', [''].concat(GRADES), s.grade)}</td><td>${sel('f-off', OFFS, s.off)}</td><td style="text-align:center"><input type="checkbox" class="f-roster" ${s.roster ? 'checked' : ''}></td>
@@ -2320,7 +2322,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const own = d.owners || {};
     body().innerHTML = `
       <div class="lvset">
-        <div class="card"><div class="toolbar"><b>인원 (토요 명단)</b> <span class="muted">${d.staff.filter(s => s.roster).length}명 · 이름 · 그룹 · 연차 등급 · 토요명단 · 부여일수는 <b>[인원 관리]</b>에서 한 번에 고칩니다</span>
+        <div class="card"><div class="toolbar"><b>인원 (토요 명단)</b> <span class="muted">${d.staff.filter(s => s.roster && s.cur !== false).length}명 · 이름 · 그룹 · 연차 등급 · 토요명단 · 부여일수는 <b>[인원 관리]</b>에서 한 번에 고칩니다</span>
           <span style="flex:1"></span>${A.S.me && A.S.me.role === '관리자' ? '<button class="primary" id="lvgoppl">인원 관리로 가기</button>' : ''}</div>
           <div style="max-height:calc(100vh - 330px);overflow:auto"><table class="list"><thead><tr><th>이름</th><th>그룹</th><th>직책</th><th>연차 등급</th><th>토요제외</th><th>토요명단</th><th>상태</th><th class="num">부여일수</th></tr></thead>
           <tbody>${list.filter(s => s.roster || s.status !== '퇴사').map(s => `<tr><td><b>${A.esc(s.name)}</b></td><td>${A.esc(s.grp || '')}</td><td>${A.esc(s.title || '')}</td><td>${A.esc(s.grade || '')}</td><td>${A.esc(s.off || '')}</td><td>${s.roster ? '✓' : '-'}</td><td>${A.esc(s.status || '')}</td><td class="num">${s.grant == null ? '' : s.grant}</td></tr>`).join('')}</tbody></table></div></div>
@@ -5638,29 +5640,35 @@ async function addCharts(buf, jobs) {
     if (S.pTab === 'org') drawOrg(); else drawPList();
   }
   function drawPList() {
-    const P = S._ppl, q = normName(S.pQ || ''), g = S.pG || '', f = S.pF || '';
-    const rows = P.rows.filter(x => (!q || x.name.includes(q)) && (!g || x.grp === g) && (!f || (f === 'y') === !!x.acct || (f === 'hr' && x.hr_use) || (f === 'sat' && x.in_roster))).slice()
+    const P = S._ppl, g = S.pG || '', f = S.pF || '';
+    const rows = P.rows.filter(x => (!g || x.grp === g) && (!f || (f === 'y') === !!x.acct || (f === 'hr' && x.hr_use) || (f === 'sat' && x.in_roster))).slice()
       .sort((a, b) => (P.groups.indexOf(a.grp) - P.groups.indexOf(b.grp)) || pSort(a, b));
     const acc = x => !x.acct ? '<span class="muted">미등록</span>' : (x.acct.role !== '일반' ? '<span class="rtag">' + esc(x.acct.role) + '</span> ' : '') + (x.acct.nopin ? '<span class="rtag" style="background:#fdecea;color:#c62828">비밀번호 없음</span>' : x.acct.tmp ? '<span class="rtag">임시 비밀번호</span>' : '등록됨');
     $('#pbody').innerHTML = `<div class="toolbar">
         <input id="pq" placeholder="이름 검색" value="${esc(S.pQ || '')}" style="width:150px">
         <select id="pg"><option value="">전체 그룹</option>${P.groups.map(x => `<option ${x === g ? 'selected' : ''}>${x}</option>`).join('')}</select>
         <select id="pf"><option value="">전체</option><option value="y" ${f === 'y' ? 'selected' : ''}>등록함</option><option value="n" ${f === 'n' ? 'selected' : ''}>아직 등록 안 함</option><option value="hr" ${f === 'hr' ? 'selected' : ''}>인사평가 대상</option><option value="sat" ${f === 'sat' ? 'selected' : ''}>토요 명단</option></select>
-        <span class="muted">${rows.length}명</span><span style="flex:1"></span>
+        <span class="muted" id="pcnt">${rows.length}명</span><span style="flex:1"></span>
         <label class="btn-file" title="처음 한 번 조직도 엑셀(조립팀 시트)로 명단을 채울 때만"><input type="file" id="rsfile" accept=".xlsm,.xlsx,.xls" hidden><span>조직도 엑셀로 한 번에 넣기…</span></label>
         <button class="primary" id="padd">+ 인원 추가</button></div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 230px)"><table class="list plist" style="min-width:1100px"><thead><tr>
         <th>이름</th><th>그룹</th><th>직책</th><th>직급</th><th>레벨</th><th>상태</th><th>세부직무</th><th>사번</th><th>연차 등급</th><th>토요</th><th>평가 등급</th><th>계정</th></tr></thead><tbody>
       ${rows.map(x => `<tr data-n="${esc(x.name)}" style="cursor:pointer"><td><b>${esc(x.disp || x.name)}</b></td><td>${esc(x.grp)}</td><td>${esc(x.title)}</td><td>${esc(x.rank)}</td><td>${esc(x.level)}</td>
         <td>${esc(x.status)}</td><td>${esc(x.job)}</td><td>${esc(x.empno)}</td><td>${esc(x.lv_grade)}</td><td>${x.in_roster ? '✓' : '<span class="muted">-</span>'}</td>
-        <td>${x.hr_use ? esc(x.hr_grade || '-') : '<span class="muted">대상 아님</span>'}</td><td>${acc(x)}</td></tr>`).join('') || '<tr><td colspan="12" class="muted" style="padding:20px">없음</td></tr>'}
+        <td>${x.hr_use ? esc(x.hr_grade || '-') : '<span class="muted">대상 아님</span>'}</td><td>${acc(x)}</td></tr>`).join('')}<tr id="pnone" style="display:none"><td colspan="12" class="muted" style="padding:20px">없음</td></tr>
       </tbody></table></div>
       ${P.extra.length ? `<div class="card" style="margin-top:14px"><h4 style="margin:0 0 6px">명단 외 계정 <span class="muted">${P.extra.length}개 · 명단에 없는 이름으로 만들어진 계정 (테스트 · 중복 · 퇴사)</span></h4>
         <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>권한</th><th class="num">입력일수</th><th>마지막 입력</th><th></th></tr></thead><tbody>
         ${P.extra.map(u => `<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.group)}</td><td>${esc(u.role)}</td><td class="num">${u.days}</td><td>${esc(u.last || '-')}</td>
           <td style="white-space:nowrap"><button data-rn="${esc(u.id)}">이름 바꾸기</button>${u.role === '일반' ? ` <button class="danger" data-ud="${esc(u.id)}">계정 삭제</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
-    const redraw = () => { const p = $('#pq').selectionStart; drawPList(); const i = $('#pq'); i.focus(); try { i.setSelectionRange(p, p); } catch (e) { } };
-    $('#pq').oninput = e => { S.pQ = e.target.value; redraw(); };
+    // 이름 검색은 줄을 숨기기만 함 (입력칸을 다시 그리지 않아 한글 입력이 ㄱㅏㅇ 처럼 풀리지 않음)
+    const applyQ = () => {
+      const q = normName(S.pQ || ''); let n = 0;
+      $$('.plist tbody tr[data-n]').forEach(tr => { const m = !q || tr.dataset.n.includes(q) || tr.cells[0].textContent.includes(q); tr.style.display = m ? '' : 'none'; if (m) n++; });
+      $('#pcnt').textContent = n + '명'; $('#pnone').style.display = n ? 'none' : '';
+    };
+    $('#pq').oninput = e => { S.pQ = e.target.value; applyQ(); };
+    applyQ();
     $('#pg').onchange = e => { S.pG = e.target.value; drawPList(); };
     $('#pf').onchange = e => { S.pF = e.target.value; drawPList(); };
     $('#padd').onclick = () => personEdit(null);
