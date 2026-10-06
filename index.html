@@ -691,6 +691,18 @@ main.loading,#main.loading{pointer-events:none;opacity:.55;transition:opacity .1
 .hrw td{overflow-wrap:anywhere}
 .btn-file{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:#fff;font-weight:600;cursor:pointer}
 .btn-file:hover{background:#f4f6fa}
+
+/* 그룹 색 : 왼쪽 띠 · 점 · 그룹 제목 줄 */
+.gdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+tr.gc > td:first-child { box-shadow: inset 4px 0 0 var(--gc); }
+tr.ghd > td { background: color-mix(in srgb, var(--gc) 9%, #fff); box-shadow: inset 4px 0 0 var(--gc); border-top: 2px solid color-mix(in srgb, var(--gc) 45%, #fff); padding: 7px 12px !important; font-size: 13px; }
+tr.ghd > td > b:first-child { font-size: 14px; color: #1f2937; margin-right: 14px; }
+tr.ghd > td > span { color: #4b5563; margin-right: 14px; }
+
+.orgblk[style*="--gc"] .orgmg { border-top: 4px solid var(--gc) !important; }
+.lvz2[style*="--gc"] .lvzt { box-shadow: inset 4px 0 0 var(--gc); padding-left: 10px; }
+.bd tr.gc > td.bn { box-shadow: inset 4px 0 0 var(--gc); }
+.bd tr.ghd > td { text-align: left; }
 </style>
 </head>
 <body>
@@ -2165,7 +2177,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const box = p => {
       const list = Z[p].filter(it => !q || it.s.name.includes(q) || (it.x.r || '').includes(q)).sort((a, b) => orgCmp(a.s, b.s) || LC.ko(a.x.d1, b.x.d1));
       const days = list.filter(it => !isPend(it.x)).reduce((a, it) => a + LC.leaveDays(it.x, H, f, l), 0);
-      return `<div class="card lvz2"><div class="lvzt"><b>${p}</b><span class="muted">${list.length}건 · 확정 ${days}일</span></div><table class="list"><thead><tr><th>이름</th><th>기간</th><th>사유</th><th class="num">일수</th><th class="num">토요</th></tr></thead><tbody>
+      return `<div class="card lvz2" style="--gc:${A.gcol(p)}"><div class="lvzt"><b>${A.gdot(p)}</b><span class="muted">${list.length}건 · 확정 ${days}일</span></div><table class="list"><thead><tr><th>이름</th><th>기간</th><th>사유</th><th class="num">일수</th><th class="num">토요</th></tr></thead><tbody>
         ${list.map(it => `<tr class="click" data-l="${it.x.id}"><td><b class="${isMgr(it.s.name) ? 'mgrt' : ''}">${A.esc(it.s.name)}</b>${isPend(it.x) ? ` <span class="lst ${ST[stOf(it.x)][0]}">${stOf(it.x) === '신청' ? '확인 전' : '대기'}</span>` : ''}</td><td>${md(it.x.d1)}${it.x.d2 !== it.x.d1 ? '~' + md(it.x.d2) : ''}${it.x.h ? ' ' + it.x.h : ''}${it.x.t ? ' <span class="tag tr">훈</span>' : ''}</td><td class="rs">${A.esc(it.x.r || '')}</td>
           <td class="num"><b>${LC.leaveDays(it.x, H, f, l)}</b></td><td class="num">${satCnt[it.s.id] || ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted" style="padding:14px">없음</td></tr>'}</tbody></table></div>`;
     };
@@ -2294,7 +2306,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const th = (key, t, num) => `<th class="${num ? 'num ' : ''}sort${k === key ? ' on' : ''}" data-k="${key}">${t}</th>`;
     body().innerHTML = `<div class="muted" style="margin-bottom:8px">${y}년 1월 1일 ~ 12월 31일 · 연차 = 확정된 평일 수 (공휴일 제외, 반차 0.5, 훈련 제외) · 잔여 = 부여일수 − 연차</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹')}<th>등급</th>${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num">훈련(일)</th>${th('sat', '토요근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1)}</tr></thead><tbody>
-      ${rows.map(r => `<tr class="click" data-s="${r.s.id}"><td><b>${A.esc(r.s.name)}</b></td><td>${A.esc(r.s.grp || '')}</td><td>${A.esc(r.s.grade || '')}</td><td class="num"><b>${r.days || ''}</b></td><td class="num muted">${r.pend || ''}</td><td class="num">${r.half || ''}</td><td class="num">${r.tr || ''}</td><td class="num">${r.sat || ''}</td><td class="num">${r.alt || ''}</td><td class="num">${r.grant == null ? '' : r.grant}</td><td class="num ${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '' : r.rem}</td></tr>`).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">자료 없음</td></tr>'}
+      ${rows.map((r, i) => (k === 'grp' ? A.ghd(rows, i, x => x.s.grp || '', 11, g => [g.length + '명', '연차 ' + g.reduce((a, x) => a + x.days, 0) + '일', '토요 ' + g.reduce((a, x) => a + x.sat, 0) + '회']) : '') + `<tr class="click gc" data-s="${r.s.id}" style="--gc:${A.gcol(r.s.grp)}"><td><b>${A.esc(r.s.name)}</b></td><td>${A.gdot(r.s.grp || '')}</td><td>${A.esc(r.s.grade || '')}</td><td class="num"><b>${r.days || ''}</b></td><td class="num muted">${r.pend || ''}</td><td class="num">${r.half || ''}</td><td class="num">${r.tr || ''}</td><td class="num">${r.sat || ''}</td><td class="num">${r.alt || ''}</td><td class="num">${r.grant == null ? '' : r.grant}</td><td class="num ${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '' : r.rem}</td></tr>`).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">자료 없음</td></tr>'}
       </tbody></table></div>`;
     A.$$('.lvsum2 th.sort').forEach(h => (h.onclick = () => { L.sumSort = h.dataset.k; drawSum(); }));
     A.$$('.lvsum2 tr[data-s]').forEach(tr => (tr.onclick = () => {
@@ -2329,7 +2341,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <div class="card"><div class="toolbar"><b>인원 (토요 명단)</b> <span class="muted">${curList().length}명 (토요명단 ${d.staff.filter(s => s.roster && s.cur !== false).length}) · 이름 · 그룹 · 연차 등급 · 토요명단 · 부여일수는 <b>[인원 관리]</b>에서 한 번에 고칩니다</span>
           <span style="flex:1"></span>${A.S.me && A.S.me.role === '관리자' ? '<button class="primary" id="lvgoppl">인원 관리로 가기</button>' : ''}</div>
           <div style="max-height:calc(100vh - 330px);overflow:auto"><table class="list"><thead><tr><th>이름</th><th>그룹</th><th>직책</th><th>연차 등급</th><th>토요제외</th><th>토요명단</th><th>상태</th><th class="num">부여일수</th></tr></thead>
-          <tbody>${list.filter(s => s.roster || s.status !== '퇴사').map(s => `<tr><td><b>${A.esc(s.name)}</b></td><td>${A.esc(s.grp || '')}</td><td>${A.esc(s.title || '')}</td><td>${A.esc(s.grade || '')}</td><td>${A.esc(s.off || '')}</td><td>${s.roster ? '✓' : '-'}</td><td>${A.esc(s.status || '')}</td><td class="num">${s.grant == null ? '' : s.grant}</td></tr>`).join('')}</tbody></table></div></div>
+          <tbody>${(() => { const L2 = list.filter(s => s.roster || s.status !== '퇴사'); return L2.map((s, i) => A.ghd(L2, i, x => x.grp || '', 8, g => [g.length + '명', '토요명단 ' + g.filter(x => x.roster).length]) + `<tr class="gc" style="--gc:${A.gcol(s.grp)}"><td><b>${A.esc(s.name)}</b></td><td>${A.gdot(s.grp || '')}</td><td>${A.esc(s.title || '')}</td><td>${A.esc(s.grade || '')}</td><td>${A.esc(s.off || '')}</td><td>${s.roster ? '✓' : '-'}</td><td>${A.esc(s.status || '')}</td><td class="num">${s.grant == null ? '' : s.grant}</td></tr>`).join(''); })()}</tbody></table></div></div>
         <div class="lvset2">
           <div class="card"><b>파트별 1차 확인 담당</b> <span class="muted">(인원 관리 › 편집 › 담당 그룹에서 바꿈)</span>
             <div class="lvown2">${['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원', '출력', '영상'].map(g => `<span><b>${g}</b> ${(own[g] || []).length ? A.esc(own[g].join(', ')) : '<span class="muted">없음 → 바로 관리자</span>'}</span>`).join('')}</div></div>
@@ -3155,7 +3167,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const fp = $('#ovPart').value, fs = $('#ovSt').value;
       const rows = d.list.filter(x => (!fp || x.person.part === fp) && (!fs || (fs === 'diff' ? diffCount(x) > 0 : st(x) === fs)));
       $('#ovTbl').innerHTML = `<thead><tr><th>파트</th><th>이름</th><th>직책</th><th class="c">등급</th><th class="c">상태</th><th class="r">합계</th><th class="c">참고와 다름</th><th class="r">일평균</th><th class="r">달성률</th><th>작성자</th><th>저장 시각</th><th></th></tr></thead><tbody>` +
-        rows.map(x => { const dc = diffCount(x); return `<tr><td>${esc(x.person.part)}</td><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td class="c">${esc(x.person.grade || '-')}</td>
+        rows.map(x => { const dc = diffCount(x); return `<tr class="gc" style="--gc:${A.gcol(x.person.part)}"><td>${A.gdot(x.person.part)}</td><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td class="c">${esc(x.person.grade || '-')}</td>
           <td class="c">${stBadge(st(x))}</td><td class="r"><b>${x.rec ? dash(x.rec['합계']) : '-'}</b></td><td class="c ${dc ? 'dif' : ''}">${dc ? dc + '칸' : ''}</td>
           <td class="r">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td class="r">${pct(x.data.달성률)}</td><td>${x.rec ? esc(x.rec['작성자']) : ''}</td><td class="muted">${x.rec ? esc(String(x.rec['저장시각'] || '').slice(5, 16)) : ''}</td>
           <td class="r"><button class="sm" data-open="${esc(x.person.name)}" data-part="${esc(x.person.part)}">열기</button></td></tr>`; }).join('') + '</tbody>';
@@ -3465,7 +3477,7 @@ function parseAcc(ws) {
           <button class="sm" id="hrGoPpl" style="margin-left:8px">인원 관리로 가기</button></div>
         <div style="max-height:52vh;overflow:auto"><table class="tbl"><tr><th>이름</th><th>파트</th><th>직책</th><th>등급</th><th>원본이름</th><th>사용</th><th>비고</th></tr>
         ${(() => { const po = (CFG['파트'] || []).map(x => x['파트']), ix = p => { const i = po.indexOf(p); return i < 0 ? 999 : i; };   // 파트 순서대로 (그룹을 옮긴 사람도 새 파트 자리에)
-          return (CFG['명단'] || []).map((r, i) => [r, i]).sort((A, B) => (ix(A[0]['파트']) - ix(B[0]['파트'])) || (A[1] - B[1])).map(x => x[0]); })().map(r => `<tr><td>${esc(r['이름'])}</td><td>${esc(r['파트'])}</td><td>${esc(r['직책'])}</td><td>${esc(r['등급'])}</td><td>${esc(r['원본이름'])}</td><td>${esc(r['사용'])}</td><td>${esc(r['비고'])}</td></tr>`).join('')}</table></div></div>
+          return (CFG['명단'] || []).map((r, i) => [r, i]).sort((A, B) => (ix(A[0]['파트']) - ix(B[0]['파트'])) || (A[1] - B[1])).map(x => x[0]); })().map(r => `<tr class="gc" style="--gc:${A.gcol(r['파트'])}"><td>${esc(r['이름'])}</td><td>${A.gdot(r['파트'])}</td><td>${esc(r['직책'])}</td><td>${esc(r['등급'])}</td><td>${esc(r['원본이름'])}</td><td>${esc(r['사용'])}</td><td>${esc(r['비고'])}</td></tr>`).join('')}</table></div></div>
       <div class="card"><h2>파트 · 담당 매니저</h2>
         <div class="banner info">담당 매니저는 <b>업무데이터 로그인 이름과 똑같이</b> 적으세요. 그 매니저가 로그인하면 왼쪽 메뉴에 [인사평가]가 생기고 이 파트만 보고 입력합니다. (예전 파트 비밀번호는 쓰지 않습니다)</div>
         ${editTable('파트', CFG['파트'], { w: { 파트: 80, 담당매니저: 80, 순서: 40 } })}
@@ -4071,6 +4083,13 @@ async function addCharts(buf, jobs) {
   const periodOf = date => S.periods.find(p => p.start <= date && (p.status === '진행' || date <= p.end)) || null;
   const curPeriod = () => S.periods.find(p => p.status === '진행') || S.periods[S.periods.length - 1] || null;
   const isManager = () => S.me && S.me.role !== '일반';
+  // 그룹 색 (모든 화면 공통 · 행 왼쪽 띠 + 그룹 앞 점)
+  const GCOL = { '1그룹': '#2563eb', '2그룹': '#059669', '3그룹': '#7c3aed', '4그룹': '#db2777', '라인': '#0891b2', '제조': '#a16207', '안정화': '#4d7c0f', '지원': '#64748b', '출력': '#c2410c', '영상': '#9333ea', '팀장': '#334155' };
+  const gcol = g => GCOL[g] || '#94a3b8';
+  const gdot = g => `<span class="gdot" style="background:${gcol(g)}"></span>${esc(g || '')}`;
+  // 그룹이 바뀌는 곳에 제목 줄 : ghd(목록, i, 그룹 꺼내는 함수, 칸 수, 덧붙일 글(같은 그룹 목록) )
+  const ghd = (list, i, gf, cols, info) => (i > 0 && gf(list[i - 1]) === gf(list[i])) ? ''
+    : `<tr class="ghd" style="--gc:${gcol(gf(list[i]))}"><td colspan="${cols}"><b>${gdot(gf(list[i]))}</b>${(info ? info(list.filter(x => gf(x) === gf(list[i]))) : []).map(t => `<span>${t}</span>`).join('')}</td></tr>`;
   // 사람 순서 (모든 화면 공통) : 그룹 순서 → 팀장 · 매니저 · 파트장 · 사원 → 사번(입사 순) → 이름
   const userKey = (u, groups) => { const gi = (groups || C.GROUP_LIST).indexOf(u.group), t = u.title || (u.role === '매니저' ? '매니저' : '');
     return String(gi < 0 ? 99 : gi).padStart(2, '0') + (t === '팀장' ? 0 : t === '매니저' ? 1 : t === '파트장' ? 2 : 3) + (u.empno ? String(u.empno).padStart(12, '0') : '999999999999') + u.name; };
@@ -5037,7 +5056,7 @@ async function addCharts(buf, jobs) {
           ${bars.length ? bars.map(x => `<div class="gbar"><b>${esc(x.n)}</b><div class="tr">${x.v == null ? '' : `<i class="${rc(x.v)}" style="width:${Math.min(100, x.v * 100)}%"></i>`}<em></em></div><b class="num">${x.v == null ? '-' : pct(x.v)}</b><span class="muted">${esc(x.sub)}</span></div>`).join('') : '<div class="muted" style="padding:10px 0">목표와 입력이 있는 인원이 없습니다</div>'}
         </section>
         <section class="card dsec"><div class="dst"><b>${dLabel(lastWork)} 입력 안 한 인원</b><span style="flex:1"></span><span class="chip ${missing.length ? 'closed' : 'open'}">${missing.length}명</span></div>
-          ${missing.length ? missing.map(u => `<div class="mrow"><span class="av">${esc(u.name.slice(0, 1))}</span><div><b>${esc(u.name)}</b><span class="muted">${esc(u.group)} · 마지막 입력 ${u.last ? dLabel(u.last) : '없음'}</span></div><button data-mu="${u.id}">대신 입력</button></div>`).join('') : '<div class="muted" style="padding:14px 0">모두 입력했습니다</div>'}
+          ${missing.length ? missing.map(u => `<div class="mrow"><span class="av">${esc(u.name.slice(0, 1))}</span><div><b>${esc(u.name)}</b><span class="muted">${gdot(u.group)} · 마지막 입력 ${u.last ? dLabel(u.last) : '없음'}</span></div><button data-mu="${u.id}">대신 입력</button></div>`).join('') : '<div class="muted" style="padding:14px 0">모두 입력했습니다</div>'}
         </section>
       </div>`;
     $$('[data-td]', b).forEach(x => (x.onclick = () => todo[+x.dataset.td].go()));
@@ -5156,9 +5175,14 @@ async function addCharts(buf, jobs) {
     $('#mbody').innerHTML = `
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' ? 236 : 190}px)">
       <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '총 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률')}<th></th></tr></thead><tbody>
-      ${list.map(u => {
+      ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
-        return `<tr data-u="${u.id}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인할 수 없음 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${esc(u.group)}</td>
+        let hd = '';
+        if (S.mSort.k === 'group' && (i === 0 || list[i - 1].group !== u.group)) {        // 그룹 제목 줄
+          const gl = list.filter(x => x.group === u.group), gr = gl.filter(x => x.target && x.items.length), ga = gr.length ? gr.reduce((a, x) => a + x.m.c8, 0) / gr.length : null;
+          hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="11"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga)}t">${pct(ga)}</b></span>`}</td></tr>`;
+        }
+        return hd + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인할 수 없음 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${gdot(u.group)}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : '입력 없음'}</td>
         <td class="num">${xym ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
@@ -5284,7 +5308,7 @@ async function addCharts(buf, jobs) {
       <div class="legend"><span><i class="r-hi"></i>목표 90% 이상</span><span><i class="r-mid"></i>50~90%</span><span><i class="r-lo"></i>50% 이하</span><span><i class="r-no"></i>목표 미설정</span><span class="muted">칸 숫자 = 그날 평가평균 · 칸을 누르면 그날 입력 화면으로 이동</span></div>
       <div class="card board" style="padding:0;overflow:auto;max-height:calc(100vh - 220px)">
       <table class="bd"><thead><tr><th class="bn">이름</th>${dates.map(d => { const w = new Date(d + 'T00:00:00').getDay(); return `<th class="${w === 6 ? 'sat' : w === 0 ? 'sun' : ''}">${+d.slice(8)}<small>${C.WD[w]}</small></th>`; }).join('')}<th class="bt">근무일</th><th class="bt">평가평균</th><th class="bt">달성률</th></tr></thead><tbody>
-      ${list.map(u => `<tr data-u="${u.id}"><td class="bn"><b>${esc(u.name)}</b><small>${esc(u.group)}${u.target ? ' · 목표 ' + u.target : ''}</small></td>${dates.map(d => {
+      ${list.map((u, i) => (S.mSort.k === 'group' ? ghd(list, i, x => x.group, dates.length + 4, g => [g.length + '명']) : '') + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td class="bn"><b>${esc(u.name)}</b><small>${gdot(u.group)}${u.target ? ' · 목표 ' + u.target : ''}</small></td>${dates.map(d => {
         const s = byU[u.id][d]; if (!s) return `<td class="e" data-d="${d}"></td>`;
         const v = C.sumDay(s, minsOf(d)).f7, rc = u.target ? rateCls(v / u.target) : 'r-no';
         return `<td class="${rc}" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 평가평균 ${f2(v)}${u.target ? ' (' + pct(v / u.target) + ')' : ''} · 주문 ${s.n || 0}건">${(Math.round(v * 10) / 10).toFixed(1)}</td>`;
@@ -5622,7 +5646,7 @@ async function addCharts(buf, jobs) {
     const blocks = cfg.blocks.map(b => {
       const cols = b.cols.map(gs => rows.filter(r => gs.includes(r.grp)));
       const mg = []; cols.forEach(c => c.filter(r => r.title === '매니저').forEach(r => mg.push(r.disp || r.name)));
-      return { name: b.name, cols, mgr: b.mgr || (mg.length ? '매니저 : ' + mg.join('/') : ''), n: Math.max(b.min || 0, ...cols.map(c => c.length)) };
+      return { name: b.name, g: (b.cols[0] || [])[0] || '', cols, mgr: b.mgr || (mg.length ? '매니저 : ' + mg.join('/') : ''), n: Math.max(b.min || 0, ...cols.map(c => c.length)) };
     });
     const st = rows.filter(r => r.title !== '팀장' && r.title !== '매니저' && r.title !== '파트장' && !['육아', '병가'].includes(r.status));
     const cnt = f => rows.filter(f).length, job = j => st.filter(r => (j === '안정화' ? r.job === '안정' : r.job === j)).length;
@@ -5665,7 +5689,7 @@ async function addCharts(buf, jobs) {
         <button class="primary" id="padd">+ 인원 추가</button></div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 230px)"><table class="list plist" style="min-width:1100px"><thead><tr>
         <th>이름</th><th>그룹</th><th>직책</th><th>직급</th><th>레벨</th><th>상태</th><th>세부직무</th><th>사번</th><th>연차 등급</th><th>토요</th><th>평가 등급</th><th>계정</th></tr></thead><tbody>
-      ${rows.map(x => `<tr data-n="${esc(x.name)}" style="cursor:pointer"><td><b>${esc(x.disp || x.name)}</b></td><td>${esc(x.grp)}</td><td>${esc(x.title)}</td><td>${esc(x.rank)}</td><td>${esc(x.level)}</td>
+      ${rows.map((x, i) => ghd(rows, i, y => y.grp, 12, g => [g.length + '명', '등록 ' + g.filter(y => y.acct).length]) + `<tr data-n="${esc(x.name)}" class="gc" style="cursor:pointer;--gc:${gcol(x.grp)}"><td><b>${esc(x.disp || x.name)}</b></td><td>${gdot(x.grp)}</td><td>${esc(x.title)}</td><td>${esc(x.rank)}</td><td>${esc(x.level)}</td>
         <td>${esc(x.status)}</td><td>${esc(x.job)}</td><td>${esc(x.empno)}</td><td>${esc(x.lv_grade)}</td><td>${x.in_roster ? '✓' : '<span class="muted">-</span>'}</td>
         <td>${x.hr_use ? esc(x.hr_grade || '-') : '<span class="muted">대상 아님</span>'}</td><td>${acc(x)}</td></tr>`).join('')}<tr id="pnone" style="display:none"><td colspan="12" class="muted" style="padding:20px">없음</td></tr>
       </tbody></table></div>
@@ -5677,6 +5701,7 @@ async function addCharts(buf, jobs) {
     const applyQ = () => {
       const q = normName(S.pQ || ''); let n = 0;
       $$('.plist tbody tr[data-n]').forEach(tr => { const m = !q || tr.dataset.n.includes(q) || tr.cells[0].textContent.includes(q); tr.style.display = m ? '' : 'none'; if (m) n++; });
+      $$('.plist tbody tr.ghd').forEach(h => { let x = h.nextElementSibling, vis = false; while (x && !x.classList.contains('ghd')) { if (x.dataset.n && x.style.display !== 'none') vis = true; x = x.nextElementSibling; } h.style.display = vis ? '' : 'none'; });
       $('#pcnt').textContent = n + '명'; $('#pnone').style.display = n ? 'none' : '';
     };
     $('#pq').oninput = e => { S.pQ = e.target.value; applyQ(); };
@@ -5821,7 +5846,7 @@ async function addCharts(buf, jobs) {
         <button id="orgcfg">조직도 제목 · 블록 설정</button><button class="primary" id="orgxl">⬇ 조직도 엑셀</button></div>
       <div class="card orgwrap"><div class="orgtitle">${esc(cfg.title)}</div>
         <div class="orgtop">${cfg.top.map(t => `<div class="orgbox"><span>${esc(t.rank)}</span><b>${esc(t.name)}</b></div>`).join('')}${D.heads.map(r => `<div class="orgbox tl" data-n="${esc(r.name)}"><span>팀장</span><b>${esc(r.disp || r.name)}</b></div>`).join('')}</div>
-        <div class="orgrow">${D.blocks.map(b => `<div class="orgblk"><div class="orgmg">${esc(b.mgr)}</div><div class="orgnm">${esc(b.name)}</div>
+        <div class="orgrow">${D.blocks.map(b => `<div class="orgblk" style="--gc:${gcol(b.g)}"><div class="orgmg">${esc(b.mgr)}</div><div class="orgnm">${esc(b.name)}</div>
             <div class="orgcols">${b.cols.map(c => `<table class="orgt">${col(c, b.n)}</table>`).join('')}</div></div>`).join('')}
           <div class="orgblk orgsum"><div class="orgmg">&nbsp;</div><div class="orgnm">조립팀 인원현황</div><table class="orgt">${D.sum.map(([k, n]) => `<tr><td class="nm">${k}</td><td class="num">${n}</td></tr>`).join('')}</table>
             <div class="orglg"><span class="ok-mg">매니저</span><span class="ok-pl">파트장</span><span class="ok-off">육아 · 병가</span></div></div></div></div>`;
@@ -5935,8 +5960,8 @@ async function addCharts(buf, jobs) {
     if (S.target && v !== 'input') { if (!(await saveFirst())) { history.pushState({ v: S.view }, ''); return; } S.target = null; S.day = null; }
     go(v, { _pop: true });
   });
-  if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager });
-  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go });
+  if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd });
+  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot });
   boot();
 })();
 </script>
