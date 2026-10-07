@@ -464,6 +464,7 @@ button.big{padding:9px 18px;font-size:14.5px;font-weight:800}
 .segr button+button{border-left:1px solid #b9c2cf}.segr button.on{background:#1f2a3a;color:#fff}
 .swopt{display:flex!important;align-items:center;gap:8px;border:1px solid #e1e6ec;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:14px!important;color:inherit!important;font-weight:500!important}
 .swopt input[type=radio]{width:auto!important}.swopt span{flex:1}.swopt select,.swopt input:not([type=radio]){width:auto!important}
+.swopt{flex-wrap:wrap}.swopt span{white-space:nowrap}.swopt #swo,.swopt #swod{width:150px!important;flex:0 0 150px}  /* v27.1 : 맞바꾸기 줄이 세로로 깨지던 것 */
 .lvsec{padding:16px 18px;margin-bottom:12px}
 .lvst{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}.lvst b{font-size:15.5px}.lvst .muted{font-size:12.5px}
 .lvtbl td{padding:8px 10px;vertical-align:top}.lvtbl td.rs{white-space:normal;max-width:260px}
@@ -5119,7 +5120,10 @@ async function addCharts(buf, jobs) {
     g.addEventListener('focusin', e => { const t = e.target; if (t.dataset.n || t.dataset.f === 'q') { showPad(t); setTimeout(() => { try { if (document.activeElement === t) t.select(); } catch (er) { } }, 0); } });
     g.addEventListener('mouseup', e => { const t = e.target; if ((t.dataset.n || t.dataset.f === 'q') && t.selectionStart === t.selectionEnd && t.value && t._sel !== 1) { t._sel = 1; t.select(); e.preventDefault(); } });
     g.addEventListener('focusout', e => { if (e.target) e.target._sel = 0; });
-    g.addEventListener('focusout', () => setTimeout(() => { if (!padHold) hidePad(); }, 120));
+    g.addEventListener('focusout', () => setTimeout(() => {                 // 다른 수량·숫자 칸으로 옮겨 간 경우엔 방금 연 숫자판을 닫지 않음
+      const a = document.activeElement;
+      if (!padHold && !(a && g.contains(a) && (a.dataset.n || a.dataset.f === 'q'))) hidePad();
+    }, 120));
     g.addEventListener('change', onGridChange);
     g.addEventListener('keydown', e => {
       if (e.key === 'Enter' && e.target.dataset.f === 'o') {
@@ -6313,11 +6317,18 @@ async function addCharts(buf, jobs) {
     return { keys, prevKeys: [stStep(u, a, -1)] };
   }
   // 칸 → 날짜 범위 (서버에서 받을 범위 · 연차 셀 때)
+  // 진행 중인 달은 마감일이 비어 있음 → 서버(app.range_end)와 같게 '오늘+7일 (시작+70일 넘지 않게)'까지로 봄
+  // (v27.1 : 이게 없어서 통계를 처음 열면 진행 중인 달이 앞 달 마감일에서 잘려 수량·연차·근태가 적게 나왔음)
+  function stEnd(p) {
+    if (p.end) return p.end;
+    const a = C.addDays(S.today, 7), b = C.addDays(p.start, 70), e = a < p.start ? p.start : a;
+    return e > b ? b : e;
+  }
   function stRange(u, k, P) {
     if (u === 'week') return [k, C.addDays(k, 6)];
     const yms = u === 'month' ? [k] : u === 'quarter' ? (() => { const y = k.slice(0, 4), q = +k.slice(-1); return [1, 2, 3].map(i => y + '-' + C.pad((q - 1) * 3 + i)); })() : Array.from({ length: 12 }, (x, i) => k + '-' + C.pad(i + 1));
     const ps = yms.map(m => (P || []).find(p => p.ym === m)).filter(Boolean);
-    const lo = ps.length ? ps[0].start : C.addDays(ymAdd(yms[0], -1) + '-01', 20), hi = ps.length && ps.length === yms.length ? ps[ps.length - 1].end : C.addDays(yms[yms.length - 1] + '-28', 3);
+    const lo = ps.length ? ps[0].start : C.addDays(ymAdd(yms[0], -1) + '-01', 20), hi = ps.length && ps.length === yms.length ? stEnd(ps[ps.length - 1]) : C.addDays(yms[yms.length - 1] + '-28', 3);
     return [lo, hi];
   }
   // 원재료 → 사람 × 칸 합계
