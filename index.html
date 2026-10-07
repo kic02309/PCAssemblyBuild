@@ -1937,8 +1937,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       });
       // 이 달 토요근무 표 (AO~AX) + 달력 밖 대체휴무(51행~)
       const spill = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+      // 달 경계 토요일(앞 달 5주차 = 이 달 1주차)은 원본처럼 앞 달 시트에만 적음 — 두 시트에 적으면 [토요] 횟수가 두 번 셈
+      const pd = toD(f); pd.setDate(0); const prevYm = ymOf(ymd(pd));
+      const prevSat = new Set(info.months.indexOf(prevYm) >= 0 ? tableSaturdays(prevYm) : []);
       blocks.forEach((b, bi) => {
-        const sat = b.days[5]; if (!sat) return;
+        const sat = b.days[5]; if (!sat || prevSat.has(sat)) return;
         const nc = 41 + 2 * bi;
         (ix.duty[sat] || []).forEach((u, i) => {
           const s = ix.S[u.s]; if (!s) return;
