@@ -876,6 +876,11 @@ header .me .tag{background:rgba(255,255,255,.12);border-radius:99px}
 .strank .rk{display:inline-flex;width:22px;height:22px;border-radius:7px;background:var(--chip);align-items:center;justify-content:center;font-weight:800;font-size:12px}.strank .rk.t{background:#fff4d6;color:#a16207}
 #stb.loading{opacity:.5;pointer-events:none}
 @media (max-width:1300px){.stkpis{grid-template-columns:repeat(3,minmax(0,1fr))}.stg2{grid-template-columns:1fr}.hub{grid-template-columns:1fr 1fr}}
+/* 작은 화면 (노트북 1280 · 1366) : 위 제목 줄이 넘치면 두 줄로 · 탭 줄은 제목 줄 높이만큼 아래에 붙음 */
+.ph{flex-wrap:wrap;height:auto;min-height:84px;row-gap:8px;padding-top:12px;padding-bottom:12px}
+.ph h1{white-space:nowrap}.ph button,.ph .chip,.ph .seg button,.ph .sel{white-space:nowrap}
+.lvtabs{top:var(--phh,84px)}
+@media (max-width:1400px){.ph{column-gap:10px}.ph h1{font-size:24px}}
 /* DARK-AUTO-START */
 /* ---- 다크 자동 변환 (gen_dark.py) ---- */
 html[data-theme=dark] input:focus,html[data-theme=dark] select:focus{border-color:#32425c}
@@ -4707,7 +4712,7 @@ async function addCharts(buf, jobs) {
       <div class="tabs"><button data-t="login" class="${tab === 'login' ? 'on' : ''}">로그인</button><button data-t="reg" class="${tab === 'reg' ? 'on' : ''}">처음 등록</button></div>
       ${tab === 'login' ? `
         <div class="fld"><label>이름</label><input id="ln" autocomplete="off" placeholder="예) 홍길동"></div>
-        <div class="fld"><label>비밀번호 (숫자 4자리)</label><input id="lp" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+        <div class="fld"><label>비밀번호 (숫자 4자리)</label><input id="lp" class="pin" type="password" maxlength="20" autocomplete="off"></div>
         <button class="primary" id="go">로그인</button>
         <div class="note">· 공용 PC입니다. 다 쓰면 꼭 <b>[로그아웃]</b>을 눌러주세요.<br>· 비밀번호를 잊었거나 처음 쓰는 매니저는 관리자에게 <b>임시 비밀번호</b>를 받으세요.<br>· 이름은 조직도(출근부)에 있는 그대로 입력합니다 (예: 김동일2).</div>` : `
         <div class="fld"><label>이름 (조직도 이름 그대로)</label><input id="rn" autocomplete="off" placeholder="예) 홍길동 · 김동일2"></div>
@@ -4894,12 +4899,17 @@ async function addCharts(buf, jobs) {
     try { localStorage.setItem('theme', t); } catch (e) { }
     $$('.thm').forEach(b => (b.innerHTML = t === 'dark' ? IC.sun : IC.moon));
   }
+  // 제목 줄(.ph) 높이를 탭 줄 위치에 알려 줌 (작은 화면에서 제목 줄이 두 줄이 될 때)
+  try { const ro = new ResizeObserver(es => es.forEach(e => document.documentElement.style.setProperty('--phh', Math.round(e.target.getBoundingClientRect().height) + 'px')));
+    new MutationObserver(() => { const ph = document.querySelector('#main .ph'); if (ph && !ph._ro) { ph._ro = 1; ro.observe(ph); } }).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
   document.addEventListener('click', e => { if (e.target.closest && e.target.closest('.thm')) setTheme(isDark() ? 'light' : 'dark'); });
   function changePin(msg, force) {
+    const adm = S.me && S.me.role === '관리자';
     modal(`<h3>비밀번호 변경</h3>${typeof msg === 'string' ? '<div class="note" style="margin-bottom:10px">' + msg + '</div>' : ''}
-      <div class="fld"><label>현재 비밀번호</label><input id="o" type="password" maxlength="4" inputmode="numeric"></div>
-      <div class="fld"><label>새 비밀번호 (숫자 4자리)</label><input id="n" type="password" maxlength="4" inputmode="numeric"></div>
-      <div class="fld"><label>새 비밀번호 확인</label><input id="n2" type="password" maxlength="4" inputmode="numeric"></div>
+      <div class="fld"><label>현재 비밀번호</label><input id="o" type="password" maxlength="20" ${adm ? '' : 'inputmode="numeric"'}></div>
+      <div class="fld"><label>새 비밀번호 (${adm ? '숫자 4자리 또는 8~20자 글자 · 숫자 섞어서' : '숫자 4자리'})</label><input id="n" type="password" maxlength="${adm ? 20 : 4}" ${adm ? '' : 'inputmode="numeric"'}></div>
+      <div class="fld"><label>새 비밀번호 확인</label><input id="n2" type="password" maxlength="${adm ? 20 : 4}" ${adm ? '' : 'inputmode="numeric"'}></div>
+      ${adm ? '<div class="muted" style="font-size:12.5px;line-height:1.6;margin-top:4px">관리자 계정은 긴 비밀번호를 권장합니다 (예: 글자 + 숫자 10자). 잊으면 Supabase users 표에서만 되살릴 수 있으니 따로 적어 두세요.</div>' : ''}
       <div class="acts">${force ? '<button data-out>로그아웃</button>' : '<button data-c>취소</button>'}<button class="primary" data-s>변경</button></div>`, (bg, close) => {
       if (force) { bg._lock = true; $('[data-out]', bg).onclick = () => { close(); logout(); }; } else $('[data-c]', bg).onclick = close;
       $$('input', bg).forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') $('[data-s]', bg).click(); }));
@@ -6020,10 +6030,8 @@ async function addCharts(buf, jobs) {
       list.sort((a, b) => { const x = sk(a), y = sk(b); return (typeof x === 'string' ? x.localeCompare(y, 'ko') : x - y) * S.mSort.d; });
       S._mlist = list;
       const act = list.filter(u => u.items.length);
-      const teamAvg = act.length ? act.reduce((s, u) => s + u.m.f7, 0) / act.length : null;
       const withT = act.filter(u => u.target);
       const hi = withT.filter(u => u.m.c8 >= 0.9).length, lo = withT.filter(u => u.m.c8 <= 0.5).length;
-      const rangeTxt = r.range.start.slice(5).replace('-', '/') + ' ~ ' + (r.range.end > S.today ? S.today : r.range.end).slice(5).replace('-', '/');
       html += pageHead('일일 업무현황', dailyTabs('manage')) + `<div class="pgb">
       <div class="toolbar">
         <div class="seg"><button data-mm="month" class="${S.mMode === 'month' ? 'on' : ''}">귀속월</button><button data-mm="range" class="${S.mMode === 'range' ? 'on' : ''}">기간 지정</button></div>
@@ -6295,7 +6303,10 @@ async function addCharts(buf, jobs) {
       const out = []; let k = V.custom.a; for (let i = 0; i < 120 && k <= V.custom.b; i++) { out.push(k); k = stStep(u, k, 1); }
       return { keys: out, prevKeys: out.map((x, i) => stStep(u, out[0], i - out.length)) };
     }
-    const a = V.anchor || stCurKey(u), keys = []; for (let i = 11; i >= 0; i--) keys.push(stStep(u, a, -i));
+    const a = V.anchor || stCurKey(u), keys = [];
+    // 연간은 자료가 있는 해부터만 (빈 해 12칸을 그리지 않게)
+    const y0 = (S.periods || []).reduce((m, p) => p.ym.slice(0, 4) < m ? p.ym.slice(0, 4) : m, a.slice(0, 4)), n = u === 'year' ? Math.min(11, Math.max(1, +a - +y0)) : 11;
+    for (let i = n; i >= 0; i--) keys.push(stStep(u, a, -i));
     return { keys, prevKeys: [stStep(u, a, -1)] };
   }
   // 칸 → 날짜 범위 (서버에서 받을 범위 · 연차 셀 때)
@@ -6494,21 +6505,24 @@ async function addCharts(buf, jobs) {
   async function stLoad() {
     const V = stState(), { keys, prevKeys } = stKeys(V), P = (V.data && V.data.periods) || S.periods || [];
     const all = prevKeys.concat(keys), rs = all.map(k => stRange(V.unit, k, P));
-    const from = rs.reduce((a, r) => r[0] < a ? r[0] : a, rs[0][0]), to = rs.reduce((a, r) => r[1] > a ? r[1] : a, rs[0][1]);
+    // 귀속월 기간이 있는 범위 밖은 자료가 없으니 받지 않음
+    const pmin = (S.periods || []).reduce((m, p) => !m || p.start < m ? p.start : m, ''), lo = pmin ? C.addDays(pmin, -7) : '';
+    let from = rs.reduce((a, r) => r[0] < a ? r[0] : a, rs[0][0]); const to = rs.reduce((a, r) => r[1] > a ? r[1] : a, rs[0][1]);
+    if (lo && from < lo) from = lo > to ? to : lo;
     $('#stl').textContent = V.custom ? stLab(V.unit, keys[0]) + ' ~ ' + stLab(V.unit, keys[keys.length - 1]) : stLab(V.unit, keys[keys.length - 1]);
     $('#stp').disabled = $('#stn').disabled = !!V.custom; $('#stc').classList.toggle('primary', !!V.custom); $('#stc').textContent = V.custom ? '📅 직접 고른 기간 ✕' : '📅 기간 직접';
     const by = V.unit === 'week' ? 'week' : 'ym', ck = by + '|' + from + '|' + to;
     if (V.key !== ck || !V.data) {
       const tk = S.token; $('#stb').classList.add('loading');
       try {
-        // 합계는 달력 분기(3달)씩 나눠 받고 한 번 받은 조각은 다시 쓰기 · 명단 · 연차 · 근태는 한 번에
+        // 합계는 달력 한 달씩 나눠 받고 한 번 받은 조각은 다시 쓰기 · 명단 · 연차 · 근태는 한 번에
         const C2 = S.stCache = S.stCache || {}, chunks = [];
-        for (let y = +from.slice(0, 4); y <= +to.slice(0, 4); y++) for (let q = 0; q < 4; q++) {
-          const a = y + '-' + C.pad(q * 3 + 1) + '-01', b = C.addDays(q === 3 ? (y + 1) + '-01-01' : y + '-' + C.pad(q * 3 + 4) + '-01', -1);
+        for (let y = +from.slice(0, 4); y <= +to.slice(0, 4); y++) for (let q = 0; q < 12; q++) {         // 달력 한 달씩 (서버 시간 여유)
+          const a = y + '-' + C.pad(q + 1) + '-01', b = C.addDays(q === 11 ? (y + 1) + '-01-01' : y + '-' + C.pad(q + 2) + '-01', -1);
           if (b < from || a > to) continue; chunks.push({ a, b, k: by + '|' + a });
         }
         const need = chunks.filter(c => !C2[c.k] || (c.b >= S.today && Date.now() - C2[c.k].at > 60000));
-        for (let i = 0; i < need.length; i += 3) await Promise.all(need.slice(i, i + 3).map(async c => { C2[c.k] = { at: Date.now(), d: await api('stats', { from: c.a, to: c.b, by, part: 'agg' }) }; }));
+        for (let i = 0; i < need.length; i += 4) await Promise.all(need.slice(i, i + 4).map(async c => { C2[c.k] = { at: Date.now(), d: await api('stats', { from: c.a, to: c.b, by, part: 'agg' }) }; }));
         const meta = await api('stats', { from, to, part: 'meta' });
         if (tk !== S.token || S.view !== 'stats') return;
         const D = Object.assign({}, meta, { agg: [], dates: [], targets: [], cols: null, oth: null });
@@ -6624,7 +6638,7 @@ async function addCharts(buf, jobs) {
       if (sel.length) trend += stLines(w, one ? 300 : 200, sel.map(k => ({ n: k, c: cols[its.indexOf(k)], v: keys.map(kk => { const x = val(B[kk])[k]; return B[kk].n ? x : null; }) })), labs);
     }
     const tot = val(R), sum = keysM.reduce((s, k) => s + (tot[k] || 0), 0);
-    return `<div class="sthd"><div><h3>업무 종류 비중${g0 ? ' · ' + esc(g0) : ''}</h3><div class="cap">${esc(m.R === R ? (V.custom ? '고른 기간' : stLab(V.unit, keys[keys.length - 1])) : '')} · ${unitT}</div></div><span class="sp"></span>${byBtns}</div>${chips}
+    return `<div class="sthd"><div><h3>업무 종류 비중${g0 ? ' · ' + esc(g0) : ''}</h3><div class="cap">${esc(V.custom ? '고른 기간' : stLab(V.unit, keys[keys.length - 1]))} · ${unitT}</div></div><span class="sp"></span>${byBtns}</div>${chips}
       <div class="leg">${keysM.map((k, i) => `<span><i style="background:${cols[i]}"></i>${esc(k)}</span>`).join('')}</div>${stMix(w, rows, keysM, cols)}${trend}
       ${one ? `<table class="list sttbl"><thead><tr><th>항목</th><th class="num">${by === 'n' ? '건수' : '분'}</th><th class="num">비중</th></tr></thead><tbody>${keysM.map(k => `<tr><td>${esc(k)}</td><td class="num">${fN(tot[k])}</td><td class="num">${sum ? (tot[k] / sum * 100).toFixed(1) + '%' : '-'}</td></tr>`).join('')}</tbody></table>` : ''}`;
   }
@@ -6667,7 +6681,6 @@ async function addCharts(buf, jobs) {
   }
   function renderSettings() {
     const main = $('#main'), me = S.me;
-    const ymOpts = S.periods.slice().reverse().map(p => `<option value="${p.ym}">${ymLabel(p.ym)}</option>`).join('');
     main.innerHTML = admHead('기간 · 백업 · 설정', 'settings', me.role === '관리자' ? '' : '<span class="muted">월 기간 설정 권한</span>') + `<div class="pgb"><div class="sgrid">
       ${me.period ? `<section class="card scard"><div class="sct"><b>월 기간 · 마감</b><span>귀속월 열기 · 마감 · 기간 수정</span></div>${periodBody()}</section>` : ''}
       <div class="scol">
