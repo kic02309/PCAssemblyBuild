@@ -882,7 +882,13 @@ header .me .tag{background:rgba(255,255,255,.12);border-radius:99px}
 .ph h1{white-space:nowrap}.ph button,.ph .chip,.ph .seg button,.ph .sel{white-space:nowrap}
 .lvtabs{top:var(--phh,84px)}
 @media (max-width:1400px){.ph{column-gap:10px}.ph h1{font-size:24px}}
-/* v28 */ .lvmine2{max-width:460px} .admseg button{white-space:nowrap}
+/* v28 */ .lvmine2{max-width:460px} .pfth{cursor:pointer;white-space:nowrap} .pfth:hover{color:var(--blue,#2f6bff)} .pfth.fon{background:#2f6bff!important;color:#fff!important}
+.pfpop{position:fixed;z-index:9000;background:var(--panel,#fff);border:1px solid var(--line,#e3e8ef);border-radius:12px;box-shadow:0 10px 30px rgba(15,27,61,.18);padding:10px;min-width:190px;max-width:260px}
+.pfpop .pft{font-weight:800;margin:2px 4px 6px}.pfpop .pfl{max-height:300px;overflow:auto}.pfpop label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:pointer;font-size:13.5px}
+.pfpop label:hover{background:rgba(47,107,255,.08)}.pfpop label span{flex:1}.pfpop label em{font-style:normal;color:var(--muted,#8a94a6);font-size:12px}.pfpop input{width:auto!important}
+.pfb{display:inline-block;padding:0 5px;margin-left:2px;border-radius:6px;cursor:pointer;font-weight:800;color:var(--muted,#8a94a6);border:1px solid transparent}.pfb:hover{border-color:var(--line,#d5dce6);color:var(--blue,#2f6bff)}.pfb.fon{background:#2f6bff;color:#fff}
+.pfrow{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}#mbody>.pfrow{display:flex;margin:0 2px 8px}.pfhint{font-size:12px}.pfrow .pfclr{white-space:nowrap}
+.pfpop .pfa{display:flex;gap:6px;justify-content:flex-end;margin-top:8px;border-top:1px solid var(--line,#e3e8ef);padding-top:8px} .admseg button{white-space:nowrap}
 /* DARK-AUTO-START */
 /* ---- 다크 자동 변환 (gen_dark.py) ---- */
 html[data-theme=dark] input:focus,html[data-theme=dark] select:focus{border-color:#32425c}
@@ -2874,7 +2880,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   function drawSum() {
     const d = D(), y = String(L.year), f = y + '-01-01', l = y + '-12-31', H = L.ix.H, own = !d.all, my = myStaff();
     const base = own ? (my ? [my] : []) : staffList();
-    const rows = base.map(s => {
+    const rows0 = base.map(s => {
       const all = d.leaves.filter(x => x.s === s.id && x.d2 >= f && x.d1 <= l), lv = all.filter(x => !isPend(x));
       const days = lv.filter(x => !x.t).reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);
       const tr = lv.filter(x => x.t).reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);
@@ -2882,14 +2888,19 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const du = (d.duty || []).filter(u => u.s === s.id && u.d.slice(0, 4) === y);
       return { s, days, half: lv.filter(x => x.h).length, tr, pend, sat: du.length, alt: du.filter(u => u.a).length, grant: s.grant, rem: s.grant != null ? s.grant - days : null, n: all.length };
     }).filter(r => own || r.s.roster || r.n || r.sat);
+    const SF2 = A.colFilter({ key: 'lvsum', scope: '.lvsum2', redraw: () => drawSum(), base: () => rows0, cols: [
+      ['grp', '그룹', r => r.s.grp, GORD], ['grade', '등급', r => r.s.grade, GRADES],
+      ['rem', '잔여', r => r.rem == null ? '' : r.rem < 0 ? '마이너스' : r.rem <= 2 ? '2일 이하' : '3일 이상', ['마이너스', '2일 이하', '3일 이상']]] });
+    const rows = SF2.filter(rows0);
     const k = L.sumSort || 'grp';
     const SK = { name: r => r.s.name, grp: r => orgKey(r.s), days: r => -r.days, sat: r => -r.sat, rem: r => r.rem == null ? 1e9 : r.rem };
     rows.sort((a, b) => { const x = SK[k](a), z = SK[k](b); return typeof x === 'string' ? LC.ko(x, z) : x - z; });
-    const th = (key, t, num) => `<th class="${num ? 'num ' : ''}sort${k === key ? ' on' : ''}" data-k="${key}">${t}</th>`;
-    body().innerHTML = `<div class="muted" style="margin-bottom:8px">${y}년 1~12월 · 잔여 = 부여일수 − 확정 연차</div>
-      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹')}<th>등급</th>${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num">훈련(일)</th>${th('sat', '토요근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1)}</tr></thead><tbody>
+    const th = (key, t, num, fk) => `<th class="${num ? 'num ' : ''}sort${k === key ? ' on' : ''}" data-k="${key}">${t}${fk && !own ? ' ' + SF2.ico(fk) : ''}</th>`;
+    body().innerHTML = `<div class="muted pfrow" style="margin-bottom:8px">${y}년 1~12월 · 잔여 = 부여일수 − 확정 연차 ${own ? '' : `<span class="muted">· ${rows.length}명</span>` + SF2.bar()}</div>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num">훈련(일)</th>${th('sat', '토요근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1, 'rem')}</tr></thead><tbody>
       ${rows.map((r, i) => (k === 'grp' ? A.ghd(rows, i, x => x.s.grp || '', 11, g => [g.length + '명', '연차 ' + g.reduce((a, x) => a + x.days, 0) + '일', '토요 ' + g.reduce((a, x) => a + x.sat, 0) + '회']) : '') + `<tr class="click gc" data-s="${r.s.id}" style="--gc:${A.gcol(r.s.grp)}"><td><b>${A.esc(r.s.name)}</b></td><td>${A.gdot(r.s.grp || '')}</td><td>${A.esc(r.s.grade || '')}</td><td class="num"><b>${r.days || ''}</b></td><td class="num muted">${r.pend || ''}</td><td class="num">${r.half || ''}</td><td class="num">${r.tr || ''}</td><td class="num">${r.sat || ''}</td><td class="num">${r.alt || ''}</td><td class="num">${r.grant == null ? '' : r.grant}</td><td class="num ${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '' : r.rem}</td></tr>`).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">자료 없음</td></tr>'}
       </tbody></table></div>`;
+    SF2.bind();
     A.$$('.lvsum2 th.sort').forEach(h => (h.onclick = () => { L.sumSort = h.dataset.k; drawSum(); }));
     A.$$('.lvsum2 tr[data-s]').forEach(tr => (tr.onclick = () => {
       const s = staffById(tr.dataset.s), lv = d.leaves.filter(x => x.s === s.id && x.d2 >= f && x.d1 <= l).sort((a, b) => LC.ko(a.d1, b.d1));
@@ -2910,6 +2921,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const d = D(), K = kv(), caps = K.caps || {};
     const q = (L.setQ || '').trim();
     const list = curList().filter(s => !q || s.name.includes(q) || (s.grp || '').includes(q) || (s.grade || '') === q);
+    const SF = A.colFilter({ key: 'lvset', scope: '.lvsetl', redraw: () => drawSet(), base: () => list.filter(s => s.roster || s.status !== '퇴사'), cols: [
+      ['grp', '그룹', s => s.grp, GORD], ['title', '직책', s => s.title], ['grade', '연차 등급', s => s.grade, GRADES], ['off', '토요제외', s => s.off],
+      ['roster', '토요명단', s => s.roster ? '포함' : '제외'], ['status', '상태', s => s.status]] });
     const sel = (cls, opts, v) => `<select class="${cls}">${opts.map(o => `<option ${o === (v || '') ? 'selected' : ''}>${o}</option>`).join('')}${v && !opts.includes(v) ? `<option selected>${A.esc(v)}</option>` : ''}</select>`;
     const row = s => `<tr data-id="${s.id}"><td><input class="f-name" value="${A.esc(s.name)}"></td><td><input class="f-grp w6" value="${A.esc(s.grp || '')}" list="lvgl"></td><td><input class="f-title w6" value="${A.esc(s.title || '')}"></td>
       <td>${sel('f-grade', [''].concat(GRADES), s.grade)}</td><td>${sel('f-off', OFFS, s.off)}</td><td style="text-align:center"><input type="checkbox" class="f-roster" ${s.roster ? 'checked' : ''}></td>
@@ -2920,10 +2934,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const own = d.owners || {};
     body().innerHTML = `
       <div class="lvset">
-        <div class="card"><div class="toolbar"><b>인원 (토요 명단)</b> <span class="muted">${curList().length}명 (토요명단 ${d.staff.filter(s => s.roster && s.cur !== false).length}) · 이름 · 그룹 · 연차 등급 · 토요명단 · 부여일수는 <b>[인원 관리]</b>에서 한 번에 고칩니다</span>
+        <div class="card"><div class="toolbar"><b>인원 (토요 명단)</b> <span class="muted">${curList().length}명 (토요명단 ${d.staff.filter(s => s.roster && s.cur !== false).length}) · 이름 · 그룹 · 연차 등급 · 토요명단 · 부여일수는 <b>[인원 관리]</b>에서 한 번에 고칩니다</span>${SF.bar()}
           <span style="flex:1"></span>${A.S.me && A.S.me.role === '관리자' ? '<button class="primary" id="lvgoppl">인원 관리로 가기</button>' : ''}</div>
-          <div style="max-height:calc(100vh - 330px);overflow:auto"><table class="list"><thead><tr><th>이름</th><th>그룹</th><th>직책</th><th>연차 등급</th><th>토요제외</th><th>토요명단</th><th>상태</th><th class="num">부여일수</th></tr></thead>
-          <tbody>${(() => { const L2 = list.filter(s => s.roster || s.status !== '퇴사'); return L2.map((s, i) => A.ghd(L2, i, x => x.grp || '', 8, g => [g.length + '명', '토요명단 ' + g.filter(x => x.roster).length]) + `<tr class="gc" style="--gc:${A.gcol(s.grp)}"><td><b>${A.esc(s.name)}</b></td><td>${A.gdot(s.grp || '')}</td><td>${A.esc(s.title || '')}</td><td>${A.esc(s.grade || '')}</td><td>${A.esc(s.off || '')}</td><td>${s.roster ? '✓' : '-'}</td><td>${A.esc(s.status || '')}</td><td class="num">${s.grant == null ? '' : s.grant}</td></tr>`).join(''); })()}</tbody></table></div></div>
+          <div style="max-height:calc(100vh - 330px);overflow:auto"><table class="list lvsetl"><thead><tr><th>이름</th>${['grp', 'title', 'grade', 'off', 'roster', 'status'].map(k => SF.th(k)).join('')}<th class="num">부여일수</th></tr></thead>
+          <tbody>${(() => { const L2 = SF.filter(list.filter(s => s.roster || s.status !== '퇴사')); return L2.map((s, i) => A.ghd(L2, i, x => x.grp || '', 8, g => [g.length + '명', '토요명단 ' + g.filter(x => x.roster).length]) + `<tr class="gc" style="--gc:${A.gcol(s.grp)}"><td><b>${A.esc(s.name)}</b></td><td>${A.gdot(s.grp || '')}</td><td>${A.esc(s.title || '')}</td><td>${A.esc(s.grade || '')}</td><td>${A.esc(s.off || '')}</td><td>${s.roster ? '✓' : '-'}</td><td>${A.esc(s.status || '')}</td><td class="num">${s.grant == null ? '' : s.grant}</td></tr>`).join(''); })()}</tbody></table></div></div>
         <div class="lvset2">
           <div class="card"><b>파트별 1차 확인 담당</b> <span class="muted">(인원 관리에서 변경)</span>
             <div class="lvown2">${['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원', '출력', '영상'].map(g => `<span><b>${g}</b> ${(own[g] || []).length ? A.esc(own[g].join(', ')) : '<span class="muted">없음 → 바로 관리자</span>'}</span>`).join('')}</div></div>
@@ -2939,6 +2953,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         </div>
       </div>`;
     if (A.$('#lvgoppl')) A.$('#lvgoppl').onclick = () => A.go('people');
+    SF.bind();
     if (A.$('#lvsq')) A.$('#lvsq').oninput = e => { L.setQ = e.target.value; const p = e.target.selectionStart; drawSet(); const i = A.$('#lvsq'); i.focus(); i.setSelectionRange(p, p); };
     const saveRow = tr => (tr._q = (tr._q || Promise.resolve()).then(() => saveRow1(tr)));   // 한 줄씩 차례로 (새 줄이 두 번 생기지 않게)
     const saveRow1 = async tr => {
@@ -3481,7 +3496,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   function renderPList() {
     const d = ST.data;
     const done = d.list.filter(x => x.rec && x.rec['상태'] === '완료').length, draft = d.list.filter(x => x.rec && x.rec['상태'] === '작성중').length;
-    const rows = d.list.map(x => {
+    const EF = A.colFilter({ key: 'hrev', scope: '#plist', base: () => d.list, redraw: () => renderPList(), cols: [
+      ['grade', '등급', x => x.person.grade], ['st', '상태', x => x.rec ? x.rec['상태'] || '작성중' : '미작성', ['완료', '작성중', '미작성']]] });
+    const rows = EF.filter(d.list).map(x => {
       const t = recTotal(x), dt = x.data, low = dt.달성률 !== null && dt.달성률 < 1;
       return `<tr class="${x.person.name === ST.sel ? 'on' : ''}" data-n="${esc(x.person.name)}">
         <td class="nm">${esc(x.person.name)}${x.person.role === '파트장' ? ' <span class="badge lead">파트장</span>' : ''}</td>
@@ -3494,9 +3511,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const sm = getSortMode();
     $('#plist').innerHTML = `<div class="plh">${ST.partSelHtml}<span class="muted">${d.list.length}명 · 완료 ${done} · 작성중 ${draft}</span><span style="flex:1"></span>
         <span class="sortsw"><button class="sm ${sm === 'name' ? 'on' : ''}" data-sort="name">가나다</button><button class="sm ${sm === 'join' ? 'on' : ''}" data-sort="join">입사순</button></span></div>
-      <table class="sum"><thead><tr><th>이름</th><th>등급</th><th>점수</th><th>일평균</th><th>달성</th><th>상태</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="6" class="muted">인원이 없습니다.</td></tr>'}</tbody>
+      ${EF.n() ? `<div class="pfrow">${EF.bar()}</div>` : ''}<table class="sum"><thead><tr><th>이름</th>${EF.th('grade')}<th>점수</th><th>일평균</th><th>달성</th>${EF.th('st')}</tr></thead>
+      <tbody>${rows || `<tr><td colspan="6" class="muted">${EF.n() ? '고른 조건에 맞는 인원이 없습니다.' : '인원이 없습니다.'}</td></tr>`}</tbody>
       <tfoot><tr><td>파트 평균</td><td></td><td class="c">${sc.length ? f1(avg(sc)) : '-'}</td><td class="c">${av.length ? f1(avg(av)) : '-'}</td><td></td><td class="c">${done}/${d.list.length}</td></tr></tfoot></table>`;
+    EF.bind();
     $('#plist').querySelectorAll('tbody tr[data-n]').forEach(el => (el.onclick = () => selectPerson(el.dataset.n)));
     $('#plist').querySelectorAll('[data-sort]').forEach(b => (b.onclick = () => { setSortMode(b.dataset.sort); d.list.sort((p, q) => cmpPeople(p, q)); renderPList(); }));
     if ($('#partSel')) $('#partSel').onchange = async e => { const v = e.target.value; e.target.value = ST.part; if (!(await guard())) return; ST.part = v; ST.sel = null; viewEval(); };
@@ -3760,22 +3778,24 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <div class="pcards">${byPart.map(b => `<div class="card pcard" data-pp="${esc(b.p.name)}" style="--gc:${A.gcol(b.p.name)}"><div class="t"><b><span class="gdot" style="background:${A.gcol(b.p.name)}"></span>${esc(b.p.name)}</b><span>${esc(b.p.manager)}</span><span style="flex:1"></span>
           ${b.n && b.done === b.n ? '<span class="badge done">완료</span>' : b.done + b.draft ? '<span class="badge draft">진행중</span>' : '<span class="badge none">시작 전</span>'}</div>
           <div class="bar"><i style="width:${b.n ? b.done / b.n * 100 : 0}%"></i></div><div class="s"><span>완료 <b>${b.done}</b> / ${b.n}명</span><span>작성중 ${b.draft} · 미작성 ${b.n - b.done - b.draft}</span></div></div>`).join('')}</div></section>
-      <section class="card dsec"><div class="dst"><b>인원별</b><span style="flex:1"></span>
-        <select id="ovPart" style="width:auto"><option value="">전체 파트</option>${parts.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
-        <select id="ovSt" style="width:auto"><option value="">전체 상태</option><option>완료</option><option>작성중</option><option>미작성</option><option value="diff">참고와 다름</option></select></div>
+      <section class="card dsec"><div class="dst"><b>인원별</b><span id="ovBar" class="pfrow"></span><span style="flex:1"></span></div>
         <div class="scroll"><table class="tbl" id="ovTbl"></table></div></section>`;
     body().querySelectorAll('[data-pp]').forEach(c => (c.onclick = () => { ST.part = c.dataset.pp; ST.sel = null; ST.tab = 'eval'; go('eval'); }));
+    const OF = A.colFilter({ key: 'hrov', scope: '#ovTbl', base: () => d.list, redraw: () => draw(), cols: [
+      ['part', '파트', x => x.person.part, parts.map(p => p.name)], ['role', '직책', x => x.person.role], ['grade', '등급', x => x.person.grade], ['st', '상태', x => st(x), ['완료', '작성중', '미작성']],
+      ['diff', '참고와 다름', x => diffCount(x) ? '있음' : '없음', ['있음', '없음']], ['by', '작성자', x => x.rec ? x.rec['작성자'] : '']] });
     const draw = () => {
-      const fp = $('#ovPart').value, fs = $('#ovSt').value;
-      const rows = d.list.filter(x => (!fp || x.person.part === fp) && (!fs || (fs === 'diff' ? diffCount(x) > 0 : st(x) === fs)));
-      $('#ovTbl').innerHTML = `<thead><tr><th>파트</th><th>이름</th><th>직책</th><th class="c">등급</th><th class="c">상태</th><th class="r">합계</th><th class="c">참고와 다름</th><th class="r">일평균</th><th class="r">달성률</th><th>작성자</th><th>저장 시각</th><th></th></tr></thead><tbody>` +
+      const rows = OF.filter(d.list);
+      $('#ovBar').innerHTML = `<span class="muted">${rows.length}명</span>` + OF.bar();
+      $('#ovTbl').innerHTML = `<thead><tr>${OF.th('part')}<th>이름</th>${OF.th('role')}${OF.th('grade', 'c')}${OF.th('st', 'c')}<th class="r">합계</th>${OF.th('diff', 'c')}<th class="r">일평균</th><th class="r">달성률</th>${OF.th('by')}<th>저장 시각</th><th></th></tr></thead><tbody>` +
         rows.map(x => { const dc = diffCount(x); return `<tr class="gc" style="--gc:${A.gcol(x.person.part)}"><td>${A.gdot(x.person.part)}</td><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td class="c">${esc(x.person.grade || '-')}</td>
           <td class="c">${stBadge(st(x))}</td><td class="r"><b>${x.rec ? dash(x.rec['합계']) : '-'}</b></td><td class="c ${dc ? 'dif' : ''}">${dc ? dc + '칸' : ''}</td>
           <td class="r">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td class="r">${pct(x.data.달성률)}</td><td>${x.rec ? esc(x.rec['작성자']) : ''}</td><td class="muted">${x.rec ? esc(String(x.rec['저장시각'] || '').slice(5, 16)) : ''}</td>
           <td class="r"><button class="sm" data-open="${esc(x.person.name)}" data-part="${esc(x.person.part)}">열기</button></td></tr>`; }).join('') + '</tbody>';
+      OF.bind();
       $('#ovTbl').querySelectorAll('[data-open]').forEach(b => (b.onclick = () => { ST.part = b.dataset.part; ST.sel = b.dataset.open; ST.tab = 'eval'; document.querySelectorAll('#hrTabs [data-hrt]').forEach(t => t.classList.toggle('on', t.dataset.hrt === 'eval')); viewEval(true); }));
     };
-    $('#ovPart').onchange = draw; $('#ovSt').onchange = draw; draw();
+    draw();
   }
 
   // ============================================================ 매니저 — 우리 파트 현황
@@ -3785,19 +3805,25 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     d.list.sort((a, b) => cmpPeople(a, b));
     const done = d.list.filter(x => x.rec && x.rec['상태'] === '완료').length;
     const all = usedItems(d.items, { role: '전체' });
-    body().innerHTML = `<section class="card dsec"><div class="dst"><b>${esc(d.part)} · ${ymLab(d.month)} (${done} / ${d.list.length} 완료)</b>
+    const MF = A.colFilter({ key: 'hrmy', scope: '#myTbl', base: () => d.list, redraw: () => drawMy(), cols: [
+      ['role', '직책', x => x.person.role], ['grade', '등급', x => x.person.grade], ['st', '상태', x => x.rec ? x.rec['상태'] || '작성중' : '미작성', ['완료', '작성중', '미작성']]] });
+    const drawMy = () => {
+    body().innerHTML = `<section class="card dsec"><div class="dst"><b>${esc(d.part)} · ${ymLab(d.month)} (${done} / ${d.list.length} 완료)</b><span class="pfrow">${MF.n() ? `<span class="muted">${MF.filter(d.list).length}명</span>` : ''}${MF.bar()}</span>
         ${parts.length > 1 ? `<select id="mpPart" style="width:auto">${parts.map(p => `<option ${p === ST.part ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select>` : ''}<span style="flex:1"></span><button class="primary" id="myDl">우리 파트 엑셀 받기</button></div>
-      <div class="scroll"><table class="tbl"><thead><tr><th>이름</th><th>직책</th><th class="c">등급</th><th class="c">상태</th>${all.map(it => `<th class="c">${esc(it.name)}</th>`).join('')}<th class="c">합계</th><th class="r">일평균</th><th class="r">달성률</th></tr></thead><tbody>
-      ${d.list.map(x => { const r = x.rec || {}, its = usedItems(d.items, x.person);
+      <div class="scroll"><table class="tbl" id="myTbl"><thead><tr><th>이름</th>${MF.th('role')}${MF.th('grade', 'c')}${MF.th('st', 'c')}${all.map(it => `<th class="c">${esc(it.name)}</th>`).join('')}<th class="c">합계</th><th class="r">일평균</th><th class="r">달성률</th></tr></thead><tbody>
+      ${MF.filter(d.list).map(x => { const r = x.rec || {}, its = usedItems(d.items, x.person);
         return `<tr><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td class="c">${esc(x.person.grade || '-')}</td><td class="c">${stBadge(r['상태'])}</td>
           ${all.map(it => `<td class="c">${its.find(q => q.no === it.no) ? dash(r['점수' + it.no]) : ''}</td>`).join('')}
           <td class="c"><b>${dash(r['합계'])}</b></td><td class="r">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td class="r">${pct(x.data.달성률)}</td></tr>`; }).join('')}
       </tbody></table></div></section>`;
+    MF.bind();
     if ($('#mpPart')) $('#mpPart').onchange = e => { ST.part = e.target.value; viewMyPart(); };
     $('#myDl').onclick = async () => {
       try { busy(true, '엑셀 만드는 중…'); await libs('ExcelJS'); const hist = (await api('hrHist12', { month: d.month })).map; const blob = await buildWorkbook(d.month, d.items, d.list, d.order, hist); const [y, m] = d.month.split('-'); A.saveBlob(blob, `인사평가_${d.part}_${y.slice(2)}년${+m}월.xlsx`); }
       catch (e) { toast(e.message, 1); } finally { busy(false); }
     };
+    };
+    drawMy();
   }
 
   // ============================================================ 근태 (매니저 · 관리자)
@@ -6106,11 +6132,16 @@ async function addCharts(buf, jobs) {
   }
   function rateCls(v) { return v == null ? '' : v >= 0.9 ? 'r-hi' : v <= 0.5 ? 'r-lo' : 'r-mid'; }
   function renderMList(r) {
-    const xym = r.period ? r.period.ym : null, list = S._mlist, today = S.today;
+    const xym = r.period ? r.period.ym : null, today = S.today;
     let prevWork = C.addDays(today, -1); while ([0, 6].includes(new Date(prevWork + 'T00:00:00').getDay())) prevWork = C.addDays(prevWork, -1);   // 월요일엔 금요일
-    const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}</th>`;
-    $('#mbody').innerHTML = `
-      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' ? 236 : 190}px)">
+    const MF = colFilter({ key: 'mlist', scope: '.mlist', base: () => S._mlist, redraw: () => renderMList(r), cols: [
+      ['group', '그룹', u => u.group, r.groups], ['role', '권한', u => u.role, ['일반', '매니저', '관리자']], ['target', '목표', u => u.target || '', C.TARGETS.map(String)],
+      ['last', '마지막 입력', u => !u.last ? '입력 없음' : u.last < prevWork ? '밀림 (전 근무일보다 전)' : '최근 입력', ['최근 입력', '밀림 (전 근무일보다 전)', '입력 없음']],
+      ['c8', '달성률', u => !(u.target && u.items.length) ? '' : u.m.c8 >= 0.9 ? '90% 이상' : u.m.c8 > 0.5 ? '51~89%' : '50% 이하', ['90% 이상', '51~89%', '50% 이하']]] });
+    const list = MF.filter(S._mlist);
+    const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}${['group', 'target', 'last', 'c8'].includes(k) ? ' ' + MF.ico(k) : k === 'name' ? ' ' + MF.ico('role') : ''}</th>`;
+    $('#mbody').innerHTML = `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}</div>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' ? 266 : 220}px)">
       <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '총 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률')}<th></th></tr></thead><tbody>
       ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
@@ -6127,6 +6158,7 @@ async function addCharts(buf, jobs) {
         <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' && !isRO() ? '<button data-a="edit" title="이름·그룹·권한 변경, 비밀번호 초기화, 계정 삭제">편집</button>' : ''}</td></tr>`;
       }).join('') || '<tr><td colspan="11" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
+    MF.bind();
     $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; drawManage(r, S.manageYm || (r.period || {}).ym, false); }));
     $$('.mlist select.mtg').forEach(sel => (sel.onchange = async () => {
       const u = S._mlist.find(x => x.id === sel.closest('tr').dataset.u), v = +sel.value || 0;   // '-' = 목표 지우기
@@ -7066,20 +7098,65 @@ async function addCharts(buf, jobs) {
     $$('[data-pt]').forEach(b => (b.onclick = () => { S.pTab = b.dataset.pt; try { sessionStorage.setItem('pTab', S.pTab); } catch (e) { } drawPeople(); }));
     if (S.pTab === 'org') drawOrg(); else drawPList();
   }
+  // v28.1 : 엑셀 필터처럼 열 제목을 눌러 값 고르기 (여러 화면 공용)
+  //  colFilter({ key, cols:[[k,'제목',x=>값]], base:()=>다른 조건까지 거른 목록, redraw, scope:'.표클래스' })
+  function colFilter(o) {
+    const st = () => { S.cf = S.cf || {}; return (S.cf[o.key] = S.cf[o.key] || {}); };
+    const col = k => o.cols.find(c => c[0] === k);
+    const val = (k, x) => { const v = col(k)[2](x); return v == null || v === '' ? '(빈칸)' : String(v); };
+    const ok = (x, skip) => Object.entries(st()).every(([k, set]) => k === skip || !set.length || !col(k) || set.includes(val(k, x)));
+    const n = () => Object.values(st()).filter(v => v.length).length;
+    const on = k => (st()[k] || []).length ? 'fon' : '';
+    const F = {
+      ok, n, filter: arr => arr.filter(x => ok(x)),
+      th: (k, cls) => `<th data-fk="${k}" class="pfth ${cls || ''} ${on(k)}">${col(k)[1]} ▾</th>`,        // 칸 전체를 누르면 필터
+      ico: k => `<b data-fk="${k}" class="pfb ${on(k)}" title="골라 보기">▾</b>`,                     // 정렬되는 제목 옆에 붙는 작은 ▾
+      bar: () => n() ? `<button class="sm pfclr" data-cfclr="${o.key}">필터 ${n()}개 해제 ✕</button>` : '<span class="muted pfhint">열 제목 ▾ 를 누르면 골라 볼 수 있습니다</span>',
+      bind() {
+        $$(o.scope + ' [data-fk]').forEach(el => (el.onclick = e => { e.stopPropagation(); pop(el, el.dataset.fk); }));
+        $$(`[data-cfclr="${o.key}"]`).forEach(b => (b.onclick = () => { S.cf[o.key] = {}; closeAll(); o.redraw(); }));
+      },
+    };
+    const closeAll = () => document.querySelectorAll('.pfpop').forEach(e => e.remove());
+    function pop(el, k) {
+      closeAll();
+      const cnt = {}; o.base().filter(x => ok(x, k)).forEach(x => { const v = val(k, x); cnt[v] = (cnt[v] || 0) + 1; });
+      const ord = col(k)[3];        // 값 순서를 정해 둔 열 (없으면 가나다)
+      const vals = Object.keys(cnt).sort((a, b) => a === '(빈칸)' ? 1 : b === '(빈칸)' ? -1 : ord ? (ord.indexOf(a) + 1 || 99) - (ord.indexOf(b) + 1 || 99) || a.localeCompare(b, 'ko') : a.localeCompare(b, 'ko', { numeric: true }));
+      const cur = st()[k] || [];
+      cur.forEach(v => { if (!(v in cnt)) { vals.push(v); cnt[v] = 0; } });
+      const p = document.createElement('div'); p.className = 'pfpop';
+      p.innerHTML = `<div class="pft">${col(k)[1]}</div><div class="pfl">${vals.map(v => `<label><input type="checkbox" value="${esc(v)}" ${cur.includes(v) ? 'checked' : ''}><span>${esc(v)}</span><em>${cnt[v]}</em></label>`).join('') || '<div class="muted">값 없음</div>'}</div>
+        <div class="pfa"><button data-x>이 열 해제</button><button class="primary" data-c>닫기</button></div>`;
+      document.body.appendChild(p);
+      const r = el.getBoundingClientRect(); p.style.top = Math.min(r.bottom + 4, innerHeight - p.offsetHeight - 10) + 'px'; p.style.left = Math.max(10, Math.min(r.left, innerWidth - p.offsetWidth - 10)) + 'px';
+      const reopen = () => { const n2 = document.querySelector(`${o.scope} [data-fk="${k}"]`); if (n2) pop(n2, k); };
+      p.querySelectorAll('input').forEach(i => (i.onchange = () => { st()[k] = [...p.querySelectorAll('input:checked')].map(x => x.value); o.redraw(); reopen(); }));
+      p.querySelector('[data-x]').onclick = () => { delete st()[k]; p.remove(); o.redraw(); };
+      p.querySelector('[data-c]').onclick = () => p.remove();
+      setTimeout(() => { const off = e => { if (!document.body.contains(p)) return document.removeEventListener('mousedown', off); if (!p.contains(e.target) && !e.target.closest('[data-fk]')) { p.remove(); document.removeEventListener('mousedown', off); } }; document.addEventListener('mousedown', off); }, 0);
+    }
+    return F;
+  }
+  const PCOL = [['title', '직책', x => x.title], ['rank', '직급', x => x.rank], ['level', '레벨', x => x.level], ['status', '상태', x => x.status], ['job', '세부직무', x => x.job],
+    ['lvg', '연차 등급', x => x.lv_grade], ['sat', '토요', x => x.in_roster ? '포함' : '제외'], ['hrg', '평가 등급', x => x.hr_use ? (x.hr_grade || '-') : '대상 아님'],
+    ['acct', '계정', x => !x.acct ? '미등록' : x.acct.nopin ? '비밀번호 없음' : x.acct.tmp ? '임시 비밀번호' : '등록됨']];
+  const pBase = () => { const P = S._ppl, g = S.pG || '', f = S.pF || ''; return P.rows.filter(x => (!g || x.grp === g) && (!f || (f === 'y') === !!x.acct || (f === 'hr' && x.hr_use) || (f === 'sat' && x.in_roster))); };
+  const PF = colFilter({ key: 'ppl', cols: PCOL, base: pBase, redraw: () => drawPList(), scope: '.plist' });
   function drawPList() {
     const P = S._ppl, g = S.pG || '', f = S.pF || '';
-    const rows = P.rows.filter(x => (!g || x.grp === g) && (!f || (f === 'y') === !!x.acct || (f === 'hr' && x.hr_use) || (f === 'sat' && x.in_roster))).slice()
+    const rows = PF.filter(pBase())
       .sort((a, b) => (P.groups.indexOf(a.grp) - P.groups.indexOf(b.grp)) || listRank(a) - listRank(b) || (a.empno ? String(a.empno).padStart(12, '0') : '999999999999').localeCompare((b.empno ? String(b.empno).padStart(12, '0') : '999999999999')) || a.name.localeCompare(b.name, 'ko'));
     const acc = x => !x.acct ? '<span class="muted">미등록</span>' : (x.acct.role !== '일반' ? '<span class="rtag">' + esc(x.acct.role) + '</span> ' : '') + (x.acct.nopin ? '<span class="rtag" style="background:#fdecea;color:#c62828">비밀번호 없음</span>' : x.acct.tmp ? '<span class="rtag">임시 비밀번호</span>' : '등록됨');
     $('#pbody').innerHTML = `<div class="toolbar">
         <input id="pq" placeholder="이름 검색" value="${esc(S.pQ || '')}" style="width:150px">
         <select id="pg"><option value="">전체 그룹</option>${P.groups.map(x => `<option ${x === g ? 'selected' : ''}>${x}</option>`).join('')}</select>
         <select id="pf"><option value="">전체</option><option value="y" ${f === 'y' ? 'selected' : ''}>등록함</option><option value="n" ${f === 'n' ? 'selected' : ''}>아직 등록 안 함</option><option value="hr" ${f === 'hr' ? 'selected' : ''}>인사평가 대상</option><option value="sat" ${f === 'sat' ? 'selected' : ''}>토요 명단</option></select>
-        <span class="muted" id="pcnt">${rows.length}명</span><span style="flex:1"></span>
+        <span class="muted" id="pcnt">${rows.length}명</span>${PF.bar()}<span style="flex:1"></span>
         ${isAdm0() && !isRO() ? `<label class="btn-file" title="처음 한 번 조직도 엑셀(조립팀 시트)로 명단을 채울 때만"><input type="file" id="rsfile" accept=".xlsm,.xlsx,.xls" hidden><span>조직도 엑셀로 한 번에 넣기…</span></label>` : ''}
         ${isRO() ? '' : '<button class="primary" id="padd">+ 인원 추가</button>'}</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 230px)"><table class="list plist" style="min-width:1100px"><thead><tr>
-        <th>이름</th><th>그룹</th><th>직책</th><th>직급</th><th>레벨</th><th>상태</th><th>세부직무</th><th>사번</th><th>연차 등급</th><th>토요</th><th>평가 등급</th><th>계정</th></tr></thead><tbody>
+        <th>이름</th><th>그룹</th>${PCOL.slice(0, 5).map(c => PF.th(c[0])).join('')}<th>사번</th>${PCOL.slice(5).map(c => PF.th(c[0])).join('')}</tr></thead><tbody>
       ${rows.map((x, i) => ghd(rows, i, y => y.grp, 12, g => [g.length + '명', '등록 ' + g.filter(y => y.acct).length]) + `<tr data-n="${esc(x.name)}" class="gc" style="cursor:pointer;--gc:${gcol(x.grp)}"><td><b>${esc(x.disp || x.name)}</b></td><td>${gdot(x.grp)}</td><td>${esc(x.title)}</td><td>${esc(x.rank)}</td><td>${esc(x.level)}</td>
         <td>${esc(x.status)}</td><td>${esc(x.job)}</td><td>${esc(x.empno)}</td><td>${esc(x.lv_grade)}</td><td>${x.in_roster ? '✓' : '<span class="muted">-</span>'}</td>
         <td>${x.hr_use ? esc(x.hr_grade || '-') : '<span class="muted">대상 아님</span>'}</td><td>${acc(x)}</td></tr>`).join('')}<tr id="pnone" style="display:none"><td colspan="12" class="muted" style="padding:20px">없음</td></tr>
@@ -7099,6 +7176,7 @@ async function addCharts(buf, jobs) {
     applyQ();
     $('#pg').onchange = e => { S.pG = e.target.value; drawPList(); };
     $('#pf').onchange = e => { S.pF = e.target.value; drawPList(); };
+    PF.bind();
     if ($('#padd')) $('#padd').onclick = () => personEdit(null);
     $$('.plist tbody tr[data-n]').forEach(tr => (tr.onclick = () => personEdit(P.rows.find(x => x.name === tr.dataset.n))));
     if ($('#rsfile')) $('#rsfile').onchange = async e => {
@@ -7362,8 +7440,8 @@ async function addCharts(buf, jobs) {
     if (S.target && v !== 'input') { if (!(await saveFirst())) { history.pushState({ v: S.view }, ''); return; } S.target = null; S.day = null; }
     go(v, { _pop: true });
   });
-  if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd });
-  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot });
+  if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter });
+  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter });
   boot();
 })();
 </script>
