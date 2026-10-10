@@ -902,6 +902,9 @@ details.hrold{margin-top:10px}details.hrold>summary{cursor:pointer;font-weight:7
 .lvcal2 [draggable=true]{cursor:grab}.lvcal2.dnd .lvd2:not(.dropok){opacity:.55}.lvd2.dropok{outline:2px dashed #2b8a3e;outline-offset:-2px;background:rgba(43,138,62,.07)!important}.lvd2.dropon{background:rgba(43,138,62,.22)!important}
 #lvundo{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9500;background:#1d2433;color:#fff;border-radius:12px;padding:10px 12px 10px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px}
 #lvundo button{background:#2f6bff;color:#fff;border:0;border-radius:99px;padding:6px 14px;font-weight:800;cursor:pointer}
+.lvhd2 .hcap{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;color:#b45309;background:#fff4e5;border-radius:99px;padding:0 7px;vertical-align:1px}
+.lvd2 .n.full{background:#fff1e0;color:#c2410c}
+html[data-theme=dark] .lvhd2 .hcap{background:#3a2a14;color:#f6b26b}html[data-theme=dark] .lvd2 .n.full{background:#3a2a14;color:#f6b26b}
 /* v28 */ .lvmine2{max-width:460px} .pfth{cursor:pointer;white-space:nowrap} .pfth:hover{color:var(--blue,#2f6bff)} .pfth.fon{background:#2f6bff!important;color:#fff!important}
 .pfpop{position:fixed;z-index:9000;background:var(--panel,#fff);border:1px solid var(--line,#e3e8ef);border-radius:12px;box-shadow:0 10px 30px rgba(15,27,61,.18);padding:10px;min-width:190px;max-width:260px}
 .pfpop .pft{font-weight:800;margin:2px 4px 6px}.pfpop .pfl{max-height:300px;overflow:auto}.pfpop label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:pointer;font-size:13.5px}
@@ -2331,7 +2334,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span>${own ? '<span class="lv me">나</span>' : ''}
       <span class="lb" style="margin-left:10px">토요근무 · 대체휴무 = 같은 주 같은 색</span>
       <span style="flex:1"></span><span class="muted">${d.canEdit ? '빈 곳을 끌어 등록 · 이름을 끌어 옮기기 · 이름 눌러 수정' : own && myStaff() ? '날짜를 끌어 신청 · 이름 눌러 보기' : '이름을 누르면 내용 보기'}</span></div>`;
-    html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map(w => `<div class="${w === '토' ? 'sat' : ''}">${w}요일${w === '토' ? '' : '<div class="sub"><span>연차</span><span>대체</span></div>'}</div>`).join('')}</div>`;
+    html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = d.all && i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
+      return `<div class="${w === '토' ? 'sat' : ''}">${w}요일${cp ? `<span class="hcap">상한 ${cp}명</span>` : ''}${w === '토' ? '' : '<div class="sub"><span>연차</span><span>대체</span></div>'}</div>`; }).join('')}</div>`;
     weeks.forEach(days => {
       html += '<div class="lvwk2">';
       days.forEach((dd, i) => {
@@ -2345,7 +2349,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         const c = LC.dayCell(L.ix, dd), cap = d.all ? capOf(dd) : 0, over = cap && c.off > cap;
         const lv = c.lv.filter(x => pf(x.s)), al = c.al.filter(x => pf(x.s));
         html += `<div class="lvd2${other ? ' other' : ''}${hol ? ' hol' : ''}${over ? ' over' : ''}" data-d="${dd}">
-          <div class="hd"><b class="dn">${md(dd)}</b>${hol ? `<span class="hn">${A.esc(hol)}</span>` : ''}${d.all && L.part ? (lv.length + al.length ? `<span class="n">휴무 ${lv.length + al.length}</span>` : '') : d.all && (c.off || cap) ? `<span class="n${over ? ' red' : ''}">휴무 ${c.off}${cap ? '/' + cap : ''}</span>` : ''}</div>
+          <div class="hd"><b class="dn">${md(dd)}</b>${hol ? `<span class="hn">${A.esc(hol)}</span>` : ''}${d.all && L.part ? (lv.length + al.length ? `<span class="n">휴무 ${lv.length + al.length}</span>` : '') : d.all && (c.off || cap) ? `<span class="n${over ? ' red' : cap && c.off === cap ? ' full' : ''}">휴무 ${c.off}${cap ? '/' + cap : ''}</span>` : ''}</div>
           <div class="dbody"><div class="rw">${lv.map(x => chipHtml(x, own)).join('')}</div>
           <div class="rw ar">${al.map(x => `<span class="sw ${satColor(x.u.d)}${own && myStaff() && x.u.s === myStaff().id ? ' me' : ''}" data-u="${x.u.d}|${x.u.s}" title="${A.esc(x.name)} · ${md(x.u.d)} 토요근무의 대체휴무">${A.esc(x.name)}</span>`).join('')}</div></div></div>`;
       });
