@@ -1740,6 +1740,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       (duty[u.d] = duty[u.d] || []).push(u);
       if (u.a) (alt[u.a] = alt[u.a] || []).push(u);
     });
+    // v28.5 : 토요근무 명단은 어디서나 등급 순(매니저 → 파트장 → A → B → C → 정리 → 안정화 → 출력 → D) → 이름 순
+    Object.values(duty).forEach(L => L.sort((a, b) => { const A = S[a.s] || {}, B = S[b.s] || {}; return (sortRank(A.grade) - sortRank(B.grade)) || binCmp(A.name || '', B.name || ''); }));
     return { S, H, byDate, duty, alt, managers: new Set((data.kv && data.kv.managers) || []) };
   }
   // 하루 칸 : 연차(정렬된 표시 이름) / 대체휴무 / 휴무 인원
