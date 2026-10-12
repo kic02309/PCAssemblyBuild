@@ -663,6 +663,14 @@ button.big{padding:9px 18px;font-size:14.5px;font-weight:800}
 .hrw .pv .hd{background:#e2efda;font-weight:700;font-size:14px}.hrw .pv .lb{background:#dde8f3;font-weight:700}.hrw .pv .gr{background:#f2f2f2;font-weight:700;white-space:nowrap;font-size:11px}
 .hrw .pv .ye{background:#ffff00}.hrw .pv .left{text-align:left}.hrw .pv .sc{font-family:"Arial Black",Arial,sans-serif;font-weight:900;font-size:13px}
 .hrw .pv .or{background:#ffc000}.hrw .pv .bl{background:#bdd7ee}.hrw .pv svg{border:1px solid #d9d9d9;background:#fff;display:block}
+/* v28.6 : 인사평가 미리보기 — 크게 · 화면 폭에 맞춰 늘고 줄어듦 (좁으면 그래프가 아래로) */
+.hr-ov.hrw .hr-modal{max-width:1760px;width:97vw;padding:20px 22px}
+.hrw .pv{grid-template-columns:minmax(0,1.32fr) minmax(0,1fr);gap:18px;font-family:inherit;font-size:14px;overflow:visible}
+.hrw .pv td,.hrw .pv th{font-size:14px;height:32px;padding:4px 6px;line-height:1.35;word-break:keep-all}
+.hrw .pv .hd{font-size:17px;height:36px}.hrw .pv .gr{font-size:13px}.hrw .pv .sc{font-size:16px}.hrw .pv td.left.dsc{font-size:13px}
+.hrw .pv svg{width:100%;height:auto}.hrw .pv>div:last-child{display:flex;flex-direction:column;gap:10px}
+@media (max-width:1500px){.hrw .pv{grid-template-columns:1fr}.hrw .pv>div:last-child{display:grid;grid-template-columns:1fr 1fr}.hrw .pv>div:last-child table{grid-column:1/3}}
+@media print{@page{size:A4 landscape;margin:8mm}body:has(.hr-ov.hrw)>:not(.hr-ov){display:none!important}.hr-ov.hrw .hr-modal{width:auto;max-width:none;zoom:.76;box-shadow:none}.hrw .pv{grid-template-columns:760px 560px!important;gap:14px;font-size:12px}.hrw .pv td,.hrw .pv th{font-size:12px;height:24px;padding:3px 4px}.hrw .pv .hd{font-size:14px;height:auto}.hrw .pv td.left.dsc{font-size:11px}.hrw .pv>div:last-child{display:block!important}.hrw .pv svg{width:560px}}
 @media print{.lay>.side,.hrt,.ph,.no-print{display:none!important}.hr-ov{position:static;background:none;padding:0}.hr-modal{padding:0}}
 /* 백업 */
 .bktbl td:last-child{text-align:right;white-space:nowrap}
@@ -3809,10 +3817,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const step = (max - min) / 5;
     const x = i => L + iw * (i + 0.5) / 12, y = v => T + ih * (1 - (v - min) / (max - min));
     let g = '';
-    for (let k = 0; k <= 5; k++) { const v = min + step * k, yy = y(v); g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="#dfe3e6"/><text x="${L - 4}" y="${yy + 3}" font-size="9" text-anchor="end" fill="#555">${fmt(v)}</text>`; }
-    for (let i = 0; i < 12; i++) g += `<text x="${x(i)}" y="${Hh - 8}" font-size="9" text-anchor="middle" fill="#555">${i + 1}월</text>`;
+    for (let k = 0; k <= 5; k++) { const v = min + step * k, yy = y(v); g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="#dfe3e6"/><text x="${L - 4}" y="${yy + 3}" font-size="10.5" text-anchor="end" fill="#555">${fmt(v)}</text>`; }
+    for (let i = 0; i < 12; i++) g += `<text x="${x(i)}" y="${Hh - 8}" font-size="10.5" text-anchor="middle" fill="#555">${i + 1}월</text>`;
     let path = '', dots = '';
-    vals.forEach((v, i) => { if (v === null) return; path += (path ? 'L' : 'M') + x(i) + ' ' + y(v) + ' '; dots += `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${color}"/><text x="${x(i)}" y="${y(v) - 7}" font-size="9" text-anchor="middle">${fmt(v)}</text>`; });
+    vals.forEach((v, i) => { if (v === null) return; path += (path ? 'L' : 'M') + x(i) + ' ' + y(v) + ' '; dots += `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${color}"/><text x="${x(i)}" y="${y(v) - 7}" font-size="10.5" font-weight="700" text-anchor="middle">${fmt(v)}</text>`; });
     return { g, path, dots, W, H: Hh };
   }
   async function openPreview(x) {
@@ -3830,25 +3838,25 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const cls = it.sign < 0 ? 'bl' : '', v = num(sc[it.no - 1]);
       return `<tr>${i === 0 ? `<td rowspan="${g.items.length}" class="${cls}" style="font-weight:700">${esc(g.name)}</td>` : ''}
         <td class="${cls}">${esc(it.name)}</td><td class="${cls}">${it.sign < 0 ? '감점' : esc(it.max) + ' 점'}</td>
-        <td class="left ${cls}" colspan="8" style="font-size:11px">${esc(it.desc)}</td><td class="sc ${cls}">${v === null ? '' : (it.sign < 0 && v ? '-' + v : v)}</td></tr>`;
+        <td class="left dsc ${cls}" colspan="8">${esc(it.desc)}</td><td class="sc ${cls}">${v === null ? '' : (it.sign < 0 && v ? '-' + v : v)}</td></tr>`;
     }).join('')).join('');
     const d = x.data;
     const c1 = lineSvg(sVals, '#1F6FB2', v => Math.round(v) + '점', 50, 100), c2 = lineSvg(qVals, '#D1662B', v => (+v).toFixed(1) + '대');
-    const svg = (c, title, color) => `<svg width="${c.W}" height="${c.H}" viewBox="0 0 ${c.W} ${c.H}"><text x="${c.W / 2}" y="20" font-size="14" font-weight="700" text-anchor="middle">${title}</text>${c.g}<path d="${c.path}" fill="none" stroke="${color}" stroke-width="2"/>${c.dots}</svg>`;
+    const svg = (c, title, color) => `<svg viewBox="0 0 ${c.W} ${c.H}" preserveAspectRatio="xMidYMid meet"><text x="${c.W / 2}" y="20" font-size="14" font-weight="700" text-anchor="middle">${title}</text>${c.g}<path d="${c.path}" fill="none" stroke="${color}" stroke-width="2"/>${c.dots}</svg>`;
     const td = v => `<td>${dash(v)}</td>`;
     bigModal(`<div class="row no-print" style="margin-bottom:10px;gap:10px"><h2 style="margin:0">미리보기 · ${esc(p.name)} (${month})</h2><span class="muted">저장 전 내용 기준 · 사진·가점 등은 엑셀에 표시</span><button class="sm" id="pvPrint">인쇄</button></div>
     <div class="pv"><div>
-      <table><colgroup><col style="width:62px"><col style="width:104px"><col style="width:50px"><col span="8" style="width:54px"><col style="width:80px"></colgroup>
+      <table><colgroup><col style="width:9%"><col style="width:15%"><col style="width:8%"><col span="8" style="width:7%"><col style="width:12%"></colgroup>
         <tr><td class="hd" colspan="12">인사평가표</td></tr><tr><th>구분</th><th>평가 요소</th><th>총 점</th><th colspan="8">평가 기준</th><th>평가 점수</th></tr>
         ${itemRows}
-        <tr><td class="or" style="font-weight:700">추가평가</td><td class="or">미래성과평가</td><td class="or">가점</td><td class="or left" colspan="8" style="font-size:11px">엑셀에서 입력</td><td class="or"></td></tr>
+        <tr><td class="or" style="font-weight:700">추가평가</td><td class="or">미래성과평가</td><td class="or">가점</td><td class="or left dsc" colspan="8">엑셀에서 입력</td><td class="or"></td></tr>
         <tr><td colspan="10" style="border-right:none"></td><td style="font-weight:700">총점</td><td class="sc" style="color:#d1662b">${tot}</td></tr></table>
-      <table style="margin-top:8px"><colgroup><col style="width:60px"><col span="12"></colgroup><tr><td class="hd" colspan="13">인사평가표</td></tr>
+      <table style="margin-top:10px"><colgroup><col style="width:10%"><col span="12"></colgroup><tr><td class="hd" colspan="13">인사평가표</td></tr>
         <tr><td class="lb" rowspan="2">평가점수</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
         <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${sVals[i] === null ? '' : Math.round(sVals[i]) + ' 점'}</td>`).join('')}</tr>
         <tr><td class="lb" rowspan="2">평균수량</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
         <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${qVals[i] === null ? '' : qVals[i].toFixed(1) + ' 대'}</td>`).join('')}</tr></table>
-      <table style="margin-top:8px"><colgroup><col style="width:60px"><col style="width:84px"><col style="width:70px"><col></colgroup><tr><td class="hd" colspan="4">월 간 총 평</td></tr>
+      <table style="margin-top:10px"><colgroup><col style="width:12%"><col style="width:15%"><col style="width:12%"><col></colgroup><tr><td class="hd" colspan="4">월 간 총 평</td></tr>
         <tr><td class="gr">관 리 자</td><td>${esc(fl.관리자)}</td><td class="gr" rowspan="2">업무평가</td><td class="left">${esc(fl.업무평가1)}</td></tr>
         <tr><td class="gr">월 목 표</td><td>${d.개인목표 === null ? '' : f1(d.개인목표)}</td><td class="left">${esc(fl.업무평가2)}</td></tr>
         <tr><td class="gr">결 과</td><td>${d.일평균 === null ? '' : f1(d.일평균)}</td><td class="gr">건강관리</td><td class="left">${esc(fl.건강관리)}</td></tr>
