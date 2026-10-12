@@ -99,8 +99,7 @@ table.grid tbody td.mk.on{background-color:#ffd43b;color:#3d3000}
 table.grid td.n{width:36px;min-width:36px}
 table.grid td.n input{color:#0b3f86;font-weight:800;font-size:14px}
 table.grid tbody td.n.on{background-color:#bcd6ff}
-table.grid td.memo-c{min-width:170px;text-align:left}
-table.grid td.memo-c input{text-align:left;font-weight:400}
+table.grid td.memo-c{width:76px;min-width:76px;text-align:center}
 table.grid tbody tr:nth-child(even) td{background-image:linear-gradient(rgba(30,45,70,.055),rgba(30,45,70,.055))}
 table.grid tbody tr.b5 td{border-bottom:2px solid #8792a3}
 table.grid tbody tr:hover td{background-image:linear-gradient(rgba(31,95,191,.13),rgba(31,95,191,.13))}
@@ -913,6 +912,18 @@ details.hrold{margin-top:10px}details.hrold>summary{cursor:pointer;font-weight:7
 .lvhd2 .hcap{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;color:#b45309;background:#fff4e5;border-radius:99px;padding:0 7px;vertical-align:1px}
 .lvd2 .n.full{background:#fff1e0;color:#c2410c}
 html[data-theme=dark] .lvhd2 .hcap{background:#3a2a14;color:#f6b26b}html[data-theme=dark] .lvd2 .n.full{background:#3a2a14;color:#f6b26b}
+.memopop{position:fixed;z-index:80;padding:10px 12px 12px;border:2px solid #2f6bff;border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(15,27,61,.25)}
+.memopop .mh{display:flex;gap:8px;align-items:baseline;margin-bottom:6px;font-size:13px}.memopop .mh span{color:#5b6475;font-weight:700}.memopop .mh em{margin-left:auto;font-style:normal;color:#8a94a6;font-size:12px}
+.memopop textarea{width:100%;font:inherit;font-size:14px;line-height:1.55;padding:8px 10px;border:1px solid #d5dce6;border-radius:8px;background:#fffdf0;resize:none;overflow:auto}
+.memo-c{min-width:0!important;width:76px;text-align:center}.memo-h{width:76px}.mbtn{font-size:12px;padding:3px 8px;border-radius:99px;border:1px solid #cfd6e2;background:#fff;color:#5b6475;font-weight:700;cursor:pointer;white-space:nowrap}
+.mbtn.on{background:#fff4e5;border-color:#f6b26b;color:#c2410c}.mbtn:disabled{opacity:.35;cursor:default}
+.grid td.c1.hasmemo{background:#f08c00!important;color:#fff;font-weight:800;cursor:help}
+html[data-theme=dark] .memopop{background:#1f2126;border-color:#4d7dff}html[data-theme=dark] .memopop textarea{background:#24262b;color:#e6e9ef;border-color:#3a3f48}html[data-theme=dark] .mbtn{background:#24262b;border-color:#3a3f48;color:#c3ccde}html[data-theme=dark] .mbtn.on{background:#3a2a14;border-color:#a36a2a;color:#f6b26b}
+.mfgbox{display:inline-flex;align-items:center;gap:6px;background:#f3eaff;border:1.5px solid #8b5cf6;border-radius:10px;padding:3px 4px 3px 10px;margin-left:8px}.mfgbox b{color:#6d28d9;font-size:13px;white-space:nowrap}
+.mfgbox input{width:190px;border:0;background:#fff;border-radius:7px;padding:5px 8px;font-size:13px}
+.grid td.o.mfg,.grid td.o.mfg input{background:#ede4ff!important;color:#5b21b6;font-weight:800}.grid td.o.mfg::before{content:"제조";position:absolute;left:2px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:#fff;background:#7c3aed;border-radius:5px;padding:1px 4px;z-index:2;pointer-events:none}.grid td.o.mfg input{padding-left:31px;padding-right:2px;letter-spacing:0;font-weight:700}
+.grid tr.flash td{animation:mflash .9s}@keyframes mflash{0%{background:#c4b5fd}100%{}}.mfgv{color:#6d28d9;font-size:.8em}
+html[data-theme=dark] .mfgbox{background:#2a2140;border-color:#7c5cd6}html[data-theme=dark] .mfgbox input{background:#1a1c20;color:#e6e9ef}html[data-theme=dark] .grid td.o.mfg,html[data-theme=dark] .grid td.o.mfg input{background:#2e2350!important;color:#c4b5fd}
 /* v28 */ .lvmine2{max-width:460px} .pfth{cursor:pointer;white-space:nowrap} .pfth:hover{color:var(--blue,#2f6bff)} .pfth.fon{background:#2f6bff!important;color:#fff!important}
 .pfpop{position:fixed;z-index:9000;background:var(--panel,#fff);border:1px solid var(--line,#e3e8ef);border-radius:12px;box-shadow:0 10px 30px rgba(15,27,61,.18);padding:10px;min-width:190px;max-width:260px}
 .pfpop .pft{font-weight:800;margin:2px 4px 6px}.pfpop .pfl{max-height:300px;overflow:auto}.pfpop label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:pointer;font-size:13.5px}
@@ -1397,6 +1408,19 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     return s;
   }
 
+  // v28.7 : 제조 라벨 QR "시리얼|제조번호|구역" (예 7951_26101381|151841163|E-13)
+  function parseMfg(v) {
+    const p = String(v == null ? '' : v).trim().split('|').map(x => x.trim());
+    if (p.length >= 2 && /^[A-Za-z]?\d{2,}_\d{4,}$/.test(p[0]) && /^\d{5,}$/.test(p[1])) return { sn: p[0], no: p[1], zone: p[2] || '' };
+    return null;
+  }
+  function snRange(sn) {
+    const L = (sn || []).slice().sort(); if (!L.length) return '';
+    if (L.length === 1) return L[0];
+    const a = L[0], b = L[L.length - 1]; let k = 0; while (k < a.length && a[k] === b[k]) k++;
+    return a + '~' + b.slice(Math.min(k, b.length - 2)) + ' (' + L.length + '대)';
+  }
+
   function emptyDay(dateStr) {
     const dow = new Date(dateStr + 'T00:00:00').getDay();
     return { kind: (dow === 6 || dow === 0) ? '휴일' : '평일', days: 1, ot: 0, meal: '-', asmOt: 0, other: {}, rows: [] };
@@ -1447,7 +1471,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const d = calcDay(doc, 0, mins);
     const r10 = {}; COLS.forEach(x => { if (d.r10[x.c]) r10[x.c] = d.r10[x.c]; });
     const o = {}; OTHER.forEach(([k]) => { if (num((doc.other || {})[k])) o[k] = num(doc.other[k]); });
-    return { r10, t: d.t, gq: d.gq, d: num(doc.days), e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, kind: doc.kind };
+    const mf = (doc.rows || []).filter(r => r && r.k === '제조' && String(r.o || '').trim());          // v28.7 : 제조 건수 · 대수 (주문과 나눠 보기용)
+    return { r10, t: d.t, gq: d.gq, d: num(doc.days), e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, mf: mf.length, mq: mf.reduce((a, r) => a + num(r.q), 0), kind: doc.kind };
   }
   // 저장된 요약으로 그날 기본환산·평가평균을 그 달 점수로 다시 계산 (예전 요약은 저장값 사용)
   function sumDay(s, mins) {
@@ -1559,10 +1584,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const rows = (doc.rows || []).filter(r => r && (String(r.o || '').trim() || r.memo));
       rows.slice(0, MAX_ROWS).forEach((r, i) => {
         const rr = 14 + i;
-        if (String(r.o || '').trim()) v['A' + rr] = String(r.o);
+        if (String(r.o || '').trim()) v['A' + rr] = (r.k === '제조' ? '제조 ' : '') + String(r.o);
         if (r.q !== '' && r.q != null) v['B' + rr] = num(r.q);
         COLS.forEach(x => { const mv = (r.m || {})[x.c]; if (mv) v[x.c + rr] = x.kind === 'num' ? num(mv) : 1; });
-        if (r.memo) v['AU' + rr] = r.memo;
+        const mm2 = [r.k === '제조' && (r.sn || []).length ? snRange(r.sn) : '', r.memo || ''].filter(Boolean).join(' · ');
+        if (mm2) v['AU' + rr] = mm2;
       });
       const nRows = Math.min(MAX_ROWS, Math.max(BASE_ROWS, Math.ceil(rows.length / 5) * 5));
       let xml = fillCells(day, v, 13 + nRows, 47);
@@ -1653,6 +1679,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         if (o == null) o = '';
         if (typeof o === 'number') o = String(o);
         const row = { o: String(o).trim(), q: V['B' + r] == null ? '' : nm(V['B' + r]), m: {}, memo: V['AU' + r] ? String(V['AU' + r]) : '' };
+        if (/^제조\s*/.test(row.o)) { row.o = row.o.replace(/^제조\s*/, ''); row.k = '제조'; }
         COLS.forEach(x => {
           const v = V[x.c + r]; if (v == null || String(v).trim() === '') return;
           if (x.kind === 'num') { const n = nm(v); if (n) row.m[x.c] = n; }
@@ -1672,7 +1699,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   root.Core = {
     COLS, COL, DEFAULT_MINS, minsMap, sumDay, GROUPS, EXCLUSIVE, TIPS, TARGETS, OT_LIST, OTHER, GROUP_LIST, MAX_ROWS, BASE_ROWS, MAX_DAYS,
-    num, normOrder, emptyDay, calcDay, daySummary, calcMonth, buildXlsx, fileName,
+    num, normOrder, parseMfg, snRange, emptyDay, calcDay, daySummary, calcMonth, buildXlsx, fileName,
     ymd, addDays, WD, sheetName, serial, pad, parseWorkbook,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -5122,7 +5149,7 @@ async function addCharts(buf, jobs) {
       S.date = date;
       const d = pc && pc.days[date];
       const doc = d && d.doc ? JSON.parse(JSON.stringify(d.doc)) : C.emptyDay(date);
-      doc.rows = (doc.rows || []).map(x => ({ o: x.o || '', q: x.q == null ? '' : x.q, m: x.m || {}, memo: x.memo || '' }));
+      doc.rows = (doc.rows || []).map(x => Object.assign({ o: x.o || '', q: x.q == null ? '' : x.q, m: x.m || {}, memo: x.memo || '' }, x.k ? { k: x.k, sn: x.sn || [] } : {}));
       doc.other = doc.other || {};
       S.day = pc ? { doc, exists: !!d, period: pc.period, canEdit: pc.canEdit, canSetTarget: pc.canSetTarget, target: pc.target, savedAt: d ? d.at : '', savedBy: d ? d.by : '', ver: d ? (d.ver == null ? null : d.ver) : '', pc }
         : { doc, exists: false, period: null, canEdit: false, canSetTarget: false, target: 0, savedAt: '', savedBy: '' };
@@ -5162,6 +5189,7 @@ async function addCharts(buf, jobs) {
       <b style="font-size:15px;margin:0 4px">${dLabel(S.date)}</b>
       ${periodChip(D.period)}
       <span class="save-state" id="ss"></span>
+      ${ro ? '' : '<label class="mfgbox" title="제조 라벨의 QR을 여기에 찍으면 [제조] 줄로 들어갑니다 · 같은 제조번호는 1대씩 더해짐"><b>제조 라벨</b><input id="mfg" placeholder="QR 찍기 · 제조번호" autocomplete="off"></label>'}
       <span style="flex:1"></span>
       ${isManager() ? '<button id="imp" title="기존 개인 엑셀(.xlsm/.xlsx) 날짜 시트를 가져옵니다">📥 엑셀 가져오기</button>' : ''}
       ${ro ? '' : '<button class="primary" id="save">저장</button><button class="danger" id="del">이 날짜 삭제</button>'}
@@ -5178,12 +5206,17 @@ async function addCharts(buf, jobs) {
     <div class="card inputs" id="tops"></div>
     <div class="gridwrap"><table class="grid ${ro ? 'ro' : ''}" id="grid"></table></div>
     <div class="below">${ro ? '' : '<button id="more">+ 5줄 추가</button>'}<span class="muted" id="rowinfo"></span>
-      <span class="muted" style="margin-left:auto">칸 클릭 = V · 주문번호에서 Enter = 다음 줄 · 파란 번호 = 메모</span></div>`;
+      <span class="muted" style="margin-left:auto">칸 클릭 = V · 주문번호에서 Enter = 다음 줄 · 주황 번호 = 특이사항 있음 (마우스를 올리면 보임)</span></div>`;
     if ($('#imp')) $('#imp').onclick = importXlsx;
     $('#dt').onchange = e => { const v = e.target.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v) && v >= '2020-01-01' && v <= '2099-12-31') switchDay(v); };   // 연도를 치는 중(0002…·20260…)이면 기다림
     $('#prev').onclick = () => switchDay(C.addDays(S.date, -1));
     $('#next').onclick = () => switchDay(C.addDays(S.date, 1));
     $('#today').onclick = () => switchDay(S.today);
+    if ($('#mfg')) {
+      const mi = $('#mfg'), go1 = () => { const v = mi.value.trim(); if (!v) return; mi.value = ''; mfgAdd(v); };
+      mi.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go1(); } });
+      mi.addEventListener('change', go1);
+    }
     if (!ro) {
       $('#save').onclick = () => saveNow(true);
       $('#del').onclick = delDay;
@@ -5242,7 +5275,7 @@ async function addCharts(buf, jobs) {
       const span = cols.filter(x => colIdx(x.c) >= colIdx(a) && colIdx(x.c) <= colIdx(b)).length;
       h1 += `<th colspan="${span}" class="gs gc g${gi}">${n}</th>`;
     });
-    h1 += '<th rowspan="3" class="gs">특이사항 메모</th></tr>';
+    h1 += '<th rowspan="3" class="gs memo-h">특이사항</th></tr>';
     let h2 = '<tr>', h3 = '<tr>';
     cols.forEach(x => {
       const g = (gStart[x.c] ? ' gs' : '') + ' gc g' + gOf[x.c];
@@ -5256,15 +5289,15 @@ async function addCharts(buf, jobs) {
     doc.rows.forEach((r, i) => {
       body += `<tr data-i="${i}" class="${(i + 1) % 5 === 0 ? 'b5' : ''}">
         <td class="stk c0 x">${ro ? '' : '<button title="이 줄 비우기" data-clr>✕</button>'}</td>
-        <td class="stk c1">${i + 1}</td>
-        <td class="stk c2 o ${r.memo ? 'memo' : ''}"><input data-f="o" value="${esc(r.o)}" ${ro ? 'disabled' : ''} autocomplete="off"></td>
+        <td class="stk c1${r.memo ? ' hasmemo' : ''}"${r.memo ? ` data-mtip="${esc(r.memo)}"` : ''}>${i + 1}</td>
+        <td class="stk c2 o${r.k === '제조' ? ' mfg' : ''}"><input data-f="o" value="${esc(r.o)}" title="${r.k === '제조' ? esc('제조 · ' + (C.snRange(r.sn) || '라벨 없이 입력')) : ''}" ${ro ? 'disabled' : ''} autocomplete="off"></td>
         <td class="stk c3"><input data-f="q" inputmode="numeric" value="${esc(r.q)}" ${ro ? 'disabled' : ''}></td>`;
       cols.forEach(x => {
         const g = (gStart[x.c] ? ' gs' : '') + ' gc g' + gOf[x.c], v = r.m[x.c];
         if (x.kind === 'num') body += `<td class="n${g}${v ? ' on' : ''}"><input data-n="${x.c}" inputmode="numeric" value="${v ? esc(v) : ''}" ${ro ? 'disabled' : ''}></td>`;
         else body += `<td class="mk${g}${v ? ' on' : ''}" data-c="${x.c}">${v ? 'V' : ''}</td>`;
       });
-      body += `<td class="memo-c gs"><input data-f="memo" value="${esc(r.memo)}" ${ro ? 'disabled' : ''} placeholder=""></td></tr>`;
+      body += `<td class="memo-c gs"><button type="button" class="mbtn${r.memo ? ' on' : ''}" data-memo ${ro && !r.memo ? 'disabled' : ''}>${r.memo ? '✎ 메모' : '+ 메모'}</button></td></tr>`;
     });
     let f1 = '<tr><td class="stk c0"></td><td class="stk c1"></td><td class="stk c2">수량 합계</td><td class="stk c3" id="fq"></td>';
     let f2r = '<tr><td class="stk c0"></td><td class="stk c1"></td><td class="stk c2">환산</td><td class="stk c3"></td>';
@@ -5290,6 +5323,7 @@ async function addCharts(buf, jobs) {
       if (!padHold && !(a && g.contains(a) && (a.dataset.n || a.dataset.f === 'q'))) hidePad();
     }, 120));
     g.addEventListener('change', onGridChange);
+    g.addEventListener('click', e => { const b = e.target.closest('[data-memo]'); if (b && !b.disabled) memoOpen(b); });     // v28.7 : [메모] 버튼 → 넓은 입력 상자
     g.addEventListener('keydown', e => {
       if (e.key === 'Enter' && e.target.dataset.f === 'o') {
         e.preventDefault(); onGridChange(e);
@@ -5301,6 +5335,55 @@ async function addCharts(buf, jobs) {
   }
 
 
+
+  // v28.7 : 제조 라벨 — QR(시리얼|제조번호|구역)이면 1대씩 더하고, 숫자만 치면 그 제조번호 줄을 만듦
+  function mfgAdd(v, at) {
+    const doc = S.day.doc, x = C.parseMfg(v), no = x ? x.no : String(v).replace(/\s+/g, '');
+    if (!/^\d{5,}$/.test(no)) return toast('제조 라벨이 아닙니다 (QR을 찍거나 제조번호 숫자를 넣으세요)', true);
+    if (x && doc.rows.some(r => (r.sn || []).includes(x.sn))) return toast('이미 찍은 라벨입니다 : ' + x.sn, true);
+    let i = doc.rows.findIndex(r => r.k === '제조' && String(r.o) === no);
+    if (i >= 0) { const r = doc.rows[i]; r.q = C.num(r.q) + 1; if (x) (r.sn = r.sn || []).push(x.sn); }
+    else {
+      if (doc.rows.some(r => r.k !== '제조' && String(r.o).trim() === no)) toast('같은 번호가 주문으로도 있습니다 — 확인하세요', true);
+      i = at != null && !String(doc.rows[at].o).trim() ? at : doc.rows.findIndex(r => !String(r.o).trim() && !r.memo && !Object.keys(r.m).length);
+      if (i < 0) { if (doc.rows.length >= C.MAX_ROWS) return toast('하루 최대 ' + C.MAX_ROWS + '줄까지 가능합니다', true); for (let k = 0; k < 5; k++) doc.rows.push({ o: '', q: '', m: {}, memo: '' }); i = doc.rows.findIndex(r => !String(r.o).trim() && !r.memo); }
+      doc.rows[i] = Object.assign(doc.rows[i], { o: no, q: 1, k: '제조', sn: x ? [x.sn] : [] });
+    }
+    buildGrid(); refreshCalc(); changed();
+    const tr = $(`#grid tr[data-i="${i}"]`); if (tr) { tr.classList.add('flash'); tr.scrollIntoView({ block: 'nearest' }); setTimeout(() => tr.classList.remove('flash'), 900); }
+    toast('제조 ' + no + ' · ' + doc.rows[i].q + '대' + (x ? ' (' + x.sn + ')' : ''));
+    const mi = $('#mfg'); if (mi) mi.focus();
+  }
+
+  // v28.7 : 특이사항 — [메모] 버튼을 누르면 넓은 상자가 열림 · Enter = 저장하고 닫기 · Esc = 취소
+  function memoOpen(btn) {
+    document.querySelectorAll('.memopop').forEach(x => x._close && x._close(true));
+    const tr = btn.closest('tr'), i = +tr.dataset.i, r = S.day.doc.rows[i], ro = !!$('#grid.ro');
+    const box = document.createElement('div'); box.className = 'memopop';
+    box.innerHTML = `<div class="mh"><b>${i + 1}번 줄 특이사항</b>${r.o ? `<span>${esc((r.k === '제조' ? '제조 ' : '') + r.o)}</span>` : ''}<em>${ro ? '보기만 가능' : 'Enter = 저장 · Esc = 취소'}</em></div>
+      <textarea ${ro ? 'readonly' : ''} placeholder="특이사항을 적으세요">${esc(r.memo || '')}</textarea>`;
+    document.body.appendChild(box);
+    const ta = box.querySelector('textarea'), w = Math.min(560, innerWidth - 16);
+    const place = () => { const q = btn.getBoundingClientRect(); Object.assign(box.style, { width: w + 'px', left: Math.max(8, Math.min(q.right - w, innerWidth - w - 8)) + 'px', top: Math.min(q.bottom + 4, innerHeight - box.offsetHeight - 8) + 'px' }); };
+    const fit = () => { ta.style.height = 'auto'; ta.style.height = Math.min(Math.max(ta.scrollHeight + 2, 64), 240) + 'px'; place(); };
+    const sc = $('.gridwrap') || window; let done = false;
+    const close = cancel => {
+      if (done) return; done = true; box.remove(); sc.removeEventListener('scroll', place); window.removeEventListener('resize', place); document.removeEventListener('mousedown', outside, true);
+      if (ro || cancel === true) return;
+      const v = ta.value.replace(/\s*\n+\s*/g, ' ').trim(); if (v === (r.memo || '')) return;
+      r.memo = v; const c1 = tr.querySelector('td.c1');
+      c1.classList.toggle('hasmemo', !!v); if (v) c1.dataset.mtip = v; else delete c1.dataset.mtip;
+      btn.classList.toggle('on', !!v); btn.textContent = v ? '✎ 메모' : '+ 메모';
+      changed(); toast(v ? (i + 1) + '번 줄 특이사항을 저장했습니다' : (i + 1) + '번 줄 특이사항을 지웠습니다');
+    };
+    const outside = e => { if (!box.contains(e.target) && e.target !== btn) close(); };
+    box._close = close;
+    ta.oninput = fit;
+    ta.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); close(); } else if (e.key === 'Escape') { e.preventDefault(); close(true); } };
+    sc.addEventListener('scroll', place, { passive: true }); window.addEventListener('resize', place);
+    setTimeout(() => document.addEventListener('mousedown', outside, true), 0);
+    fit(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
 
   // ---- 여러 명 엑셀 한꺼번에 가져오기 (관리 화면) ----
   function impStatus(x, all, existing) {
@@ -5554,9 +5637,9 @@ async function addCharts(buf, jobs) {
   // ---- 제목 칸 설명 말풍선 ----
   (function initTip() {
     document.addEventListener('mouseover', e => {
-      const th = e.target.closest && e.target.closest('th[data-tip]'), tp = $('#tip');
+      const th = e.target.closest && e.target.closest('th[data-tip],td[data-mtip]'), tp = $('#tip');
       if (!th) { tp.classList.remove('show'); return; }
-      tp.innerHTML = th.dataset.tip; tp.classList.add('show');
+      tp.innerHTML = th.dataset.mtip != null ? '<b>특이사항</b><br>' + esc(th.dataset.mtip) : th.dataset.tip; tp.classList.add('show');
       const r = th.getBoundingClientRect(), w = tp.offsetWidth;
       let left = r.left + r.width / 2 - w / 2; left = Math.max(6, Math.min(left, window.innerWidth - w - 6));
       tp.style.left = left + 'px'; tp.style.top = (r.bottom + 6) + 'px';
@@ -5576,7 +5659,7 @@ async function addCharts(buf, jobs) {
     const t = e.target, tr = t.closest('tr'); if (!tr) return;
     const r = S.day.doc.rows[+tr.dataset.i];
     if (t.dataset.f === 'q') { const n = clampIn(t, 999); r.q = t.value === '' ? '' : n; }
-    else if (t.dataset.f === 'memo') { r.memo = t.value; tr.querySelector('td.o').classList.toggle('memo', !!t.value); }
+    else if (t.dataset.f === 'memo') { r.memo = t.value; }
     else if (t.dataset.f === 'o') { r.o = t.value; }
     else if (t.dataset.n) {
       if (!String(r.o).trim() && t.value) { toast('주문번호부터 입력하세요', true); t.value = ''; return; }
@@ -5588,6 +5671,7 @@ async function addCharts(buf, jobs) {
   function onGridChange(e) {
     const t = e.target; if (t.dataset.f !== 'o') return;
     const tr = t.closest('tr'), r = S.day.doc.rows[+tr.dataset.i];
+    if (C.parseMfg(t.value)) { const v0 = t.value; t.value = ''; r.o = ''; mfgAdd(v0, +tr.dataset.i); return; }     // 제조 라벨을 주문번호 칸에 찍은 경우
     const v = C.normOrder(t.value); t.value = v; r.o = v;
     const q = tr.querySelector('input[data-f="q"]');
     if (v && (r.q === '' || r.q == null)) { r.q = 1; q.value = 1; }
@@ -5615,7 +5699,9 @@ async function addCharts(buf, jobs) {
     const tr = $(`#grid tr[data-i="${i}"]`);
     $$('input', tr).forEach(x => (x.value = ''));
     $$('td.mk,td.n', tr).forEach(x => { x.classList.remove('on'); if (x.classList.contains('mk')) x.textContent = ''; });
-    tr.querySelector('td.o').classList.remove('memo');
+    tr.querySelector('td.o').classList.remove('mfg'); tr.querySelector('input[data-f="o"]').title = '';
+    const c1 = tr.querySelector('td.c1'); c1.classList.remove('hasmemo'); delete c1.dataset.mtip;
+    const mb = tr.querySelector('[data-memo]'); if (mb) { mb.classList.remove('on'); mb.textContent = '+ 메모'; }
     changed();
   }
 
@@ -5632,7 +5718,8 @@ async function addCharts(buf, jobs) {
       <div class="stat"><div class="k">기본 환산</div><div class="v">${f2(c.e2)}</div></div>
       <div class="stat"><div class="k">수량 (일반+특수+추천)</div><div class="v">${c.g2}</div></div>
       <div class="stat"><div class="k">평가 일수</div><div class="v">${f2(c.f6)}</div></div>
-      <div class="stat"><div class="k">입력 주문</div><div class="v">${c.orders}<small>건</small></div></div>`;
+      ${(() => { const R = D.doc.rows.filter(r => String(r.o).trim()), mf = R.filter(r => r.k === '제조'), mq = mf.reduce((a, r) => a + C.num(r.q), 0);
+        return `<div class="stat"><div class="k">${mf.length ? '주문 · <span class="mfgv">제조</span>' : '입력 주문'}</div><div class="v">${R.length - mf.length}<small>건</small>${mf.length ? `<span class="mfgv"> · ${mf.length}<small>건</small> ${mq}<small>대</small></span>` : ''}</div></div>`; })()}`;
     $('#e4').textContent = c.e4 + '분';
     $('#w7').textContent = c.w7 ? f2(c.w7) : '-';
     const cols = C.COLS.filter(x => x.label !== '-');
@@ -5669,7 +5756,7 @@ async function addCharts(buf, jobs) {
     if (S.saving) { await new Promise(r => setTimeout(r, 300)); return saveNow(manual); }
     S.saving = true; showSaveState();
     const day = S.day, date = S.date, uid = who().id, doc = day.doc;
-    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined })) });
+    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined })) });
     const snapshotDirty = JSON.stringify(doc);
     try {
       const q = { userId: uid, date, doc: clean, sum: C.daySummary(clean, minsOf(date)) };
@@ -5711,7 +5798,7 @@ async function addCharts(buf, jobs) {
   function flushOnClose() {
     if (!S.dirty || !S.day || !S.day.canEdit || !S.token) return;
     const doc = S.day.doc;
-    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined })) });
+    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined })) });
     try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify(Object.assign({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) }, S.day.ver != null ? { base: S.day.ver } : {})) }); S.dirty = false; } catch (e) { }
   }
   window.addEventListener('pagehide', flushOnClose);
