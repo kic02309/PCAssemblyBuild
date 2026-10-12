@@ -200,6 +200,12 @@ table.grid thead th.hastip{text-decoration:underline dotted #46505e;text-underli
 table.mlist th.sort{cursor:pointer;user-select:none}table.mlist th.sort:hover{color:#1d2430}table.mlist th.on{color:#1f5fbf}
 table.mlist td{padding:7px 10px}table.mlist tbody tr:nth-child(even) td{background:#f7f9fb}table.mlist tbody tr:hover td{background:#eaf1fc}
 table.mlist td.acts{white-space:nowrap}table.mlist td.acts button{padding:4px 9px;margin-right:4px;font-size:12.5px}
+table.mlist td.acts button.more{padding:3px 9px;font-weight:900;letter-spacing:1px;margin-right:0}table.mlist td.mopen button.more{background:#e8efff;border-color:#9db8f2;color:#1f5fbf}
+.rmenu{display:none}
+.rmpop{position:fixed;z-index:90;min-width:150px;padding:5px;background:#fff;border:1px solid #d5dce6;border-radius:10px;box-shadow:0 10px 28px rgba(15,27,61,.2)}
+.rmpop button{display:block;width:100%;margin:0;padding:8px 10px;border:0;border-radius:7px;background:none;text-align:left;font-size:13px;font-weight:600;color:inherit;cursor:pointer}.rmpop button:hover:not(:disabled){background:#eef3ff;color:#1f5fbf}.rmpop button:disabled{opacity:.4;cursor:default}
+#gtopen.on{background:#fff4d6;border-color:#e3c766}#gtopen .gtn{margin-left:4px;padding:1px 7px;border-radius:99px;background:#fdecea;color:#c62828;font-size:11.5px;font-weight:800}
+html[data-theme=dark] .rmpop{background:#24262b;border-color:#3a3f48;color:#e6e9ef}html[data-theme=dark] .rmpop button:hover:not(:disabled){background:#2d3a55;color:#9dbbff}html[data-theme=dark] #gtopen.on{background:#36321c;border-color:#564e2e}html[data-theme=dark] #gtopen .gtn{background:#3d1f1f;color:#ff8a80}
 .rtag{font-size:11px;background:#e6ebf2;color:#46505e;border-radius:9px;padding:1px 7px;margin-left:3px;font-weight:600}
 .mini{display:inline-block;width:70px;height:8px;border-radius:4px;background:#e6eaf0;overflow:hidden;vertical-align:middle;margin-right:7px}
 .mini i{display:block;height:100%}
@@ -604,6 +610,8 @@ button.big{padding:9px 18px;font-size:14.5px;font-weight:800}
 .hrw table.score td{padding:8px 10px;border-bottom:1px solid #eef1f5;vertical-align:middle;font-size:13px}
 .hrw table.score td.grp{color:#7d8898;font-size:12px;white-space:nowrap}
 .hrw table.score td.nm b{display:block}.hrw table.score td.nm span{font-size:12px;color:#7d8898}
+.hrw table.score td.nm b{display:inline}.hrw table.score .dq{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;margin-left:6px;border-radius:50%;background:#e8eef8;color:#4a5f86;font-size:11px;font-style:normal;font-weight:800;font-family:Georgia,serif;cursor:help;vertical-align:1px}.hrw table.score .dq:hover{background:#2f6bff;color:#fff}
+html[data-theme=dark] .hrw table.score .dq{background:#2d3a55;color:#9dbbff}
 .hrw table.score td.mx{font-weight:700}
 .hrw table.score input{width:74px;text-align:center;font-weight:800;font-size:15px;padding:6px;border:1px solid #e3c766;background:#fffbe8;border-radius:6px}
 .hrw table.score tr.diff input{background:#ffeeb0;border-color:#d39e00}
@@ -864,7 +872,7 @@ header .me .tag{background:rgba(255,255,255,.12);border-radius:99px}
 .stmg{margin:4px 0 10px}.stmi{margin:12px 0 6px}
 .stkpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:14px}
 .stkpis .kpi b{font-size:30px}.stkpis .kpi em{font-style:normal;font-size:13px;font-weight:800}.stkpis .kpi i{font-style:normal;font-size:12.5px;color:var(--sub)}
-.stkpis .kpi em.up,.stcard .up{color:#16a34a;fill:#16a34a}.stkpis .kpi em.dn,.stcard .dn{color:#dc2626;fill:#dc2626}.stkpis .kpi em.eq{color:var(--sub)}
+.stkpis .kpi em.up,.stcard .up{color:#16a34a;fill:#16a34a}.stkpis .kpi em.dn,.stcard .dn{color:#dc2626;fill:#dc2626}.stkpis .kpi em.eq{color:var(--sub)}.stkpis .kpi em.live{display:inline-block;align-self:flex-start;width:max-content;padding:1px 8px;border-radius:99px;background:#e7f6ec;color:#15803d;font-size:12px}html[data-theme=dark] .stkpis .kpi em.live{background:#1c3526;color:#6fd394}
 .stg2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:14px;align-items:start}.stg2>.stcard{margin:0}
 .stcard{padding:20px 22px!important;margin-bottom:14px}.stcard h3{margin:0 0 2px;font-size:16.5px;letter-spacing:-.3px}.stcard .cap{font-size:12.5px;color:var(--sub);margin-bottom:12px}
 .sthd{display:flex;align-items:flex-start;gap:10px}.sthd .sp{flex:1}
@@ -1325,6 +1333,15 @@ html[data-theme=dark] .modal{box-shadow:0 20px 60px rgba(0,0,0,.6)}
 html[data-theme=dark] .side{box-shadow:0 10px 30px rgba(0,0,0,.4)}
 html[data-theme=dark] .hubc.t .ic{background:#17301f;color:#5fd08d}html[data-theme=dark] .strank .rk.t{background:#3d331a;color:#fcd34d}
 html[data-theme=dark] .stkpis .kpi em.up,html[data-theme=dark] .stcard .up{color:#4ade80;fill:#4ade80}html[data-theme=dark] .stkpis .kpi em.dn,html[data-theme=dark] .stcard .dn{color:#f87171;fill:#f87171}html[data-theme=dark] .stg .up{fill:#4ade80}html[data-theme=dark] .stg .dn{fill:#f87171}
+
+/* v28.8 : 일일 현황 빈 칸 줄이기 */
+.ddnone{display:flex;gap:12px;align-items:flex-start;margin-top:6px;padding:9px 12px;border-radius:9px;background:#f5f7fa;font-size:12.5px}.ddnone>b{flex:none;color:#6b7686;font-weight:700;padding-top:1px}.ddnone>div{display:flex;flex-wrap:wrap;gap:4px 14px}.ddnone em{font-style:normal;margin-left:4px;color:#2e7d32;font-size:11.5px}
+.ddnone.all{flex-direction:column;gap:2px;align-items:flex-start;padding:14px}.ddnone.all b{color:#4a5568;font-size:13px}
+.ddz{font-size:12px;margin-top:6px}
+html[data-theme=dark] .ddnone{background:#24262b}html[data-theme=dark] .ddnone>b,html[data-theme=dark] .ddnone.all b{color:#a7b0c0}
+/* v28.8 : 설정 지난 달 접기 */
+details.fold>summary{cursor:pointer;color:#5b6475;font-size:12.5px;padding:6px 2px;list-style:none}details.fold>summary::before{content:'▸ ';color:#8a94a6}details.fold[open]>summary::before{content:'▾ '}
+#bkbox tr.bkold{display:none}#bkbox.bkall tr.bkold{display:table-row}.fold-b{margin-top:8px}
 </style>
 </head>
 <body>
@@ -1411,7 +1428,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // v28.7 : 제조 라벨 QR "시리얼|제조번호|구역" (예 7951_26101381|151841163|E-13)
   function parseMfg(v) {
     const p = String(v == null ? '' : v).trim().split('|').map(x => x.trim());
-    if (p.length >= 2 && /^[A-Za-z]?\d{2,}_\d{4,}$/.test(p[0]) && /^\d{5,}$/.test(p[1])) return { sn: p[0], no: p[1], zone: p[2] || '' };
+    if (p.length >= 2 && /^\S+_\d{4,}$/.test(p[0]) && /^\d{5,}$/.test(p[1])) return { sn: p[0], no: p[1], zone: p[2] || '' };
     return null;
   }
   function snRange(sn) {
@@ -3683,7 +3700,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const isMinus = it.sign < 0;
       return `<tr data-no="${it.no}" class="${isMinus ? 'minus' : ''}">
         <td class="grp">${esc(it.group)}</td>
-        <td class="nm"><b>${esc(it.name)}</b><span>${esc(it.desc)}</span></td>
+        <td class="nm"><b>${esc(it.name)}</b>${it.desc ? `<i class="dq" data-xh="${esc(it.name)}" data-xtip="${esc(it.desc)}">i</i>` : ''}</td>
         <td class="c mx">${isMinus ? '감점' : esc(it.max)}</td>
         <td class="c inp"><input type="number" step="0.5" min="0" inputmode="decimal" data-no="${it.no}" value="${esc(val)}" ${locked ? 'disabled' : ''} placeholder="${isMinus ? '감점' : '점수'}"></td>
         <td class="ref">${ref === null ? '' : `<b>${isMinus && ref ? '-' : ''}${ref}${isMinus ? '' : '점'}</b><button class="sm" data-apply="${it.no}" ${locked ? 'disabled' : ''}>넣기</button>`}<span>${esc(note)}</span></td></tr>`;
@@ -3697,7 +3714,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       ${rec['저장시각'] ? `<div class="muted" style="margin:-4px 0 8px">마지막 저장 ${esc(rec['저장시각'])} · ${esc(rec['작성자'])}</div>` : ''}
       <div id="side"></div>
       <div class="gt">평가 점수<span style="flex:1"></span><button class="sm primary" id="applyAll" ${locked ? 'disabled' : ''}>참고 점수 전체 적용</button></div>
-      <table class="score"><thead><tr><th style="width:74px">구분</th><th>평가 요소 · 기준</th><th class="c" style="width:56px">배점</th><th class="c" style="width:96px">입력</th><th style="width:320px">참고 점수</th></tr></thead><tbody id="scoreBody">${rows}</tbody></table>
+      <table class="score"><thead><tr><th style="width:74px">구분</th><th title="ⓘ 에 마우스를 올리면 평가 기준이 보입니다">평가 요소</th><th class="c" style="width:56px">배점</th><th class="c" style="width:96px">입력</th><th style="width:320px">참고 점수</th></tr></thead><tbody id="scoreBody">${rows}</tbody></table>
       <div class="total"><span class="muted">가점은 엑셀에서 입력</span><span>합계</span><b id="totalVal">-</b></div>
       <div class="gt">월간 총평 <span class="muted" style="font-weight:500">엑셀 한 칸 = 한 줄 (최대 ${MAXC}자)</span></div>
       <table class="ctb"><tr><th>관 리 자</th><td class="v"><select id="fMgr" ${locked ? 'disabled' : ''}><option value=""></option>${mgrs.map(m => `<option ${m === mgrVal ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></td><th rowspan="2">업무평가</th><td>${ln('fW1', '업무평가1', '여기에 입력')}</td></tr>
@@ -5052,6 +5069,11 @@ async function addCharts(buf, jobs) {
   async function go(view, opt) {
     if (S.view === 'hr' && view !== 'hr' && window.HR && !(await window.HR.guard())) { setNav(); return; }   // 인사평가 저장 안 한 점수
     if (!(await saveFirst())) { setNav(); return; }
+    if (view === 'admin' && canHub()) {                                    // v28.8 : 고르기 화면 없이 바로 (마지막에 본 탭 → 인원 → 설정 → 통계)
+      const ok = k => k === 'people' ? can('people') : k === 'settings' ? canSetPage() : k === 'stats' ? can('stats') : false;
+      view = [S.admLast, 'people', 'settings', 'stats'].find(k => k && ok(k)) || 'settings';
+    }
+    if (['people', 'settings', 'stats'].includes(view)) S.admLast = view;
     const lay = layoutOf(view);
     if (lay !== S.layout) shell(lay);
     if (lay === 'side') S.lastSide = view;
@@ -5085,7 +5107,7 @@ async function addCharts(buf, jobs) {
   const pageHead = (title, mid, right) => `<div class="ph"><h1>${title}</h1>${mid || ''}<span style="flex:1"></span>${right || ''}</div>`;
   // 관리자 설정 안쪽 화면 머리 : ‹ 고르기 화면으로 + 옆 화면 바로 가기 (관리자만)
   const admHead = (title, cur, mid, right) => !canHub() ? pageHead(title, mid, right)
-    : `<div class="ph"><button class="bk" data-go="admin" title="관리자 설정으로">‹</button><h1>${title}</h1><div class="seg admseg">${[['people', '인원 현황/관리', can('people')], ['settings', '기간 · 백업 · 설정', canSetPage()], ['stats', '통계', can('stats')]].filter(x => x[2]).map(([k, t]) => `<button data-go="${k}" class="${cur === k ? 'on' : ''}">${t}</button>`).join('')}</div>${mid || ''}<span style="flex:1"></span>${right || ''}</div>`;
+    : `<div class="ph"><h1>${title}</h1><div class="seg admseg">${[['people', '인원 현황/관리', can('people')], ['settings', '기간 · 백업 · 설정', canSetPage()], ['stats', '통계', can('stats')]].filter(x => x[2]).map(([k, t]) => `<button data-go="${k}" class="${cur === k ? 'on' : ''}">${t}</button>`).join('')}</div>${mid || ''}<span style="flex:1"></span>${right || ''}</div>`;
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-go]'); if (b && S.me && !b.classList.contains('on')) go(b.dataset.go); });
   // 다크 / 밝은 모드 (이 PC에서 기억)
   const isDark = () => document.documentElement.dataset.theme === 'dark';
@@ -5637,9 +5659,10 @@ async function addCharts(buf, jobs) {
   // ---- 제목 칸 설명 말풍선 ----
   (function initTip() {
     document.addEventListener('mouseover', e => {
-      const th = e.target.closest && e.target.closest('th[data-tip],td[data-mtip]'), tp = $('#tip');
+      const th = e.target.closest && e.target.closest('th[data-tip],td[data-mtip],[data-xtip]'), tp = $('#tip');
       if (!th) { tp.classList.remove('show'); return; }
-      tp.innerHTML = th.dataset.mtip != null ? '<b>특이사항</b><br>' + esc(th.dataset.mtip) : th.dataset.tip; tp.classList.add('show');
+      tp.innerHTML = th.dataset.xtip != null ? (th.dataset.xh ? '<b>' + esc(th.dataset.xh) + '</b><br>' : '') + esc(th.dataset.xtip)     // v28.8 : 글자 그대로 보여 주는 말풍선
+        : th.dataset.mtip != null ? '<b>특이사항</b><br>' + esc(th.dataset.mtip) : th.dataset.tip; tp.classList.add('show');
       const r = th.getBoundingClientRect(), w = tp.offsetWidth;
       let left = r.left + r.width / 2 - w / 2; left = Math.max(6, Math.min(left, window.innerWidth - w - 6));
       tp.style.left = left + 'px'; tp.style.top = (r.bottom + 6) + 'px';
@@ -6054,11 +6077,16 @@ async function addCharts(buf, jobs) {
         <div class="ddstack">${D.tw.length ? `<i style="flex:${D.hit};background:#1f5fbf"></i><i style="flex:${D.tw.length - D.hit};background:#f0d2ad"></i>` : ''}</div><div class="s">${D.tw.length ? '달성률 ' + Math.round(D.hit / D.tw.length * 100) + '%' : '목표 있는 조립 인원 없음'}</div></div>
     </div>`;
     h += `<div class="ddrow2"><div class="card"><h3 class="ddh">그룹별 평균 환산<small>막대 = 평균 · 검은 선 = 평균 목표 · 조립 인원 기준</small></h3>
-      ${D.G.map(x => x.w ? `<div class="ddgb"><div class="nm">${gdot(x.g)}</div>${ddBar(x.avg, x.tg, 0, gcol(x.g))}<div class="info"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ''} · 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</div></div>`
-        : `<div class="ddgb"><div class="nm">${gdot(x.g)}</div><div class="muted" style="font-size:12px">조립 실적 없음${x.sup ? ' (업무지원 ' + x.sup + '명)' : ''}</div><div></div></div>`).join('')}
+      ${D.G.filter(x => x.w).map(x => `<div class="ddgb"><div class="nm">${gdot(x.g)}</div>${ddBar(x.avg, x.tg, 0, gcol(x.g))}<div class="info"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ''} · 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</div></div>`).join('')}
+      ${(() => { const E = D.G.filter(x => !x.w); if (!E.length || !D.G.length) return '';                       // v28.8 : 실적 없는 그룹은 한 줄로
+        const nm = E.map(x => `<span>${gdot(x.g)}${x.sup ? `<em>지원 ${x.sup}</em>` : ''}</span>`).join('');
+        return E.length === D.G.length ? `<div class="ddnone all"><b>아직 조립 실적이 없습니다</b><span class="muted">입력이 들어오면 그룹별 막대가 생깁니다</span></div>`
+          : `<div class="ddnone"><b>실적 없음</b><div>${nm}</div></div>`; })()}
       ${D.G.length ? '' : '<div class="muted">인원 관리 명단이 없습니다</div>'}</div>
       <div class="card"><h3 class="ddh">휴무 · 업무지원</h3>
-        <div class="ddoff">${kinds.filter(k => k !== '훈련' || D.off.some(p => p.off === k)).map(k => { const L = D.off.filter(p => p.off === k); return `<div class="ddoi"><b>${k}</b><span class="n">${L.length}</span><div class="who">${L.map(p => `<span>${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join(' ') || '<span class="muted">-</span>'}</div></div>`; }).join('')}</div>
+        ${(() => { const K = kinds.filter(k => D.off.some(p => p.off === k)), Z = kinds.filter(k => k !== '훈련' && !K.includes(k));   // v28.8 : 인원 있는 종류만 칸으로
+          return (K.length ? `<div class="ddoff">${K.map(k => { const L = D.off.filter(p => p.off === k); return `<div class="ddoi"><b>${k}</b><span class="n">${L.length}</span><div class="who">${L.map(p => `<span>${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join(' ')}</div></div>`; }).join('')}</div>` : '<div class="ddnone all"><b>휴무 없음</b></div>')
+            + (K.length && Z.length ? `<div class="muted ddz">${Z.join(' · ')} 0명</div>` : ''); })()}
         ${D.P.some(p => p.half) ? `<div class="muted" style="font-size:12px;margin-top:6px">반차 : ${D.P.filter(p => p.half).map(p => esc(p.disp) + ' (' + esc(p.half) + ')').join(', ')}</div>` : ''}
         <h3 class="ddh" style="margin-top:14px">업무배정<small>지원차출 ${D.sup.length}명${r.asgAt ? ' · 마지막 수정 ' + esc(r.asgAt) : ''}</small></h3>
         <div class="ddasg">${tasks.concat(Object.values(D.sup.reduce((a, p) => (tasks.includes(p.task) || (a[p.task] = p.task), a), {}))).map(t => { const L = D.sup.filter(p => p.task === t); return L.length ? `<div class="ddac"><div class="t">${esc(t)}<span>${L.length}</span></div>${L.map(p => `<span class="ddpn">${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join('')}</div>` : ''; }).join('') || '<div class="muted" style="font-size:12.5px">배정 없음' + (staff ? '' : ' — [업무배정 · 휴무 입력]에서 넣습니다') + '</div>'}</div></div></div>`;
@@ -6364,10 +6392,10 @@ async function addCharts(buf, jobs) {
         ${isRO() ? '' : `<button id="bimp" title="여러 명의 기존 엑셀을 한꺼번에 가져옵니다 (파일 이름으로 인원 찾기)">📥 여러 명 엑셀 가져오기</button>`}
         <button id="zip" ${xym ? '' : 'disabled'}>⬇ 엑셀 전체 (zip)</button>
       </div>
-      ${S.mView === 'list' && S.mMode === 'month' && xym && !isRO() ? `<div class="gtbar"><b>그룹 목표 한꺼번에</b>
+      ${S.gtOpen && S.mView === 'list' && S.mMode === 'month' && xym && !isRO() ? `<div class="gtbar"><b>그룹 목표 한꺼번에</b>
         <select id="gtg">${r.groups.filter(g => g !== '팀장').map(g => `<option ${g === S.manageGroup ? 'selected' : ''}>${g}</option>`).join('')}</select> 일반 인원 전체를
         <select id="gtv"><option value="">목표 선택</option>${C.TARGETS.map(t => `<option>${t}</option>`).join('')}</select>(으)로 <button id="gtgo">적용</button>
-        <span class="muted">${ymLabel(xym)} 목표 · 적용 후 사람별로 수정 가능</span></div>` : ''}
+        <span class="muted">${ymLabel(xym)} 목표 · 적용 후 사람별로 수정 가능</span><span style="flex:1"></span><button class="sm" id="gtx">닫기</button></div>` : ''}
       <div id="mbody"></div></div>`;
     }
     main.innerHTML = html; bindDailyTabs();
@@ -6382,6 +6410,7 @@ async function addCharts(buf, jobs) {
       $('#zip').onclick = () => xym && zipAll(xym);
       S._musers = r.users;
       if ($('#bimp')) $('#bimp').onclick = bulkImport;
+      if ($('#gtx')) $('#gtx').onclick = () => { S.gtOpen = false; renderManage(); };
       if ($('#gtgo')) $('#gtgo').onclick = async () => {
         const g = $('#gtg').value, v = $('#gtv').value;
         if (!v) return toast('목표를 선택하세요', true);
@@ -6398,6 +6427,21 @@ async function addCharts(buf, jobs) {
     if (what === 'day') go('input', { date: date || u.last || S.today });
     else { S.monthYm = xym; go('month', { ym: xym }); }
   }
+  // v28.8 : 줄 끝 [⋯] 메뉴 — 줄 안의 숨은 버튼을 화면 맨 위 상자에 그대로 보여 줌 (표 스크롤 · 애니메이션에 안 잘리게)
+  function rowMenu(btn) {
+    const pop = $('#rmpop'), was = btn && btn.closest('td').classList.contains('mopen');
+    $$('td.mopen').forEach(t => t.classList.remove('mopen')); if (pop) pop.remove();
+    if (!btn || was) return;
+    const td = btn.closest('td'), r = btn.getBoundingClientRect(), m = document.createElement('div');
+    td.classList.add('mopen'); m.id = 'rmpop'; m.className = 'rmpop';
+    $$('.rmenu button', td).forEach(o => { const c = document.createElement('button'); c.innerHTML = o.innerHTML; c.disabled = o.disabled; if (o.title) c.title = o.title; c.onclick = () => { rowMenu(null); o.click(); }; m.appendChild(c); });
+    document.body.appendChild(m);
+    const h = m.offsetHeight, w = m.offsetWidth;
+    m.style.left = Math.max(6, r.right - w) + 'px';
+    m.style.top = (r.bottom + 4 + h > window.innerHeight - 6 ? r.top - h - 4 : r.bottom + 4) + 'px';
+  }
+  document.addEventListener('click', e => { if (!(e.target.closest && e.target.closest('#rmpop,[data-more]'))) rowMenu(null); });
+  document.addEventListener('scroll', e => { if ($('#rmpop')) rowMenu(null); }, true);
   function rateCls(v) { return v == null ? '' : v >= 0.9 ? 'r-hi' : v <= 0.5 ? 'r-lo' : 'r-mid'; }
   function renderMList(r) {
     const xym = r.period ? r.period.ym : null, today = S.today;
@@ -6408,8 +6452,8 @@ async function addCharts(buf, jobs) {
       ['c8', '달성률', u => !(u.target && u.items.length) ? '' : u.m.c8 >= 0.9 ? '90% 이상' : u.m.c8 > 0.5 ? '51~89%' : '50% 이하', ['90% 이상', '51~89%', '50% 이하']]] });
     const list = MF.filter(S._mlist);
     const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}${['group', 'target', 'last', 'c8'].includes(k) ? ' ' + MF.ico(k) : k === 'name' ? ' ' + MF.ico('role') : ''}</th>`;
-    $('#mbody').innerHTML = `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}</div>
-      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' ? 266 : 220}px)">
+    $('#mbody').innerHTML = `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="그룹 일반 인원의 월 목표를 한 번에 정합니다">🎯 목표 일괄 지정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' && S.gtOpen ? 266 : 220}px)">
       <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '총 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률')}<th></th></tr></thead><tbody>
       ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
@@ -6423,10 +6467,12 @@ async function addCharts(buf, jobs) {
         <td class="num">${xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td>${c8 == null ? '<span class="muted">-</span>' : `<div class="mini"><i class="${rateCls(c8)}" style="width:${Math.min(100, c8 * 100)}%"></i></div><b class="${rateCls(c8)}t">${pct(c8)}</b>`}</td>
-        <td class="acts"><button data-a="day">일일</button><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>엑셀</button>${S.me.role === '관리자' && !isRO() ? '<button data-a="edit" title="이름·그룹·권한 변경, 비밀번호 초기화, 계정 삭제">편집</button>' : ''}</td></tr>`;
+        <td class="acts"><button data-a="month" ${xym ? '' : 'disabled'}>월 통계</button><button class="more" data-more title="일일 입력 보기 · 엑셀 받기${S.me.role === '관리자' && !isRO() ? ' · 인원 편집' : ''}">⋯</button>
+          <div class="rmenu"><button data-a="day">📝 일일 입력 보기</button><button data-a="xl" ${has && xym ? '' : 'disabled'}>⬇ 엑셀 받기</button>${S.me.role === '관리자' && !isRO() ? '<button data-a="edit" title="이름·그룹·권한 변경, 비밀번호 초기화, 계정 삭제">✎ 인원 편집</button>' : ''}</div></td></tr>`;
       }).join('') || '<tr><td colspan="11" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
     MF.bind();
+    if ($('#gtopen')) $('#gtopen').onclick = () => { S.gtOpen = !S.gtOpen; renderManage(); };
     $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; drawManage(r, S.manageYm || (r.period || {}).ym, false); }));
     $$('.mlist select.mtg').forEach(sel => (sel.onchange = async () => {
       const u = S._mlist.find(x => x.id === sel.closest('tr').dataset.u), v = +sel.value || 0;   // '-' = 목표 지우기
@@ -6438,8 +6484,10 @@ async function addCharts(buf, jobs) {
         toast(u.name + ' ' + ymLabel(xym) + (v ? ' 목표 ' + v : ' 목표 지움')); renderMList(r);
       } catch (e) { toast(e.message, true); sel.value = u.target || ''; sel.disabled = false; }
     }));
-    $$('.mlist tr[data-u] button').forEach(b => (b.onclick = async () => {
+    $$('.mlist tr[data-u] button').forEach(b => (b.onclick = async e => {
       const u = S._mlist.find(x => x.id === b.closest('tr').dataset.u);
+      if (b.hasAttribute('data-more')) { e.stopPropagation(); rowMenu(b); return; }
+      rowMenu(null);
       if (b.dataset.a === 'day') openUser(u, 'day', u.last);
       else if (b.dataset.a === 'month') openUser(u, 'month', null, xym);
       else if (b.dataset.a === 'xl') {
@@ -6576,9 +6624,10 @@ async function addCharts(buf, jobs) {
     const lastClosed = S.periods.filter(p => p.status === '마감').pop();
     const nextYm = open ? open.ym : (lastClosed ? nextYmOf(lastClosed.ym) : ymForStart(C.addDays(S.today, 1)));
     return `
-      <table class="list" style="margin-bottom:12px"><thead><tr><th>귀속월</th><th>시작일</th><th>마감일</th><th>상태</th></tr></thead><tbody>
-      ${S.periods.slice().reverse().slice(0, 6).map(p => `<tr><td><b>${ymLabel(p.ym)}</b></td><td>${p.start}</td><td>${p.end || '-'}</td><td>${periodChip(p)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">기간 없음</td></tr>'}
-      </tbody></table>
+      ${(() => { const L = S.periods.slice().reverse(), pr = p => `<tr><td><b>${ymLabel(p.ym)}</b></td><td>${p.start}</td><td>${p.end || '-'}</td><td>${periodChip(p)}</td></tr>`;   // v28.8 : 최근 2개만, 나머지는 접기
+        return `<table class="list" style="margin-bottom:${L.length > 2 ? 4 : 12}px"><thead><tr><th>귀속월</th><th>시작일</th><th>마감일</th><th>상태</th></tr></thead><tbody>
+          ${L.slice(0, 2).map(pr).join('') || '<tr><td colspan="4" class="muted">기간 없음</td></tr>'}</tbody></table>
+          ${L.length > 2 ? `<details class="fold" style="margin-bottom:12px"><summary>지난 달 ${L.length - 2}개 보기</summary><table class="list"><tbody>${L.slice(2, 14).map(pr).join('')}</tbody></table></details>` : ''}`; })()}
       ${open ? `
       <div class="row" style="gap:12px;align-items:flex-end">
         <div class="fld"><label>귀속월</label><input type="month" id="pym" value="${open.ym}"></div>
@@ -6895,11 +6944,11 @@ async function addCharts(buf, jobs) {
     let h = '';
     if (!V.data.agg.length) h += `<div class="banner warn" style="margin-bottom:14px">이 기간에 입력된 데이터가 없습니다.</div>`;
     // 요약
-    if (show('kpi') && live) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : 진행 중인 기간이라 누적 숫자는 작게 나옵니다.</div>`;
+    if (show('kpi') && live) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : 진행 중인 기간이라 합계(수량)는 비교하지 않습니다 · 평균은 그대로 비교</div>`;
     if (show('kpi')) {
       const tgA = R.ev.filter(a => a.tg > 0), tgAvg = tgA.length ? tgA.reduce((s, a) => s + a.tg, 0) / tgA.length : null, att = R.att;
       h += `<div class="stkpis" data-stk="kpi">
-        <div class="card kpi"><span>조립 수량 · ${esc(gl)}</span><b>${fN(R.q)}<small> 대</small></b>${dl(R.q, P.q, v => P.q ? (v / P.q * 100).toFixed(1) : fN(v), true, P.q ? '%' : '')}</div>
+        <div class="card kpi"><span>조립 수량 · ${esc(gl)}</span><b>${fN(R.q)}<small> 대</small></b>${live ? `<em class="eq live">진행 중</em> <i>${P.q == null ? '' : pv.replace(' 대비', '') + ' 전체 ' + fN(P.q) + '대'}</i>` : dl(R.q, P.q, v => P.q ? (v / P.q * 100).toFixed(1) : fN(v), true, P.q ? '%' : '')}</div>
         <div class="card kpi"><span>평균 환산 (하루 평가값)</span><b>${f1(R.avg)}${tgAvg ? `<small> / 목표 ${f1(tgAvg)}</small>` : ''}</b>${dl(R.avg, P.avg, f1, true)}</div>
         <div class="card kpi"><span>목표 달성 인원</span><b>${R.hit == null ? '-' : Math.round(R.hit * 100)}<small>%</small></b>${R.tgN ? `<i>${R.tgN}명 중 ${R.hitN}명</i> ` : ''}${dl(R.hit == null ? null : R.hit * 100, P.hit == null ? null : P.hit * 100, v => v.toFixed(0), true, '%p')}</div>
         <div class="card kpi"><span>입력 인원 (하루 평균)</span><b>${f1(R.ppd)}<small> 명</small></b>${dl(R.ppd, P.ppd, f1, true)}</div>
@@ -7232,13 +7281,15 @@ async function addCharts(buf, jobs) {
     if (!document.body.contains(box)) return;                              // 기다리는 동안 다른 화면으로 옮김
     const st = x => [x.period ? '업무 ' + x.period : '', x.hr === null || x.hr === undefined ? '' : (x.hr ? '인사평가 마감' : '인사평가 진행'), x.lvClosed ? '연차 마감' : ''].filter(Boolean).join(' · ') || '-';
     box.innerHTML = `<div style="max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px"><table class="list bktbl"><thead><tr><th>달</th><th>상태</th><th class="num">일일</th><th class="num">연차</th><th class="num">평가</th><th>마지막 백업</th><th></th></tr></thead><tbody>
-      ${r.months.slice().reverse().map(x => `<tr><td><b>${ymLabel(x.ym)}</b>${x.oldest ? ' <span class="muted">(가장 오래됨)</span>' : ''}</td><td class="muted">${esc(st(x))}</td>
+      ${r.months.slice().reverse().map((x, i) => `<tr class="${i >= 3 && !x.changed && !x.oldest ? 'bkold' : ''}"><td><b>${ymLabel(x.ym)}</b>${x.oldest ? ' <span class="muted">(가장 오래됨)</span>' : ''}</td><td class="muted">${esc(st(x))}</td>
         <td class="num">${x.days}</td><td class="num">${x.leaves}</td><td class="num">${x.hrRecs}</td>
         <td>${x.backupAt ? esc(x.backupAt.slice(5, 16)) + ' · ' + esc(x.backupBy) + (x.changed ? ' <b class="t-lo">· 바뀜 → 다시 백업</b>' : '') : '<span class="muted">없음</span>'}</td>
         <td><button data-bk="${x.ym}">⬇ 백업</button>${x.oldest && isAdm0() && !isRO() ? ` <button class="danger" data-bd="${x.ym}" ${x.canDelete ? '' : 'disabled title="12개월 지난 가장 오래된 달 · 마감 · 백업 후 변경 없음일 때만"'}>이 달 지우기</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">데이터가 없습니다</td></tr>'}
       </tbody></table></div>
+      ${(() => { const n = r.months.filter((x, i, A) => { const j = A.length - 1 - i; return j >= 3 && !x.changed && !x.oldest; }).length; return n ? `<button class="sm fold-b" id="bkmore" data-n="${n}">${box.classList.contains('bkall') ? '접기 ▴' : '지난 달 ' + n + '개 보기 ▾'}</button>` : ''; })()}
       <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">지우기는 <b>12개월이 지난</b> 가장 오래된 달이 마감·백업 후 변경 없을 때만 켜집니다.</span>
         ${isAdm0() && !isRO() ? '<label class="btn-file"><input type="file" id="bkfile" accept=".json" hidden><span>백업 파일로 복원…</span></label>' : ''}</div>`;
+    if ($('#bkmore', box)) $('#bkmore', box).onclick = e => { const on = box.classList.toggle('bkall'); e.target.textContent = on ? '접기 ▴' : '지난 달 ' + e.target.dataset.n + '개 보기 ▾'; };
     $$('[data-bk]', box).forEach(b => (b.onclick = async () => {
       const ym = b.dataset.bk; b.disabled = true;
       try {
