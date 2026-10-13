@@ -1363,6 +1363,9 @@ header.roh nav{margin-left:14px}header.roh .me .tag{background:#f59e0b;color:#1f
 html[data-theme=dark] .rob.d .ic{background:#1d2c4d;color:#8fb4ff}html[data-theme=dark] .rob.l .ic{background:#2e2350;color:#c4b0ff}html[data-theme=dark] .rob.o .ic{background:#3a2616;color:#ffb27a}
 .rob .st:has(.rokpi){display:block;width:100%}.rokpi{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.rokpi .rkd{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--sub)}
 .rokpi>div:not(.rkd){background:var(--line2);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}.rokpi i{font-style:normal;font-size:13px;color:var(--sub);font-weight:700}.rokpi b{font-size:30px;font-weight:800;letter-spacing:-.5px}.rokpi b em{font-style:normal;font-size:14px;color:var(--sub);font-weight:600;margin-left:2px}.rokpi small{font-size:12px;color:var(--sub)}
+/* v28.11 : 통계 — 월 마감 자료 막대 */
+.stg path.bh{fill:color-mix(in srgb,var(--blue) 16%,var(--panel));stroke:var(--blue);stroke-width:1.2;stroke-dasharray:4 3}.stg path.b1.bh{fill:color-mix(in srgb,var(--blue) 40%,var(--panel))}
+.hilg{color:var(--blue);font-weight:800}
 </style>
 </head>
 <body>
@@ -4114,6 +4117,49 @@ function parseAcc(ws) {
 }
 
 
+// v28.11 : 예전(1~4월) 전체 통합파일 — [업무데이터] 시트 (16·17줄 두 줄 제목) + [점수] 시트의 목표
+//  칸 : 구분 · 파트 · 이름 … 조립수량 · 근무일 · 실수량(환산) … 총량(환산) · 점유율 · 평균(환산) · 달성_%
+function isOldBook(wb) { return wb.SheetNames.includes('업무데이터') && wb.SheetNames.includes('점수') && oldHeader(XLSX.utils.sheet_to_json(wb.Sheets['업무데이터'], { header: 1, raw: true, defval: '' })) >= 0; }
+function oldHeader(aoa) {
+  for (let r = 0; r < Math.min(aoa.length, 40); r++) if ((aoa[r] || []).some(c => normH(c) === '조립수량') && (aoa[r + 1] || []).some(c => normH(c) === '평균(환산)')) return r;
+  return -1;
+}
+function parseOld(wb) {
+  const aoa = XLSX.utils.sheet_to_json(wb.Sheets['업무데이터'], { header: 1, raw: true, defval: '' });
+  const hr = oldHeader(aoa); if (hr < 0) throw new Error('예전 통합파일의 [업무데이터] 시트 제목 줄(조립수량 · 평균(환산))을 찾지 못했습니다.');
+  const top = aoa[hr] || [], bot = aoa[hr + 1] || [], m = {};
+  for (let i = 0; i < Math.max(top.length, bot.length); i++) [bot[i], top[i]].forEach(h => { const k = normH(h); if (k && m[k] === undefined) m[k] = i; });
+  const col = k => m[k], need = ['이름', '조립수량', '근무일', '평균(환산)'];
+  need.forEach(k => { if (col(k) === undefined) throw new Error('[업무데이터] 시트에 "' + k + '" 칸이 없습니다.'); });
+  // 목표 : [점수] 시트 (이름 · 목표)
+  const tg = {}; try {
+    const sa = XLSX.utils.sheet_to_json(wb.Sheets['점수'], { header: 1, raw: true, defval: '' }), sh = findHeader(sa, ['목표']);
+    if (sh >= 0) { const sm = colMap(sa[sh]), ni = sa[sh].findIndex(c => normH(c) === '이름'); for (let r = sh + 1; r < sa.length; r++) { const nm = normH(sa[r][ni]); const t = num(sa[r][sm['목표']]); if (nm && t) tg[nm] = t; } }
+  } catch (e) { }
+  const GR = ['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원', '출력'];
+  const out = {}, order = []; let blk = [], blkG = '';
+  const flush = () => { blk.forEach(k => { if (!out[k].원본그룹) out[k].원본그룹 = blkG; }); blk = []; blkG = ''; };
+  let prevNo = 0;
+  for (let r = hr + 2; r < aoa.length; r++) {
+    const row = aoa[r], name = String(row[col('이름')] || '').trim(), no = num(row[0]), part = String(row[col('파트')] !== undefined ? row[col('파트')] : row[1] || '').trim();
+    if (!name || /^[\d.]+$/.test(name) || normH(name) === '이름') continue;
+    if (no !== null && no <= prevNo) flush(); prevNo = no === null ? prevNo : no;   // 구분 번호가 1로 돌아가면 새 그룹
+    const k = normH(name); if (out[k]) continue;
+    const isRole = part === '매니저' || part === '파트장';
+    if (!isRole && !blkG) blkG = part;
+    let ach = num(row[col('달성_%')]); if (ach !== null && ach > 3) ach = ach / 100;
+    const days = num(row[col('근무일')]);
+    out[k] = { 이름: name, 원본그룹: isRole ? '' : part, 직위: isRole ? part : '', 조립수량: num(row[col('조립수량')]), 목표수량: tg[k] || null,
+      평가평균: num(row[col('평균(환산)')]), 실제평균: num(row[col('실수량(환산)')]), 근무일수: days === null ? null : Math.floor(days + 1e-9), 총량: num(row[col('총량(환산)')]),
+      달성률: ach, 순위: null, 조퇴: null, 지각: null, 당일연차: null, 결근: null, 지시불이행: null, 원본등급: '', 품질지적: 0, 미발송: 0, 오발송: 0, 오조립: 0, 파손: 0, 예전양식: 1 };
+    blk.push(k); order.push(k);
+  }
+  flush();
+  return { rows: out, order };
+}
+// 파일 이름 → 평가월 ("26년 1월 ..." → 2026-01)
+function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})\s*년\s*(\d{1,2})\s*월/); if (!x) return ''; const y = x[1].length === 2 ? '20' + x[1] : x[1]; return y + '-' + String(+x[2]).padStart(2, '0'); }
+
   async function viewData() {
     body().innerHTML = '<div class="muted" style="padding:20px">불러오는 중…</div>';
     let d; try { d = await getMonth(ST.month, (META.parts[0] || {}).name || ''); } catch (e) { toast(e.message, 1); return; }
@@ -4127,8 +4173,9 @@ function parseAcc(ws) {
         <div class="row"><input type="file" id="upAcc" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upAccSheet" class="hidden" style="width:auto"></select><button class="primary" id="accBtn" disabled>올리기</button></div>
         <div id="accPrev" class="muted" style="margin-top:8px">다시 올리면 그 달 사고만 바뀝니다.</div></section>
       <section class="card dsec"><div class="dst"><b>③ 근태</b><span class="chip open">매니저 기록</span></div><div style="line-height:1.8">매니저가 [근태] 탭에서 기록합니다. <a href="#" id="dAtt">근태 보기</a></div></section>
-      <section class="card dsec"><div class="dst"><b>④ 업무통계 엑셀 올리기</b><span class="muted">웹 입력 전 달(10월 이전) 또는 비상시</span></div>
-        <div class="row"><input type="file" id="upWork" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upWorkSheet" class="hidden" style="width:auto"></select><button class="primary" id="upBtn" disabled>올리기</button></div>
+      <section class="card dsec"><div class="dst"><b>④ 업무통계 엑셀 올리기</b><span class="muted">웹 입력 전 달(10월 이전) · 예전(1~4월) 통합파일도 됨</span></div>
+        <div class="row"><input type="file" id="upWork" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upWorkSheet" class="hidden" style="width:auto"></select>
+          <label class="muted" style="display:flex;align-items:center;gap:6px">평가월 <input type="month" id="upYm" value="${ST.month}" style="width:auto"></label><button class="primary" id="upBtn" disabled>올리기</button></div>
         <div id="upPreview" style="margin-top:10px"></div></section></div>`;
     $('#dAtt').onclick = e => { e.preventDefault(); go('att'); };
     $('#dWeb').onclick = async () => {
@@ -4143,7 +4190,8 @@ function parseAcc(ws) {
         const f = e.target.files[0]; if (!f) return;
         try {
           const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: true });
-          books[key] = wb;
+          books[key] = wb; books[key + 'Name'] = f.name;
+          const fy = ymFromName(f.name); if (fy && key === 'work' && $('#upYm')) $('#upYm').value = fy;   // v28.11 : 파일 이름의 "26년 1월" → 평가월
           const s = $(sheetSel); s.classList.remove('hidden');
           const def = wb.SheetNames.find(n => prefer.some(p => n.includes(p))) || wb.SheetNames[0];
           s.innerHTML = wb.SheetNames.map(n => `<option ${n === def ? 'selected' : ''}>${esc(n)}</option>`).join('');
@@ -4155,9 +4203,10 @@ function parseAcc(ws) {
     const pvWork = () => {
       work = null; $('#upBtn').disabled = true;
       try {
-        const w = parseWork(books.work.Sheets[$('#upWorkSheet').value]);
+        const old = isOldBook(books.work), w = old ? parseOld(books.work) : parseWork(books.work.Sheets[$('#upWorkSheet').value]);
+        $('#upWorkSheet').classList.toggle('hidden', old);
         work = w.order.map(k => w.rows[k]);
-        $('#upPreview').innerHTML = `<div class="banner info">인원 ${work.length}명 읽음 · 앞부분 미리보기</div><div class="scroll"><table class="tbl"><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th></tr>
+        $('#upPreview').innerHTML = `<div class="banner info">${old ? '<b>예전 통합파일</b> ([업무데이터] + [점수] 시트) · ' : ''}인원 ${work.length}명 읽음 · 조립수량 합계 ${Math.round(work.reduce((a, r) => a + (r.조립수량 || 0), 0)).toLocaleString()} · 앞부분 미리보기</div><div class="scroll"><table class="tbl"><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th></tr>
           ${work.slice(0, 6).map(r => `<tr><td>${esc(r.이름)}</td><td>${esc(r.원본그룹)}</td><td>${f1(r.평가평균, 2)}</td><td>${f1(r.총량)}</td><td>${dash(r.목표수량)}</td><td>${dash(r.근무일수)}</td><td>${dash(r.지각)}</td><td>${dash(r.조퇴)}</td><td>${dash(r.결근)}</td></tr>`).join('')}</table></div>`;
         $('#upBtn').disabled = false;
       } catch (err) { $('#upPreview').innerHTML = `<div class="banner lock">${esc(err.message)}</div>`; }
@@ -4170,9 +4219,11 @@ function parseAcc(ws) {
     setup('#upWork', '#upWorkSheet', 'work', ['업무데이터', '업무'], pvWork);
     setup('#upAcc', '#upAccSheet', 'acc', ['사고'], pvAcc);
     $('#upBtn').onclick = async () => {
-      if (!work || !(await A.confirmBox(`${ymLab(ST.month)} 업무데이터 ${work.length}명을 올립니다.<br>이 달에 이미 반영된 자료가 있으면 새 자료로 바뀝니다.`, '올리기'))) return;
+      const um = $('#upYm').value || ST.month;
+      if (!/^\d{4}-\d{2}$/.test(um)) return toast('평가월을 고르세요', 1);
+      if (!work || !(await A.confirmBox(`<b>${ymLab(um)}</b> 업무데이터 ${work.length}명을 올립니다.<br>이 달에 이미 반영된 자료가 있으면 새 자료로 바뀝니다.`, '올리기'))) return;
       try {
-        const r = await api('hrUpload', { month: ST.month, rows: work, src: 'upload' }); META = r.meta; refreshMonthSel();
+        const r = await api('hrUpload', { month: um, rows: work, src: 'upload' }); META = r.meta; refreshMonthSel();
         $('#upPreview').innerHTML = `<div class="banner info">${ymLab(r.month)} 올리기 완료 · ${r.count}명</div>` + (r.missing.length ? `<div class="banner warn">명단에는 있는데 업무데이터에 없는 인원 ${r.missing.length}명: ${r.missing.map(esc).join(', ')}<br>이름이 다르면 [기준 · 명단]의 "원본이름"을 고치세요.</div>` : '');
         toast('올리기 완료');
       } catch (e) { toast(e.message, 1); }
@@ -6767,6 +6818,28 @@ async function addCharts(buf, jobs) {
     });
     return out;
   }
+  // v28.11 : 월 마감 자료 (인사평가에 엑셀로 올린 사람별 한 달 실적) → 날짜별 입력이 없는 달만 칸에 더함
+  //  같은 사람이 같은 칸에 날짜별 자료도 있으면 근무일로 가중 평균
+  function stMonthly(D, bucket, out) {
+    const daily = new Set((D.agg || []).map(r => r[1])), byName = {}, rg = {};
+    (D.users || []).forEach(u => (byName[normName(u.name)] = u)); (D.roster || []).forEach(([n, g, t]) => (rg[normName(n)] = { g, t }));
+    const nb = v => v === null || v === undefined || v === '' || !isFinite(+v) ? null : +v;
+    (D.hrm || []).forEach(([ym, name, og, q, f7, tg, c8, dd, role]) => {
+      if (daily.has(ym)) return;
+      const key = bucket(ym, null); if (key == null) return;
+      const k = normName(name), us = byName[k], cur = rg[k], f = nb(f7) || 0, n = Math.round(nb(dd) || 0), t = nb(tg) || 0;
+      if (!n && !f) return;
+      const uid = us ? us.id : 'h:' + k, id = uid + '|' + key;
+      const a = out[id] = out[id] || { u: uid, key, n: 0, c4: 0, d4: 0, sumH: 0, av: 0, au: 0, otc: 0, aw: 0, oth: 0, q: 0, mf: 0, mq: 0, r10: {}, rmin: {}, ot: {}, yms: {}, f7: 0, tg: 0, c8: null,
+        grp: (cur && cur.g) || (us && us.grp) || String(og || ''), name: us ? us.name : name, title: (cur && cur.t) || (us && us.title) || String(role || '') };
+      const n0 = a.n, n1 = n0 + n;
+      a.f7 = n1 ? (a.f7 * n0 + f * n) / n1 : f;
+      if (t) a.tg = a.tg && n0 ? (a.tg * n0 + t * n) / n1 : t;
+      a.n = n1; a.c4 += n; a.q += nb(q) || 0; a.hist = (a.hist || 0) + 1; a.yms[ym] = (a.yms[ym] || 0) + n;
+      a.c8 = a.tg ? a.f7 / a.tg : nb(c8);
+    });
+    return out;
+  }
   // 날짜 → 칸
   function stDateKey(u, d, P) {
     if (u === 'week') return monOf(d);
@@ -6779,10 +6852,12 @@ async function addCharts(buf, jobs) {
     const K = new Set(keys), PK = new Set(prevKeys);
     const bk = (ym, wk) => u === 'week' ? wk : u === 'month' ? ym : u === 'quarter' ? qOf(ym) : ym.slice(0, 4);
     const per = stAgg(D, (ym, wk) => { const k = bk(ym, wk); return K.has(k) ? k : null; });
+    if (u !== 'week') stMonthly(D, ym => { const k = bk(ym); return K.has(k) ? k : null; }, per);
     const sumKey = V.custom ? (ym, wk) => { const k = bk(ym, wk); return K.has(k) ? 'R' : PK.has(k) ? 'P' : null; }
       : (ym, wk) => { const k = bk(ym, wk); return k === keys[keys.length - 1] ? 'R' : PK.has(k) ? 'P' : null; };
     const tot = stAgg(D, sumKey);
-    const ok = a => a.grp !== '팀장' && inG(a.grp);
+    if (u !== 'week') stMonthly(D, ym => sumKey(ym, null), tot);
+    const ok = a => a.grp !== '팀장' && (V.grp.length ? inG(a.grp) : G.includes(a.grp) || !!a.hist);   // 예전 그룹 이름(웍스 · 대량 등)도 전체에는 넣음
     const evalP = a => ok(a) && a.n > 0 && a.f7 > 0;
     const minD = u === 'week' ? 3 : 5;
     const nameG = {}; (D.roster || []).forEach(([n, g]) => (nameG[normName(n)] = g)); D.users.forEach(x => (nameG[normName(x.name)] = x.grp));
@@ -6790,8 +6865,8 @@ async function addCharts(buf, jobs) {
     const isW = d => { const w = new Date(d + 'T00:00:00').getDay(); return w >= 1 && w <= 5 && !H[d]; };
     const AK = keys[keys.length - 1], dkey = d => { const k = stDateKey(u, d, D.periods); return V.custom ? (K.has(k) ? 'R' : PK.has(k) ? 'P' : null) : (k === AK ? 'R' : PK.has(k) ? 'P' : null); };
     // 칸별
-    const B = {}; keys.concat(['R', 'P']).forEach(k => (B[k] = { k, ps: [], q: 0, mf: 0, mq: 0, n: 0, dates: 0, lv: 0, tr: 0, att: { 지각: 0, 조퇴: 0, 결근: 0, 당일연차: 0 }, r10: {}, rmin: {}, ot: {} }));
-    const addTo = (b, a) => { b.ps.push(a); b.q += a.q; b.mf += a.mf || 0; b.mq += a.mq || 0; b.n += a.n; for (const c in a.r10) { b.r10[c] = (b.r10[c] || 0) + a.r10[c]; b.rmin[c] = (b.rmin[c] || 0) + a.rmin[c]; } for (const k in a.ot) b.ot[k] = (b.ot[k] || 0) + a.ot[k]; };
+    const B = {}; keys.concat(['R', 'P']).forEach(k => (B[k] = { k, ps: [], q: 0, mf: 0, mq: 0, n: 0, hist: 0, dates: 0, lv: 0, tr: 0, att: { 지각: 0, 조퇴: 0, 결근: 0, 당일연차: 0 }, r10: {}, rmin: {}, ot: {} }));
+    const addTo = (b, a) => { b.ps.push(a); b.q += a.q; if (a.hist) b.hist++; b.mf += a.mf || 0; b.mq += a.mq || 0; b.n += a.n; for (const c in a.r10) { b.r10[c] = (b.r10[c] || 0) + a.r10[c]; b.rmin[c] = (b.rmin[c] || 0) + a.rmin[c]; } for (const k in a.ot) b.ot[k] = (b.ot[k] || 0) + a.ot[k]; };
     Object.values(per).forEach(a => { if (ok(a) && B[a.key]) addTo(B[a.key], a); });
     Object.values(tot).forEach(a => { if (ok(a) && B[a.key]) addTo(B[a.key], a); });
     D.dates.forEach(([d]) => { const k1 = stDateKey(u, d, D.periods); if (B[k1] && K.has(k1)) B[k1].dates++; const k2 = dkey(d); if (k2 === 'R' || k2 === 'P') B[k2].dates++; });
@@ -6810,7 +6885,7 @@ async function addCharts(buf, jobs) {
       const ev = b.ps.filter(evalP), tg = ev.filter(a => a.c8 != null);
       b.ev = ev; b.avg = ev.length ? ev.reduce((s, a) => s + a.f7, 0) / ev.length : null;
       b.hit = tg.length ? tg.filter(a => a.c8 >= 1).length / tg.length : null; b.hitN = tg.filter(a => a.c8 >= 1).length; b.tgN = tg.length;
-      b.ppd = b.dates ? b.n / b.dates : null;
+      b.ppd = b.dates && !b.hist ? b.n / b.dates : null;
       b.byG = {}; G.forEach(g => { const L = ev.filter(a => a.grp === g), T = L.filter(a => a.tg > 0); b.byG[g] = { avg: L.length ? L.reduce((s, a) => s + a.f7, 0) / L.length : null, n: L.length, tg: T.length ? T.reduce((s, a) => s + a.tg, 0) / T.length : null, q: b.ps.filter(a => a.grp === g).reduce((s, a) => s + a.q, 0), mq: b.ps.filter(a => a.grp === g).reduce((s, a) => s + (a.mq || 0), 0), r10: {}, rmin: {}, ot: {} }; });
       b.ps.forEach(a => { const x = b.byG[a.grp]; if (!x) return; for (const c in a.r10) { x.r10[c] = (x.r10[c] || 0) + a.r10[c]; x.rmin[c] = (x.rmin[c] || 0) + a.rmin[c]; } for (const k in a.ot) x.ot[k] = (x.ot[k] || 0) + a.ot[k]; });
     });
@@ -6831,7 +6906,7 @@ async function addCharts(buf, jobs) {
     const every = Math.ceil(vals.length / Math.max(1, Math.floor((w - pl) / 46)));
     vals.forEach((v, i) => { const x = pl + st * i + (st - bw) / 2, last = opt.hi === i;
       if (v != null && v > 0) { const y = pt + ph * (1 - v / mx), sv = opt.sub ? Math.min(v, +opt.sub[i] || 0) : 0, tt = labs[i] + ' : ' + (opt.dec ? f1(v) : fN(v)) + (opt.unit || '') + (sv ? ' (주문 ' + fN(v - sv) + ' · 제조 ' + fN(sv) + ')' : '');
-        g += `<path class="${last ? 'b1' : 'b0'}" d="${colPath(x, y, bw, base)}">${tip(tt)}</path>`;
+        g += `<path class="${last ? 'b1' : 'b0'}${opt.hist && opt.hist[i] ? ' bh' : ''}" d="${colPath(x, y, bw, base)}">${tip(tt + (opt.hist && opt.hist[i] ? ' · 월 마감 자료' : ''))}</path>`;
         if (sv) { const hs = ph * sv / mx; g += `<rect class="${last ? 'bm1' : 'bm0'}" x="${x}" y="${base - hs}" width="${bw}" height="${Math.max(1, hs)}">${tip(tt)}</rect>`; }   // v28.9 : 제조 몫
         if (last || opt.all) g += `<text class="vl" x="${x + bw / 2}" y="${y - 7}" text-anchor="middle">${opt.dec ? f1(v) : fN(v)}</text>`; }
       else g += `<text class="ax" x="${x + bw / 2}" y="${base - 6}" text-anchor="middle">-</text>`;
@@ -6934,7 +7009,7 @@ async function addCharts(buf, jobs) {
     if (lo && from < lo) from = lo > to ? to : lo;
     $('#stl').textContent = V.custom ? stLab(V.unit, keys[0]) + ' ~ ' + stLab(V.unit, keys[keys.length - 1]) : stLab(V.unit, keys[keys.length - 1]);
     $('#stp').disabled = $('#stn').disabled = !!V.custom; $('#stc').classList.toggle('primary', !!V.custom); $('#stc').textContent = V.custom ? '📅 직접 고른 기간 ✕' : '📅 기간 직접';
-    const by = V.unit === 'week' ? 'week' : 'ym', ck = by + '|' + from + '|' + to;
+    const by = V.unit === 'week' ? 'week' : 'ym', ck = by + '|' + from + '|' + to + '|' + rs[0][0];
     if (V.key !== ck || !V.data) {
       const tk = S.token; $('#stb').classList.add('loading');
       try {
@@ -6946,7 +7021,8 @@ async function addCharts(buf, jobs) {
         }
         const need = chunks.filter(c => !C2[c.k] || (c.b >= S.today && Date.now() - C2[c.k].at > 60000));
         for (let i = 0; i < need.length; i += 4) await Promise.all(need.slice(i, i + 4).map(async c => { C2[c.k] = { at: Date.now(), d: await api('stats', { from: c.a, to: c.b, by, part: 'agg' }) }; }));
-        const meta = await api('stats', { from, to, part: 'meta' });
+        const hfrom = rs.reduce((a, r) => r[0] < a ? r[0] : a, rs[0][0]).slice(0, 7), hto = rs.reduce((a, r) => r[1] > a ? r[1] : a, rs[0][1]).slice(0, 7);   // v28.11 : 월 마감 자료는 기간 없는 달도
+        const meta = await api('stats', { from, to, part: 'meta', hfrom, hto });
         if (tk !== S.token || S.view !== 'stats') return;
         const D = Object.assign({}, meta, { agg: [], dates: [], targets: [], cols: null, oth: null });
         chunks.forEach(c => { const x = C2[c.k].d; D.cols = x.cols; D.oth = x.oth; D.agg = D.agg.concat(x.agg); D.dates = D.dates.concat(x.dates); D.targets = D.targets.concat(x.targets); });
@@ -6985,7 +7061,8 @@ async function addCharts(buf, jobs) {
     const pv = V.custom ? '앞 같은 기간 대비' : { week: '지난주 대비', month: '지난달 대비', quarter: '지난 분기 대비', year: '작년 대비' }[u];
     const dl = (a, b, fmt, good, unit) => a == null || b == null ? `<i>${pv} -</i>` : (() => { const d = a - b; if (Math.abs(d) < 1e-9) return `<em class="eq">－ 0${unit || ''}</em> <i>${pv}</i>`; return `<em class="${good == null ? 'eq' : (d > 0) === good ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'} ${fmt(Math.abs(d))}${unit || ''}</em> <i>${pv}</i>`; })();
     let h = '';
-    if (!V.data.agg.length) h += `<div class="banner warn" style="margin-bottom:14px">이 기간에 입력된 데이터가 없습니다.</div>`;
+    if (!V.data.agg.length && !(V.data.hrm || []).length) h += `<div class="banner warn" style="margin-bottom:14px">이 기간에 입력된 데이터가 없습니다.</div>`;
+    if (show('kpi') && R.hist) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : <b>월 마감 자료</b>(인사평가에 올린 업무통계)로 계산 · 일별 숫자 · 업무 종류 비중 · 입력 인원은 없음</div>`;
     // 요약
     if (show('kpi') && live) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : 진행 중인 기간이라 합계(수량)는 비교하지 않습니다 · 평균은 그대로 비교</div>`;
     if (show('kpi')) {
@@ -7001,9 +7078,9 @@ async function addCharts(buf, jobs) {
     if (show('trend')) {
       const tm = V.trendM, vals = keys.map(k => tm === 'q' ? B[k].q : tm === 'avg' ? B[k].avg : B[k].ppd), tgs = R.ev.filter(a => a.tg > 0), tgv = tgs.length ? tgs.reduce((s, a) => s + a.tg, 0) / tgs.length : null;
       const nm = { q: '조립 수량', avg: '평균 환산', ppd: '입력 인원 (하루 평균)' }[tm];
-      cards.push(stCard('trend', wide, `<div class="sthd"><div><h3>${nm} 추이 · ${esc(gl)}</h3><div class="cap">${keys.length}개 ${STU.find(x => x[0] === u)[1]} · ${V.custom ? '' : '기준 기간 진하게 · '}막대에 마우스를 올리면 숫자${tm === 'q' && keys.some(k => B[k].mq) ? ' · <span class="mflg">■</span> 보라 = 제조' : ''}</div></div><span class="sp"></span>
+      cards.push(stCard('trend', wide, `<div class="sthd"><div><h3>${nm} 추이 · ${esc(gl)}</h3><div class="cap">${keys.length}개 ${STU.find(x => x[0] === u)[1]} · ${V.custom ? '' : '기준 기간 진하게 · '}막대에 마우스를 올리면 숫자${tm === 'q' && keys.some(k => B[k].mq) ? ' · <span class="mflg">■</span> 보라 = 제조' : ''}${keys.some(k => B[k].hist) ? ' · <span class="hilg">▭</span> 점선 = 월 마감 자료' : ''}</div></div><span class="sp"></span>
         <div class="seg sm2">${[['q', '수량'], ['avg', '평균 환산'], ['ppd', '입력 인원']].map(([k, t]) => `<button data-tm="${k}" class="${tm === k ? 'on' : ''}">${t}</button>`).join('')}</div></div>
-        ${stBars(wide ? W : Wh, one ? 420 : 250, vals, labs, { hi: V.custom ? -1 : AK, dec: tm !== 'q', line: tm === 'avg' ? tgv : 0, all: one && keys.length <= 16, unit: tm === 'q' ? '대' : '', sub: tm === 'q' && keys.some(k => B[k].mq) ? keys.map(k => B[k].mq) : null })}
+        ${stBars(wide ? W : Wh, one ? 420 : 250, vals, labs, { hi: V.custom ? -1 : AK, dec: tm !== 'q', line: tm === 'avg' ? tgv : 0, all: one && keys.length <= 16, unit: tm === 'q' ? '대' : '', hist: keys.map(k => B[k].hist > 0), sub: tm === 'q' && keys.some(k => B[k].mq) ? keys.map(k => B[k].mq) : null })}
         ${one ? `<table class="list sttbl"><thead><tr><th>기간</th><th class="num">조립 수량</th>${keys.some(k => B[k].mq) ? '<th class="num mfgv">그중 제조</th>' : ''}<th class="num">평균 환산</th><th class="num">평가 인원</th><th class="num">입력 인원(하루)</th><th class="num">목표 달성</th></tr></thead><tbody>${keys.map((k, i) => `<tr><td>${labsL[i]}</td><td class="num">${fN(B[k].q)}</td>${keys.some(k2 => B[k2].mq) ? `<td class="num mfgv">${B[k].mq ? fN(B[k].mq) : ''}</td>` : ''}<td class="num">${f1(B[k].avg)}</td><td class="num">${B[k].ev.length}</td><td class="num">${f1(B[k].ppd)}</td><td class="num">${B[k].hit == null ? '-' : Math.round(B[k].hit * 100) + '%'}</td></tr>`).reverse().join('')}</tbody></table>` : ''}`));
     }
     if (show('cmp')) {
