@@ -4086,6 +4086,12 @@ function parseWork(ws) {
   const m = colMap(aoa[hr]);
   const pick = (row, ...keys) => { for (const k of keys) if (m[k] !== undefined) return row[m[k]]; return ''; };
   const out = {}, order = [];
+  // v28.12 : 사람별 항목 개수 (일반 ~ 개+포 44칸 = 사이트 항목 C ~ AT 순서) — 표지 칸으로 순서가 맞을 때만
+  const hrow = (aoa[hr] || []).map(normH), e0 = hrow.indexOf('일반');
+  const ITEM_C = ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM','AN','AO','AP','AQ','AR','AS','AT'];
+  const anchor = [[0, '일반'], [2, '추천웍스'], [8, 'A'], [13, 'F'], [14, 'A'], [24, 'O/S'], [33, '옵1'], [38, '난1']];
+  const hasItems = e0 >= 0 && anchor.every(([i, l]) => hrow[e0 + i] === l);
+  const SKIP = { H: 1, I: 1, J: 1 };                                   // 운송 칸은 달마다 이름이 달라(퀵+당 · 안+택) 넣지 않음
   for (let r = hr + 1; r < aoa.length; r++) {
     const row = aoa[r]; const name = String(pick(row, '이름') || '').trim();
     if (!name || name === '이름' || /^[\d.]+$/.test(name)) continue;
@@ -4098,9 +4104,10 @@ function parseWork(ws) {
       결근: num(pick(row, '결근')), 지시불이행: num(pick(row, '지시불이행')), 원본등급: pick(row, '등급'),
       품질지적: 0, 미발송: 0, 오발송: 0, 오조립: 0, 파손: 0
     };
+    if (hasItems) { const it = {}; ITEM_C.forEach((c, i) => { if (SKIP[c]) return; const v = num(row[e0 + i]); if (v) it[c] = v; }); if (Object.keys(it).length) out[k].항목 = it; }
     order.push(k);
   }
-  return { rows: out, order };
+  return { rows: out, order, items: hasItems };
 }
 
 const ACC_KINDS = { '품질지적': '품질지적', '지시불이행': '지시불이행', '미발송': '미발송', '오발송': '오발송', '오배송': '오발송', '오조립': '오조립', '파손': '파손' };
@@ -4210,7 +4217,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
         const fy = ymFromName(books.workName), um = $('#upYm').value;
         $('#upYm').classList.toggle('warnbox', !fy);
         $('#upPreview').innerHTML = (fy ? '' : `<div class="banner warn">파일 이름에서 달("26년 1월")을 찾지 못했습니다. <b>평가월(${esc(ymLab(um))})</b>이 맞는지 꼭 확인하세요.</div>`)
-          + `<div class="banner info">평가월 <b>${esc(ymLab(um))}</b> · ${old ? '<b>예전 통합파일</b> ([업무데이터] + [점수] 시트) · ' : ''}인원 ${work.length}명 읽음 · 조립수량 합계 ${Math.round(work.reduce((a, r) => a + (r.조립수량 || 0), 0)).toLocaleString()} · 앞부분 미리보기</div><div class="scroll"><table class="tbl"><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th></tr>
+          + `<div class="banner info">평가월 <b>${esc(ymLab(um))}</b> · ${old ? '<b>예전 통합파일</b> ([업무데이터] + [점수] 시트) · ' : ''}인원 ${work.length}명 읽음 · 조립수량 합계 ${Math.round(work.reduce((a, r) => a + (r.조립수량 || 0), 0)).toLocaleString()}${w.items ? ' · <b>업무 종류(항목별 개수)</b> 같이 읽음' : ''} · 앞부분 미리보기</div><div class="scroll"><table class="tbl"><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th></tr>
           ${work.slice(0, 6).map(r => `<tr><td>${esc(r.이름)}</td><td>${esc(r.원본그룹)}</td><td>${f1(r.평가평균, 2)}</td><td>${f1(r.총량)}</td><td>${dash(r.목표수량)}</td><td>${dash(r.근무일수)}</td><td>${dash(r.지각)}</td><td>${dash(r.조퇴)}</td><td>${dash(r.결근)}</td></tr>`).join('')}</table></div>`;
         $('#upBtn').disabled = false;
       } catch (err) { $('#upPreview').innerHTML = `<div class="banner lock">${esc(err.message)}</div>`; }
@@ -6829,7 +6836,8 @@ async function addCharts(buf, jobs) {
     const daily = new Set((D.agg || []).map(r => r[1])), byName = {}, rg = {};
     (D.users || []).forEach(u => (byName[normName(u.name)] = u)); (D.roster || []).forEach(([n, g, t]) => (rg[normName(n)] = { g, t }));
     const nb = v => v === null || v === undefined || v === '' || !isFinite(+v) ? null : +v;
-    (D.hrm || []).forEach(([ym, name, og, q, f7, tg, c8, dd, role]) => {
+    const MM = {};
+    (D.hrm || []).forEach(([ym, name, og, q, f7, tg, c8, dd, role, items]) => {
       if (daily.has(ym)) return;
       const key = bucket(ym, null); if (key == null) return;
       const k = normName(name), us = byName[k], cur = rg[k], f = nb(f7) || 0, n = Math.round(nb(dd) || 0), t = nb(tg) || 0;
@@ -6841,6 +6849,10 @@ async function addCharts(buf, jobs) {
       a.f7 = n1 ? (a.f7 * n0 + f * n) / n1 : f;
       if (t) a.tg = a.tg && n0 ? (a.tg * n0 + t * n) / n1 : t;
       a.n = n1; a.c4 += n; a.q += nb(q) || 0; a.hist = (a.hist || 0) + 1; a.yms[ym] = (a.yms[ym] || 0) + n;
+      if (items && typeof items === 'object') {                         // v28.12 : 업무 종류 (5월 이후 업무통계의 항목별 개수)
+        const M = MM[ym] = MM[ym] || C.minsMap(minsYm(ym));
+        for (const c in items) { const v = nb(items[c]) || 0; if (!v || !C.COL[c]) continue; a.r10[c] = (a.r10[c] || 0) + v; a.rmin[c] = (a.rmin[c] || 0) + v * (M[c] || 0); }
+      }
       a.c8 = a.tg ? a.f7 / a.tg : nb(c8);
     });
     return out;
@@ -7067,7 +7079,7 @@ async function addCharts(buf, jobs) {
     const dl = (a, b, fmt, good, unit) => a == null || b == null ? `<i>${pv} -</i>` : (() => { const d = a - b; if (Math.abs(d) < 1e-9) return `<em class="eq">－ 0${unit || ''}</em> <i>${pv}</i>`; return `<em class="${good == null ? 'eq' : (d > 0) === good ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'} ${fmt(Math.abs(d))}${unit || ''}</em> <i>${pv}</i>`; })();
     let h = '';
     if (!V.data.agg.length && !(V.data.hrm || []).length) h += `<div class="banner warn" style="margin-bottom:14px">이 기간에 입력된 데이터가 없습니다.</div>`;
-    if (show('kpi') && R.hist) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : <b>월 마감 자료</b>(인사평가에 올린 업무통계)로 계산 · 일별 숫자 · 업무 종류 비중 · 입력 인원은 없음</div>`;
+    if (show('kpi') && R.hist) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : <b>월 마감 자료</b>(인사평가에 올린 업무통계)로 계산 · 일별 숫자 · 입력 인원은 없음 (업무 종류는 5월 이후 업무통계만 · 운송 방법 제외)</div>`;
     // 요약
     if (show('kpi') && live) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : 진행 중인 기간이라 합계(수량)는 비교하지 않습니다 · 평균은 그대로 비교</div>`;
     if (show('kpi')) {
