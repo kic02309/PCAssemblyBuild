@@ -5217,7 +5217,7 @@ async function addCharts(buf, jobs) {
     if (view === 'manage') return renderManage();
     if (view === 'dash') return renderDash();
     if (view === 'home') return renderRoHome();
-    if (view === 'mfg') { $('#proxy').innerHTML = ''; return isManager() ? renderMfg() : go('dash'); }
+    if (view === 'mfg') { $('#proxy').innerHTML = ''; return isManager() ? renderMfg(true) : go('dash'); }     // 메뉴로 들어올 때마다 새로 불러옴 (입력·삭제 바로 반영)
     if (view === 'settings') return canSetPage() ? renderSettings() : go('dash');
     if (view === 'stats') return can('stats') ? renderStats() : go('dash');
     if (view === 'admin') return canHub() ? renderAdminHub() : go('settings');
