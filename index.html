@@ -1366,6 +1366,7 @@ html[data-theme=dark] .rob.d .ic{background:#1d2c4d;color:#8fb4ff}html[data-them
 /* v28.11 : 통계 — 월 마감 자료 막대 */
 .stg path.bh{fill:color-mix(in srgb,var(--blue) 16%,var(--panel));stroke:var(--blue);stroke-width:1.2;stroke-dasharray:4 3}.stg path.b1.bh{fill:color-mix(in srgb,var(--blue) 40%,var(--panel))}
 .hilg{color:var(--blue);font-weight:800}
+#upYm.warnbox{outline:2px solid #f59e0b;background:#fff7e6}
 </style>
 </head>
 <body>
@@ -4158,7 +4159,7 @@ function parseOld(wb) {
   return { rows: out, order };
 }
 // 파일 이름 → 평가월 ("26년 1월 ..." → 2026-01)
-function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})\s*년\s*(\d{1,2})\s*월/); if (!x) return ''; const y = x[1].length === 2 ? '20' + x[1] : x[1]; return y + '-' + String(+x[2]).padStart(2, '0'); }
+function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\s_.-]*(\d{1,2})[\s_.-]*월/); if (!x) return ''; const y = x[1].length === 2 ? '20' + x[1] : x[1]; return y + '-' + String(+x[2]).padStart(2, '0'); }
 
   async function viewData() {
     body().innerHTML = '<div class="muted" style="padding:20px">불러오는 중…</div>';
@@ -4206,7 +4207,10 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})\s*년\s*(\d{
         const old = isOldBook(books.work), w = old ? parseOld(books.work) : parseWork(books.work.Sheets[$('#upWorkSheet').value]);
         $('#upWorkSheet').classList.toggle('hidden', old);
         work = w.order.map(k => w.rows[k]);
-        $('#upPreview').innerHTML = `<div class="banner info">${old ? '<b>예전 통합파일</b> ([업무데이터] + [점수] 시트) · ' : ''}인원 ${work.length}명 읽음 · 조립수량 합계 ${Math.round(work.reduce((a, r) => a + (r.조립수량 || 0), 0)).toLocaleString()} · 앞부분 미리보기</div><div class="scroll"><table class="tbl"><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th></tr>
+        const fy = ymFromName(books.workName), um = $('#upYm').value;
+        $('#upYm').classList.toggle('warnbox', !fy);
+        $('#upPreview').innerHTML = (fy ? '' : `<div class="banner warn">파일 이름에서 달("26년 1월")을 찾지 못했습니다. <b>평가월(${esc(ymLab(um))})</b>이 맞는지 꼭 확인하세요.</div>`)
+          + `<div class="banner info">평가월 <b>${esc(ymLab(um))}</b> · ${old ? '<b>예전 통합파일</b> ([업무데이터] + [점수] 시트) · ' : ''}인원 ${work.length}명 읽음 · 조립수량 합계 ${Math.round(work.reduce((a, r) => a + (r.조립수량 || 0), 0)).toLocaleString()} · 앞부분 미리보기</div><div class="scroll"><table class="tbl"><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th></tr>
           ${work.slice(0, 6).map(r => `<tr><td>${esc(r.이름)}</td><td>${esc(r.원본그룹)}</td><td>${f1(r.평가평균, 2)}</td><td>${f1(r.총량)}</td><td>${dash(r.목표수량)}</td><td>${dash(r.근무일수)}</td><td>${dash(r.지각)}</td><td>${dash(r.조퇴)}</td><td>${dash(r.결근)}</td></tr>`).join('')}</table></div>`;
         $('#upBtn').disabled = false;
       } catch (err) { $('#upPreview').innerHTML = `<div class="banner lock">${esc(err.message)}</div>`; }
@@ -4217,6 +4221,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})\s*년\s*(\d{
       catch (err) { $('#accPrev').textContent = err.message; }
     };
     setup('#upWork', '#upWorkSheet', 'work', ['업무데이터', '업무'], pvWork);
+    $('#upYm').onchange = () => { if (books.work) pvWork(); };
     setup('#upAcc', '#upAccSheet', 'acc', ['사고'], pvAcc);
     $('#upBtn').onclick = async () => {
       const um = $('#upYm').value || ST.month;
