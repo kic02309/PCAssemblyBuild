@@ -1546,6 +1546,10 @@ html[data-theme=dark] .gchips button{background:#1e2128;border-color:#3a404b;col
 html[data-theme=dark] .lv.sp,html[data-theme=dark] .tag.sp{background:#3a2552;border-color:#5a3d7a;color:#e9d5ff}
 table.bd th.hol{color:#c62828;background:#fdecec}table.bd td.hc{background:#fdf3f3}
 html[data-theme=dark] table.bd th.hol{background:#3a1d1d;color:#ff9b9b}html[data-theme=dark] table.bd td.hc{background:#2a1b1b}
+
+/* v28.23 : 미가입 */
+.rtag.pendt{background:#eef0f3;color:#6b7280;border:1px dashed #b8c0cc}table.mlist tr.pend td,table.bd tr.pend td{color:#9aa3b1}
+html[data-theme=dark] .rtag.pendt{background:#23272e;color:#9aa3b1;border-color:#4b5260}
 </style>
 </head>
 <body>
@@ -7009,7 +7013,8 @@ async function addCharts(buf, jobs) {
     let html = '';
     if (r) {
       const xym = r.period ? r.period.ym : null;
-      const list = r.users.filter(u => !S.manageGroup || S.manageGroup.split(',').includes(u.group)).map(u => {
+      const all = r.users.concat((r.pending || []).map(p => ({ id: 'pend:' + p.name, name: p.name, group: p.group, role: '일반', pend: true, items: [], last: '', target: 0, title: p.title || '', empno: p.empno || '', seq: p.seq, mg: [] })));   // v28.23 : 가입 안 한 명단도
+      const list = all.filter(u => !S.manageGroup || S.manageGroup.split(',').includes(u.group)).map(u => {
         const m = C.calcMonth(u.items, u.target, minsYm(xym));
         let qty = 0, conv = 0;
         u.items.forEach(it => { const s = it.sum || {}, r10 = s.r10 || {}; qty += C.num(r10.C) + C.num(r10.D) + C.num(r10.E) + C.num(r10.F) + C.num(r10.G); conv += C.sumDay(s, minsOf(it.date)).e2; });
@@ -7165,7 +7170,7 @@ async function addCharts(buf, jobs) {
   // ---- v28.18 : 사람 카드 — 어디서든 이름을 누르면 같은 카드 (그날 입력 · 월 통계 · 일자별 · 연차 · 근태 · 특이사항)
   async function findUser(name) {
     if (S.me && name === S.me.name) return { id: S.me.id, name: S.me.name, group: S.me.group, role: S.me.role };
-    const hit = (S._mlist || []).find(x => x.name === name); if (hit) return hit;
+    const hit = (S._mlist || []).find(x => x.name === name && !x.pend); if (hit) return hit;
     if (!isManager()) return null;
     if (!S._ulist) { try { S._ulist = (await api('listUsers', {})).users || []; } catch (e) { S._ulist = []; } }
     const u = S._ulist.find(x => x.name === name); return u ? { id: u.id, name: u.name, group: u.group, role: u.role, mg: u.mg } : null;
@@ -7261,7 +7266,7 @@ async function addCharts(buf, jobs) {
     prevWork = C.addDays(prevWork, -1); while ([0, 6].includes(new Date(prevWork + 'T00:00:00').getDay())) prevWork = C.addDays(prevWork, -1);   // v28.19 : 빨강 = 2근무일 이상 비었을 때만
     const MF = colFilter({ key: 'mlist', scope: '.mlist', base: () => S._mlist, redraw: () => renderMList(r), cols: [
       ['group', '그룹', u => u.group, r.groups], ['role', '권한', u => u.role, ['일반', '매니저', '관리자']], ['target', '목표', u => u.target || '', C.TARGETS.map(String)],
-      ['last', '마지막 입력', u => !u.last ? '입력 없음' : u.last < prevWork ? '밀림 (2근무일 이상)' : '최근 입력', ['최근 입력', '밀림 (2근무일 이상)', '입력 없음']],
+      ['last', '마지막 입력', u => u.pend ? '가입 안 함' : !u.last ? '입력 없음' : u.last < prevWork ? '밀림 (2근무일 이상)' : '최근 입력', ['최근 입력', '밀림 (2근무일 이상)', '입력 없음', '가입 안 함']],
       ['c8', '달성률', u => !(u.target && u.items.length) ? '' : u.m.c8 >= 0.9 ? '90% 이상' : u.m.c8 > 0.5 ? '51~89%' : '50% 이하', ['90% 이상', '51~89%', '50% 이하']]] });
     const list = MF.filter(S._mlist);
     const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}${['group', 'target', 'last', 'c8'].includes(k) ? ' ' + MF.ico(k) : k === 'name' ? ' ' + MF.ico('role') : ''}</th>`;
@@ -7275,9 +7280,9 @@ async function addCharts(buf, jobs) {
           const gl = list.filter(x => x.group === u.group), gr = gl.filter(x => x.target && x.items.length), ga = gr.length ? gr.reduce((a, x) => a + x.m.c8, 0) / gr.length : null;
           hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="10"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${(() => { const q = gl.reduce((a, x) => a + (x.mq || 0), 0); return q ? `<span class="mfgv">제조 ${q}대</span>` : ''; })()}${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga)}t">${pct(ga)}</b></span>`}</td></tr>`;
         }
-        return hd + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인 불가 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${S.mSort.k === 'group' ? gdot(u.group).replace(/>[^<]*$/, '>') : gdot(u.group)}</td>
-        <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : '입력 없음'}</td>
-        <td class="num">${xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}${u.mq ? `<small class="mfq" title="그중 제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
+        return hd + `<tr data-u="${u.id}" class="gc${u.pend ? ' pend' : ''}" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${u.pend ? ' <span class="rtag pendt" title="아직 업무데이터 사이트에 가입하지 않음">미가입</span>' : ''}${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인 불가 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${S.mSort.k === 'group' ? gdot(u.group).replace(/>[^<]*$/, '>') : gdot(u.group)}</td>
+        <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : u.pend ? '가입 안 함' : '입력 없음'}</td>
+        <td class="num">${u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}${u.mq ? `<small class="mfq" title="그중 제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td class="mrate" title="막대 = 평가평균 (빗금 = 기타시간 환산) · 검은 선 = 목표">${c8 == null ? '<span class="muted">-</span>' : `<div class="mrbar">${ddBar(u.m.f7, u.target, u.m.w7 || 0)}</div><b class="${rateCls(c8)}t">${pct(c8)}</b>`}</td>
 </tr>`;
@@ -7299,6 +7304,7 @@ async function addCharts(buf, jobs) {
     // v28.18 : 이름 · 달성률 칸을 누르면 사람 카드 (예전 [월 통계] · ⋯ 메뉴 대신)
     $$('.mlist tr[data-u] td:first-child b, .mlist tr[data-u] td.mrate').forEach(el => { el.classList.add('pclk'); el.onclick = () => {
       const u = S._mlist.find(x => x.id === el.closest('tr').dataset.u); if (!u) return;
+      if (u.pend) return personCard({ name: u.name, group: u.group, note: null });
       personCard({ id: u.id, name: u.name, group: u.group, role: u.role, date: u.last || S.today, edit: isAdm() && !isRO() ? () => editUser(u) : null });
     }; });
   }
@@ -7411,15 +7417,15 @@ async function addCharts(buf, jobs) {
       <div class="legend"><span><i class="r-hi"></i>목표 90% 이상</span><span><i class="r-mid"></i>50~90%</span><span><i class="r-lo"></i>50% 이하</span><span><i class="r-no"></i>목표 미설정</span><span class="muted">숫자 = 그날 평가평균 · 칸 클릭 = 그날 입력 화면</span></div>
       <div class="card board" style="padding:0;overflow:auto;max-height:calc(100vh - 220px)">
       <table class="bd"><thead><tr><th class="bn">이름</th>${dates.map(d => { const w = new Date(d + 'T00:00:00').getDay(), hn = HOL[d]; return `<th class="${hn ? 'hol' : w === 6 ? 'sat' : w === 0 ? 'sun' : ''}" ${hn ? `title="${esc(hn)}"` : ''}>${+d.slice(8)}<small>${hn ? esc(hn.replace(/\(.*\)/, '').slice(0, 3)) : C.WD[w]}</small></th>`; }).join('')}<th class="bt">근무일</th><th class="bt">평가평균</th><th class="bt">달성률</th></tr></thead><tbody>
-      ${list.map((u, i) => (S.mSort.k === 'group' ? ghd(list, i, x => x.group, dates.length + 4, g => [g.length + '명']) : '') + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td class="bn"><b class="pclk" data-bu="${u.id}">${esc(u.name)}</b><small>${gdot(u.group)}${u.target ? ' · 목표 ' + u.target : ''}</small></td>${dates.map(d => {
+      ${list.map((u, i) => (S.mSort.k === 'group' ? ghd(list, i, x => x.group, dates.length + 4, g => [g.length + '명']) : '') + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td class="bn"><b class="pclk" data-bu="${u.id}">${esc(u.name)}</b>${u.pend ? ' <span class="rtag pendt">미가입</span>' : ''}<small>${gdot(u.group)}${u.target ? ' · 목표 ' + u.target : ''}</small></td>${dates.map(d => {
         const s = byU[u.id][d], why = bWhy(u.name, d); if (!s) return `<td class="e${why ? ' why' : ''}${HOL[d] && !why ? ' hc' : ''}" data-d="${d}" ${why ? `title="${esc(u.name)} ${dLabel(d)} · ${esc(why)}"` : HOL[d] ? `title="${esc(HOL[d])}"` : ''}>${why ? `<span>${esc(why.length > 3 ? why.slice(0, 3) : why)}</span>` : ''}</td>`;
         const v = C.sumDay(s, minsOf(d)).f7, rc = u.target ? rateCls(v / u.target) : 'r-no';
         if (!(v > 1e-9)) return `<td class="z" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 실적 0 (${esc(why || '사유 없음')}) · 근무일엔 들어가고 평가평균에선 빠짐">${why ? `<span>${esc(why.length > 3 ? why.slice(0, 3) : why)}</span>` : '0'}</td>`;
         return `<td class="${rc}" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 평가평균 ${f2(v)}${u.target ? ' (' + pct(v / u.target) + ')' : ''} · 주문 ${s.n || 0}건">${(Math.round(v * 10) / 10).toFixed(1)}</td>`;
       }).join('')}<td class="bt">${u.items.length ? u.days : '-'}</td><td class="bt"><b>${u.items.length ? f2(u.m.f7) : '-'}</b></td><td class="bt ${u.target && u.items.length ? rateCls(u.m.c8) + 't' : ''}">${u.target && u.items.length ? pct(u.m.c8) : '-'}</td></tr>`).join('') || '<tr><td class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody><tfoot><tr><td class="bn">입력 인원</td>${dates.map(d => `<td>${cnt[d] || ''}</td>`).join('')}<td class="bt" colspan="3"></td></tr></tfoot></table></div>`;
-    $$('.bd td[data-d]').forEach(td => (td.onclick = () => { const u = S._mlist.find(x => x.id === td.closest('tr').dataset.u); openUser(u, 'day', td.dataset.d); }));
-    $$('.bd [data-bu]').forEach(b => (b.onclick = () => { const u = S._mlist.find(x => x.id === b.dataset.bu); if (u) personCard({ id: u.id, name: u.name, group: u.group, role: u.role, date: u.last || S.today, edit: isAdm() && !isRO() ? () => editUser(u) : null }); }));
+    $$('.bd td[data-d]').forEach(td => (td.onclick = () => { const u = S._mlist.find(x => x.id === td.closest('tr').dataset.u); if (!u || u.pend) return; openUser(u, 'day', td.dataset.d); }));
+    $$('.bd [data-bu]').forEach(b => (b.onclick = () => { const u = S._mlist.find(x => x.id === b.dataset.bu); if (u && u.pend) return personCard({ name: u.name, group: u.group }); if (u) personCard({ id: u.id, name: u.name, group: u.group, role: u.role, date: u.last || S.today, edit: isAdm() && !isRO() ? () => editUser(u) : null }); }));
   }
   async function zipAll(ym) {
     const list = (S._mlist || []).filter(u => u.items.length);
