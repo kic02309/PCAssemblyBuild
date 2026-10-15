@@ -1984,8 +1984,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     for (let d = a; d <= b; d = addDays(d, 1)) if (isWork(d, H)) n++;
     return l.h ? n * 0.5 : n;
   }
-  // v28.21 : 사유로 특별휴가 구분 — 출산휴가 / 경조휴가(결혼 · 사망 등) = 연차 일수에서 뺌
-  function leaveKind(l) { const r = (l && (l.r != null ? l.r : l.reason)) || ''; return /출산/.test(r) ? '출산' : /결혼|사망|장례|부고|조문|경조/.test(r) ? '경조' : ''; }
+  // v28.21 : 사유로 경조휴가 구분 (출산 · 결혼 · 사망 · 조사 등) = 연차 일수에서 뺌
+  function leaveKind(l) { const r = (l && (l.r != null ? l.r : l.reason)) || ''; return /출산|결혼|사망|장례|부고|조문|조사|경조/.test(r) ? '경조' : ''; }   // 출산 · 결혼 · 조사 = 경조휴가
   function dispName(name, l) { const k = leaveKind(l); return name + (l.t ? '(훈)' : '') + (k ? '(' + k + ')' : '') + (l.h ? '(' + l.h + ')' : ''); }
 
   // 자료 묶음 → 빠른 조회용
@@ -2773,7 +2773,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${L.part === p ? ' on' : ''}">${p || '전체'}</button>`).join('')}
         <span style="flex:1"></span>
         <label class="lvchk"><input type="checkbox" id="lvsp" ${L.showPend ? 'checked' : ''}> 확정 전 신청도 보기</label></div>`;
-    html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span><span class="lv sp">출산·경조</span>${own ? '<span class="lv me">나</span>' : ''}
+    html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span><span class="lv sp">경조</span>${own ? '<span class="lv me">나</span>' : ''}
       <span class="lb" style="margin-left:10px">토요근무 · 대체휴무 = 같은 주 같은 색</span>
       <span style="flex:1"></span><span class="muted">${d.canEdit ? '빈 곳을 끌어 등록 · 이름을 끌어 옮기기 · 이름 눌러 수정' : own && myStaff() ? '날짜를 끌어 신청 · 이름 눌러 보기' : '이름을 누르면 내용 보기'}</span></div>`;
     html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = d.all && i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
@@ -3466,7 +3466,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const r = rows[0];
       body().innerHTML = !r ? '<div class="muted" style="padding:20px">자료 없음</div>' : `<div class="muted" style="margin-bottom:8px">${y}년 1~12월 · 확정 기준 · 칸을 누르면 내역</div>
         <div class="lvtiles" data-s="${r.s.id}">
-          <div class="card"><span>연차 사용</span><b>${r.days}<small>일</small></b><em>${[r.half ? '반차 ' + r.half + '회 포함' : '', r.pend ? '신청중 ' + r.pend + '일' : '', r.tr ? '훈련·출산·경조 ' + r.tr + '일' : ''].filter(Boolean).join(' · ') || '&nbsp;'}</em></div>
+          <div class="card"><span>연차 사용</span><b>${r.days}<small>일</small></b><em>${[r.half ? '반차 ' + r.half + '회 포함' : '', r.pend ? '신청중 ' + r.pend + '일' : '', r.tr ? '훈련·경조 ' + r.tr + '일' : ''].filter(Boolean).join(' · ') || '&nbsp;'}</em></div>
           <div class="card"><span>잔여</span><b class="${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '-' : r.rem}<small>${r.rem == null ? '' : '일'}</small></b><em>${r.grant == null ? '부여일수 없음' : '부여 ' + r.grant + '일'}</em></div>
           <div class="card"><span>토요근무</span><b>${r.sat}<small>회</small></b><em>&nbsp;</em></div>
           <div class="card"><span>대체휴무</span><b>${r.alt}<small>회</small></b><em>${r.sat - r.alt > 0 ? '아직 안 쓴 ' + (r.sat - r.alt) + '회' : '&nbsp;'}</em></div></div>`;
@@ -3474,7 +3474,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       return;
     }
     body().innerHTML = `<div class="muted pfrow" style="margin-bottom:8px">${y}년 1~12월 · 잔여 = 부여일수 − 확정 연차 ${own ? '' : `<span class="muted">· ${rows.length}명</span>` + SF2.bar()}</div>
-      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num" title="훈련 · 출산휴가 · 경조휴가 (연차 아님)">훈련·출산·경조(일)</th>${th('sat', '토요근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1, 'rem')}</tr></thead><tbody>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num" title="훈련 · 경조휴가(출산·결혼·조사 등) — 연차 아님">훈련·경조(일)</th>${th('sat', '토요근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1, 'rem')}</tr></thead><tbody>
       ${rows.map((r, i) => (k === 'grp' ? A.ghd(rows, i, x => x.s.grp || '', 11, g => [g.length + '명', '연차 ' + g.reduce((a, x) => a + x.days, 0) + '일', '토요 ' + g.reduce((a, x) => a + x.sat, 0) + '회']) : '') + `<tr class="click gc" data-s="${r.s.id}" style="--gc:${A.gcol(r.s.grp)}"><td><b>${A.esc(r.s.name)}</b></td><td>${k === 'grp' ? A.gdot(r.s.grp || '').replace(/>[^<]*$/, '>') : A.gdot(r.s.grp || '')}</td><td>${A.esc(r.s.grade || '')}</td><td class="num"><b>${r.days || ''}</b></td><td class="num muted">${r.pend || ''}</td><td class="num">${r.half || ''}</td><td class="num">${r.tr || ''}</td><td class="num">${r.sat || ''}</td><td class="num">${r.alt || ''}</td><td class="num">${r.grant == null ? '' : r.grant}</td><td class="num ${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '' : r.rem}</td></tr>`).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">자료 없음</td></tr>'}
       </tbody></table></div>`;
     SF2.bind();
@@ -6493,7 +6493,10 @@ async function addCharts(buf, jobs) {
 
   // ------------------------------------------------ 일일 업무현황 (전 근무일 기본 · 사원은 전 근무일만)
   const DD_OFFCLS = { 연차: 'lv', 반차: 'lv', 훈련: 'ch', 병가: 'lv', 경조: 'ck', 출산: 'ck', 대체: 'ch', 육아: 'ch' };
-  const lvKind = rs => window.LeaveCore && window.LeaveCore.leaveKind ? window.LeaveCore.leaveKind({ r: rs || '' }) : (/출산/.test(rs || '') ? '출산' : /결혼|사망|장례|부고|조문|경조/.test(rs || '') ? '경조' : '');   // v28.21
+  // v28.21 : 월 업무현황 그룹 버튼 — 팀장 빼고 · 영상(업무 구분) = 제조 · 출력 + 지원 = 한 버튼 (김주호 담당)
+  const MG_CHIPS = [['1그룹', ['1그룹']], ['2그룹', ['2그룹']], ['3그룹', ['3그룹']], ['4그룹', ['4그룹']], ['라인', ['라인']], ['제조', ['제조', '영상']], ['안정화', ['안정화']], ['출력·지원', ['출력', '지원']]];
+  const mgChips = groups => { const used = new Set(MG_CHIPS.flatMap(c => c[1])); return MG_CHIPS.map(([t, gs]) => [t, gs.filter(g => groups.includes(g))]).filter(c => c[1].length).concat(groups.filter(g => !used.has(g) && g !== '팀장').map(g => [g, [g]])); };
+  const lvKind = rs => window.LeaveCore && window.LeaveCore.leaveKind ? window.LeaveCore.leaveKind({ r: rs || '' }) : (/출산|결혼|사망|장례|부고|조문|조사|경조/.test(rs || '') ? '경조' : '');   // v28.21
   const isMgrUser = () => S.me && S.me.role !== '일반';
   const isAdm = () => S.me && S.me.role === '관리자';
   function dailyTabs(on) {
@@ -7037,7 +7040,8 @@ async function addCharts(buf, jobs) {
 
         <button id="zip" ${xym ? '' : 'disabled'}>⬇ 엑셀 전체 (zip)</button>
       </div>
-      ${(() => { const on = S.manageGroup ? S.manageGroup.split(',') : []; return `<div class="gchips"><span class="muted">그룹</span><button data-gg="" class="${on.length ? '' : 'on'}">전체</button>${r.groups.map(g => `<button data-gg="${esc(g)}" class="${on.includes(g) ? 'on' : ''}">${gdot(g)}</button>`).join('')}${on.length > 1 ? `<span class="muted">${on.length}개 그룹</span>` : ''}</div>`; })()}
+      ${(() => { const on = S.manageGroup ? S.manageGroup.split(',') : [], has = new Set(r.users.map(u => u.group)), ch = mgChips(r.groups).filter(([, gs]) => gs.some(g => has.has(g)));
+        return `<div class="gchips"><span class="muted">그룹</span><button data-gg="" class="${on.length ? '' : 'on'}">전체</button>${ch.map(([t, gs]) => `<button data-gg="${esc(gs.join(','))}" class="${gs.every(g => on.includes(g)) ? 'on' : ''}">${gdot(gs[0]).replace(/>[^<]*$/, '>')}${esc(t)}</button>`).join('')}</div>`; })()}
       ${S.gtOpen && S.mView === 'list' && S.mMode === 'month' && xym && !isRO() ? `<div class="gtbar"><b>그룹 목표 한꺼번에</b>
         <select id="gtg">${r.groups.filter(g => g !== '팀장').map(g => `<option ${g === (S.manageGroup || '').split(',')[0] ? 'selected' : ''}>${g}</option>`).join('')}</select> 일반 인원 전체를
         <select id="gtv"><option value="">목표 선택</option>${C.TARGETS.map(t => `<option>${t}</option>`).join('')}</select>(으)로 <button id="gtgo">적용</button>
@@ -7060,8 +7064,8 @@ async function addCharts(buf, jobs) {
         S.mMode = 'range'; S.mRange = { start: st, end: t, q: k }; renderManage();
       }));
       $$('[data-gg]').forEach(b => (b.onclick = () => {                    // v28.21 : 그룹 여러 개 고르기 (누를 때마다 켜고 끄기)
-        const g = b.dataset.gg; let on = S.manageGroup ? S.manageGroup.split(',') : [];
-        on = !g ? [] : on.includes(g) ? on.filter(x => x !== g) : on.concat(g);
+        const gs = b.dataset.gg ? b.dataset.gg.split(',') : []; let on = S.manageGroup ? S.manageGroup.split(',') : [];
+        on = !gs.length ? [] : gs.every(g => on.includes(g)) ? on.filter(x => !gs.includes(x)) : on.concat(gs.filter(g => !on.includes(g)));
         S.manageGroup = on.join(','); renderManage();
       }));
       $('#zip').onclick = () => xym && zipAll(xym);
