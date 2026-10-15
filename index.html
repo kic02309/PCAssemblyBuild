@@ -2168,10 +2168,103 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   // ---------------------------------------------------------------- 엑셀 만들기
   // info : { year, months:['2026-03',…], staff, leaves, duty, kv, batchYm }
+
+  // ---------------------------------------------------------------- v28.20 : 깔끔한 내려받기 (info.clean)
+  //  원본 양식 그대로 + 토요·시작·끝 시트 숨김 + 월 시트 오른쪽(사유 기록부 · 토요 표 · 매니저 칸 = V~BH) 숨김
+  //  → 그 오른쪽(BJ~)에 파트별 연차 기록 (파트 · 이름 · 시작일 · 종료일 · 사유 · 일수 · 이달 합계)
+  const CLEAN_PARTS = ['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원·출력·기타'];
+  let CX = null;                                                         // 추가한 셀 서식 번호
+  function cleanStyles(x) {
+    // v28.20 : 선 정리 — 안쪽 점선(hair) = 연한 회색 · 하루/주 테두리(thin) = 진한 회색 중간 굵기 → 하루 칸 구분이 보이게
+    x = x.replace(/<borders[^>]*>[\s\S]*?<\/borders>/, B => B
+      .replace(/(<(?:left|right|top|bottom) style=")hair(">)<color indexed="64"\/>/g, '$1hair$2<color rgb="FFC3C9D2"/>')
+      .replace(/(<(?:left|right|top|bottom) style=")thin(">)<color indexed="64"\/>/g, '$1medium$2<color rgb="FF7F8794"/>'));
+    const add = (tag, item) => { const m = x.match(new RegExp('<' + tag + ' count="(\\d+)"')); const n = +m[1]; x = x.replace(m[0], '<' + tag + ' count="' + (n + 1) + '"').replace('</' + tag + '>', item + '</' + tag + '>'); return n; };
+    const fN = add('fonts', '<font><sz val="10"/><name val="맑은 고딕"/><family val="2"/><charset val="129"/></font>');
+    const fB = add('fonts', '<font><b/><sz val="10"/><name val="맑은 고딕"/><family val="2"/><charset val="129"/></font>');
+    const fG = add('fonts', '<font><sz val="9"/><color rgb="FF6B7280"/><name val="맑은 고딕"/><family val="2"/><charset val="129"/></font>');
+    const fT = add('fonts', '<font><b/><sz val="12"/><name val="맑은 고딕"/><family val="2"/><charset val="129"/></font>');
+    const pH = add('fills', '<fill><patternFill patternType="solid"><fgColor rgb="FFE8EDF4"/><bgColor indexed="64"/></patternFill></fill>');
+    const pP = add('fills', '<fill><patternFill patternType="solid"><fgColor rgb="FFF1F4F8"/><bgColor indexed="64"/></patternFill></fill>');
+    const b = add('borders', '<border><left style="thin"><color rgb="FFC9D1DC"/></left><right style="thin"><color rgb="FFC9D1DC"/></right><top style="thin"><color rgb="FFC9D1DC"/></top><bottom style="thin"><color rgb="FFC9D1DC"/></bottom><diagonal/></border>');
+    const xf = (font, fill, border, center) => add('cellXfs', '<xf numFmtId="0" fontId="' + font + '" fillId="' + fill + '" borderId="' + border + '" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment ' + (center ? 'horizontal="center" ' : '') + 'vertical="center"/></xf>');
+    CX = { hd: xf(fB, pH, b, 1), part: xf(fB, pP, b, 0), txt: xf(fN, 0, b, 0), gray: xf(fG, 0, b, 0), num: xf(fN, 0, b, 1), numB: xf(fB, 0, b, 1), title: xf(fT, 0, 0, 0), empty: xf(fG, 0, 0, 0) };
+    return x;
+  }
+  function cleanMonth(xml, ym, info, ix) {
+    const C0 = 62, cl = n => colL(n);                                    // BJ 부터
+    // 열 : V(22)~BH(60) 숨김 · BI 여백 · BJ~BP 기록표
+    {
+      const W = [2, 12, 8.5, 11, 11, 26, 5.5, 8], mine = W.map((w, k) => '<col min="' + (61 + k) + '" max="' + (61 + k) + '" width="' + w + '" customWidth="1"/>').join('');
+      const cols = [...xml.matchAll(/<col min="(\d+)" max="(\d+)"([^>]*?)\/>/g)].map(m => ({ a: +m[1], z: +m[2], rest: m[3].replace(/ hidden="1"/, '') }));
+      const seg = (a, z, rest, hid) => '<col min="' + a + '" max="' + z + '"' + rest + (hid ? ' hidden="1"' : '') + '/>';
+      let out = '', put = false;
+      cols.forEach(c => {
+        if (c.a <= 21) out += seg(c.a, Math.min(c.z, 21), c.rest, 0);
+        if (c.z >= 22 && c.a <= 60) out += seg(Math.max(c.a, 22), Math.min(c.z, 60), c.rest, 1);
+        if (c.z >= 69) { if (!put) { out += mine; put = true; } out += seg(Math.max(c.a, 69), c.z, c.rest, 0); }
+      });
+      if (!put) out += mine;
+      xml = xml.replace(/<cols>[\s\S]*?<\/cols>/, '<cols>' + out + '</cols>');
+    }
+    // 기록 만들기
+    const f = monthFirst(ym), l = monthLast(ym), H = ix.H;
+    const part = g => CLEAN_PARTS.includes(g) ? g : '지원·출력·기타';
+    const recs = info.leaves.filter(x => x.d2 >= f && x.d1 <= l && ix.S[x.s]).map(x => ({ x, s: ix.S[x.s], p: part(ix.S[x.s].grp), n: leaveDays(x, H, f, l) }));
+    recs.sort((a, b) => (CLEAN_PARTS.indexOf(a.p) - CLEAN_PARTS.indexOf(b.p)) || ko(a.s.name, b.s.name) || ko(a.x.d1, b.x.d1));
+    const tot = {}; recs.forEach(o => (tot[o.s.name] = (tot[o.s.name] || 0) + o.n));
+    const md2 = d => (+d.slice(5, 7)) + '/' + (+d.slice(8)) + '(' + WD[dow(d)] + ')';
+    const rows = {}, merges = [];
+    const put = (r, c, v, st) => { (rows[r] = rows[r] || []).push('<c r="' + cl(c) + r + '" s="' + st + '"' + (v === '' || v == null ? '/>' : typeof v === 'number' ? '><v>' + v + '</v></c>' : ' t="inlineStr"><is><t>' + esc(String(v)) + '</t></is></c>')); };
+    put(3, C0, (+ym.slice(5)) + '월 파트별 연차 기록', CX.title);
+    ['파트', '이름', '시작일', '종료일', '사유', '일수', '이달 합계'].forEach((t, i) => put(5, C0 + i, t, CX.hd));
+    let r = 6, lastP = null, lastN = null;
+    if (!recs.length) put(6, C0, '이 달 연차 기록 없음', CX.empty);
+    recs.forEach(o => {
+      if (o.p !== lastP) {
+        put(r, C0, o.p + '  (' + new Set(recs.filter(z => z.p === o.p).map(z => z.s.name)).size + '명)', CX.part);
+        for (let i = 1; i < 7; i++) put(r, C0 + i, '', CX.part);
+        merges.push(cl(C0) + r + ':' + cl(C0 + 6) + r); r++; lastP = o.p; lastN = null;
+      }
+      put(r, C0, o.p, CX.gray); put(r, C0 + 1, o.s.name, CX.txt); put(r, C0 + 2, md2(o.x.d1), CX.txt); put(r, C0 + 3, md2(o.x.d2), CX.txt);
+      put(r, C0 + 4, (o.x.r || '') + (o.x.h ? ' (' + o.x.h + ' 반차)' : '') + (o.x.t ? ' (훈련)' : ''), CX.txt);
+      put(r, C0 + 5, o.n, CX.num); put(r, C0 + 6, o.s.name !== lastN ? tot[o.s.name] : '', CX.numB);
+      lastN = o.s.name; r++;
+    });
+    // 행에 붙이기 (기존 행 끝 / 없는 행은 새로)
+    const want = Object.keys(rows).map(Number).sort((a, b) => a - b);
+    want.forEach(rn => {
+      const cells = rows[rn].join('');
+      const re1 = new RegExp('<row r="' + rn + '"([^>]*?)/>'), re2 = new RegExp('(<row r="' + rn + '"[^>]*>[\\s\\S]*?)</row>');
+      if (re1.test(xml)) xml = xml.replace(re1, (m0, a) => '<row r="' + rn + '"' + a.replace(/ spans="[^"]*"/, '') + '>' + cells + '</row>');
+      else if (re2.test(xml)) xml = xml.replace(re2, (m0, a) => a.replace(/ spans="[^"]*"/, '') + cells + '</row>');
+      else {                                                               // 새 행 : 다음 번호 행 앞
+        const m = [...xml.matchAll(/<row r="(\d+)"/g)].find(x => +x[1] > rn);
+        const nr = '<row r="' + rn + '">' + cells + '</row>';
+        xml = m ? xml.slice(0, m.index) + nr + xml.slice(m.index) : xml.replace('</sheetData>', nr + '</sheetData>');
+      }
+    });
+    if (merges.length) {
+      const mc = xml.match(/<mergeCells count="(\d+)">/);
+      if (mc) xml = xml.replace(mc[0], '<mergeCells count="' + (+mc[1] + merges.length) + '">').replace('</mergeCells>', merges.map(x => '<mergeCell ref="' + x + '"/>').join('') + '</mergeCells>');
+      else xml = xml.replace('</sheetData>', '</sheetData><mergeCells count="' + merges.length + '">' + merges.map(x => '<mergeCell ref="' + x + '"/>').join('') + '</mergeCells>');
+    }
+    xml = xml.replace(/<dimension ref="[^"]*"\/>/, '<dimension ref="A1:' + cl(C0 + 6) + Math.max(135, r) + '"/>');
+    // 토요근무 2번 · 3번 강조 색 빼기 (웹에서 다 정한 결과만 내려받으므로 엑셀에선 필요 없음)
+    xml = xml.replace(/<conditionalFormatting sqref="S7:T14 S16:T23[^"]*">(?:(?!<\/conditionalFormatting>)[\s\S])*?COUNTIF\(\$AO\$7[\s\S]*?<\/conditionalFormatting>/g, '');
+    // 인쇄 : A4 가로 · 폭 한 장 (인쇄 범위는 workbook 에서 A1 ~ 기록표 끝)
+    xml = xml.replace(/<sheetPr([^>]*?)\/>/, '<sheetPr$1><pageSetUpPr fitToPage="1"/></sheetPr>')
+      .replace(/<pageMargins[^>]*\/>/, '<pageMargins left="0.3" right="0.3" top="0.4" bottom="0.4" header="0.2" footer="0.2"/>')
+      .replace(/<pageSetup[^>]*\/>/, '<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
+    info._printRows = info._printRows || {}; info._printRows[ym] = Math.max(56, r - 1);
+    return xml;
+  }
+
   async function buildXlsx(JSZip, b64, info) {
     const tpl = await JSZip.loadAsync(b64, { base64: true });
     const T = p => tpl.file(p).async('string');
     const [satT, startT, monthT, endT] = await Promise.all([T('tpl/sat.xml'), T('tpl/start.xml'), T('tpl/month.xml'), T('tpl/end.xml')]);
+    const stylesX = info.clean ? cleanStyles(await T('xl/styles.xml')) : null;   // v28.20 : 기록표 서식 (월 시트보다 먼저)
     const ix = index(info), kv = info.kv || {};
     const zone = s => { const g = (s && s.grp) || ''; return /^[12]그룹$/.test(g) ? 0 : /^[34]그룹$/.test(g) ? 1 : 2; };
     const warn = [];
@@ -2246,19 +2339,20 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         });
       });
       ((kv.managers || []).slice(0, 8)).forEach((nm, i) => (v['AZ' + (7 + i)] = nm));
-      sheets.push({ name: ym.slice(2, 4) + '년_' + (+ym.slice(5)) + '월', xml: setCells(monthT, v) });
+      sheets.push({ ym, name: ym.slice(2, 4) + '년_' + (+ym.slice(5)) + '월', xml: info.clean ? cleanMonth(setCells(monthT, v), ym, info, ix) : setCells(monthT, v) });
     }
     sheets.push({ name: '끝', xml: endT });
 
     // 통합문서 조립
     const out = new JSZip();
     const F = (p, d) => out.file(p, d, { createFolders: false });
-    for (const p of ['xl/styles.xml', 'xl/theme/theme1.xml', 'xl/sharedStrings.xml']) F(p, await T(p));
+    for (const p of ['xl/theme/theme1.xml', 'xl/sharedStrings.xml']) F(p, await T(p));
+    F('xl/styles.xml', stylesX || await T('xl/styles.xml'));
     let wbS = '', wbR = '', ct = '';
     sheets.forEach((s, i) => {
       const n = i + 1;
       F('xl/worksheets/sheet' + n + '.xml', s.xml);
-      wbS += '<sheet name="' + esc(s.name) + '" sheetId="' + n + '" r:id="rId' + n + '"/>';
+      wbS += '<sheet name="' + esc(s.name) + '" sheetId="' + n + '"' + (info.clean && ['토요', '시작', '끝'].includes(s.name) ? ' state="hidden"' : '') + ' r:id="rId' + n + '"/>';
       wbR += '<Relationship Id="rId' + n + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + n + '.xml"/>';
       ct += '<Override PartName="/xl/worksheets/sheet' + n + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
     });
@@ -2267,7 +2361,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       '<Relationship Id="rId' + (k + 2) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>' +
       '<Relationship Id="rId' + (k + 3) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>';
     const active = Math.max(0, sheets.length - 2);
-    F('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><workbookPr defaultThemeVersion="166925"/><bookViews><workbookView xWindow="0" yWindow="0" windowWidth="28800" windowHeight="12180" tabRatio="712" activeTab="' + active + '"/></bookViews><sheets>' + wbS + '</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
+    F('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><workbookPr defaultThemeVersion="166925"/><bookViews><workbookView xWindow="0" yWindow="0" windowWidth="28800" windowHeight="12180" tabRatio="712"' + (info.clean ? ' firstSheet="2"' : '') + ' activeTab="' + active + '"/></bookViews><sheets>' + wbS + '</sheets>' + (info.clean ? '<definedNames>' + sheets.map((sh, i) => info._printRows && info._printRows[sh.ym] ? '<definedName name="_xlnm.Print_Area" localSheetId="' + i + '">\'' + esc(sh.name) + '\'!$A$1:$BP$' + info._printRows[sh.ym] + '</definedName>' : '').join('') + '</definedNames>' : '') + '<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
     F('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + wbR + '</Relationships>');
     F('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' + ct + '<Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>');
     F('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
@@ -2413,8 +2507,91 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     };
   }
 
+
+  // ---------------------------------------------------------------- v28.20 : 깔끔한 연차 엑셀 (달력 + 파트별 연차 기록 · 월별 시트)
+  //  달력 = 월~금 연차 · 반차 · 훈련 · 대체휴무(토요 주 색) / 토요일 = 토요근무자 · 오른쪽 = 파트별 연차 기록 (사유 · 날짜 · 일수 · 이달 합계)
+  const PART_ORDER = ['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원·출력·기타'];
+  const partName = g => PART_ORDER.includes(g) ? g : '지원·출력·기타';
+  async function buildCleanXlsx(EJ, info) {
+    const ix = index(info), H = ix.H, wb = new EJ.Workbook(); wb.creator = '조립팀 업무데이터';
+    const argb = h => 'FF' + h.replace('#', '').toUpperCase();
+    const fill = h => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: argb(h) } });
+    const thin = { style: 'thin', color: { argb: 'FFC9D1DC' } }, box = { top: thin, left: thin, bottom: thin, right: thin };
+    const F0 = { name: '맑은 고딕', size: 10 };
+    for (const ym of info.months) {
+      const f = monthFirst(ym), l = monthLast(ym), y = +ym.slice(0, 4), m = +ym.slice(5);
+      const ws = wb.addWorksheet(String(y).slice(2) + '년 ' + m + '월', { views: [{ state: 'frozen', ySplit: 3, showGridLines: false, zoomScale: 90 }],
+        pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } } });
+      // 열 : A 여백 · 월~금 = [연차 2칸 + 대체 1칸] × 5 (B~P) · 토 = 토요근무 2칸 (Q~R) · S 여백 · T~Z 파트별 연차 기록
+      ws.columns = [{ width: 1.5 }].concat(...Array(5).fill([{ width: 8.6 }, { width: 8.6 }, { width: 8.6 }]), [{ width: 8.6 }, { width: 8.6 }, { width: 2 },
+        { width: 12 }, { width: 8.5 }, { width: 10 }, { width: 10 }, { width: 24 }, { width: 5.5 }, { width: 7.5 }]);
+      const C = (r, c) => ws.getCell(r, c), L0 = 20;                    // 기록표 첫 열 (T)
+      ws.mergeCells(1, 2, 1, 18); Object.assign(C(1, 2), { value: y + '년 ' + m + '월', font: { name: '맑은 고딕', size: 20, bold: true, color: { argb: 'FF3A3F47' } }, alignment: { horizontal: 'center', vertical: 'middle' } }); ws.getRow(1).height = 34;
+      ws.mergeCells(2, 2, 2, 18); Object.assign(C(2, 2), { value: '요일 칸 = 연차 2칸 + 대체휴무 1칸 (색 = 같은 색 토요일 근무분) · 반차 (오전/오후) · (훈) 훈련   |   토요일 = 토요근무자', font: { name: '맑은 고딕', size: 9, color: { argb: 'FF6B7280' } }, alignment: { horizontal: 'center' } });
+      ['월', '화', '수', '목', '금', '토'].forEach((t, i) => {
+        const c0 = 2 + 3 * i, c1 = i === 5 ? c0 + 1 : c0 + 2; ws.mergeCells(3, c0, 3, c1);
+        Object.assign(C(3, c0), { value: t + '요일', font: { name: '맑은 고딕', size: 10, bold: true, color: { argb: i === 5 ? 'FF1F5FBF' : 'FF2F5597' } }, alignment: { horizontal: 'center', vertical: 'middle' } });
+        for (let c = c0; c <= c1; c++) C(3, c).border = { bottom: { style: 'medium', color: { argb: 'FF8EA9DB' } } };
+      });
+      ws.getRow(3).height = 20;
+      // 주 (월~토) : 이 달 날짜가 하나라도 있는 주
+      const weeks = []; let mon = addDays(f, -((dow(f) + 6) % 7));
+      while (mon <= l) { weeks.push([0, 1, 2, 3, 4, 5].map(k => addDays(mon, k))); mon = addDays(mon, 7); }
+      const sats = monthSaturdays(ym), satCol = d => { const k = sats.indexOf(d); return k >= 0 ? WEEK_COLORS[k % 5] : null; };
+      const HEAD = '#FFF2CC', OUT = '#FBE5D6', med = { style: 'thin', color: { argb: 'FF7F7F7F' } };
+      let r = 4;
+      weeks.forEach(days => {
+        const cells = days.map((d, i) => {
+          const out = d < f || d > l;
+          if (i === 5) return { d, out, lv: out ? [] : (ix.duty[d] || []).map(u => (ix.S[u.s] || {}).name || '?'), al: [] };
+          const dc = out ? { lv: [], al: [] } : dayCell(ix, d);
+          return { d, out, lv: dc.lv.map(x => x.name), al: dc.al.map(x => ({ t: x.name, bg: satCol(x.u.d) || '#D9D9D9' })) };
+        });
+        const n = Math.max(8, ...cells.map(c => Math.max(Math.ceil(c.lv.length / 2), c.al.length)));
+        days.forEach((d, i) => {
+          const c0 = 2 + 3 * i, last = i === 5 ? c0 + 1 : c0 + 2, cl = cells[i], hol = H[d], cnt = cl.lv.length + cl.al.length;
+          // 머리 줄 : 날짜 (+ 공휴일) · 인원
+          const hb = cl.out ? OUT : i === 5 && satCol(d) ? satCol(d) : HEAD;
+          ws.mergeCells(r, c0, r, c0 + 1);
+          Object.assign(C(r, c0), { value: cl.out ? '' : (+d.slice(5, 7)) + '월 ' + (+d.slice(8)) + '일', font: { name: '맑은 고딕', size: 10, bold: true, color: { argb: hol ? 'FFC62828' : 'FF111827' } }, alignment: { horizontal: 'center', vertical: 'middle' } });
+          if (i < 5) Object.assign(C(r, c0 + 2), { value: cl.out ? '' : hol ? hol.replace(/\(.*\)/, '') : cnt + '명', font: { name: '맑은 고딕', size: hol ? 8.5 : 10, bold: true, color: { argb: hol ? 'FFC62828' : 'FF4472C4' } }, alignment: { horizontal: 'center', vertical: 'middle', shrinkToFit: true } });
+          else if (hol && !cl.out) C(r, c0).value += ' ' + hol.replace(/\(.*\)/, '');
+          for (let c = c0; c <= last; c++) { C(r, c).fill = fill(hb); C(r, c).border = { top: med, bottom: thin, left: c === c0 ? med : undefined, right: c === last ? med : undefined }; }
+          // 이름 칸 : 연차 = 왼쪽 위→아래, 넘치면 오른쪽 칸 / 대체 = 셋째 칸 (토요일은 두 칸에 토요근무자)
+          for (let k = 0; k < n; k++) for (let c = c0; c <= last; c++) {
+            const cell = C(r + 1 + k, c), j = c - c0;
+            let v = '', bg = cl.out ? OUT : null;
+            if (!cl.out) { if (j < 2) v = cl.lv[j * n + k] || ''; else { const a = cl.al[k]; if (a) { v = a.t; bg = a.bg; } } }
+            cell.value = v; cell.font = Object.assign({}, F0, { size: 9.5 }); cell.alignment = { horizontal: 'center', vertical: 'middle', shrinkToFit: true };
+            if (bg) cell.fill = fill(bg);
+            cell.border = { top: thin, bottom: k === n - 1 ? med : thin, left: c === c0 ? med : thin, right: c === last ? med : thin };
+          }
+        });
+        for (let k = 0; k <= n; k++) ws.getRow(r + k).height = 15;
+        r += n + 1;
+      });
+      // 파트별 연차 기록
+      const recs = info.leaves.filter(x => x.d2 >= f && x.d1 <= l && ix.S[x.s]).map(x => ({ x, s: ix.S[x.s], p: partName(ix.S[x.s].grp), n: leaveDays(x, H, f, l) }));
+      recs.sort((a, b) => (PART_ORDER.indexOf(a.p) - PART_ORDER.indexOf(b.p)) || ko(a.s.name, b.s.name) || ko(a.x.d1, b.x.d1));
+      const tot = {}; recs.forEach(o => (tot[o.s.name] = (tot[o.s.name] || 0) + o.n));
+      const hd = ['파트', '이름', '시작일', '종료일', '사유', '일수', '이달 합계'];
+      hd.forEach((t, i) => { const c = C(3, L0 + i); c.value = t; c.font = { name: '맑은 고딕', size: 10, bold: true }; c.fill = fill('#E8EDF4'); c.border = box; c.alignment = { horizontal: 'center' }; });
+      let rr = 4, lastP = null, lastN = null;
+      if (!recs.length) { ws.mergeCells(4, L0, 4, L0 + 6); Object.assign(C(4, L0), { value: '이 달 연차 기록 없음', font: { name: '맑은 고딕', size: 10, color: { argb: 'FF9AA3B1' } } }); }
+      recs.forEach(o => {
+        if (o.p !== lastP) { ws.mergeCells(rr, L0, rr, L0 + 6); const c = C(rr, L0); c.value = o.p + '  (' + new Set(recs.filter(z => z.p === o.p).map(z => z.s.name)).size + '명)'; c.font = { name: '맑은 고딕', size: 10, bold: true }; c.fill = fill('#F1F4F8'); c.border = box; rr++; lastP = o.p; lastN = null; }
+        const md2 = d => (+d.slice(5, 7)) + '/' + (+d.slice(8)) + '(' + WD[dow(d)] + ')';
+        const v = [o.p, o.s.name, md2(o.x.d1), md2(o.x.d2), (o.x.r || '') + (o.x.h ? ' (' + o.x.h + ' 반차)' : '') + (o.x.t ? ' (훈련)' : ''), o.n, o.s.name !== lastN ? tot[o.s.name] : null];
+        v.forEach((val, i) => { const c = C(rr, L0 + i); c.value = val; c.font = Object.assign({}, F0, i === 6 ? { bold: true } : i === 0 ? { color: { argb: 'FF6B7280' } } : {}); c.border = box; if (i >= 5) c.alignment = { horizontal: 'center' }; });
+        lastN = o.s.name; rr++;
+      });
+    }
+    if (!wb.worksheets.length) wb.addWorksheet('연차');
+    return wb;
+  }
+
   const api = { pad, ymd, toD, addDays, dow, diffDays, serial, fromSerial, ymOf, WD, mdLabel, ko, WEEK_COLORS, monthFirst, monthLast, excelBlocks, screenWeeks,
-    monthSaturdays, tableSaturdays, holidayMap, isWork, leaveDays, dispName, index, dayCell, satWeek, gradeGroup, isLast, sortRank, makeAssigner, setCells, buildXlsx, readBook, parseWorkbook, EXCLUDE_GRADES, SORT_ORDER };
+    monthSaturdays, tableSaturdays, holidayMap, isWork, leaveDays, dispName, index, dayCell, satWeek, gradeGroup, isLast, sortRank, makeAssigner, setCells, buildXlsx, readBook, parseWorkbook, buildCleanXlsx, EXCLUDE_GRADES, SORT_ORDER };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.LeaveCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -3393,11 +3570,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const pend = d.leaves.length - leaves.length;
     try {
       A.toast('엑셀 만드는 중…');
-      const r = await LC.buildXlsx(JSZip, LEAVE_TPL_B64, { year: L.year, months: list, staff: d.staff, leaves, duty: d.duty, kv: d.kv, batchYm: bym });
+      // v28.20 : 원본 달력 양식 그대로 + 오른쪽은 파트별 연차 기록 (토요·시작·끝 시트와 사유 기록부·토요 표는 숨김)
+      const r = await LC.buildXlsx(JSZip, LEAVE_TPL_B64, { year: L.year, months: list, staff: d.staff, leaves, duty: d.duty, kv: d.kv, batchYm: bym, clean: true });
       const blob = await r.zip.generateAsync({ type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       A.saveBlob(blob, y.slice(2) + '년 연차관리.xlsx');
-      A.toast(list.length + '개월 엑셀을 받았습니다' + (pend ? ' · 확정 전 ' + pend + '건 제외' : '') + (r.warn.length ? ' · 칸 부족 ' + r.warn.length + '건' : ''));
-      if (r.warn.length) console.warn('[연차 엑셀] 칸 부족', r.warn);
+      A.toast(list.length + '개월 엑셀을 받았습니다' + (pend ? ' · 확정 전 ' + pend + '건 제외' : ''));
     } catch (e) { A.toast('엑셀 만들기 실패 : ' + e.message, true); }
   }
 
@@ -8570,7 +8747,7 @@ async function addCharts(buf, jobs) {
     if (S.target && v !== 'input') { if (!(await saveFirst())) { history.pushState({ v: S.view }, ''); return; } S.target = null; S.day = null; }
     go(v, { _pop: true });
   });
-  if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter });
+  if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter, loadLib });
   if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter });
   boot();
 })();
