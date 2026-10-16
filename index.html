@@ -1370,6 +1370,17 @@ table.mlist small.mfq{display:block;font-size:11px;font-weight:700;color:#7c3aed
 html[data-theme=dark] .stg .bm1,html[data-theme=dark] .mflg{fill:#a78bfa;color:#a78bfa}html[data-theme=dark] .stg .bm0{fill:color-mix(in srgb,#a78bfa 45%,var(--panel))}html[data-theme=dark] table.mlist small.mfq,html[data-theme=dark] .ddpr .q .mq{background:#2e2350;color:#c4b0ff}
 html[data-theme=dark] .mfgv,html[data-theme=dark] td.mfgv{color:#b69cff}
 .stat .v small.mfgv{color:#6d28d9}html[data-theme=dark] .stat .v small.mfgv{color:#b69cff}
+/* v28.26 : 통계 사고 */
+.accbars{display:grid;gap:7px}.accb{display:grid;grid-template-columns:120px minmax(0,1fr) 96px;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:6px}
+.accb:hover,.accb.on{background:color-mix(in srgb,var(--accent,#1f5fbf) 10%,transparent)}.accb .t{height:11px;background:color-mix(in srgb,currentColor 9%,transparent);border-radius:6px;overflow:hidden}.accb .t i{display:block;height:100%;border-radius:6px}
+.accb em{font-style:normal;text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}.accb em b{color:var(--text,inherit)}
+.acck{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff;margin:1px 3px 1px 0;white-space:nowrap}
+.accrep{font-size:11px;font-weight:700;color:#dc2626;border:1px solid #dc2626;border-radius:6px;padding:0 5px}
+.accdet{margin-top:12px;padding:12px;border-radius:10px;background:color-mix(in srgb,var(--accent,#1f5fbf) 6%,transparent)}.accdet .sub{display:flex;gap:10px;align-items:center}
+table.acct{font-size:13px}table.acct td{vertical-align:middle}tr.accsub>td{background:color-mix(in srgb,var(--accent,#1f5fbf) 5%,transparent);padding:6px 10px 10px 24px}tr.click.on>td{background:color-mix(in srgb,var(--accent,#1f5fbf) 9%,transparent)}
+/* v28.26 : 연차 확정 대기 탭 → 파트 신청 확인 · 달력 */
+.lvcfside{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;margin-bottom:12px}.lvcfside>.lvsec{margin:0}
+#cfw{margin-bottom:12px}#cfw .lvtbl{width:100%}
 /* v28.24 : 조립 / 반조 / 출고 / 제조 구분 */
 table.mlist .mxl{padding:3px 10px;border-radius:8px;font-size:13px;min-width:0}
 .shipv{color:#b45309}td.shipv,.stat .v.shipv{color:#b45309}html[data-theme=dark] .shipv{color:#f0b35b}
@@ -2728,7 +2739,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // ------------------------------------------------------------ 화면 틀
   async function render(main, tab) {
     L.main = main;
-    if (tab) L.tab = tab === 'swap' ? 'conf' : tab;
+    if (tab) L.tab = tab === 'swap' ? 'cal' : tab === 'conf' ? 'part' : tab;   // v28.26 : 확정 대기 탭 없앰 → 파트 신청 확인 · 달력
     L.ym = L.ym || A.S.today.slice(0, 7);
     const y = +L.ym.slice(0, 4);
     if (!L.data || L.year !== y) {
@@ -2747,16 +2758,15 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const d = D();
     if (!d.all) return [['cal', '우리 파트 달력'], ['sum', '내 합계']];
     const t = [];
-    if (d.canEdit) t.push(['conf', '확정 대기', L.counts.confirmWait + L.counts.swaps]);
-    if (ownedGroups().length) t.push(['part', '파트 신청 확인', L.counts.partWait]);
-    t.push(['cal', '달력']); if (myStaff() && !d.canEdit && !(A.S.me && A.S.me.ro)) t.push(['mine', '내 연차']);   // v28.10 : 보기 전용(팀장)은 신청 안 함          // v28 : 매니저 · 보기 전용 관리자 본인 연차
+    if (ownedGroups().length || d.canEdit) t.push(['part', '파트 신청 확인', L.counts.partWait + (d.canEdit ? L.counts.confirmWait : 0)]);   // v28.26 : 관리자 확정도 여기서
+    t.push(['cal', '달력', d.canEdit ? L.counts.swaps : 0]);                           // v28.26 : 토요 바꾸기 요청 · 월 마감 = 달력 위 if (myStaff() && !d.canEdit && !(A.S.me && A.S.me.ro)) t.push(['mine', '내 연차']);   // v28.10 : 보기 전용(팀장)은 신청 안 함          // v28 : 매니저 · 보기 전용 관리자 본인 연차
     t.push(['rec', '사유 기록부'], ['sat', '토요근무'], ['sum', '개인별 합계']);
     if (d.canEdit) t.push(['set', '인원 · 설정']);
     return t;
   }
   function draw() {
     const d = D(), own = !d.all, main = L.main, tabs = tabsFor();
-    if (!L.tab || !tabs.some(t => t[0] === L.tab)) L.tab = tabs[0][0] === 'conf' && !tabs[0][2] ? 'cal' : tabs[0][0];
+    if (!L.tab || !tabs.some(t => t[0] === L.tab)) L.tab = tabs[0][0] === 'part' && !tabs[0][2] && d.canEdit ? 'cal' : tabs[0][0];
     const closed = isClosed(L.ym), side = A.isManager();
     main.innerHTML = `
       ${side ? `<div class="ph lvph"><h1>${A.S.me && A.S.me.ro ? '연차 현황' : '연차 · 토요'}</h1>` : '<div class="toolbar lvbar">'}
@@ -2835,7 +2845,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     html += '</div>';
     if (d.all) html += calSummary(pf);
     if (own) html = `<div class="lvown"><div class="lvownc">${html}</div><aside class="lvmine">${mineHtml()}</aside></div>`;
+    if (d.canEdit && !own) html = '<div id="cfside"></div>' + html;                    // v28.26 : 토요 바꾸기 요청 · 월 마감 (예전 확정 대기 탭)
     body().innerHTML = html;
+    if (d.canEdit && !own) drawConf(A.$('#cfside'), 'side');
     A.$$('[data-pt]').forEach(b => (b.onclick = () => { L.part = b.dataset.pt; drawCal(); }));
     if (A.$('#lvsp')) A.$('#lvsp').onchange = e => { L.showPend = e.target.checked; reindex(); drawCal(); };
     A.$$('.lvcal2 [data-l]').forEach(el => (el.onclick = ev => { ev.stopPropagation(); const l = d.leaves.find(x => x.id === el.dataset.l); if (l) leaveModal({ edit: l }); }));
@@ -2945,8 +2957,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const over = wd.filter(x => x.over), top = wd.slice().sort((a, b) => b.n - a.n || LC.ko(a.x, b.x)).filter(x => x.n).slice(0, 3);
     // ⑤ 처리할 것
     const todo = [];
-    if (d.canEdit && c.confirmWait) todo.push(`<button data-gt="conf" class="sm">확정 대기 <b>${c.confirmWait}</b>건 →</button>`);
-    if (d.canEdit && c.swaps) todo.push(`<button data-gt="conf" class="sm">토요 바꾸기 요청 <b>${c.swaps}</b>건 →</button>`);
+    if (d.canEdit && c.confirmWait) todo.push(`<button data-gt="part" class="sm">확정 대기 <b>${c.confirmWait}</b>건 →</button>`);
+    if (d.canEdit && c.swaps) todo.push(`<button data-gt="cal" class="sm">토요 바꾸기 요청 <b>${c.swaps}</b>건 →</button>`);
     if (c.partWait) todo.push(`<button data-gt="part" class="sm">우리 파트 확인 전 <b>${c.partWait}</b>건 →</button>`);
     const ttl = (t, sub) => `<div class="st">${t}${sub ? `<span class="muted">${sub}</span>` : ''}</div>`;
     return `<div class="lvsum">
@@ -3209,6 +3221,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // ------------------------------------------------------------ 파트 매니저 : 파트 신청 확인
   function drawPart() {      // v28.18 : 위 = 큰 달력 (신청을 끌어 날짜 조율) · 아래 = 신청한 날짜 순 사유 목록
     const d = D(), groups = ownedGroups(), f = LC.monthFirst(L.ym), l = LC.monthLast(L.ym), H = L.ix.H;
+    if (!groups.length) { body().innerHTML = '<div id="cfw"></div>'; drawConf(A.$('#cfw'), 'wait'); return; }   // v28.26 : 담당 파트 없는 관리자 = 확정 대기만
     const inG = x => { const s = staffById(x.s); return s && groups.includes(s.grp); };
     const pend = d.leaves.filter(x => stOf(x) === '신청' && inG(x));
     const list = pend.filter(x => x.d2 >= f && x.d1 <= l).sort((a, b) => LC.ko(a.at || '', b.at || '') || LC.ko(a.d1, b.d1));
@@ -3225,7 +3238,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       return `<div class="pcd${hol ? ' hol' : ''}" data-pd="${t}"><div class="pdh"><span>${md(t)}</span>${n ? `<span class="pdn${n >= 3 ? ' hi' : ''}">휴무 ${n}명</span>` : ''}</div>
         ${L0.map(x => { const p = stOf(x) === '신청'; return `<span class="pch2 ${p ? 'req' : 'ok'}" ${p ? `draggable="true" data-pl="${x.id}"` : ''} data-pid="${x.id}" title="${nm(x.s)} · ${A.esc(x.r || '')}${x.h ? ' · ' + x.h : ''} · ${p ? '확인 전 (끌어서 옮기기)' : stOf(x)}">${nm(x.s)}${x.h ? '<i>' + x.h.slice(0, 1) + '</i>' : ''}</span>`; }).join('')}
         ${al.map(u => `<span class="pch2 alt" title="${nm(u.s)} · 토요근무 대체휴무">${nm(u.s)}</span>`).join('')}</div>`; };
-    body().innerHTML = `<div class="lvpart2">
+    body().innerHTML = `<div class="lvpart2">${d.canEdit ? '<div id="cfw"></div>' : ''}
       <section class="card lvsec"><div class="lvst"><b>${A.esc(gl)} ${ymLab(L.ym)} 연차 신청 ${list.length}건</b><span class="muted">점선 = 확인 전 신청 · <b>끌어서 다른 날로 놓으면 날짜 조율</b> · 초록 = 넘긴 신청 · 주황 = 대체휴무 · 빨간 숫자 = 그날 파트 휴무 3명 이상</span></div>
         ${Object.keys(other).length ? `<div class="lvw" style="margin:0 0 10px">다른 달에도 확인 전 신청이 있습니다 : ${Object.keys(other).sort().map(m => `<a href="#" data-gm="${m}">${ymLab(m)} ${other[m]}건</a>`).join(' · ')}</div>` : ''}
         <div class="pcal">${['월', '화', '수', '목', '금'].map(w => `<b>${w}</b>`).join('')}${'<span></span>'.repeat(lead)}${days.map(cell).join('')}</div>
@@ -3235,12 +3248,13 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         ${list.map(x => { const s = staffById(x.s) || {}, pk = peak(x); return `<tr class="click" data-pr="${x.id}"><td class="muted">${A.esc((x.at || '').slice(5, 10).replace('-', '/'))}</td><td><b>${A.esc(s.name || '?')}</b></td>${groups.length > 1 ? `<td>${A.esc(s.grp || '')}</td>` : ''}<td>${mdw(x.d1)}${x.d2 !== x.d1 ? ' ~ ' + mdw(x.d2) : ''}${x.h ? ' ' + x.h : ''}</td>
           <td class="num">${LC.leaveDays(x, H)}</td><td class="rs">${A.esc(x.r || '')}${x.n ? '<div class="nt">💬 ' + A.esc(x.n) + '</div>' : ''}</td><td class="num"><span class="cnt ${pk >= 3 ? 'hi' : ''}">${pk}명${pk >= 3 ? ' ⚠' : ''}</span></td><td><button class="sm" data-pe="${x.id}">날짜 수정</button></td></tr>`; }).join('') || `<tr><td colspan="8" class="muted" style="padding:18px">확인할 신청이 없습니다</td></tr>`}
         </tbody></table>
-        <div class="lvgo"><div><b>확인이 끝나면 한 번만 누르세요</b><span class="muted">${list.length}건이 한 번에 관리자에게 넘어갑니다</span></div>
-          <button class="primary big" id="pcf" ${list.length ? '' : 'disabled'}>✓ ${A.esc(gl)} 최종 확인 → 관리자에게 (${list.length}건)</button></div>
+        <div class="lvgo"><div><b>확인이 끝나면 한 번만 누르세요</b><span class="muted">${list.length}건이 한 번에 ${d.canEdit ? '확정됩니다 (관리자)' : '관리자에게 넘어갑니다'}</span></div>
+          <button class="primary big" id="pcf" ${list.length ? '' : 'disabled'}>✓ ${A.esc(gl)} 최종 확인 → ${d.canEdit ? '바로 확정' : '관리자에게'} (${list.length}건)</button></div>
       </section>
       <section class="card lvsec"><div class="lvst"><b>이미 넘긴 신청 ${sent.length}건</b><span class="muted">관리자 확정 대기 ${sent.filter(x => stOf(x) === '파트확인').length} · 확정 ${sent.filter(x => stOf(x) === '확정').length}</span></div>
         <div class="muted" style="line-height:1.8">${sent.map(x => nm(x.s) + ' ' + md(x.d1) + (x.d2 !== x.d1 ? '~' + md(x.d2) : '') + (stOf(x) === '확정' ? ' ✓' : '')).join(' · ') || '없음'}</div></section>
     </div>`;
+    if (d.canEdit) drawConf(A.$('#cfw'), 'wait');
     A.$$('[data-gm]').forEach(a => (a.onclick = e => { e.preventDefault(); const ny = +a.dataset.gm.slice(0, 4); L.ym = a.dataset.gm; if (ny !== L.year) render(L.main); else draw(); }));
     A.$$('[data-pe]').forEach(b => (b.onclick = e => { e.stopPropagation(); partEditModal(d.leaves.find(x => x.id === b.dataset.pe)); }));
     A.$$('[data-pr]').forEach(tr => (tr.onclick = () => A.$$(`[data-pid="${tr.dataset.pr}"]`).forEach(c => { c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); c.scrollIntoView({ block: 'nearest' }); })));
@@ -3261,9 +3275,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     });
     if (A.$('#pcf')) A.$('#pcf').onclick = async () => {
       if (L.pcBusy) return; L.pcBusy = true; setTimeout(() => (L.pcBusy = false), 800);
-      if (!(await A.confirmBox(`<b>${A.esc(gl)} ${ymLab(L.ym)} 신청 ${list.length}건</b>을 최종 확인하고 관리자에게 넘깁니다.<br><span class="muted">넘긴 뒤에는 인원이 취소할 수 없습니다.</span>`, '최종 확인'))) return;
+      if (!(await A.confirmBox(`<b>${A.esc(gl)} ${ymLab(L.ym)} 신청 ${list.length}건</b>을 최종 확인하고 ${d.canEdit ? '바로 확정합니다' : '관리자에게 넘깁니다'}.<br><span class="muted">넘긴 뒤에는 인원이 취소할 수 없습니다.</span>`, '최종 확인'))) return;
       L.pcBusy = true;
-      try { const r = await A.api('lvPartConfirm', { ids: list.map(x => x.id) }); list.forEach(x => { x.st = '파트확인'; x.pb = me().name; }); A.toast(r.n + '건을 관리자에게 넘겼습니다'); refresh(); } catch (e) { A.toast(e.message, true); }
+      try { const ids = list.map(x => x.id), r = await A.api('lvPartConfirm', { ids }); list.forEach(x => { x.st = '파트확인'; x.pb = me().name; });
+        if (d.canEdit) { await A.api('lvConfirm', { ids }); list.forEach(x => (x.st = '확정')); }        // v28.26 : 관리자 담당 파트 = 바로 확정
+        A.toast(r.n + (d.canEdit ? '건 확정' : '건을 관리자에게 넘겼습니다')); refresh(); } catch (e) { A.toast(e.message, true); }
       finally { setTimeout(() => (L.pcBusy = false), 800); }
     };
   }
@@ -3284,7 +3300,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   // ------------------------------------------------------------ 관리자 : 확정 대기 · 토요 바꾸기 · 마감
-  function drawConf() {
+  function drawConf(host, mode) {                       // v28.26 : mode 'wait' = 파트 신청 확인 안 · 'side' = 달력 위 (토요 바꾸기 · 마감)
+    if (!host) return;
     const d = D(), f = LC.monthFirst(L.ym), l = LC.monthLast(L.ym), H = L.ix.H;
     const inM = x => x.d2 >= f && x.d1 <= l, pf = x => !L.part || partOf((staffById(x.s) || {}).grp) === L.part;
     const wait = d.leaves.filter(x => stOf(x) === '파트확인' && inM(x)), pre = d.leaves.filter(x => stOf(x) === '신청' && inM(x));
@@ -3297,7 +3314,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const overDays = []; for (let t = f; t <= l; t = LC.addDays(t, 1)) if (LC.isWork(t, H)) { const c = capOf(t), n = LC.dayCell(L.ix, t).off; if (c && n > c) overDays.push(md(t) + ' ' + n + '/' + c); }
     const emptySat = LC.monthSaturdays(L.ym).filter(s => !(L.ix.duty[s] || []).length);
     const closed = isClosed(L.ym), ready = !wait.length && !pre.length;
-    body().innerHTML = `<div class="lvconf"><div>
+    const leftHtml = `<div class="lvcfw"><div class="lvst" style="margin:0 0 8px"><b>관리자 확정 대기 ${wait.length}건</b><span class="muted">매니저가 넘긴 신청 · 확정해야 달력 · 연차 일수에 들어갑니다</span></div>
       <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${L.part === p ? ' on' : ''}">${p || '전체'} ${p ? (byPart[p] || 0) : wait.length}${p && prePart[p] ? ' <small>· 확인 전 ' + prePart[p] + '</small>' : ''}</button>`).join('')}</div>
       ${Object.keys(otherM).length ? `<div class="lvw" style="margin:0 0 10px">다른 달 확정 대기 : ${Object.keys(otherM).sort().map(m => `<a href="#" data-gm="${m}">${ymLab(m)} ${otherM[m]}건</a>`).join(' · ')}</div>` : ''}
       <section class="card lvsec" style="padding:0;overflow:auto"><table class="list lvtbl"><thead><tr><th><input type="checkbox" id="cfa" aria-label="모두 선택"></th><th>이름</th><th>파트</th><th>기간</th><th class="num">일수</th><th>사유</th><th>파트 확인</th><th class="num">그날 전체</th><th></th></tr></thead><tbody>
@@ -3310,8 +3327,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <div class="lvgo"><span class="muted" style="flex:1">빨간 숫자 = 상한 초과</span><button id="cfs">선택한 건 확정</button><button class="primary" id="cfall" ${list.length ? '' : 'disabled'}>${L.part ? A.esc(L.part) + ' ' : ''}전체 확정 (${list.length}건)</button></div></section>
       ${pre.length ? `<details class="lvpre"><summary>파트 확인 전 신청 ${pre.length}건 <span class="muted">(${Object.keys(prePart).map(p => p + ' ' + prePart[p]).join(' · ')}) — 여기서 바로 확정 가능</span></summary>
         <div class="muted" style="line-height:1.9;padding:8px 2px">${pre.map(x => `<a href="#" data-ce="${x.id}">${A.esc((staffById(x.s) || {}).name || '?')} ${md(x.d1)}${x.d2 !== x.d1 ? '~' + md(x.d2) : ''}</a>`).join(' · ')}</div></details>` : ''}
-    </div>
-    <div class="lvside">
+    </div>`;
+    const sideHtml = `<div class="lvcfside">
       <section class="card lvsec"><div class="lvst"><b>토요근무 바꾸기 요청 ${swaps.length}건</b></div>
         ${swaps.map(w => { const s = staffById(w.s) || {}; return `<div class="swc"><div><b>${A.esc(s.name || '?')}</b> <span class="muted">${A.esc(s.grp || '')}</span></div><div>${A.esc(swapText(w))}</div>${w.r ? `<div class="muted" style="font-size:12.5px">${A.esc(w.r)}</div>` : ''}
           <div class="a"><button class="sm danger" data-wn="${w.id}">반려</button><button class="sm primary" data-wy="${w.id}">반영</button></div></div>`; }).join('') || '<div class="muted">없음</div>'}
@@ -3324,18 +3341,19 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <div class="muted" style="font-size:12.5px;margin:8px 0">팀장님께 보고 후 마감하세요. 마감하면 아무도 고칠 수 없습니다 (마감 풀기로 해제).</div>
         ${closed ? '<button id="lvopen">마감 풀기</button>' : `<button class="primary" id="lvclose" ${ready ? '' : 'disabled title="확정 대기·확인 전 신청을 먼저 처리하세요"'}>🔒 ${ymLab(L.ym)} 연차 마감</button>`}
       </section>
-    </div></div>`;
-    A.$$('[data-pt]').forEach(b => (b.onclick = () => { L.part = b.dataset.pt; drawConf(); }));
-    A.$$('[data-gm]').forEach(a => (a.onclick = e => { e.preventDefault(); const ny = +a.dataset.gm.slice(0, 4); L.ym = a.dataset.gm; if (ny !== L.year) render(L.main); else draw(); }));
-    A.$$('[data-ce]').forEach(b => (b.onclick = e => { e.preventDefault(); leaveModal({ edit: d.leaves.find(x => x.id === b.dataset.ce) }); }));
+    </div>`;
+    host.innerHTML = mode === 'side' ? sideHtml : leftHtml;
+    if (mode !== 'side') A.$$('[data-pt]', host).forEach(b => (b.onclick = () => { L.part = b.dataset.pt; draw(); }));
+    A.$$('[data-gm]', host).forEach(a => (a.onclick = e => { e.preventDefault(); const ny = +a.dataset.gm.slice(0, 4); L.ym = a.dataset.gm; if (ny !== L.year) render(L.main); else draw(); }));
+    A.$$('[data-ce]', host).forEach(b => (b.onclick = e => { e.preventDefault(); leaveModal({ edit: d.leaves.find(x => x.id === b.dataset.ce) }); }));
     const confirm = async ids => {
       if (!ids.length) return A.toast('확정할 건을 고르세요', true);
       try { const r = await A.api('lvConfirm', { ids }); ids.forEach(id => { const x = d.leaves.find(y => y.id === id); if (x) x.st = '확정'; }); A.toast(r.n + '건 확정'); refresh(); } catch (e) { A.toast(e.message, true); }
     };
     A.$$('[data-c1]').forEach(b => (b.onclick = () => confirm([b.dataset.c1])));
     if (A.$('#cfa')) A.$('#cfa').onchange = e => A.$$('.cfc').forEach(c => (c.checked = e.target.checked));
-    A.$('#cfs').onclick = () => confirm(A.$$('.cfc:checked').map(c => c.value));
-    A.$('#cfall').onclick = async () => { if (await A.confirmBox((L.part || '전체') + ' ' + list.length + '건을 확정합니다.', '확정')) confirm(list.map(x => x.id)); };
+    if (A.$('#cfs')) A.$('#cfs').onclick = () => confirm(A.$$('.cfc:checked').map(c => c.value));
+    if (A.$('#cfall')) A.$('#cfall').onclick = async () => { if (await A.confirmBox((L.part || '전체') + ' ' + list.length + '건을 확정합니다.', '확정')) confirm(list.map(x => x.id)); };
     const swapDo = (id, ok) => {
       const run = async note => {
         try { const r = await A.api('lvSwapDo', { id, ok, note }); const i = d.swaps.findIndex(x => x.id === id); d.swaps[i] = r.swap; if (ok) await load(L.year, true); A.toast(ok ? '반영했습니다 (토요 명단이 바뀌었습니다)' : '반려했습니다'); refresh(); } catch (e) { A.toast(e.message, true); }
@@ -3418,7 +3436,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         <span class="muted"> · 이름 색 : <b class="c2">2회</b> <b class="c3">3회 이상</b> · 주당 구성 ${((kv().slots || []).filter(Boolean)).length}칸</span></div>
       <div class="lvsg">${weeks.map(col).join('') || '<div class="warn">배정 묶음에 토요일이 없습니다. 위에서 고르세요.</div>'}</div>
       <datalist id="lvsn">${curList().map(s => `<option value="${A.esc(s.name)}">${A.esc(s.grade || '')} ${A.esc(s.grp || '')}</option>`).join('')}</datalist>`;
-    if (A.$('#lvgsw')) A.$('#lvgsw').onclick = () => { L.tab = 'conf'; draw(); };
+    if (A.$('#lvgsw')) A.$('#lvgsw').onclick = () => { L.tab = 'cal'; draw(); };
     if (!can) return;
     const save = async ws => {
       const days = ws.map(w => ({ d: w, list: (L.ix.duty[w] || []).map(u => ({ s: u.s, a: u.a || '' })) }));
@@ -4549,6 +4567,9 @@ function parseAcc(ws) {
     const row = aoa[r]; const name = String(row[m['이름']] || '').trim(); const kind = ACC_KINDS[normH(row[m['구분']])];
     if (!name || !kind) continue;
     const k = normH(name); out[k] = out[k] || { 이름: name }; out[k][kind] = (out[k][kind] || 0) + 1; n++;
+    // v28.26 : 사고 내역 (통계 [사고] 탭) — [출고일 · 주문번호 · 구분 · 내용 · 처리 · 처리일]
+    const cv = h => { const i = m[h]; if (i === undefined) return ''; const v = row[i]; if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); } return String(v == null ? '' : v).trim().replace(/\./g, '-').replace(/-$/, '').slice(0, 300); };
+    (out[k].내역 = out[k].내역 || []).push([cv('출고일자') || cv('출고일') || cv('날짜'), cv('주문번호'), kind, cv('내용'), cv('처리'), cv('처리일자')]);
   }
   return { rows: out, count: n };
 }
@@ -6639,7 +6660,7 @@ async function addCharts(buf, jobs) {
     const ord = { r: 0, o: 1, b: 2 }, add = x => { it.push(x); it.sort((a, b) => ord[a.lv] - ord[b.lv]); };
     // 1) 연차
     if (lv) {
-      if (lv.canEdit && (lv.confirmWait || lv.swaps)) add({ lv: 'r', t: '연차 확정 대기', n: (lv.confirmWait || 0) + '건', m: lv.swaps ? '토요근무 바꾸기 요청 ' + lv.swaps + '건' : '', go: () => go('leave', { tab: 'conf' }) });
+      if (lv.canEdit && (lv.confirmWait || lv.swaps)) add({ lv: 'r', t: '연차 확정 대기', n: (lv.confirmWait || 0) + '건', m: lv.swaps ? '토요근무 바꾸기 요청 ' + lv.swaps + '건' : '', go: () => go('leave', { tab: lv.confirmWait ? 'part' : 'cal' }) });
       if (lv.partWait) add({ lv: 'r', t: '연차 파트 신청 확인', n: lv.partWait + '건', m: '확인하면 관리자 확정 대기로', go: () => go('leave', { tab: 'part' }) });
       if (lv.canEdit && (lv.emptySats || []).length) add({ lv: 'o', t: '토요근무 빈 주', n: lv.emptySats.length + '주', m: lv.emptySats.map(md).join(' · ') + ' 배정 0명', go: () => go('leave', { tab: 'sat' }) });
     }
@@ -7540,7 +7561,7 @@ async function addCharts(buf, jobs) {
   // 계산 원칙 : 서버는 [사람 · 귀속월 · 주 · 요일구분]별 원재료 합계만 보내고, 계산은 core.js(엑셀 통계 시트)와 같은 식으로 여기서 함
   //   개인 평가평균(환산) = (Σ 항목수×분/30 ÷ (근무일 + 조립야근/60/8.5)) + 주말가산 + 기타시간  ← 월 업무현황 · 인사평가와 같은 값
   const STC = [['kpi', '요약'], ['trend', '추이'], ['cmp', '그룹 비교'], ['flow', '그룹별 흐름'], ['mix', '업무 종류 비중'], ['dist', '달성률 분포'], ['att', '근태 · 연차'], ['rank', '인원별 순위']];
-  const STC4 = [['요약', ['kpi', 'trend', 'dist', 'att']], ['그룹', ['cmp', 'flow']], ['인원 순위', ['rank']], ['업무 종류', ['mix']]];     // v28.18 : 고르는 칸 4개로
+  const STC4 = [['요약', ['kpi', 'trend', 'dist', 'att']], ['그룹', ['cmp', 'flow']], ['인원 순위', ['rank']], ['업무 종류', ['mix']], ['사고', ['acc']]];   // v28.26 : 사고     // v28.18 : 고르는 칸 4개로
   const STU = [['week', '주'], ['month', '월'], ['quarter', '분기'], ['year', '연간']];
   const STG = () => C.GROUP_LIST.filter(g => g !== '영상');
   const stState = () => (S.stv = S.stv || { unit: 'month', anchor: null, custom: null, sel: [], grp: [], trendM: 'q', mixG: '', mixItems: [], mixBy: 'n', rankM: 'top', data: null, key: '' });
@@ -7921,10 +7942,11 @@ async function addCharts(buf, jobs) {
         <div><div class="sub">근태 기록 (건)</div><div class="leg">${ak.map((k, i) => `<span><i style="background:${ac[i]}"></i>${k}</span>`).join('')}</div>${stStack(ww, one ? 280 : 150, keys.map(k => B[k].att), labs, ak, ac, V.custom ? -1 : AK)}</div></div>`));
     }
     if (show('rank')) cards.push(stCard('rank', wide, stRankHtml(V, m, gl, rl, pv, one)));
+    if (show('acc')) cards.push(stCard('acc', true, stAccHtml(V, m, W, labs, gl, rl, pv, dl)));
     if (wide) h += cards.join('');
     else {
       const c = id => cards.find(x => x.includes(`data-stk="${id}"`)) || '';
-      h += `<div class="stg2">${c('trend')}${c('cmp')}</div>${c('flow')}<div class="stg2">${c('mix')}${c('dist')}</div><div class="stg2">${c('att')}${c('rank')}</div>`;
+      h += `<div class="stg2">${c('trend')}${c('cmp')}</div>${c('flow')}<div class="stg2">${c('mix')}${c('dist')}</div><div class="stg2">${c('att')}${c('rank')}</div>${c('acc')}`;
     }
     box.innerHTML = h;
     $$('[data-tm]', box).forEach(b => (b.onclick = () => { V.trendM = b.dataset.tm; stDraw(); }));
@@ -7932,8 +7954,83 @@ async function addCharts(buf, jobs) {
     $$('[data-mi]', box).forEach(b => (b.onclick = () => { const k = b.dataset.mi, i = V.mixItems.indexOf(k); if (i < 0) { if (V.mixItems.length >= 6) return toast('항목은 6개까지 고를 수 있습니다'); V.mixItems.push(k); } else V.mixItems.splice(i, 1); stDraw(); }));
     $$('[data-mb]', box).forEach(b => (b.onclick = () => { V.mixBy = b.dataset.mb; stDraw(); }));
     $$('[data-rm]', box).forEach(b => (b.onclick = () => { V.rankM = b.dataset.rm; stDraw(); }));
+    $$('[data-acs]', box).forEach(b => (b.onclick = () => { const v = b.dataset.acs; if (!v) V.accSel = null; else { const [t, ...r] = v.split('|'), val = r.join('|'); V.accSel = V.accSel && V.accSel.t === t && V.accSel.v === val ? null : { t, v: val }; } stDraw(); }));   // v28.26
+    $$('[data-acp]', box).forEach(b => (b.onclick = () => { V.accP = V.accP === b.dataset.acp ? null : b.dataset.acp; stDraw(); }));
     $$('[data-pu]', box).forEach(b => (b.onclick = () => { const u = ((V.data || {}).users || []).find(x => x.id === b.dataset.pu) || {}; personCard({ id: b.dataset.pu, name: u.name || b.textContent.trim(), group: u.grp || '', stat: () => stPerson(b.dataset.pu) }); }));
   }
+  // ---- v28.26 : 사고 (인사평가에 올린 사고 파일 · 월 단위)
+  const ACC_K = ['오조립', '파손', '오발송', '미발송', '품질지적', '지시불이행'], ACC_C = ['#c2410c', '#7c3aed', '#0f766e', '#b45309', '#2563eb', '#64748b'];
+  const ACC_W = [['메모리', /메모리|램|RAM|DIMM/i], ['CPU 쿨러', /쿨러|써멀|서멀|비닐/], ['그래픽카드', /그래픽|VGA|글카|RTX|GTX|라데온/i], ['SSD · 저장장치', /SSD|HDD|NVMe|M\.2|하드/i], ['파워', /파워|PSU|전원/i],
+    ['메인보드 · 바이오스', /메인보드|보드|바이오스|BIOS/i], ['케이스 · 팬', /케이스|팬|RGB/i], ['윈도우 · OS', /윈도우|OS|정품|드라이버|인증/i], ['박스 · 구성품', /박스|구성품|설명서|부속|나사|케이블|브라켓/], ['배송 · 송장', /배송|송장|택배|퀵|주소|출고지/], ['파손 · 흠집', /파손|깨|스크래치|찍힘|휨|흠집|기스/]];
+  function stAccData(V, m) {
+    const D = V.data, u = V.unit, { keys, prevKeys } = m, K = new Set(keys), PK = new Set(prevKeys), AK = keys[keys.length - 1];
+    const bk = ym => u === 'month' ? ym : u === 'quarter' ? qOf(ym) : ym.slice(0, 4);
+    const rk = ym => { const k = bk(ym); return V.custom ? (K.has(k) ? 'R' : PK.has(k) ? 'P' : null) : (k === AK ? 'R' : PK.has(k) ? 'P' : null); };
+    const byName = {}, rg = {}; (D.users || []).forEach(x => (byName[normName(x.name)] = x)); (D.roster || []).forEach(([n, g]) => (rg[normName(n)] = { g, n }));
+    const names = Array.from(new Set(Object.keys(byName).concat(Object.keys(rg))));
+    const alias = k => { const L = names.filter(x => x.length > k.length && x.startsWith(k) && /^\d+$/.test(x.slice(k.length))); return L.length === 1 ? L[0] : null; };
+    const HG = { 생산: '라인', 영상: '제조' }, hg = {}; (D.hrm || []).forEach(r => (hg[r[0] + '|' + normName(r[1])] = String(r[2] || '').trim()));
+    const G = STG(), out = [];
+    (D.acc || []).forEach(([ym, name, row]) => {
+      let k = normName(name); if (!byName[k] && !rg[k]) { const al = alias(k); if (al) k = al; }
+      const us = byName[k], cur = rg[k], g0 = HG[hg[ym + '|' + normName(name)]] || hg[ym + '|' + normName(name)] || '';
+      const grp = (G.includes(g0) && g0) || (cur && cur.g) || (us && us.grp) || g0, uid = us ? us.id : 'h:' + k, nm = us ? us.name : cur ? cur.n : name;
+      if (grp === '팀장' || (V.grp.length && !V.grp.includes(grp))) return;
+      const det = Array.isArray(row && row.내역) ? row.내역 : null, used = {};
+      if (det) det.forEach(x => { const kd = ACC_K.includes(x[2]) ? x[2] : null; if (!kd) return; used[kd] = (used[kd] || 0) + 1; out.push({ ym, key: bk(ym), r: rk(ym), uid, name: nm, grp, kind: kd, d: x[0] || '', ord: x[1] || '', txt: x[3] || '', act: x[4] || '', det: 1 }); });
+      ACC_K.forEach(kd => { const n = Math.max(0, (+(row || {})[kd] || 0) - (used[kd] || 0)); for (let i = 0; i < n; i++) out.push({ ym, key: bk(ym), r: rk(ym), uid, name: nm, grp, kind: kd, d: '', ord: '', txt: '', act: '', det: 0 }); });
+    });
+    return out;
+  }
+  function stAccHtml(V, m, w, labs, gl, rl, pv, dl) {
+    const D = V.data, { keys, R, P } = m, AK = keys.length - 1;
+    if (V.unit === 'week') return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">사고는 달마다 올린 사고 파일이라 주 단위가 없습니다 · [월] · [분기] · [연간]에서 보세요</div></div>`;
+    const A = stAccData(V, m), RA = A.filter(x => x.r === 'R'), PA = A.filter(x => x.r === 'P'), sel = V.accSel || null;
+    if (!(D.acc || []).length) return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">이 기간에 올린 사고 파일이 없습니다 · 인사평가 [데이터]에서 달마다 사고 파일을 올리면 여기에 나옵니다</div></div>`;
+    const per = (n, q) => q > 0 ? n / q * 1000 : null, f2x = v => v == null ? '-' : v.toFixed(2);
+    const ppl = {}; RA.forEach(x => { const p = ppl[x.uid] = ppl[x.uid] || { uid: x.uid, name: x.name, grp: x.grp, n: 0, k: {}, list: [] }; p.n++; p.k[x.kind] = (p.k[x.kind] || 0) + 1; p.list.push(x); });
+    const qOfU = {}; (R.ps || []).forEach(a => (qOfU[a.u] = (qOfU[a.u] || 0) + (a.q || 0)));
+    const P2 = Object.values(ppl).sort((a, b) => b.n - a.n || LC0(a.name, b.name));
+    const kc = {}; RA.forEach(x => (kc[x.kind] = (kc[x.kind] || 0) + 1)); const top = ACC_K.slice().sort((a, b) => (kc[b] || 0) - (kc[a] || 0))[0];
+    const noDet = RA.some(x => !x.det);
+    // 최근 3달 (기준 기간 끝 달까지)
+    const endYm = RA.length ? RA.map(x => x.ym).sort().pop() : (D.acc.map(r => r[0]).sort().pop() || ''), y3 = [0, 1, 2].map(i => { const [y, mm] = endYm.split('-').map(Number); const d = new Date(y, mm - 1 - i, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); });
+    const in3 = A.filter(x => y3.includes(x.ym)), rep = uid => { const mk = {}; in3.filter(x => x.uid === uid).forEach(x => ((mk[x.kind] = mk[x.kind] || new Set()).add(x.ym))); return Object.values(mk).some(s => s.size >= 2); };
+    let h = `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">${esc(rl)} · 인사평가에 올린 사고 파일 기준 · 그룹 = 그 달 업무통계의 그룹${noDet ? ' · <b>내용 · 처리는 사고 파일을 다시 올린 달부터 보입니다</b>' : ''}</div></div>`;
+    h += `<div class="stkpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="card kpi"><span>사고 건수</span><b>${RA.length}<small> 건</small></b>${dl(RA.length, PA.length, fN, false, '건')}</div>
+      <div class="card kpi"><span>조립 1,000대당 사고</span><b>${f2x(per(RA.length, R.q))}<small> 건</small></b>${dl(per(RA.length, R.q), per(PA.length, P.q), f2x, false)}</div>
+      <div class="card kpi"><span>사고 난 인원</span><b>${P2.length}<small> 명 / ${R.head || 0}명</small></b><i>2건 이상 ${P2.filter(p => p.n >= 2).length}명 · 반복 ${P2.filter(p => rep(p.uid)).length}명</i></div>
+      <div class="card kpi"><span>가장 많은 종류</span><b>${RA.length ? esc(top) : '-'}<small> ${RA.length ? (kc[top] || 0) + '건 · ' + Math.round((kc[top] || 0) / RA.length * 100) + '%' : ''}</small></b></div></div>`;
+    // 달별 추이 · 그룹별
+    const rows = keys.map(k => { const o = {}; A.filter(x => x.key === k).forEach(x => (o[x.kind] = (o[x.kind] || 0) + 1)); return o; });
+    const ww = Math.floor((w - 20) / 2);
+    const G = STG(), gq = {}; (R.ps || []).forEach(a => (gq[a.grp] = (gq[a.grp] || 0) + (a.q || 0)));
+    const gr = G.map(g => ({ g, n: RA.filter(x => x.grp === g).length, q: gq[g] || 0 })).filter(x => x.n || x.q), gmx = Math.max(0.01, ...gr.map(x => per(x.n, x.q) || 0));
+    const bar = (lab, v, mx, txt, attr, col, on) => `<div class="accb${on ? ' on' : ''}" ${attr}><span>${lab}</span><span class="t"><i style="width:${mx ? Math.max(v ? 2 : 0, v / mx * 100) : 0}%;background:${col}"></i></span><em>${txt}</em></div>`;
+    h += `<div class="stat2"><div><div class="sub">달별 사고 (건) · 종류별</div><div class="leg">${ACC_K.map((k, i) => `<span><i style="background:${ACC_C[i]}"></i>${k}</span>`).join('')}</div>${stStack(ww, 230, rows, labs, ACC_K, ACC_C, V.custom ? -1 : AK)}</div>
+      <div><div class="sub">그룹별 · 막대 = 조립 1,000대당 · 누르면 내역</div><div class="accbars">${gr.map(x => bar(esc(x.g), per(x.n, x.q) || 0, gmx, `<b>${x.n}건</b> · ${f2x(per(x.n, x.q))}`, `data-acs="grp|${esc(x.g)}"`, gcol(x.g), sel && sel.t === 'grp' && sel.v === x.g)).join('') || '<div class="muted">없음</div>'}</div></div></div>`;
+    // 원인 단어 · 처리 방법 (1건 이하 = 기타)
+    const group = (fnOf) => { const c = {}; RA.filter(x => x.det).forEach(x => fnOf(x).forEach(v => (c[v] = c[v] || []).push(x))); const L = Object.entries(c).filter(([k, v]) => k !== '기타' && v.length > 1).sort((a, b) => b[1].length - a[1].length);
+      const etc = Object.entries(c).filter(([k, v]) => k === '기타' || v.length <= 1).flatMap(([, v]) => v); const seen = new Set(), etcU = etc.filter(x => !seen.has(x) && seen.add(x)); if (etcU.length) L.push(['기타', etcU]); return L; };
+    const kw = group(x => { const t = x.txt || ''; const hit = ACC_W.filter(([, re]) => re.test(t)).map(([n]) => n); return hit.length ? hit : ['기타']; });
+    const act = group(x => [String(x.act || '').trim() || '(적지 않음)']);
+    const kmx = Math.max(1, ...kw.map(x => x[1].length)), amx = Math.max(1, ...act.map(x => x[1].length));
+    h += `<div class="stat2"><div><div class="sub">원인 단어 (사고 내용) · 1건뿐인 것은 기타 · 누르면 내역</div><div class="accbars">${kw.map(([k, v]) => bar(esc(k), v.length, kmx, `<b>${v.length}</b>건`, `data-acs="kw|${esc(k)}"`, '#c2410c', sel && sel.t === 'kw' && sel.v === k)).join('') || '<div class="muted">내용이 있는 사고가 없습니다</div>'}</div></div>
+      <div><div class="sub">처리 방법 · 1건뿐인 것은 기타 · 누르면 내역</div><div class="accbars">${act.map(([k, v]) => bar(esc(k), v.length, amx, `<b>${v.length}</b>건`, `data-acs="act|${esc(k)}"`, '#0f766e', sel && sel.t === 'act' && sel.v === k)).join('') || '<div class="muted">처리 내용이 있는 사고가 없습니다</div>'}</div></div></div>`;
+    const detT = list => `<div class="tw"><table class="list acct"><thead><tr><th>출고일</th><th>이름</th><th>그룹</th><th>구분</th><th>주문번호</th><th>내용</th><th>처리</th></tr></thead><tbody>${list.slice(0, 300).map(x => `<tr><td>${esc(x.d ? x.d.slice(5).replace('-', '/') : (+x.ym.slice(5)) + '월')}</td><td>${esc(x.name)}</td><td>${esc(x.grp)}</td><td><span class="acck" style="background:${ACC_C[ACC_K.indexOf(x.kind)]}">${esc(x.kind)}</span></td><td class="muted">${esc(x.ord)}</td><td>${x.det ? esc(x.txt) : '<span class="muted">내용 없음 (예전에 올린 파일)</span>'}</td><td>${esc(x.act)}</td></tr>`).join('')}</tbody></table></div>`;
+    if (sel) { const L = sel.t === 'grp' ? RA.filter(x => x.grp === sel.v) : ((sel.t === 'kw' ? kw : act).find(([k]) => k === sel.v) || [, []])[1];
+      h += `<div class="accdet"><div class="sub"><b>${esc(sel.v)}</b> 내역 ${L.length}건 <button class="sm" data-acs="">닫기</button></div>${detT(L.slice().sort((a, b) => LC0(b.d, a.d)))}</div>`; }
+    // 사람별
+    h += `<div class="sub" style="margin-top:14px">사람별 사고 · 건수 많은 순 · 줄을 누르면 내역 · <span class="accrep">반복</span> = 같은 종류가 최근 3달(${y3.slice().reverse().map(y => +y.slice(5) + '월').join('·')}) 안에 두 달 이상</div>
+      <div class="tw"><table class="list acct"><thead><tr><th>이름</th><th>그룹</th><th class="num">건수</th><th>종류</th><th class="num">조립수량</th><th class="num">1,000대당</th><th class="num">최근 3달</th></tr></thead><tbody>
+      ${P2.map(p => { const q = qOfU[p.uid] || 0, op = V.accP === p.uid; return `<tr class="click${op ? ' on' : ''}" data-acp="${esc(p.uid)}"><td><b>${esc(p.name)}</b>${rep(p.uid) ? ' <span class="accrep">반복</span>' : ''}</td><td>${esc(p.grp)}</td><td class="num"><b>${p.n}</b></td>
+        <td>${ACC_K.filter(k => p.k[k]).map(k => `<span class="acck" style="background:${ACC_C[ACC_K.indexOf(k)]}">${k} ${p.k[k]}</span>`).join('')}</td><td class="num">${q ? fN(q) : '-'}</td><td class="num">${q ? f2x(per(p.n, q)) : '-'}</td><td class="num">${in3.filter(x => x.uid === p.uid).length}건</td></tr>
+        ${op ? `<tr class="accsub"><td colspan="7">${detT(p.list.slice().sort((a, b) => LC0(b.d, a.d)))}</td></tr>` : ''}`; }).join('') || '<tr><td colspan="7" class="muted" style="padding:16px">이 기간에 사고가 없습니다</td></tr>'}
+      </tbody></table></div>`;
+    return h;
+  }
+  const LC0 = (a, b) => String(a || '').localeCompare(String(b || ''), 'ko');
   function stMixHtml(V, m, w, labs, labsL, one) {
     const { R, B, keys, gs } = m, MG = stMixGroups(), g0 = V.mixG, by = g0 && g0 !== '기타시간' ? V.mixBy : 'm';
     const chips = `<div class="stmg"><button class="stch ${g0 ? '' : 'on'}" data-mg="">전체 묶음</button>${MG.map(x => `<button class="stch ${g0 === x.n ? 'on' : ''}" data-mg="${esc(x.n)}">${esc(x.n)}</button>`).join('')}<button class="stch ${g0 === '기타시간' ? 'on' : ''}" data-mg="기타시간">기타시간</button></div>`;
