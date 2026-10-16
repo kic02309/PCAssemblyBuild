@@ -1390,6 +1390,7 @@ table.ppast input[type=date]{width:auto;padding:4px 8px}table.ppast td{vertical-
 .accsp{gap:44px;margin:18px 0 26px}.accsp .sub small,.accflow .sub small{font-weight:500;color:var(--sub);margin-left:6px}
 .accb.big{grid-template-columns:86px minmax(0,1fr) 120px;font-size:14px;min-height:34px}.accb.big.gw{grid-template-columns:70px minmax(0,1fr) 250px}
 .accb.big .t{height:20px;border-radius:6px}.accb.big em{color:var(--text,inherit);white-space:nowrap}.accb.big em b{font-size:15.5px}.accb.big em small{color:var(--sub);font-size:12.5px;margin-left:3px}.accb.big em .ar{margin-left:2px}
+.acctop{display:grid;gap:7px;margin-top:8px}.acctop>div{display:grid;grid-template-columns:62px 12px 1fr auto;align-items:center;gap:8px;font-size:14px}.acctop .n{color:var(--sub);font-size:12.5px;white-space:nowrap}.acctop i{width:12px;height:12px;border-radius:3px}.acctop .r1>b{font-size:17px}.acctop em{font-style:normal;color:var(--sub);font-size:13px;white-space:nowrap}.acctop em b{color:var(--text,inherit);font-size:15px}
 .accfew{display:inline-block;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;margin-left:4px}
 .accflow{margin:6px 0 26px}.stcard .leg.accleg,.accleg{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;margin:6px 0 14px}.stcard .leg.accleg span,.accleg span{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--text,inherit)}.stcard .leg.accleg i,.accleg i{width:14px;height:14px;border-radius:4px;display:inline-block}
 .accm{display:grid;grid-template-columns:70px minmax(0,1fr) 110px;align-items:center;gap:14px;min-height:34px;margin-bottom:6px;padding:0 8px;border-radius:8px;font-size:14px}
@@ -8169,7 +8170,9 @@ async function addCharts(buf, jobs) {
       <div class="card kpi"><span>사고 건수</span><b>${RA.length}<small> 건</small></b>${live ? '<em class="eq live">진행 중</em> <i>사고 파일을 올린 만큼만</i>' : cmp(RA.length, PA.length, fN, '건')}</div>
       <div class="card kpi"><span title="사고 건수 ÷ 조립수량 (출고 · 반조 · 제조 제외)">사고율</span><b>${live && !RA.length ? '-' : f2x(per(RA.length, R.q))}<small> %</small></b><i>조립 ${fN(Math.round(R.q || 0))}대 중 ${RA.length}건</i> ${live ? '<i>· 진행 중이라 비교 안 함</i>' : cmp(per(RA.length, R.q), per(PA.length, P.q), f2x, '%p')}</div>
       <div class="card kpi"><span>사고 난 인원</span><b>${P2.length}<small> 명 / ${R.head || 0}명</small></b><i>2건 이상 ${P2.filter(p => p.n >= 2).length}명 · 반복 ${P2.filter(p => rep(p.uid)).length}명</i></div>
-      <div class="card kpi"><span>가장 많은 종류</span><b>${RA.length ? esc(top) : '-'}<small> ${RA.length ? (kc[top] || 0) + '건 · ' + pc(kc[top] || 0, RA.length) : ''}</small></b>${(() => { const t2 = ACC_K.slice().sort((a, b) => (kc[b] || 0) - (kc[a] || 0))[1]; return RA.length && kc[t2] ? `<i>2위 ${esc(t2)} ${kc[t2]}건 · ${pc(kc[t2], RA.length)}</i>` : ''; })()}</div></div>`;
+      <div class="card kpi"><span>많은 종류 1 ~ 3위</span>${(() => { const L = ACC_K.filter(k => kc[k]).sort((a, b) => kc[b] - kc[a]); if (!L.length) return '<b>-</b>';   // v28.37 : 같은 건수 = 같은 순위
+        const rk = L.map((k, i) => 1 + L.filter(z => kc[z] > kc[k]).length), top3 = L.filter((k, i) => rk[i] <= 3);
+        return `<div class="acctop">${top3.map(k => { const r = rk[L.indexOf(k)], tie = rk.filter(x => x === r).length > 1; return `<div class="r${r}"><span class="n">${tie ? '공동 ' : ''}${r}위</span><i style="background:${ACC_C[ACC_K.indexOf(k)]}"></i><b>${esc(k)}</b><em><b>${kc[k]}</b>건 · ${pc(kc[k], RA.length)}</em></div>`; }).join('')}</div>`; })()}</div></div>`;
     // 달별 추이 · 그룹별
     const rows = keys.map(k => { const o = {}; A.filter(x => x.key === k).forEach(x => (o[x.kind] = (o[x.kind] || 0) + 1)); return o; });
     const ww = Math.floor((w - 20) / 2);
@@ -8889,7 +8892,13 @@ async function addCharts(buf, jobs) {
       ${P.extra.length ? `<div class="card" style="margin-top:14px"><h4 style="margin:0 0 6px">명단 외 계정 <span class="muted">${P.extra.length}개 · 명단에 없는 이름의 계정 (테스트 · 중복 · 퇴사)</span></h4>
         <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>권한</th><th class="num">입력일수</th><th>마지막 입력</th><th></th></tr></thead><tbody>
         ${P.extra.map(u => `<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.group)}</td><td>${esc(u.role)}</td><td class="num">${u.days}</td><td>${esc(u.last || '-')}</td>
-          <td style="white-space:nowrap">${isAdm0() && !isRO() ? `<button data-rn="${esc(u.id)}">이름 바꾸기</button>${u.role === '일반' ? ` <button class="danger" data-ud="${esc(u.id)}">계정 삭제</button>` : ''}` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+          <td style="white-space:nowrap">${isAdm0() && !isRO() ? `<button data-rn="${esc(u.id)}">이름 바꾸기</button>${u.role === '일반' ? ` <button class="danger" data-ud="${esc(u.id)}">계정 삭제</button>` : ''}` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      ${isAdm0() && !isRO() ? `<div class="card vwcard" style="margin-top:14px"><h4 style="margin:0 0 4px">👁 보기 전용 계정 <span class="muted">명단 밖 · 이사님 등 · 볼 수만 있고 명단 · 조직도 · 업무 현황 · 통계 · 연차에는 안 나옴</span></h4>
+        <div class="muted" style="font-size:12.5px;margin-bottom:10px">이름을 올려 두면 그분이 로그인 화면 <b>[처음 등록]</b>에서 이름 + 비밀번호 4자리를 직접 정해 들어옵니다. 권한은 팀장님과 같은 보기 전용입니다.</div>
+        <table class="list"><thead><tr><th>이름</th><th>상태</th><th>마지막 로그인</th><th></th></tr></thead><tbody>
+        ${(P.viewers || []).map(v => `<tr><td><b>${esc(v.name)}</b></td><td>${v.reg ? (v.tmp ? '<span class="lst">임시 비밀번호</span>' : '<span class="lst ok">등록됨</span>') : '<span class="muted">등록 전 ([처음 등록] 기다림)</span>'}</td><td class="muted">${esc(v.last ? v.last.slice(5, 16).replace('T', ' ') : '-')}</td>
+          <td style="white-space:nowrap">${v.reg ? `<button data-vp="${esc(v.id)}" data-vn="${esc(v.name)}">비밀번호 초기화</button> ` : ''}<button class="danger" data-vd="${esc(v.name)}">빼기</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted" style="padding:12px">없음</td></tr>'}</tbody></table>
+        <div class="row" style="gap:8px;margin-top:10px"><input id="vwn" placeholder="이름 (예: 이광영)" autocomplete="off" style="max-width:200px"><button class="primary" id="vwadd">+ 보기 전용 추가</button></div></div>` : ''}`;
     // 이름 검색은 줄을 숨기기만 함 (입력칸을 다시 그리지 않아 한글 입력이 ㄱㅏㅇ 처럼 풀리지 않음)
     const applyQ = () => {
       const q = normName(S.pQ || ''); let n = 0;
@@ -8910,6 +8919,14 @@ async function addCharts(buf, jobs) {
       if (!p.rows.length) return toast('명단에 이름이 없습니다', true);
       rosterPreview(p, { rows: P.rows.map(x => Object.assign({}, x)), groups: P.groups });
     };
+    // v28.37 : 보기 전용 계정 (명단 밖)
+    const vwAfter = x => { P.viewers = x.viewers; S._mcache = {}; renderPeople(); };
+    if ($('#vwadd')) $('#vwadd').onclick = async () => { const n = $('#vwn').value.trim(); if (!n) return toast('이름을 입력하세요', true); try { vwAfter(await api('viewerSet', { mode: 'add', name: n })); toast(n + ' 보기 전용 추가 · [처음 등록]에서 비밀번호를 정하시면 됩니다'); } catch (er) { toast(er.message, true); } };
+    $$('[data-vd]').forEach(b => (b.onclick = async () => { const n = b.dataset.vd; if (!(await confirmBox('<b>' + esc(n) + '</b> 보기 전용 계정을 뺄까요?<br><span class="muted">등록된 계정도 지워져 더 이상 로그인할 수 없습니다.</span>', '빼기'))) return; try { vwAfter(await api('viewerSet', { mode: 'del', name: n })); toast(n + ' 뺌'); } catch (er) { toast(er.message, true); } }));
+    $$('[data-vp]').forEach(b => (b.onclick = () => modal(`<h3>${esc(b.dataset.vn)} 비밀번호 초기화</h3><div class="fld"><label>임시 비밀번호 (숫자 4자리)</label><input id="vtp" inputmode="numeric" maxlength="4" autocomplete="off"></div><div class="note">로그인 후 [비밀번호 변경]으로 바꾸시라고 전해 주세요.</div><div class="acts"><button data-c>취소</button><button class="primary" data-s>초기화</button></div>`, (bg2, close2) => {
+      $('[data-c]', bg2).onclick = close2;
+      $('[data-s]', bg2).onclick = async () => { try { await api('resetPin', { userId: b.dataset.vp, pin: $('#vtp', bg2).value }); close2(); toast(b.dataset.vn + ' 임시 비밀번호 설정'); renderPeople(); } catch (er) { toast(er.message, true); } };
+    })));
     $$('[data-rn]').forEach(b => (b.onclick = () => {
       const u = P.extra.find(y => y.id === b.dataset.rn);
       modal(`<h3>${esc(u.name)} 이름 바꾸기</h3><div class="fld"><label>새 이름</label><input id="nn" value="${esc(u.name)}" autocomplete="off"></div>
