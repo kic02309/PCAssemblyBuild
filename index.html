@@ -1371,6 +1371,7 @@ html[data-theme=dark] .stg .bm1,html[data-theme=dark] .mflg{fill:#a78bfa;color:#
 html[data-theme=dark] .mfgv,html[data-theme=dark] td.mfgv{color:#b69cff}
 .stat .v small.mfgv{color:#6d28d9}html[data-theme=dark] .stat .v small.mfgv{color:#b69cff}
 /* v28.24 : 조립 / 반조 / 출고 / 제조 구분 */
+table.mlist .mxl{padding:3px 10px;border-radius:8px;font-size:13px;min-width:0}
 .shipv{color:#b45309}td.shipv,.stat .v.shipv{color:#b45309}html[data-theme=dark] .shipv{color:#f0b35b}
 .qchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.qchip{font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:#eef3fb;color:#1f4f99;white-space:nowrap}
 html[data-theme=dark] .qchip{background:#1d2a40;color:#9cc2ff}
@@ -2019,7 +2020,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     return l.h ? n * 0.5 : n;
   }
   // v28.21 : 사유로 경조휴가 구분 (출산 · 결혼 · 사망 · 조사 등) = 연차 일수에서 뺌
-  function leaveKind(l) { const r = (l && (l.r != null ? l.r : l.reason)) || ''; return /출산|결혼|사망|장례|부고|조문|조사|경조/.test(r) ? '경조' : ''; }   // 출산 · 결혼 · 조사 = 경조휴가
+  function leaveKind(l) { const r = (l && (l.r != null ? l.r : l.reason)) || ''; return /병가/.test(r) ? '병가' : /출산|결혼|사망|장례|부고|조문|조사|경조/.test(r) ? '경조' : ''; }   // v28.24 : 병가 (연차 일수 제외)   // 출산 · 결혼 · 조사 = 경조휴가
   function dispName(name, l) { const k = leaveKind(l); return name + (l.t ? '(훈)' : '') + (k ? '(' + k + ')' : '') + (l.h ? '(' + l.h + ')' : ''); }
 
   // 자료 묶음 → 빠른 조회용
@@ -2657,7 +2658,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   const L = { tab: null, ym: null, data: null, year: null, ix: null, drag: null, part: '', showPend: true, counts: null };
   const GRADES = ['파트장', 'A', 'B', 'C', 'D', '정리', '안정화', '출력', '매니저', '영상', '계약', '육아휴직', '병가휴가', '근무제외'];
   const OFFS = ['', '직무제외', '계약', '육아휴직', '병가', '근무제외'];
-  const REASONS = ['개인정비', '병원 진료', '건강검진', '경조사', '가족 행사', '여행', '이사', '예비군 훈련', '민방위 훈련'];
+  const REASONS = ['개인정비', '병원 진료', '병가', '건강검진', '경조사', '가족 행사', '여행', '이사', '예비군 훈련', '민방위 훈련'];
   const PARTS = ['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원·출력·기타'];
   const partOf = g => PARTS.includes(g) ? g : '지원·출력·기타';
   const md = d => (+d.slice(5, 7)) + '/' + (+d.slice(8, 10));
@@ -2807,7 +2808,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${L.part === p ? ' on' : ''}">${p || '전체'}</button>`).join('')}
         <span style="flex:1"></span>
         <label class="lvchk"><input type="checkbox" id="lvsp" ${L.showPend ? 'checked' : ''}> 확정 전 신청도 보기</label></div>`;
-    html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span><span class="lv sp">경조</span>${own ? '<span class="lv me">나</span>' : ''}
+    html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span><span class="lv sp">경조 · 병가</span>${own ? '<span class="lv me">나</span>' : ''}
       <span class="lb" style="margin-left:10px">토요근무 · 대체휴무 = 같은 주 같은 색</span>
       <span style="flex:1"></span><span class="muted">${d.canEdit ? '빈 곳을 끌어 등록 · 이름을 끌어 옮기기 · 이름 눌러 수정' : own && myStaff() ? '날짜를 끌어 신청 · 이름 눌러 보기' : '이름을 누르면 내용 보기'}</span></div>`;
     html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = d.all && i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
@@ -3500,7 +3501,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const r = rows[0];
       body().innerHTML = !r ? '<div class="muted" style="padding:20px">자료 없음</div>' : `<div class="muted" style="margin-bottom:8px">${y}년 1~12월 · 확정 기준 · 칸을 누르면 내역</div>
         <div class="lvtiles" data-s="${r.s.id}">
-          <div class="card"><span>연차 사용</span><b>${r.days}<small>일</small></b><em>${[r.half ? '반차 ' + r.half + '회 포함' : '', r.pend ? '신청중 ' + r.pend + '일' : '', r.tr ? '훈련·경조 ' + r.tr + '일' : ''].filter(Boolean).join(' · ') || '&nbsp;'}</em></div>
+          <div class="card"><span>연차 사용</span><b>${r.days}<small>일</small></b><em>${[r.half ? '반차 ' + r.half + '회 포함' : '', r.pend ? '신청중 ' + r.pend + '일' : '', r.tr ? '훈련·경조·병가 ' + r.tr + '일' : ''].filter(Boolean).join(' · ') || '&nbsp;'}</em></div>
           <div class="card"><span>잔여</span><b class="${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '-' : r.rem}<small>${r.rem == null ? '' : '일'}</small></b><em>${r.grant == null ? '부여일수 없음' : '부여 ' + r.grant + '일'}</em></div>
           <div class="card"><span>토요근무</span><b>${r.sat}<small>회</small></b><em>&nbsp;</em></div>
           <div class="card"><span>대체휴무</span><b>${r.alt}<small>회</small></b><em>${r.sat - r.alt > 0 ? '아직 안 쓴 ' + (r.sat - r.alt) + '회' : '&nbsp;'}</em></div></div>`;
@@ -3508,7 +3509,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       return;
     }
     body().innerHTML = `<div class="muted pfrow" style="margin-bottom:8px">${y}년 1~12월 · 잔여 = 부여일수 − 확정 연차 ${own ? '' : `<span class="muted">· ${rows.length}명</span>` + SF2.bar()}</div>
-      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num" title="훈련 · 경조휴가(출산·결혼·조사 등) — 연차 아님">훈련·경조(일)</th>${th('sat', '토요근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1, 'rem')}</tr></thead><tbody>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num" title="훈련 · 경조휴가(출산·결혼·조사 등) — 연차 아님">훈련·경조·병가(일)</th>${th('sat', '토요근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1, 'rem')}</tr></thead><tbody>
       ${rows.map((r, i) => (k === 'grp' ? A.ghd(rows, i, x => x.s.grp || '', 11, g => [g.length + '명', '연차 ' + g.reduce((a, x) => a + x.days, 0) + '일', '토요 ' + g.reduce((a, x) => a + x.sat, 0) + '회']) : '') + `<tr class="click gc" data-s="${r.s.id}" style="--gc:${A.gcol(r.s.grp)}"><td><b>${A.esc(r.s.name)}</b></td><td>${k === 'grp' ? A.gdot(r.s.grp || '').replace(/>[^<]*$/, '>') : A.gdot(r.s.grp || '')}</td><td>${A.esc(r.s.grade || '')}</td><td class="num"><b>${r.days || ''}</b></td><td class="num muted">${r.pend || ''}</td><td class="num">${r.half || ''}</td><td class="num">${r.tr || ''}</td><td class="num">${r.sat || ''}</td><td class="num">${r.alt || ''}</td><td class="num">${r.grant == null ? '' : r.grant}</td><td class="num ${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '' : r.rem}</td></tr>`).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">자료 없음</td></tr>'}
       </tbody></table></div>`;
     SF2.bind();
@@ -6543,7 +6544,7 @@ async function addCharts(buf, jobs) {
   // v28.21 : 월 업무현황 그룹 버튼 — 팀장 빼고 · 영상(업무 구분) = 제조 · 출력 + 지원 = 한 버튼 (김주호 담당)
   const MG_CHIPS = [['1그룹', ['1그룹']], ['2그룹', ['2그룹']], ['3그룹', ['3그룹']], ['4그룹', ['4그룹']], ['라인', ['라인']], ['제조', ['제조', '영상']], ['안정화', ['안정화']], ['출력·지원', ['출력', '지원']]];
   const mgChips = groups => { const used = new Set(MG_CHIPS.flatMap(c => c[1])); return MG_CHIPS.map(([t, gs]) => [t, gs.filter(g => groups.includes(g))]).filter(c => c[1].length).concat(groups.filter(g => !used.has(g) && g !== '팀장').map(g => [g, [g]])); };
-  const lvKind = rs => window.LeaveCore && window.LeaveCore.leaveKind ? window.LeaveCore.leaveKind({ r: rs || '' }) : (/출산|결혼|사망|장례|부고|조문|조사|경조/.test(rs || '') ? '경조' : '');   // v28.21
+  const lvKind = rs => window.LeaveCore && window.LeaveCore.leaveKind ? window.LeaveCore.leaveKind({ r: rs || '' }) : (/병가/.test(rs || '') ? '병가' : /출산|결혼|사망|장례|부고|조문|조사|경조/.test(rs || '') ? '경조' : '');   // v28.21
   const isMgrUser = () => S.me && S.me.role !== '일반';
   const isAdm = () => S.me && S.me.role === '관리자';
   function dailyTabs(on) {
@@ -7319,21 +7320,22 @@ async function addCharts(buf, jobs) {
     const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}${['group', 'target', 'last', 'c8'].includes(k) ? ' ' + MF.ico(k) : k === 'name' ? ' ' + MF.ico('role') : ''}</th>`;
     $('#mbody').innerHTML = `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="그룹 일반 인원의 월 목표를 한 번에 정합니다">🎯 목표 일괄 지정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' && S.gtOpen ? 266 : 220}px)">
-      <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '조립 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}</tr></thead><tbody>
+      <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '조립 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}<th title="이 사람 한 달 엑셀">엑셀</th></tr></thead><tbody>
       ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
         let hd = '';
         if (S.mSort.k === 'group' && (i === 0 || list[i - 1].group !== u.group)) {        // 그룹 제목 줄
           const gl = list.filter(x => x.group === u.group), gr = gl.filter(x => x.target && x.items.length), ga = gr.length ? gr.reduce((a, x) => a + x.m.c8, 0) / gr.length : null;
-          hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="10"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${(() => { const q = gl.reduce((a, x) => a + (x.mq || 0), 0); return q ? `<span class="mfgv">제조 ${q}대</span>` : ''; })()}${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga)}t">${pct(ga)}</b></span>`}</td></tr>`;
+          hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="11"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${(() => { const q = gl.reduce((a, x) => a + (x.mq || 0), 0); return q ? `<span class="mfgv">제조 ${q}대</span>` : ''; })()}${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga)}t">${pct(ga)}</b></span>`}</td></tr>`;
         }
         return hd + `<tr data-u="${u.id}" class="gc${u.pend ? ' pend' : ''}" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${u.pend ? ' <span class="rtag pendt" title="아직 업무데이터 사이트에 가입하지 않음">미가입</span>' : ''}${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인 불가 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${S.mSort.k === 'group' ? gdot(u.group).replace(/>[^<]*$/, '>') : gdot(u.group)}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : u.pend ? '가입 안 함' : '입력 없음'}</td>
         <td class="num">${u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}${u.ship ? `<small class="mfq shipv" title="제조사용(출고) ${u.ship}대">출고 ${u.ship}</small>` : ''}${u.mq ? `<small class="mfq" title="제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td class="mrate" title="막대 = 평가평균 (빗금 = 기타시간 환산) · 검은 선 = 목표">${c8 == null ? '<span class="muted">-</span>' : `<div class="mrbar">${ddBar(u.m.f7, u.target, u.m.w7 || 0)}</div><b class="${rateCls(c8)}t">${pct(c8)}</b>`}</td>
+        <td>${has && xym && !u.pend ? `<button class="mxl" data-xl="${u.id}" title="${esc(u.name)} · ${ymLabel(xym)} 엑셀 받기">⬇</button>` : ''}</td>
 </tr>`;
-      }).join('') || '<tr><td colspan="10" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
+      }).join('') || '<tr><td colspan="11" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
     MF.bind();
     if ($('#gtopen')) $('#gtopen').onclick = () => { S.gtOpen = !S.gtOpen; renderManage(); };
@@ -7349,6 +7351,13 @@ async function addCharts(buf, jobs) {
       } catch (e) { toast(e.message, true); sel.value = u.target || ''; sel.disabled = false; }
     }));
     // v28.18 : 이름 · 달성률 칸을 누르면 사람 카드 (예전 [월 통계] · ⋯ 메뉴 대신)
+    $$('.mlist .mxl').forEach(b => (b.onclick = async e => {                       // v28.24 : 한 사람 엑셀 바로 받기
+      e.stopPropagation(); const u = list.find(x => x.id === b.dataset.xl), ym = xym; if (!u || !ym) return;
+      b.disabled = true; b.textContent = '…';
+      try { const mr = await api('getMonth', { userId: u.id, ym }); saveBlob(await makeXlsxBlob(mr.user, ym, mr.target, mr.days), C.fileName(u.name, ym)); toast(u.name + ' 엑셀을 받았습니다'); }
+      catch (er) { toast(er.message, true); }
+      b.disabled = false; b.textContent = '⬇';
+    }));
     $$('.mlist tr[data-u] td:first-child b, .mlist tr[data-u] td.mrate').forEach(el => { el.classList.add('pclk'); el.onclick = () => {
       const u = S._mlist.find(x => x.id === el.closest('tr').dataset.u); if (!u) return;
       if (u.pend) return personCard({ name: u.name, group: u.group, note: null });
