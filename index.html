@@ -5558,6 +5558,7 @@ async function addCharts(buf, jobs) {
   // v28 : 관리자 · 보기 전용 관리자 · 추가 권한 받은 매니저
   const isAdm0 = () => !!(S.me && S.me.role === '관리자');
   const isRO = () => !!(S.me && S.me.ro);
+  const ulistReq = () => curPeriod() ? { ym: curPeriod().ym } : { start: S.today, end: S.today };   // v28.30 : 인원 목록만 필요할 때 (귀속월 없어도)
   const can = p => !!(S.me && (S.me.role === '관리자' || (S.me.perms || []).includes(p)));
   const canHub = () => !!(S.me && (S.me.role === '관리자' || (S.me.perms || []).length));
   const canSettings = () => !!(S.me && (S.me.period || canHub()));
@@ -7259,7 +7260,7 @@ async function addCharts(buf, jobs) {
     if (S.me && name === S.me.name) return { id: S.me.id, name: S.me.name, group: S.me.group, role: S.me.role };
     const hit = (S._mlist || []).find(x => x.name === name && !x.pend); if (hit) return hit;
     if (!isManager()) return null;
-    if (!S._ulist) { try { S._ulist = (await api('listUsers', {})).users || []; } catch (e) { S._ulist = []; } }
+    if (!S._ulist) { try { S._ulist = (await api('listUsers', ulistReq())).users || []; } catch (e) { S._ulist = []; } }
     const u = S._ulist.find(x => x.name === name); return u ? { id: u.id, name: u.name, group: u.group, role: u.role, mg: u.mg } : null;
   }
   async function personCard(q) {
@@ -7275,7 +7276,7 @@ async function addCharts(buf, jobs) {
     }
     if (!q.edit && isAdm() && !isRO() && u.id !== S.me.id) q.edit = async () => {         // v28.19 : 어디서 열어도 [인원 편집]
       let f = (S._mlist || []).find(x => x.id === u.id);
-      if (!f) { try { S._ulist = (await api('listUsers', {})).users || []; } catch (e) { return toast(e.message, true); } f = S._ulist.find(x => x.id === u.id); }
+      if (!f) { try { S._ulist = (await api('listUsers', ulistReq())).users || []; } catch (e) { return toast(e.message, true); } f = S._ulist.find(x => x.id === u.id); }
       if (f) editUser(f); else toast('인원 정보를 찾지 못했습니다', true);
     };
     const self = u.id === S.me.id; if (!self && !isManager()) return;
@@ -8289,7 +8290,7 @@ async function addCharts(buf, jobs) {
       </div></div>`;
     if (me.period) bindPeriodPanel();
     if ($('#prt')) $('#prt').onclick = editRates;
-    if ($('#bimp')) $('#bimp').onclick = async () => { try { if (!S._musers) S._musers = (await api('listUsers', {})).users || []; } catch (e) { return toast(e.message, true); } bulkImport(); };
+    if ($('#bimp')) $('#bimp').onclick = async () => { try { if (!S._musers) S._musers = (await api('listUsers', ulistReq())).users || [];   /* v28.30 : 귀속월 없이 부르면 서버가 거절하던 것 */ } catch (e) { return toast(e.message, true); } bulkImport(); };
     if ($('#bkbox')) drawBackup();
     if ($('#trashb')) $('#trashb').onclick = trashModal;
     if ($('#abkey')) { $('#abkey').onclick = autoBkModal; autoBkStatus(); }
