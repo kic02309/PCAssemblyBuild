@@ -1390,7 +1390,9 @@ table.ppast input[type=date]{width:auto;padding:4px 8px}table.ppast td{vertical-
 .accsp{gap:44px;margin:18px 0 26px}.accsp .sub small,.accflow .sub small{font-weight:500;color:var(--sub);margin-left:6px}
 .accb.big{grid-template-columns:86px minmax(0,1fr) 120px;font-size:14px;min-height:34px}.accb.big.gw{grid-template-columns:70px minmax(0,1fr) 250px}
 .accb.big .t{height:20px;border-radius:6px}.accb.big em{color:var(--text,inherit);white-space:nowrap}.accb.big em b{font-size:15.5px}.accb.big em small{color:var(--sub);font-size:12.5px;margin-left:3px}.accb.big em .ar{margin-left:2px}
-.acctop{display:grid;gap:7px;margin-top:8px}.acctop>div{display:grid;grid-template-columns:62px 12px 1fr auto;align-items:center;gap:8px;font-size:14px}.acctop .n{color:var(--sub);font-size:12.5px;white-space:nowrap}.acctop i{width:12px;height:12px;border-radius:3px}.acctop .r1>b{font-size:17px}.acctop em{font-style:normal;color:var(--sub);font-size:13px;white-space:nowrap}.acctop em b{color:var(--text,inherit);font-size:15px}
+.acctop{display:grid;gap:6px;margin-top:10px}.acctop>div{display:grid;grid-template-columns:62px 12px 1fr auto;align-items:center;gap:8px;font-size:14px}.acctop .n{color:var(--sub);font-size:12.5px;white-space:nowrap}.acctop i{width:12px;height:12px;border-radius:3px}
+.stkpis .kpi .acctop b{font-size:15px;font-weight:700;letter-spacing:0;line-height:1.4}.stkpis .kpi .acctop em{font-style:normal;color:var(--sub);font-size:12.5px;font-weight:600;white-space:nowrap}.stkpis .kpi .acctop em b{font-size:15px;font-weight:800;color:var(--text,inherit)}
+.hmk.gone{background:#fee2e2;color:#b91c1c}
 .accfew{display:inline-block;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;margin-left:4px}
 .accflow{margin:6px 0 26px}.stcard .leg.accleg,.accleg{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;margin:6px 0 14px}.stcard .leg.accleg span,.accleg span{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--text,inherit)}.stcard .leg.accleg i,.accleg i{width:14px;height:14px;border-radius:4px;display:inline-block}
 .accm{display:grid;grid-template-columns:70px minmax(0,1fr) 110px;align-items:center;gap:14px;min-height:34px;margin-bottom:6px;padding:0 8px;border-radius:8px;font-size:14px}
@@ -8122,6 +8124,7 @@ async function addCharts(buf, jobs) {
     $$('[data-mi]', box).forEach(b => (b.onclick = () => { const k = b.dataset.mi, i = V.mixItems.indexOf(k); if (i < 0) { if (V.mixItems.length >= 6) return toast('항목은 6개까지 고를 수 있습니다'); V.mixItems.push(k); } else V.mixItems.splice(i, 1); stDraw(); }));
     $$('[data-mb]', box).forEach(b => (b.onclick = () => { V.mixBy = b.dataset.mb; stDraw(); }));
     $$('[data-rm]', box).forEach(b => (b.onclick = () => { V.rankM = b.dataset.rm; stDraw(); }));
+    $$('[data-rg]', box).forEach(b => (b.onclick = () => { V.rankGone = !V.rankGone; stDraw(); }));
     $$('[data-acs]', box).forEach(b => (b.onclick = () => { const v = b.dataset.acs; if (!v) V.accSel = null; else { const [t, ...r] = v.split('|'), val = r.join('|'); V.accSel = V.accSel && V.accSel.t === t && V.accSel.v === val ? null : { t, v: val }; } stDraw(); }));   // v28.26
     $$('[data-acp]', box).forEach(b => (b.onclick = () => { V.accP = V.accP === b.dataset.acp ? null : b.dataset.acp; stDraw(); }));
     $$('[data-pu]', box).forEach(b => (b.onclick = () => { const u = ((V.data || {}).users || []).find(x => x.id === b.dataset.pu) || {}; personCard({ id: b.dataset.pu, name: u.name || b.textContent.trim(), group: u.grp || '', stat: () => stPerson(b.dataset.pu) }); }));
@@ -8235,14 +8238,18 @@ async function addCharts(buf, jobs) {
   }
   function stRankHtml(V, m, gl, rl, pv, one) {
     const { R, P, minD } = m, md = V.rankM, n = one ? 30 : 10;
-    const ok = R.ev.filter(a => a.n >= minD), pm = {}; P.ev.filter(a => a.n >= minD).forEach(a => (pm[a.u] = a));
+    // v28.39 : 퇴사자(지금 명단에 없는 사람)는 순위에서 뺌 · [퇴사자 보기]로 따로 · 합계 · 평균에는 그대로
+    const RN = new Set((V.data.roster || []).map(x => normName(x[0]))), UN = {}; (V.data.users || []).forEach(u => (UN[u.id] = normName(u.name)));
+    const gone = a => RN.size > 0 && !RN.has(String(a.u).startsWith('h:') ? String(a.u).slice(2) : (UN[a.u] || normName(a.name)));
+    const goneL = R.ev.filter(a => a.n >= minD && gone(a)), showG = !!V.rankGone;
+    const ok = R.ev.filter(a => a.n >= minD && (showG || !gone(a))), pm = {}; P.ev.filter(a => a.n >= minD).forEach(a => (pm[a.u] = a));
     let rows, head;
     if (md === 'top' || md === 'bottom') {
       rows = ok.slice().sort((a, b) => md === 'top' ? b.f7 - a.f7 : a.f7 - b.f7).slice(0, n);
       const anyM = rows.some(a => a.mq), pl0 = pv.replace(' 대비', '');      // v28.14 : 칸 추가 · 이름 누르면 개인 상세
       head = `<th>순위</th><th>이름</th><th>그룹</th><th class="num">일평균 환산</th><th class="num">목표</th><th class="num">달성률</th><th class="num">일평균 조립</th><th class="num">조립 수량</th>${anyM ? '<th class="num mfgv">제조</th>' : ''}<th class="num">근무일</th><th class="num">${esc(pl0)} 대비</th>`;
       rows = rows.map((a, i) => { const p0 = pm[a.u], d = p0 ? a.f7 - p0.f7 : null;
-        return `<tr><td><span class="rk ${i < 3 && md === 'top' ? 't' : ''}">${i + 1}</span></td><td><b class="stpu" data-pu="${esc(a.u)}" title="눌러서 개인 상세">${esc(a.name)}</b>${a.hist ? ' <span class="hmk" title="월 마감 자료">월</span>' : ''}</td><td>${gdot(a.grp)}</td><td class="num"><b>${f1(a.f7)}</b></td>
+        return `<tr><td><span class="rk ${i < 3 && md === 'top' ? 't' : ''}">${i + 1}</span></td><td><b class="stpu" data-pu="${esc(a.u)}" title="눌러서 개인 상세">${esc(a.name)}</b>${a.hist ? ' <span class="hmk" title="월 마감 자료">월</span>' : ''}${showG && gone(a) ? ' <span class="hmk gone" title="지금 명단에 없음">퇴사</span>' : ''}</td><td>${gdot(a.grp)}</td><td class="num"><b>${f1(a.f7)}</b></td>
           <td class="num">${a.tg ? f1(a.tg) : '-'}</td><td class="num ${a.c8 == null ? '' : a.c8 >= 1 ? 'up' : 'dn'}">${a.c8 == null ? '-' : Math.round(a.c8 * 100) + '%'}</td><td class="num">${a.q > 0 && a.n ? f1(a.q / a.n) : '-'}</td><td class="num">${a.q ? fN(a.q) : '-'}</td>${anyM ? `<td class="num mfgv">${a.mq || ''}</td>` : ''}<td class="num">${a.n}</td>
           <td class="num">${d == null ? '<span class="muted">-</span>' : Math.abs(d) < 0.05 ? '<span class="muted">－</span>' : `<span class="${d > 0 ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'}${f1(Math.abs(d))}</span>`}</td></tr>`; });
     } else {
@@ -8252,7 +8259,7 @@ async function addCharts(buf, jobs) {
       head = `<th>순위</th><th>이름</th><th>그룹</th><th class="num">${esc(pl)}</th><th class="num">${esc(V.custom ? '고른 기간' : rl)}</th><th class="num">변화</th>`;
       rows = rows.map((x, i) => `<tr><td><span class="rk">${i + 1}</span></td><td><b class="stpu" data-pu="${esc(x.a.u)}" title="눌러서 개인 상세">${esc(x.a.name)}</b></td><td>${gdot(x.a.grp)}</td><td class="num">${f1(x.p.f7)}</td><td class="num">${f1(x.a.f7)}</td><td class="num"><b class="${x.d > 0 ? 'up' : 'dn'}">${x.d > 0 ? '▲' : '▼'} ${f1(Math.abs(x.d))}</b> <span class="muted">(${x.d > 0 ? '+' : '−'}${x.p.f7 ? Math.abs(x.d / x.p.f7 * 100).toFixed(0) : '-'}%)</span></td></tr>`);
     }
-    return `<div class="sthd"><div><h3>인원별 순위 · ${esc(gl)}</h3><div class="cap">${esc(rl)} 일평균 환산 · 근무일 ${minD}일 이상인 사람만 · 이름을 누르면 개인 상세${md === 'up' || md === 'down' ? ' · ' + pv + ' (두 기간 모두 ' + minD + '일 이상)' : ''}</div></div><span class="sp"></span>
+    return `<div class="sthd"><div><h3>인원별 순위 · ${esc(gl)}</h3><div class="cap">${esc(rl)} 일평균 환산 · 근무일 ${minD}일 이상인 사람만 · 이름을 누르면 개인 상세${md === 'up' || md === 'down' ? ' · ' + pv + ' (두 기간 모두 ' + minD + '일 이상)' : ''}${goneL.length ? ` · 퇴사 ${goneL.length}명 ${showG ? '포함' : '빠짐'} <button class="sm" data-rg>${showG ? '퇴사자 빼기' : '퇴사자 보기'}</button>` : ''}</div></div><span class="sp"></span>
       <div class="seg sm2">${[['top', '상위'], ['bottom', '하위'], ['up', '많이 오른 사람'], ['down', '많이 내린 사람']].map(([k, t]) => `<button data-rm="${k}" class="${md === k ? 'on' : ''}">${t}</button>`).join('')}</div></div>
       <div style="overflow-x:auto"><table class="list strank" style="min-width:${md === 'top' || md === 'bottom' ? 760 : 0}px"><thead><tr>${head}</tr></thead><tbody>${rows.join('') || `<tr><td colspan="11" class="muted" style="padding:18px">해당하는 사람이 없습니다</td></tr>`}</tbody></table></div>`;
   }
