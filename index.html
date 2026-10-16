@@ -3995,7 +3995,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       if (!u.items.length) return;
       const m = C.calcMonth(u.items, u.target, A.minsYm(month));
       let qty = 0, conv = 0;
-      u.items.forEach(it => { const s = it.sum || {}, r10 = s.r10 || {}; qty += C.num(r10.C) + C.num(r10.D) + C.num(r10.E) + C.num(r10.F) + C.num(r10.G); conv += C.sumDay(s, A.minsOf(it.date)).e2; });
+      u.items.forEach(it => { const s = it.sum || {}; qty += C.qtyParts(s).asm; /* v28.24 : 원본 조립수량 = 일반·특수·프리·추천·웍스 (출고·반조·제조 빼고, 업무통계 엑셀과 같게) */ conv += C.sumDay(s, A.minsOf(it.date)).e2; });
       rows.push(H.webRow(u, m, qty, conv));
     });
     if (!rows.length) return { count: 0 };
@@ -5422,13 +5422,14 @@ async function addCharts(buf, jobs) {
   const colPos = c => C.COLS.findIndex(x => x.c === c);
   const lay2 = doc => !!doc && (doc.lay >= 2 || (doc.rows || []).some(r => r && r.m && (r.m.D2 || r.m.E2)));
   function gridCols(doc, date) {
-    const rs = rateSet(ymOfDate(date)) || {}, NM = rs.names || {}, HD = rs.hide || [], L2 = lay2(doc);
+    const rs = rateSet(ymOfDate(date)) || {}, NM = rs.names || {}, HD = rs.hide || [];
     const used = c => (doc.rows || []).some(r => r && r.m && r.m[c]);
-    return C.COLS.filter(x => !x.v || L2).map(x => Object.assign({}, x, { label: NM[x.c] ? NM[x.c] : !L2 && x.c === 'D' ? '특수\n프리' : !L2 && x.c === 'E' ? '추천\n웍스' : x.label }))
+    // 예전 기록도 같은 7칸 : 예전 특수·프리 → 특수 칸, 추천·웍스 → 추천 칸 (같은 D · E 칸이라 그대로 보임)
+    return C.COLS.map(x => Object.assign({}, x, { label: NM[x.c] || x.label }))
       .filter(x => x.label !== '-' && (!HD.includes(x.c) || used(x.c)));
   }
   // 수량 칸 : 조립 / 반조 / 제조사용(출고) / 제조
-  const qtyChips = (P, oldLay) => P.by.filter(([, n]) => n).map(([c, n]) => `<span class="qchip">${oldLay && c === 'D' ? '특수·프리' : oldLay && c === 'E' ? '추천·웍스' : C.QLAB[c]} ${n}</span>`).join('');
+  const qtyChips = (P, oldLay) => P.by.filter(([, n]) => n).map(([c, n]) => `<span class="qchip">${C.QLAB[c]} ${n}</span>`).join('');
 
   // ------------------------------------------------ 로그인
   function renderLogin(tab) {
