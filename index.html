@@ -4568,7 +4568,7 @@ function parseAcc(ws) {
     if (!name || !kind) continue;
     const k = normH(name); out[k] = out[k] || { 이름: name }; out[k][kind] = (out[k][kind] || 0) + 1; n++;
     // v28.26 : 사고 내역 (통계 [사고] 탭) — [출고일 · 주문번호 · 구분 · 내용 · 처리 · 처리일]
-    const cv = h => { const i = m[h]; if (i === undefined) return ''; const v = row[i]; if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); } return String(v == null ? '' : v).trim().replace(/\./g, '-').replace(/-$/, '').slice(0, 300); };
+    const cv = h => { const i = m[h]; if (i === undefined) return ''; const v = row[i]; if (v instanceof Date && !isNaN(v)) { const d = new Date(v.getTime() + 12 * 36e5); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); } if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); } return String(v == null ? '' : v).trim().replace(/\./g, '-').replace(/-$/, '').slice(0, 300); };
     (out[k].내역 = out[k].내역 || []).push([cv('출고일자') || cv('출고일') || cv('날짜'), cv('주문번호'), kind, cv('내용'), cv('처리'), cv('처리일자')]);
   }
   return { rows: out, count: n };
@@ -4628,8 +4628,8 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
         ${hasPeriod ? '웹 입력으로 자동 계산 (10분마다 반영, 마감 달은 고정)' : '<span class="warn-t">귀속월 기간이 없어 자동 반영 불가 → ④ 엑셀로 올리세요.</span>'}</div>
         <div class="row" style="margin-top:10px"><button class="primary" id="dWeb" ${hasPeriod && !locked ? '' : 'disabled'}>업무데이터로 지금 반영</button>${locked ? '<span class="muted">🔒 마감된 달</span>' : ''}</div></section>
       <section class="card dsec"><div class="dst"><b>② 사고 파일</b><span class="muted">품질지적 · 미/오발송 · 오조립 · 파손 · 지시불이행</span></div>
-        <div class="row"><input type="file" id="upAcc" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upAccSheet" class="hidden" style="width:auto"></select><button class="primary" id="accBtn" disabled>올리기</button></div>
-        <div id="accPrev" class="muted" style="margin-top:8px">다시 올리면 그 달 사고만 바뀝니다.</div></section>
+        <div class="row"><input type="file" id="upAcc" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upAccSheet" class="hidden" style="width:auto"></select><button class="primary" id="accBtn" disabled>올리기</button><button id="accAll" disabled title="01월 ~ 12월 시트를 각 평가월로 한 번에">📚 모든 달 한꺼번에</button></div>
+        <div id="accPrev" class="muted" style="margin-top:8px">다시 올리면 그 달 사고만 바뀝니다. 한 파일에 01월 ~ 12월 시트가 있으면 [모든 달 한꺼번에]로 올리세요.</div></section>
       <section class="card dsec"><div class="dst"><b>③ 근태</b><span class="chip open">매니저 기록</span></div><div style="line-height:1.8">매니저가 [근태] 탭에서 기록합니다. <a href="#" id="dAtt">근태 보기</a></div></section>
       <section class="card dsec"><div class="dst"><b>④ 업무통계 엑셀 올리기</b><span class="muted">웹 입력 전 달(10월 이전) · 예전(1~4월) 통합파일도 됨</span></div>
         <div class="row"><input type="file" id="upWork" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upWorkSheet" class="hidden" style="width:auto"></select>
@@ -4674,7 +4674,8 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     };
     const pvAcc = () => {
       acc = null; $('#accBtn').disabled = true;
-      try { const a = parseAcc(books.acc.Sheets[$('#upAccSheet').value]); acc = Object.values(a.rows); $('#accPrev').textContent = `사고 ${a.count}건 · ${acc.length}명 읽음`; $('#accBtn').disabled = false; }
+      $('#accAll').disabled = !accMonths().length;
+      try { const a = parseAcc(books.acc.Sheets[$('#upAccSheet').value]); acc = Object.values(a.rows); $('#accPrev').textContent = `[${$('#upAccSheet').value}] 시트 → 평가월 ${ymLab(ST.month)} · 사고 ${a.count}건 · ${acc.length}명 읽음`; $('#accBtn').disabled = false; }
       catch (err) { $('#accPrev').textContent = err.message; }
     };
     setup('#upWork', '#upWorkSheet', 'work', ['업무데이터', '업무'], pvWork);
@@ -4689,6 +4690,19 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
         $('#upPreview').innerHTML = `<div class="banner info">${ymLab(r.month)} 올리기 완료 · ${r.count}명</div>` + (r.missing.length ? `<div class="banner warn">명단에는 있는데 업무데이터에 없는 인원 ${r.missing.length}명: ${r.missing.map(esc).join(', ')}<br>이름이 다르면 [기준 · 명단]의 "원본이름"을 고치세요.</div>` : '');
         toast('올리기 완료');
       } catch (e) { toast(e.message, 1); }
+    };
+    // v28.27 : 한 파일 = 01월 ~ 12월 시트 → 시트 이름의 달로 한 번에 (해는 파일 이름, 없으면 지금 평가월의 해)
+    function accMonths() {
+      if (!books.acc) return [];
+      const y = (ymFromName(books.accName || '') || '').slice(0, 4) || ((String(books.accName || '').match(/20\d\d/) || [])[0]) || String(ST.month || '').slice(0, 4) || String(new Date().getFullYear());
+      return books.acc.SheetNames.map(sn => { const m = String(sn).replace(/\s+/g, '').match(/^(\d{1,2})월$/); if (!m || +m[1] < 1 || +m[1] > 12) return null;
+        try { const a = parseAcc(books.acc.Sheets[sn]); return a.count ? { sn, ym: y + '-' + String(+m[1]).padStart(2, '0'), rows: Object.values(a.rows), n: a.count } : null; } catch (e) { return null; } }).filter(Boolean);
+    }
+    $('#accAll').onclick = async () => {
+      const L = accMonths(); if (!L.length) return toast('01월 ~ 12월 시트에서 사고를 찾지 못했습니다', 1);
+      if (!(await A.confirmBox(`사고 파일의 <b>${L.length}개 달</b>을 한 번에 올립니다.<br>${L.map(x => `${esc(x.sn)} → ${ymLab(x.ym)} ${x.n}건`).join('<br>')}<br><span class="muted">각 달 사고 자료는 새 파일 내용으로 바뀝니다 (비어 있는 시트는 건너뜀).</span>`, '올리기'))) return;
+      let done = 0; for (const x of L) { try { await api('hrAccUpload', { month: x.ym, rows: x.rows }); done++; $('#accPrev').textContent = `올리는 중… ${done}/${L.length} (${ymLab(x.ym)})`; } catch (e) { toast(ymLab(x.ym) + ' : ' + e.message, 1); } }
+      $('#accPrev').textContent = `사고 ${done}개 달 올림 · ${L.filter((x, i) => i < done).map(x => ymLab(x.ym)).join(', ')}`; toast('사고 자료를 올렸습니다');
     };
     $('#accBtn').onclick = async () => {
       if (!acc || !(await A.confirmBox(`${ymLab(ST.month)} 사고 자료(${acc.length}명)를 올립니다. 이 달 사고 자료는 새 파일 내용으로 바뀝니다.`, '올리기'))) return;
