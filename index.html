@@ -1370,6 +1370,18 @@ table.mlist small.mfq{display:block;font-size:11px;font-weight:700;color:#7c3aed
 html[data-theme=dark] .stg .bm1,html[data-theme=dark] .mflg{fill:#a78bfa;color:#a78bfa}html[data-theme=dark] .stg .bm0{fill:color-mix(in srgb,#a78bfa 45%,var(--panel))}html[data-theme=dark] table.mlist small.mfq,html[data-theme=dark] .ddpr .q .mq{background:#2e2350;color:#c4b0ff}
 html[data-theme=dark] .mfgv,html[data-theme=dark] td.mfgv{color:#b69cff}
 .stat .v small.mfgv{color:#6d28d9}html[data-theme=dark] .stat .v small.mfgv{color:#b69cff}
+/* v28.24 : 조립 / 반조 / 출고 / 제조 구분 */
+.shipv{color:#b45309}td.shipv,.stat .v.shipv{color:#b45309}html[data-theme=dark] .shipv{color:#f0b35b}
+.qchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.qchip{font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:#eef3fb;color:#1f4f99;white-space:nowrap}
+html[data-theme=dark] .qchip{background:#1d2a40;color:#9cc2ff}
+.qsub{font-size:11.5px;color:var(--muted,#6b7280);margin-top:4px}
+.qrows{display:grid;gap:5px;margin:6px 0 2px}.qrows>div{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:8px;font-size:12.5px}.qrows>div>span{color:var(--muted,#6b7280);white-space:nowrap}.qrows>div>b{min-width:52px;text-align:right}
+.qb{display:block;height:8px;border-radius:4px;background:color-mix(in srgb,currentColor 10%,transparent);overflow:hidden}.qb>i{display:block;height:100%;border-radius:4px}
+.ddpr .q .sq{font-style:normal;margin-left:3px;padding:0 3px;border-radius:4px;background:#fdf1e1;color:#b45309;font-size:10.5px;font-weight:800}
+html[data-theme=dark] .ddpr .q .sq{background:#3a2a14;color:#f0b35b}
+table.mlist small.mfq.shipv{background:#fdf1e1;color:#b45309}html[data-theme=dark] table.mlist small.mfq.shipv{background:#3a2a14;color:#f0b35b}
+#stats.stats,.stats{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))!important}
+.erow .stats{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))!important}
 /* v28.10 : 보기 전용 (위쪽 막대 + 첫 화면 박스) */
 .roc{min-height:calc(100vh - 68px)}.roc .ph{top:68px}
 header.roh nav{margin-left:14px}header.roh .me .tag{background:#f59e0b;color:#1f1300;font-weight:800}
@@ -1576,7 +1588,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // ---- 열 정의 (엑셀 날짜 시트 C~AT 열과 1:1) ----
   // kind: type=조립구분(하나만), ship=운송(하나만, 건당), case/cool=하나만(수량배), chk=체크(수량배), num=개수 입력
   const COLS = [
-    ['C', 'type', '일반', 0], ['D', 'type', '특수\n프리', 0], ['E', 'type', '추천\n웍스', 0], ['F', 'type', '출고', 0], ['G', 'type', '반조', 0],
+    ['C', 'type', '일반', 0], ['D', 'type', '특수', 0], ['D2', 'type', '프리', 0, 'D'], ['E', 'type', '추천', 0], ['E2', 'type', '웍스', 0, 'E'], ['F', 'type', '출고', 0], ['G', 'type', '반조', 0],   // v28.24 : 프리 · 웍스 따로 (엑셀은 D · E 칸에 합쳐 적음)
     ['H', 'ship', '방문', 0], ['I', 'ship', '퀵', 0], ['J', 'ship', '당일', 0],
     ['K', 'case', 'A', 12], ['L', 'case', 'B', 17], ['M', 'case', 'C', 21], ['N', 'case', 'D', 25], ['O', 'case', 'E', 30], ['P', 'case', 'F', 35],
     ['Q', 'cool', 'A', 2.5], ['R', 'cool', 'B', 5], ['S', 'cool', 'C', 7], ['T', 'cool', 'D', 13], ['U', 'cool', 'E', 16], ['V', 'cool', 'F', 22],
@@ -1586,7 +1598,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     ['AJ', 'num', '옵1', 1], ['AK', 'num', '옵2', 3], ['AL', 'num', '옵3', 4], ['AM', 'num', '옵4', 2], ['AN', 'num', '옵5', 5],
     ['AO', 'num', '난1', 1.5], ['AP', 'num', '-', 0], ['AQ', 'num', '난3', 4], ['AR', 'num', '특/추', 10],
     ['AS', 'num', '반조\n받음', -3], ['AT', 'num', '개인\n포장', 5],
-  ].map(([c, kind, label, min]) => ({ c, kind, label, min, rate: min / 30 }));
+  ].map(([c, kind, label, min, xl]) => ({ c, kind, label, min, rate: min / 30, xl: xl || c, v: !!xl }));
   const COL = {}; COLS.forEach(x => (COL[x.c] = x));
   // 항목별 분 : 기본값(원본 엑셀) + 관리자가 귀속월별로 바꾼 값
   const DEFAULT_MINS = {}; COLS.forEach(x => (DEFAULT_MINS[x.c] = x.min));
@@ -1601,7 +1613,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     ['운영체제', 'AA', 'AF'], ['출고 + 완충', 'AG', 'AI'], ['제조+옵션변경', 'AJ', 'AL'], ['조립+추가', 'AM', 'AN'],
     ['난이도 추가', 'AO', 'AR'], ['반조 + 개포', 'AS', 'AT'],
   ];
-  const EXCLUSIVE = { type: ['C', 'D', 'E', 'F', 'G'], ship: ['H', 'I', 'J'], case: ['K', 'L', 'M', 'N', 'O', 'P'], cool: ['Q', 'R', 'S', 'T', 'U', 'V'] };
+  const EXCLUSIVE = { type: ['C', 'D', 'D2', 'E', 'E2', 'F', 'G'], ship: ['H', 'I', 'J'], case: ['K', 'L', 'M', 'N', 'O', 'P'], cool: ['Q', 'R', 'S', 'T', 'U', 'V'] };
   const TIPS = {
     K: '상단/미니타워 > 예시 라피네/V200', L: '하단/선정리 기본형 > 예시 D6/U30', M: '하단/팬 5V 연결/B와D 중간 난이도(케이스는 크나 선정리 기본형) > 예시 DS900/UH40',
     N: 'C급대비 선정리 난이도 높음/허브 장착 케이스 > 예시 DLX21/3100M', O: 'FLUX PRO급 크기&무게 선정리 난이도 기본', P: 'FLUX PRO급 크기&무게 케이스 선정리 난이도 상',
@@ -1646,9 +1658,16 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     return a + '~' + b.slice(Math.min(k, b.length - 2)) + ' (' + L.length + '대)';
   }
 
+  // v28.24 : 수량 나누기 — 조립(일반 · 특수 · 프리 · 추천 · 웍스) / 반조 / 제조사용(출고)
+  const ASM = ['C', 'D', 'D2', 'E', 'E2'];
+  const asmQty = r10 => ASM.reduce((a, c) => a + num((r10 || {})[c]), 0);
+  // src = 하루 요약(sum) 또는 월 계산 결과 : ta(제조 줄 뺀 조립 구분 수량)가 있으면 그걸, 없으면(예전 기록) r10
+  function qtyParts(src) { src = src || {}; const T = src.ta || src.r10 || {}; return { asm: asmQty(T), ban: num(T.G), ship: num(T.F), mfg: num(src.mq), by: ASM.map(c => [c, num(T[c])]) }; }
+  function typeCounts(doc) { const ta = {}; (doc.rows || []).forEach(r => { if (!r || r.k === '제조' || String(r.o || '').trim() === '' || r.q === '' || r.q == null) return; const m = r.m || {}; for (const c of EXCLUSIVE.type) if (m[c]) { ta[c] = (ta[c] || 0) + num(r.q); break; } }); return ta; }
+  const QLAB = { C: '일반', D: '특수', D2: '프리', E: '추천', E2: '웍스' };
   function emptyDay(dateStr) {
     const dow = new Date(dateStr + 'T00:00:00').getDay();
-    return { kind: (dow === 6 || dow === 0) ? '휴일' : '평일', days: 1, ot: 0, meal: '-', asmOt: 0, other: {}, rows: [] };
+    return { kind: (dow === 6 || dow === 0) ? '휴일' : '평일', days: 1, ot: 0, meal: '-', asmOt: 0, other: {}, rows: [], lay: 2 };   // lay 2 = 프리 · 웍스 따로 쓰는 새 입력표
   }
 
   // ---- 하루 계산 (엑셀 날짜 시트 1~10행과 동일) ----
@@ -1656,7 +1675,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const M = minsMap(mins), rt = c => M[c] / 30;
     const r10 = {}, r9 = {}, t = {}; let gq = 0;
     COLS.forEach(x => (r10[x.c] = 0));
-    ['C', 'D', 'E', 'F', 'G'].forEach(c => (r9[c] = 0));
+    EXCLUSIVE.type.forEach(c => (r9[c] = 0));
     (doc.rows || []).forEach(row => {
       // 엑셀 매크로와 동일 : 주문번호와 수량이 모두 있어야 계산
       if (!row || String(row.o || '').trim() === '' || row.q === '' || row.q == null) return;
@@ -1679,9 +1698,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const o = doc.other || {};
     const otherMin = OTHER.reduce((s, [k]) => s + num(o[k]), 0);
     const w7 = otherMin / 30;
-    const sumType = r9.C + r9.D + r9.E + r9.F + r9.G;
+    const sumType = EXCLUSIVE.type.reduce((a, c) => a + r9[c], 0);
     const e2 = sumType + w7;
-    const g2 = r10.C + r10.D + r10.E;
+    const g2 = asmQty(r10);
     const e4 = Math.max(0, num(doc.ot) - (doc.meal === 'O' ? 10 : 0));
     const work = doc.kind === '휴일' ? 0 : num(doc.days);
     const hol = doc.kind === '휴일' ? num(doc.days) : 0;
@@ -1697,7 +1716,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const r10 = {}; COLS.forEach(x => { if (d.r10[x.c]) r10[x.c] = d.r10[x.c]; });
     const o = {}; OTHER.forEach(([k]) => { if (num((doc.other || {})[k])) o[k] = num(doc.other[k]); });
     const mf = (doc.rows || []).filter(r => r && r.k === '제조' && String(r.o || '').trim());          // v28.7 : 제조 건수 · 대수 (주문과 나눠 보기용)
-    return { r10, t: d.t, gq: d.gq, d: num(doc.days), e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, mf: mf.length, mq: mf.reduce((a, r) => a + num(r.q), 0), kind: doc.kind };
+    return { r10, ta: typeCounts(doc), t: d.t, gq: d.gq, d: num(doc.days), e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, mf: mf.length, mq: mf.reduce((a, r) => a + num(r.q), 0), kind: doc.kind };
   }
   // 저장된 요약으로 그날 기본환산·평가평균을 그 달 점수로 다시 계산 (예전 요약은 저장값 사용)
   function sumDay(s, mins) {
@@ -1715,13 +1734,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const M = minsMap(mins);
     items = items.slice().sort((a, b) => a.date < b.date ? -1 : 1).slice(0, MAX_DAYS);
     let c4 = 0, d4 = 0; const osum = {}; OTHER.forEach(([k]) => (osum[k] = 0));
-    const r10 = {}; COLS.forEach(x => (r10[x.c] = 0));
+    const r10 = {}; COLS.forEach(x => (r10[x.c] = 0)); const ta = {}; EXCLUSIVE.type.forEach(c => (ta[c] = 0));
     let sumAU = 0, sumAV = 0, sumAW = 0, otCount = 0, mf = 0, mq = 0, z = 0, zAV = 0, zAU = 0;   // v28.18 : z = 실적 0인 날 (지원 등) — 근무일엔 넣고 평균에선 뺌
     const daily = items.map(it => {
       const s = it.sum, dow = new Date(it.date + 'T00:00:00').getDay();
       if (dow === 6) d4++; else c4++;
       OTHER.forEach(([k]) => (osum[k] += num((s.o || {})[k])));
       COLS.forEach(x => (r10[x.c] += num((s.r10 || {})[x.c])));
+      { const T = s.ta || s.r10 || {}; EXCLUSIVE.type.forEach(c => (ta[c] += num(T[c]))); }   // v28.24 : 제조 줄 뺀 조립 구분 수량 (예전 기록은 r10)
       sumAU += num(s.e4); sumAV += num(s.h7); if (num(s.e4) > 0) otCount++;
       const sd = sumDay(s, mins);
       const aw = (dow === 6 || dow === 0) && sd.e2 ? sd.e2 * 0.25 : 0;
@@ -1742,9 +1762,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const i6 = ce + (sumAU - zAU) / 60 / 8.5;
     const i7 = (i6 ? sumH_AT / i6 : 0) + g4 + w7;
     const e2 = (ce ? sumH_AT / ce : 0) + g4;
-    const g2 = r10.C + r10.D + r10.E;
+    const g2 = asmQty(r10);
     return {
-      days, c4, d4, z, ev, osum, otherTotal, w7, r10, sumH_AT, g4, f6, f7, i6, i7, e2, g2,
+      days, c4, d4, z, ev, osum, otherTotal, w7, r10, ta, sumH_AT, g4, f6, f7, i6, i7, e2, g2,
       e4: sumAU, f4: otCount, c8: target ? f7 / target : null, daily, truncated: false, mf, mq,   // v28.9 : 제조 건수 · 대수
     };
   }
@@ -1780,6 +1800,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     });
     return xml;
   }
+  // v28.24 : 빈 칸(X · AP)에 이름을 붙였으면 엑셀 제목 칸도 그 이름으로
+  function setNames(xml, names) {
+    if (!names) return xml;
+    Object.keys(names).forEach(c => { const t = String(names[c] || '').trim(); if (!t) return;
+      xml = xml.replace(new RegExp('<c r="' + c + '(1[0-5]|[1-9])"( s="\\d+")? t="s"><v>(\\d+)</v></c>', 'g'), (m, row, st, k) => SST_DASH.has(+k) ? '<c r="' + c + row + '"' + (st || '') + ' t="inlineStr"><is><t>' + esc(t) + '</t></is></c>' : m); });
+    return xml;
+  }
+  let SST_DASH = new Set();
   function setTips(xml, tips) {
     if (!tips) return xml;
     return xml.replace(/<hyperlink ref="([A-Z]+)13"([^>]*?) tooltip="[^"]*"/g, (m, c, mid) => tips[c] ? '<hyperlink ref="' + c + '13"' + mid + ' tooltip="' + esc(tips[c]) + '"' : m);
@@ -1792,7 +1820,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const T = async p => tpl.file(p).async('string');
     let [stat, start, end, day] = await Promise.all([T('tpl/stat.xml'), T('tpl/start.xml'), T('tpl/end.xml'), T('tpl/day.xml')]);
     const M = minsMap(info.mins);
-    day = setTips(setMinsRow(day, M), info.tips); stat = setMinsRow(stat, M);
+    { const ss = await T('xl/sharedStrings.xml'), L = []; ss.replace(/<si>([\s\S]*?)<\/si>/g, (m, x) => { L.push(x.replace(/<[^>]+>/g, '').trim()); return m; }); SST_DASH = new Set(L.map((t, i) => t === '-' ? i : -1).filter(i => i >= 0)); }
+    day = setNames(setTips(setMinsRow(day, M), info.tips), info.names); stat = setNames(setMinsRow(stat, M), info.names);
     const days = info.days.slice().sort((a, b) => a.date < b.date ? -1 : 1).slice(0, MAX_DAYS);
     const out = new JSZip();
     const F = (p, d) => out.file(p, d, { createFolders: false });
@@ -1814,7 +1843,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         const rr = 14 + i;
         if (String(r.o || '').trim()) v['A' + rr] = (r.k === '제조' ? '제조 ' : '') + String(r.o);
         if (r.q !== '' && r.q != null) v['B' + rr] = num(r.q);
-        COLS.forEach(x => { const mv = (r.m || {})[x.c]; if (mv) v[x.c + rr] = x.kind === 'num' ? num(mv) : 1; });
+        COLS.forEach(x => { const mv = (r.m || {})[x.c]; if (mv) v[x.xl + rr] = x.kind === 'num' ? num(mv) : 1; });   // 프리 → D(특수프리) · 웍스 → E(추천웍스)
         const mm2 = [r.k === '제조' && (r.sn || []).length ? snRange(r.sn) : '', r.memo || ''].filter(Boolean).join(' · ');
         if (mm2) v['AU' + rr] = mm2;
       });
@@ -1909,6 +1938,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         const row = { o: String(o).trim(), q: V['B' + r] == null ? '' : nm(V['B' + r]), m: {}, memo: V['AU' + r] ? String(V['AU' + r]) : '' };
         if (/^제조\s*/.test(row.o)) { row.o = row.o.replace(/^제조\s*/, ''); row.k = '제조'; }
         COLS.forEach(x => {
+          if (x.v) return;                                                 // 프리 · 웍스는 예전 엑셀에 칸이 없음 (특수프리 · 추천웍스 칸 그대로)
           const v = V[x.c + r]; if (v == null || String(v).trim() === '') return;
           if (x.kind === 'num') { const n = nm(v); if (n) row.m[x.c] = n; }
           else { const s = String(v).trim().toUpperCase(); if (s === 'V' || s === '1' || s === 'TRUE' || s === 'O') row.m[x.c] = 1; }
@@ -1926,7 +1956,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   root.Core = {
-    COLS, COL, DEFAULT_MINS, minsMap, sumDay, GROUPS, EXCLUSIVE, TIPS, TARGETS, OT_LIST, OTHER, GROUP_LIST, MAX_ROWS, BASE_ROWS, MAX_DAYS,
+    COLS, COL, DEFAULT_MINS, ASM, asmQty, qtyParts, typeCounts, QLAB, minsMap, sumDay, GROUPS, EXCLUSIVE, TIPS, TARGETS, OT_LIST, OTHER, GROUP_LIST, MAX_ROWS, BASE_ROWS, MAX_DAYS,
     num, normOrder, parseMfg, snRange, emptyDay, calcDay, daySummary, calcMonth, buildXlsx, fileName,
     ymd, addDays, WD, sheetName, serial, pad, parseWorkbook,
   };
@@ -5388,6 +5418,17 @@ async function addCharts(buf, jobs) {
   const tipsYm = ym => Object.assign({}, C.TIPS, (rateSet(ym) || {}).tips || {});
   const ymOfDate = d => (periodOf(d) || {}).ym || String(d || '').slice(0, 7);
   const minsOf = d => minsYm(ymOfDate(d));
+  // v28.24 : 입력표 칸 — 프리 · 웍스(새 입력표만) · 빈 칸 이름 · 숨긴 칸
+  const colPos = c => C.COLS.findIndex(x => x.c === c);
+  const lay2 = doc => !!doc && (doc.lay >= 2 || (doc.rows || []).some(r => r && r.m && (r.m.D2 || r.m.E2)));
+  function gridCols(doc, date) {
+    const rs = rateSet(ymOfDate(date)) || {}, NM = rs.names || {}, HD = rs.hide || [], L2 = lay2(doc);
+    const used = c => (doc.rows || []).some(r => r && r.m && r.m[c]);
+    return C.COLS.filter(x => !x.v || L2).map(x => Object.assign({}, x, { label: NM[x.c] ? NM[x.c] : !L2 && x.c === 'D' ? '특수\n프리' : !L2 && x.c === 'E' ? '추천\n웍스' : x.label }))
+      .filter(x => x.label !== '-' && (!HD.includes(x.c) || used(x.c)));
+  }
+  // 수량 칸 : 조립 / 반조 / 제조사용(출고) / 제조
+  const qtyChips = (P, oldLay) => P.by.filter(([, n]) => n).map(([c, n]) => `<span class="qchip">${oldLay && c === 'D' ? '특수·프리' : oldLay && c === 'E' ? '추천·웍스' : C.QLAB[c]} ${n}</span>`).join('');
 
   // ------------------------------------------------ 로그인
   function renderLogin(tab) {
@@ -5822,13 +5863,13 @@ async function addCharts(buf, jobs) {
   }
 
   function buildGrid() {
-    const D = S.day, doc = D.doc, ro = !D.canEdit, cols = C.COLS.filter(x => x.label !== '-');
+    const D = S.day, doc = D.doc, ro = !D.canEdit, cols = gridCols(doc, S.date);
     const MN = C.minsMap(minsOf(S.date)), TP = tipsYm(ymOfDate(S.date));
     const gStart = {}; C.GROUPS.forEach(g => (gStart[g[1]] = 1));
-    const gOf = {}; C.GROUPS.forEach((g, gi) => C.COLS.forEach(x => { if (colIdx(x.c) >= colIdx(g[1]) && colIdx(x.c) <= colIdx(g[2])) gOf[x.c] = gi; }));
+    const gOf = {}; C.GROUPS.forEach((g, gi) => C.COLS.forEach(x => { if (colPos(x.c) >= colPos(g[1]) && colPos(x.c) <= colPos(g[2])) gOf[x.c] = gi; }));
     let h1 = '<tr><th class="stk c0" rowspan="3"></th><th class="stk c1" rowspan="3">#</th><th class="stk c2" rowspan="3">주문번호</th><th class="stk c3" rowspan="3">수량</th>';
     C.GROUPS.forEach(([n, a, b], gi) => {
-      const span = cols.filter(x => colIdx(x.c) >= colIdx(a) && colIdx(x.c) <= colIdx(b)).length;
+      const span = cols.filter(x => colPos(x.c) >= colPos(a) && colPos(x.c) <= colPos(b)).length;
       h1 += `<th colspan="${span}" class="gs gc g${gi}">${n}</th>`;
     });
     h1 += '<th rowspan="3" class="gs memo-h">특이사항</th></tr>';
@@ -6325,13 +6366,14 @@ async function addCharts(buf, jobs) {
       ${(() => { const i6 = c.f6 - C.num(D.doc.asmOt) / 60 / 8.5 + c.e4 / 60 / 8.5, i7 = i6 ? c.e2 / i6 : 0;      // v28.17 : 실제 = 조립 야근 대신 내 실제 야근으로
         return `<div class="stat"><div class="k">평가 · <span class="real">실제</span> 평균</div><div class="v">${f2(c.f7)}<small class="real"> · ${f2(i7)}</small></div></div>`; })()}
       <div class="stat"><div class="k">기본 환산</div><div class="v">${f2(c.e2)}</div></div>
-      <div class="stat"><div class="k">수량 (일반+특수+추천)</div><div class="v">${c.g2}</div></div>
+      ${(() => { const mq = D.doc.rows.filter(r => r.k === '제조' && String(r.o).trim()).reduce((a, r) => a + C.num(r.q), 0), P = C.qtyParts({ ta: C.typeCounts(D.doc), mq });      // v28.24 : 조립 / 반조 / 출고 / 제조 나눠서
+        return `<div class="stat sq"><div class="k">조립수량</div><div class="v">${P.asm}</div><div class="qchips">${qtyChips(P, !lay2(D.doc))}</div></div>${P.ban ? `<div class="stat"><div class="k">반조</div><div class="v">${P.ban}</div></div>` : ''}<div class="stat"><div class="k">제조사용(출고)</div><div class="v shipv">${P.ship}</div></div>${P.mfg ? `<div class="stat"><div class="k">제조수량</div><div class="v mfgv">${P.mfg}</div></div>` : ''}`; })()}
       <div class="stat"><div class="k">평가 · <span class="real">실제</span> 일수</div><div class="v">${f2(c.f6)}<small class="real"> · ${f2(c.f6 - C.num(D.doc.asmOt) / 60 / 8.5 + c.e4 / 60 / 8.5)}</small></div></div>
       ${(() => { const R = D.doc.rows.filter(r => String(r.o).trim()), mf = R.filter(r => r.k === '제조'), mq = mf.reduce((a, r) => a + C.num(r.q), 0);
         return `<div class="stat"><div class="k">${mf.length ? '주문 · <span class="mfgv">제조</span>' : '입력 주문'}</div><div class="v">${R.length - mf.length}<small>건</small>${mf.length ? `<span class="mfgv"> · ${mf.length}<small>건</small> ${mq}<small>대</small></span>` : ''}</div></div>`; })()}`;
     $('#e4').textContent = c.e4 + '분';
     $('#w7').textContent = c.w7 ? f2(c.w7) : '-';
-    const cols = C.COLS.filter(x => x.label !== '-');
+    const cols = gridCols(D.doc, S.date);
     let tq = 0; D.doc.rows.forEach(r => { if (String(r.o).trim()) tq += C.num(r.q); });
     const fq = $('#fq'); if (fq) fq.textContent = tq || '';
     cols.forEach(x => {
@@ -6449,7 +6491,7 @@ async function addCharts(buf, jobs) {
       <div class="stat"><div class="k">실제 평균</div><div class="v">${f2(m.i7)}</div></div>
       <div class="stat"><div class="k">기본 평균</div><div class="v">${f2(m.e2)}</div></div>
       <div class="stat"><div class="k">근무일 (평일 / 토요)</div><div class="v">${m.c4}<small>/ ${m.d4}</small></div></div>
-      <div class="stat"><div class="k">총량 (일반+특수+추천)</div><div class="v">${m.g2}${m.mq ? `<small class="mfgv"> · 제조 ${m.mq}대</small>` : ''}</div></div>
+      ${(() => { const P = C.qtyParts(m); return `<div class="stat"><div class="k">조립수량</div><div class="v">${P.asm}</div><div class="qchips">${qtyChips(P, !(m.ta.D2 || m.ta.E2))}</div><div class="qsub">${P.ban ? `반조 ${P.ban} · ` : ''}<span class="shipv">출고 ${P.ship}</span>${P.mfg ? ` · <span class="mfgv">제조 ${P.mfg}</span>` : ''}</div></div>`; })()}
     </div>
     <div id="attl"></div>
     ${monthChart(m.daily, r.target)}
@@ -6482,7 +6524,7 @@ async function addCharts(buf, jobs) {
       ${daily.map(d => `<div class="mbar" title="${dLabel(d.date)} · 평가평균 ${f2(d.f7)}${target ? ' (' + pct(d.f7 / target) + ')' : ''}"><em>${(Math.round((d.f7 || 0) * 10) / 10).toFixed(1)}</em><i class="${target && d.f7 >= target * 0.9 ? 'hi' : ''}" style="height:${Math.max(2, y(d.f7 || 0))}px"></i><small>${+d.date.slice(5, 7)}/${+d.date.slice(8)}</small></div>`).join('')}</div></div>`;
   }
   async function makeXlsxBlob(user, ym, target, days) {
-    const z = await C.buildXlsx(JSZip, TEMPLATE_B64, { name: user.name, ym, target, days, mins: minsYm(ym), tips: (rateSet(ym) || {}).tips });
+    const z = await C.buildXlsx(JSZip, TEMPLATE_B64, { name: user.name, ym, target, days, mins: minsYm(ym), tips: (rateSet(ym) || {}).tips, names: (rateSet(ym) || {}).names });
     return z.generateAsync({ type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   }
   function saveBlob(blob, name) {
@@ -6526,7 +6568,7 @@ async function addCharts(buf, jobs) {
       if (s) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
-        o.q = num(r10.C) + num(r10.D) + num(r10.E) + num(r10.F) + num(r10.G); o.mq = num(s.mq);
+        { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; }   // v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
       o.kind = o.off ? 'off' : o.task ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
       return o;
@@ -6544,11 +6586,12 @@ async function addCharts(buf, jobs) {
       const mg = (r.mgrs || {})[g] || L.filter(p => p.title === '매니저').map(p => p.disp).join('/');
       return { g, L, n: L.length, att: L.filter(p => p.kind !== 'off').length, w: w.length, sup: L.filter(p => p.kind === 'sup').length, mg,
         avg: w.length ? w.reduce((a, p) => a + p.v, 0) / w.length : null, tg: t.length ? t.reduce((a, p) => a + p.target, 0) / t.length : null,
-        q: Math.round(w.reduce((a, p) => a + p.q, 0) * 10) / 10, mq: w.reduce((a, p) => a + (p.mq || 0), 0) };
+        q: Math.round(w.reduce((a, p) => a + p.q, 0) * 10) / 10, mq: w.reduce((a, p) => a + (p.mq || 0), 0), ship: w.reduce((a, p) => a + (p.ship || 0), 0), ban: w.reduce((a, p) => a + (p.ban || 0), 0) };
     });
     return { r, P, body, work, tw, G, total: P.length, off: P.filter(p => p.kind === 'off'), sup: P.filter(p => p.kind === 'sup'), none: body.filter(p => p.kind === 'none'),
       mgr: P.filter(p => p.kind === 'mgr'), zero: body.filter(p => p.kind === 'zero'),
-      sumV: work.reduce((a, p) => a + p.v, 0), sumO: work.reduce((a, p) => a + p.oth, 0), sumQ: Math.round(work.reduce((a, p) => a + p.q, 0)), sumMQ: work.reduce((a, p) => a + (p.mq || 0), 0),
+      sumV: work.reduce((a, p) => a + p.v, 0), sumO: work.reduce((a, p) => a + p.oth, 0), sumQ: Math.round(work.reduce((a, p) => a + p.q, 0)), sumMQ: work.reduce((a, p) => a + (p.mq || 0), 0), sumShip: work.reduce((a, p) => a + (p.ship || 0), 0), sumBan: work.reduce((a, p) => a + (p.ban || 0), 0),
+      sumBy: C.ASM.map(c => [c, work.reduce((a, p) => a + (p.qp ? (p.qp.by.find(x => x[0] === c) || [0, 0])[1] : 0), 0)]),
       hit: tw.filter(p => p.v >= p.target).length, tgAvg: tw.length ? tw.reduce((a, p) => a + p.target, 0) / tw.length : null,
       asgOff: P.filter(p => p.off && p.task) };
   }
@@ -6665,7 +6708,10 @@ async function addCharts(buf, jobs) {
       <div class="card ddk"><div class="l">출근</div><div class="v">${att}<small> / ${D.total}명</small></div>
         <div class="ddstack">${seg.filter(x => x[0]).map(([n, c]) => `<i style="flex:${n};background:${c}"></i>`).join('')}</div>
         <div class="ddlg">${seg.map(([n, c, t]) => `<span style="--c:${c}">${t}</span>`).join('')}</div></div>
-      <div class="card ddk"><div class="l">조립 실적</div><div class="v">${f1d(D.sumV)}<small> 환산</small></div><div class="s">수량 <b>${D.sumQ}</b>개${D.sumMQ ? ` <span class="mfgv">(제조 ${D.sumMQ})</span>` : ''} · 조립 인원 ${D.work.length}명</div></div>
+      <div class="card ddk"><div class="l">조립 실적 <span class="muted" style="font-weight:500">· 조립 인원 ${D.work.length}명</span></div><div class="v">${f1d(D.sumV)}<small> 환산</small></div>
+        ${(() => { const mx = Math.max(1, D.sumQ, D.sumShip, D.sumMQ, D.sumBan), bar = (n, c) => `<i class="qb"><i style="width:${n / mx * 100}%;background:${c}"></i></i>`;   // v28.24 : 조립 / 반조 / 출고 / 제조 나눠서
+          return `<div class="qrows"><div><span>조립수량</span>${bar(D.sumQ, '#1f5fbf')}<b>${D.sumQ}대</b></div>${D.sumBan ? `<div><span>반조</span>${bar(D.sumBan, '#64748b')}<b>${D.sumBan}대</b></div>` : ''}<div><span>제조사용(출고)</span>${bar(D.sumShip, '#b45309')}<b>${D.sumShip}대</b></div><div><span>제조수량(제조)</span>${bar(D.sumMQ, '#6d3fc9')}<b>${D.sumMQ}대</b></div></div>
+          <div class="qchips">${D.sumBy.filter(([, n]) => n).map(([c, n]) => `<span class="qchip">${C.QLAB[c]} ${n}</span>`).join('')}</div>`; })()}</div>
       <div class="card ddk"><div class="l">평균 환산 <small>(하루 평가값)</small></div><div class="v">${D.work.length ? f1d(D.sumV / D.work.length) : '-'}<small>${D.tgAvg ? ' / 목표 ' + f1d(D.tgAvg) : ''}</small></div>
         <div class="s">${D.sumO > 0.05 && D.work.length ? '기타시간 제외 ' + f1d((D.sumV - D.sumO) / D.work.length) : '기타시간 없음'}</div></div>
       <div class="card ddk"><div class="l">목표 달성</div><div class="v">${D.hit}<small> / ${D.tw.length}명</small></div>
@@ -6685,12 +6731,12 @@ async function addCharts(buf, jobs) {
         ${D.P.some(p => p.half) ? `<div class="muted" style="font-size:12px;margin-top:6px">반차 : ${D.P.filter(p => p.half).map(p => esc(p.disp) + ' (' + esc(p.half) + ')').join(', ')}</div>` : ''}
         <h3 class="ddh" style="margin-top:14px">업무배정<small>지원차출 ${D.sup.length}명${r.asgAt ? ' · 마지막 수정 ' + esc(r.asgAt) : ''}</small></h3>
         <div class="ddasg">${tasks.concat(Object.values(D.sup.reduce((a, p) => (tasks.includes(p.task) || (a[p.task] = p.task), a), {}))).map(t => { const L = D.sup.filter(p => p.task === t); return L.length ? `<div class="ddac"><div class="t">${esc(t)}<span>${L.length}</span></div>${L.map(p => `<span class="ddpn">${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join('')}</div>` : ''; }).join('') || '<div class="muted" style="font-size:12.5px">배정 없음' + (staff || isRO() ? '' : ' — [업무배정 · 휴무 입력]에서 넣습니다') + '</div>'}</div></div></div>`;
-    h += `<div class="card ddleg"><b>그룹별 인원</b><span class="ddlg"><span style="--c:#1f5fbf">목표 달성</span><span style="--c:#e39a3b">목표 미달</span><span class="hatch">기타시간 환산</span><span style="--c:#1d2430">목표</span>${D.sumMQ ? '<span class="mfgv" style="font-size:inherit">수량 옆 보라 <b>제N</b> = 그중 제조 N대</span>' : ''}</span><span style="flex:1"></span>${staff ? '' : '<span class="muted" style="font-size:12px">이름 = 사람 카드 (특이사항 · 월 통계 · 연차) · [일일] = 그날 입력 화면 · 💬 = 특이사항 있음</span>'}</div>`;
+    h += `<div class="card ddleg"><b>그룹별 인원</b><span class="ddlg"><span style="--c:#1f5fbf">목표 달성</span><span style="--c:#e39a3b">목표 미달</span><span class="hatch">기타시간 환산</span><span style="--c:#1d2430">목표</span><span class="muted" style="font-size:inherit">수량 = 조립 · <b class="shipv">출N</b> = 출고 · <b class="mfgv">제N</b> = 제조</span></span><span style="flex:1"></span>${staff ? '' : '<span class="muted" style="font-size:12px">이름 = 사람 카드 (특이사항 · 월 통계 · 연차) · [일일] = 그날 입력 화면 · 💬 = 특이사항 있음</span>'}</div>`;
     h += '<div class="ddgroups">' + D.G.map(x => `<div class="card ddgc" style="--gc:${gcol(x.g)}"><div class="ddgh"><div class="t">${staff ? gdot(x.g) : `<span class="glink" data-gm="${esc(x.g)}" title="${esc(x.g)} 월 업무현황">${gdot(x.g)} ›</span>`}<span>${esc(x.mg || '')}</span>${x.g === '라인' && canLine ? `<button class="sm" id="ddline">총량 입력</button>` : ''}</div>
-        <div class="s"><span>출근 <b>${x.att}</b>/${x.n}</span><span>평균 <b>${f1d(x.avg)}</b></span><span>수량 <b>${x.q}</b>${x.mq ? ` <em class="mfgv${staff ? '' : ' glink'}" ${staff ? '' : `data-gmf="${esc(x.g)}" title="제조 내역"`}>제조 ${x.mq}</em>` : ''}</span>${x.sup ? `<span>지원 <b>${x.sup}</b></span>` : ''}${x.g === '라인' && r.line ? '<span class="muted">총량 배분</span>' : ''}</div></div>
+        <div class="s"><span>출근 <b>${x.att}</b>/${x.n}</span><span>평균 <b>${f1d(x.avg)}</b></span><span>조립 <b>${x.q}</b>${x.ship ? ` <em class="shipv">출고 ${x.ship}</em>` : ''}${x.mq ? ` <em class="mfgv${staff ? '' : ' glink'}" ${staff ? '' : `data-gmf="${esc(x.g)}" title="제조 내역"`}>제조 ${x.mq}</em>` : ''}</span>${x.sup ? `<span>지원 <b>${x.sup}</b></span>` : ''}${x.g === '라인' && r.line ? '<span class="muted">총량 배분</span>' : ''}</div></div>
       ${x.L.map(p => {
         const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${!staff && p.note ? ` <span class="memo" title="${esc(['💬 ' + dLabel(r.date) + ' 특이사항', p.note.reason ? '사유 : ' + p.note.reason : '', p.note.feedback ? '피드백 : ' + p.note.feedback : '', p.note.by ? '— ' + p.note.by : ''].filter(Boolean).join('\n'))}">💬</span>` : ''}${canNote(p) && p.uid && p.oth > 0.05 ? `<button class="oth1" data-oth="1" title="기타시간 사유 보기 · 고치기">⏱</button>` : ''}</div>`;
-        if (p.kind === 'work') return `<div class="ddpr">${nm}${ddBar(p.v, p.target, p.oth)}<div class="v" style="color:${p.target && p.v < p.target ? '#b45309' : '#1f5fbf'}" title="${p.oth > 0.05 ? '기타시간 ' + f1d(p.oth) + ' 포함' : ''}">${f1d(p.v)}</div><div class="q" ${p.mq ? `title="수량 ${p.q}대 중 제조 ${p.mq}대"` : ''}>${p.q || ''}${p.mq ? `<i class="mq">제${p.mq}</i>` : ''}</div></div>`;
+        if (p.kind === 'work') return `<div class="ddpr">${nm}${ddBar(p.v, p.target, p.oth)}<div class="v" style="color:${p.target && p.v < p.target ? '#b45309' : '#1f5fbf'}" title="${p.oth > 0.05 ? '기타시간 ' + f1d(p.oth) + ' 포함' : ''}">${f1d(p.v)}</div><div class="q" title="조립 ${p.q}대${p.ban ? ' · 반조 ' + p.ban : ''}${p.ship ? ' · 출고 ' + p.ship : ''}${p.mq ? ' · 제조 ' + p.mq : ''}">${p.q || ''}${p.ship ? `<i class="sq">출${p.ship}</i>` : ''}${p.mq ? `<i class="mq">제${p.mq}</i>` : ''}</div></div>`;
         const [t, c] = p.kind === 'off' ? [p.off, DD_OFFCLS[p.off] || 'lv'] : p.kind === 'sup' ? [sh(p.task), 'up'] : p.kind === 'mgr' ? [p.title, 'ch'] : p.kind === 'zero' ? ['실적 없음', 'ch'] : ['미입력', 'no'];
         return `<div class="ddpr">${nm}<span class="ddst ${c}">${esc(t)}</span><div></div><div></div></div>`;
       }).join('')}</div>`).join('') + '</div>';
@@ -6922,7 +6968,7 @@ async function addCharts(buf, jobs) {
       put(y, 1, `조립팀 일일 업무 현황   ·   ${dd.slice(0, 4)}년 ${+dd.slice(5, 7)}월 ${+dd.slice(8)}일 (${wd})`, { size: 16, bold: true }); mrg(y, 1, y, 19); ws.getRow(y).height = 30; y++;
       put(y, 1, '환산 = 하루 평가값 · 빨간 삼각형 = 특이사항 메모', { size: 9, color: '8A95A3' }); mrg(y, 1, y, 19); y += 2;
       const K = [['출근', `${D.total - D.off.length} / ${D.total}명`, `조립 ${D.work.length} · 지원 ${D.sup.length} · 휴무 ${D.off.length} · 미입력 ${D.none.length + D.zero.length}`],
-        ['조립 실적', `${f1d(D.sumV)} 환산`, `수량 ${D.sumQ}개${D.sumMQ ? ' (제조 ' + D.sumMQ + ')' : ''}`], ['평균 환산', D.work.length ? f1d(D.sumV / D.work.length) : '-', D.tgAvg ? '평균 목표 ' + f1d(D.tgAvg) : ''],
+        ['조립 실적', `${f1d(D.sumV)} 환산`, `조립 ${D.sumQ}대${D.sumBan ? ' · 반조 ' + D.sumBan : ''} · 출고 ${D.sumShip} · 제조 ${D.sumMQ}`], ['평균 환산', D.work.length ? f1d(D.sumV / D.work.length) : '-', D.tgAvg ? '평균 목표 ' + f1d(D.tgAvg) : ''],
         ['목표 달성', `${D.hit} / ${D.tw.length}명`, D.tw.length ? '달성률 ' + Math.round(D.hit / D.tw.length * 100) + '%' : ''], ['확인 필요', `${D.none.length + D.asgOff.length}건`, D.none.length ? '미입력 ' + D.none.map(p => p.disp).join(', ') : '미입력 없음']];
       [[1, 4], [5, 9], [10, 14], [15, 17], [18, 19]].forEach(([a, b], i) => { const [l, v, s] = K[i];
         put(y, a, l, { size: 9, bold: true, color: '5F6B7A', fill: 'F7F9FC' }); mrg(y, a, y, b);
@@ -7016,9 +7062,9 @@ async function addCharts(buf, jobs) {
       const all = r.users.concat((r.pending || []).map(p => ({ id: 'pend:' + p.name, name: p.name, group: p.group, role: '일반', pend: true, items: [], last: '', target: 0, title: p.title || '', empno: p.empno || '', seq: p.seq, mg: [] })));   // v28.23 : 가입 안 한 명단도
       const list = all.filter(u => !S.manageGroup || S.manageGroup.split(',').includes(u.group)).map(u => {
         const m = C.calcMonth(u.items, u.target, minsYm(xym));
-        let qty = 0, conv = 0;
-        u.items.forEach(it => { const s = it.sum || {}, r10 = s.r10 || {}; qty += C.num(r10.C) + C.num(r10.D) + C.num(r10.E) + C.num(r10.F) + C.num(r10.G); conv += C.sumDay(s, minsOf(it.date)).e2; });
-        return Object.assign({ m, qty, conv, mq: m.mq, days: m.c4 + m.d4 }, u);
+        let qty = 0, conv = 0, ship = 0;
+        u.items.forEach(it => { const s = it.sum || {}, P = C.qtyParts(s); qty += P.asm; ship += P.ship; conv += C.sumDay(s, minsOf(it.date)).e2; });   // v28.24 : 조립수량 (출고 · 반조 · 제조 따로)
+        return Object.assign({ m, qty, ship, conv, mq: m.mq, days: m.c4 + m.d4 }, u);
       });
       // 그룹 순서 → 매니저 · 파트장 · 사원 → 사번(입사 순) → 이름
       const grpKey = u => userKey(u, r.groups);
@@ -7272,7 +7318,7 @@ async function addCharts(buf, jobs) {
     const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}${['group', 'target', 'last', 'c8'].includes(k) ? ' ' + MF.ico(k) : k === 'name' ? ' ' + MF.ico('role') : ''}</th>`;
     $('#mbody').innerHTML = `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="그룹 일반 인원의 월 목표를 한 번에 정합니다">🎯 목표 일괄 지정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' && S.gtOpen ? 266 : 220}px)">
-      <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '총 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}</tr></thead><tbody>
+      <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', '목표', 1)}${th('qty', '조립 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}</tr></thead><tbody>
       ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.target && has ? u.m.c8 : null;
         let hd = '';
@@ -7282,7 +7328,7 @@ async function addCharts(buf, jobs) {
         }
         return hd + `<tr data-u="${u.id}" class="gc${u.pend ? ' pend' : ''}" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${u.pend ? ' <span class="rtag pendt" title="아직 업무데이터 사이트에 가입하지 않음">미가입</span>' : ''}${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인 불가 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${S.mSort.k === 'group' ? gdot(u.group).replace(/>[^<]*$/, '>') : gdot(u.group)}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : u.pend ? '가입 안 함' : '입력 없음'}</td>
-        <td class="num">${u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}${u.mq ? `<small class="mfq" title="그중 제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
+        <td class="num">${u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has ? u.qty : '-'}${u.ship ? `<small class="mfq shipv" title="제조사용(출고) ${u.ship}대">출고 ${u.ship}</small>` : ''}${u.mq ? `<small class="mfq" title="제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td class="mrate" title="막대 = 평가평균 (빗금 = 기타시간 환산) · 검은 선 = 목표">${c8 == null ? '<span class="muted">-</span>' : `<div class="mrbar">${ddBar(u.m.f7, u.target, u.m.w7 || 0)}</div><b class="${rateCls(c8)}t">${pct(c8)}</b>`}</td>
 </tr>`;
@@ -7314,34 +7360,37 @@ async function addCharts(buf, jobs) {
     const last = yms[yms.length - 1] || S.today.slice(0, 7); yms.push(nextYmOf(last));
     const opts = Array.from(new Set(yms)).sort().reverse();
     const def = (curPeriod() || {}).ym || last;
-    const grpOf = c => (C.GROUPS.find(g => colIdx(c) >= colIdx(g[1]) && colIdx(c) <= colIdx(g[2])) || [''])[0];
-    const cols = C.COLS.filter(x => x.kind !== 'type' && x.label !== '-');
-    modal(`<h3>⚙ 항목 점수(분) 설정</h3>
+    const grpOf = c => (C.GROUPS.find(g => colPos(c) >= colPos(g[1]) && colPos(c) <= colPos(g[2])) || [''])[0];
+    const SPARE = ['X', 'AP'];                                              // v28.24 : 원본 엑셀의 빈 칸 2개 = 새 항목으로 쓸 수 있음
+    const cols = C.COLS.filter(x => x.kind !== 'type' && (x.label !== '-' || SPARE.includes(x.c)));
+    modal(`<h3>⚙ 항목 설정 <span class="muted" style="font-size:13px;font-weight:500">이름 · 분 · 숨기기</span></h3>
       <div class="row" style="gap:10px;align-items:center;margin-bottom:8px"><b>적용 귀속월</b><select id="rym" style="width:auto">${opts.map(y => `<option value="${y}" ${y === def ? 'selected' : ''}>${ymLabel(y)}부터</option>`).join('')}</select><span class="muted" id="rbase"></span></div>
-      <div style="max-height:58vh;overflow:auto;border:1px solid var(--line);border-radius:8px"><table class="list rt"><thead><tr><th>구분</th><th>항목</th><th class="num">기본</th><th>분</th><th>설명 (말풍선)</th></tr></thead><tbody id="rbody"></tbody></table></div>
-      <div class="muted" style="margin-top:8px;line-height:1.6">· 고른 달부터 적용, 이전 달 기록·평가는 그대로입니다.<br>· 빈칸은 기본값(원본 엑셀)으로 계산합니다.<br>· 다른 사람 화면은 다시 로그인하면 반영됩니다.</div>
+      <div style="max-height:58vh;overflow:auto;border:1px solid var(--line);border-radius:8px"><table class="list rt"><thead><tr><th>구분</th><th>항목</th><th class="num">기본</th><th>분</th><th>설명 (말풍선)</th><th title="입력표에서 숨김 (지난 기록 · 엑셀은 그대로)">숨김</th></tr></thead><tbody id="rbody"></tbody></table></div>
+      <div class="muted" style="margin-top:8px;line-height:1.6">· 고른 달부터 적용, 이전 달 기록·평가는 그대로입니다.<br>· 빈칸은 기본값(원본 엑셀)으로 계산합니다.<br>· <b>빈 칸(케이스 쿨러 · 난이도 추가)</b>에 이름을 넣으면 입력표에 새 항목으로 생기고, 엑셀에도 그 이름으로 적힙니다.<br>· <b>숨김</b> = 고른 달부터 입력표에서 칸을 숨깁니다 (지난 기록 · 엑셀은 그대로, 값이 있는 날은 보임).<br>· 다른 사람 화면은 다시 로그인하면 반영됩니다.</div>
       <div class="acts" style="justify-content:space-between"><div><button class="danger" id="rdel">이 달 설정 삭제</button></div><div style="display:flex;gap:8px"><button data-n>닫기</button><button class="primary" data-y>저장</button></div></div>`, (bg, close) => {
       const draw = () => {
-        const ym = $('#rym', bg).value, set = rateSet(ym), M = C.minsMap(set && set.mins), TP = tipsYm(ym), own = set && set.ym === ym;
+        const ym = $('#rym', bg).value, set = rateSet(ym), M = C.minsMap(set && set.mins), TP = tipsYm(ym), own = set && set.ym === ym, NM = (set && set.names) || {}, HD = (set && set.hide) || [];
         $('#rbase', bg).textContent = own ? '이 달 설정 (' + set.by + ' · ' + set.at + ')' : set ? ymLabel(set.ym) + ' 설정을 이어받는 중' : '기본값 사용 중';
         $('#rdel', bg).disabled = !own;
-        $('#rbody', bg).innerHTML = cols.map(x => `<tr data-c="${x.c}"><td class="muted">${esc(grpOf(x.c))}</td><td><b>${esc(x.label.replace('\n', ''))}</b> <span class="muted">${x.c}</span></td><td class="num muted">${x.min}</td>
-          <td><input class="rm${M[x.c] !== x.min ? ' chg' : ''}" inputmode="decimal" value="${M[x.c]}"></td><td><input class="rtp${(TP[x.c] || '') !== (C.TIPS[x.c] || '') ? ' chg' : ''}" value="${esc(TP[x.c] || '')}" maxlength="300"></td></tr>`).join('');
+        $('#rbody', bg).innerHTML = cols.map(x => `<tr data-c="${x.c}" class="${SPARE.includes(x.c) ? 'spare' : ''}"><td class="muted">${esc(grpOf(x.c))}</td><td>${SPARE.includes(x.c) ? `<input class="rnm" maxlength="8" value="${esc(NM[x.c] || '')}" placeholder="빈 칸 — 이름 넣으면 생김" style="width:150px">` : `<b>${esc(x.label.replace('\n', ''))}</b>`} <span class="muted">${x.c}</span></td><td class="num muted">${x.min}</td>
+          <td><input class="rm${M[x.c] !== x.min ? ' chg' : ''}" inputmode="decimal" value="${M[x.c]}"></td><td><input class="rtp${(TP[x.c] || '') !== (C.TIPS[x.c] || '') ? ' chg' : ''}" value="${esc(TP[x.c] || '')}" maxlength="300"></td><td style="text-align:center"><input type="checkbox" class="rhd" ${HD.includes(x.c) ? 'checked' : ''} aria-label="숨김"></td></tr>`).join('');
         $$('#rbody input.rm', bg).forEach(i => (i.oninput = () => { const x = C.COL[i.closest('tr').dataset.c]; i.classList.toggle('chg', i.value.trim() !== '' && +i.value !== x.min); }));
       };
       draw(); $('#rym', bg).onchange = draw; $('[data-n]', bg).onclick = close;
       const done = (r, msg) => { S.rates = r.rates; S.pc = {}; S._mcache = {}; close(); toast(msg); rerender(); };
       $('[data-y]', bg).onclick = async () => {
-        const ym = $('#rym', bg).value, mins = {}, tips = {}; let bad = '';
+        const ym = $('#rym', bg).value, mins = {}, tips = {}, names = {}, hide = []; let bad = '';
         $$('#rbody tr', bg).forEach(tr => {
           const c = tr.dataset.c, x = C.COL[c], v = $('.rm', tr).value.trim(), t = $('.rtp', tr).value.trim();
           if (v !== '') { if (!isFinite(+v)) bad = x.label.replace('\n', ''); else if (+v !== x.min) mins[c] = +v; }
           if (t !== (C.TIPS[c] || '')) tips[c] = t;
+          const nm = $('.rnm', tr); if (nm && nm.value.trim()) names[c] = nm.value.trim();
+          if ($('.rhd', tr).checked) hide.push(c);
         });
         if (bad) return toast(bad + ' : 숫자를 입력하세요', true);
         const n = Object.keys(mins).length;
-        if (!(await confirmBox('<b>' + ymLabel(ym) + '부터</b> 적용합니다.<br>기본값과 다른 항목 <b>' + n + '개</b>' + (Object.keys(tips).length ? ', 설명 변경 ' + Object.keys(tips).length + '개' : '') + '<br><span class="muted">' + ymLabel(ym) + ' 이전 달의 평가는 바뀌지 않습니다.</span>', '저장'))) return;
-        try { done(await api('setRates', { ym, mins, tips }), ymLabel(ym) + '부터 항목 점수를 적용했습니다'); } catch (e) { toast(e.message, true); }
+        if (!(await confirmBox('<b>' + ymLabel(ym) + '부터</b> 적용합니다.<br>기본값과 다른 항목 <b>' + n + '개</b>' + (Object.keys(tips).length ? ', 설명 변경 ' + Object.keys(tips).length + '개' : '') + (Object.keys(names).length ? '<br>새 항목 : <b>' + Object.values(names).map(esc).join(', ') + '</b>' : '') + (hide.length ? '<br>숨김 : <b>' + hide.map(c => esc(C.COL[c].label.replace('\n', ''))).join(', ') + '</b>' : '') + '<br><span class="muted">' + ymLabel(ym) + ' 이전 달의 평가는 바뀌지 않습니다.</span>', '저장'))) return;
+        try { done(await api('setRates', { ym, mins, tips, names, hide }), ymLabel(ym) + '부터 항목 설정을 적용했습니다'); } catch (e) { toast(e.message, true); }
       };
       $('#rdel', bg).onclick = async () => {
         const ym = $('#rym', bg).value;
@@ -7531,13 +7580,14 @@ async function addCharts(buf, jobs) {
     const TGT = {}; D.targets.forEach(([u, ym, t]) => (TGT[u + '|' + ym] = +t || 0));
     const CO = D.cols || [], OT = D.oth || [];
     D.agg.forEach(row => {
-      const [u, ym, wk, dw, n, ra, ta, oa, h7, e4, otc, le2, ln, mgq, mos, mf, mq, z, zh, zu] = row, key = bucket(ym, wk); if (key == null || !users[u]) return;   // mf · mq : v28.9 서버부터 (없으면 0)
+      const [u, ym, wk, dw, n, ra, ta, oa, h7, e4, otc, le2, ln, mgq, mos, mf, mq, z, zh, zu, tya] = row, key = bucket(ym, wk); if (key == null || !users[u]) return;   // mf · mq : v28.9 서버부터 (없으면 0)
       const r10 = {}, t = {}, o = {}; CO.forEach((c, i) => { if (ra[i]) r10[c] = ra[i]; if (ta[i]) t[c] = ta[i]; }); OT.forEach((k, i) => { if (oa[i]) o[k] = oa[i]; });
       const M = mm(ym), id = u + '|' + key;
-      const a = out[id] = out[id] || { u, key, n: 0, c4: 0, d4: 0, z: 0, zh: 0, sumH: 0, av: 0, au: 0, otc: 0, aw: 0, oth: 0, q: 0, mf: 0, mq: 0, r10: {}, rmin: {}, ot: {}, yms: {} };
+      const a = out[id] = out[id] || { u, key, n: 0, c4: 0, d4: 0, z: 0, zh: 0, sumH: 0, av: 0, au: 0, otc: 0, aw: 0, oth: 0, q: 0, ship: 0, ban: 0, mf: 0, mq: 0, r10: {}, rmin: {}, ot: {}, yms: {} };
       a.n += n; a.z += +z || 0; a.zh += +zh || 0; a.mf += +mf || 0; a.mq += +mq || 0; if (dw === 's') a.d4 += n; else a.c4 += n;
       let e2w = (+mgq || 0) * 0.1 + (+mos || 0) / 30;
-      for (const c in r10) { const v = +r10[c] || 0, x = C.COL[c]; if (!x) continue; a.r10[c] = (a.r10[c] || 0) + v; a.rmin[c] = (a.rmin[c] || 0) + v * (M[c] || 0); if (x.kind !== 'type') a.sumH += v * (M[c] || 0) / 30; if (x.kind === 'type') a.q += v; }
+      for (const c in r10) { const v = +r10[c] || 0, x = C.COL[c]; if (!x) continue; a.r10[c] = (a.r10[c] || 0) + v; a.rmin[c] = (a.rmin[c] || 0) + v * (M[c] || 0); if (x.kind !== 'type') a.sumH += v * (M[c] || 0) / 30; if (x.kind === 'type' && !tya) a.q += v; }
+      if (tya) { const TY = D.tys || [], T = {}; TY.forEach((c, i) => (T[c] = +tya[i] || 0)); a.q += C.asmQty(T); a.ship += T.F || 0; a.ban += T.G || 0; }   // v28.24 : 조립수량 = 일반·특수·프리·추천·웍스 (제조 줄 · 출고 · 반조 따로)
       for (const c in t) e2w += (+t[c] || 0) * (M[c] || 0) / 30;
       for (const k in o) { a.ot[k] = (a.ot[k] || 0) + (+o[k] || 0); a.oth += +o[k] || 0; }
       a.av += +h7 || 0; a.au += +e4 || 0; a.otc += +otc || 0;
@@ -7606,7 +7656,7 @@ async function addCharts(buf, jobs) {
     const AK = keys[keys.length - 1], dkey = d => { const k = stDateKey(u, d, D.periods); return V.custom ? (K.has(k) ? 'R' : PK.has(k) ? 'P' : null) : (k === AK ? 'R' : PK.has(k) ? 'P' : null); };
     // 칸별
     const B = {}; keys.concat(['R', 'P']).forEach(k => (B[k] = { k, ps: [], q: 0, mf: 0, mq: 0, n: 0, hist: 0, dates: 0, lv: 0, tr: 0, att: { 지각: 0, 조퇴: 0, 결근: 0, 당일연차: 0 }, r10: {}, rmin: {}, ot: {} }));
-    const addTo = (b, a) => { b.ps.push(a); b.q += a.q; if (a.hist) b.hist++; b.mf += a.mf || 0; b.mq += a.mq || 0; b.n += a.n; for (const c in a.r10) { b.r10[c] = (b.r10[c] || 0) + a.r10[c]; b.rmin[c] = (b.rmin[c] || 0) + a.rmin[c]; } for (const k in a.ot) b.ot[k] = (b.ot[k] || 0) + a.ot[k]; };
+    const addTo = (b, a) => { b.ps.push(a); b.q += a.q; b.ship = (b.ship || 0) + (a.ship || 0); b.ban = (b.ban || 0) + (a.ban || 0); if (a.hist) b.hist++; b.mf += a.mf || 0; b.mq += a.mq || 0; b.n += a.n; for (const c in a.r10) { b.r10[c] = (b.r10[c] || 0) + a.r10[c]; b.rmin[c] = (b.rmin[c] || 0) + a.rmin[c]; } for (const k in a.ot) b.ot[k] = (b.ot[k] || 0) + a.ot[k]; };
     Object.values(per).forEach(a => { if (ok(a) && B[a.key]) addTo(B[a.key], a); });
     Object.values(tot).forEach(a => { if (ok(a) && B[a.key]) addTo(B[a.key], a); });
     if (u !== 'week') {                                                  // v28.13 : 월 마감 자료 달의 근무일 = 사람별 근무일수 중 가장 흔한 값
@@ -7817,7 +7867,7 @@ async function addCharts(buf, jobs) {
     if (show('kpi')) {
       const tgA = R.ev.filter(a => a.tg > 0), tgAvg = tgA.length ? tgA.reduce((s, a) => s + a.tg, 0) / tgA.length : null, att = R.att;
       h += `<div class="stkpis" data-stk="kpi">
-        <div class="card kpi"><span>조립 수량 · ${esc(gl)}</span><b>${fN(R.q)}<small> 대</small></b>${R.mq ? `<i class="mfsplit">주문 ${fN(R.q - R.mq)} · <span class="mfgv">제조 ${fN(R.mq)}</span></i>` : ''}${live ? `<em class="eq live">진행 중</em> <i>${P.q == null ? '' : pv.replace(' 대비', '') + ' 전체 ' + fN(P.q) + '대'}</i>` : dl(R.q, P.q, v => P.q ? (v / P.q * 100).toFixed(1) : fN(v), true, P.q ? '%' : '')}</div>
+        <div class="card kpi"><span>조립 수량 · ${esc(gl)}</span><b>${fN(R.q)}<small> 대</small></b>${R.ship || R.mq || R.ban ? `<i class="mfsplit">${R.ban ? '반조 ' + fN(R.ban) + ' · ' : ''}<span class="shipv">출고 ${fN(R.ship || 0)}</span> · <span class="mfgv">제조 ${fN(R.mq || 0)}</span></i>` : ''}${live ? `<em class="eq live">진행 중</em> <i>${P.q == null ? '' : pv.replace(' 대비', '') + ' 전체 ' + fN(P.q) + '대'}</i>` : dl(R.q, P.q, v => P.q ? (v / P.q * 100).toFixed(1) : fN(v), true, P.q ? '%' : '')}</div>
         <div class="card kpi"><span>일평균 환산수량</span><b>${f1(R.avg)}${tgAvg ? `<small> / 목표 ${f1(tgAvg)}</small>` : ''}</b>${dl(R.avg, P.avg, f1, true)}</div>
         <div class="card kpi"><span title="그 기간 평균이 월 목표의 100% 이상인 인원">목표 100% 이상 인원</span><b>${R.hit == null ? '-' : Math.round(R.hit * 100)}<small>%</small></b>${R.tgN ? `<i>${R.tgN}명 중 ${R.hitN}명</i> ` : ''}${dl(R.hit == null ? null : R.hit * 100, P.hit == null ? null : P.hit * 100, v => v.toFixed(0), true, '%p')}</div>
         <div class="card kpi"><span>일평균 조립수량 <small style="font-weight:500">(1인)</small></span><b>${R.qpp == null ? '-' : (Math.round(R.qpp * 10) / 10).toFixed(1)}<small> 대</small></b>${dl(R.qpp, P.qpp, f1, true)}</div>
@@ -7829,8 +7879,8 @@ async function addCharts(buf, jobs) {
       const nm = { q: '조립 수량', avg: '평균 환산', ppd: '근무 인원 (하루 평균)' }[tm];
       cards.push(stCard('trend', wide, `<div class="sthd"><div><h3>${nm} 추이 · ${esc(gl)}</h3><div class="cap">${keys.length}개 ${STU.find(x => x[0] === u)[1]} · ${V.custom ? '' : '기준 기간 진하게 · '}막대에 마우스를 올리면 숫자${tm === 'q' && keys.some(k => B[k].mq) ? ' · <span class="mflg">■</span> 보라 = 제조' : ''}${keys.some(k => B[k].hist) ? ' · <span class="hilg">▭</span> 점선 = 월 마감 자료' : ''}</div></div><span class="sp"></span>
         <div class="seg sm2">${[['q', '수량'], ['avg', '평균 환산'], ['ppd', '근무 인원']].map(([k, t]) => `<button data-tm="${k}" class="${tm === k ? 'on' : ''}">${t}</button>`).join('')}</div></div>
-        ${stBars(wide ? W : Wh, one ? 420 : 250, vals, labs, { hi: V.custom ? -1 : AK, dec: tm !== 'q', line: tm === 'avg' ? tgv : 0, all: one && keys.length <= 16, unit: tm === 'q' ? '대' : '', hist: keys.map(k => B[k].hist > 0), sub: tm === 'q' && keys.some(k => B[k].mq) ? keys.map(k => B[k].mq) : null })}
-        ${one ? `<table class="list sttbl"><thead><tr><th>기간</th><th class="num">조립 수량</th>${keys.some(k => B[k].mq) ? '<th class="num mfgv">그중 제조</th>' : ''}<th class="num">평균 환산</th><th class="num">평가 인원</th><th class="num">근무 인원(하루)</th><th class="num">목표 달성</th></tr></thead><tbody>${keys.map((k, i) => `<tr><td>${labsL[i]}</td><td class="num">${fN(B[k].q)}</td>${keys.some(k2 => B[k2].mq) ? `<td class="num mfgv">${B[k].mq ? fN(B[k].mq) : ''}</td>` : ''}<td class="num">${f1(B[k].avg)}</td><td class="num">${B[k].ev.length}</td><td class="num">${f1(B[k].ppd)}</td><td class="num">${B[k].hit == null ? '-' : Math.round(B[k].hit * 100) + '%'}</td></tr>`).reverse().join('')}</tbody></table>` : ''}`));
+        ${stBars(wide ? W : Wh, one ? 420 : 250, vals, labs, { hi: V.custom ? -1 : AK, dec: tm !== 'q', line: tm === 'avg' ? tgv : 0, all: one && keys.length <= 16, unit: tm === 'q' ? '대' : '', hist: keys.map(k => B[k].hist > 0), sub: null })}
+        ${one ? `<table class="list sttbl"><thead><tr><th>기간</th><th class="num">조립 수량</th>${keys.some(k => B[k].mq) ? '<th class="num mfgv">제조</th>' : ''}<th class="num">평균 환산</th><th class="num">평가 인원</th><th class="num">근무 인원(하루)</th><th class="num">목표 달성</th></tr></thead><tbody>${keys.map((k, i) => `<tr><td>${labsL[i]}</td><td class="num">${fN(B[k].q)}</td>${keys.some(k2 => B[k2].mq) ? `<td class="num mfgv">${B[k].mq ? fN(B[k].mq) : ''}</td>` : ''}<td class="num">${f1(B[k].avg)}</td><td class="num">${B[k].ev.length}</td><td class="num">${f1(B[k].ppd)}</td><td class="num">${B[k].hit == null ? '-' : Math.round(B[k].hit * 100) + '%'}</td></tr>`).reverse().join('')}</tbody></table>` : ''}`));
     }
     if (show('cmp')) {
       const rows = gs.map(g => ({ g, v: R.byG[g].avg, t: R.byG[g].tg, n: R.byG[g].n, hc: R.byG[g].hc, d: R.byG[g].avg != null && P.byG[g].avg != null ? R.byG[g].avg - P.byG[g].avg : null })).sort((a, b) => (b.v == null ? -1 : b.v) - (a.v == null ? -1 : a.v));
@@ -7924,7 +7974,7 @@ async function addCharts(buf, jobs) {
     const rk = a => { const G = L.filter(x => x.key === a.key && x.grp === a.grp && x.n >= minD && x.f7 > 0 && x.grp !== '팀장').sort((x, y) => y.f7 - x.f7); const i = G.findIndex(x => x.u === uid); return i < 0 ? null : [i + 1, G.length]; };
     const labs = me.map(a => (+a.key.slice(5)) + '월');
     const att = {}; (D.att || []).filter(r => normName(r[0]) === normName(last.name)).forEach(r => { const k = stDateKey('month', r[1], D.periods) || r[1].slice(0, 7); att[k] = att[k] || {}; att[k][r[2]] = (att[k][r[2]] || 0) + 1; });
-    const M = C.minsMap(minsYm(last.key)), gk = c => (C.GROUPS.find(g => colIdx(c) >= colIdx(g[1]) && colIdx(c) <= colIdx(g[2])) || [''])[0];
+    const M = C.minsMap(minsYm(last.key)), gk = c => (C.GROUPS.find(g => colPos(c) >= colPos(g[1]) && colPos(c) <= colPos(g[2])) || [''])[0];
     const mix = {}; let mt = 0; Object.entries(last.r10 || {}).forEach(([c, v]) => { const x = C.COL[c]; if (!x || x.kind === 'type' || x.kind === 'ship') return; const g = gk(c), m = v * (M[c] || 0); mix[g] = (mix[g] || 0) + m; mt += m; });
     const MC = ['#2563eb', '#0891b2', '#7c3aed', '#db2777', '#a16207', '#16a34a', '#ea580c', '#64748b', '#0f766e'];
     const mixH = mt ? `<div class="pmix">${Object.entries(mix).sort((a, b) => b[1] - a[1]).map(([g, m], i) => `<i style="flex:${m};background:${MC[i % MC.length]}" title="${esc(g)} ${Math.round(m / mt * 100)}%"></i>`).join('')}</div>
@@ -7933,7 +7983,7 @@ async function addCharts(buf, jobs) {
     modal(`<div class="dhd"><div><h3>${esc(last.name)} <span class="muted" style="font-size:14px;font-weight:600">${gdot(last.grp)}${last.title ? ' · ' + esc(last.title) : ''}</span></h3>
         <span class="muted">${esc(labs[labs.length - 1])} 기준 · 일평균 환산 <b>${f1(last.f7)}</b>${last.tg ? ' / 목표 ' + f1(last.tg) : ''}${r0 ? ' · 그룹 안 ' + r0[0] + '위 / ' + r0[1] + '명' : ''}</span></div><button data-n>닫기</button></div>
       <div class="pgrid"><div><div class="sub">일평균 환산 (선 = 목표)</div>${stBars(420, 190, me.map(a => a.f7 || null), labs, { hi: me.length - 1, dec: true, line: last.tg || 0, all: me.length <= 12, hist: me.map(a => !!a.hist) })}</div>
-        <div><div class="sub">조립 수량 (대)</div>${stBars(420, 190, me.map(a => a.q || null), labs, { hi: me.length - 1, all: me.length <= 12, unit: '대', hist: me.map(a => !!a.hist), sub: me.some(a => a.mq) ? me.map(a => a.mq || 0) : null })}</div></div>
+        <div><div class="sub">조립 수량 (대)</div>${stBars(420, 190, me.map(a => a.q || null), labs, { hi: me.length - 1, all: me.length <= 12, unit: '대', hist: me.map(a => !!a.hist), sub: null })}</div></div>
       <div class="sub" style="margin-top:6px">업무 종류 비중 · ${esc(labs[labs.length - 1])} (환산 시간 기준 · 조립 구분 · 운송 제외)</div>${mixH}
       <div style="max-height:34vh;overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:10px"><table class="list sttbl"><thead><tr><th>달</th><th class="num">일평균 환산</th><th class="num">목표</th><th class="num">달성률</th><th class="num">일평균 조립</th><th class="num">조립 수량</th><th class="num">근무일</th><th class="num">그룹 안 순위</th><th>근태</th></tr></thead><tbody>
         ${me.slice().reverse().map(a => { const r = rk(a), t = att[a.key] || {}; return `<tr><td>${esc((+a.key.slice(5)) + '월')}${a.hist ? ' <span class="hmk" title="월 마감 자료">월</span>' : ''}</td><td class="num"><b>${f1(a.f7)}</b></td><td class="num">${a.tg ? f1(a.tg) : '-'}</td><td class="num ${a.c8 == null ? '' : a.c8 >= 1 ? 'up' : 'dn'}">${a.c8 == null ? '-' : Math.round(a.c8 * 100) + '%'}</td>
@@ -7958,7 +8008,7 @@ async function addCharts(buf, jobs) {
     api('daily', { date: '' }).then(r => { const D = ddModel(r), dd = r.date;
       const k = (l, v, sm) => `<div><i>${l}</i><b>${v}</b>${sm ? `<small>${sm}</small>` : ''}</div>`;
       put('rb_d', `<div class="rokpi"><div class="rkd">${esc(dLabel(dd))} 기준</div>${k('출근', (D.total - D.off.length) + '<em> / ' + D.total + '명</em>')}${k('조립 인원', D.work.length + '<em>명</em>', D.tw.length ? '목표 달성 ' + D.hit + '명' : '')}
-        ${k('조립 수량', D.sumQ + '<em>개</em>', D.sumMQ ? '그중 제조 ' + D.sumMQ + '대' : '')}${k('평균 환산', D.work.length ? f1d(D.sumV / D.work.length) : '-', D.tgAvg ? '목표 ' + f1d(D.tgAvg) : '')}</div>`);
+        ${k('조립 수량', D.sumQ + '<em>개</em>', '출고 ' + D.sumShip + ' · 제조 ' + D.sumMQ)}${k('평균 환산', D.work.length ? f1d(D.sumV / D.work.length) : '-', D.tgAvg ? '목표 ' + f1d(D.tgAvg) : '')}</div>`);
       put('rb_l', `<span>${esc(dLabel(dd))} 휴무 ${D.off.length}명</span>`); }).catch(() => { put('rb_d', ''); put('rb_l', ''); });
     api('people').then(P => { S._ppl = P; const rows = P.rows, gs = new Set(rows.map(x => x.grp).filter(Boolean));
       put('rb_p', `<span>명단 ${rows.length}명</span><span>등록 ${rows.filter(x => x.acct).length}</span>`); put('rb_o', `<span>${gs.size}개 그룹</span>`); }).catch(() => { put('rb_p', ''); put('rb_o', ''); });
