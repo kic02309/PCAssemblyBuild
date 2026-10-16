@@ -7136,7 +7136,11 @@ async function addCharts(buf, jobs) {
         <span class="muted">${ymLabel(xym)} 목표 · 적용 후 사람별로 수정 가능</span><span style="flex:1"></span><button class="sm" id="gtx">닫기</button></div>` : ''}
       <div id="mbody"></div></div>`;
     }
+    if (!r) html = `<div class="ph"><h1>월 업무현황</h1></div><div class="card" style="padding:28px;line-height:1.9;max-width:720px"><b style="font-size:16px">열린 귀속월이 없습니다</b><br>
+      <span class="muted">데이터 초기화로 귀속월 기간도 함께 지워졌습니다. 귀속월을 열면 인원 목록이 다시 나옵니다.</span>
+      <div class="row" style="gap:8px;margin-top:12px">${canSetPage() && !isRO() ? '<button class="primary" id="mgoset">기간 · 백업 · 설정에서 귀속월 열기</button>' : ''}<button id="mrange">날짜로 직접 보기</button></div></div>`;   // v28.28 : 귀속월 없을 때 빈 화면 대신 안내
     main.innerHTML = html; bindDailyTabs();
+    if (!r) { if ($('#mgoset')) $('#mgoset').onclick = () => go('settings'); $('#mrange').onclick = () => { S.mMode = 'range'; renderManage(); }; }
     if (r) {
       const xym = r.period ? r.period.ym : null;
       if (S.mView === 'board') renderBoard(r); else renderMList(r);
