@@ -2163,14 +2163,24 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     function sortWeek(w) {
       lists[w].sort((a, b) => { const A = byId[a] || {}, B = byId[b] || {}; return (sortRank(A.grade) - sortRank(B.grade)) || binCmp(A.name || '', B.name || ''); });
     }
-    function assignOne(w) {
-      lists[w] = [];
+    function assignOne(w, keep) {                                       // v28.34 : keep = 고정 인원 (연차 → 토요 대체) · 그 사람들이 차지한 칸은 빼고 나머지만 뽑음
+      lists[w] = (keep || []).slice();
       const used = usedMonth(w), mgr = managerRotation(); let mp = 0;
-      let staffSlots = slotRows.filter(x => x === '사원').length, dNeed = Math.min(dSlotsThisWeek(w), staffSlots), staffIdx = 0;
+      lists[w].forEach(id => used.add(id));
+      const taken = slotRows.map(() => false); let keptD = 0;
+      lists[w].forEach(id => {
+        const r = byId[id], g = r ? gradeGroup(r.grade) : '';
+        if (r && isLast(r.grade)) keptD++;
+        let i = slotRows.findIndex((need, k) => need && !taken[k] && need !== '사원' && fitsSlot(g, need));
+        if (i < 0) i = slotRows.findIndex((need, k) => need && !taken[k] && need === '사원' && (fitsSlot(g, need) || !g));
+        if (i < 0) i = slotRows.findIndex((need, k) => need && !taken[k]);
+        if (i >= 0) taken[i] = true;
+      });
+      let staffSlots = slotRows.filter((x, k) => x === '사원' && !taken[k]).length, dNeed = Math.max(0, Math.min(dSlotsThisWeek(w) - keptD, staffSlots)), staffIdx = 0;
       const short = [];
       for (let pass = 1; pass <= 2; pass++) {
-        slotRows.forEach(need => {
-          if (!need) return;
+        slotRows.forEach((need, k) => {
+          if (!need || taken[k]) return;
           if (!((pass === 1 && need !== '사원') || (pass === 2 && need === '사원'))) return;
           let pick = null;
           if (need === '매니저') {
@@ -2905,7 +2915,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const okAt = c => {                                         // 이 칸에 놓을 수 있나
       if (!src) return false;
       const x = c.dataset.d, w2 = c.dataset.sat;
-      if (src.k === 'l' && w2) return !src.l.h && !src.l.t && !isPend(src.l) && satCands(src.day).includes(w2);   // v28.32 : 토요일 칸 = 토요 대체
+      if (src.k === 'l' && w2) return !src.l.h && !src.l.t && !LC.leaveKind(src.l) && !isPend(src.l) && satCands(src.day).includes(w2);   // v28.32 : 토요일 칸 = 토요 대체
       if (src.k === 'l') { if (!x || x === src.l.d1 || !isW(x) || !open(x)) return false; const e = src.l.h ? x : span(x, src.n); return open(e) && !hasLeave(src.l.s, x, e, src.l.id); }
       if (src.k === 'a') return !!x && x !== src.a && altIn(src.w, x) && !hasLeave(src.s, x, x);
       if (src.k === 's') { if (x) return altIn(src.w, x) && !hasLeave(src.s, x, x);
@@ -2953,6 +2963,17 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   // ------------------------------------------------------------ v28.32 : 연차 → 토요근무 대체 (연차일 = 대체휴무) · 되돌리기
+  const fixedOf = w => (D().leaves || []).filter(l => l.st === '대체' && l.as === w).map(l => l.s);   // v28.34 : 그 토요일 고정 인원 (연차 → 토요 대체)
+  // 한 주 빈자리 채우기 : keep 은 그대로 두고 남은 칸만 규칙대로 뽑음 (대체휴무 날짜는 유지)
+  async function fillWeek(w, keep) {
+    const d = D(), ym = LC.ymOf(w), weeks = batchDates(ym).includes(w) ? batchDates(ym) : [w];
+    const roster = d.staff.filter(x => x.roster), old = {}; (L.ix.duty[w] || []).forEach(u => (old[u.s] = u.a));
+    const as = LC.makeAssigner({ roster, slots: kv().slots || [], weeks, lists: Object.fromEntries(weeks.map(x => [x, x === w ? keep : (L.ix.duty[x] || []).map(u => u.s)])), score: cumScore(weeks) });
+    const r = as.assignOne(w, keep);
+    d.duty = d.duty.filter(u => u.d !== w).concat(as.lists[w].map((id, i) => ({ d: w, s: id, o: i, a: old[id] || null }))); reindex();
+    await A.api('lvSetDuty', { days: [{ d: w, list: (L.ix.duty[w] || []).map(u => ({ s: u.s, a: u.a || '' })) }] });
+    return { added: as.lists[w].filter(id => !keep.includes(id)), short: r.short };
+  }
   const convMap = () => { const m = {}; (D().leaves || []).forEach(l => { if (l.st === '대체' && l.as) m[l.as + '|' + l.s] = l; }); return m; };
   const open1 = l => !isClosed(LC.ymOf(l.d1)) && !isClosed(LC.ymOf(l.d2));
   // 그 날을 대체휴무로 할 수 있는 토요일 (토요일 -5일 ~ +8일 · 공휴일 · 마감 달 빼고) : 전 주 토요일이 먼저
@@ -2969,8 +2990,17 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       + (l.d1 !== l.d2 ? `<br><span class="muted">여러 날 연차라 ${md(day)} 하루만 바뀌고 나머지는 연차로 남습니다.</span>` : '')
       + '<br><span class="muted">연차 기록은 "토요 대체"로 남고, 언제든 원래 연차로 되돌릴 수 있습니다.</span>';
     if (!(await A.confirmBox(msg, '토요 대체'))) return false;
-    try { await A.api('lvSatAlt', { id: l.id, day, sat }); await load(L.year, true); draw(); A.toast(s.name + ' ' + md(day) + ' 연차 → ' + md(sat) + ' 토요 대체'); return true; }
+    try { await A.api('lvSatAlt', { id: l.id, day, sat }); await load(L.year, true); A.toast(s.name + ' ' + md(day) + ' 연차 → ' + md(sat) + ' 토요 대체'); }
     catch (e) { A.toast(e.message, true); return false; }
+    // v28.34 : 한 달 한 번 — 같은 달 다른 토요일에도 근무가 있으면 빼고 그 자리를 다시 채울지
+    const other = (D().duty || []).filter(u => u.s === l.s && u.d !== sat && LC.ymOf(u.d) === LC.ymOf(sat) && !fixedOf(u.d).includes(l.s) && !isClosed(LC.ymOf(u.d)));
+    for (const u of other) {
+      if (!(await A.confirmBox(`<b>${A.esc(s.name || '')}</b>은(는) 같은 달 <b>${mdw(u.d)}</b>에도 토요근무가 있습니다.<br>한 달 한 번이 되도록 <b>${md(u.d)}에서 빼고, 그 자리는 규칙대로 다른 사람으로 채울까요?</b><br><span class="muted">${md(u.d)} 인원 수는 그대로 유지됩니다.</span>`, '빼고 채우기', '그대로 두기'))) continue;
+      try { const r = await fillWeek(u.d, (L.ix.duty[u.d] || []).map(x => x.s).filter(id => id !== l.s));
+        A.toast(md(u.d) + ' : ' + s.name + ' 빠짐' + (r.added.length ? ' → ' + r.added.map(id => (staffById(id) || {}).name).join(', ') + ' 채움' : ' (채울 사람 없음)'), !r.added.length); }
+      catch (e) { A.toast(e.message, true); await load(L.year, true); }
+    }
+    draw(); return true;
   }
   function satPick(l) {                                                  // [토요근무로 대체] : 날짜 · 토요일 고르기
     const H = L.ix.H, days = []; for (let t = l.d1; t <= l.d2; t = LC.addDays(t, 1)) if (LC.isWork(t, H) && !isClosed(LC.ymOf(t))) days.push(t);
@@ -2989,12 +3019,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
   function overModal(day, pf) {                                          // 상한 넘은 날 : 그날 연차자 → 토요 대체
     const c = LC.dayCell(L.ix, day), cap = capOf(day), cands = satCands(day), sat0 = cands[0];
-    const list = c.lv.filter(x => pf(x.s) && !x.l.h && !x.l.t && !isPend(x.l) && open1(x.l));
+    const list = c.lv.filter(x => pf(x.s) && !x.l.h && !x.l.t && !LC.leaveKind(x.l) && !isPend(x.l) && open1(x.l));   // 경조 · 병가는 연차가 아니라 제외
     A.modal(`<h3>${mdw(day)} 휴무 ${c.off}${cap ? '/' + cap : ''} <span class="muted" style="font-size:13px;font-weight:500">상한보다 ${Math.max(0, c.off - cap)}명 많음</span></h3>
       <div class="muted" style="margin-bottom:8px">연차자를 토요근무로 돌리면 ${md(day)}은 대체휴무가 되어 연차 일수에서 빠집니다.${sat0 ? ` 기본 = <b>${mdw(sat0)}</b> (지금 ${satN(sat0)}명)` : ''}</div>
       ${sat0 ? '' : '<div class="banner warn" style="margin-bottom:8px">이 날은 고를 수 있는 토요일이 없습니다 (대체휴무는 토요일 -5일 ~ +8일 · 공휴일 · 마감된 달 제외)</div>'}
       <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>사유</th><th></th></tr></thead><tbody>
-      ${list.map(x => `<tr><td><b>${A.esc(x.s.name)}</b></td><td>${A.esc(x.s.grp || '')}</td><td class="muted">${A.esc(x.l.r || '')}</td><td style="white-space:nowrap">${cands.slice(0, 2).map((t, i) => `<button class="sm${i === 0 ? ' primary' : ''}" data-cv="${x.l.id}|${t}">${md(t)} 토요 대체</button>`).join(' ')}</td></tr>`).join('') || '<tr><td colspan="4" class="muted" style="padding:14px">바꿀 수 있는 연차가 없습니다 (반차 · 훈련 · 확인 전 신청 제외)</td></tr>'}</tbody></table>
+      ${list.map(x => `<tr><td><b>${A.esc(x.s.name)}</b></td><td>${A.esc(x.s.grp || '')}</td><td class="muted">${A.esc(x.l.r || '')}</td><td style="white-space:nowrap">${cands.slice(0, 2).map((t, i) => `<button class="sm${i === 0 ? ' primary' : ''}" data-cv="${x.l.id}|${t}">${md(t)} 토요 대체</button>`).join(' ')}</td></tr>`).join('') || '<tr><td colspan="4" class="muted" style="padding:14px">바꿀 수 있는 연차가 없습니다 (반차 · 훈련 · 경조 · 병가 · 확인 전 신청 제외)</td></tr>'}</tbody></table>
       <div class="acts"><button data-n>닫기</button></div>`, (bg, close) => {
       A.$('[data-n]', bg).onclick = close;
       A.$$('[data-cv]', bg).forEach(b => (b.onclick = async () => { const [id, t] = b.dataset.cv.split('|'), l = D().leaves.find(z => z.id === id); if (l && await convertLeave(l, day, t)) { close(); if (LC.dayCell(L.ix, day).off > cap) overModal(day, pf); } }));
@@ -3237,7 +3267,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <label class="lvchk"><input type="checkbox" id="lvtr" ${ed && ed.t ? 'checked' : ''}> 훈련 (달력에 <b>이름(훈)</b> 으로 표시)</label>
       ${ed ? `<div class="fld" style="margin-top:6px"><label>조정 메모 <span class="muted">(변경 이유 · 인원에게 보임)</span></label><input id="lvnote" value="${A.esc(ed.n || '')}" maxlength="200" placeholder="예) 11/6 인원 많아 11/9 로 조정"></div>` : ''}
       <div id="lvinfo" class="lvinfo"></div>
-      <div class="acts" style="justify-content:space-between"><div style="display:flex;gap:8px">${ed ? '<button class="danger" data-del>삭제</button>' : ''}${ed && !ed.h && !ed.t && open1(ed) ? '<button data-sa title="그 주 토요일 근무로 바꾸고 연차일은 대체휴무">↺ 토요근무로 대체</button>' : ''}</div><div style="display:flex;gap:8px"><button data-n>취소</button>${ed && st !== '확정' ? '<button data-yc>저장 + 확정</button>' : ''}<button class="primary" data-y>저장</button></div></div>`, (bg, close) => {
+      <div class="acts" style="justify-content:space-between"><div style="display:flex;gap:8px">${ed ? '<button class="danger" data-del>삭제</button>' : ''}${ed && !ed.h && !ed.t && !LC.leaveKind(ed) && open1(ed) ? '<button data-sa title="그 주 토요일 근무로 바꾸고 연차일은 대체휴무">↺ 토요근무로 대체</button>' : ''}</div><div style="display:flex;gap:8px"><button data-n>취소</button>${ed && st !== '확정' ? '<button data-yc>저장 + 확정</button>' : ''}<button class="primary" data-y>저장</button></div></div>`, (bg, close) => {
       const $ = s => A.$(s, bg);
       const drawPick = () => {
         $('#lvpk').innerHTML = picked.map(id => { const s = staffById(id) || {}; return `<span class="lc big">${A.esc(s.name || '?')} <small>${A.esc(s.grp || '')}</small>${ed ? '' : `<b data-rm="${id}">✕</b>`}</span>`; }).join('') || '<span class="muted">이름을 입력하세요</span>';
@@ -3505,13 +3535,15 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       }
       return o;
     };
+    const slotN = ((kv().slots || []).filter(Boolean)).length;
     const col = w => {
-      const list = (L.ix.duty[w] || []);
+      const list = (L.ix.duty[w] || []), fx = fixedOf(w);
       return `<div class="card lvsc${L.satFocus === w ? ' focus' : ''}" data-w="${w}"><div class="lvst"><b>${mdw(w)}</b> <span class="muted">${list.length}명</span>
-        ${can ? `<span style="flex:1"></span><button data-re="${w}" title="이 주만 규칙대로 다시 뽑기">다시 뽑기</button><button data-clr="${w}">비우기</button>` : ''}</div>
+        ${fx.length ? `<span class="lst alt" title="연차 → 토요 대체 인원은 고정 (다시 뽑아도 남음)">고정 ${fx.length}명</span>` : ''}
+        ${can ? `<span style="flex:1"></span>${list.length < slotN ? `<button class="primary" data-fill="${w}" title="지금 명단은 두고 빈자리만 채우기">빈자리 ${slotN - list.length} 채우기</button>` : ''}<button data-re="${w}" title="이 주만 규칙대로 다시 뽑기 (고정 인원은 남음)">다시 뽑기</button><button data-clr="${w}">비우기</button>` : ''}</div>
         <div class="lvsl">${list.map(u => { const s = staffById(u.s) || {}, n = cnt[u.s] || 0, ps = pendSw.find(x => x.s === u.s && x.d === w); return `<div class="lvsr" data-s="${u.s}"><span class="gb g-${A.esc(s.grade || '')}">${A.esc(s.grade || '-')}</span>
-          <b class="${n >= 3 ? 'c3' : n === 2 ? 'c2' : ''}${isMgr(s.name) ? ' mgrt' : ''}" title="이 묶음 ${n}회 · 올해 누적 ${sc[u.s] || 0}회">${A.esc(s.name || '?')}</b><small class="muted">${A.esc(s.grp || '')}</small>${ps ? `<span class="lst mgr" title="${A.esc(swapText(ps))}">바꾸기 요청</span>` : ''}
-          ${can ? `<select class="alt" data-w="${w}" data-s="${u.s}">${altOpts(w, u.a)}</select><b class="x" data-w="${w}" data-s="${u.s}">✕</b>` : (u.a ? `<span class="muted">→ ${mdw(u.a)}</span>` : '')}</div>`; }).join('') || '<div class="muted" style="padding:10px">비어 있음</div>'}</div>
+          <b class="${n >= 3 ? 'c3' : n === 2 ? 'c2' : ''}${isMgr(s.name) ? ' mgrt' : ''}" title="이 묶음 ${n}회 · 올해 누적 ${sc[u.s] || 0}회">${A.esc(s.name || '?')}</b>${fx.includes(u.s) ? '<span class="lst alt" title="연차 → 토요 대체 (고정)">↺ 대체</span>' : ''}<small class="muted">${A.esc(s.grp || '')}</small>${ps ? `<span class="lst mgr" title="${A.esc(swapText(ps))}">바꾸기 요청</span>` : ''}
+          ${can ? `<select class="alt" data-w="${w}" data-s="${u.s}" ${fx.includes(u.s) ? 'disabled title="대체휴무 = 원래 연차일 (바꾸려면 달력에서 되돌리기)"' : ''}>${altOpts(w, u.a)}</select><b class="x" data-w="${w}" data-s="${u.s}">✕</b>` : (u.a ? `<span class="muted">→ ${mdw(u.a)}</span>` : '')}</div>`; }).join('') || '<div class="muted" style="padding:10px">비어 있음</div>'}</div>
         ${can ? `<div class="lvsa"><input list="lvsn" data-add="${w}" placeholder="+ 이름 추가 (매니저·번외 등)"></div>` : ''}</div>`;
     };
     const around = []; for (let k = -1; k <= LC.monthSaturdays(L.ym).length; k++) { const base = LC.monthSaturdays(L.ym)[0] || LC.monthFirst(L.ym); around.push(LC.addDays(base, 7 * k)); }
@@ -3534,8 +3566,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       reindex(); drawSat();
     };
     const setList = (w, ids, keepAlt) => {
-      const old = {}; (L.ix.duty[w] || []).forEach(u => (old[u.s] = u.a));
-      d.duty = d.duty.filter(u => u.d !== w).concat(ids.map((id, i) => ({ d: w, s: id, o: i, a: keepAlt ? old[id] || null : null })));
+      const old = {}, fx = fixedOf(w); (L.ix.duty[w] || []).forEach(u => (old[u.s] = u.a));
+      d.duty = d.duty.filter(u => u.d !== w).concat(ids.map((id, i) => ({ d: w, s: id, o: i, a: keepAlt || fx.includes(id) ? old[id] || null : null })));   // 고정 인원 대체휴무는 늘 유지
       reindex();
     };
     A.$$('[data-bd]').forEach(c => (c.onchange = async () => {
@@ -3544,12 +3576,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       try { await A.api('lvSetKv', { k: 'batches', v: b }); d.kv.batches = b; drawSat(); } catch (e) { A.toast(e.message, true); }
     }));
     const run = async all => {
-      const lists = Object.fromEntries(weeks.map(w => [w, all ? [] : (L.ix.duty[w] || []).map(u => u.s)]));
+      const lists = Object.fromEntries(weeks.map(w => [w, all ? fixedOf(w) : (L.ix.duty[w] || []).map(u => u.s)]));
       const as = LC.makeAssigner({ roster, slots: kv().slots || [], weeks, lists, score: cumScore(weeks) });
-      const todo = all ? weeks : weeks.filter(w => !lists[w].length);
+      const todo = all ? weeks : weeks.filter(w => !lists[w].filter(id => !fixedOf(w).includes(id)).length);   // 고정 인원만 있는 주 = 빈 주
       if (!todo.length) return A.toast('빈 주가 없습니다. [전체 다시 배정]이나 [다시 뽑기]를 쓰세요', true);
       if (!(await A.confirmBox((all ? '이 묶음의 <b>모든 주를 지우고</b> 처음부터 다시 뽑습니다.' : '빈 주 ' + todo.length + '개를 배정합니다.') + '<br><span class="muted">등급·그룹 고르게 · 올해 적게 한 사람 우선</span>', '배정'))) return;
-      const res = todo.map(w => as.assignOne(w));
+      const res = todo.map(w => as.assignOne(w, fixedOf(w)));
       todo.forEach(w => setList(w, as.lists[w], false));
       const short = res.filter(r => r.short.length);
       A.toast(todo.length + '주 배정' + (short.length ? ' · 후보 부족 ' + short.map(r => md(r.week)).join(',') : ''), !!short.length);
@@ -3558,14 +3590,17 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     A.$('#lvaN').onclick = () => run(false); A.$('#lvaA').onclick = () => run(true);
     A.$$('[data-re]').forEach(b => (b.onclick = async () => {
       const w = b.dataset.re;
-      if ((L.ix.duty[w] || []).length && !(await A.confirmBox(mdw(w) + ' 명단을 지우고 다시 뽑습니다.<br><span class="muted">직접 넣은 사람과 대체휴무도 지워집니다.</span>', '다시 뽑기'))) return;
+      if ((L.ix.duty[w] || []).length && !(await A.confirmBox(mdw(w) + ' 명단을 지우고 다시 뽑습니다.<br><span class="muted">직접 넣은 사람과 대체휴무도 지워집니다.' + (fixedOf(w).length ? ' (↺ 토요 대체 ' + fixedOf(w).length + '명은 그대로 남음)' : '') + '</span>', '다시 뽑기'))) return;
       const as = LC.makeAssigner({ roster, slots: kv().slots || [], weeks, lists: Object.fromEntries(weeks.map(x => [x, (L.ix.duty[x] || []).map(u => u.s)])), score: cumScore(weeks) });
-      const r = as.assignOne(w); setList(w, as.lists[w], false);
+      const r = as.assignOne(w, fixedOf(w)); setList(w, as.lists[w], false);
       if (r.short.length) A.toast('후보 부족 : ' + r.short.join(','), true);
       await save([w]);
     }));
-    A.$$('[data-clr]').forEach(b => (b.onclick = async () => { if (!(await A.confirmBox(mdw(b.dataset.clr) + ' 명단을 모두 지울까요?', '비우기'))) return; setList(b.dataset.clr, [], false); await save([b.dataset.clr]); }));
-    A.$$('.lvsr .x').forEach(x => (x.onclick = async () => { const w = x.dataset.w; setList(w, (L.ix.duty[w] || []).map(u => u.s).filter(id => id !== x.dataset.s), true); await save([w]); }));
+    A.$$('[data-clr]').forEach(b => (b.onclick = async () => { const fx = fixedOf(b.dataset.clr); if (!(await A.confirmBox(mdw(b.dataset.clr) + ' 명단을 모두 지울까요?' + (fx.length ? '<br><span class="muted">↺ 토요 대체 ' + fx.length + '명은 남습니다.</span>' : ''), '비우기'))) return; setList(b.dataset.clr, fx, false); await save([b.dataset.clr]); }));
+    A.$$('[data-fill]').forEach(b => (b.onclick = async () => { const w = b.dataset.fill; try { const r = await fillWeek(w, (L.ix.duty[w] || []).map(u => u.s)); A.toast(md(w) + ' 빈자리 ' + r.added.length + '명 채움' + (r.short.length ? ' · 후보 부족 ' + r.short.join(',') : ''), !!r.short.length); } catch (e) { A.toast(e.message, true); await load(L.year, true); } drawSat(); }));
+    A.$$('.lvsr .x').forEach(x => (x.onclick = async () => { const w = x.dataset.w;
+      if (fixedOf(w).includes(x.dataset.s)) { const lv = (d.leaves || []).find(l => l.st === '대체' && l.as === w && l.s === x.dataset.s); if (lv) altInfo(lv); return; }   /* v28.34 : 고정 인원 = 되돌리기로만 */
+      setList(w, (L.ix.duty[w] || []).map(u => u.s).filter(id => id !== x.dataset.s), true); await save([w]); }));
     A.$$('select.alt').forEach(sel => (sel.onchange = async () => {
       const u = d.duty.find(x => x.d === sel.dataset.w && x.s === sel.dataset.s); if (!u) return;
       u.a = sel.value || null;
