@@ -3028,7 +3028,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       <div class="acts"><button data-n>닫기</button></div>`, (bg, close) => {
       A.$('[data-n]', bg).onclick = close;
       A.$$('[data-cv]', bg).forEach(b => (b.onclick = async () => { const [id, t] = b.dataset.cv.split('|'), l = D().leaves.find(z => z.id === id); if (l && await convertLeave(l, day, t)) { close(); if (LC.dayCell(L.ix, day).off > cap) overModal(day, pf); } }));
-    }, 'lg');
+    }, 'otm');
   }
   function altInfo(l) {                                                  // 토요 대체된 연차 보기 · 되돌리기
     const d = D(), s = staffById(l.s) || {}, can = d.canEdit && open1(l) && !isClosed(LC.ymOf(l.as)), past = l.as < A.S.today;
@@ -3538,9 +3538,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const slotN = ((kv().slots || []).filter(Boolean)).length;
     const col = w => {
       const list = (L.ix.duty[w] || []), fx = fixedOf(w);
-      return `<div class="card lvsc${L.satFocus === w ? ' focus' : ''}" data-w="${w}"><div class="lvst"><b>${mdw(w)}</b> <span class="muted">${list.length}명</span>
+      return `<div class="card lvsc${L.satFocus === w ? ' focus' : ''}" data-w="${w}"><div class="lvst"><b>${mdw(w)}</b> <span class="muted">${list.length}명</span>${H[w] ? ` <span class="lst" style="color:var(--bad,#c33)" title="공휴일 토요일 : 보통 근무 없음">${A.esc(H[w])}</span>` : ''}
         ${fx.length ? `<span class="lst alt" title="연차 → 토요 대체 인원은 고정 (다시 뽑아도 남음)">고정 ${fx.length}명</span>` : ''}
-        ${can ? `<span style="flex:1"></span>${list.length < slotN ? `<button class="primary" data-fill="${w}" title="지금 명단은 두고 빈자리만 채우기">빈자리 ${slotN - list.length} 채우기</button>` : ''}<button data-re="${w}" title="이 주만 규칙대로 다시 뽑기 (고정 인원은 남음)">다시 뽑기</button><button data-clr="${w}">비우기</button>` : ''}</div>
+        ${can ? `<span style="flex:1"></span>${list.length < slotN && !H[w] ? `<button class="primary" data-fill="${w}" title="지금 명단은 두고 빈자리만 채우기">빈자리 ${slotN - list.length} 채우기</button>` : ''}<button data-re="${w}" title="이 주만 규칙대로 다시 뽑기 (고정 인원은 남음)">다시 뽑기</button><button data-clr="${w}">비우기</button>` : ''}</div>
         <div class="lvsl">${list.map(u => { const s = staffById(u.s) || {}, n = cnt[u.s] || 0, ps = pendSw.find(x => x.s === u.s && x.d === w); return `<div class="lvsr" data-s="${u.s}"><span class="gb g-${A.esc(s.grade || '')}">${A.esc(s.grade || '-')}</span>
           <b class="${n >= 3 ? 'c3' : n === 2 ? 'c2' : ''}${isMgr(s.name) ? ' mgrt' : ''}" title="이 묶음 ${n}회 · 올해 누적 ${sc[u.s] || 0}회">${A.esc(s.name || '?')}</b>${fx.includes(u.s) ? '<span class="lst alt" title="연차 → 토요 대체 (고정)">↺ 대체</span>' : ''}<small class="muted">${A.esc(s.grp || '')}</small>${ps ? `<span class="lst mgr" title="${A.esc(swapText(ps))}">바꾸기 요청</span>` : ''}
           ${can ? `<select class="alt" data-w="${w}" data-s="${u.s}" ${fx.includes(u.s) ? 'disabled title="대체휴무 = 원래 연차일 (바꾸려면 달력에서 되돌리기)"' : ''}>${altOpts(w, u.a)}</select><b class="x" data-w="${w}" data-s="${u.s}">✕</b>` : (u.a ? `<span class="muted">→ ${mdw(u.a)}</span>` : '')}</div>`; }).join('') || '<div class="muted" style="padding:10px">비어 있음</div>'}</div>
