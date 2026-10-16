@@ -1386,6 +1386,17 @@ table.ppast input[type=date]{width:auto;padding:4px 8px}table.ppast td{vertical-
 .accbars{display:grid;gap:7px}.accb{display:grid;grid-template-columns:120px minmax(0,1fr) 96px;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:6px}
 .accb:hover,.accb.on{background:color-mix(in srgb,var(--accent,#1f5fbf) 10%,transparent)}.accb .t{height:11px;background:color-mix(in srgb,currentColor 9%,transparent);border-radius:6px;overflow:hidden}.accb .t i{display:block;height:100%;border-radius:6px}
 .accb em{font-style:normal;text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}.accb em b{color:var(--text,inherit)}
+/* v28.36 : 사고 통계 크게 · 가로 막대 흐름 */
+.accsp{gap:44px;margin:18px 0 26px}.accsp .sub small,.accflow .sub small{font-weight:500;color:var(--sub);margin-left:6px}
+.accb.big{grid-template-columns:86px minmax(0,1fr) 120px;font-size:14px;min-height:34px}.accb.big.gw{grid-template-columns:70px minmax(0,1fr) 250px}
+.accb.big .t{height:20px;border-radius:6px}.accb.big em{color:var(--text,inherit);white-space:nowrap}.accb.big em b{font-size:15.5px}.accb.big em small{color:var(--sub);font-size:12.5px;margin-left:3px}.accb.big em .ar{margin-left:2px}
+.accfew{display:inline-block;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;margin-left:4px}
+.accflow{margin:6px 0 26px}.stcard .leg.accleg,.accleg{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;margin:6px 0 14px}.stcard .leg.accleg span,.accleg span{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--text,inherit)}.stcard .leg.accleg i,.accleg i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.accm{display:grid;grid-template-columns:70px minmax(0,1fr) 110px;align-items:center;gap:14px;min-height:34px;margin-bottom:6px;padding:0 8px;border-radius:8px;font-size:14px}
+.accm.on{background:color-mix(in srgb,#f97316 9%,transparent);outline:2px solid color-mix(in srgb,#f97316 55%,transparent)}.accm.on .l{font-weight:800}
+.accm .t{height:22px}.accm .t>span{display:flex;height:100%;border-radius:6px;overflow:hidden;min-width:3px}
+.accm .t i{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;font-style:normal;border-right:2px solid var(--card,#fff);box-sizing:border-box;min-width:3px}
+.stcard .accm:not(.on) .t i{opacity:.55}.accm em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.accm em b{font-size:15px}.accm em small{font-size:12.5px;margin-left:4px}.accm em .up{color:#b91c1c}.accm em .dn{color:#15803d}
 .acck{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff;margin:1px 3px 1px 0;white-space:nowrap}
 .accrep{font-size:11px;font-weight:700;color:#dc2626;border:1px solid #dc2626;border-radius:6px;padding:0 5px}
 .accdet{margin-top:12px;padding:12px;border-radius:10px;background:color-mix(in srgb,var(--accent,#1f5fbf) 6%,transparent)}.accdet .sub{display:flex;gap:10px;align-items:center}
@@ -8144,7 +8155,7 @@ async function addCharts(buf, jobs) {
     if (V.unit === 'week') return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">사고는 달마다 올린 사고 파일이라 주 단위가 없습니다 · [월] · [분기] · [연간]에서 보세요</div></div>`;
     const A = stAccData(V, m), cmp = (a, b, f, unit) => !A.pHas ? `<i>${pv} - (비교할 사고 파일 없음)</i>` : dl(a, b, f, false, unit), RA = A.filter(x => x.r === 'R'), PA = A.filter(x => x.r === 'P'), sel = V.accSel || null;
     if (!(D.acc || []).length) return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">이 기간에 올린 사고 파일이 없습니다 · 인사평가 [데이터]에서 달마다 사고 파일을 올리면 여기에 나옵니다</div></div>`;
-    const per = (n, q) => q > 0 ? n / q * 1000 : null, f2x = v => v == null ? '-' : v.toFixed(2);
+    const per = (n, q) => q > 0 ? n / q * 100 : null, f2x = v => v == null ? '-' : v.toFixed(2), pc = (n, t) => t ? Math.round(n / t * 100) + '%' : '-';   // v28.36 : 사고율 % = 사고 ÷ 조립수량(출고 · 반조 · 제조 제외)
     const ppl = {}; RA.forEach(x => { const p = ppl[x.uid] = ppl[x.uid] || { uid: x.uid, name: x.name, grp: x.grp, n: 0, k: {}, list: [] }; p.n++; p.k[x.kind] = (p.k[x.kind] || 0) + 1; p.list.push(x); });
     const qOfU = {}; (R.ps || []).forEach(a => (qOfU[a.u] = (qOfU[a.u] || 0) + (a.q || 0)));
     const P2 = Object.values(ppl).sort((a, b) => b.n - a.n || LC0(a.name, b.name));
@@ -8156,17 +8167,25 @@ async function addCharts(buf, jobs) {
     let h = `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">${esc(rl)} · 인사평가에 올린 사고 파일 기준 · 그룹 = 그 달 업무통계의 그룹${noDet ? ' · <b>내용 · 처리는 사고 파일을 다시 올린 달부터 보입니다</b>' : ''}</div></div>`;
     h += `<div class="stkpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
       <div class="card kpi"><span>사고 건수</span><b>${RA.length}<small> 건</small></b>${live ? '<em class="eq live">진행 중</em> <i>사고 파일을 올린 만큼만</i>' : cmp(RA.length, PA.length, fN, '건')}</div>
-      <div class="card kpi"><span>조립 1,000대당 사고</span><b>${live && !RA.length ? '-' : f2x(per(RA.length, R.q))}<small> 건</small></b>${live ? '<i>진행 중이라 비교 안 함</i>' : cmp(per(RA.length, R.q), per(PA.length, P.q), f2x)}</div>
+      <div class="card kpi"><span title="사고 건수 ÷ 조립수량 (출고 · 반조 · 제조 제외)">사고율</span><b>${live && !RA.length ? '-' : f2x(per(RA.length, R.q))}<small> %</small></b><i>조립 ${fN(Math.round(R.q || 0))}대 중 ${RA.length}건</i> ${live ? '<i>· 진행 중이라 비교 안 함</i>' : cmp(per(RA.length, R.q), per(PA.length, P.q), f2x, '%p')}</div>
       <div class="card kpi"><span>사고 난 인원</span><b>${P2.length}<small> 명 / ${R.head || 0}명</small></b><i>2건 이상 ${P2.filter(p => p.n >= 2).length}명 · 반복 ${P2.filter(p => rep(p.uid)).length}명</i></div>
-      <div class="card kpi"><span>가장 많은 종류</span><b>${RA.length ? esc(top) : '-'}<small> ${RA.length ? (kc[top] || 0) + '건 · ' + Math.round((kc[top] || 0) / RA.length * 100) + '%' : ''}</small></b></div></div>`;
+      <div class="card kpi"><span>가장 많은 종류</span><b>${RA.length ? esc(top) : '-'}<small> ${RA.length ? (kc[top] || 0) + '건 · ' + pc(kc[top] || 0, RA.length) : ''}</small></b>${(() => { const t2 = ACC_K.slice().sort((a, b) => (kc[b] || 0) - (kc[a] || 0))[1]; return RA.length && kc[t2] ? `<i>2위 ${esc(t2)} ${kc[t2]}건 · ${pc(kc[t2], RA.length)}</i>` : ''; })()}</div></div>`;
     // 달별 추이 · 그룹별
     const rows = keys.map(k => { const o = {}; A.filter(x => x.key === k).forEach(x => (o[x.kind] = (o[x.kind] || 0) + 1)); return o; });
     const ww = Math.floor((w - 20) / 2);
     const G = STG(), gq = {}; (R.ps || []).forEach(a => (gq[a.grp] = (gq[a.grp] || 0) + (a.q || 0)));
     const gr = G.map(g => ({ g, n: RA.filter(x => x.grp === g).length, q: gq[g] || 0 })).filter(x => x.n || x.q), gmx = Math.max(0.01, ...gr.map(x => per(x.n, x.q) || 0));
     const bar = (lab, v, mx, txt, attr, col, on) => `<div class="accb${on ? ' on' : ''}" ${attr}><span>${lab}</span><span class="t"><i style="width:${mx ? Math.max(v ? 2 : 0, v / mx * 100) : 0}%;background:${col}"></i></span><em>${txt}</em></div>`;
-    h += `<div class="stat2"><div><div class="sub">달별 사고 (건) · 종류별</div><div class="leg">${ACC_K.map((k, i) => `<span><i style="background:${ACC_C[i]}"></i>${k}</span>`).join('')}</div>${stStack(ww, 230, rows, labs, ACC_K, ACC_C, V.custom ? -1 : AK)}</div>
-      <div><div class="sub">그룹별 · 막대 = 조립 1,000대당 · 누르면 내역</div><div class="accbars">${gr.map(x => bar(esc(x.g), per(x.n, x.q) || 0, gmx, `<b>${x.n}건</b> · ${f2x(per(x.n, x.q))}`, `data-acs="grp|${esc(x.g)}"`, gcol(x.g), sel && sel.t === 'grp' && sel.v === x.g)).join('') || '<div class="muted">없음</div>'}</div></div></div>`;
+    const kbar = (k, i) => { const v = kc[k] || 0; return `<div class="accb big${sel && sel.t === 'kind' && sel.v === k ? ' on' : ''}" data-acs="kind|${k}"><span><b>${k}</b></span><span class="t"><i style="width:${RA.length ? v / RA.length * 100 : 0}%;background:${ACC_C[i]}"></i></span><em><b>${v}</b>건 <small>${pc(v, RA.length)}</small></em></div>`; };
+    const few = x => x.q > 0 && x.q < 300;
+    h += `<div class="stat2 accsp"><div><div class="sub">${esc(rl)} 종류별 <small>건수 · 전체 사고 중 비율 · 누르면 내역</small></div><div class="accbars">${ACC_K.map(kbar).join('')}</div></div>
+      <div><div class="sub">그룹별 <small>건수 · 전체 사고 중 비율 · 회색 = 사고율 (조립 대비) · 누르면 내역</small></div><div class="accbars">${gr.filter(x => x.n).sort((a, b) => b.n - a.n).map(x => `<div class="accb big gw${sel && sel.t === 'grp' && sel.v === x.g ? ' on' : ''}" data-acs="grp|${esc(x.g)}"><span><b>${esc(x.g)}</b></span><span class="t"><i style="width:${RA.length ? x.n / RA.length * 100 : 0}%;background:${gcol(x.g)}"></i></span><em><b>${x.n}</b>건 <small>${pc(x.n, RA.length)}</small> <small class="ar">· 사고율 ${f2x(per(x.n, x.q))}%</small>${few(x) && x.n ? ' <span class="accfew" title="조립 대수가 적어 1~2건만 나도 사고율이 크게 나옵니다">조립 적음</span>' : ''}</em></div>`).join('') || '<div class="muted">없음</div>'}</div>${gr.some(x => !x.n) ? `<div class="muted" style="font-size:12.5px;margin-top:8px">사고 없음 : ${gr.filter(x => !x.n).map(x => esc(x.g)).join(' · ')}</div>` : ''}</div></div>`;
+    // 흐름 : 한 줄 = 한 칸 (가로 막대 · 칸 안 숫자 · 고른 칸 강조) — 자료 없는 앞쪽 칸은 뺌
+    { const tot = r => ACC_K.reduce((a, k) => a + (r[k] || 0), 0), f0 = rows.findIndex(r => tot(r) > 0), idx = f0 < 0 ? [] : keys.map((k, i) => i).filter(i => i >= f0), mx = Math.max(1, ...idx.map(i => tot(rows[i]))), on = V.custom ? -1 : AK;
+      h += `<div class="accflow"><div class="sub">흐름 (${esc(idx.length ? labs[idx[0]] + ' ~ ' + labs[idx[idx.length - 1]] : '-')}) <small>막대 길이 = 건수 · 칸 숫자 = 종류별 건수${on >= 0 ? ' · 고른 ' + (V.unit === 'month' ? '달' : '기간') + ' 강조' : ''} · 마우스를 올리면 자세히</small></div>
+        <div class="leg accleg">${ACC_K.map((k, i) => `<span><i style="background:${ACC_C[i]}"></i>${k}</span>`).join('')}</div>
+        ${idx.map((i, j) => { const r = rows[i], t = tot(r), pv = j ? tot(rows[idx[j - 1]]) : null, d = pv == null ? null : t - pv, tip = ACC_K.filter(k => r[k]).map(k => k + ' ' + r[k]).join(' · ');
+          return `<div class="accm${i === on ? ' on' : ''}" title="${esc(labs[i])} ${t}건${tip ? ' — ' + esc(tip) : ''}"><span class="l">${esc(labs[i])}</span><span class="t"><span style="width:${t / mx * 100}%">${ACC_K.map((k, ci) => r[k] ? `<i style="width:${r[k] / t * 100}%;background:${ACC_C[ci]}">${r[k] / mx >= 0.025 ? r[k] : ''}</i>` : '').join('')}</span></span><em><b>${t}</b>건${d == null || !d ? (d === 0 ? ' <small>－0</small>' : '') : ` <small class="${d > 0 ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</small>`}</em></div>`; }).join('') || '<div class="muted">사고 파일이 없습니다</div>'}</div>`; }
     // 원인 단어 · 처리 방법 (1건 이하 = 기타)
     const group = (fnOf) => { const c = {}; RA.filter(x => x.det).forEach(x => fnOf(x).forEach(v => (c[v] = c[v] || []).push(x))); const L = Object.entries(c).filter(([k, v]) => k !== '기타' && v.length > 1).sort((a, b) => b[1].length - a[1].length);
       const etc = Object.entries(c).filter(([k, v]) => k === '기타' || v.length <= 1).flatMap(([, v]) => v); const seen = new Set(), etcU = etc.filter(x => !seen.has(x) && seen.add(x)); if (etcU.length) L.push(['기타', etcU]); return L; };
@@ -8176,13 +8195,13 @@ async function addCharts(buf, jobs) {
     h += `<div class="stat2"><div><div class="sub">원인 단어 (사고 내용) · 1건뿐인 것은 기타 · 누르면 내역</div><div class="accbars">${kw.map(([k, v]) => bar(esc(k), v.length, kmx, `<b>${v.length}</b>건`, `data-acs="kw|${esc(k)}"`, '#c2410c', sel && sel.t === 'kw' && sel.v === k)).join('') || '<div class="muted">내용이 있는 사고가 없습니다</div>'}</div></div>
       <div><div class="sub">처리 방법 · 1건뿐인 것은 기타 · 누르면 내역</div><div class="accbars">${act.map(([k, v]) => bar(esc(k), v.length, amx, `<b>${v.length}</b>건`, `data-acs="act|${esc(k)}"`, '#0f766e', sel && sel.t === 'act' && sel.v === k)).join('') || '<div class="muted">처리 내용이 있는 사고가 없습니다</div>'}</div></div></div>`;
     const detT = list => `<div class="tw"><table class="list acct"><thead><tr><th>출고일</th><th>이름</th><th>그룹</th><th>구분</th><th>주문번호</th><th>내용</th><th>처리</th></tr></thead><tbody>${list.slice(0, 300).map(x => `<tr><td>${esc(x.d ? x.d.slice(5).replace('-', '/') : (+x.ym.slice(5)) + '월')}</td><td>${esc(x.name)}</td><td>${esc(x.grp)}</td><td><span class="acck" style="background:${ACC_C[ACC_K.indexOf(x.kind)]}">${esc(x.kind)}</span></td><td class="muted">${esc(x.ord)}</td><td>${x.det ? esc(x.txt) : '<span class="muted">내용 없음 (예전에 올린 파일)</span>'}</td><td>${esc(x.act)}</td></tr>`).join('')}</tbody></table></div>`;
-    if (sel) { const L = sel.t === 'grp' ? RA.filter(x => x.grp === sel.v) : ((sel.t === 'kw' ? kw : act).find(([k]) => k === sel.v) || [, []])[1];
+    if (sel) { const L = sel.t === 'grp' ? RA.filter(x => x.grp === sel.v) : sel.t === 'kind' ? RA.filter(x => x.kind === sel.v) : ((sel.t === 'kw' ? kw : act).find(([k]) => k === sel.v) || [, []])[1];
       h += `<div class="accdet"><div class="sub"><b>${esc(sel.v)}</b> 내역 ${L.length}건 <button class="sm" data-acs="">닫기</button></div>${detT(L.slice().sort((a, b) => LC0(b.d, a.d)))}</div>`; }
     // 사람별
     h += `<div class="sub" style="margin-top:14px">사람별 사고 · 건수 많은 순 · 줄을 누르면 내역 · <span class="accrep">반복</span> = 같은 종류가 최근 3달(${y3.slice().reverse().map(y => +y.slice(5) + '월').join('·')}) 안에 두 달 이상</div>
-      <div class="tw"><table class="list acct"><thead><tr><th>이름</th><th>그룹</th><th class="num">건수</th><th>종류</th><th class="num">조립수량</th><th class="num">1,000대당</th><th class="num">최근 3달</th></tr></thead><tbody>
+      <div class="tw"><table class="list acct"><thead><tr><th>이름</th><th>그룹</th><th class="num">건수</th><th>종류</th><th class="num">조립수량</th><th class="num">사고율</th><th class="num">최근 3달</th></tr></thead><tbody>
       ${P2.map(p => { const q = qOfU[p.uid] || 0, op = V.accP === p.uid; return `<tr class="click${op ? ' on' : ''}" data-acp="${esc(p.uid)}"><td><b>${esc(p.name)}</b>${rep(p.uid) ? ' <span class="accrep">반복</span>' : ''}</td><td>${esc(p.grp)}</td><td class="num"><b>${p.n}</b></td>
-        <td>${ACC_K.filter(k => p.k[k]).map(k => `<span class="acck" style="background:${ACC_C[ACC_K.indexOf(k)]}">${k} ${p.k[k]}</span>`).join('')}</td><td class="num">${q ? fN(q) : '-'}</td><td class="num">${q ? f2x(per(p.n, q)) : '-'}</td><td class="num">${in3.filter(x => x.uid === p.uid).length}건</td></tr>
+        <td>${ACC_K.filter(k => p.k[k]).map(k => `<span class="acck" style="background:${ACC_C[ACC_K.indexOf(k)]}">${k} ${p.k[k]}</span>`).join('')}</td><td class="num">${q ? fN(q) : '-'}</td><td class="num">${q ? f2x(per(p.n, q)) + '%' : '-'}</td><td class="num">${in3.filter(x => x.uid === p.uid).length}건</td></tr>
         ${op ? `<tr class="accsub"><td colspan="7">${detT(p.list.slice().sort((a, b) => LC0(b.d, a.d)))}</td></tr>` : ''}`; }).join('') || '<tr><td colspan="7" class="muted" style="padding:16px">이 기간에 사고가 없습니다</td></tr>'}
       </tbody></table></div>`;
     return h;
