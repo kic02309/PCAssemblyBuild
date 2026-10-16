@@ -7956,7 +7956,7 @@ async function addCharts(buf, jobs) {
         <div><div class="sub">근태 기록 (건)</div><div class="leg">${ak.map((k, i) => `<span><i style="background:${ac[i]}"></i>${k}</span>`).join('')}</div>${stStack(ww, one ? 280 : 150, keys.map(k => B[k].att), labs, ak, ac, V.custom ? -1 : AK)}</div></div>`));
     }
     if (show('rank')) cards.push(stCard('rank', wide, stRankHtml(V, m, gl, rl, pv, one)));
-    if (show('acc')) cards.push(stCard('acc', true, stAccHtml(V, m, W, labs, gl, rl, pv, dl)));
+    if (show('acc')) cards.push(stCard('acc', true, stAccHtml(V, m, W, labs, gl, rl, pv, dl, live)));
     if (wide) h += cards.join('');
     else {
       const c = id => cards.find(x => x.includes(`data-stk="${id}"`)) || '';
@@ -7994,12 +7994,13 @@ async function addCharts(buf, jobs) {
       if (det) det.forEach(x => { const kd = ACC_K.includes(x[2]) ? x[2] : null; if (!kd) return; used[kd] = (used[kd] || 0) + 1; out.push({ ym, key: bk(ym), r: rk(ym), uid, name: nm, grp, kind: kd, d: x[0] || '', ord: x[1] || '', txt: x[3] || '', act: x[4] || '', det: 1 }); });
       ACC_K.forEach(kd => { const n = Math.max(0, (+(row || {})[kd] || 0) - (used[kd] || 0)); for (let i = 0; i < n; i++) out.push({ ym, key: bk(ym), r: rk(ym), uid, name: nm, grp, kind: kd, d: '', ord: '', txt: '', act: '', det: 0 }); });
     });
+    out.pHas = (D.acc || []).some(r => rk(r[0]) === 'P');                  // 비교 기간에 사고 파일이 있었는지
     return out;
   }
-  function stAccHtml(V, m, w, labs, gl, rl, pv, dl) {
+  function stAccHtml(V, m, w, labs, gl, rl, pv, dl, live) {
     const D = V.data, { keys, R, P } = m, AK = keys.length - 1;
     if (V.unit === 'week') return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">사고는 달마다 올린 사고 파일이라 주 단위가 없습니다 · [월] · [분기] · [연간]에서 보세요</div></div>`;
-    const A = stAccData(V, m), RA = A.filter(x => x.r === 'R'), PA = A.filter(x => x.r === 'P'), sel = V.accSel || null;
+    const A = stAccData(V, m), cmp = (a, b, f, unit) => !A.pHas ? `<i>${pv} - (비교할 사고 파일 없음)</i>` : dl(a, b, f, false, unit), RA = A.filter(x => x.r === 'R'), PA = A.filter(x => x.r === 'P'), sel = V.accSel || null;
     if (!(D.acc || []).length) return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">이 기간에 올린 사고 파일이 없습니다 · 인사평가 [데이터]에서 달마다 사고 파일을 올리면 여기에 나옵니다</div></div>`;
     const per = (n, q) => q > 0 ? n / q * 1000 : null, f2x = v => v == null ? '-' : v.toFixed(2);
     const ppl = {}; RA.forEach(x => { const p = ppl[x.uid] = ppl[x.uid] || { uid: x.uid, name: x.name, grp: x.grp, n: 0, k: {}, list: [] }; p.n++; p.k[x.kind] = (p.k[x.kind] || 0) + 1; p.list.push(x); });
@@ -8012,8 +8013,8 @@ async function addCharts(buf, jobs) {
     const in3 = A.filter(x => y3.includes(x.ym)), rep = uid => { const mk = {}; in3.filter(x => x.uid === uid).forEach(x => ((mk[x.kind] = mk[x.kind] || new Set()).add(x.ym))); return Object.values(mk).some(s => s.size >= 2); };
     let h = `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">${esc(rl)} · 인사평가에 올린 사고 파일 기준 · 그룹 = 그 달 업무통계의 그룹${noDet ? ' · <b>내용 · 처리는 사고 파일을 다시 올린 달부터 보입니다</b>' : ''}</div></div>`;
     h += `<div class="stkpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-      <div class="card kpi"><span>사고 건수</span><b>${RA.length}<small> 건</small></b>${dl(RA.length, PA.length, fN, false, '건')}</div>
-      <div class="card kpi"><span>조립 1,000대당 사고</span><b>${f2x(per(RA.length, R.q))}<small> 건</small></b>${dl(per(RA.length, R.q), per(PA.length, P.q), f2x, false)}</div>
+      <div class="card kpi"><span>사고 건수</span><b>${RA.length}<small> 건</small></b>${live ? '<em class="eq live">진행 중</em> <i>사고 파일을 올린 만큼만</i>' : cmp(RA.length, PA.length, fN, '건')}</div>
+      <div class="card kpi"><span>조립 1,000대당 사고</span><b>${live && !RA.length ? '-' : f2x(per(RA.length, R.q))}<small> 건</small></b>${live ? '<i>진행 중이라 비교 안 함</i>' : cmp(per(RA.length, R.q), per(PA.length, P.q), f2x)}</div>
       <div class="card kpi"><span>사고 난 인원</span><b>${P2.length}<small> 명 / ${R.head || 0}명</small></b><i>2건 이상 ${P2.filter(p => p.n >= 2).length}명 · 반복 ${P2.filter(p => rep(p.uid)).length}명</i></div>
       <div class="card kpi"><span>가장 많은 종류</span><b>${RA.length ? esc(top) : '-'}<small> ${RA.length ? (kc[top] || 0) + '건 · ' + Math.round((kc[top] || 0) / RA.length * 100) + '%' : ''}</small></b></div></div>`;
     // 달별 추이 · 그룹별
