@@ -7816,20 +7816,20 @@ async function addCharts(buf, jobs) {
   // v28.11 : 월 마감 자료 (인사평가에 엑셀로 올린 사람별 한 달 실적) → 날짜별 입력이 없는 달만 칸에 더함
   //  같은 사람이 같은 칸에 날짜별 자료도 있으면 근무일로 가중 평균
   function stMonthly(D, bucket, out) {
-    const daily = new Set((D.agg || []).map(r => r[1])), byName = {}, rg = {};
+    const daily = new Set((D.agg || []).map(r => r[0] + '|' + r[1])), byName = {}, rg = {};   // v28.41 : 사람 단위 — 날짜별 입력이 있는 사람만 그 달 월 마감 자료를 안 씀
     (D.users || []).forEach(u => (byName[normName(u.name)] = u)); (D.roster || []).forEach(([n, g, t]) => (rg[normName(n)] = { g, t, n }));
     const HG = { 생산: '라인', 영상: '제조' }, names = Array.from(new Set(Object.keys(byName).concat(Object.keys(rg))));
     const alias = k => { const L = names.filter(x => x.length > k.length && x.startsWith(k) && /^\d+$/.test(x.slice(k.length))); return L.length === 1 ? L[0] : null; };
     const nb = v => v === null || v === undefined || v === '' || !isFinite(+v) ? null : +v;
     const MM = {};
     (D.hrm || []).forEach(([ym, name, og, q, f7, tg, c8, dd, role, items]) => {
-      if (daily.has(ym)) return;
       const key = bucket(ym, null); if (key == null) return;
       let k = normName(name);
       if (!byName[k] && !rg[k]) { const al = alias(k); if (al) k = al; }          // v28.25 : 예전 이름 (김현준 → 김현준3 처럼 뒤에 숫자 붙은 명단 이름) = 같은 사람
       const us = byName[k], cur = rg[k], f = nb(f7) || 0, n = Math.round(nb(dd) || 0), t = nb(tg) || 0;
       if (!n && !f) return;
       const uid = us ? us.id : 'h:' + k, id = uid + '|' + key;
+      if (daily.has(uid + '|' + ym)) return;
       const g0 = HG[String(og || '').trim()] || String(og || '').trim();            // v28.25 : 지난 달 = 그때 그룹 (엑셀 그대로 · 생산 → 라인 · 영상 → 제조)
       const a = out[id] = out[id] || { u: uid, key, n: 0, c4: 0, d4: 0, sumH: 0, av: 0, au: 0, otc: 0, aw: 0, oth: 0, q: 0, mf: 0, mq: 0, r10: {}, rmin: {}, ot: {}, yms: {}, f7: 0, tg: 0, c8: null,
         grp: (STG().includes(g0) && g0) || (cur && cur.g) || (us && us.grp) || g0, name: us ? us.name : cur ? cur.n : name, title: (cur && cur.t) || (us && us.title) || String(role || '') };
@@ -7899,7 +7899,7 @@ async function addCharts(buf, jobs) {
       b.ppd = b.dates ? b.n / b.dates : null;                               // 근무 인원 (하루 평균)
       const qp = b.ps.filter(a => ok(a) && a.q > 0 && a.n > 0); b.qpp = qp.length ? qp.reduce((s, a) => s + a.q, 0) / qp.reduce((s, a) => s + a.n, 0) : null;   // 1인 하루 조립 수량
       b.head = b.ps.filter(a => ok(a) && a.n > 0).length;                 // 총원 (그 기간 실적 있는 인원)
-      b.byG = {}; G.forEach(g => { const L = ev.filter(a => a.grp === g), T = L.filter(a => a.tg > 0); b.byG[g] = { avg: L.length ? L.reduce((s, a) => s + a.f7, 0) / L.length : null, n: L.length, tg: T.length ? T.reduce((s, a) => s + a.tg, 0) / T.length : null, hc: b.ps.filter(a => a.grp === g && a.n > 0).length, q: b.ps.filter(a => a.grp === g).reduce((s, a) => s + a.q, 0), mq: b.ps.filter(a => a.grp === g).reduce((s, a) => s + (a.mq || 0), 0), r10: {}, rmin: {}, ot: {} }; });
+      b.byG = {}; G.forEach(g => { const L = ev.filter(a => a.grp === g), T = L.filter(a => a.tg > 0); b.byG[g] = { avg: L.length ? L.reduce((s, a) => s + a.f7, 0) / L.length : null, n: L.length, tg: T.length ? T.reduce((s, a) => s + a.tg, 0) / T.length : null, hc: b.ps.filter(a => a.grp === g && a.n > 0).length, q: b.ps.filter(a => a.grp === g).reduce((s, a) => s + a.q, 0), mq: b.ps.filter(a => a.grp === g).reduce((s, a) => s + (a.mq || 0), 0), ship: b.ps.filter(a => a.grp === g).reduce((s, a) => s + (a.ship || 0), 0), nd: b.ps.filter(a => a.grp === g).reduce((s, a) => s + (a.n || 0), 0), dl: b.ps.filter(a => a.grp === g && !a.hist && a.n > 0).length, hs: b.ps.filter(a => a.grp === g && a.hist && a.n > 0).length, r10: {}, rmin: {}, ot: {} }; });
       b.ps.forEach(a => { const x = b.byG[a.grp]; if (!x) return; for (const c in a.r10) { x.r10[c] = (x.r10[c] || 0) + a.r10[c]; x.rmin[c] = (x.rmin[c] || 0) + a.rmin[c]; } for (const k in a.ot) x.ot[k] = (x.ot[k] || 0) + a.ot[k]; });
     });
     return { u, keys, prevKeys, B, R: B.R, P: B.P, gs, minD, G };
@@ -7947,6 +7947,17 @@ async function addCharts(buf, jobs) {
       if (r.t) { const x = pl + tw * r.t / mx; g += `<line class="tk" x1="${x}" x2="${x}" y1="${y - 2}" y2="${y + 20}"/>`; }
       g += `<text class="vl" x="${w - pr + 10}" y="${y + 14}">${r.v == null ? '자료 없음' : f1(r.v)}</text>`;
       if (r.v != null && r.d != null && Math.abs(r.d) >= 0.05) g += `<text class="${r.d > 0 ? 'up' : 'dn'}" x="${w - pr + 52}" y="${y + 14}">${r.d > 0 ? '▲' : '▼'}${f1(Math.abs(r.d))}</text>`; });
+    return svgW(w, rows.length * rh + 12, g);
+  }
+  // v28.41 : 그룹별 수량 막대 (합계 · 1인 하루)
+  function stQBars(w, rows, unit) {
+    const pl = 118, pr = 250, rh = 36, mx = niceMax(Math.max(1, ...rows.map(r => r.v || 0)) * 1.05), tw = w - pl - pr; let g = '';
+    rows.forEach((r, i) => { const y = i * rh + 8;
+      g += `<circle cx="8" cy="${y + 10}" r="5" style="fill:${gcol(r.g)}"/><text class="lbm" x="20" y="${y + 15}">${esc(r.g)}${r.hc ? `<tspan class="hc" dx="5">${r.hc}명</tspan>` : ''}</text><rect class="trk" x="${pl}" y="${y + 1}" width="${tw}" height="18" rx="9"/>`;
+      if (r.v != null && r.v > 0) g += `<rect x="${pl}" y="${y + 1}" width="${Math.max(8, tw * r.v / mx)}" height="18" rx="9" style="fill:${gcol(r.g)}">${tip(r.g + ' ' + fN(r.v) + unit + (r.pd != null ? ' · 1인 하루 ' + f1(r.pd) : ''))}</rect>`;
+      g += `<text class="vlh" x="${w - pr + 12}" y="${y + 16}" style="font-size:15.5px">${r.v == null ? '자료 없음' : fN(r.v) + unit}</text>`;
+      if (r.v != null) g += `<text class="ax" x="${w - pr + 92}" y="${y + 16}">1인 하루 ${f1(r.pd)}${r.part ? ' · 일부만' : ''}</text>`;
+      if (r.v != null && r.d != null && Math.abs(r.d) >= 0.5) g += `<text class="${r.d > 0 ? 'up' : 'dn'}" x="${w - 46}" y="${y + 16}">${r.d > 0 ? '▲' : '▼'}${fN(Math.abs(r.d))}</text>`; });
     return svgW(w, rows.length * rh + 12, g);
   }
   // 작은 선 그래프 (그룹별 흐름)
@@ -8099,7 +8110,13 @@ async function addCharts(buf, jobs) {
     }
     if (show('cmp')) {
       const rows = gs.map(g => ({ g, v: R.byG[g].avg, t: R.byG[g].tg, n: R.byG[g].n, hc: R.byG[g].hc, d: R.byG[g].avg != null && P.byG[g].avg != null ? R.byG[g].avg - P.byG[g].avg : null })).sort((a, b) => (b.v == null ? -1 : b.v) - (a.v == null ? -1 : a.v));
-      cards.push(stCard('cmp', true, `<div><h3>그룹 비교 · ${esc(rl)} 평균 환산</h3><div class="cap">막대 = 그룹 평균 · 검은 선 = 그룹 목표 평균 · ▲▼ ${pv}</div></div>${stHBars(W, rows)}
+      const cm = V.cmpM || 'avg', cmB = `<div class="seg sm2">${[['avg', '평균 환산'], ['q', '조립 수량'], ['mq', '제조'], ['ship', '출고']].map(([k, t]) => `<button data-cm="${k}" class="${cm === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+      if (cm !== 'avg') {                                                // v28.41 : 그룹별 수량 (조립 · 제조 · 출고)
+        const nm = { q: '조립 수량', mq: '제조 수량', ship: '출고 수량' }[cm], qr = gs.map(g => { const x = R.byG[g], y = P.byG[g], noD = cm !== 'q' && !x.dl;
+          return { g, v: noD ? null : x[cm] || 0, pd: !noD && x.nd ? (x[cm] || 0) / x.nd : null, part: cm !== 'q' && x.dl && x.hs, d: !live && !noD && y && (cm === 'q' || y.dl) ? (x[cm] || 0) - (y[cm] || 0) : null, hc: x.hc }; }).sort((a, b) => (b.v == null ? -1 : b.v) - (a.v == null ? -1 : a.v));
+        cards.push(stCard('cmp', true, `<div class="sthd"><div><h3>그룹 비교 · ${esc(rl)} ${nm}</h3><div class="cap">막대 = 그룹 합계 · 오른쪽 = 합계 · 1인 하루 평균 · ${live ? '진행 중이라 합계는 비교 안 함' : '▲▼ ' + pv}${cm !== 'q' ? ' · 지난 달(업무통계 엑셀만 있는 달)은 ' + nm.replace(' 수량', '') + ' 자료 없음' : ''}</div></div><span class="sp"></span>${cmB}</div>${stQBars(W, qr, cm === 'q' ? '대' : '대')}`));
+      } else
+      cards.push(stCard('cmp', true, `<div class="sthd"><div><h3>그룹 비교 · ${esc(rl)} 평균 환산</h3><div class="cap">막대 = 그룹 평균 · 검은 선 = 그룹 목표 평균 · ▲▼ ${pv}</div></div><span class="sp"></span>${cmB}</div>${stHBars(W, rows)}
         ${one ? `<table class="list sttbl"><thead><tr><th>그룹</th><th class="num">평균 환산</th><th class="num">목표</th><th class="num">평가 인원</th><th class="num">조립 수량</th><th class="num">${pv.replace(' 대비', '')}</th></tr></thead><tbody>${rows.map(r => `<tr><td>${gdot(r.g)}</td><td class="num">${f1(r.v)}</td><td class="num">${f1(r.t)}</td><td class="num">${r.n}</td><td class="num">${fN(R.byG[r.g].q)}</td><td class="num">${r.d == null ? '-' : (r.d > 0 ? '▲' : r.d < 0 ? '▼' : '') + f1(Math.abs(r.d))}</td></tr>`).join('')}</tbody></table>` : ''}`));
     }
     if (show('flow')) {
@@ -8122,6 +8139,7 @@ async function addCharts(buf, jobs) {
     h += cards.join('');                                                  // v28.40 : 카드는 한 줄에 하나씩 (전체 폭)
     box.innerHTML = h;
     $$('[data-tm]', box).forEach(b => (b.onclick = () => { V.trendM = b.dataset.tm; stDraw(); }));
+    $$('[data-cm]', box).forEach(b => (b.onclick = () => { V.cmpM = b.dataset.cm; stDraw(); }));
     $$('[data-mg]', box).forEach(b => (b.onclick = () => { V.mixG = b.dataset.mg; V.mixItems = []; if (V.mixG === '기타시간' || !V.mixG) V.mixBy = 'm'; stDraw(); }));
     $$('[data-mi]', box).forEach(b => (b.onclick = () => { const k = b.dataset.mi, i = V.mixItems.indexOf(k); if (i < 0) { if (V.mixItems.length >= 6) return toast('항목은 6개까지 고를 수 있습니다'); V.mixItems.push(k); } else V.mixItems.splice(i, 1); stDraw(); }));
     $$('[data-mb]', box).forEach(b => (b.onclick = () => { V.mixBy = b.dataset.mb; stDraw(); }));
