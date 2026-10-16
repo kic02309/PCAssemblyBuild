@@ -7617,17 +7617,22 @@ async function addCharts(buf, jobs) {
   //  같은 사람이 같은 칸에 날짜별 자료도 있으면 근무일로 가중 평균
   function stMonthly(D, bucket, out) {
     const daily = new Set((D.agg || []).map(r => r[1])), byName = {}, rg = {};
-    (D.users || []).forEach(u => (byName[normName(u.name)] = u)); (D.roster || []).forEach(([n, g, t]) => (rg[normName(n)] = { g, t }));
+    (D.users || []).forEach(u => (byName[normName(u.name)] = u)); (D.roster || []).forEach(([n, g, t]) => (rg[normName(n)] = { g, t, n }));
+    const HG = { 생산: '라인', 영상: '제조' }, names = Array.from(new Set(Object.keys(byName).concat(Object.keys(rg))));
+    const alias = k => { const L = names.filter(x => x.length > k.length && x.startsWith(k) && /^\d+$/.test(x.slice(k.length))); return L.length === 1 ? L[0] : null; };
     const nb = v => v === null || v === undefined || v === '' || !isFinite(+v) ? null : +v;
     const MM = {};
     (D.hrm || []).forEach(([ym, name, og, q, f7, tg, c8, dd, role, items]) => {
       if (daily.has(ym)) return;
       const key = bucket(ym, null); if (key == null) return;
-      const k = normName(name), us = byName[k], cur = rg[k], f = nb(f7) || 0, n = Math.round(nb(dd) || 0), t = nb(tg) || 0;
+      let k = normName(name);
+      if (!byName[k] && !rg[k]) { const al = alias(k); if (al) k = al; }          // v28.25 : 예전 이름 (김현준 → 김현준3 처럼 뒤에 숫자 붙은 명단 이름) = 같은 사람
+      const us = byName[k], cur = rg[k], f = nb(f7) || 0, n = Math.round(nb(dd) || 0), t = nb(tg) || 0;
       if (!n && !f) return;
       const uid = us ? us.id : 'h:' + k, id = uid + '|' + key;
+      const g0 = HG[String(og || '').trim()] || String(og || '').trim();            // v28.25 : 지난 달 = 그때 그룹 (엑셀 그대로 · 생산 → 라인 · 영상 → 제조)
       const a = out[id] = out[id] || { u: uid, key, n: 0, c4: 0, d4: 0, sumH: 0, av: 0, au: 0, otc: 0, aw: 0, oth: 0, q: 0, mf: 0, mq: 0, r10: {}, rmin: {}, ot: {}, yms: {}, f7: 0, tg: 0, c8: null,
-        grp: (cur && cur.g) || (us && us.grp) || String(og || ''), name: us ? us.name : name, title: (cur && cur.t) || (us && us.title) || String(role || '') };
+        grp: (STG().includes(g0) && g0) || (cur && cur.g) || (us && us.grp) || g0, name: us ? us.name : cur ? cur.n : name, title: (cur && cur.t) || (us && us.title) || String(role || '') };
       const n0 = a.n, n1 = n0 + n;
       a.f7 = n1 ? (a.f7 * n0 + f * n) / n1 : f;
       if (t) a.tg = a.tg && n0 ? (a.tg * n0 + t * n) / n1 : t;
