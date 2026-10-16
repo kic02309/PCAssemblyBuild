@@ -1370,6 +1370,10 @@ table.mlist small.mfq{display:block;font-size:11px;font-weight:700;color:#7c3aed
 html[data-theme=dark] .stg .bm1,html[data-theme=dark] .mflg{fill:#a78bfa;color:#a78bfa}html[data-theme=dark] .stg .bm0{fill:color-mix(in srgb,#a78bfa 45%,var(--panel))}html[data-theme=dark] table.mlist small.mfq,html[data-theme=dark] .ddpr .q .mq{background:#2e2350;color:#c4b0ff}
 html[data-theme=dark] .mfgv,html[data-theme=dark] td.mfgv{color:#b69cff}
 .stat .v small.mfgv{color:#6d28d9}html[data-theme=dark] .stat .v small.mfgv{color:#b69cff}
+/* v28.31 : 기간 화면 */
+.psec{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}.psh{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;margin-bottom:10px}.psh b{font-size:15px}
+.pok{color:#15803d;font-size:12.5px;font-weight:700}.pbad{color:#dc2626;font-size:12.5px;font-weight:700}td.ppe.pbad{font-size:inherit}
+table.ppast input[type=date]{width:auto;padding:4px 8px}table.ppast td{vertical-align:middle}
 /* v28.26 : 통계 사고 */
 .accbars{display:grid;gap:7px}.accb{display:grid;grid-template-columns:120px minmax(0,1fr) 96px;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:6px}
 .accb:hover,.accb.on{background:color-mix(in srgb,var(--accent,#1f5fbf) 10%,transparent)}.accb .t{height:11px;background:color-mix(in srgb,currentColor 9%,transparent);border-radius:6px;overflow:hidden}.accb .t i{display:block;height:100%;border-radius:6px}
@@ -7544,37 +7548,49 @@ async function addCharts(buf, jobs) {
   }
 
   const rerender = () => (S.view === 'settings' ? renderSettings() : renderManage());
+  // v28.31 : 기간 화면 정리 — ① 진행 중인 달 ② 귀속월 목록 (이어짐 확인) ③ 지난 달 한꺼번에 추가 (시작일만 넣으면 마감일 자동)
+  function pastRows() {
+    const L = S.periods.slice().sort((a, b) => (a.start < b.start ? -1 : 1)), first = L[0];
+    if (!first) return [];
+    const out = []; let ym = ymAdd(first.ym, -1);
+    for (let i = 0; i < 12; i++) { out.push(ym); if (ym.slice(5) === '01' && i >= 0 && first.ym.slice(5) !== '01') break; ym = ymAdd(ym, -1); }
+    return { first, yms: out };
+  }
   function periodBody() {
     const open = S.periods.find(p => p.status === '진행');
     const lastClosed = S.periods.filter(p => p.status === '마감').pop();
     const nextYm = open ? open.ym : (lastClosed ? nextYmOf(lastClosed.ym) : ymForStart(C.addDays(S.today, 1)));
+    const L = S.periods.slice().sort((a, b) => (a.start < b.start ? 1 : -1));            // 최신 → 예전
+    const link = (p, i) => { const older = L[i + 1]; if (!older || !older.end) return ''; const want = addDaysStr(older.end, 1); if (want === p.start) return '<span class="pok">✓ 이어짐</span>';
+      return want < p.start ? `<span class="pbad">⚠ 빈 날 ${older.end} ~ ${p.start}</span>` : `<span class="pbad">⚠ ${ymLabel(older.ym)}와 겹침</span>`; };
+    const pr = (p, i) => `<tr><td><b>${ymLabel(p.ym)}</b></td><td>${p.start}</td><td>${p.end || '-'}</td><td>${periodChip(p)}</td><td>${link(p, i)}</td></tr>`;
+    const PR = pastRows(), guess = (ym, ref) => { const d = +(ref || '').slice(8) || 1; const [y, m] = ymAdd(ym, -1).split('-'); const last = new Date(+y, +m, 0).getDate(); return y + '-' + m + '-' + String(Math.min(d, last)).padStart(2, '0'); };
     return `
-      ${(() => { const L = S.periods.slice().reverse(), pr = p => `<tr><td><b>${ymLabel(p.ym)}</b></td><td>${p.start}</td><td>${p.end || '-'}</td><td>${periodChip(p)}</td></tr>`;   // v28.8 : 최근 2개만, 나머지는 접기
-        return `<table class="list" style="margin-bottom:${L.length > 2 ? 4 : 12}px"><thead><tr><th>귀속월</th><th>시작일</th><th>마감일</th><th>상태</th></tr></thead><tbody>
-          ${L.slice(0, 2).map(pr).join('') || '<tr><td colspan="4" class="muted">기간 없음</td></tr>'}</tbody></table>
-          ${L.length > 2 ? `<details class="fold" style="margin-bottom:12px"><summary>지난 달 ${L.length - 2}개 보기</summary><table class="list"><tbody>${L.slice(2, 14).map(pr).join('')}</tbody></table></details>` : ''}`; })()}
+      <div class="psec"><div class="psh"><b>① 진행 중인 달</b><span class="muted">${open ? ymLabel(open.ym) + ' · ' + open.start + ' 부터' : '진행 중인 달 없음'}</span></div>
       ${open ? `
       <div class="row" style="gap:12px;align-items:flex-end">
         <div class="fld"><label>귀속월</label><input type="month" id="pym" value="${open.ym}"></div>
         <div class="fld"><label>시작일</label><input type="date" id="pst" value="${open.start}"></div>
         <div class="fld"><label>마감일</label><input type="date" id="pen"></div>
-        <button class="primary" id="pclose">이 달 마감</button>
-        <button id="pedit">귀속월·시작일만 수정</button>
+        <button class="primary" id="pclose">${ymLabel(open.ym)} 마감</button>
+        <button id="pedit">귀속월 · 시작일만 수정</button>
       </div>
-      <div class="note">마감하면 관리자·담당 매니저만 수정 가능. 다음 달은 마감일 다음 날부터 자동으로 열립니다.</div>` : `
+      <div class="note">${ymLabel(open.ym)} 전용 칸입니다. 마감하면 다음 달이 마감일 다음 날부터 자동으로 열립니다.</div>` : `
       <div class="row" style="gap:12px;align-items:flex-end">
         <div class="fld"><label>귀속월</label><input type="month" id="pym" value="${nextYm}"></div>
         <div class="fld"><label>시작일</label><input type="date" id="pst" value="${lastClosed ? addDaysStr(lastClosed.end, 1) : ''}"></div>
         <button class="primary" id="popen">이 달 시작</button>
       </div>`}
-      ${lastClosed ? `<div class="row" style="margin-top:12px"><button id="pcancel">최근 마감 취소 (${ymLabel(lastClosed.ym)})</button></div>` : ''}
-      <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">지난 달 추가 (예전 엑셀용)</summary>
-      <div class="row" style="gap:12px;align-items:flex-end;margin-top:10px">
-        <div class="fld"><label>귀속월</label><input type="month" id="aym"></div>
-        <div class="fld"><label>시작일</label><input type="date" id="ast"></div>
-        <div class="fld"><label>마감일</label><input type="date" id="aen"></div>
-        <button id="padd">마감 상태로 추가</button>
-      </div></details>`;
+      ${lastClosed ? `<div class="row" style="margin-top:8px"><button class="sm" id="pcancel">최근 마감 취소 (${ymLabel(lastClosed.ym)})</button></div>` : ''}</div>
+      <div class="psec"><div class="psh"><b>② 귀속월 목록</b><span class="muted">${L.length}개 · 날짜가 빈 곳 · 겹친 곳은 빨간색</span></div>
+        <table class="list"><thead><tr><th>귀속월</th><th>시작일</th><th>마감일</th><th>상태</th><th>앞 달과</th></tr></thead><tbody>
+        ${L.slice(0, 4).map(pr).join('') || '<tr><td colspan="5" class="muted">기간 없음</td></tr>'}</tbody></table>
+        ${L.length > 4 ? `<details class="fold"><summary>나머지 ${L.length - 4}개 보기</summary><table class="list"><tbody>${L.slice(4).map((p, i) => pr(p, i + 4)).join('')}</tbody></table></details>` : ''}</div>
+      ${PR.first ? `<div class="psec"><div class="psh"><b>③ 지난 달 추가</b><span class="muted">웹 쓰기 전 달 (엑셀로 가져올 달) · <b>시작일만 확인</b>하면 마감일은 뒤 달 시작 전날로 자동</span></div>
+        <table class="list ppast"><thead><tr><th><input type="checkbox" id="ppall" checked aria-label="모두"></th><th>귀속월</th><th>시작일</th><th>마감일 (자동)</th></tr></thead><tbody>
+        ${PR.yms.map((ym, i) => `<tr data-pym="${ym}"><td><input type="checkbox" class="ppc" checked aria-label="추가"></td><td><b>${ymLabel(ym)}</b></td><td><input type="date" class="pps" value="${guess(ym, i ? '' : PR.first.start) && ''}"></td><td class="ppe muted">-</td></tr>`).join('')}
+        </tbody></table>
+        <div class="row" style="gap:10px;margin-top:8px;align-items:center"><button class="primary" id="ppadd">체크한 달 추가</button><span class="muted" id="ppmsg">위에서부터 (최신 달부터) 차례로 이어 붙입니다 · 시작일이 빈 달은 건너뜀</span></div></div>` : ''}`;
   }
   // ============================================================ 통계 (관리자 설정 › 통계)
   // 계산 원칙 : 서버는 [사람 · 귀속월 · 주 · 요일구분]별 원재료 합계만 보내고, 계산은 core.js(엑셀 통계 시트)와 같은 식으로 여기서 함
@@ -8286,7 +8302,7 @@ async function addCharts(buf, jobs) {
         <div id="bkbox"><div class="muted">불러오는 중…</div></div>
         ${isAdm0() ? `<div class="row" style="margin-top:12px"><span class="muted" style="flex:1">지우거나 바꾼 자료는 180일 동안 보관됩니다</span><button id="trashb">🗂 지운 자료 보관함</button></div>` : ''}
         ${isAdm0() ? `<div class="row" style="margin-top:12px"><span class="muted" style="flex:1" id="abst">자동 백업 (매일) : 확인 중…</span><button id="abkey">🔑 자동 백업 열쇠</button></div>` : ''}
-        ${me.period && me.role === '관리자' ? '<div class="row" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)"><span class="muted" style="flex:1">운영 전 시험 데이터 삭제용 (일일 입력 · 목표 · 기간 · 근태 · 일일 현황)</span><button class="danger" id="pwipe">데이터 전체 삭제…</button></div>' : ''}</section>` : ''}
+        ${me.period && me.role === '관리자' ? '<div class="row" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)"><span class="muted" style="flex:1">운영 전 시험 데이터 삭제용 · <b>한 달만</b> = 그 귀속월의 일일 입력 · 근태 · 일일 현황만 (기간 · 목표 · 다른 달 그대로)</span><button class="danger" id="pmwipe">한 달 데이터만 지우기…</button><button class="danger" id="pwipe">데이터 전체 삭제…</button></div>' : ''}</section>` : ''}
       </div></div>`;
     if (me.period) bindPeriodPanel();
     if ($('#prt')) $('#prt').onclick = editRates;
@@ -8570,8 +8586,42 @@ async function addCharts(buf, jobs) {
       if (!(await confirmBox(`가장 최근 마감(<b>${lc ? ymLabel(lc.ym) : ''}</b>)을 취소하고 다시 진행 상태로 돌립니다.` + (op ? `<br>그 뒤에 자동으로 열린 <b>${ymLabel(op.ym)}</b> 기간은 없어지고, 그 기간에 입력한 날짜는 ${lc ? ymLabel(lc.ym) : '이전 달'}로 합쳐집니다 (입력 자체는 지워지지 않음).` : ''), '마감 취소'))) return;
       try { upd(await api('cancelClose')); toast('마감을 취소했습니다'); } catch (e) { toast(e.message, true); }
     };
-    b('padd').onclick = async () => {
-      try { upd(await api('addPastPeriod', { ym: b('aym').value, start: b('ast').value, end: b('aen').value })); toast('지난 달 기간을 추가했습니다'); } catch (e) { toast(e.message, true); refreshAfterFail(); }
+    if (b('ppadd')) {                                           // v28.31 : 지난 달 한꺼번에 (마감일 = 뒤 달 시작 전날)
+      const PR = pastRows(), rows = () => $$('.ppast tbody tr');
+      const calc = () => { let nextStart = PR.first.start, ok = 0;
+        rows().forEach(tr => { const on = $('.ppc', tr).checked, st = $('.pps', tr).value, e = $('.ppe', tr);
+          if (!on || !st) { e.textContent = '-'; e.className = 'ppe muted'; return; }
+          const en = C.addDays(nextStart, -1); e.textContent = en; e.className = 'ppe' + (st > en ? ' pbad' : '');
+          if (st <= en) ok++; nextStart = st; });
+        b('ppadd').textContent = '체크한 달 추가 (' + ok + '개)'; return ok; };
+      rows().forEach(tr => { $('.pps', tr).onchange = calc; $('.ppc', tr).onchange = calc; });
+      b('ppall').onchange = e => { $$('.ppc').forEach(c => (c.checked = e.target.checked)); calc(); };
+      calc();
+      b('ppadd').onclick = async () => {
+        const jobs = []; let nextStart = PR.first.start, bad = '';
+        rows().forEach(tr => { if (!$('.ppc', tr).checked) return; const st = $('.pps', tr).value; if (!st) return; const en = C.addDays(nextStart, -1); if (st > en) bad = bad || ymLabel(tr.dataset.pym); jobs.push({ ym: tr.dataset.pym, start: st, end: en }); nextStart = st; });
+        if (bad) return toast(bad + ' : 시작일이 마감일보다 뒤입니다', true);
+        if (!jobs.length) return toast('시작일을 넣은 달이 없습니다', true);
+        if (!(await confirmBox('지난 달 <b>' + jobs.length + '개</b>를 마감 상태로 추가합니다.<br>' + jobs.map(j => ymLabel(j.ym) + ' : ' + j.start + ' ~ ' + j.end).join('<br>'), '추가'))) return;
+        let r = null, n = 0;
+        for (const j of jobs) { try { r = await api('addPastPeriod', j); n++; } catch (e) { toast(ymLabel(j.ym) + ' : ' + e.message, true); break; } }
+        if (r) { upd(r); toast('지난 달 ' + n + '개를 추가했습니다'); } else refreshAfterFail();
+      };
+    }
+    if (b('pmwipe')) b('pmwipe').onclick = () => {           // v28.31 : 한 귀속월만
+      const L = S.periods.slice().reverse(); if (!L.length) return toast('귀속월이 없습니다', true);
+      const def = (curPeriod() || L[0]).ym;
+      modal(`<h3 style="color:var(--red)">한 달 데이터만 지우기</h3>
+      <div class="fld"><label>귀속월</label><select id="pmym">${L.map(p => `<option value="${p.ym}" ${p.ym === def ? 'selected' : ''}>${ymLabel(p.ym)} (${p.start} ~ ${p.end || '진행 중'})</option>`).join('')}</select></div>
+      <div style="line-height:1.7"><b>지워지는 것</b> : 그 기간 모든 인원의 일일 입력 · 근태 기록 · 일일 현황(업무배정 · 특이사항 · 병가/경조 · 라인 총량) · 수정 요청<br><b>남는 것</b> : 귀속월 기간 · 월 목표 · 다른 달 · 계정 · 연차 · 인사평가<br><span class="muted">지운 내용은 [지운 자료 보관함]에 남습니다.</span></div>
+      <div class="fld" style="margin-top:10px"><label>확인 : 귀속월 <b id="pmcf"></b> 을(를) 그대로 입력</label><input id="pmin" placeholder="예) 2026-10" autocomplete="off"></div>
+      <div class="acts"><button data-c>취소</button><button class="danger" data-s>지우기</button></div>`, (bg, close) => {
+        const sh = () => ($('#pmcf', bg).textContent = $('#pmym', bg).value); sh(); $('#pmym', bg).onchange = sh;
+        $('[data-c]', bg).onclick = close;
+        $('[data-s]', bg).onclick = async () => {
+          try { const r = await api('deletePeriodData', { ym: $('#pmym', bg).value, confirm: $('#pmin', bg).value.trim() }); close(); upd(r); toast('일일 ' + r.n + '건을 지웠습니다'); } catch (e) { toast(e.message, true); }
+        };
+      });
     };
     if (b('pwipe')) b('pwipe').onclick = () => modal(`<h3 style="color:var(--red)">데이터 전체 삭제</h3>
       <div style="line-height:1.6"><b>지워지는 것</b> : 모든 인원의 일일 입력 · 월 목표 · 월 기간 · 인사평가 <u>근태</u> 기록<br><b>남는 것</b> : 계정 · 조직도 명단 · 연차·토요 · 인사평가 점수·평가 기록<br>운영 전 시험 데이터 삭제용 <b>한 번만</b> 쓰세요.<br>되돌릴 수 없습니다. 계속하려면 <b>전체삭제</b> 라고 입력하세요.</div>
