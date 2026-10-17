@@ -5602,7 +5602,7 @@ async function addCharts(buf, jobs) {
     const ppl = new Set(sel.map(r => r.name)).size, nWeb = sel.filter(r => r.src === 'web').length;
     const years = Array.from(new Set([today.slice(0, 4), Z.year, String(+today.slice(0, 4) - 1)])).sort().reverse();
     let monthNote = '';
-    if (Z.ym) {
+    if (Z.ym && !self) {
       if (mi && mi.lock) monthNote = `<div class="accnote lock">🔒 ${ymLab(Z.ym)} 인사평가가 잠겨 있어 사고를 등록 · 고칠 수 없습니다</div>`;
       else if (Z.ym < (D.webFrom || '') && !(mi && mi.src === 'web')) monthNote = `<div class="accnote xl">📄 ${ymLab(Z.ym)}은 <b>엑셀로 관리하는 달</b>입니다 (웹 등록은 ${ymLab(D.webFrom)}부터)${canEdit() ? ' · 인사평가 [데이터]에서 사고 엑셀로 올리세요' : ''}</div>`;
       else if (mi && mi.src === 'xl') monthNote = `<div class="accnote xl">📄 ${ymLab(Z.ym)}은 <b>엑셀로 올린 사고 자료</b>입니다${canEdit() ? ' · 이 달은 인사평가 [데이터]에서 엑셀로 관리하고, 웹 등록은 안 됩니다' : ''}</div>`;
@@ -5612,25 +5612,25 @@ async function addCharts(buf, jobs) {
       <div class="card accbar">
         <div class="r"><select id="acy">${years.map(y => `<option value="${y}" ${y === Z.year ? 'selected' : ''}>${y}년</option>`).join('')}</select>
           <div class="accms"><button data-am="" class="${!Z.ym ? 'on' : ''}">전체<small>${all.length}</small></button>${yms.map(ym => { const n = cnt(ym), m = monthInfo(ym);
-            return `<button data-am="${ym}" class="${Z.ym === ym ? 'on' : ''} ${n ? '' : 'z'}" title="${ymLab(ym)}${m ? (m.src === 'xl' ? ' · 엑셀' : ' · 웹') : ''}${m && m.lock ? ' · 잠김' : ''}">${+ym.slice(5)}월<small>${n || ''}${m && m.src === 'xl' ? '<i class="xs">엑셀</i>' : ''}</small></button>`; }).join('')}</div>
+            return `<button data-am="${ym}" class="${Z.ym === ym ? 'on' : ''} ${n ? '' : 'z'}" title="${ymLab(ym)}${m ? (m.src === 'xl' ? ' · 엑셀' : ' · 웹') : ''}${m && m.lock ? ' · 잠김' : ''}">${+ym.slice(5)}월<small>${n || ''}</small></button>`; }).join('')}</div>
           <div class="grow"></div>
           ${canEdit() ? '<button class="primary" id="acadd">+ 사고 등록</button>' : ''}
           ${scope() === 'all' ? '<button id="acxl" title="사고현황 엑셀과 같은 양식 (달마다 시트)">기존 양식 엑셀</button><button id="acan" title="정리된 엑셀을 받아 Claude에 올리면 분석 보고서를 받을 수 있습니다">분석용 내보내기</button>' : ''}</div>
         <div class="r">${self ? '' : `<select id="acg"><option value="">전체 그룹</option>${groups.map(g => `<option ${g === Z.fg ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>`}
           <span class="seg sm2"><button data-ak="" class="${!Z.fk ? 'on' : ''}">전체 구분</button>${KINDS.map(k => `<button data-ak="${k}" class="${Z.fk === k ? 'on' : ''}">${k}${kc[k] ? ' ' + kc[k] : ''}</button>`).join('')}</span>
-          <input id="acq" placeholder="${self ? '주문번호 · 제품 · 내용' : '이름 · 주문번호 · 제품 · 내용'} 찾기" value="${esc(Z.q)}" autocomplete="off" style="width:230px"></div>
+          <input id="acq" placeholder="${self ? '주문번호 · 내용' : '이름 · 주문번호 · 제품 · 내용'} 찾기" value="${esc(Z.q)}" autocomplete="off" style="width:230px"></div>
       </div>
       ${monthNote}
       <div class="acckpi">
         <div class="card"><span>${Z.ym ? ymLab(Z.ym) : Z.year + '년'} 사고</span><b>${sel.length}<small> 건</small></b><em>${self ? (sel.length ? '종류는 오른쪽 · 줄을 누르면 자세히' : '사고가 없습니다 👍') : '사고 난 인원 ' + ppl + '명 · 웹 등록 ' + nWeb + '건 · 엑셀 ' + (sel.length - nWeb) + '건'}</em></div>
         <div class="card wide"><span>구분별</span><div class="acckb">${KINDS.map(k => { const v = kc[k] || 0; return `<div><i style="background:${KC[k]}"></i><b>${k}</b><em>${v}<small>건</small></em><span class="t"><i style="width:${sel.length ? v / sel.length * 100 : 0}%;background:${KC[k]}"></i></span></div>`; }).join('')}</div></div>
       </div>
-      <div class="card" style="padding:0;overflow:auto"><table class="list acctl"><thead><tr><th>출고일</th>${Z.ym ? '' : '<th>귀속월</th>'}${self ? '' : '<th>이름</th><th>그룹</th>'}<th>구분</th><th>주문번호</th><th>제품</th><th>증상 · 내용</th><th>처리</th><th></th></tr></thead><tbody>
-        ${rows.slice(0, 500).map((r, i) => `<tr class="click" data-ai="${all.indexOf(r)}"><td class="nw">${r.d ? md(r.d) : '<span class="muted">-</span>'}</td>${Z.ym ? '' : `<td class="nw">${+r.ym.slice(5)}월</td>`}${self ? '' : `<td class="nw"><b>${esc(r.name)}</b></td><td class="nw">${A.gdot(r.grp)}</td>`}
+      <div class="card" style="padding:0;overflow:auto"><table class="list acctl"><thead><tr><th>출고일</th>${Z.ym || self ? '' : '<th>귀속월</th>'}${self ? '' : '<th>이름</th><th>그룹</th>'}<th>구분</th><th>주문번호</th>${self ? '' : '<th>제품</th>'}<th>증상 · 내용</th><th>처리</th>${self ? '' : '<th></th>'}</tr></thead><tbody>
+        ${rows.slice(0, 500).map((r, i) => `<tr class="click" data-ai="${all.indexOf(r)}"><td class="nw">${r.d ? md(r.d) : '<span class="muted">-</span>'}</td>${Z.ym || self ? '' : `<td class="nw">${+r.ym.slice(5)}월</td>`}${self ? '' : `<td class="nw"><b>${esc(r.name)}</b></td><td class="nw">${A.gdot(r.grp)}</td>`}
           <td>${kTag(r.kind)}</td><td class="nw">${esc(r.ord) || '<span class="muted">-</span>'}</td>
-          <td class="pr">${(r.prods || []).length ? esc(r.prods[0].name || r.prods[0].code) + (r.prods.length > 1 ? ` <span class="muted">외 ${r.prods.length - 1}</span>` : '') : '<span class="muted">-</span>'}</td>
+          ${self ? '' : `<td class="pr">${(r.prods || []).length ? esc(r.prods[0].name || r.prods[0].code) + (r.prods.length > 1 ? ` <span class="muted">외 ${r.prods.length - 1}</span>` : '') : '<span class="muted">-</span>'}</td>`}
           <td class="tx">${r.sym || r.part ? `<span class="accsy">${esc([r.part, r.sym].filter(Boolean).join(' · '))}</span> ` : ''}${r.det ? esc(r.txt) : '<span class="muted">내용 없음 (예전에 올린 파일)</span>'}</td><td class="tx2">${esc(r.act)}</td>
-          <td class="nw">${r.nimg ? `<span class="accim" title="캡처 ${r.nimg}장">📷${r.nimg > 1 ? r.nimg : ''}</span>` : ''}${r.src === 'xl' ? '<span class="accsrc">엑셀</span>' : ''}</td></tr>`).join('') || `<tr><td colspan="10" class="muted" style="padding:28px;text-align:center">${sel.length ? '찾는 조건에 맞는 사고가 없습니다' : (Z.ym ? ymLab(Z.ym) : Z.year + '년') + ' 사고가 없습니다'}</td></tr>`}
+          ${self ? '' : `<td class="nw">${r.nimg ? `<span class="accim" title="캡처 ${r.nimg}장">📷${r.nimg > 1 ? r.nimg : ''}</span>` : ''}${r.src === 'xl' ? '<span class="accsrc">엑셀</span>' : ''}</td>`}</tr>`).join('') || `<tr><td colspan="10" class="muted" style="padding:28px;text-align:center">${sel.length ? '찾는 조건에 맞는 사고가 없습니다' : (Z.ym ? ymLab(Z.ym) : Z.year + '년') + ' 사고가 없습니다'}</td></tr>`}
         ${rows.length > 500 ? `<tr><td colspan="10" class="muted" style="padding:10px">500건까지만 보입니다 · 달이나 구분을 골라 주세요</td></tr>` : ''}
       </tbody></table></div></div>`;
     $('#acy').onchange = e => { Z.year = e.target.value; Z.ym = ''; Z.fg = ''; render(main); };
@@ -5659,13 +5659,13 @@ async function addCharts(buf, jobs) {
     const diff = l => { if (!l.old || !l.new) return ''; const N = { d: '출고일', ym: '귀속월', ord: '주문번호', name: '이름', kind: '구분', sym: '증상', part: '부품', txt: '내용', act: '처리', actD: '처리일', nimg: '캡처' };
       const ch = Object.keys(N).filter(k => JSON.stringify(l.old[k]) !== JSON.stringify(l.new[k])).map(k => `${N[k]} <s>${esc(String(l.old[k] || '-').slice(0, 30))}</s> → ${esc(String(l.new[k] || '-').slice(0, 30))}`);
       if (JSON.stringify(l.old.prods) !== JSON.stringify(l.new.prods)) ch.push('제품 목록'); return ch.join(' · '); };
-    A.modal(`<h3>사고 내역 ${kTag(it.kind)} ${it.src === 'xl' ? '<span class="accsrc">엑셀로 올린 자료</span>' : ''}</h3>
+    A.modal(`<h3>사고 내역 ${kTag(it.kind)} ${it.src === 'xl' && !self ? '<span class="accsrc">엑셀로 올린 자료</span>' : ''}</h3>
       <div class="accdf">${F('출고일', esc(it.d))}${F('귀속월', ymLab(it.ym))}${self ? '' : F('이름', esc(it.name) + ' <span class="muted">' + esc(it.grp) + '</span>')}${F('주문번호', esc(it.ord))}
         ${F('증상 분류', esc(it.sym))}${F('부품', esc(it.part))}${F('처리', esc(it.act))}${F('처리일', esc(it.actD))}</div>
       <div class="accdt"><span>내용</span><p>${it.det ? esc(it.txt) || '<i class="muted">-</i>' : '<i class="muted">내용 없음 (예전에 올린 파일 · 건수만 있음)</i>'}</p></div>
       ${(it.prods || []).length ? `<div class="sub" style="margin-top:12px">제품 ${it.prods.length}개</div><table class="list accpt"><thead><tr><th>제품코드</th><th>제품명</th><th class="num">수량</th></tr></thead><tbody>${it.prods.map(p => `<tr><td class="nw">${esc(p.code)}</td><td>${esc(p.name)}</td><td class="num">${esc(p.qty)}</td></tr>`).join('')}</tbody></table>` : ''}
       ${imgs.length ? `<div class="sub" style="margin-top:12px">캡처 ${imgs.length}장 <small class="muted">누르면 크게</small></div><div class="accth">${imgs.map((m, i) => `<img src="${m.data}" data-big="${i}" alt="캡처 ${i + 1}">`).join('')}</div>` : ''}
-      ${it.src === 'web' ? `<div class="muted" style="font-size:12px;margin-top:12px">등록 ${esc(it.by)} ${esc((it.at || '').slice(5, 16))}${it.upAt && it.upAt !== it.at ? ' · 마지막 수정 ' + esc(it.upBy) + ' ' + esc(it.upAt.slice(5, 16)) : ''}</div>` : ''}
+      ${it.src === 'web' && !self ? `<div class="muted" style="font-size:12px;margin-top:12px">등록 ${esc(it.by)} ${esc((it.at || '').slice(5, 16))}${it.upAt && it.upAt !== it.at ? ' · 마지막 수정 ' + esc(it.upBy) + ' ' + esc(it.upAt.slice(5, 16)) : ''}</div>` : ''}
       ${log.length > 1 ? `<details class="acclog"><summary>고친 기록 ${log.length}건</summary>${log.map(l => `<div><b>${esc(l.act)}</b> <span class="muted">${esc(l.by)} · ${esc(l.at.slice(5, 16))}</span> ${diff(l)}</div>`).join('')}</details>` : ''}
       <div class="acts">${it.src === 'web' && canEdit() && !lock ? '<button class="danger" data-del style="margin-right:auto">지우기</button><button data-ed>고치기</button>' : ''}${it.src === 'web' && canEdit() && lock ? '<span class="muted" style="margin-right:auto">🔒 인사평가가 잠긴 달이라 고칠 수 없습니다</span>' : ''}<button class="primary" data-c>닫기</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
