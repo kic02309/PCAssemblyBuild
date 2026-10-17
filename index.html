@@ -1628,7 +1628,8 @@ table.acctl tr.click{cursor:pointer}table.acctl tr.click:hover td{background:#f5
 .accsy{display:inline-block;font-size:11.5px;background:#eef1f5;color:#46505e;border-radius:5px;padding:0 6px;margin-right:2px}
 .accsrc{display:inline-block;font-size:11px;background:#fff7e6;color:#7a4b00;border:1px solid #f3d9a4;border-radius:5px;padding:0 5px;margin-left:4px;font-weight:600}.accim{font-size:13px}
 .modal.accfm{width:min(980px,96vw);max-height:94vh;overflow:auto}.modal.accd{width:min(860px,96vw);max-height:92vh;overflow:auto}
-.accf{display:flex;flex-direction:column;gap:6px}.accf .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.accf .fld{margin-bottom:4px}.accf .fld label{display:block;margin-bottom:3px}
+.accf{display:flex;flex-direction:column;gap:6px}.accf .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.accf .g31{display:grid;grid-template-columns:3fr 1fr;gap:10px}
+.accpend{display:inline-block;font-size:11px;font-weight:700;background:#fdecec;color:#b42318;border-radius:5px;padding:0 6px;white-space:nowrap}html[data-theme=dark] .accpend{background:#3a1d1d;color:#ffb4b4}.accf .fld{margin-bottom:4px}.accf .fld label{display:block;margin-bottom:3px}
 .accf textarea{width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:5px;padding:6px 8px;resize:vertical;background:#fff;color:var(--ink)}
 .acckind{display:flex;gap:6px;flex-wrap:wrap}.acckind button{border-radius:99px;font-weight:700;padding:6px 14px}.acckind button.on{background:var(--kc);border-color:var(--kc);color:#fff}
 .accps{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:6px;display:flex;flex-direction:column;gap:8px}.accps .h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.accps .h small{font-size:12px}
@@ -5543,8 +5544,6 @@ async function addCharts(buf, jobs) {
   const Z = { year: null, ym: null, data: null, q: '', fk: '', fg: '', at: 0 };
   const KINDS = ['오조립', '파손', '오발송', '미발송', '품질지적', '지시불이행'];
   const KC = { 오조립: '#c2410c', 파손: '#7c3aed', 오발송: '#0f766e', 미발송: '#b45309', 품질지적: '#2563eb', 지시불이행: '#64748b' };
-  const SYMS = ['부팅 안 됨', '화면 안 나옴', '재부팅 · 멈춤', '소음 · 진동', '인식 안 됨', '성능 · 발열', '외관 파손 · 흠집', '구성품 누락 · 오구성', '설정 · 소프트웨어', '기타'];
-  const PARTS = ['CPU', '메인보드', '메모리', 'SSD · 저장장치', '그래픽카드', '파워', 'CPU 쿨러', '케이스 · 팬', 'OS · 소프트웨어', '구성품 · 박스', '배송 · 포장', '기타'];
   const MAXIMG = 3;
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const $ = (s, el) => (el || document).querySelector(s);
@@ -5578,7 +5577,7 @@ async function addCharts(buf, jobs) {
         out.push({ src: 'xl', det: 1, ym, name, grp, kind: k, d: x[0] || '', ord: x[1] || '', txt: x[3] || '', act: x[4] || '', actD: x[5] || '', prods: [], nimg: 0 }); });
       KINDS.forEach(k => { for (let i = 0; i < Math.max(0, (+(row || {})[k] || 0) - (used[k] || 0)); i++) out.push({ src: 'xl', det: 0, ym, name, grp, kind: k, d: '', ord: '', txt: '', act: '', actD: '', prods: [], nimg: 0 }); });
     });
-    return out.sort((a, b) => (b.d || b.ym).localeCompare(a.d || a.ym) || (b.id || 0) - (a.id || 0));
+    return out.sort((a, b) => b.ym.localeCompare(a.ym) || (b.d || '').localeCompare(a.d || '') || (b.id || 0) - (a.id || 0));   // 귀속월 → 출고일 (날짜 오타가 있어도 제 달 안에)
   }
 
   // ------------------------------------------------ 화면
@@ -5593,7 +5592,7 @@ async function addCharts(buf, jobs) {
     const D = Z.data;
     if (Z.ym === null) { const cur = ymOf(today); Z.ym = cur.slice(0, 4) === Z.year ? cur : ''; if (scope() === 'self') Z.ym = ''; }
     const all = rowsOf(D), sel = all.filter(r => !Z.ym || r.ym === Z.ym), q = Z.q.trim().toLowerCase();
-    const rows = sel.filter(r => (!Z.fk || r.kind === Z.fk) && (!Z.fg || r.grp === Z.fg) && (!q || [r.name, r.ord, r.txt, r.act, r.sym, r.part, ...(r.prods || []).flatMap(p => [p.code, p.name])].some(v => String(v || '').toLowerCase().includes(q))));
+    const rows = sel.filter(r => (!Z.fk || r.kind === Z.fk) && (!Z.fg || r.grp === Z.fg) && (!q || [r.name, r.ord, r.txt, r.act, ...(r.prods || []).flatMap(p => [p.code, p.name])].some(v => String(v || '').toLowerCase().includes(q))));
     const yms = Array.from({ length: 12 }, (_, i) => Z.year + '-' + String(i + 1).padStart(2, '0'));
     const cnt = ym => all.filter(r => r.ym === ym).length;
     const groups = Array.from(new Set(sel.map(r => r.grp).filter(Boolean))).sort((a, b) => (A.C.GROUP_LIST.indexOf(a) + 1 || 99) - (A.C.GROUP_LIST.indexOf(b) + 1 || 99));
@@ -5629,7 +5628,7 @@ async function addCharts(buf, jobs) {
         ${rows.slice(0, 500).map((r, i) => `<tr class="click" data-ai="${all.indexOf(r)}"><td class="nw">${r.d ? md(r.d) : '<span class="muted">-</span>'}</td>${Z.ym || self ? '' : `<td class="nw">${+r.ym.slice(5)}월</td>`}${self ? '' : `<td class="nw"><b>${esc(r.name)}</b></td><td class="nw">${A.gdot(r.grp)}</td>`}
           <td>${kTag(r.kind)}</td><td class="nw">${esc(r.ord) || '<span class="muted">-</span>'}</td>
           ${self ? '' : `<td class="pr">${(r.prods || []).length ? esc(r.prods[0].name || r.prods[0].code) + (r.prods.length > 1 ? ` <span class="muted">외 ${r.prods.length - 1}</span>` : '') : '<span class="muted">-</span>'}</td>`}
-          <td class="tx">${r.sym || r.part ? `<span class="accsy">${esc([r.part, r.sym].filter(Boolean).join(' · '))}</span> ` : ''}${r.det ? esc(r.txt) : '<span class="muted">내용 없음 (예전에 올린 파일)</span>'}</td><td class="tx2">${esc(r.act)}</td>
+          <td class="tx">${r.det ? esc(r.txt) : '<span class="muted">내용 없음 (예전에 올린 파일)</span>'}</td><td class="tx2">${r.src === 'web' && !r.actD ? '<span class="accpend">처리 전</span> ' : ''}${esc(r.act)}</td>
           ${self ? '' : `<td class="nw">${r.nimg ? `<span class="accim" title="캡처 ${r.nimg}장">📷${r.nimg > 1 ? r.nimg : ''}</span>` : ''}${r.src === 'xl' ? '<span class="accsrc">엑셀</span>' : ''}</td>`}</tr>`).join('') || `<tr><td colspan="10" class="muted" style="padding:28px;text-align:center">${sel.length ? '찾는 조건에 맞는 사고가 없습니다' : (Z.ym ? ymLab(Z.ym) : Z.year + '년') + ' 사고가 없습니다'}</td></tr>`}
         ${rows.length > 500 ? `<tr><td colspan="10" class="muted" style="padding:10px">500건까지만 보입니다 · 달이나 구분을 골라 주세요</td></tr>` : ''}
       </tbody></table></div></div>`;
@@ -5656,13 +5655,14 @@ async function addCharts(buf, jobs) {
     close0();
     const mi = monthInfo(it.ym), lock = mi && mi.lock, self = scope() === 'self';
     const F = (l, v) => `<div><span>${l}</span><b>${v || '<i class="muted">-</i>'}</b></div>`;
-    const diff = l => { if (!l.old || !l.new) return ''; const N = { d: '출고일', ym: '귀속월', ord: '주문번호', name: '이름', kind: '구분', sym: '증상', part: '부품', txt: '내용', act: '처리', actD: '처리일', nimg: '캡처' };
+    const diff = l => { if (!l.old || !l.new) return ''; const N = { d: '출고일', ym: '귀속월', ord: '주문번호', name: '이름', kind: '구분', txt: '내용', act: '처리', actD: '처리일', nimg: '캡처' };
       const ch = Object.keys(N).filter(k => JSON.stringify(l.old[k]) !== JSON.stringify(l.new[k])).map(k => `${N[k]} <s>${esc(String(l.old[k] || '-').slice(0, 30))}</s> → ${esc(String(l.new[k] || '-').slice(0, 30))}`);
       if (JSON.stringify(l.old.prods) !== JSON.stringify(l.new.prods)) ch.push('제품 목록'); return ch.join(' · '); };
     A.modal(`<h3>사고 내역 ${kTag(it.kind)} ${it.src === 'xl' && !self ? '<span class="accsrc">엑셀로 올린 자료</span>' : ''}</h3>
       <div class="accdf">${F('출고일', esc(it.d))}${F('귀속월', ymLab(it.ym))}${self ? '' : F('이름', esc(it.name) + ' <span class="muted">' + esc(it.grp) + '</span>')}${F('주문번호', esc(it.ord))}
-        ${F('증상 분류', esc(it.sym))}${F('부품', esc(it.part))}${F('처리', esc(it.act))}${F('처리일', esc(it.actD))}</div>
-      <div class="accdt"><span>내용</span><p>${it.det ? esc(it.txt) || '<i class="muted">-</i>' : '<i class="muted">내용 없음 (예전에 올린 파일 · 건수만 있음)</i>'}</p></div>
+        ${F('처리일자', it.actD ? esc(it.actD) : it.src === 'web' ? '<span class="accpend">처리 전</span>' : '')}</div>
+      <div class="accdt"><span>내용 (증상)</span><p>${it.det ? esc(it.txt) || '<i class="muted">-</i>' : '<i class="muted">내용 없음 (예전에 올린 파일 · 건수만 있음)</i>'}</p></div>
+      <div class="accdt"><span>처리 내용</span><p>${esc(it.act) || '<i class="muted">아직 없음</i>'}</p></div>
       ${(it.prods || []).length ? `<div class="sub" style="margin-top:12px">제품 ${it.prods.length}개</div><table class="list accpt"><thead><tr><th>제품코드</th><th>제품명</th><th class="num">수량</th></tr></thead><tbody>${it.prods.map(p => `<tr><td class="nw">${esc(p.code)}</td><td>${esc(p.name)}</td><td class="num">${esc(p.qty)}</td></tr>`).join('')}</tbody></table>` : ''}
       ${imgs.length ? `<div class="sub" style="margin-top:12px">캡처 ${imgs.length}장 <small class="muted">누르면 크게</small></div><div class="accth">${imgs.map((m, i) => `<img src="${m.data}" data-big="${i}" alt="캡처 ${i + 1}">`).join('')}</div>` : ''}
       ${it.src === 'web' && !self ? `<div class="muted" style="font-size:12px;margin-top:12px">등록 ${esc(it.by)} ${esc((it.at || '').slice(5, 16))}${it.upAt && it.upAt !== it.at ? ' · 마지막 수정 ' + esc(it.upBy) + ' ' + esc(it.upAt.slice(5, 16)) : ''}</div>` : ''}
@@ -5689,18 +5689,16 @@ async function addCharts(buf, jobs) {
       <div class="accf">
         <div class="g4">
           <div class="fld"><label>출고일 *</label><input type="date" id="fd" value="${esc(f.d)}"></div>
-          <div class="fld"><label>귀속월 <small class="muted">출고일로 자동</small></label><select id="fym"></select></div>
           <div class="fld"><label>주문번호</label><input id="fo" value="${esc(f.ord)}" autocomplete="off" maxlength="60"></div>
           <div class="fld"><label>발생 인원 *</label><input id="fn" list="accppl" value="${esc(f.name)}" autocomplete="off" placeholder="이름"><datalist id="accppl">${P.map(p => `<option value="${esc(p[0])}">${esc(p[1])}</option>`).join('')}</datalist><small class="muted" id="fng"></small></div>
+          <div class="fld"><label>귀속월 <small class="muted">출고일로 자동</small></label><select id="fym"></select></div>
         </div>
         <div class="fld"><label>구분 *</label><div class="acckind">${KINDS.map(k => `<button type="button" data-k="${k}" class="${f.kind === k ? 'on' : ''}" style="--kc:${KC[k]}">${k}</button>`).join('')}</div></div>
-        <div class="g4">
-          <div class="fld"><label>부품</label><select id="fp"><option value="">-</option>${PARTS.map(x => `<option ${x === f.part ? 'selected' : ''}>${x}</option>`).join('')}${f.part && !PARTS.includes(f.part) ? `<option selected>${esc(f.part)}</option>` : ''}</select></div>
-          <div class="fld"><label>증상 분류</label><select id="fs"><option value="">-</option>${SYMS.map(x => `<option ${x === f.sym ? 'selected' : ''}>${x}</option>`).join('')}${f.sym && !SYMS.includes(f.sym) ? `<option selected>${esc(f.sym)}</option>` : ''}</select></div>
-          <div class="fld"><label>처리</label><input id="fa" value="${esc(f.act)}" autocomplete="off" maxlength="500" placeholder="예) 재발송 · 회수 교환"></div>
-          <div class="fld"><label>처리일</label><input type="date" id="fad" value="${esc(f.actD)}"></div>
-        </div>
         <div class="fld"><label>내용 (증상 자세히)</label><textarea id="ft" rows="3" maxlength="2000" placeholder="예) 출고 후 부팅 안 됨 · 메모리 2번 슬롯 덜 꽂힘">${esc(f.txt)}</textarea></div>
+        <div class="g31">
+          <div class="fld"><label>처리 내용 <small class="muted">나중에 [고치기]로 넣어도 됨</small></label><textarea id="fa" rows="2" maxlength="500" placeholder="예) 회수 후 재조립 · 고객 안내">${esc(f.act)}</textarea></div>
+          <div class="fld"><label>처리일자 <small class="muted">처리 끝난 날</small></label><input type="date" id="fad" value="${esc(f.actD)}"></div>
+        </div>
         <div class="accps">
           <div class="h"><b>제품 목록</b><small class="muted">관리툴 주문 화면에서 제품 줄을 드래그해 복사(Ctrl+C) → 아래 칸을 누르고 붙여넣기(Ctrl+V) · 캡처 이미지도 붙여넣기 됩니다</small></div>
           <div class="accpz" id="pz" tabindex="0" contenteditable="true" spellcheck="false" data-ph="여기를 누르고 Ctrl+V"></div>
@@ -5733,7 +5731,7 @@ async function addCharts(buf, jobs) {
       $('#fd', bg).onchange = () => { mark(); fill(); };
       $('#fym', bg).onchange = e => { f.ym = e.target.value; ymSet = f.ym !== ymOf($('#fd', bg).value || today); mark(); fill(); };
       $('#fn', bg).oninput = () => { mark(); ng(); };
-      ['#fo', '#fa', '#fad', '#ft', '#fp', '#fs'].forEach(s => ($(s, bg).oninput = mark));
+      ['#fo', '#fa', '#fad', '#ft'].forEach(s => ($(s, bg).oninput = mark));
       $$('[data-k]', bg).forEach(b => (b.onclick = () => { f.kind = b.dataset.k; $$('[data-k]', bg).forEach(x => x.classList.toggle('on', x === b)); mark(); }));
       fill(); ng();
       // 제품 표
@@ -5809,7 +5807,7 @@ async function addCharts(buf, jobs) {
       $('[data-s]', bg).onclick = async () => {
         if (busy) return;
         const item = { id: it ? it.id : '', d: $('#fd', bg).value, ym: $('#fym', bg).value, ord: $('#fo', bg).value.trim(), name: A.normName($('#fn', bg).value), kind: f.kind,
-          sym: $('#fs', bg).value, part: $('#fp', bg).value, txt: $('#ft', bg).value.trim(), act: $('#fa', bg).value.trim(), actD: $('#fad', bg).value, prods: prods.filter(p => (p.code || '').trim() || (p.name || '').trim()) };
+          sym: f.sym || '', part: f.part || '', txt: $('#ft', bg).value.trim(), act: $('#fa', bg).value.trim(), actD: $('#fad', bg).value, prods: prods.filter(p => (p.code || '').trim() || (p.name || '').trim()) };
         if (!item.d) return A.toast('출고일을 넣으세요', true);
         if (!item.name) return A.toast('발생 인원을 넣으세요', true);
         if (!(D.people || []).some(p => p[0] === item.name)) return A.toast('명단에 없는 이름입니다 : ' + item.name, true);
@@ -5972,17 +5970,17 @@ async function addCharts(buf, jobs) {
     g.columns = [{ width: 18 }, { width: 90 }];
     [['파일', '조립팀 사고 분석용 자료 (업무데이터 웹에서 내보냄)'], ['기간', label], ['만든 날', A.S.today + ' · ' + A.S.me.name], ['사고 건수', L.length + '건 (웹 등록 ' + L.filter(r => r.src === 'web').length + ' · 엑셀로 올린 자료 ' + L.filter(r => r.src === 'xl').length + ')'], [],
      ['시트', '사고목록 : 한 줄 = 사고 한 건'], ['', '제품목록 : 한 줄 = 사고에 들어간 제품 하나 (사고번호로 연결)'], ['', '월별 : 달 · 구분별 건수'], [],
-     ['칸 설명', '출처 = 웹(사고 메뉴에서 등록) / 엑셀(인사평가에 올린 사고 파일 · 제품 · 증상 분류 없음)'], ['', '귀속월 = 출고일이 들어가는 업무데이터 달'], ['', '구분 = 오조립 · 파손 · 오발송 · 미발송 · 품질지적 · 지시불이행'],
-     ['', '부품 · 증상 분류 = 등록할 때 고른 값 (빈칸 = 안 고름)'], ['', '이름 · 주문번호는 조립팀 내부 자료입니다. 밖으로 보낼 땐 지우고 보내세요'], [],
-     ['분석 요청 예시', '이 파일로 사고 분석 보고서를 만들어줘. 구분 · 부품 · 증상별 경향, 같은 제품코드 반복, 그룹 · 사람별 반복, 지난달 대비 변화, 바로 할 수 있는 개선점을 정리해줘']]
+     ['칸 설명', '출처 = 웹(사고 메뉴에서 등록) / 엑셀(인사평가에 올린 사고 파일 · 제품 목록 없음)'], ['', '귀속월 = 출고일이 들어가는 업무데이터 달'], ['', '구분 = 오조립 · 파손 · 오발송 · 미발송 · 품질지적 · 지시불이행'],
+     ['', '내용 = 증상 자세히 (분석할 때 이 글로 증상을 묶음) · 처리일 빈칸 = 처리 전'], ['', '이름 · 주문번호는 조립팀 내부 자료입니다. 밖으로 보낼 땐 지우고 보내세요'], [],
+     ['분석 요청 예시', '이 파일로 사고 분석 보고서를 만들어줘. 구분별 · 증상(내용)별 경향, 같은 제품코드 반복, 그룹 · 사람별 반복, 지난달 대비 변화, 바로 할 수 있는 개선점을 정리해줘']]
       .forEach(r => { const x = g.addRow(r); x.font = font; x.getCell(1).font = { name: '맑은 고딕', size: 10, bold: true }; x.getCell(2).alignment = { wrapText: true, vertical: 'top' }; });
     const s = wb.addWorksheet('사고목록');
-    head(s, [['사고번호', 9], ['출처', 7], ['귀속월', 9], ['출고일', 11], ['주문번호', 16], ['이름', 9], ['그룹', 8], ['구분', 10], ['부품', 14], ['증상 분류', 16], ['내용', 50], ['처리', 24], ['처리일', 11], ['제품 수', 8], ['제품코드', 28], ['제품명', 60], ['캡처', 6], ['등록', 16]]);
-    L.forEach((r, i) => { r._n = i + 1; const x = s.addRow([r._n, r.src === 'web' ? '웹' : '엑셀', r.ym, r.d || '', r.ord, r.name, r.grp, r.kind, r.part || '', r.sym || '', r.det ? r.txt : '(내용 없음)', r.act, r.actD || '', (r.prods || []).length,
+    head(s, [['사고번호', 9], ['출처', 7], ['귀속월', 9], ['출고일', 11], ['주문번호', 16], ['이름', 9], ['그룹', 8], ['구분', 10], ['내용', 50], ['처리', 24], ['처리일', 11], ['제품 수', 8], ['제품코드', 28], ['제품명', 60], ['캡처', 6], ['등록', 16]]);
+    L.forEach((r, i) => { r._n = i + 1; const x = s.addRow([r._n, r.src === 'web' ? '웹' : '엑셀', r.ym, r.d || '', r.ord, r.name, r.grp, r.kind, r.det ? r.txt : '(내용 없음)', r.act, r.actD || '', (r.prods || []).length,
       (r.prods || []).map(p => p.code).filter(Boolean).join(', '), (r.prods || []).map(p => p.name).filter(Boolean).join(' / '), r.nimg || 0, r.src === 'web' ? (r.by || '') + ' ' + String(r.at || '').slice(0, 10) : '']); x.font = font; x.alignment = { vertical: 'top', wrapText: false }; });
     const p = wb.addWorksheet('제품목록');
-    head(p, [['사고번호', 9], ['귀속월', 9], ['출고일', 11], ['주문번호', 16], ['이름', 9], ['그룹', 8], ['구분', 10], ['부품', 14], ['증상 분류', 16], ['제품코드', 12], ['제품명', 70], ['수량', 7]]);
-    L.forEach(r => (r.prods || []).forEach(q => { const x = p.addRow([r._n, r.ym, r.d || '', r.ord, r.name, r.grp, r.kind, r.part || '', r.sym || '', q.code, q.name, q.qty === '' ? '' : +q.qty || q.qty]); x.font = font; }));
+    head(p, [['사고번호', 9], ['귀속월', 9], ['출고일', 11], ['주문번호', 16], ['이름', 9], ['그룹', 8], ['구분', 10], ['제품코드', 12], ['제품명', 70], ['수량', 7]]);
+    L.forEach(r => (r.prods || []).forEach(q => { const x = p.addRow([r._n, r.ym, r.d || '', r.ord, r.name, r.grp, r.kind, q.code, q.name, q.qty === '' ? '' : +q.qty || q.qty]); x.font = font; }));
     const m = wb.addWorksheet('월별');
     const yms = Array.from(new Set(L.map(r => r.ym))).sort();
     head(m, [['귀속월', 10]].concat(KINDS.map(k => [k, 10])).concat([['합계', 9], ['사고 난 인원', 12]]));
@@ -9532,6 +9530,7 @@ async function addCharts(buf, jobs) {
         : `<div class="fld"><label>권한${a.self ? ' (본인 권한은 바꿀 수 없음)' : ''}</label><select id="a_role" ${a.self ? 'disabled' : ''}>${[['일반', '일반'], ['매니저', '매니저'], ['관리자', '관리자'], ['관리자ro', '관리자 (보기 전용)']].map(([k, t]) => `<option value="${k}" ${k === (a.role === '관리자' && a.ro ? '관리자ro' : a.role) ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
           <div class="fld" id="a_mgw"><label>담당 그룹 (업무 현황 · 연차 1차 확인)</label><div class="chks">${C.GROUP_LIST.map(gg => `<label><input type="checkbox" value="${gg}" ${(a.mg || []).includes(gg) ? 'checked' : ''}>${gg}</label>`).join('')}</div></div>
           <label class="dck" id="a_law"><input type="checkbox" id="a_la" ${a.la || a.role === '관리자' ? 'checked' : ''} ${a.role === '관리자' ? 'disabled' : ''}><span><b>연차·토요근무 확정 권한</b><small>연차 확정 · 토요 배정 · 연차 마감</small></span></label>
+          <label class="dck" id="a_acw"><input type="checkbox" id="a_acc" ${a.role === '관리자' ? 'checked disabled' : ''}><span><b>사고 등록 권한</b><small>사고 등록 · 고치기 · 지우기 · 전체 그룹 사고 보기</small></span></label>
           <div class="fld" id="a_pmw"><label>추가 권한 (관리자 기능 일부 · 전체 그룹)</label>${Object.entries(PERM_L).map(([k, t]) => `<label class="dck"><input type="checkbox" data-pm="${k}" ${(a.perms || []).includes(k) ? 'checked' : ''}><span><b>${t}</b><small>${PERM_D[k]}</small></span></label>`).join('')}</div>
           ${S.me.period && !a.self ? `<label class="dck" id="a_paw"><input type="checkbox" id="a_pa" ${a.pa ? 'checked' : ''}><span><b>월 기간 설정 권한</b><small>월 기간 마감 · 항목별 분 · 데이터 전체 삭제</small></span></label>` : ''}
           <div class="row" style="gap:8px;margin-top:6px">${a.role !== '관리자' ? `<button data-pin>${a.nopin ? '임시 비밀번호 정하기' : '비밀번호 초기화 (임시 번호)'}</button>` : ''}${a.role === '일반' ? '<button class="danger" data-adel>계정 삭제</button>' : ''}
@@ -9559,7 +9558,14 @@ async function addCharts(buf, jobs) {
       const role = $('#a_role', bg), la = $('#a_la', bg), mgw = $('#a_mgw', bg);
       const syncA = () => { if (!role) return; const rv = role.value; mgw.classList.toggle('hide', rv !== '매니저'); $('#a_pmw', bg).classList.toggle('hide', rv !== '매니저');
         if ($('#a_paw', bg)) $('#a_paw', bg).classList.toggle('hide', rv !== '관리자'); $('#a_law', bg).classList.toggle('hide', rv === '관리자ro');
-        la.disabled = rv.startsWith('관리자'); if (la.disabled) la.checked = true; }; syncA(); if (role) role.onchange = syncA;
+        la.disabled = rv.startsWith('관리자'); if (la.disabled) la.checked = true;
+        const ac = $('#a_acc', bg); if (ac) { ac.disabled = rv.startsWith('관리자'); if (ac.disabled) ac.checked = true; else if (ac.dataset.v != null) ac.checked = ac.dataset.v === '1'; } }; syncA(); if (role) role.onchange = syncA;
+      // v28.43 : 사고 등록 권한 (사고 담당 이름 목록) — 지금 값 불러오기
+      const acc0 = { v: null }, acI = $('#a_acc', bg);
+      if (acI && a && a.role !== '관리자') { acI.disabled = true;
+        api('accAdmins', {}).then(r => { acc0.v = (r.admins || []).some(z => z.name === v.name); acI.dataset.v = acc0.v ? '1' : '0'; acI.checked = acc0.v; acI.disabled = role && role.value.startsWith('관리자'); s0 = snap(); })
+          .catch(() => { acI.closest('label').querySelector('small').textContent = '불러오지 못했습니다 · 인원 현황 아래 [사고 담당]에서 정하세요'; }); }
+      if (acI) acI.onchange = () => (acI.dataset.v = acI.checked ? '1' : '0');
       // 직책 · 상태 · 세부직무를 고르면 연차 등급을 같이 제안
       const sug = () => { const r = { title: $('#p_title', bg).value, status: $('#p_status', bg).value, job: $('#p_job', bg).value, level: $('#p_level', bg).value };
         const gtxt = r.title === '매니저' ? '매니저' : r.title === '파트장' ? '파트장' : r.status === '육아' ? '육아휴직' : r.status === '병가' ? '병가휴가' : r.status === '계약' ? '계약' : ({ 출력: '출력', 안정: '안정화', 지원: '정리', 영상: '영상' })[r.job] || r.level;
@@ -9598,6 +9604,7 @@ async function addCharts(buf, jobs) {
             if (nr !== a.role || nro !== !!a.ro || nla !== !!a.la || (nr === '매니저' && mg.join() !== (a.mg || []).join()) || pm.slice().sort().join() !== (nr === '매니저' ? (a.perms || []).slice().sort().join() : '') || (npa !== null && npa !== !!a.pa))
               await api('updateUser', Object.assign({ userId: a.id, name: r.saved, group: p.grp || a.group, role: nr, mg: nr === '매니저' ? mg : [], leaveAdmin: nla, perms: pm, readOnly: nro }, npa !== null ? { periodAdmin: npa } : {}));
           }
+          if (a && role && acI && acc0.v !== null && !role.value.startsWith('관리자') && acI.checked !== acc0.v) await api('accAdmins', { mode: acI.checked ? 'add' : 'del', name: r.saved || p.name });
           S._ppl = (a && role) ? await api('people') : r;
           if (a && a.self) { const m = await api('me'); S.me = m.me; shell(S.layout); setNav(); }
           close(); S._mcache = {}; drawPeople();
