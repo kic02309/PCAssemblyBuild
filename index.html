@@ -6079,7 +6079,7 @@ async function addCharts(buf, jobs) {
       // 로그아웃 뒤 늦게 도착한 응답(예전 토큰)은 무시 : 새 로그인 화면 입력이 지워지지 않도록
       if (tk0 && tk0 === S.token && /로그인이 (필요|만료)/.test(res.msg || '')) {
         // 로그인 만료 때 저장 못 한 입력은 잠시 보관했다가 다시 로그인하면 복구
-        try { if (S.dirty && S.day && S.day.canEdit) sessionStorage.setItem('pending', JSON.stringify({ uid: who().id, date: S.date, doc: S.day.doc })); } catch (e) { }
+        keepDraft();
         logout(true);
       }
       throw new Error(res.msg || '오류');
@@ -6202,6 +6202,7 @@ async function addCharts(buf, jobs) {
     }
     if (!silent) { try { await api('logout'); } catch (e) { } }
     clearTimeout(S.timer);
+    if (!silent) { try { sessionStorage.removeItem(DRAFT_KEY); sessionStorage.removeItem('pending'); } catch (e) { } }
     S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
     // 공용 PC : 다음 사람에게 앞사람이 보던 날짜·달·필터·창이 남지 않게
     S.date = null; S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
@@ -6456,9 +6457,9 @@ async function addCharts(buf, jobs) {
       renderDay();
       if (asmFix && S.day.canEdit) changed();
       try {
-        const pend = JSON.parse(sessionStorage.getItem('pending') || 'null');
-        if (pend && pend.uid === u.id && pend.date === date && S.day.canEdit) {
-          sessionStorage.removeItem('pending'); S.day.doc = pend.doc; renderDay(); changed();
+        const pend = draftMap()[draftId(u.id, date)];
+        if (pend && pend.owner === S.me.id && pend.uid === u.id && pend.date === date && S.day.canEdit) {
+          S.day.doc = pend.doc; if ('base' in pend) S.day.ver = pend.base; renderDay(); changed();
           toast('저장 못 한 내용을 복구했습니다 (곧 자동 저장)');
         }
       } catch (e) { }
@@ -7104,8 +7105,26 @@ async function addCharts(buf, jobs) {
   }
 
   // 저장
+  const DRAFT_KEY = 'dayDrafts.v1', DRAFT_TTL = 14 * 60 * 60 * 1000;
+  function draftMap() {
+    try { const m = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || '{}');
+      for (const k of Object.keys(m)) if (!m[k] || Date.now() - m[k].at > DRAFT_TTL) delete m[k];
+      return m;
+    } catch (e) { return {}; }
+  }
+  function draftId(uid, date) { return S.me.id + '|' + uid + '|' + date; }
+  function keepDraft() {
+    if (!S.me || !S.day || !S.day.canEdit || !S.dirty) return;
+    try { const m = draftMap(), uid = who().id; m[draftId(uid, S.date)] = { owner: S.me.id, uid, date: S.date, doc: S.day.doc, base: S.day.ver, at: Date.now() };
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(m));
+    } catch (e) { /* 저장 공간 부족 시 미저장 표시는 유지한다. */ }
+  }
+  function dropDraft(uid, date) {
+    if (!S.me) return;
+    try { const m = draftMap(); delete m[draftId(uid, date)]; sessionStorage.setItem(DRAFT_KEY, JSON.stringify(m)); } catch (e) { }
+  }
   function changed() {
-    S.dirty = true; refreshCalc(); showSaveState();
+    S.dirty = true; keepDraft(); refreshCalc(); showSaveState();
     clearTimeout(S.timer); S.timer = setTimeout(() => saveNow(), 2500);
   }
   function showSaveState(err) {
@@ -7121,8 +7140,8 @@ async function addCharts(buf, jobs) {
     if (!S.day || !S.day.canEdit) return true;
     if (S.day.conflict && !force) return false;                          // 충돌 창이 떠 있는 동안 자동 저장 멈춤
     if (!S.dirty && !manual) return true;
-    if (S.saving) { await new Promise(r => setTimeout(r, 300)); return saveNow(manual); }
-    S.saving = true; showSaveState();
+    if (S.saving) { await new Promise(r => setTimeout(r, 300)); return saveNow(manual, force); }
+    keepDraft(); S.saving = true; showSaveState();
     const day = S.day, date = S.date, uid = who().id, doc = day.doc;
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
     const snapshotDirty = JSON.stringify(doc);
@@ -7133,7 +7152,8 @@ async function addCharts(buf, jobs) {
       const r = await api('saveDay', q);
       day.savedAt = r.savedAt; day.savedBy = r.savedBy; day.exists = true; day.ver = r.ver; day.conflict = false;
       if (day.pc) day.pc.days[date] = { doc: JSON.parse(JSON.stringify(clean)), at: r.savedAt, by: r.savedBy, ver: r.ver };
-      if (S.day === day && JSON.stringify(doc) === snapshotDirty) S.dirty = false;
+      if (S.day === day && JSON.stringify(doc) === snapshotDirty) { S.dirty = false; dropDraft(uid, date); }
+      else if (S.day === day) keepDraft();
       S.saving = false; if (S.day === day) showSaveState();
       if (manual) toast('저장했습니다');
       return true;
@@ -7150,24 +7170,26 @@ async function addCharts(buf, jobs) {
     if (S.day === day) showSaveState('다른 곳에서 먼저 저장함');
     const over = await confirmBox(`<b>${esc(msg)}</b><br>내 수정은 아직 저장되지 않았습니다.<br><span class="muted">[그쪽 내용 불러오기]를 누르면 내 수정은 버려집니다.</span>`, '내 내용으로 덮어쓰기', '그쪽 내용 불러오기');
     if (over) return saveNow(true, true);
-    day.conflict = false; if (S.day === day) { S.dirty = false; S.pc = {}; loadDay(date); }
+    day.conflict = false; if (S.day === day) { dropDraft(who().id, date); S.dirty = false; S.pc = {}; loadDay(date); }
     return false;
   }
   async function delDay() {
     if (!(await confirmBox(dLabel(S.date) + ' 데이터를 통째로 삭제할까요?<br><span class="muted">엑셀에서도 이 날짜 시트가 빠집니다.</span>', '삭제'))) return;
     clearTimeout(S.timer);
     while (S.saving) await new Promise(r => setTimeout(r, 150));          // 보내는 중인 저장이 끝난 뒤 지움
-    clearTimeout(S.timer); S.dirty = false;
+    clearTimeout(S.timer); keepDraft(); const wasDirty = S.dirty; S.dirty = false;
     const day = S.day, date = S.date;
-    try { await api('deleteDay', { userId: who().id, date }); if (day.pc) delete day.pc.days[date]; toast('삭제했습니다'); if (S.day === day) loadDay(date); }
-    catch (e) { toast(e.message, true); }
+    try { await api('deleteDay', { userId: who().id, date }); dropDraft(who().id, date); if (day.pc) delete day.pc.days[date]; toast('삭제했습니다'); if (S.day === day) loadDay(date); }
+    catch (e) { if (S.day === day) { S.dirty = wasDirty; showSaveState(e.message); } toast(e.message, true); }
   }
   // 창을 닫을 때 저장 안 된 내용이 있으면 마지막으로 한 번 더 보냄 (keepalive)
   function flushOnClose() {
     if (!S.dirty || !S.day || !S.day.canEdit || !S.token) return;
+    keepDraft();
+    if (S.day.conflict || S.saving) return;
     const doc = S.day.doc;
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
-    try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify(Object.assign({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) }, S.day.ver != null ? { base: S.day.ver } : {})) }); S.dirty = false; } catch (e) { }
+    try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify(Object.assign({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) }, S.day.ver != null ? { base: S.day.ver } : {})) }).catch(() => { /* 초안과 미저장 상태를 유지한다. */ }); } catch (e) { }
   }
   window.addEventListener('pagehide', flushOnClose);
   window.addEventListener('beforeunload', e => { if (S.dirty) { flushOnClose(); } });
@@ -9215,12 +9237,12 @@ async function addCharts(buf, jobs) {
     const st = x => [x.period ? '업무 ' + x.period : '', x.hr === null || x.hr === undefined ? '' : (x.hr ? '인사평가 마감' : '인사평가 진행'), x.lvClosed ? '연차 마감' : ''].filter(Boolean).join(' · ') || '-';
     box.innerHTML = `<div style="max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px"><table class="list bktbl"><thead><tr><th>달</th><th>상태</th><th class="num">일일</th><th class="num">연차</th><th class="num">평가</th><th>마지막 백업</th><th></th></tr></thead><tbody>
       ${r.months.slice().reverse().map((x, i) => `<tr class="${i >= 3 && !x.changed && !x.oldest ? 'bkold' : ''}"><td><b>${ymLabel(x.ym)}</b>${x.oldest ? ' <span class="muted">(가장 오래됨)</span>' : ''}</td><td class="muted">${esc(st(x))}</td>
-        <td class="num">${x.days}</td><td class="num">${x.leaves}</td><td class="num">${x.hrRecs}</td>
+        <td class="num">${x.days}${x.imageCount ? ' <span class="muted">(증빙 이미지 있음 · 삭제 불가)</span>' : ''}</td><td class="num">${x.leaves}</td><td class="num">${x.hrRecs}</td>
         <td>${x.backupAt ? esc(x.backupAt.slice(5, 16)) + ' · ' + esc(x.backupBy) + (x.changed ? ' <b class="t-lo">· 바뀜 → 다시 백업</b>' : '') : '<span class="muted">없음</span>'}</td>
         <td><button data-bk="${x.ym}">⬇ 백업</button>${x.oldest && isAdm0() && !isRO() ? ` <button class="danger" data-bd="${x.ym}" ${x.canDelete ? '' : 'disabled title="12개월 지난 가장 오래된 달 · 마감 · 백업 후 변경 없음일 때만"'}>이 달 지우기</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">데이터가 없습니다</td></tr>'}
       </tbody></table></div>
       ${(() => { const n = r.months.filter((x, i, A) => { const j = A.length - 1 - i; return j >= 3 && !x.changed && !x.oldest; }).length; return n ? `<button class="sm fold-b" id="bkmore" data-n="${n}">${box.classList.contains('bkall') ? '접기 ▴' : '지난 달 ' + n + '개 보기 ▾'}</button>` : ''; })()}
-      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">지우기는 <b>12개월이 지난</b> 가장 오래된 달이 마감·백업 후 변경 없을 때만 켜집니다.</span>
+      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">지우기는 <b>12개월이 지난</b> 가장 오래된 달이 마감·백업 후 변경 없을 때만 켜집니다. 월 백업에는 사고 증빙 이미지가 포함되지 않으며, 이미지가 있는 달은 삭제할 수 없습니다.</span>
         ${isAdm0() && !isRO() ? '<label class="btn-file"><input type="file" id="bkfile" accept=".json" hidden><span>백업 파일로 복원…</span></label>' : ''}</div>`;
     if ($('#bkmore', box)) $('#bkmore', box).onclick = e => { const on = box.classList.toggle('bkall'); e.target.textContent = on ? '접기 ▴' : '지난 달 ' + e.target.dataset.n + '개 보기 ▾'; };
     $$('[data-bk]', box).forEach(b => (b.onclick = async () => {
@@ -9732,8 +9754,8 @@ async function addCharts(buf, jobs) {
       S.pc = {};
       if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {}, asm: r.day.asm || {} };
       let d0 = S.today;
-      try { const pend = JSON.parse(sessionStorage.getItem('pending') || 'null'); if (pend && pend.uid === S.me.id && pend.date) d0 = pend.date; } catch (e) { }
-      const pend0 = d0 !== S.today;
+      try { const pend = Object.values(draftMap()).filter(x => x.owner === S.me.id && x.uid === S.me.id).sort((a, b) => b.at - a.at)[0]; if (pend) d0 = pend.date; } catch (e) { }
+      const pend0 = Object.values(draftMap()).some(x => x.owner === S.me.id && x.uid === S.me.id);
       let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : 'input';
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
