@@ -2984,11 +2984,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   staff.forEach(s=>{const n=C.norm(s.name);if(names.has(n))errors.push(s.name+': 같은 이름이 여러 명입니다.');names.set(n,s);});
   const events=[],pairs=new Map();
   for(const r of parsed.records){const s=names.get(C.norm(r.name));if(!s)continue;if(!supported.includes(r.kind)){errors.push(r.date+' '+r.name+': 구분을 읽지 못했습니다.');continue;}const key=s.id+'|'+r.date;const old=pairs.get(key);if(old&&old!==r.kind)errors.push(r.date+' '+r.name+': 서로 다른 구분이 중복됩니다.');pairs.set(key,r.kind);events.push({s:s.id,d:r.date,k:r.kind,st:'확정'});}
-  const desired=canonical(events),ids=staff.map(s=>s.id),before=current(data,months,ids),by=new Map(),after=new Map();
+  // 실제 반영 대상은 현재 인원. 비교/정리 대상은 달력에 표시될 수 있는 전체 등록 인원.
+  const allStaff=data.staff||[];
+  if(!staff.length)errors.push('현재 인원 명단을 불러오지 못했습니다.');
+  const desired=canonical(events),ids=allStaff.map(s=>s.id),before=current(data,months,ids),by=new Map(),after=new Map();
   for(const e of before){const k=e.s+'|'+e.d;by.set(k,(by.get(k)||[]).concat(e));}for(const e of desired){const k=e.s+'|'+e.d;after.set(k,(after.get(k)||[]).concat(e));}
-  const rows=[];for(const key of new Set([...by.keys(),...after.keys()])){const a=by.get(key)||[],b=after.get(key)||[];const e=b[0]||a[0],s=staff.find(s=>s.id===e.s);const status=!a.length?'add':!b.length?'delete':JSON.stringify(a.map(x=>[x.k,x.st]).sort())===JSON.stringify(b.map(x=>[x.k,x.st]).sort())?'same':'change';rows.push({date:e.d,name:s.name,before:a.map(x=>x.k+(x.st!=='확정'?' ('+x.st+')':'')).join(' / ')||'-',after:b.map(x=>x.k).join(' / ')||'-',status});}
+  const rows=[];for(const key of new Set([...by.keys(),...after.keys()])){const a=by.get(key)||[],b=after.get(key)||[];const e=b[0]||a[0],s=allStaff.find(s=>s.id===e.s);const status=!a.length?'add':!b.length?'delete':JSON.stringify(a.map(x=>[x.k,x.st]).sort())===JSON.stringify(b.map(x=>[x.k,x.st]).sort())?'same':'change';rows.push({date:e.d,name:s.name,before:a.map(x=>x.k+(x.st!=='확정'?' ('+x.st+')':'')).join(' / ')||'-',after:b.map(x=>x.k).join(' / ')||'-',status});}
   rows.sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name,'ko'));
-  return {errors:[...new Set(errors)],months,scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
+  return {errors:[...new Set(errors)],months,scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),cleanupScope:Object.fromEntries(allStaff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
  }
  root.ActualSyncCore={prepare,current,canonical};
 })(window);
@@ -3010,7 +3013,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   function show(){
    const report=U.result||U.plan,rows=report?.rows?.filter(r=>r.status!=='same')||[];
    const count=report?(report.counts||report):null;
-   host.innerHTML=`<section class="card actual-import"><b>실근무현황 업데이트</b><p class="muted" style="margin:12px 0">현재 인원의 선택 월을 실제 자료대로 맞춥니다.</p>
+   host.innerHTML=`<section class="card actual-import"><b>실근무현황 업데이트</b><p class="muted" style="margin:12px 0">선택 월을 실제 자료로 맞추고, 현재 명단 밖 기존 기록도 정리합니다.</p>
     <textarea id="actualText" rows="5" aria-label="실제 근무현황 붙여넣기" placeholder="월간 전체 근무현황을 붙여넣으세요." ${U.busy?'disabled':''}>${esc(U.text)}</textarea>
     <div class="row" style="justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="actualCompare" ${U.busy||!U.text.trim()?'disabled':''}>비교하기</button><button id="actualUpdate" class="primary" ${U.busy||!U.text.trim()||!may()?'disabled':''}>${U.busy?'처리 중…':'실제 내용으로 업데이트'}</button></div>
     ${U.message?'<div role="status" class="actual-message" style="margin-top:12px;white-space:pre-wrap">'+esc(U.message)+'</div>':''}
@@ -3030,8 +3033,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     try{
      const r=await read();if(!r)return;if(!may())throw Error('연차·토요 관리 권한이 필요합니다.');
      U.plan=r.plan;
-     const result=await A.api('lvActualSync',{months:r.plan.months,scope:r.plan.scope,events:r.plan.events,coverage:r.p.coverage});
-     if(!result.verified)throw Error('최종 일치 검증 결과를 확인하지 못했습니다.');
+     const info=await A.api('lvActualSyncInfo',{});
+     if(info?.syncVersion!==2)throw Error('중복 정리 SQL을 먼저 적용해주세요.');
+     const result=await A.api('lvActualSync',{syncVersion:2,months:r.plan.months,scope:r.plan.scope,cleanupScope:r.plan.cleanupScope,events:r.plan.events,coverage:r.p.coverage});
+     if(!result.verified||result.syncVersion!==2)throw Error('전체 기록의 최종 일치 검증 결과를 확인하지 못했습니다.');
      U.text='';U.plan=null;U.result=result;U.message='업데이트 완료 · 실제 자료와 일치 · 복사 원문 폐기';
      if(!active())return;
      try{await ctx.reload(+r.plan.months[0].slice(0,4));}catch(e){U.message+='\n달력은 화면을 다시 열어 확인해주세요.';}
