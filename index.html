@@ -2873,7 +2873,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       if (norm(r.name) === '김보성2' || !candidates.length) { row.status = 'exclude'; row.note = '조립팀 대상 명단 아님'; return; }
       if (candidates.length !== 1) { row.note = '같은 이름이 여러 명: 인원 확인 필요'; return; }
       const s = candidates[0]; row.staff = s.id; row.group = s.grp;
-      if (s.cur === false || s.status === '퇴사') { row.note = '현재 명단 밖 인원: 과거 소속 확인 필요'; return; }
+      if (s.cur === false || s.status === '퇴사') { row.status = 'exclude'; return; }
       if (groups && !groups.includes(s.grp)) { row.status = 'exclude'; row.note = '담당 파트 밖 인원'; return; }
       const old = snapshot(data, s.id, r.date); row.old = old;
       row.before = old.leaves.map(l => leaveType(l) + (l.st && l.st !== '확정' ? ' (' + l.st + ')' : '')).concat(old.duties.map(u => u.a === r.date ? '대체주휴일' : '토요근무')).join(' / ') || '기록 없음';
@@ -2885,7 +2885,13 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         row.action = { type: 'duty' }; row.status = 'add';
       } else if (r.kind === '대체주휴일') {
         if (old.duties.some(u => u.a === r.date) || old.leaves.some(l => l.st === '대체' && l.d1 === r.date)) row.status = 'same';
-        else row.note = '대체할 토요일 연결 필요: 기존 토요근무 화면에서 확인';
+        else if (!old.leaves.length && !old.duties.length && dow(r.date) > 0 && dow(r.date) < 6 && !H[r.date] && !(data.closed || []).includes(r.date.slice(0,7))) {
+          row.altOptions = (data.duty || []).filter(u => {
+            const delta = (Date.parse(r.date) - Date.parse(u.d)) / 86400000;
+            return u.s === s.id && !u.a && dow(u.d) === 6 && delta >= -5 && delta <= 8 && !(data.closed || []).includes(u.d.slice(0,7)) && !(data.leaves || []).some(l => l.s === s.id && l.st === '대체' && l.as === u.d);
+          });
+          row.note = row.altOptions.length ? '대체할 토요일을 선택하면 반영 가능' : '연결할 미사용 토요근무가 없음: 토요근무 화면에서 확인';
+        } else row.note = '기존 휴가/대체 기록 또는 마감 상태 확인 필요';
         return;
       } else {
         const target = spec(r.kind);
@@ -2909,9 +2915,37 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     (data.duty || []).forEach(u => {
       const s = (data.staff || []).find(s => s.id === u.s);
       if (!s || norm(s.name) === '김보성2' || s.cur === false || groups && !groups.includes(s.grp)) return;
-      if (covered.has(u.d) && !existing.has(u.d + '|' + norm(s.name))) rows.push({ id: 'missing-duty|' + u.d + '|' + u.s, date: u.d, name: s.name, group: s.grp, kind: '복사 명단에 없음', before: '토요근무', status: 'missing', note: '기존 근무 유지 · 취소 여부 별도 확인' });
+      if (covered.has(u.d) && !existing.has(u.d + '|' + norm(s.name))) {
+        rows.push({ id: 'missing-duty|' + u.d + '|' + u.s, date: u.d, name: s.name, staff:s.id, group: s.grp, kind: '복사 명단에 없음', before: '토요근무', status: 'missing', note:'기존 근무 유지' });
+      }
     });
-    return rows.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name, 'ko'));
+    // 실제 자료의 같은 사람 주말근무를 우선 사용. 하나로 정해질 때만 자동 연결.
+    rows.filter(r => r.kind === '대체주휴일' && r.status === 'hold' && r.staff && r.old).forEach(r => {
+      delete r.altOptions;
+      if ((conflict.get(r.date+'|'+norm(r.name))||new Set()).size>1) return;
+      if (r.old.leaves.length || r.old.duties.length || (data.closed || []).includes(r.date.slice(0,7)) || dow(r.date) === 0 || dow(r.date) === 6 || H[r.date]) return;
+      const near = d => { const n=(Date.parse(r.date)-Date.parse(d))/86400000; return n>=-5&&n<=8; };
+      const sourceWork = parsed.records.filter(p => norm(p.name) === norm(r.name) && p.kind === '주말근무' && near(p.date));
+      if(sourceWork.some(p=>(conflict.get(p.date+'|'+norm(p.name))||new Set()).size>1)){r.note='복사 자료의 근무 구분 확인 필요';return;}
+      const actualSats = [...new Set(sourceWork.filter(p => dow(p.date) === 6 && p.date.slice(0,7)>=from && p.date.slice(0,7)<=to).map(p => p.date))];
+      if (!actualSats.length && sourceWork.some(p => dow(p.date) !== 6)) { r.note='일요일 근무와의 연결은 확인 필요'; return; }
+      const dates = actualSats.length ? actualSats : [...new Set((data.duty || []).filter(u => u.s===r.staff && near(u.d) && dow(u.d)===6).map(u => u.d))];
+      if (dates.length !== 1) { r.note=dates.length ? '연결 후보가 여러 개: 확인 필요' : '연결할 주말근무 확인 필요'; return; }
+      const sat=dates[0], oldSat=(data.duty || []).find(u => u.s===r.staff && u.d===sat) || null;
+      if ((data.closed || []).includes(sat.slice(0,7))) { r.note='토요근무 월 마감: 비교만 가능'; return; }
+      if (oldSat?.a || (data.leaves || []).some(l => l.s===r.staff && l.st==='대체' && l.as===sat)) { r.note='기존 대체휴무 연결 확인 필요'; return; }
+      if (!oldSat && !actualSats.includes(sat)) return;
+      r.status='change'; r.note=sat+' 근무 ↔ '+r.date+' 대체휴무';
+      r.action={type:'alt',sat,satOld:oldSat,createSaturday:!oldSat};
+    });
+    const links=new Map();
+    rows.filter(r=>r.action?.type==='alt').forEach(r=>{const k=r.staff+'|'+r.action.sat;links.set(k,(links.get(k)||[]).concat(r));});
+    links.forEach(list=>{
+      if (list.length>1) { list.forEach(r=>{r.action=null;r.status='hold';r.note='같은 근무에 대체휴무가 여러 개: 확인 필요';}); return; }
+      const alt=list[0];
+      rows.filter(r=>r.staff===alt.staff&&r.date===alt.action.sat&&r.kind==='주말근무'&&r.action?.type==='duty').forEach(r=>{r.action=null;r.status='linked';r.note='대체휴무 선택 시 함께 반영';});
+    });
+    return rows.filter(r => r.status !== 'exclude').map(r=>{delete r.altOptions;return r;}).sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name, 'ko'));
   }
   root.AttendanceCore = { norm, parse, spec, leaveType, snapshot, compare, key };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -2922,96 +2956,82 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   'use strict';
   const C = root.AttendanceCore;
   let state = null;
-  const tags = { add: '추가', change: '변경', same: '일치', hold: '확인 필요', exclude: '제외', missing: '기존 유지' };
+  const tags = { add:'추가', change:'변경', same:'일치', hold:'확인 필요', missing:'기존 유지', linked:'함께 반영' };
   function render(host, ctx) {
-    const A = ctx.A, esc = A.esc;
-    if (!state || state.token !== A.S.token) state = { token: A.S.token, from: '2026-01', to: '2026-10', text: '', parsed: {}, rows: [], picked: new Set(), filter: 'diff', busy: false, message: '' };
-    const U = state, mayEdit = !!ctx.data.canEdit, groups = mayEdit || ctx.data.full ? null : (ctx.groups || []);
-    const parsed = () => {
-      const all = Object.values(U.parsed);
-      return { records: all.flatMap(x => x.records), dates: [...new Set(all.flatMap(x => x.dates))], months: Object.keys(U.parsed).sort(), errors: all.flatMap(x => x.errors) };
-    };
-    function compare() {
-      U.rows = C.compare(parsed(), ctx.data, U.from, U.to, groups);
-      U.picked = new Set(U.rows.filter(r => r.action && mayEdit && r.status === 'add').map(r => r.id));
-    }
-    function show() {
-      const all = U.rows, counts = {};
-      Object.keys(tags).forEach(k => counts[k] = all.filter(r => r.status === k).length);
-      const months = [];
-      for (let m = U.from; m <= U.to;) { months.push(m); const d = new Date(m + '-01T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + 1); m = d.toISOString().slice(0, 7); }
-      const list = all.filter(r => U.filter === 'all' || U.filter === 'diff' && ['add', 'change', 'hold', 'missing'].includes(r.status) || r.status === U.filter);
-      host.innerHTML = `<section class="card actual-import">
-        <div class="row" style="flex-wrap:wrap;gap:10px"><b>실근무현황 업데이트</b><span class="muted">현재 연차 명단과 대조 · 선택한 기록만 반영</span></div>
-        <div class="row" style="flex-wrap:wrap;gap:8px;margin:14px 0"><label>시작월 <input id="actualFrom" type="month" value="${U.from}"></label> ~ <label>종료월 <input id="actualTo" type="month" value="${U.to}"></label><button id="actualCompare">기간 비교</button></div>
-        <div class="row" style="flex-wrap:wrap;gap:5px;margin-bottom:12px">${months.map(m => `<span class="chip ${U.parsed[m] ? 'ok' : ''}">${+m.slice(5)}월 ${U.parsed[m] ? '자료 있음' : '미등록'}</span>`).join('')}</div>
-        <label for="actualText"><b>실제 서버의 월간 근무현황 붙여넣기</b></label>
-        <textarea id="actualText" rows="5" placeholder="연월 · 날짜 · 구분 · 이름이 포함되도록 고객지원부를 펼쳐 복사하세요. 여러 달은 순서대로 추가할 수 있습니다.">${esc(U.text)}</textarea>
-        <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:8px"><button id="actualRead" class="primary">붙여넣은 자료 추가·비교</button><button id="actualFilePick">텍스트 파일 불러오기 (.txt)</button><input type="file" id="actualFile" accept=".txt,text/plain" hidden><button id="actualClear">복사 자료 비우기</button><span class="muted">같은 달을 다시 넣으면 그 달 비교 자료만 교체됩니다.</span></div>
-        <div class="muted" style="line-height:1.7;margin:12px 0">일반 연차는 상세사유 없이 등록 · 병가/경조는 구분명만 기록 · 기존 상세사유는 가능한 경우 보존<br>대체휴무 연결·일요일·기간형 신청·취소는 확인 목록으로 유지합니다. 마감된 월은 비교만 가능합니다.${!mayEdit ? '<br>현재 계정은 담당 파트 비교만 가능하며, 반영은 연차·토요 입력 권한자가 할 수 있습니다.' : ''}</div>
-        ${U.message ? `<div class="warn" role="status" style="white-space:pre-wrap">${esc(U.message)}</div>` : ''}
-        <div class="row" style="flex-wrap:wrap;gap:12px;margin:16px 0"><b>선택 기간 ${months.filter(m => U.parsed[m]).length}개월 자료</b><span>추가 ${counts.add} · 변경 ${counts.change} · 일치 ${counts.same} · 확인 ${counts.hold} · 유지 ${counts.missing} · 제외 ${counts.exclude}</span></div>
-        <div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px"><label>표시 <select id="actualFilter">${[['diff','차이·확인'],['all','전체']].concat(Object.entries(tags)).map(([k,v]) => `<option value="${k}" ${U.filter === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label><button id="actualPick" ${mayEdit ? '' : 'disabled'}>반영 가능 건 선택</button><button id="actualNone">선택 해제</button><button id="actualExport">비교표 다운로드 (.csv)</button></div>
-        <div class="actual-tablewrap"><table class="list actual-table"><thead><tr><th>선택</th><th>날짜</th><th>이름 · 파트</th><th>기존 웹</th><th>복사 내용</th><th>판정 · 확인사항</th></tr></thead><tbody>${list.map(r => `<tr><td><input type="checkbox" data-actual="${esc(r.id)}" ${U.picked.has(r.id) ? 'checked' : ''} ${mayEdit && r.action ? '' : 'disabled'} aria-label="${esc(r.date + ' ' + r.name)} 선택"></td><td>${esc(r.date)}</td><td><b>${esc(r.name)}</b><br><span class="muted">${esc(r.group || '')}</span></td><td>${esc(r.before)}</td><td>${esc(r.kind)}</td><td><b>${tags[r.status]}</b>${r.note ? '<br>' + esc(r.note) : ''}</td></tr>`).join('') || '<tr><td colspan="6" class="muted" style="padding:24px">자료를 추가하면 이곳에 현재 등록 내용과의 차이가 표시됩니다.</td></tr>'}</tbody></table></div>
-        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:14px"><span class="muted" style="flex:1">복사 명단에 없는 기존 기록은 자동 삭제하지 않습니다.</span><button id="actualApply" class="primary" ${mayEdit && U.picked.size && !U.busy ? '' : 'disabled'}>${U.busy ? '반영 중…' : '선택 ' + U.picked.size + '건 반영'}</button></div>
+    const A=ctx.A, esc=A.esc;
+    if (!state || state.token!==A.S.token) state={token:A.S.token,text:'',parsed:null,rows:[],picked:new Set(),busy:false,message:'',from:'',to:''};
+    const U=state;
+    const active=()=>U.token===A.S.token&&host.isConnected;
+    const mayEdit=()=>!!ctx.data.canEdit&&!A.S.me?.ro;
+    const groups=()=>ctx.data.canEdit||ctx.data.full?null:(ctx.groups||[]);
+    const purge=()=>{U.text='';U.parsed=null;U.rows=[];U.picked.clear();U.from='';U.to='';};
+    function show(){
+      const ready=U.rows.filter(r=>r.action), count=U.picked.size;
+      host.innerHTML=`<section class="card actual-import">
+        <div class="row" style="flex-wrap:wrap;gap:10px"><b>실근무현황 업데이트</b>${U.from?'<span class="muted">'+esc(U.from===U.to?U.from:U.from+' ~ '+U.to)+'</span>':''}</div>
+        <p class="muted" style="margin:12px 0">현재 인원만 비교하고, 확인한 변경사항을 반영합니다.</p>
+        <textarea id="actualText" rows="5" aria-label="실제 근무현황 붙여넣기" placeholder="실제 서버의 월간 근무현황을 붙여넣으세요." ${U.busy?'disabled':''}>${esc(U.text)}</textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:10px"><button id="actualCompare" class="primary" ${U.busy?'disabled':''}>${U.busy?'처리 중…':'비교하기'}</button></div>
+        ${U.message?'<div class="actual-message" role="status" style="margin-top:12px;white-space:pre-wrap">'+esc(U.message)+'</div>':''}
+        <div id="actualReview" ${U.parsed?'':'hidden'}>
+          <div class="actual-tablewrap" style="margin-top:14px"><table class="list actual-table"><thead><tr><th><input type="checkbox" id="actualAll" aria-label="반영 가능한 항목 모두 선택" ${mayEdit()&&ready.length&&!U.busy?'':'disabled'} ${ready.length&&ready.every(r=>U.picked.has(r.id))?'checked':''}></th><th>날짜</th><th>이름</th><th>현재 웹</th><th>실제 자료</th><th>반영 내용</th></tr></thead><tbody>${U.rows.map(r=>`<tr><td><input type="checkbox" data-actual="${esc(r.id)}" aria-label="${esc(r.date+' '+r.name)} 선택" ${U.picked.has(r.id)?'checked':''} ${mayEdit()&&r.action&&!U.busy?'':'disabled'}></td><td>${esc(r.date)}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.before)}</td><td>${esc(r.kind)}</td><td><b>${tags[r.status]||'확인 필요'}</b>${r.note?'<br><span class="muted">'+esc(r.note)+'</span>':''}</td></tr>`).join('')||'<tr><td colspan="6">현재 명단과 일치하는 인원이 없습니다.</td></tr>'}</tbody></table></div>
+          <div class="row" style="flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:12px"><span class="muted">${mayEdit()?'선택 '+count+'건':'반영은 기존 연차·토요 관리 권한이 필요합니다.'}</span><button id="actualApply" class="primary" ${mayEdit()&&count&&!U.busy?'':'disabled'}>선택 반영</button></div>
+        </div>
       </section>`;
-      const $ = s => host.querySelector(s);
-      const validRange = () => {
-        const from = $('#actualFrom').value, to = $('#actualTo').value;
-        if (!/^20\d{2}-\d{2}$/.test(from) || !/^20\d{2}-\d{2}$/.test(to) || from > to || from.slice(0,4) !== to.slice(0,4)) { A.toast('같은 연도의 시작월·종료월을 확인하세요', true); return false; }
-        U.from = from; U.to = to; return true;
+      const $=s=>host.querySelector(s);
+      $('#actualText').oninput=e=>{
+        U.text=e.target.value;U.parsed=null;U.rows=[];U.picked.clear();U.from='';U.to='';U.message='';
+        $('#actualReview').hidden=true;
+        const message=host.querySelector('.actual-message');if(message)message.textContent='';
       };
-      $('#actualText').oninput = e => U.text = e.target.value;
-      $('#actualFilter').onchange = e => { U.filter = e.target.value; show(); };
-      $('#actualFilePick').onclick = () => $('#actualFile').click();
-      $('#actualFile').onchange = async e => {
-        const file = e.target.files[0]; if (!file) return;
-        try { const text = await file.text(); if (U.token !== A.S.token || !host.isConnected) return; U.text = text; show(); host.querySelector('#actualRead').click(); }
-        catch (e) { A.toast('텍스트 파일을 읽지 못했습니다: ' + e.message, true); }
+      $('#actualCompare').onclick=async()=>{
+        if(U.busy)return;
+        const p=C.parse(U.text,null);
+        if(p.errors.length||!p.records.length){U.message=p.errors.join('\n')||'연월·구분·이름이 함께 복사됐는지 확인하세요.';show();return;}
+        const months=p.months.slice().sort();
+        if(months[0].slice(0,4)!==months[months.length-1].slice(0,4)){U.message='한 연도씩 비교해주세요.';show();return;}
+        U.busy=true;U.message='';show();
+        try{
+          const data=await A.api('lvGet',{year:+months[0].slice(0,4)});if(!active())return;
+          ctx.data=data;U.from=months[0];U.to=months[months.length-1];U.parsed=p;
+          U.rows=C.compare(p,data,U.from,U.to,groups());
+          U.picked=new Set(mayEdit()?U.rows.filter(r=>r.action).map(r=>r.id):[]);
+          if(!U.rows.length)U.message='현재 명단과 일치하는 인원이 없습니다.';
+        }catch(e){if(active())U.message='비교하지 못했습니다: '+e.message;}
+        finally{U.busy=false;if(active())show();}
       };
-      $('#actualClear').onclick = () => { if (U.busy) return; U.parsed = {}; U.rows = []; U.picked.clear(); U.text = ''; U.message = ''; show(); };
-      const refreshData = async () => { ctx.data = await A.api('lvGet', { year: +U.from.slice(0,4) }); };
-      $('#actualCompare').onclick = async () => {
-        if (U.busy || !validRange()) return;
-        try { await refreshData(); if (U.token !== A.S.token || !host.isConnected) return; compare(); U.message = '서버의 최신 등록 내용과 비교했습니다.'; show(); } catch (e) { A.toast(e.message, true); }
+      const updateCount=()=>{
+        const button=$('#actualApply');button.disabled=!mayEdit()||!U.picked.size||U.busy;
+        const all=$('#actualAll');all.checked=ready.length>0&&ready.every(r=>U.picked.has(r.id));
+        all.indeterminate=U.picked.size>0&&!all.checked;
+        const span=button.previousElementSibling;if(mayEdit())span.textContent='선택 '+U.picked.size+'건';
       };
-      $('#actualRead').onclick = async () => {
-        if (U.busy || !validRange()) return;
-        const p = C.parse(U.text, null);
-        if (p.errors.length || !p.records.length) { U.message = p.errors.join('\n') || '읽을 수 있는 명단이 없습니다. 고객지원부의 구분·이름이 펼쳐졌는지 확인하세요.'; show(); return; }
-        try {
-          await refreshData(); if (U.token !== A.S.token || !host.isConnected) return;
-          p.months.forEach(m => U.parsed[m] = { records:p.records.filter(r => r.month === m), dates:p.dates.filter(d => d.slice(0,7) === m), errors:[] });
-          compare(); U.message = p.months.join(', ') + ' 자료를 읽었습니다. 아직 서버 기록은 변경하지 않았습니다.'; show();
-        } catch (e) { A.toast(e.message, true); }
-      };
-      host.querySelectorAll('[data-actual]').forEach(el => el.onchange = () => { if (el.checked) U.picked.add(el.dataset.actual); else U.picked.delete(el.dataset.actual); const b = $('#actualApply'); b.disabled = !mayEdit || !U.picked.size || U.busy; b.textContent = '선택 ' + U.picked.size + '건 반영'; });
-      $('#actualPick').onclick = () => { U.rows.filter(r => r.action).forEach(r => U.picked.add(r.id)); show(); };
-      $('#actualNone').onclick = () => { U.picked.clear(); show(); };
-      $('#actualExport').onclick = () => {
-        const q = v => '"' + String(v == null ? '' : v).replace(/^[=+@-]/, "'$&").replace(/"/g, '""') + '"';
-        const rows = [['날짜','이름','파트','기존 웹','복사 내용','판정','확인사항']].concat(U.rows.map(r => [r.date,r.name,r.group,r.before,r.kind,tags[r.status],r.note]));
-        A.saveBlob(new Blob(['\uFEFF' + rows.map(r => r.map(q).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}), '실근무현황_비교_' + U.from + '_' + U.to + '.csv');
-      };
-      $('#actualApply').onclick = async () => {
-        if (U.busy || !mayEdit) return;
-        const rows = U.rows.filter(r => U.picked.has(r.id) && r.action);
-        if (!rows.length) return;
-        if (rows.length > 2000) return A.toast('기간을 나누어 2000건 이하로 선택하세요', true);
-        if (!(await A.confirmBox(`<b>${esc(U.from)} ~ ${esc(U.to)}</b>의 선택한 <b>${rows.length}건</b>을 실제 연차·토요 기록에 반영합니다.<br>추가·변경만 적용하며, 선택하지 않은 기록은 유지합니다.`, '선택 반영'))) return;
-        U.busy = true; show();
-        try {
-          const result = await A.api('lvActualApply', { from:U.from, to:U.to, rows:rows.map(r => ({s:r.staff,d:r.date,kind:r.kind,old:r.old})) });
-          if (U.token !== A.S.token) return;
-          await refreshData(); await ctx.reload(+U.from.slice(0,4)); compare();
-          U.picked.clear(); U.message = '선택 ' + result.applied + '건을 반영했습니다. 최신 자료로 다시 비교했습니다.';
-        } catch (e) { U.message = '반영하지 못했습니다: ' + e.message + '\nSQL 보정 적용 여부를 확인하고, 최신 자료로 다시 비교하세요.'; }
-        finally { U.busy = false; if (U.token === A.S.token && host.isConnected) show(); }
+      host.querySelectorAll('[data-actual]').forEach(el=>el.onchange=()=>{if(el.checked)U.picked.add(el.dataset.actual);else U.picked.delete(el.dataset.actual);updateCount();});
+      $('#actualAll').onchange=e=>{U.picked=new Set(e.target.checked?ready.map(r=>r.id):[]);show();};
+      $('#actualApply').onclick=async()=>{
+        if(U.busy||!mayEdit())return;
+        const rows=U.rows.filter(r=>r.action&&U.picked.has(r.id));if(!rows.length)return;
+        if(rows.length>2000)return A.toast('2000건 이하로 나누어 반영해주세요',true);
+        const sats=new Set();
+        for(const r of rows.filter(r=>r.action.type==='alt')){const k=r.staff+'|'+r.action.sat;if(sats.has(k))return A.toast('같은 근무의 대체휴무가 여러 개입니다. 다시 확인해주세요',true);sats.add(k);}
+        U.busy=true;show();
+        const yes=await A.confirmBox('선택한 <b>'+rows.length+'건</b>을 반영할까요?','선택 반영');
+        if(!active()){U.busy=false;return;}
+        if(!yes){U.busy=false;show();return;}
+        try{
+          const result=await A.api('lvActualApply',{from:U.from,to:U.to,rows:rows.map(r=>({s:r.staff,d:r.date,kind:r.kind,old:r.old,op:r.action.type,sat:r.action.sat,satOld:r.action.satOld,createSaturday:r.action.createSaturday}))});
+          const year=+U.from.slice(0,4);
+          purge();
+          U.message=result.applied+'건 반영 완료 · 복사 자료 폐기';
+          if(!active())return;
+          try{await ctx.reload(year);}catch(e){U.message+='\n최신 달력은 화면을 다시 열어 확인해주세요.';}
+        }catch(e){if(active())U.message='반영 결과를 확인하지 못했습니다. 다시 비교해주세요.\n'+e.message;}
+        finally{U.busy=false;if(active())show();}
       };
     }
     show();
   }
-  root.ActualAttendance = { render, reset: () => state = null };
+  root.ActualAttendance={render,reset:()=>state=null};
 })(window);
 
 </script>
