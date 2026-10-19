@@ -5748,7 +5748,8 @@ async function addCharts(buf, jobs) {
         const opts = Array.from(new Set([auto, sel, prevYm(auto), nextYm(auto)])).sort();
         $('#fym', bg).innerHTML = opts.map(y => `<option value="${y}" ${y === sel ? 'selected' : ''}>${ymLab(y)}${y === auto ? ' (자동)' : ''}</option>`).join('');
         const mi = monthInfo(sel), w = $('#fwarn', bg);
-        const early = sel < (D.webFrom || '') && !(it && it.ym === sel);
+        const octoberTest = sel === '2026-10' && canEdit() && A.S.me && ['관리자', '매니저'].includes(A.S.me.role);
+        const early = sel < (D.webFrom || '') && !(it && it.ym === sel) && !octoberTest;
         const msg = mi && mi.lock ? `🔒 ${ymLab(sel)} 인사평가가 잠겨 있어 저장할 수 없습니다` : early ? `📄 웹 등록은 ${ymLab(D.webFrom)}부터입니다 · ${ymLab(sel)}은 인사평가 [데이터]에서 사고 엑셀로 올리세요` : mi && mi.src === 'xl' ? `📄 ${ymLab(sel)}은 엑셀로 올린 사고 자료가 있어 웹에서 저장할 수 없습니다 (인사평가 [데이터]에서 엑셀로 관리)` : '';
         w.style.display = msg ? '' : 'none'; w.className = 'accnote ' + (mi && mi.lock ? 'lock' : 'xl'); w.innerHTML = msg;
         const sb = $('[data-s]', bg); if (sb) sb.disabled = !!msg;
@@ -5770,7 +5771,10 @@ async function addCharts(buf, jobs) {
       };
       drawP();
       $('#padd', bg).onclick = () => { prods.push({ code: '', name: '', qty: '' }); drawP(); const L = $$('#pt input[data-f=code]', bg); if (L.length) L[L.length - 1].focus(); };
-      const addProds = (L, how) => { const before = prods.length; L.forEach(p => { if (!prods.some(q => q.code && q.code === p.code && q.name === p.name)) prods.push(p); }); mark(); drawP(); A.toast(`제품 ${prods.length - before}개 넣음${how ? ' (' + how + ')' : ''} · 맞는지 확인하세요`); };
+      const tidyAccProds = L => L.map(p => Object.assign({}, p, {
+        name: String(p.name || '').replace(/^(?:(?:본|[gGvV])(?=\s|\[)|[ⓖⒼⓥⓋ])\s*/u, '').trim()
+      })).filter(p => !/^(?:운송료|조립\s*본체\s*운송료|택배무료)(?:$|[\s\[（(])/u.test(p.name));
+      const addProds = (L, how) => { L = tidyAccProds(L); const before = prods.length; L.forEach(p => { if (!prods.some(q => q.code && q.code === p.code && q.name === p.name)) prods.push(p); }); mark(); drawP(); A.toast(`제품 ${prods.length - before}개 넣음${how ? ' (' + how + ')' : ''} · 맞는지 확인하세요`); };
       // 붙여넣기 칸
       const pz = $('#pz', bg);
       pz.addEventListener('paste', async e => {
