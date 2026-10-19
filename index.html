@@ -1651,6 +1651,19 @@ html[data-theme=dark] .accms .xs{background:#2a2f37;color:#aab3c2}html[data-them
 html[data-theme=dark] .accnote.lock{background:#3a1d1d;color:#ffb4b4;border-color:#5c2a2a}html[data-theme=dark] .accnote.web,html[data-theme=dark] .accmap{background:#18263b;color:#b9d0f5;border-color:#2c4468}
 html[data-theme=dark] .accsy{background:#262b33;color:#c4ccd8}html[data-theme=dark] table.acctl tr.click:hover td{background:#1f2630}html[data-theme=dark] .accpz{background:#18202c;border-color:#3a4a62;color:#aab8cc}
 html[data-theme=dark] .accpz:focus{background:#1b2638}html[data-theme=dark] .accf textarea{background:#1a1c20;color:#e6e9ee;border-color:#3a3f48}html[data-theme=dark] .accth img{background:#1a1c20}
+/* 월 업무현황 '월' 조회 전용: 기존 다른 화면/모드에는 적용하지 않음 */
+.manage-toolbar .rq button{min-height:36px}
+.manage-monthbar{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 6px;background:var(--blue-soft);border-radius:12px;min-height:36px}
+.manage-monthnav{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.manage-monthnav button{width:34px;height:34px;min-width:34px;padding:0;border-radius:9px;background:var(--panel);border:1px solid var(--line);color:var(--blue);font-size:21px;font-weight:800;line-height:1}
+.manage-monthnav button:hover{background:var(--chip)}
+.manage-monthnav strong{font-size:17px;font-weight:800;color:var(--ink);min-width:126px;text-align:center;white-space:nowrap}
+.manage-monthdates{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.manage-monthdates input[type=date]{height:34px;min-width:150px;width:150px;padding:5px 8px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink)}
+.manage-monthbar .manage-monthref{font-size:12.5px;white-space:nowrap}
+html[data-theme=dark] .manage-monthbar{background:#203650}
+html[data-theme=dark] .manage-monthnav button,html[data-theme=dark] .manage-monthdates input[type=date]{background:#242a35;border-color:#3a4554;color:#e6e9ef}
+@media(max-width:850px){.manage-monthbar{gap:6px}.manage-monthnav strong{min-width:114px;font-size:16px}.manage-monthdates input[type=date]{width:140px;min-width:140px}}
 </style>
 </head>
 <body>
@@ -1821,7 +1834,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // items: [{date:'yyyy-mm-dd', sum: daySummary}]  (날짜순)
   function calcMonth(items, target, mins) {
     const M = minsMap(mins);
-    items = items.slice().sort((a, b) => a.date < b.date ? -1 : 1).slice(0, MAX_DAYS);
+    items = items.slice().sort((a, b) => a.date < b.date ? -1 : 1);
     let c4 = 0, d4 = 0; const osum = {}; OTHER.forEach(([k]) => (osum[k] = 0));
     const r10 = {}; COLS.forEach(x => (r10[x.c] = 0)); const ta = {}; EXCLUSIVE.type.forEach(c => (ta[c] = 0));
     let sumAU = 0, sumAV = 0, sumAW = 0, otCount = 0, mf = 0, mq = 0, z = 0, zAV = 0, zAU = 0;   // v28.18 : z = 실적 0인 날 (지원 등) — 근무일엔 넣고 평균에선 뺌
@@ -1904,6 +1917,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   function colN(c) { let n = 0; for (const ch of c) n = n * 26 + ch.charCodeAt(0) - 64; return n; }
 
   async function buildXlsx(JSZip, templateB64, info) {
+    // 기존 업무데이터 엑셀 양식은 날짜 시트 30개까지만 지원한다. 조용히 누락시키지 않는다.
+    if (info.days.length > MAX_DAYS) throw new Error('이 엑셀 양식은 최대 ' + MAX_DAYS + '일까지 지원합니다. 자료 누락을 막기 위해 다운로드를 중단했습니다 (현재 ' + info.days.length + '일)');
+    if (info.days.some(x => (x.doc.rows || []).filter(r => r && (String(r.o || '').trim() || r.memo)).length > MAX_ROWS)) throw new Error('엑셀 한 날짜는 최대 ' + MAX_ROWS + '행입니다. 초과 자료가 있어 내보내기를 중단했습니다');
     // info: {name, ym:'2026-11', target, days:[{date, doc}]}
     const tpl = await JSZip.loadAsync(templateB64, { base64: true });
     const T = async p => tpl.file(p).async('string');
@@ -4013,8 +4029,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
           if (!p.grade || tg === undefined || tg === null) note = '등급 없음 → 매니저 판단';
           else if (d.일평균 === null) note = '업무데이터 없음';
           else {
-            const steps = Math.trunc(((d.일평균 - tg) / (it.unit || 0.5)) + 1e-9);
-            v = (it.base || 0) + steps * (it.unitPts || 1);
+            const steps = Math.trunc(((d.일평균 - tg) / (it.unit || 0.5)) + (d.일평균 >= tg ? 1e-9 : -1e-9));
+            v = (it.base || 0) + steps * (it.unitPts === null ? 1 : it.unitPts);
             note = '일평균 ' + fmt(d.일평균, 2) + '대 / 목표 ' + tg + '대';
           }
         } else if (it.calc === '성장') {
@@ -4022,7 +4038,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
           else if (d.전월평균 === null) { v = it.base || 0; note = '전월 기록 없음 → 기본점'; }
           else {
             const st = Math.trunc(((d.일평균 - d.전월평균) / (it.unit || 0.5)) + (d.일평균 >= d.전월평균 ? 1e-9 : -1e-9));
-            v = (it.base || 0) + st * (it.unitPts || 1);
+            v = (it.base || 0) + st * (it.unitPts === null ? 1 : it.unitPts);
             note = '전월 ' + fmt(d.전월평균, 2) + '대 → ' + fmt(d.일평균, 2) + '대';
           }
         } else if (it.calc === '순위표') {
@@ -4437,6 +4453,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   // status : '완료' = 작성 완료 버튼 / null = 자동 저장 (기존 상태 유지)
   async function save(status, auto) {
+    while (ST.saving) await ST.saving;
+    const op = performSave(status, auto); ST.saving = op;
+    try { return await op; } finally { if (ST.saving === op) ST.saving = null; }
+  }
+  async function performSave(status, auto) {
     clearTimeout(ST.timer);
     const x = curPerson(); if (!x || !$('#scoreBody')) return true;
     const items = usedItems(ST.data.items, x.person);
@@ -4456,6 +4477,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     setSaveState('저장 중…', 'wait');
     try {
       const q = { month: ST.data.month, name: x.person.name, scores: sc, status: st, fields: fields(), data, refs: x.refs, base: (x.rec && x.rec['저장시각']) || '' };
+      const inputSnapshot = JSON.stringify({ scores: sc, fields: q.fields });
       let r;
       try { r = await api('hrSave', q); }
       catch (e) {
@@ -4467,8 +4489,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         if (!over) { ST.dirty = false; setSaveState('먼저 저장된 점수를 불러왔습니다', 'ok'); viewEval(true); return false; }
         r = await api('hrSave', Object.assign(q, { force: true }));
       }
-      x.rec = r.saved; ST.dirty = false;
+      x.rec = r.saved;
+      if (curPerson() !== x || !$('#scoreBody')) return false;
+      const unchanged = inputSnapshot === JSON.stringify({ scores: readScores(), fields: fields() });
+      ST.dirty = !unchanged;
       renderPList();
+      if (!unchanged) { setSaveState('추가 입력이 있습니다 · 아직 저장 안 됨', 'wait'); return false; }
       if (auto) setSaveState('자동 저장됨 · ' + hhmm(), 'ok');
       else { selectPerson(x.person.name, true); toast(`작성 완료 저장됨 (합계 ${r.total}점)${diffs.length ? ` · 참고와 다른 칸 ${diffs.length}개` : ''}`); }
       return true;
@@ -6453,13 +6479,14 @@ async function addCharts(buf, jobs) {
       if (asm != null && C.num(doc.asmOt) !== asm && (!isManager() || !C.num(doc.asmOt))) { doc.asmOt = asm; asmFix = !!d; }
       S.day = pc ? { doc, exists: !!d, period: pc.period, canEdit: pc.canEdit && (isManager() || date === S.today), past: !isManager() && date !== S.today, canSetTarget: pc.canSetTarget, target: pc.target, savedAt: d ? d.at : '', savedBy: d ? d.by : '', ver: d ? (d.ver == null ? null : d.ver) : '', pc }
         : { doc, exists: false, period: null, canEdit: false, canSetTarget: false, target: 0, savedAt: '', savedBy: '' };
+      S.day.asmBase = C.num(d && d.doc && d.doc.asmOt);
       S.dirty = false;
       renderDay();
       if (asmFix && S.day.canEdit) changed();
       try {
         const pend = draftMap()[draftId(u.id, date)];
         if (pend && pend.owner === S.me.id && pend.uid === u.id && pend.date === date && S.day.canEdit) {
-          S.day.doc = pend.doc; if ('base' in pend) S.day.ver = pend.base; renderDay(); changed();
+          S.day.doc = pend.doc; if ('base' in pend) S.day.ver = pend.base; if ('asmBase' in pend) S.day.asmBase = pend.asmBase; renderDay(); changed();
           toast('저장 못 한 내용을 복구했습니다 (곧 자동 저장)');
         }
       } catch (e) { }
@@ -7115,7 +7142,7 @@ async function addCharts(buf, jobs) {
   function draftId(uid, date) { return S.me.id + '|' + uid + '|' + date; }
   function keepDraft() {
     if (!S.me || !S.day || !S.day.canEdit || !S.dirty) return;
-    try { const m = draftMap(), uid = who().id; m[draftId(uid, S.date)] = { owner: S.me.id, uid, date: S.date, doc: S.day.doc, base: S.day.ver, at: Date.now() };
+    try { const m = draftMap(), uid = who().id; m[draftId(uid, S.date)] = { owner: S.me.id, uid, date: S.date, doc: S.day.doc, base: S.day.ver, asmBase: S.day.asmBase, at: Date.now() };
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify(m));
     } catch (e) { /* 저장 공간 부족 시 미저장 표시는 유지한다. */ }
   }
@@ -7146,11 +7173,11 @@ async function addCharts(buf, jobs) {
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
     const snapshotDirty = JSON.stringify(doc);
     try {
-      const q = { userId: uid, date, doc: clean, sum: C.daySummary(clean, minsOf(date)) };
+      const q = { userId: uid, date, asmBase: day.asmBase, doc: clean, sum: C.daySummary(clean, minsOf(date)) };
       if (day.ver != null) q.base = day.ver;                                // 불러온 뒤 다른 곳에서 먼저 저장했으면 서버가 알려 줌
       if (force) q.force = true;
       const r = await api('saveDay', q);
-      day.savedAt = r.savedAt; day.savedBy = r.savedBy; day.exists = true; day.ver = r.ver; day.conflict = false;
+      day.savedAt = r.savedAt; day.savedBy = r.savedBy; day.exists = true; day.ver = r.ver; day.asmBase = r.asmOt; day.conflict = false;
       if (day.pc) day.pc.days[date] = { doc: JSON.parse(JSON.stringify(clean)), at: r.savedAt, by: r.savedBy, ver: r.ver };
       if (S.day === day && JSON.stringify(doc) === snapshotDirty) { S.dirty = false; dropDraft(uid, date); }
       else if (S.day === day) keepDraft();
@@ -7189,7 +7216,7 @@ async function addCharts(buf, jobs) {
     if (S.day.conflict || S.saving) return;
     const doc = S.day.doc;
     const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
-    try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify(Object.assign({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) }, S.day.ver != null ? { base: S.day.ver } : {})) }).catch(() => { /* 초안과 미저장 상태를 유지한다. */ }); } catch (e) { }
+    try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify(Object.assign({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, asmBase: S.day.asmBase, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) }, S.day.ver != null ? { base: S.day.ver } : {})) }).catch(() => { /* 초안과 미저장 상태를 유지한다. */ }); } catch (e) { }
   }
   window.addEventListener('pagehide', flushOnClose);
   window.addEventListener('beforeunload', e => { if (S.dirty) { flushOnClose(); } });
@@ -7222,7 +7249,7 @@ async function addCharts(buf, jobs) {
       <span style="flex:1"></span>
       <button class="primary" id="xl">⬇ 엑셀 다운로드 (.xlsx)</button>
     </div>
-    ${over ? '<div class="warn">입력된 날짜가 ' + r.days.length + '일로 엑셀 한도(30일)를 넘어 앞 30일만 들어갑니다.</div>' : ''}
+    ${over ? '<div class="warn">입력된 날짜가 ' + r.days.length + '일입니다. 화면에는 전체 날짜를 집계합니다. 기존 엑셀 양식은 30일까지 지원하므로 이 달의 다운로드는 중단합니다.</div>' : ''}
     ${!r.target ? '<div class="warn">월 목표가 없어 달성률이 안 나옵니다. ' + (r.canSetTarget ? '위에서 월 목표를 선택하세요.' : '담당 매니저에게 목표를 요청하세요.') + '</div>' : ''}
     <div class="stats s6">
       <div class="stat"><div class="k">평가 평균</div><div class="v">${f2(m.f7)}</div></div>
@@ -7818,9 +7845,15 @@ async function addCharts(buf, jobs) {
       const withT = act.filter(u => u.target);
       const hi = withT.filter(u => u.m.c8 >= 0.9).length, lo = withT.filter(u => u.m.c8 <= 0.5).length;
       html += pageHead($('.czn') ? '월 업무현황' : '일일 업무현황', dailyTabs('manage')) + `<div class="pgb">
-      <div class="toolbar">
+      <div class="toolbar manage-toolbar">
         <div class="seg rq"><button data-mm="month" class="${S.mMode === 'month' ? 'on' : ''}">귀속월</button>${[['w', '주'], ['m', '월'], ['q', '분기']].concat(can('stats') ? [['y', '연 (통계)']] : []).map(([k, t]) => `<button data-rq="${k}" class="${S.mMode === 'range' && S.mRange.q === k ? 'on' : ''}">${t}</button>`).join('')}<button data-mm="range" class="${S.mMode === 'range' && !S.mRange.q ? 'on' : ''}" title="날짜를 직접 고르기">직접</button></div>
         ${S.mMode === 'month' ? `<select id="mym">${periodOptions(ym)}</select>${periodChip(r.period)}`
+          : S.mRange.q === 'm' ? `<div class="manage-monthbar">
+               <div class="manage-monthnav"><button id="monthPrev" title="이전달" aria-label="이전달">‹</button>
+                 <strong>${S.mRange.start.slice(0, 4)}년 ${+S.mRange.start.slice(5, 7)}월</strong>
+                 <button id="monthNext" title="다음달" aria-label="다음달">›</button></div>
+               <div class="manage-monthdates"><input type="date" id="rs" value="${S.mRange.start}" aria-label="조회 시작일"><span>~</span><input type="date" id="re" value="${S.mRange.end}" aria-label="조회 종료일"></div>
+               <span class="muted manage-monthref">${xym ? '목표는 ' + ymLabel(xym) + ' 기준' : '해당 기간의 귀속월 없음'}</span></div>`
           : `<input type="date" id="rs" value="${S.mRange.start}"> ~ <input type="date" id="re" value="${S.mRange.end}"><button class="primary" id="rgo">조회</button>
              <span class="muted">${xym ? '목표는 ' + ymLabel(xym) + ' 기준' : '해당 기간의 귀속월 없음'}</span>`}
         ${stale ? '<span class="chip" id="mstale">갱신 중…</span>' : ''}
@@ -7850,6 +7883,25 @@ async function addCharts(buf, jobs) {
       $$('[data-mv]').forEach(b => (b.onclick = () => { S.mView = b.dataset.mv; renderManage(); }));
       if ($('#mym')) $('#mym').onchange = e => { S.manageYm = e.target.value; renderManage(); };
       if ($('#rgo')) $('#rgo').onclick = () => { S.mRange = { start: $('#rs').value, end: $('#re').value, q: '' }; renderManage(); };
+      // '월' 조회: 이전/다음달 클릭 즉시 조회 (이번 달은 기존대로 오늘까지 표시)
+      const moveManageMonth = step => {
+        const d = new Date(+S.mRange.start.slice(0, 4), +S.mRange.start.slice(5, 7) - 1 + step, 1);
+        const m = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        S.mRange = { start: m + '-01', end: m === S.today.slice(0, 7) ? S.today : m + '-' + String(last).padStart(2, '0'), q: 'm' };
+        renderManage();
+      };
+      if ($('#monthPrev')) $('#monthPrev').onclick = () => moveManageMonth(-1);
+      if ($('#monthNext')) $('#monthNext').onclick = () => moveManageMonth(1);
+      // 날짜 달력에서 직접 범위를 바꾸면 별도 '조회' 클릭 없이 즉시 반영하고 직접 모드로 표시
+      if ($('#monthPrev')) ['rs', 're'].forEach(id => {
+        $('#' + id).onchange = () => {
+          const start = $('#rs').value, end = $('#re').value;
+          if (!start || !end || start > end) return toast('조회 시작일과 종료일을 확인하세요', true);
+          S.mRange = { start, end, q: '' };
+          renderManage();
+        };
+      });
       // v28.18 : 주(월~일) · 월(1일~말일) · 분기 · 연 — 오늘이 들어 있는 기간 (끝은 오늘까지)
       $$('[data-rq]').forEach(b => (b.onclick = () => {
         const t = S.today, y = +t.slice(0, 4), mo = +t.slice(5, 7), pd = n => String(n).padStart(2, '0'), k = b.dataset.rq;
