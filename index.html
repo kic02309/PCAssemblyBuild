@@ -2788,6 +2788,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 <script>(function (root) {
   'use strict';
   const norm = s => String(s || '').normalize('NFC').replace(/\s+/g, '');
+  const isCurrentStaff = s => !!s && s.cur === true && s.status !== '퇴사' && norm(s.name) !== '김보성2';
+  function currentView(data) {
+    const staff=(data.staff||[]).filter(isCurrentStaff), ids=new Set(staff.map(s=>s.id));
+    return {...data,staff,leaves:(data.leaves||[]).filter(l=>ids.has(l.s)),duty:(data.duty||[]).filter(u=>ids.has(u.s))};
+  }
   const kinds = ['연차휴가', '오전반차', '오후반차', '대체주휴일', '병가휴가', '경조휴가', '훈련/교육', '주말근무'];
   const dayName = ['일', '월', '화', '수', '목', '금', '토'];
   const day = (y, m, d) => new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10);
@@ -2952,7 +2957,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     });
     return rows.filter(r => r.status !== 'exclude').map(r=>{delete r.altOptions;return r;}).sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name, 'ko'));
   }
-  root.AttendanceCore = { norm, parse, spec, leaveType, snapshot, compare, key };
+  root.AttendanceCore = { norm, isCurrentStaff, currentView, parse, spec, leaveType, snapshot, compare, key };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 (function(root){
@@ -2980,7 +2985,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
    if(c.expectedTrain!==null&&c.expectedTrain!==c.observedTrain)errors.push(c.date+': 훈련 인원 수와 복사된 이름 수가 다릅니다.');
    if((wd(c.date)===0||wd(c.date)===6)&&c.deptCount!==c.observedWeekend)errors.push(c.date+': 주말근무 명단을 모두 펼쳐주세요.');
   }
-  const staff=(data.staff||[]).filter(s=>s.cur!==false&&s.status!=='퇴사'&&C.norm(s.name)!=='김보성2'),names=new Map();
+  const staff=(data.staff||[]).filter(C.isCurrentStaff),names=new Map();
   staff.forEach(s=>{const n=C.norm(s.name);if(names.has(n))errors.push(s.name+': 같은 이름이 여러 명입니다.');names.set(n,s);});
   const events=[],pairs=new Map();
   for(const r of parsed.records){const s=names.get(C.norm(r.name));if(!s)continue;if(!supported.includes(r.kind)){errors.push(r.date+' '+r.name+': 구분을 읽지 못했습니다.');continue;}const key=s.id+'|'+r.date;const old=pairs.get(key);if(old&&old!==r.kind)errors.push(r.date+' '+r.name+': 서로 다른 구분이 중복됩니다.');pairs.set(key,r.kind);events.push({s:s.id,d:r.date,k:r.kind,st:'확정'});}
@@ -3090,6 +3095,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   function visibleLeaves() { return L.showPend || !D().all ? D().leaves : D().leaves.filter(l => !isPend(l)); }
   function reindex() {
     L.ix = LC.index(Object.assign({}, L.data, { leaves: visibleLeaves() }));
+    L.calIx = LC.index(window.AttendanceCore.currentView(Object.assign({}, L.data, { leaves: visibleLeaves() })));
     L.counts = calcCounts();
     if (A && A.updateBadge) A.updateBadge();
   }
@@ -3208,13 +3214,13 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
   function otherActualWork(pf=()=>true) {
     const staff=Object.fromEntries((D().staff||[]).map(s=>[s.id,s]));
-    const rows=(D().duty||[]).filter(u=>u.d.slice(0,7)===L.ym&&LC.dow(u.d)!==6&&staff[u.s]&&pf(staff[u.s]));
+    const rows=(D().duty||[]).filter(u=>u.d.slice(0,7)===L.ym&&LC.dow(u.d)!==6&&window.AttendanceCore.isCurrentStaff(staff[u.s])&&pf(staff[u.s]));
     if(!rows.length)return '';
     return '<section class="card"><b>일요일·휴일 근무</b><div style="margin-top:10px">'+rows.map(u=>A.esc(mdw(u.d)+' '+staff[u.s].name)).join(' · ')+'</div></section>';
   }
   function drawCal() {
-    const d = D(), own = !d.all, ym = L.ym, H = L.ix.H, weeks = LC.screenWeeks(ym);
-    const pf = s => !L.part || (s && partOf(s.grp) === L.part);
+    const d = D(), own = !d.all, ym = L.ym, H = L.calIx.H, weeks = LC.screenWeeks(ym);
+    const pf = s => window.AttendanceCore.isCurrentStaff(s) && (!L.part || partOf(s.grp) === L.part);
     const conv = convMap();                                               // v28.32 : 토요 대체된 연차 (토요일|사람 → 연차)
     let html = own ? surveyBanner() : `
       <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${L.part === p ? ' on' : ''}">${p || '전체'}</button>`).join('')}
@@ -3230,12 +3236,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       days.forEach((dd, i) => {
         const other = LC.ymOf(dd) !== ym, hol = H[dd];
         if (i === 5) {
-          const list = (L.ix.duty[dd] || []).map(u => ({ u, s: staffById(u.s) })).filter(x => x.s && pf(x.s));
+          const list = (L.calIx.duty[dd] || []).map(u => ({ u, s: staffById(u.s) })).filter(x => x.s && pf(x.s));
           html += `<div class="lvd2 sat${other ? ' other' : ''}" data-sat="${dd}" title="누르면 명단·대체휴무일 보기${d.canEdit ? ' · 연차 이름을 여기로 끌면 토요 대체' : ''}"><div class="hd"><b class="dn">${md(dd)}</b>${hol ? `<span class="hn">${A.esc(hol)}</span>` : ''}${list.length ? `<span class="sb ${satColor(dd)}">토요근무 ${list.length}명</span>` : ''}</div>
             ${list.length ? `<div class="rw">${list.map(x => { const cv = conv[dd + '|' + x.s.id]; return `<span class="sw ${satColor(dd)}${own && myStaff() && x.s.id === myStaff().id ? ' me' : ''}${cv ? ' lvx' : ''}" data-sw="${dd}|${x.s.id}"${cv ? ` title="${A.esc(x.s.name)} · ${mdw(cv.d1)} 연차 신청 → 토요 대체"` : ''}>${A.esc(x.s.name)}${cv ? '<i>↺</i>' : ''}</span>`; }).join('')}</div>` : other ? '' : '<div class="satc none">미배정</div>'}</div>`;
           return;
         }
-        const c = LC.dayCell(L.ix, dd), cap = d.all ? capOf(dd) : 0, over = cap && c.off > cap;
+        const c = LC.dayCell(L.calIx, dd), cap = d.all ? capOf(dd) : 0, over = cap && c.off > cap;
         const lv = c.lv.filter(x => pf(x.s)), al = c.al.filter(x => pf(x.s));
         html += `<div class="lvd2${other ? ' other' : ''}${hol ? ' hol' : ''}${over ? ' over' : ''}" data-d="${dd}">
           <div class="hd"><b class="dn">${md(dd)}</b>${hol ? `<span class="hn">${A.esc(hol)}</span>` : ''}${d.all && L.part ? (lv.length + al.length ? `<span class="n">휴무 ${lv.length + al.length}</span>` : '') : d.all && (c.off || cap) ? `<span class="n${over ? ' red' : cap && c.off === cap ? ' full' : ''}"${over && d.canEdit ? ` data-ov="${dd}" title="누르면 토요 대체로 정리"` : ''}>휴무 ${c.off}${cap ? '/' + cap : ''}${over && d.canEdit ? ' ↺' : ''}</span>` : ''}</div>
@@ -3432,7 +3438,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
   // 달력 아래 요약 (관리자·매니저) : 파트 버튼을 누르면 그 파트 기준
   function calSummary(pf) {
-    const d = D(), ym = L.ym, H = L.ix.H, f = LC.monthFirst(ym), last = LC.monthLast(ym), c = L.counts || {};
+    const d = window.AttendanceCore.currentView(D()), ym = L.ym, H = L.calIx.H, f = LC.monthFirst(ym), last = LC.monthLast(ym), c = L.counts || {};
     const inM = d.leaves.filter(l => l.d2 >= f && l.d1 <= last && staffById(l.s));
     const mine = inM.filter(l => pf(staffById(l.s)));
     const days = list => list.filter(l => !LC.leaveKind(l)).reduce((a, l) => a + LC.leaveDays(l, H, f, last), 0);   // v28.21 : 출산 · 경조 제외
@@ -3442,11 +3448,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const byP = PARTS.map(p => [p, days(inM.filter(l => !isPend(l) && partOf(staffById(l.s).grp) === p))]);
     const mx = Math.max(1, ...byP.map(x => x[1]));
     // ③ 토요근무
-    const sats = LC.monthSaturdays(ym).map(sd => { const u = (L.ix.duty[sd] || []).filter(x => pf(staffById(x.s))); return { sd, n: u.length, noAlt: u.filter(x => !x.a).length }; });
+    const sats = LC.monthSaturdays(ym).map(sd => { const u = (L.calIx.duty[sd] || []).filter(x => pf(staffById(x.s))); return { sd, n: u.length, noAlt: u.filter(x => !x.a).length }; });
     const noAlt = sats.reduce((a, x) => a + x.noAlt, 0);
     // ④ 주의할 날
     const wd = []; for (let x = f; x <= last; x = LC.addDays(x, 1)) if (LC.isWork(x, H)) {
-      const cell = LC.dayCell(L.ix, x), n = cell.lv.filter(y => pf(y.s)).length + cell.al.filter(y => pf(y.s)).length, cap = L.part ? 0 : capOf(x);
+      const cell = LC.dayCell(L.calIx, x), n = cell.lv.filter(y => pf(y.s)).length + cell.al.filter(y => pf(y.s)).length, cap = L.part ? 0 : capOf(x);
       wd.push({ x, n, over: cap && cell.off > cap, cap });
     }
     const over = wd.filter(x => x.over), top = wd.slice().sort((a, b) => b.n - a.n || LC.ko(a.x, b.x)).filter(x => x.n).slice(0, 3);
@@ -3877,7 +3883,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const d = D(), f = LC.monthFirst(L.ym), l = LC.monthLast(L.ym), H = L.ix.H;
     const satCnt = {}; LC.monthSaturdays(L.ym).forEach(sd => (L.ix.duty[sd] || []).forEach(u => (satCnt[u.s] = (satCnt[u.s] || 0) + 1)));
     const Z = {}; PARTS.forEach(p => (Z[p] = []));
-    visibleLeaves().filter(x => x.d2 >= f && x.d1 <= l).forEach(x => { const s = staffById(x.s); if (s && Z[partOf(s.grp)]) Z[partOf(s.grp)].push({ x, s }); });
+    visibleLeaves().filter(x => x.d2 >= f && x.d1 <= l).forEach(x => { const s = staffById(x.s); if (s && (!inCal || window.AttendanceCore.isCurrentStaff(s)) && Z[partOf(s.grp)]) Z[partOf(s.grp)].push({ x, s }); });
     const PP = inCal && L.part ? [L.part] : PARTS;
     const q = (L.recQ || '').trim();
     const box = p => {
