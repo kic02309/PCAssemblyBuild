@@ -7225,32 +7225,92 @@ async function addCharts(buf, jobs) {
   function periodOptions(sel) {
     return S.periods.slice().reverse().map(p => `<option value="${p.ym}" ${p.ym === sel ? 'selected' : ''}>${ymLabel(p.ym)} (${p.start.slice(5)} ~ ${p.end ? p.end.slice(5) : '진행중'})</option>`).join('');
   }
+  // 인원별 월별 · 월범위 · 연간: 기존 getMonth 권한/귀속월 범위를 그대로 사용
+  function personMonthSelection(state, periods) {
+    const list = periods.slice().sort((a, b) => a.ym.localeCompare(b.ym));
+    if (state.mode === 'month') return list.filter(p => p.ym === state.ym);
+    if (state.mode === 'year') return list.filter(p => p.ym.slice(0, 4) === state.year);
+    return list.filter(p => p.ym >= state.from && p.ym <= state.to);
+  }
+  function combinePersonMonths(results) {
+    const parts = results.map(r => C.calcMonth(r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(r.period.ym)) })), r.target, minsYm(r.period.ym)));
+    const m = { daily: [], r10: {}, ta: {}, osum: {} }, seen = new Set();
+    const totals = ['days', 'c4', 'd4', 'z', 'ev', 'otherTotal', 'sumH_AT', 'f6', 'i6', 'g2', 'e4', 'f4', 'mf', 'mq'];
+    totals.forEach(k => m[k] = 0);
+    let weekend = 0;
+    parts.forEach(p => {
+      totals.forEach(k => m[k] += p[k]);
+      ['r10', 'ta', 'osum'].forEach(k => Object.keys(p[k]).forEach(c => m[k][c] = (m[k][c] || 0) + p[k][c]));
+      p.daily.forEach(d => {
+        if (seen.has(d.date)) throw new Error('귀속월 기간이 겹칩니다. 관리자 기간 설정을 확인하세요.');
+        seen.add(d.date); m.daily.push(d); weekend += d.aw;
+      });
+    });
+    m.daily.sort((a, b) => a.date.localeCompare(b.date));
+    m.g4 = m.ev ? weekend / m.ev : 0;
+    m.w7 = m.ev ? m.otherTotal / 30 / m.ev : 0;
+    m.f7 = (m.f6 ? m.sumH_AT / m.f6 : 0) + m.g4 + m.w7;
+    m.i7 = (m.i6 ? m.sumH_AT / m.i6 : 0) + m.g4 + m.w7;
+    m.e2 = (m.ev ? m.sumH_AT / m.ev : 0) + m.g4;
+    m.c8 = null;
+    return m;
+  }
+  async function downloadPersonRange(results, m, label) {
+    const X = await loadXLSX(), book = X.utils.book_new();
+    const rows = [['귀속월', '시작일', '마감일', '상태', '월 목표']].concat(results.map(r => [r.period.ym, r.period.start, r.period.end || '진행 중 (기존 조회 규칙)', r.period.status, r.target || '']));
+    X.utils.book_append_sheet(book, X.utils.aoa_to_sheet(rows), '조회 귀속월');
+    const owner = new Map(results.flatMap(r => r.days.map(d => [d.date, r.period.ym])));
+    X.utils.book_append_sheet(book, X.utils.aoa_to_sheet([['귀속월', '날짜', '구분', '주문', '제조 대수', '기본환산', '평가평균', '실제야근(분)', '조립야근(분)', '토요가산']].concat(m.daily.map(d => [owner.get(d.date), d.date, d.kind || '', d.n - d.mf, d.mq, d.e2, d.f7, d.e4, d.h7, d.aw]))), '일별 내역');
+    X.utils.book_append_sheet(book, X.utils.aoa_to_sheet([['이름', results[0].user.name], ['조회', label], ['평가 평균', m.f7], ['실제 평균', m.i7], ['기본 평균', m.e2], ['평일', m.c4], ['토요', m.d4], ['조립수량', C.qtyParts(m).asm], ['기타시간(분)', m.otherTotal], ['실제야근(분)', m.e4]]), '기간 요약');
+    saveBlob(new Blob([X.write(book, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), results[0].user.name + '_' + label.replace(/[^0-9가-힣~-]/g, '') + '.xlsx');
+  }
   async function renderMonth(ym) {
     const main = $('#main');
     if (!S.periods.length) { main.innerHTML = '<div class="warn">월 기간이 없습니다. 관리자가 열면 쓸 수 있습니다.</div>'; return; }
     ym = ym || S.monthYm || (periodOf(S.date || S.today) || curPeriod()).ym;
     S.monthYm = ym;
+    const uid = who().id;
+    if (!S.personMonth || S.personMonth.uid !== uid || arguments[0]) S.personMonth = { uid, mode: 'month', ym, from: ym, to: ym, year: ym.slice(0, 4) };
+    const state = S.personMonth, multi = state.mode !== 'month';
+    const selected = personMonthSelection(state, S.periods);
+    const label = state.mode === 'year' ? state.year + '년 연간' : state.from + ' ~ ' + state.to;
     main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
-    let r;
+    let r, results;
     const u0 = who(), seq = S.monthSeq = (S.monthSeq || 0) + 1;
     const stale = () => seq !== S.monthSeq || S.view !== 'month' || !S.me || who().id !== u0.id;
-    try { r = await api('getMonth', { userId: u0.id, ym }); } catch (e) { if (!stale()) main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    try {
+      if (!selected.length) throw new Error('해당 기간에 설정된 귀속월이 없습니다.');
+      results = await Promise.all(selected.map(p => api('getMonth', { userId: u0.id, ym: p.ym })));
+      r = multi ? Object.assign({}, results[0], { days: results.flatMap(x => x.days), target: 0, canSetTarget: false }) : results[0];
+    } catch (e) { if (!stale()) main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
     if (stale()) return;                                                 // 기다리는 동안 다른 사람·화면으로 옮김   // 매니저가 고친 내용·목표까지 항상 최신으로
     const MY = minsYm(ym), items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, MY) }));
-    const m = C.calcMonth(items, r.target, MY);
+    let m;
+    try { m = multi ? combinePersonMonths(results) : C.calcMonth(items, r.target, MY); }
+    catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
+    const years = [...new Set(S.periods.map(p => p.ym.slice(0, 4)))].sort().reverse();
+    const monthOpts = value => S.periods.slice().reverse().map(p => '<option value="' + p.ym + '" ' + (p.ym === value ? 'selected' : '') + '>' + ymLabel(p.ym) + '</option>').join('');
+    const expected = state.mode === 'year' ? Array.from({ length: 12 }, (_, i) => state.year + '-' + String(i + 1).padStart(2, '0')) : [];
+    if (state.mode === 'range') { for (let y = state.from; y <= state.to;) { expected.push(y); const d = new Date(+y.slice(0, 4), +y.slice(5, 7), 1); y = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); } }
+    const missing = expected.filter(y => !selected.some(p => p.ym === y));
     const over = r.days.length > C.MAX_DAYS;
     main.innerHTML = `
     <div class="toolbar">
       <b style="font-size:15px">${esc(r.user.name)}</b><span class="muted">${esc(r.user.group)}</span>
-      <select id="ym">${periodOptions(ym)}</select>
-      ${periodChip(r.period)}
+      <div class="seg">
+        ${[['month', '월별'], ['range', '월범위'], ['year', '연간']].map(([k, t]) => '<button data-pmode="' + k + '" class="' + (state.mode === k ? 'on' : '') + '">' + t + '</button>').join('')}
+      </div>
+      ${!multi ? '<button id="personPrev" title="이전달">‹</button><select id="ym">' + periodOptions(ym) + '</select><button id="personNext" title="다음달">›</button>' + periodChip(r.period)
+        : state.mode === 'range' ? '<select id="personFrom" aria-label="시작월">' + monthOpts(state.from) + '</select> ~ <select id="personTo" aria-label="종료월">' + monthOpts(state.to) + '</select><button id="personQuery" class="primary">조회</button>'
+        : '<select id="personYear" aria-label="연도">' + years.map(y => '<option ' + (y === state.year ? 'selected' : '') + '>' + y + '</option>').join('') + '</select><button id="personQuery" class="primary">조회</button>'}
       <span class="fld" style="flex-direction:row;align-items:center;gap:6px;margin-left:10px"><label style="font-size:12px">월 목표</label>
         <select id="tg" ${r.canSetTarget ? '' : 'disabled'}><option value="">선택</option>${C.TARGETS.map(t => `<option ${t === r.target ? 'selected' : ''}>${t}</option>`).join('')}</select></span>
       <span style="flex:1"></span>
       <button class="primary" id="xl">⬇ 엑셀 다운로드 (.xlsx)</button>
     </div>
-    ${over ? '<div class="warn">입력된 날짜가 ' + r.days.length + '일입니다. 화면에는 전체 날짜를 집계합니다. 기존 엑셀 양식은 30일까지 지원하므로 이 달의 다운로드는 중단합니다.</div>' : ''}
-    ${!r.target ? '<div class="warn">월 목표가 없어 달성률이 안 나옵니다. ' + (r.canSetTarget ? '위에서 월 목표를 선택하세요.' : '담당 매니저에게 목표를 요청하세요.') + '</div>' : ''}
+    ${over && !multi ? '<div class="warn">입력된 날짜가 ' + r.days.length + '일입니다. 화면에는 전체 날짜를 집계합니다. 기존 엑셀 양식은 30일까지 지원하므로 이 달의 다운로드는 중단합니다.</div>' : ''}
+    ${multi ? '<div class="muted" style="margin-bottom:10px">' + esc(label) + ' · ' + selected.length + '개 귀속월 · 월별 항목별 분을 적용해 합산 · 목표 수정 및 달성률은 월별에서 확인' + (missing.length ? '<br>귀속월 미설정으로 제외: ' + esc(missing.join(', ')) : '') + '</div>' : ''}
+    ${!multi && !r.target ? '<div class="warn">월 목표가 없어 달성률이 안 나옵니다. ' + (r.canSetTarget ? '위에서 월 목표를 선택하세요.' : '담당 매니저에게 목표를 요청하세요.') + '</div>' : ''}
     <div class="stats s6">
       <div class="stat"><div class="k">평가 평균</div><div class="v">${f2(m.f7)}</div></div>
       <div class="stat"><div class="k">달성률</div><div class="v">${r.target ? pct(m.c8) : '-'}</div>${m.c8 != null ? `<div class="bar"><i class="${m.c8 >= 0.9 ? 'hi' : m.c8 <= 0.5 ? 'lo' : ''}" style="width:${Math.min(100, m.c8 * 100)}%"></i></div>` : ''}</div>
@@ -7260,14 +7320,24 @@ async function addCharts(buf, jobs) {
       ${(() => { const P = C.qtyParts(m); return `<div class="stat"><div class="k">조립수량</div><div class="v">${P.asm}</div><div class="qchips">${qtyChips(P, !(m.ta.D2 || m.ta.E2))}</div><div class="qsub">${P.ban ? `반조 ${P.ban} · ` : ''}<span class="shipv">출고 ${P.ship}</span>${P.mfg ? ` · <span class="mfgv">제조 ${P.mfg}</span>` : ''}</div></div>`; })()}
     </div>
     <div id="attl"></div>
-    ${monthChart(m.daily, r.target)}
+    ${multi ? '<div style="overflow-x:auto">' + monthChart(m.daily, 0).replace('class="mcb"', 'class="mcb" style="min-width:' + Math.max(600, m.daily.length * 42) + 'px"').replace('월 목표를 정하면 목표선이 표시됩니다', '월별 목표는 월별 화면에서 확인하세요') + '</div>' : monthChart(m.daily, r.target)}
     <div class="row muted" style="margin-bottom:8px">토요 가산 ${f2(m.g4)} · 기타시간 환산 ${f2(m.w7)} (기타시간 합계 ${m.otherTotal}분) · 실제야근 합계 ${m.e4}분 (${m.f4}회)</div>
     <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 360px)">
       <table class="list"><thead><tr><th>날짜</th><th>구분</th><th class="num">주문</th>${m.mf ? '<th class="num mfgv">제조</th>' : ''}<th class="num">기본환산</th><th class="num">평가평균</th><th class="num">실제야근</th><th class="num">조립야근</th><th class="num">토요가산</th></tr></thead>
       <tbody>${m.daily.length ? m.daily.map(d => `<tr class="click" data-d="${d.date}"><td class="${d.dow === 6 ? 'sat' : d.dow === 0 ? 'sun' : ''}">${dLabel(d.date)}</td><td>${esc(d.kind || '')}</td><td class="num">${d.n - (d.mf || 0)}</td>${m.mf ? `<td class="num mfgv">${d.mf ? d.mq + '대' : ''}</td>` : ''}<td class="num">${f2(d.e2)}</td><td class="num"><b>${f2(d.f7)}</b></td><td class="num">${d.e4 || ''}</td><td class="num">${d.h7 || ''}</td><td class="num">${d.aw ? f2(d.aw) : ''}</td></tr>`).join('') : '<tr><td colspan="8" class="muted" style="padding:24px">입력된 날짜가 없습니다</td></tr>'}</tbody></table>
     </div>`;
-    $('#ym').onchange = e => renderMonth(e.target.value);
-    if (window.HR && r.user.id === S.me.id) window.HR.myAttLine(ym).then(h => { const el = $('#attl'); if (el && S.monthYm === ym) el.outerHTML = h || ''; });   // 본인 근태 횟수
+    $$('[data-pmode]').forEach(b => b.onclick = () => { state.mode = b.dataset.pmode; renderMonth(); });
+    if ($('#ym')) $('#ym').onchange = e => renderMonth(e.target.value);
+    if ($('#personPrev')) {
+      const move = step => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + step, 1), next = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); if (!S.periods.some(p => p.ym === next)) return toast('해당 귀속월 기간이 없습니다', true); renderMonth(next); };
+      $('#personPrev').onclick = () => move(-1); $('#personNext').onclick = () => move(1);
+    }
+    if ($('#personQuery')) $('#personQuery').onclick = () => {
+      if (state.mode === 'range') { const from = $('#personFrom').value, to = $('#personTo').value; if (from > to) return toast('종료월은 시작월 이후로 선택하세요', true); state.from = from; state.to = to; }
+      else state.year = $('#personYear').value;
+      renderMonth();
+    };
+    if (!multi && window.HR && r.user.id === S.me.id) window.HR.myAttLine(ym).then(h => { const el = $('#attl'); if (el && S.monthYm === ym) el.outerHTML = h || ''; });   // 본인 근태 횟수
     $('#tg').onchange = async e => {
       const v = +e.target.value || 0;
       try { await api('setTarget', { userId: who().id, ym, target: v }); dropPc(who().id); toast(v ? '목표를 저장했습니다' : '목표를 지웠습니다'); renderMonth(ym); }
@@ -7276,7 +7346,7 @@ async function addCharts(buf, jobs) {
     $$('tr[data-d]').forEach(tr => (tr.onclick = () => go('input', { date: tr.dataset.d })));
     $('#xl').onclick = async () => {
       const b = $('#xl'); b.disabled = true; b.textContent = '만드는 중…';
-      try { await downloadXlsx(r.user, ym, r.target, r.days); } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); }
+      try { if (multi) await downloadPersonRange(results, m, label); else await downloadXlsx(r.user, ym, r.target, r.days); } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); }
       b.disabled = false; b.textContent = '⬇ 엑셀 다운로드 (.xlsx)';
     };
   }
