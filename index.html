@@ -1623,6 +1623,18 @@ html[data-theme=dark] .rtag.pendt{background:#23272e;color:#9aa3b1;border-color:
 .acckb>div>i{width:10px;height:10px;border-radius:3px}.acckb b{font-size:13.5px}.acckb em{font-style:normal;font-weight:800;font-size:15px}.acckb em small{font-size:11.5px;color:var(--sub);font-weight:600;margin-left:1px}
 .acckb .t{grid-column:1/-1;height:6px;background:var(--line2);border-radius:4px;overflow:hidden}.acckb .t i{display:block;height:100%;border-radius:4px}
 table.acctl td{vertical-align:top}table.acctl td.nw,table.accpt td.nw{white-space:nowrap}table.acctl td.pr{max-width:240px}table.acctl td.tx{min-width:240px;max-width:420px}table.acctl td.tx2{max-width:200px}
+/* 사고 목록/상세: 긴 제품명과 내용이 다른 칸을 침범하지 않도록 줄바꿈 */
+table.acctl td.pr,table.acctl td.tx,table.acctl td.tx2{white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.5}
+table.acctl td.pr{width:240px;min-width:180px}
+table.acctl td.tx2{min-width:140px}
+.modal.accd table.accpt{table-layout:fixed;width:100%}
+.modal.accd table.accpt th:first-child{width:100px}
+.modal.accd table.accpt th:last-child{width:55px}
+.modal.accd table.accpt td{white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:top;line-height:1.5}
+.modal.accd .accdf{grid-template-columns:repeat(4,minmax(0,1fr))}
+.modal.accd .accdf>div{min-width:0;overflow-wrap:anywhere}
+.modal.accd .accdt p,.modal.accd .acclog{overflow-wrap:anywhere}
+@media(max-width:600px){.modal.accd .accdf{grid-template-columns:repeat(2,minmax(0,1fr))}.modal.accd table.accpt th:first-child{width:76px}.modal.accd table.accpt th:last-child{width:44px}}
 table.acctl tr.click{cursor:pointer}table.acctl tr.click:hover td{background:#f5f8fd}
 .acck{display:inline-block;color:#fff;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;white-space:nowrap}
 .accsy{display:inline-block;font-size:11.5px;background:#eef1f5;color:#46505e;border-radius:5px;padding:0 6px;margin-right:2px}
