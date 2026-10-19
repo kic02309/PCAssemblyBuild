@@ -2849,7 +2849,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
           if (kind && /^[가-힣A-Za-z][가-힣A-Za-z0-9·().]{0,29}$/.test(s)) recs.push({ date, name: s, kind, month: ym });
         });
         out.dates.push(date); out.records.push(...recs);
-        out.coverage.push({date,department:section.includes('고객지원부'),deptCount,expanded,expectedLeave,expectedTrain,observedLeave:recs.filter(r=>!['훈련/교육','주말근무'].includes(r.kind)).length,observedTrain:recs.filter(r=>r.kind==='훈련/교육').length,observedWeekend:recs.filter(r=>r.kind==='주말근무').length,holiday:section.some(s=>/^(추석|설날|설 연휴|개천절|한글날|삼일절|3·1절|어린이날|현충일|광복절|성탄절|크리스마스|신정|근로자의 날|부처님오신날|대체공휴일|임시공휴일|.*선거일)/.test(s))});
+        out.coverage.push({date,department:section.includes('고객지원부'),deptCount,expanded,expectedLeave,expectedTrain,observedLeave:recs.filter(r=>!['훈련/교육','주말근무'].includes(r.kind)).length,observedTrain:recs.filter(r=>r.kind==='훈련/교육').length,observedWeekend:recs.filter(r=>r.kind==='주말근무').length,holiday:section.some(s=>/^(추석|설날|설 연휴|개천절|한글날|제헌절|삼일절|3·1절|어린이날|현충일|광복절|성탄절|크리스마스|신정|근로자의 날|부처님오신날|대체공휴일|임시공휴일|.*선거일)/.test(s))});
       });
     });
     out.records = [...new Map(out.records.map(r => [key(r), r])).values()];
@@ -2973,11 +2973,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
  }
  function prepare(parsed,data){
   const errors=[...parsed.errors],months=[...new Set(parsed.months)].sort();
+  // 달력·연차일수에 사용하는 관리자 공휴일 날짜를 가져오기 검사에도 동일하게 적용.
+  const holidays=new Set(((data.kv||{}).holidays||[]).map(h=>h.d));
+  const coverage=(parsed.coverage||[]).map(c=>({...c,holiday:c.holiday||holidays.has(c.date)}));
   for(const m of months){
    const n=new Date(+m.slice(0,4),+m.slice(5),0).getDate();
    if(new Set(parsed.dates.filter(d=>d.slice(0,7)===m)).size!==n)errors.push(m+': 월간 전체 날짜를 복사해주세요.');
   }
-  for(const c of parsed.coverage||[]){
+  for(const c of coverage){
    if(c.holiday&&!c.department)continue;
    if(!c.department){errors.push(c.date+': 고객지원부를 펼쳐 복사해주세요.');continue;}
    if(wd(c.date)>0&&wd(c.date)<6&&!c.holiday&&!c.expanded)errors.push(c.date+': 상세 명단이 펼쳐지지 않았습니다.');
@@ -2996,7 +2999,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   for(const e of before){const k=e.s+'|'+e.d;by.set(k,(by.get(k)||[]).concat(e));}for(const e of desired){const k=e.s+'|'+e.d;after.set(k,(after.get(k)||[]).concat(e));}
   const rows=[];for(const key of new Set([...by.keys(),...after.keys()])){const a=by.get(key)||[],b=after.get(key)||[];const e=b[0]||a[0],s=allStaff.find(s=>s.id===e.s);const status=!a.length?'add':!b.length?'delete':JSON.stringify(a.map(x=>[x.k,x.st]).sort())===JSON.stringify(b.map(x=>[x.k,x.st]).sort())?'same':'change';rows.push({date:e.d,name:s.name,before:a.map(x=>x.k+(x.st!=='확정'?' ('+x.st+')':'')).join(' / ')||'-',after:b.map(x=>x.k).join(' / ')||'-',status});}
   rows.sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name,'ko'));
-  return {errors:[...new Set(errors)],months,scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),cleanupScope:Object.fromEntries(allStaff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
+  return {errors:[...new Set(errors)],months,coverage,scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),cleanupScope:Object.fromEntries(allStaff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
  }
  root.ActualSyncCore={prepare,current,canonical};
 })(window);
@@ -3040,7 +3043,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
      U.plan=r.plan;
      const info=await A.api('lvActualSyncInfo',{});
      if(info?.syncVersion!==2)throw Error('중복 정리 SQL을 먼저 적용해주세요.');
-     const result=await A.api('lvActualSync',{syncVersion:2,months:r.plan.months,scope:r.plan.scope,cleanupScope:r.plan.cleanupScope,events:r.plan.events,coverage:r.p.coverage});
+     const result=await A.api('lvActualSync',{syncVersion:2,months:r.plan.months,scope:r.plan.scope,cleanupScope:r.plan.cleanupScope,events:r.plan.events,coverage:r.plan.coverage});
      if(!result.verified||result.syncVersion!==2)throw Error('전체 기록의 최종 일치 검증 결과를 확인하지 못했습니다.');
      U.text='';U.plan=null;U.result=result;U.message='업데이트 완료 · 실제 자료와 일치 · 복사 원문 폐기';
      if(!active())return;
