@@ -5608,7 +5608,8 @@ async function addCharts(buf, jobs) {
   }
   function accProductSummary(prods) {
     if (!prods || !prods.length) return '-';
-    return accProductType(prods[0].name) + (prods.length > 1 ? ' 외 ' + (prods.length - 1) + '종' : '');
+    if (prods.length === 1) return accProductName(prods[0].name || prods[0].code);
+    return accProductType(prods[0].name) + ' 외 ' + (prods.length - 1) + '종';
   }
   const MAXIMG = 3;
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
