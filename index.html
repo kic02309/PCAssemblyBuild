@@ -1635,6 +1635,8 @@ table.acctl td.tx2{min-width:140px}
 .modal.accd .accdf>div{min-width:0;overflow-wrap:anywhere}
 .modal.accd .accdt p,.modal.accd .acclog{overflow-wrap:anywhere}
 @media(max-width:600px){.modal.accd .accdf{grid-template-columns:repeat(2,minmax(0,1fr))}.modal.accd table.accpt th:first-child{width:76px}.modal.accd table.accpt th:last-child{width:44px}}
+.acc-product-summary,.modal.accd .acc-product-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.acc-product-summary{max-width:240px}
 table.acctl tr.click{cursor:pointer}table.acctl tr.click:hover td{background:#f5f8fd}
 .acck{display:inline-block;color:#fff;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;white-space:nowrap}
 .accsy{display:inline-block;font-size:11.5px;background:#eef1f5;color:#46505e;border-radius:5px;padding:0 6px;margin-right:2px}
@@ -5582,6 +5584,32 @@ async function addCharts(buf, jobs) {
   const Z = { year: null, ym: null, data: null, q: '', fk: '', fg: '', at: 0 };
   const KINDS = ['오조립', '파손', '오발송', '미발송', '품질지적', '지시불이행'];
   const KC = { 오조립: '#c2410c', 파손: '#7c3aed', 오발송: '#0f766e', 미발송: '#b45309', 품질지적: '#2563eb', 지시불이행: '#64748b' };
+  // 표시만 정리: 저장된 원문과 내보내기 자료는 보존
+  function accProductName(value) {
+    let name = String(value || '').replace(/^(?:(?:본|[gGvV])(?=\s|\[)|[ⓖⒼⓥⓋ])\s*/u, '').trim();
+    const notice = /병행\s*수입\s*제품(?:은|의|\s)|(?:국내\s*)?정식\s*서비스\s*센터에서|[※＊*]\s*(?:비닐|사용|반품|교환)|[▶◀]\s*(?:\d[\d,]*\s*원\s*쿠폰|수정하기)|(?:A\s*\/\s*S|AS)\s*(?:기간|정책|안내|불가)|반품\s*(?:안내|불가|규정)|교환\s*(?:안내|불가|규정)/i;
+    const at = name.search(notice);
+    if (at >= 0) name = name.slice(0, at);
+    return name.replace(/[\s·|,;:＊*※▶◀]+$/g, '').trim() || '제품명 없음';
+  }
+  function accProductType(value) {
+    const name = accProductName(value);
+    if (/코어\s*i[3579]|라이젠|\b(?:CPU|CORE\s*(?:ULTRA|I[3579])|XEON|RYZEN)\b/i.test(name)) return 'CPU';
+    if (/메인보드|[MB]-?ATX|(?:PRO\s*)?[ABHZX]\d{3}[A-Z0-9-]*.*(?:DDR|D[345]|보드)/i.test(name)) return '메인보드';
+    if (/SSD|NVMe|Optimus\s*5100/i.test(name)) return 'SSD';
+    if (/메모리|\bDDR[345]\b/i.test(name)) return '메모리';
+    if (/지포스|라데온|\b(?:RTX|GTX|RADEON)\s*\d|그래픽카드/i.test(name)) return '그래픽카드';
+    if (/파워|80\s*PLUS|POWER\s*SUPPLY/i.test(name)) return '파워';
+    if (/케이스|미들타워|빅타워|미니타워/i.test(name)) return '케이스';
+    if (/쿨러|수냉|공랭/i.test(name)) return '쿨러';
+    if (/\bHDD\b|하드디스크/i.test(name)) return 'HDD';
+    if (/조립비/.test(name)) return '조립비';
+    return '제품';
+  }
+  function accProductSummary(prods) {
+    if (!prods || !prods.length) return '-';
+    return accProductType(prods[0].name) + (prods.length > 1 ? ' 외 ' + (prods.length - 1) + '종' : '');
+  }
   const MAXIMG = 3;
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const $ = (s, el) => (el || document).querySelector(s);
@@ -5665,7 +5693,7 @@ async function addCharts(buf, jobs) {
       <div class="card" style="padding:0;overflow:auto"><table class="list acctl"><thead><tr><th>출고일</th>${Z.ym || self ? '' : '<th>귀속월</th>'}${self ? '' : '<th>이름</th><th>그룹</th>'}<th>구분</th><th>주문번호</th>${self ? '' : '<th>제품</th>'}<th>증상 · 내용</th><th>처리</th>${self ? '' : '<th></th>'}</tr></thead><tbody>
         ${rows.slice(0, 500).map((r, i) => `<tr class="click" data-ai="${all.indexOf(r)}"><td class="nw">${r.d ? md(r.d) : '<span class="muted">-</span>'}</td>${Z.ym || self ? '' : `<td class="nw">${+r.ym.slice(5)}월</td>`}${self ? '' : `<td class="nw"><b>${esc(r.name)}</b></td><td class="nw">${A.gdot(r.grp)}</td>`}
           <td>${kTag(r.kind)}</td><td class="nw">${esc(r.ord) || '<span class="muted">-</span>'}</td>
-          ${self ? '' : `<td class="pr">${(r.prods || []).length ? esc(r.prods[0].name || r.prods[0].code) + (r.prods.length > 1 ? ` <span class="muted">외 ${r.prods.length - 1}</span>` : '') : '<span class="muted">-</span>'}</td>`}
+          ${self ? '' : `<td class="pr">${(r.prods || []).length ? '<span class="acc-product-summary" title="' + esc(r.prods.map(p => accProductName(p.name || p.code)).join(' / ')) + '">' + esc(accProductSummary(r.prods)) + '</span>' : '<span class="muted">-</span>'}</td>`}
           <td class="tx">${r.det ? esc(r.txt) : '<span class="muted">내용 없음 (예전에 올린 파일)</span>'}</td><td class="tx2">${r.src === 'web' && !r.actD ? '<span class="accpend">처리 전</span> ' : ''}${esc(r.act)}</td>
           ${self ? '' : `<td class="nw">${r.nimg ? `<span class="accim" title="캡처 ${r.nimg}장">📷${r.nimg > 1 ? r.nimg : ''}</span>` : ''}${r.src === 'xl' ? '<span class="accsrc">엑셀</span>' : ''}</td>`}</tr>`).join('') || `<tr><td colspan="10" class="muted" style="padding:28px;text-align:center">${sel.length ? '찾는 조건에 맞는 사고가 없습니다' : (Z.ym ? ymLab(Z.ym) : Z.year + '년') + ' 사고가 없습니다'}</td></tr>`}
         ${rows.length > 500 ? `<tr><td colspan="10" class="muted" style="padding:10px">500건까지만 보입니다 · 달이나 구분을 골라 주세요</td></tr>` : ''}
@@ -5701,7 +5729,7 @@ async function addCharts(buf, jobs) {
         ${F('처리일자', it.actD ? esc(it.actD) : it.src === 'web' ? '<span class="accpend">처리 전</span>' : '')}</div>
       <div class="accdt"><span>내용 (증상)</span><p>${it.det ? esc(it.txt) || '<i class="muted">-</i>' : '<i class="muted">내용 없음 (예전에 올린 파일 · 건수만 있음)</i>'}</p></div>
       <div class="accdt"><span>처리 내용</span><p>${esc(it.act) || '<i class="muted">아직 없음</i>'}</p></div>
-      ${(it.prods || []).length ? `<div class="sub" style="margin-top:12px">제품 ${it.prods.length}개</div><table class="list accpt"><thead><tr><th>제품코드</th><th>제품명</th><th class="num">수량</th></tr></thead><tbody>${it.prods.map(p => `<tr><td class="nw">${esc(p.code)}</td><td>${esc(p.name)}</td><td class="num">${esc(p.qty)}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${(it.prods || []).length ? `<div class="sub" style="margin-top:12px">제품 ${it.prods.length}개</div><table class="list accpt"><thead><tr><th>제품코드</th><th>제품명</th><th class="num">수량</th></tr></thead><tbody>${it.prods.map(p => `<tr><td class="nw">${esc(p.code)}</td><td><span class="acc-product-name" title="${esc(accProductName(p.name))}">${esc(accProductName(p.name))}</span></td><td class="num">${esc(p.qty)}</td></tr>`).join('')}</tbody></table>` : ''}
       ${imgs.length ? `<div class="sub" style="margin-top:12px">캡처 ${imgs.length}장 <small class="muted">누르면 크게</small></div><div class="accth">${imgs.map((m, i) => `<img src="${m.data}" data-big="${i}" alt="캡처 ${i + 1}">`).join('')}</div>` : ''}
       ${it.src === 'web' && !self ? `<div class="muted" style="font-size:12px;margin-top:12px">등록 ${esc(it.by)} ${esc((it.at || '').slice(5, 16))}${it.upAt && it.upAt !== it.at ? ' · 마지막 수정 ' + esc(it.upBy) + ' ' + esc(it.upAt.slice(5, 16)) : ''}</div>` : ''}
       ${log.length > 1 ? `<details class="acclog"><summary>고친 기록 ${log.length}건</summary>${log.map(l => `<div><b>${esc(l.act)}</b> <span class="muted">${esc(l.by)} · ${esc(l.at.slice(5, 16))}</span> ${diff(l)}</div>`).join('')}</details>` : ''}
