@@ -2148,7 +2148,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     return l.h ? n * 0.5 : n;
   }
   // v28.21 : 사유로 경조휴가 구분 (출산 · 결혼 · 사망 · 조사 등) = 연차 일수에서 뺌
-  function leaveKind(l) { if (l && l.st === '대체') return '대체'; const r = (l && (l.r != null ? l.r : l.reason)) || ''; if(r==='대체주휴일')return '대체'; return /병가/.test(r) ? '병가' : /출산|결혼|사망|장례|부고|조문|조사|경조/.test(r) ? '경조' : ''; }   // v28.24 : 병가 (연차 일수 제외)   // 출산 · 결혼 · 조사 = 경조휴가
+  function leaveKind(l) { if (l && l.st === '대체') return '대체'; const r = (l && (l.r != null ? l.r : l.reason)) || ''; if(r==='대체주휴일')return '대체'; if(r==='유계결근')return '유계결근'; return /병가/.test(r) ? '병가' : /출산|결혼|사망|장례|부고|조문|조사|경조/.test(r) ? '경조' : ''; }   // v28.24 : 병가 (연차 일수 제외)   // 출산 · 결혼 · 조사 = 경조휴가
   function dispName(name, l) { const k = leaveKind(l); return name + (l.t ? '(훈)' : '') + (k ? '(' + k + ')' : '') + (l.h ? '(' + l.h + ')' : ''); }
 
   // 자료 묶음 → 빠른 조회용
@@ -2793,7 +2793,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const staff=(data.staff||[]).filter(isCurrentStaff), ids=new Set(staff.map(s=>s.id));
     return {...data,staff,leaves:(data.leaves||[]).filter(l=>ids.has(l.s)),duty:(data.duty||[]).filter(u=>ids.has(u.s))};
   }
-  const kinds = ['연차휴가', '오전반차', '오후반차', '대체주휴일', '병가휴가', '경조휴가', '훈련/교육', '주말근무'];
+  const kinds = ['연차휴가', '오전반차', '오후반차', '대체주휴일', '병가휴가', '경조휴가', '훈련/교육', '주말근무', '유계결근'];
   const dayName = ['일', '월', '화', '수', '목', '금', '토'];
   const day = (y, m, d) => new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10);
   const dow = d => new Date(d + 'T00:00:00Z').getUTCDay();
@@ -2845,7 +2845,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
           if(s==='휴가'&&following)expectedLeave=+following[1];
           if(s==='훈련/교육'&&following)expectedTrain=+following[1];
           if (/^\d+명\s*\(/.test(s) || ['근무', '휴가', '육아/출산', '펼쳐보기', '추석', '개천절'].includes(s)) { kind = ''; return; }
-          if (kinds.includes(s) || /휴가$|근무$/.test(s)) { kind = /^\d+명\s*\(/.test(section[i + 1] || '') ? '' : s; return; }
+          if (kinds.includes(s) || /휴가$|근무$|결근$/.test(s)) { kind = /^\d+명\s*\(/.test(section[i + 1] || '') ? '' : s; return; }
           if (kind && /^[가-힣A-Za-z][가-힣A-Za-z0-9·().]{0,29}$/.test(s)) recs.push({ date, name: s, kind, month: ym });
         });
         out.dates.push(date); out.records.push(...recs);
@@ -2861,6 +2861,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
   function leaveType(l) {
     if (l.st === '대체' || l.r === '대체주휴일') return '대체주휴일';
+    if (l.r === '유계결근') return '유계결근';
     if (/병가/.test(l.r || '')) return '병가휴가';
     if (/출산|결혼|사망|장례|부고|조문|조사|경조/.test(l.r || '')) return '경조휴가';
     if (l.t) return '훈련/교육';
@@ -2957,13 +2958,13 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     });
     return rows.filter(r => r.status !== 'exclude').map(r=>{delete r.altOptions;return r;}).sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name, 'ko'));
   }
-  root.AttendanceCore = { norm, isCurrentStaff, currentView, parse, spec, leaveType, snapshot, compare, key };
+  root.AttendanceCore = { norm, kinds, isCurrentStaff, currentView, parse, spec, leaveType, snapshot, compare, key };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 (function(root){
  'use strict';
  const C=root.AttendanceCore,wd=d=>new Date(d+'T00:00:00Z').getUTCDay();
- const supported=['연차휴가','오전반차','오후반차','대체주휴일','병가휴가','경조휴가','훈련/교육','주말근무'];
+ const supported=C.kinds;
  const canonical=events=>[...new Map(events.map(e=>[JSON.stringify(e),e])).values()].sort((a,b)=>(a.d+'|'+a.s+'|'+a.k+'|'+a.st).localeCompare(b.d+'|'+b.s+'|'+b.k+'|'+b.st));
  function current(data,months,ids){
   const out=[],H=Object.fromEntries(((data.kv||{}).holidays||[]).map(h=>[h.d,h.n]));
@@ -3043,6 +3044,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
      U.plan=r.plan;
      const info=await A.api('lvActualSyncInfo',{});
      if(info?.syncVersion!==2)throw Error('중복 정리 SQL을 먼저 적용해주세요.');
+     if(r.plan.events.some(e=>e.k==='유계결근')&&!info.supportedKinds?.includes('유계결근'))throw Error('유계결근 처리 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
      const result=await A.api('lvActualSync',{syncVersion:2,months:r.plan.months,scope:r.plan.scope,cleanupScope:r.plan.cleanupScope,events:r.plan.events,coverage:r.plan.coverage});
      if(!result.verified||result.syncVersion!==2)throw Error('전체 기록의 최종 일치 검증 결과를 확인하지 못했습니다.');
      U.text='';U.plan=null;U.result=result;U.message='업데이트 완료 · 실제 자료와 일치 · 복사 원문 폐기';
@@ -3213,7 +3215,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const cls = 'lv' + (st === '신청' ? ' req' : st === '파트확인' ? ' mgr' : '') + (l.t ? ' tr' : '') + (own && mine ? ' me' : '');
     const tip = `${s.name || ''} ${md(l.d1)}${l.d2 !== l.d1 ? '~' + md(l.d2) : ''}${l.h ? ' ' + l.h + ' 반차' : ''} · ${ST[st][1]}${l.r ? ' · ' + l.r : ''}`;
     const kd = LC.leaveKind(l);                                                       // v28.21 : 출산 · 경조휴가 (연차 아님)
-    return `<span class="${cls}${kd ? ' sp' : ''}" data-l="${l.id}" title="${A.esc(tip + (kd ? ' · ' + kd + '휴가 (연차 일수 제외)' : ''))}">${A.esc(s.name || '?')}${l.t ? '(훈)' : ''}${kd ? '(' + kd + ')' : ''}${l.h ? '<i>' + l.h + '</i>' : ''}</span>`;
+    return `<span class="${cls}${kd ? ' sp' : ''}" data-l="${l.id}" title="${A.esc(tip + (kd ? ' · ' + (kd==='유계결근'?kd:kd+'휴가') + ' (연차 일수 제외)' : ''))}">${A.esc(s.name || '?')}${l.t ? '(훈)' : ''}${kd ? '(' + kd + ')' : ''}${l.h ? '<i>' + l.h + '</i>' : ''}</span>`;
   }
   function otherActualWork(pf=()=>true) {
     const staff=Object.fromEntries((D().staff||[]).map(s=>[s.id,s]));
@@ -4015,7 +4017,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const rows0 = base.map(s => {
       const all = d.leaves.filter(x => x.s === s.id && x.d2 >= f && x.d1 <= l), lv = all.filter(x => !isPend(x));
       const days = lv.filter(x => !x.t && !LC.leaveKind(x)).reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);
-      const tr = lv.filter(x => (x.t || LC.leaveKind(x)) && LC.leaveKind(x)!=='대체' && x.st !== '대체').reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);   // v28.21 : 훈련 + 출산 · 경조 (연차 아님)
+      const tr = lv.filter(x => (x.t || LC.leaveKind(x)) && LC.leaveKind(x)!=='대체' && LC.leaveKind(x)!=='유계결근' && x.st !== '대체').reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);   // v28.21 : 훈련 + 출산 · 경조 (연차 아님)
       const pend = all.filter(isPend).reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);
       const du = (d.duty || []).filter(u => u.s === s.id && u.d.slice(0, 4) === y);
       return { s, days, half: lv.filter(x => x.h).length, tr, pend, sat: du.length, alt: du.filter(u => u.a).length + lv.filter(x=>LC.leaveKind(x)==='대체'&&x.st!=='대체').reduce((a,x)=>a+LC.leaveDays(x,H,f,l),0), grant: s.grant, rem: s.grant != null ? s.grant - days : null, n: all.length };
@@ -4051,7 +4053,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const du = (d.duty || []).filter(u => u.s === s.id && u.d.slice(0, 4) === y);
       A.modal(`<h3>${A.esc(s.name)} <span class="muted" style="font-size:13px">${y}년</span></h3>
         <div style="max-height:60vh;overflow:auto"><table class="list"><thead><tr><th>기간</th><th class="num">일수</th><th>사유</th><th>상태</th></tr></thead><tbody>
-        ${lv.map(x => `<tr class="click" data-l="${x.id}"><td>${mdw(x.d1)}${x.d2 !== x.d1 ? ' ~ ' + mdw(x.d2) : ''}${x.h ? ' ' + x.h : ''}${x.t ? ' (훈)' : ''}${x.st === '대체' ? ' (토요 대체 → ' + md(x.as) + ' 토요근무)' : LC.leaveKind(x) ? ' (' + LC.leaveKind(x) + '휴가)' : ''}</td><td class="num">${LC.leaveDays(x, H, f, l)}</td><td>${A.esc(x.r || '')}</td><td><span class="lst ${ST[stOf(x)][0]}">${ST[stOf(x)][1]}</span></td></tr>`).join('') || '<tr><td colspan="4" class="muted">연차 없음</td></tr>'}</tbody></table>
+        ${lv.map(x => `<tr class="click" data-l="${x.id}"><td>${mdw(x.d1)}${x.d2 !== x.d1 ? ' ~ ' + mdw(x.d2) : ''}${x.h ? ' ' + x.h : ''}${x.t ? ' (훈)' : ''}${x.st === '대체' ? ' (토요 대체 → ' + md(x.as) + ' 토요근무)' : LC.leaveKind(x) ? ' (' + LC.leaveKind(x) + (LC.leaveKind(x)==='유계결근'?'':'휴가') + ')' : ''}</td><td class="num">${LC.leaveDays(x, H, f, l)}</td><td>${A.esc(x.r || '')}</td><td><span class="lst ${ST[stOf(x)][0]}">${ST[stOf(x)][1]}</span></td></tr>`).join('') || '<tr><td colspan="4" class="muted">연차 없음</td></tr>'}</tbody></table>
         <div style="margin-top:10px"><b>주말근무 ${du.length}회</b> <span class="muted">${du.map(u => md(u.d) + (u.a ? '→' + md(u.a) : '')).join(' · ')}</span></div></div>
         <div class="acts"><button data-n>닫기</button></div>`, (bg, close) => {
         A.$('[data-n]', bg).onclick = close;
