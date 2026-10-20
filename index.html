@@ -2980,7 +2980,14 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   const sourceDates=new Set(parsed.dates),preservedDates=[];
   // 달력·연차일수에 사용하는 관리자 공휴일 날짜를 가져오기 검사에도 동일하게 적용.
   const holidays=new Set(((data.kv||{}).holidays||[]).map(h=>h.d));
-  const coverage=(parsed.coverage||[]).map(c=>({...c,holiday:c.holiday||holidays.has(c.date)}));
+  // 토요일·일요일의 미펼친 칸과 휴일의 부서 없는 칸은 빈 자료로 단정하지 않는다.
+  // 해당 날짜만 보존하고, 다른 날의 상세 명단은 원본과 대조한다.
+  const coverage=(parsed.coverage||[]).map(c=>{
+    const holiday=c.holiday||holidays.has(c.date), weekend=wd(c.date)===0||wd(c.date)===6;
+    const preserve=(!c.department&&(holiday||weekend)) ||
+     (weekend&&c.department&&c.deptCount===null&&c.observedWeekend===0&&c.expectedLeave===null&&c.expectedTrain===null);
+    return {...c,holiday,preserve};
+  });
   for(const m of months){
    const n=new Date(+m.slice(0,4),+m.slice(5),0).getDate();
    const firstSupplied=parsed.dates.filter(d=>d.slice(0,7)===m).sort()[0];
@@ -2991,7 +2998,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
    }
   }
   for(const c of coverage){
-   if(c.holiday&&!c.department)continue;
+   if(c.preserve){preservedDates.push(c.date);continue;}
    if(!c.department){errors.push(c.date+': 고객지원부를 펼쳐 복사해주세요.');continue;}
    if(wd(c.date)>0&&wd(c.date)<6&&!c.holiday&&!c.expanded)errors.push(c.date+': 상세 명단이 펼쳐지지 않았습니다.');
    if(c.expectedLeave!==null&&c.expectedLeave!==c.observedLeave)errors.push(c.date+': 휴가 인원 수와 복사된 이름 수가 다릅니다.');
@@ -3005,11 +3012,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // 실제 반영 대상은 현재 인원. 비교/정리 대상은 달력에 표시될 수 있는 전체 등록 인원.
   const allStaff=data.staff||[];
   if(!staff.length)errors.push('현재 인원 명단을 불러오지 못했습니다.');
-  const desired=canonical(events),ids=allStaff.map(s=>s.id),before=current(data,months,ids).filter(e=>sourceDates.has(e.d)),by=new Map(),after=new Map();
+  const syncDates=new Set(coverage.filter(c=>!c.preserve).map(c=>c.date));
+  const desired=canonical(events),ids=allStaff.map(s=>s.id),before=current(data,months,ids).filter(e=>syncDates.has(e.d)),by=new Map(),after=new Map();
   for(const e of before){const k=e.s+'|'+e.d;by.set(k,(by.get(k)||[]).concat(e));}for(const e of desired){const k=e.s+'|'+e.d;after.set(k,(after.get(k)||[]).concat(e));}
   const rows=[];for(const key of new Set([...by.keys(),...after.keys()])){const a=by.get(key)||[],b=after.get(key)||[];const e=b[0]||a[0],s=allStaff.find(s=>s.id===e.s);const status=!a.length?'add':!b.length?'delete':JSON.stringify(a.map(x=>[x.k,x.st]).sort())===JSON.stringify(b.map(x=>[x.k,x.st]).sort())?'same':'change';rows.push({date:e.d,name:s.name,before:a.map(x=>x.k+(x.st!=='확정'?' ('+x.st+')':'')).join(' / ')||'-',after:b.map(x=>x.k).join(' / ')||'-',status});}
   rows.sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name,'ko'));
-  return {errors:[...new Set(errors)],months,coverage,preservedDates,scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),cleanupScope:Object.fromEntries(allStaff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
+  return {errors:[...new Set(errors)],months,coverage,preservedDates:[...new Set(preservedDates)].sort(),scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),cleanupScope:Object.fromEntries(allStaff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
  }
  root.ActualSyncCore={prepare,current,canonical};
 })(window);
@@ -3037,7 +3045,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     <textarea id="actualText" rows="5" aria-label="실제 근무현황 붙여넣기" placeholder="월간 전체 근무현황을 붙여넣으세요." ${U.busy?'disabled':''}>${esc(U.text)}</textarea>
     <div class="row" style="justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="actualCompare" ${U.busy||!U.text.trim()?'disabled':''}>비교하기</button><button id="actualUpdate" class="primary" ${U.busy||!U.text.trim()||!may()?'disabled':''}>${U.busy?'처리 중…':'실제 내용으로 업데이트'}</button></div>
     <div id="actualReport">${U.message?'<div role="status" class="actual-message" style="margin-top:12px;white-space:pre-wrap">'+esc(U.message)+'</div>':''}
-    ${report?.preservedDates?.length?'<p class="muted">원본에 없는 날짜는 기존 기록 유지: '+esc(report.preservedDates.join(', '))+'</p>':''}
+    ${report?.preservedDates?.length?'<p class="muted">명단이 없는 휴일·주말 및 원본에 빠진 날짜는 기존 기록 유지 (동기화 대상 제외): '+esc(report.preservedDates.join(', '))+'</p>':''}
     ${!may()?'<p class="muted">기존 연차·토요 관리 권한으로 업데이트할 수 있습니다.</p>':''}
     ${count?'<div style="margin:14px 0">추가 '+count.add+' · 변경 '+count.change+' · 삭제 '+count.delete+' · 일치 '+count.same+'</div>':''}
     ${report?'<div class="actual-tablewrap"><table class="list actual-table"><thead><tr><th>구분</th><th>날짜</th><th>이름</th><th>기존 내용</th><th>실제 내용</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+labels[r.status]+'</td><td>'+esc(r.date)+'</td><td>'+esc(r.name)+'</td><td>'+esc(fmt(r.before))+'</td><td>'+esc(fmt(r.after))+'</td></tr>').join('')+(rows.length?'':'<tr><td colspan="5">차이 없음</td></tr>')+'</tbody></table></div>':''}
@@ -3056,13 +3064,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
      U.plan=r.plan;
      const info=await A.api('lvActualSyncInfo',{});
      if(!active())return;
-     if(info?.syncVersion!==2)throw Error('중복 정리 SQL을 먼저 적용해주세요.');
-     if(info.importRevision!==3)throw Error('최종 실근무 업데이트 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
-     if(r.plan.preservedDates.length&&info.coverageVersion!==2)throw Error('월초 날짜 보존 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
+     if(info?.syncVersion!==3||info.importRevision!==4||info.coverageVersion!==3)throw Error('휴일·주말 안전 보존 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
      if(r.plan.events.some(e=>e.k==='유계결근')&&!info.supportedKinds?.includes('유계결근'))throw Error('유계결근 처리 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
-     const result=await A.api('lvActualSync',{syncVersion:2,months:r.plan.months,scope:r.plan.scope,cleanupScope:r.plan.cleanupScope,events:r.plan.events,coverage:r.plan.coverage});
-     if(!result.verified||result.syncVersion!==2)throw Error('전체 기록의 최종 일치 검증 결과를 확인하지 못했습니다.');
-     U.text='';U.plan=null;U.result=result;U.message=result.preservedDates?.length?'업데이트 완료 · 원본 포함 날짜와 일치 · 미포함 날짜는 기존 기록 유지 · 복사 원문 폐기':'업데이트 완료 · 실제 자료와 일치 · 복사 원문 폐기';
+     const result=await A.api('lvActualSync',{syncVersion:3,months:r.plan.months,scope:r.plan.scope,cleanupScope:r.plan.cleanupScope,events:r.plan.events,coverage:r.plan.coverage});
+     if(!result.verified||result.syncVersion!==3)throw Error('전체 기록의 최종 일치 검증 결과를 확인하지 못했습니다.');
+     U.text='';U.plan=null;U.result=result;U.message=result.preservedDates?.length?'업데이트 완료 · 검증된 날짜만 반영 · 미펼친 휴일·주말과 누락 날짜는 기존 기록 유지 · 복사 원문 폐기':'업데이트 완료 · 실제 자료와 일치 · 복사 원문 폐기';
      if(state!==U||U.token!==A.S.token)return;
      try{await ctx.reload(+r.plan.months[0].slice(0,4));}catch(e){U.message+='\n달력은 화면을 다시 열어 확인해주세요.';}
     }catch(e){if(active())U.message='업데이트하지 못했습니다: '+e.message;}
@@ -4067,17 +4073,23 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     });
   }
 
-  // ------------------------------------------------------------ 개인별 합계 (올해 · 확정만)
+  // ------------------------------------------------------------ 개인별 합계 (선택 월 실적 · 연간 잔여)
   function drawSum() {
-    const d = D(), y = String(L.year), f = y + '-01-01', l = y + '-12-31', H = L.ix.H, own = !d.all, my = myStaff();
+    const d = D(), y = String(L.year), f = LC.monthFirst(L.ym), l = LC.monthLast(L.ym), H = L.ix.H, own = !d.all, my = myStaff();
+    const yf=y+'-01-01', yl=y+'-12-31', monthLabel=ymLab(L.ym);
     const base = own ? (my ? [my] : []) : staffList();
     const rows0 = base.map(s => {
       const all = d.leaves.filter(x => x.s === s.id && x.d2 >= f && x.d1 <= l), lv = all.filter(x => !isPend(x));
       const days = lv.filter(x => !x.t && !LC.leaveKind(x)).reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);
       const tr = lv.filter(x => (x.t || LC.leaveKind(x)) && LC.leaveKind(x)!=='대체' && LC.leaveKind(x)!=='유계결근' && x.st !== '대체').reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);   // v28.21 : 훈련 + 출산 · 경조 (연차 아님)
       const pend = all.filter(isPend).reduce((a, x) => a + LC.leaveDays(x, H, f, l), 0);
-      const du = (d.duty || []).filter(u => u.s === s.id && u.d.slice(0, 4) === y);
-      return { s, days, half: lv.filter(x => x.h).length, tr, pend, sat: du.length, alt: du.filter(u => u.a).length + lv.filter(x=>LC.leaveKind(x)==='대체'&&x.st!=='대체').reduce((a,x)=>a+LC.leaveDays(x,H,f,l),0), grant: s.grant, rem: s.grant != null ? s.grant - days : null, n: all.length };
+      const du = (d.duty || []).filter(u => u.s === s.id && u.d >= f && u.d <= l);
+      const annualLv=d.leaves.filter(x=>x.s===s.id&&x.d2>=yf&&x.d1<=yl&&!isPend(x));
+      const annualDays=annualLv.filter(x=>!x.t&&!LC.leaveKind(x)).reduce((a,x)=>a+LC.leaveDays(x,H,yf,yl),0);
+      const annualDuties=(d.duty||[]).filter(u=>u.s===s.id&&u.d>=yf&&u.d<=yl);
+      const annualAlt=annualDuties.filter(u=>u.a).length+annualLv.filter(x=>LC.leaveKind(x)==='대체'&&x.st!=='대체').reduce((a,x)=>a+LC.leaveDays(x,H,yf,yl),0);
+      const alt=(d.duty||[]).filter(u=>u.s===s.id&&u.a>=f&&u.a<=l).length+lv.filter(x=>LC.leaveKind(x)==='대체'&&x.st!=='대체').reduce((a,x)=>a+LC.leaveDays(x,H,f,l),0);
+      return { s, days, half: lv.filter(x => x.h).length, tr, pend, sat: du.length, alt, grant:s.grant, rem:s.grant!=null?s.grant-annualDays:null, annualUnused:annualDuties.length-annualAlt, n: all.length };
     }).filter(r => own || r.s.roster || r.n || r.sat);
     const SF2 = A.colFilter({ key: 'lvsum', scope: '.lvsum2', redraw: () => drawSum(), base: () => rows0, cols: [
       ['grp', '그룹', r => r.s.grp, GORD], ['grade', '등급', r => r.s.grade, GRADES],
@@ -4089,17 +4101,17 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const th = (key, t, num, fk) => `<th class="${num ? 'num ' : ''}sort${k === key ? ' on' : ''}" data-k="${key}">${t}${fk && !own ? ' ' + SF2.ico(fk) : ''}</th>`;
     if (own) {                                     // v28.2 : 사원 본인은 숫자 칸 4개
       const r = rows[0];
-      body().innerHTML = !r ? '<div class="muted" style="padding:20px">자료 없음</div>' : `<div class="muted" style="margin-bottom:8px">${y}년 1~12월 · 확정 기준 · 칸을 누르면 내역</div>
+      body().innerHTML = !r ? '<div class="muted" style="padding:20px">자료 없음</div>' : `<div class="muted" style="margin-bottom:8px">${monthLabel} · 선택 월 확정 실적 · 잔여는 연간 기준 · 칸을 누르면 내역</div>
         <div class="lvtiles" data-s="${r.s.id}">
           <div class="card"><span>연차 사용</span><b>${r.days}<small>일</small></b><em>${[r.half ? '반차 ' + r.half + '회 포함' : '', r.pend ? '신청중 ' + r.pend + '일' : '', r.tr ? '훈련·경조·병가 ' + r.tr + '일' : ''].filter(Boolean).join(' · ') || '&nbsp;'}</em></div>
           <div class="card"><span>잔여</span><b class="${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '-' : r.rem}<small>${r.rem == null ? '' : '일'}</small></b><em>${r.grant == null ? '부여일수 없음' : '부여 ' + r.grant + '일'}</em></div>
           <div class="card"><span>토요근무</span><b>${r.sat}<small>회</small></b><em>&nbsp;</em></div>
-          <div class="card"><span>대체휴무</span><b>${r.alt}<small>회</small></b><em>${r.sat - r.alt > 0 ? '아직 안 쓴 ' + (r.sat - r.alt) + '회' : '&nbsp;'}</em></div></div>`;
+          <div class="card"><span>대체휴무</span><b>${r.alt}<small>회</small></b><em>${r.annualUnused > 0 ? '올해 아직 안 쓴 ' + r.annualUnused + '회' : '&nbsp;'}</em></div></div>`;
       const t = A.$('.lvtiles[data-s]'); if (t) t.onclick = () => sumDetail(r.s.id);
       return;
     }
-    body().innerHTML = `<div class="muted pfrow" style="margin-bottom:8px">${y}년 1~12월 · 잔여 = 부여일수 − 확정 연차 ${own ? '' : `<span class="muted">· ${rows.length}명</span>` + SF2.bar()}</div>
-      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num" title="훈련 · 경조휴가(출산·결혼·조사 등) — 연차 아님">훈련·경조·병가(일)</th>${th('sat', '주말근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '잔여', 1, 'rem')}</tr></thead><tbody>
+    body().innerHTML = `<div class="muted pfrow" style="margin-bottom:8px">${monthLabel} · 선택 월 실적 · 연간 잔여 = 부여일수 − 올해 확정 연차 ${own ? '' : `<span class="muted">· ${rows.length}명</span>` + SF2.bar()}</div>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num" title="훈련 · 경조휴가(출산·결혼·조사 등) — 연차 아님">훈련·경조·병가(일)</th>${th('sat', '주말근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '연간 잔여', 1, 'rem')}</tr></thead><tbody>
       ${rows.map((r, i) => (k === 'grp' ? A.ghd(rows, i, x => x.s.grp || '', 11, g => [g.length + '명', '연차 ' + g.reduce((a, x) => a + x.days, 0) + '일', '토요 ' + g.reduce((a, x) => a + x.sat, 0) + '회']) : '') + `<tr class="click gc" data-s="${r.s.id}" style="--gc:${A.gcol(r.s.grp)}"><td><b>${A.esc(r.s.name)}</b></td><td>${k === 'grp' ? A.gdot(r.s.grp || '').replace(/>[^<]*$/, '>') : A.gdot(r.s.grp || '')}</td><td>${A.esc(r.s.grade || '')}</td><td class="num"><b>${r.days || ''}</b></td><td class="num muted">${r.pend || ''}</td><td class="num">${r.half || ''}</td><td class="num">${r.tr || ''}</td><td class="num">${r.sat || ''}</td><td class="num">${r.alt || ''}</td><td class="num">${r.grant == null ? '' : r.grant}</td><td class="num ${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '' : r.rem}</td></tr>`).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">자료 없음</td></tr>'}
       </tbody></table></div>`;
     SF2.bind();
@@ -4107,8 +4119,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     A.$$('.lvsum2 tr[data-s]').forEach(tr => (tr.onclick = () => sumDetail(tr.dataset.s)));
     function sumDetail(sid) { {
       const s = staffById(sid), lv = d.leaves.filter(x => x.s === s.id && x.d2 >= f && x.d1 <= l).sort((a, b) => LC.ko(a.d1, b.d1));
-      const du = (d.duty || []).filter(u => u.s === s.id && u.d.slice(0, 4) === y);
-      A.modal(`<h3>${A.esc(s.name)} <span class="muted" style="font-size:13px">${y}년</span></h3>
+      const du = (d.duty || []).filter(u => u.s === s.id && u.d >= f && u.d <= l);
+      A.modal(`<h3>${A.esc(s.name)} <span class="muted" style="font-size:13px">${monthLabel}</span></h3>
         <div style="max-height:60vh;overflow:auto"><table class="list"><thead><tr><th>기간</th><th class="num">일수</th><th>사유</th><th>상태</th></tr></thead><tbody>
         ${lv.map(x => `<tr class="click" data-l="${x.id}"><td>${mdw(x.d1)}${x.d2 !== x.d1 ? ' ~ ' + mdw(x.d2) : ''}${x.h ? ' ' + x.h : ''}${x.t ? ' (훈)' : ''}${x.st === '대체' ? ' (토요 대체 → ' + md(x.as) + ' 토요근무)' : LC.leaveKind(x) ? ' (' + LC.leaveKind(x) + (LC.leaveKind(x)==='유계결근'?'':'휴가') + ')' : ''}</td><td class="num">${LC.leaveDays(x, H, f, l)}</td><td>${A.esc(x.r || '')}</td><td><span class="lst ${ST[stOf(x)][0]}">${ST[stOf(x)][1]}</span></td></tr>`).join('') || '<tr><td colspan="4" class="muted">연차 없음</td></tr>'}</tbody></table>
         <div style="margin-top:10px"><b>주말근무 ${du.length}회</b> <span class="muted">${du.map(u => md(u.d) + (u.a ? '→' + md(u.a) : '')).join(' · ')}</span></div></div>
