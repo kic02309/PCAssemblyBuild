@@ -2803,10 +2803,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const heads = [];
     lines.forEach((s, i) => { const m = s.match(/^(20\d{2})년\s*(\d{1,2})월$/); if (m) heads.push({ i, ym: m[1] + '-' + m[2].padStart(2, '0') }); });
     if (!heads.length) heads.push({ i: 0, ym: fallback });
-    const out = { records: [], dates: [], months: [], errors: [], coverage: [] };
+    const out = { records: [], dates: [], months: [], errors: [], coverage: [] }, seenMonths = new Set();
     heads.forEach((head, hi) => {
       const ym = head.ym;
       if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(ym || '')) { out.errors.push('조회 연월을 읽지 못했습니다.'); return; }
+      if (seenMonths.has(ym)) { out.errors.push(ym + ': 같은 달 자료가 중복되어 있습니다. 최신 월간 자료 한 번만 붙여넣어주세요.'); return; }
+      seenMonths.add(ym);
       out.months.push(ym);
       const block = lines.slice(head.i, hi + 1 < heads.length ? heads[hi + 1].i : lines.length), headers = [];
       block.forEach((s, i) => {
@@ -2848,6 +2850,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
           if (kinds.includes(s) || /휴가$|근무$|결근$/.test(s)) { kind = /^\d+명\s*\(/.test(section[i + 1] || '') ? '' : s; return; }
           if (kind && /^[가-힣A-Za-z][가-힣A-Za-z0-9·().]{0,29}$/.test(s)) recs.push({ date, name: s, kind, month: ym });
         });
+        if (out.dates.includes(date)) out.errors.push(date + ': 날짜가 중복되어 있습니다. 월간 자료 한 번만 붙여넣어주세요.');
         out.dates.push(date); out.records.push(...recs);
         out.coverage.push({date,department:section.includes('고객지원부'),deptCount,expanded,expectedLeave,expectedTrain,observedLeave:recs.filter(r=>!['훈련/교육','주말근무'].includes(r.kind)).length,observedTrain:recs.filter(r=>r.kind==='훈련/교육').length,observedWeekend:recs.filter(r=>r.kind==='주말근무').length,holiday:section.some(s=>/^(추석|설날|설 연휴|개천절|한글날|제헌절|삼일절|3·1절|어린이날|현충일|광복절|성탄절|크리스마스|신정|근로자의 날|부처님오신날|대체공휴일|임시공휴일|.*선거일)/.test(s))});
       });
@@ -2974,12 +2977,18 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
  }
  function prepare(parsed,data){
   const errors=[...parsed.errors],months=[...new Set(parsed.months)].sort();
+  const sourceDates=new Set(parsed.dates),preservedDates=[];
   // 달력·연차일수에 사용하는 관리자 공휴일 날짜를 가져오기 검사에도 동일하게 적용.
   const holidays=new Set(((data.kv||{}).holidays||[]).map(h=>h.d));
   const coverage=(parsed.coverage||[]).map(c=>({...c,holiday:c.holiday||holidays.has(c.date)}));
   for(const m of months){
    const n=new Date(+m.slice(0,4),+m.slice(5),0).getDate();
-   if(new Set(parsed.dates.filter(d=>d.slice(0,7)===m)).size!==n)errors.push(m+': 월간 전체 날짜를 복사해주세요.');
+   const firstSupplied=parsed.dates.filter(d=>d.slice(0,7)===m).sort()[0];
+   for(let day=1;day<=n;day++){
+    const date=m+'-'+String(day).padStart(2,'0');if(sourceDates.has(date))continue;
+    if(firstSupplied&&date<firstSupplied&&day<=2&&(wd(date)===0||wd(date)===6))preservedDates.push(date);
+    else errors.push(m+': '+date+' 날짜가 빠졌습니다. 월간 전체 날짜를 복사해주세요.');
+   }
   }
   for(const c of coverage){
    if(c.holiday&&!c.department)continue;
@@ -2996,11 +3005,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   // 실제 반영 대상은 현재 인원. 비교/정리 대상은 달력에 표시될 수 있는 전체 등록 인원.
   const allStaff=data.staff||[];
   if(!staff.length)errors.push('현재 인원 명단을 불러오지 못했습니다.');
-  const desired=canonical(events),ids=allStaff.map(s=>s.id),before=current(data,months,ids),by=new Map(),after=new Map();
+  const desired=canonical(events),ids=allStaff.map(s=>s.id),before=current(data,months,ids).filter(e=>sourceDates.has(e.d)),by=new Map(),after=new Map();
   for(const e of before){const k=e.s+'|'+e.d;by.set(k,(by.get(k)||[]).concat(e));}for(const e of desired){const k=e.s+'|'+e.d;after.set(k,(after.get(k)||[]).concat(e));}
   const rows=[];for(const key of new Set([...by.keys(),...after.keys()])){const a=by.get(key)||[],b=after.get(key)||[];const e=b[0]||a[0],s=allStaff.find(s=>s.id===e.s);const status=!a.length?'add':!b.length?'delete':JSON.stringify(a.map(x=>[x.k,x.st]).sort())===JSON.stringify(b.map(x=>[x.k,x.st]).sort())?'same':'change';rows.push({date:e.d,name:s.name,before:a.map(x=>x.k+(x.st!=='확정'?' ('+x.st+')':'')).join(' / ')||'-',after:b.map(x=>x.k).join(' / ')||'-',status});}
   rows.sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name,'ko'));
-  return {errors:[...new Set(errors)],months,coverage,scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),cleanupScope:Object.fromEntries(allStaff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
+  return {errors:[...new Set(errors)],months,coverage,preservedDates,scope:Object.fromEntries(staff.map(s=>[s.id,C.norm(s.name)])),cleanupScope:Object.fromEntries(allStaff.map(s=>[s.id,C.norm(s.name)])),events:desired,rows,counts:Object.fromEntries(['add','change','delete','same'].map(k=>[k,rows.filter(r=>r.status===k).length]))};
  }
  root.ActualSyncCore={prepare,current,canonical};
 })(window);
@@ -3011,7 +3020,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
  const fmt=v=>Array.isArray(v)?v.map(x=>x[0]+(x[1]&&x[1]!=='확정'?' ('+x[1]+')':'')).join(' / '):v||'-';
  function render(host,ctx){
   const A=ctx.A,esc=A.esc;if(!state||state.token!==A.S.token)state={token:A.S.token,text:'',plan:null,result:null,busy:false,message:''};
-  const U=state,active=()=>U.token===A.S.token&&host.isConnected,may=()=>!!ctx.data.canEdit&&!A.S.me?.ro;
+  const U=state,active=()=>state===U&&U.token===A.S.token&&host.isConnected,may=()=>!!ctx.data.canEdit&&!A.S.me?.ro;
+  U.repaint=()=>{if(active())show();};
+  const repaint=()=>{if(state===U&&U.token===A.S.token)U.repaint();};
   async function read(){
    const p=C.parse(U.text,null);if(p.errors.length)throw Error(p.errors.join('\n'));
    if(!p.months.length||new Set(p.months.map(m=>m.slice(0,4))).size!==1)throw Error('한 연도의 월간 전체 자료를 복사해주세요.');
@@ -3025,17 +3036,18 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
    host.innerHTML=`<section class="card actual-import"><b>실근무현황 업데이트</b><p class="muted" style="margin:12px 0">선택 월을 실제 자료로 맞추고, 현재 명단 밖 기존 기록도 정리합니다.</p>
     <textarea id="actualText" rows="5" aria-label="실제 근무현황 붙여넣기" placeholder="월간 전체 근무현황을 붙여넣으세요." ${U.busy?'disabled':''}>${esc(U.text)}</textarea>
     <div class="row" style="justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="actualCompare" ${U.busy||!U.text.trim()?'disabled':''}>비교하기</button><button id="actualUpdate" class="primary" ${U.busy||!U.text.trim()||!may()?'disabled':''}>${U.busy?'처리 중…':'실제 내용으로 업데이트'}</button></div>
-    ${U.message?'<div role="status" class="actual-message" style="margin-top:12px;white-space:pre-wrap">'+esc(U.message)+'</div>':''}
+    <div id="actualReport">${U.message?'<div role="status" class="actual-message" style="margin-top:12px;white-space:pre-wrap">'+esc(U.message)+'</div>':''}
+    ${report?.preservedDates?.length?'<p class="muted">원본에 없는 날짜는 기존 기록 유지: '+esc(report.preservedDates.join(', '))+'</p>':''}
     ${!may()?'<p class="muted">기존 연차·토요 관리 권한으로 업데이트할 수 있습니다.</p>':''}
     ${count?'<div style="margin:14px 0">추가 '+count.add+' · 변경 '+count.change+' · 삭제 '+count.delete+' · 일치 '+count.same+'</div>':''}
     ${report?'<div class="actual-tablewrap"><table class="list actual-table"><thead><tr><th>구분</th><th>날짜</th><th>이름</th><th>기존 내용</th><th>실제 내용</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+labels[r.status]+'</td><td>'+esc(r.date)+'</td><td>'+esc(r.name)+'</td><td>'+esc(fmt(r.before))+'</td><td>'+esc(fmt(r.after))+'</td></tr>').join('')+(rows.length?'':'<tr><td colspan="5">차이 없음</td></tr>')+'</tbody></table></div>':''}
-   </section>`;
+    </div></section>`;
    const $=s=>host.querySelector(s);
-   $('#actualText').oninput=e=>{U.text=e.target.value;U.plan=null;U.result=null;U.message='';$('#actualCompare').disabled=!U.text.trim();$('#actualUpdate').disabled=!U.text.trim()||!may();};
+   $('#actualText').oninput=e=>{U.text=e.target.value;U.plan=null;U.result=null;U.message='';$('#actualReport').replaceChildren();$('#actualCompare').disabled=!U.text.trim();$('#actualUpdate').disabled=!U.text.trim()||!may();};
    $('#actualCompare').onclick=async()=>{
     if(U.busy)return;U.busy=true;U.message='';show();
     try{const r=await read();if(!r)return;U.plan=r.plan;U.result=null;U.message='비교 완료 · 아직 반영 전입니다.';}
-    catch(e){if(active())U.message=e.message;}finally{U.busy=false;if(active())show();}
+    catch(e){if(active())U.message=e.message;}finally{U.busy=false;repaint();}
    };
    $('#actualUpdate').onclick=async()=>{
     if(U.busy||!may())return;U.busy=true;U.message='';show();
@@ -3043,15 +3055,18 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
      const r=await read();if(!r)return;if(!may())throw Error('연차·토요 관리 권한이 필요합니다.');
      U.plan=r.plan;
      const info=await A.api('lvActualSyncInfo',{});
+     if(!active())return;
      if(info?.syncVersion!==2)throw Error('중복 정리 SQL을 먼저 적용해주세요.');
+     if(info.importRevision!==3)throw Error('최종 실근무 업데이트 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
+     if(r.plan.preservedDates.length&&info.coverageVersion!==2)throw Error('월초 날짜 보존 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
      if(r.plan.events.some(e=>e.k==='유계결근')&&!info.supportedKinds?.includes('유계결근'))throw Error('유계결근 처리 SQL을 먼저 적용해주세요. 아직 저장하지 않았습니다.');
      const result=await A.api('lvActualSync',{syncVersion:2,months:r.plan.months,scope:r.plan.scope,cleanupScope:r.plan.cleanupScope,events:r.plan.events,coverage:r.plan.coverage});
      if(!result.verified||result.syncVersion!==2)throw Error('전체 기록의 최종 일치 검증 결과를 확인하지 못했습니다.');
-     U.text='';U.plan=null;U.result=result;U.message='업데이트 완료 · 실제 자료와 일치 · 복사 원문 폐기';
-     if(!active())return;
+     U.text='';U.plan=null;U.result=result;U.message=result.preservedDates?.length?'업데이트 완료 · 원본 포함 날짜와 일치 · 미포함 날짜는 기존 기록 유지 · 복사 원문 폐기':'업데이트 완료 · 실제 자료와 일치 · 복사 원문 폐기';
+     if(state!==U||U.token!==A.S.token)return;
      try{await ctx.reload(+r.plan.months[0].slice(0,4));}catch(e){U.message+='\n달력은 화면을 다시 열어 확인해주세요.';}
     }catch(e){if(active())U.message='업데이트하지 못했습니다: '+e.message;}
-    finally{U.busy=false;if(active())show();}
+    finally{U.busy=false;repaint();}
    };
   }
   show();
@@ -3883,6 +3898,26 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   }
 
   // ------------------------------------------------------------ 사유 기록부 (파트별 8칸 · 엑셀은 원본 3구역)
+  // 표시 전용: 직원·구분·사유·상태가 같고 달력 날짜가 바로 이어지는 확정 기록만 한 줄로 묶는다.
+  // 실제 저장 기록과 원래 ID는 변경하지 않는다. 연속 묶음에서 날짜별 수정도 가능하다.
+  function groupRecRows(list) {
+    const rows = [], tails = new Map();
+    const ordered = list.slice().sort((a, b) => orgCmp(a.s, b.s) || LC.ko(a.x.d1, b.x.d1) || LC.ko(a.x.d2, b.x.d2));
+    ordered.forEach(it => {
+      const x = it.x, canGroup = stOf(x) === '확정' && !x.as && !x.aa && !x.ab;
+      const key = canGroup ? JSON.stringify([x.s, LC.leaveKind(x), x.h || '', !!x.t, x.r || '', stOf(x), x.n || '']) : null;
+      const prev = key === null ? null : tails.get(key);
+      if (prev && LC.addDays(prev.d2, 1) === x.d1) {
+        prev.d2 = x.d2;
+        prev.items.push(it);
+      } else {
+        const row = { s: it.s, x, d1: x.d1, d2: x.d2, items: [it] };
+        rows.push(row);
+        if (key !== null) tails.set(key, row);
+      }
+    });
+    return rows.sort((a, b) => orgCmp(a.s, b.s) || LC.ko(a.d1, b.d1) || LC.ko(a.d2, b.d2));
+  }
   function drawRec(host) {
     const hb = host || body(), inCal = !!host;
     const d = D(), f = LC.monthFirst(L.ym), l = LC.monthLast(L.ym), H = L.ix.H;
@@ -3890,19 +3925,41 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const Z = {}; PARTS.forEach(p => (Z[p] = []));
     visibleLeaves().filter(x => x.d2 >= f && x.d1 <= l).forEach(x => { const s = staffById(x.s); if (s && (!inCal || window.AttendanceCore.isCurrentStaff(s)) && Z[partOf(s.grp)]) Z[partOf(s.grp)].push({ x, s }); });
     const PP = inCal && L.part ? [L.part] : PARTS;
-    const q = (L.recQ || '').trim();
+    const q = (L.recQ || '').trim(), recRows = new Map();
+    let rowSeq = 0;
     const box = p => {
       const list = Z[p].filter(it => !q || it.s.name.includes(q) || (it.x.r || '').includes(q)).sort((a, b) => orgCmp(a.s, b.s) || LC.ko(a.x.d1, b.x.d1));
+      const rows = groupRecRows(list);
       const days = list.filter(it => !isPend(it.x) && !LC.leaveKind(it.x)).reduce((a, it) => a + LC.leaveDays(it.x, H, f, l), 0);
-      return `<div class="card lvz2" style="--gc:${A.gcol(p)}"><div class="lvzt"><b>${A.gdot(p)}</b><span class="muted">${list.length}건 · 확정 ${days}일</span></div><table class="list"><thead><tr><th>이름</th><th>기간</th><th>사유</th><th class="num">일수</th><th class="num">토요</th></tr></thead><tbody>
-        ${list.map(it => `<tr class="click" data-l="${it.x.id}"><td><b class="${isMgr(it.s.name) ? 'mgrt' : ''}">${A.esc(it.s.name)}</b>${isPend(it.x) ? ` <span class="lst ${ST[stOf(it.x)][0]}">${stOf(it.x) === '신청' ? '확인 전' : '대기'}</span>` : ''}${it.x.st === '대체' ? ` <span class="lst alt" title="${A.esc((it.x.ab || '') + ' · ' + (it.x.aa || ''))}">토요 대체 ${md(it.x.as)}</span>` : ''}</td><td>${md(it.x.d1)}${it.x.d2 !== it.x.d1 ? '~' + md(it.x.d2) : ''}${it.x.h ? ' ' + it.x.h : ''}${it.x.t ? ' <span class="tag tr">훈</span>' : ''}${LC.leaveKind(it.x) ? ' <span class="tag sp">' + LC.leaveKind(it.x) + '</span>' : ''}</td><td class="rs">${A.esc(it.x.r || '')}</td>
-          <td class="num"><b>${LC.leaveDays(it.x, H, f, l)}</b></td><td class="num">${satCnt[it.s.id] || ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted" style="padding:14px">없음</td></tr>'}</tbody></table></div>`;
+      return `<div class="card lvz2" style="--gc:${A.gcol(p)}"><div class="lvzt"><b>${A.gdot(p)}</b><span class="muted">${list.length}건${list.length !== rows.length ? ' · 표시 ' + rows.length + '줄' : ''} · 확정 ${days}일</span></div><table class="list"><thead><tr><th>이름</th><th>기간</th><th>사유</th><th class="num">일수</th><th class="num">토요</th></tr></thead><tbody>
+        ${rows.map(row => {
+          const it = row.items[0], id = String(++rowSeq);
+          recRows.set(id, row);
+          const rowDays = row.items.reduce((a, v) => a + LC.leaveDays(v.x, H, f, l), 0);
+          return `<tr class="click" data-rg="${id}"${row.items.length > 1 ? ' title="날짜별 기록을 선택해 수정할 수 있습니다"' : ''}><td><b class="${isMgr(it.s.name) ? 'mgrt' : ''}">${A.esc(it.s.name)}</b>${isPend(it.x) ? ` <span class="lst ${ST[stOf(it.x)][0]}">${stOf(it.x) === '신청' ? '확인 전' : '대기'}</span>` : ''}${it.x.st === '대체' ? ` <span class="lst alt" title="${A.esc((it.x.ab || '') + ' · ' + (it.x.aa || ''))}">토요 대체 ${md(it.x.as)}</span>` : ''}</td><td>${md(row.d1)}${row.d2 !== row.d1 ? '~' + md(row.d2) : ''}${it.x.h ? ' ' + it.x.h : ''}${it.x.t ? ' <span class="tag tr">훈</span>' : ''}${LC.leaveKind(it.x) ? ' <span class="tag sp">' + LC.leaveKind(it.x) + '</span>' : ''}${row.items.length > 1 ? ' <span class="tag" title="화면 표시만 묶음 · 원본 ' + row.items.length + '건 유지">' + row.items.length + '건 묶음</span>' : ''}</td><td class="rs">${A.esc(it.x.r || '')}</td>
+          <td class="num"><b>${rowDays}</b></td><td class="num">${satCnt[it.s.id] || ''}</td></tr>`;
+        }).join('') || '<tr><td colspan="5" class="muted" style="padding:14px">없음</td></tr>'}</tbody></table></div>`;
     };
-    hb.innerHTML = `<div class="toolbar">${inCal ? `<b style="font-size:16px">사유 기록부 · ${ymLab(L.ym)}${L.part ? ' · ' + A.esc(L.part) : ''}</b>` : ''}<input id="lvq" placeholder="이름·사유 검색" value="${A.esc(q)}" style="width:200px"><span class="muted">일수 = 평일 수(공휴일 제외, 반차 0.5) · 토요 = 토요근무 횟수${inCal ? ' · 줄을 누르면 수정 · 파트 버튼으로 같이 걸러짐' : ''}</span></div>
+    hb.innerHTML = `<div class="toolbar">${inCal ? `<b style="font-size:16px">사유 기록부 · ${ymLab(L.ym)}${L.part ? ' · ' + A.esc(L.part) : ''}</b>` : ''}<input id="lvq" placeholder="이름·사유 검색" value="${A.esc(q)}" style="width:200px"><span class="muted">일수 = 평일 수(공휴일 제외, 반차 0.5) · 토요 = 토요근무 횟수 · 같은 사유의 연속 날짜는 묶어 표시(개별 기록 유지)${inCal ? ' · 줄을 누르면 수정' : ''}</span></div>
       <div class="lvzs2">${PP.map(box).join('')}</div>`;
     { const q = A.$('#lvq'), upd = () => { L.recQ = q.value; const pos = q.selectionStart; drawRec(host); const i = A.$('#lvq'); i.focus(); i.setSelectionRange(pos, pos); };
-      q.oninput = e => { if (!e.isComposing) upd(); }; q.addEventListener('compositionend', upd); }   // 한글 조합 중에는 다시 그리지 않음
-    A.$$('.lvz2 tr[data-l]').forEach(tr => (tr.onclick = () => leaveModal({ edit: d.leaves.find(x => x.id === tr.dataset.l) })));
+      q.oninput = e => { if (!e.isComposing) upd(); }; q.addEventListener('compositionend', upd); }
+    A.$$('.lvz2 tr[data-rg]', hb).forEach(tr => (tr.onclick = () => {
+      const row = recRows.get(tr.dataset.rg);
+      if (!row) return;
+      if (row.items.length === 1) { leaveModal({ edit: d.leaves.find(x => x.id === row.items[0].x.id) }); return; }
+      A.modal(`<h3>${A.esc(row.s.name)} · ${mdw(row.d1)} ~ ${mdw(row.d2)}</h3>
+        <div class="muted" style="margin-bottom:10px">화면에서만 ${row.items.length}건을 묶었습니다. 수정할 날짜를 선택하세요. 원본 기록은 각각 유지됩니다.</div>
+        <div style="max-height:52vh;overflow:auto"><table class="list"><thead><tr><th>기간</th><th>사유</th><th class="num">일수</th><th></th></tr></thead><tbody>
+        ${row.items.map(it => `<tr><td>${mdw(it.x.d1)}${it.x.d2 !== it.x.d1 ? ' ~ ' + mdw(it.x.d2) : ''}</td><td>${A.esc(it.x.r || '')}</td><td class="num">${LC.leaveDays(it.x, H, f, l)}</td><td><button class="sm" data-edit="${A.esc(it.x.id)}">${d.canEdit ? '수정' : '보기'}</button></td></tr>`).join('')}
+        </tbody></table></div><div class="acts"><button data-n>닫기</button></div>`, (bg, close) => {
+        A.$('[data-n]', bg).onclick = close;
+        A.$$('[data-edit]', bg).forEach(b => (b.onclick = () => {
+          const edit = d.leaves.find(x => x.id === b.dataset.edit);
+          close(); if (edit) leaveModal({ edit });
+        }));
+      }, 'md');
+    }));
   }
 
   // ------------------------------------------------------------ 토요근무
