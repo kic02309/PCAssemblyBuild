@@ -1688,6 +1688,14 @@ html[data-theme=dark] .manage-monthnav button,html[data-theme=dark] .manage-mont
 .actual-import table.actual-table td:first-child{width:64px;min-width:64px;white-space:nowrap}
 .actual-import table.actual-table input[type=checkbox]{width:auto}
 .actual-import table.actual-table td:nth-child(2){white-space:nowrap}
+/* 업무데이터 입력 집중 전체화면: 상단·좌측 메뉴만 숨기고 표의 글씨·열 너비는 유지 */
+body.input-focus .czt, body.input-focus .czr,
+body.input-focus .roh, body.input-focus.lay-top #app > header{display:none!important}
+body.input-focus .czb{min-height:100vh}
+body.input-focus .czb > .content{flex:1 1 100%;width:100%;min-width:0}
+body.input-focus .cz #main.pg:has(>.gridwrap){padding:6px 12px 0}
+body.input-focus #main .gridwrap{max-height:calc(100vh - 240px)!important}
+body.input-focus #inputFocus{background:#1f63e6;color:#fff}
 </style>
 </head>
 <body>
@@ -6030,7 +6038,10 @@ async function addCharts(buf, jobs) {
     const mi = Z.ym ? monthInfo(Z.ym) : null, self = scope() === 'self';
     const kc = {}; sel.forEach(r => (kc[r.kind] = (kc[r.kind] || 0) + 1));
     const ppl = new Set(sel.map(r => r.name)).size, nWeb = sel.filter(r => r.src === 'web').length;
-    const years = Array.from(new Set([today.slice(0, 4), Z.year, String(+today.slice(0, 4) - 1)])).sort().reverse();
+    // 2025년부터 현재 연도까지 누락 없이 표시. 과거에 선택한 연도도 유지.
+    const currentYear = +today.slice(0, 4), selectedYear = +Z.year;
+    const firstYear = Math.min(2025, currentYear, selectedYear), lastYear = Math.max(currentYear, selectedYear);
+    const years = Array.from({length: lastYear - firstYear + 1}, (_, i) => String(lastYear - i));
     let monthNote = '';
     if (Z.ym && !self) {
       if (mi && mi.lock) monthNote = `<div class="accnote lock">🔒 ${ymLab(Z.ym)} 인사평가가 잠겨 있어 사고를 등록 · 고칠 수 없습니다</div>`;
@@ -6472,6 +6483,35 @@ async function addCharts(buf, jobs) {
     monthYm: null, manageYm: null, manageGroup: '',
   };
 
+  // 업무데이터 입력 전용 전체화면: 저장 중인 데이터·표의 글씨·열 너비는 변경하지 않는다.
+  function setInputFocus(enabled) {
+    const on = !!enabled && S.view === 'input';
+    document.body.classList.toggle('input-focus', on);
+    const b = $('#inputFocus');
+    if (b) {
+      b.textContent = on ? '⤢ 전체화면 해제' : '⛶ 전체화면';
+      b.setAttribute('aria-pressed', String(on));
+      b.title = on ? '일반 화면으로 돌아가기 (Esc)' : '상단·왼쪽 메뉴를 숨기고 입력 영역 확장';
+    }
+    if (on) {
+      // 브라우저가 허용하면 진짜 전체화면, 허용하지 않으면 메뉴 숨김 모드로 동작.
+      try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          const p = document.documentElement.requestFullscreen();
+          if (p && p.catch) p.catch(() => {});
+        }
+      } catch (_) { /* 사이트 내부 확장은 이미 활성화됨 */ }
+    } else if (document.fullscreenElement && document.exitFullscreen) {
+      try { const p = document.exitFullscreen(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+    }
+  }
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('input-focus')) setInputFocus(false);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !document.fullscreenElement && document.body.classList.contains('input-focus') && !document.querySelector('.modal-bg, .hr-ov')) setInputFocus(false);
+  });
+
   // ------------------------------------------------ 공통
   function toast(msg, err) {
     const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
@@ -6636,6 +6676,7 @@ async function addCharts(buf, jobs) {
       if (!(await confirmBox('<b>저장 안 된 입력</b>이 있습니다 (인터넷 확인).<br>로그아웃하면 사라집니다.', '그래도 로그아웃'))) return;
     }
     if (!silent) { try { await api('logout'); } catch (e) { } }
+    setInputFocus(false);
     clearTimeout(S.timer);
     if (!silent) { try { sessionStorage.removeItem(DRAFT_KEY); sessionStorage.removeItem('pending'); } catch (e) { } }
     S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
@@ -6770,6 +6811,7 @@ async function addCharts(buf, jobs) {
     if (view === 'att') { if (window.HR && window.HR.quickAtt) window.HR.quickAtt(); return; }   // 근태 입력 = 창만 열림
     if (S.view === 'hr' && view !== 'hr' && window.HR && !(await window.HR.guard())) { setNav(); return; }   // 인사평가 저장 안 한 점수
     if (!(await saveFirst())) { setNav(); return; }
+    if (view !== 'input' && document.body.classList.contains('input-focus')) setInputFocus(false);
     if (isRO()) {                                                        // v28.10 : 보기 전용은 박스 5개 화면만
       opt = opt || {};
       if (view === 'org') { view = 'people'; opt.tab = 'org'; } else if (view === 'people' && !opt.tab && !opt._pop) opt.tab = 'list';
@@ -6930,6 +6972,7 @@ async function addCharts(buf, jobs) {
       <span style="flex:1"></span>
       ${isManager() ? '<button id="imp" title="기존 개인 엑셀(.xlsm/.xlsx) 날짜 시트를 가져옵니다">📥 엑셀 가져오기</button>' : ''}
       ${ro ? '' : '<button class="primary" id="save">저장</button><button class="danger" id="del">이 날짜 삭제</button>'}
+      <button id="inputFocus" type="button" aria-pressed="${document.body.classList.contains('input-focus')}" title="상단·왼쪽 메뉴를 숨기고 입력 영역 확장">${document.body.classList.contains('input-focus') ? '⤢ 전체화면 해제' : '⛶ 전체화면'}</button>
     </div>
     ${lockMsg ? '<div class="' + (D.period && ro ? 'lock' : 'warn') + '">' + lockMsg + '</div>' : ''}
     <div class="erow"><div class="energy" id="energy">
@@ -6946,6 +6989,7 @@ async function addCharts(buf, jobs) {
     <div class="gridwrap"><table class="grid ${ro ? 'ro' : ''}" id="grid"></table></div>
     <div class="below">${ro ? '' : '<button id="more">+ 5줄 추가</button>'}<span class="muted" id="rowinfo"></span>
       <span class="muted" style="margin-left:auto">칸 클릭 = V · 주문번호에서 Enter = 다음 줄 · 주황 번호 = 특이사항 있음 (마우스를 올리면 보임)</span></div>`;
+    $('#inputFocus').onclick = () => setInputFocus(!document.body.classList.contains('input-focus'));
     if ($('#imp')) $('#imp').onclick = importXlsx;
     if ($('#ereq')) editReqBind();
     $('#dt').onchange = e => { const v = e.target.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v) && v >= '2020-01-01' && v <= '2099-12-31') switchDay(v); };   // 연도를 치는 중(0002…·20260…)이면 기다림
