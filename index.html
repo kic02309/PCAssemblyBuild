@@ -1764,6 +1764,98 @@ html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
 @media (max-width:1200px){.ddgroups{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:780px){.ddgroups{grid-template-columns:minmax(0,1fr)}}
 /* End daily dashboard v5 */
+
+/* =======================================================
+   V7 / 일일 업무현황 압축 요약 + 그룹 평균/체크 통합
+   Only the daily dashboard is affected; no data calculation changes.
+   ======================================================= */
+#main:has(.ddkpis-v7) > .ph{background:var(--panel)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 1px 0 var(--line),0 3px 12px rgba(17,24,39,.035);z-index:42;min-height:68px;height:auto;padding:10px 30px;gap:9px;flex-wrap:wrap}
+#main:has(.ddkpis-v7) > .ph h1{font-size:24px;line-height:1.2;max-width:100%;}
+#main:has(.ddkpis-v7) .pgb{padding-top:8px}
+#main:has(.ddkpis-v7) .czf-v4[data-view=dash]{z-index:25;isolation:auto;background:var(--panel)}
+#main:has(.ddkpis-v7) .czf-v4[data-view=dash] .czf-actions{margin-left:2px}
+#main:has(.ddkpis-v7) .czf-v4[data-view=dash] .czf-line:first-child{justify-content:flex-start}
+.ddkpis-v7{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:12px;margin-bottom:12px;position:relative;z-index:11;overflow:visible}
+.ddkpis-v7>.ddk{min-width:0;padding:13px 16px;border-radius:14px!important;position:relative}
+.ddkpis-v7 .ddk .l{font-size:13px;font-weight:800}
+.ddkpis-v7 .ddk .v{font-size:26px;line-height:1.12;margin:7px 0 9px}
+.ddkpis-v7 .ddk .s{font-size:11.5px}
+.ddkpis-v7 .qrows{margin:7px 0 1px}
+.ddkpis-v7 .qchips{margin-top:4px}
+.ddkpis-v7 .ddk-att-v7{z-index:5}
+.ddkpis-v7 .ddk-att-v7 .v{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.ddkpis-v7 .ddk-att-v7 .v small{font-size:15px;color:var(--ink);font-weight:800}
+.dd-att-rate{font-size:15px;font-style:normal;color:#1d6bf3;font-weight:850;margin-left:auto}
+.dd-att-stack{height:10px;gap:1px;margin:12px 0 8px}
+.dd-att-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px 11px;font-size:11.5px;color:var(--sub);line-height:1.4}
+.dd-att-legend>*{white-space:nowrap}
+.dd-att-legend .dd-att-in:before,.dd-att-legend .dd-att-off:before,.dd-att-legend .dd-att-none:before{content:'';display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:4px;background:#1f5fbf}
+.dd-att-legend .dd-att-off:before{background:#d9344a}
+.dd-att-legend .dd-att-none:before{background:#a6b2c1}
+.dd-off-toggle{border:1px solid #f3c9d0!important;border-radius:7px;background:#fff4f5!important;color:#b92b44!important;font-size:11.5px;font-weight:800;padding:3px 7px;line-height:1.4}
+.dd-off-toggle:hover{background:#ffe7ec!important}
+.dd-off-pop[hidden]{display:none!important}
+.dd-off-pop{position:absolute;top:calc(100% - 5px);left:12px;z-index:70;width:min(320px,calc(100vw - 68px));border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 12px 32px rgba(17,24,39,.16);padding:11px;color:var(--ink)}
+.dd-off-pop-title{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 3px 7px;border-bottom:1px solid var(--line2)}
+.dd-off-pop-title b{font-size:12.5px}
+.dd-off-pop-title button{border:0;background:transparent;color:var(--sub);padding:1px 6px}
+.dd-off-list{max-height:240px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 8px;padding-top:8px}
+.dd-off-list>div{display:flex;gap:6px;align-items:center;justify-content:space-between;min-width:0;padding:7px 8px;background:var(--head);border-radius:7px;font-size:12px}
+.dd-off-list>div>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.dd-off-list>div>small{font-size:10.5px;color:#bb3b52;white-space:nowrap}
+.ddsummary-v7{grid-template-columns:1fr 1fr;align-items:stretch}
+.ddsummary-v7>.card{padding:14px 16px;min-width:0;border-radius:14px!important}
+.ddsummary-v7 .ddh{font-size:14px;margin-bottom:10px}
+.ddquick-bars{display:grid;gap:8px}
+.ddquick-bar{display:grid;grid-template-columns:110px minmax(50px,1fr) 48px;gap:10px;align-items:center;font-size:12.5px}
+.ddquick-bar>span{color:var(--sub);font-weight:650;white-space:nowrap}
+.ddquick-bar>b{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ddquick-track{height:9px;background:var(--line2);border-radius:8px;overflow:hidden}
+.ddquick-track i{display:block;height:100%;border-radius:8px}
+.ddsummary-v7 .dd-support-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ddsupport-v7,.dd-support-v7{min-width:0}
+.dd-support-v7 .ddac{min-width:0;border:0;background:var(--head);padding:9px 10px;border-radius:10px}
+.dd-support-v7 .ddac .t{font-size:11.5px;gap:6px;line-height:1.5}
+.dd-support-v7 .ddac .t span{white-space:nowrap;color:#175dcc}
+.dd-support-v7 .ddpn{font-size:10.5px;padding:2px 5px;margin:4px 2px 0 0;max-width:100%;text-overflow:ellipsis;overflow:hidden}
+.dd-support-v7 .dd-support-names{max-height:84px;overflow-y:auto}
+.ddcombo-v7{border-radius:14px!important;padding:13px 16px;margin-bottom:12px;min-width:0}
+.ddcombo-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;font-size:15px}
+.ddcombo-title small{font-size:11.5px;color:var(--sub)}
+.ddcombo-list{display:flex;flex-direction:column}
+.ddcombo-row{display:grid;grid-template-columns:80px minmax(150px,1.3fr) 220px minmax(270px,1fr);gap:12px;align-items:center;min-height:43px;border-top:1px solid var(--line2);padding:8px 2px}
+.ddcombo-name{font-weight:800;font-size:13px;white-space:nowrap}
+.ddcombo-graph{min-width:0}
+.ddcombo-graph .ddtr{height:13px;border-radius:10px;background:var(--line2)}
+.ddcombo-graph .ddtr i{border-radius:10px}
+.ddcombo-value{font-size:12px;font-variant-numeric:tabular-nums;color:var(--sub);white-space:nowrap}
+.ddcombo-value b{font-size:14px;color:var(--ink)}
+.ddcombo-value small{font-size:11.5px;color:var(--sub)}
+.ddcombo-checks{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:6px;min-width:0}
+.dd-cstat{font-size:11.5px;color:var(--sub);white-space:nowrap;border:1px solid var(--line2);background:var(--head);border-radius:7px;padding:4px 7px}
+.dd-cstat b{color:var(--ink);font-size:11.5px}
+.dd-cstat.warn{color:#af392f;background:#fff2ed;border-color:#ffeadf}
+.dd-cstat.warn b{color:#c83229}
+.ddcombo-noresult{margin:4px 0 2px;padding:6px 10px}
+.ddcombo-shared-v7{padding:9px 0 0;border-top:1px solid var(--line2);font-size:11.5px}
+.ddshared-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ddshared-line>strong{font-size:12px;white-space:nowrap}
+.ddshared-count{font-size:10.5px;background:#e5484d;color:#fff;padding:1px 6px;border-radius:99px;font-weight:800}
+.ddshared-items{display:flex;align-items:center;gap:6px;min-width:0;flex:1;flex-wrap:wrap}
+.dd-common-ck{display:inline-flex;align-items:center;gap:6px;border-radius:7px;background:var(--head);border:1px solid var(--line2);font-size:11px;padding:4px 8px;line-height:1.3;white-space:nowrap;color:var(--ink)}
+.dd-common-ck b{color:var(--ink)}
+.dd-common-ck.r b{color:#c83229}
+.dd-common-ck.o b{color:#b45309}
+.ddshared-ok{color:#16823c;font-size:11px;font-weight:700}
+.ddshared-fold{margin-left:auto;background:transparent;border:1px solid var(--line);padding:4px 8px;border-radius:8px;font-size:11px}
+.dd-other-checks{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px;padding:6px 8px;border-radius:8px;background:var(--head)}
+.dd-other-checks>b{font-size:11.5px}
+.dd-other-checks>span{font-size:11px;color:var(--sub)}
+.ddcombo-v7 + .ddleg{padding:7px 12px}
+@media(max-width:1450px){.ddcombo-row{grid-template-columns:72px minmax(130px,1.2fr) 175px minmax(230px,1fr);gap:8px}.ddcombo-value small{font-size:11px}.ddsummary-v7 .dd-support-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1150px){.ddkpis-v7{grid-template-columns:repeat(2,minmax(0,1fr))}.ddcombo-row{grid-template-columns:78px minmax(150px,1fr) minmax(180px,auto)}.ddcombo-checks{grid-column:2 / -1}.ddsummary-v7{grid-template-columns:1fr}.ddsummary-v7 .dd-support-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.ddkpis-v7{grid-template-columns:minmax(0,1fr)}.ddsummary-v7 .dd-support-grid{grid-template-columns:minmax(0,1fr)}.ddcombo-row{grid-template-columns:70px minmax(0,1fr);gap:6px 9px}.ddcombo-value{grid-column:2}.ddcombo-checks{grid-column:1/-1}.ddquick-bar{grid-template-columns:90px minmax(40px,1fr) 44px;gap:6px}#main:has(.ddkpis-v7) > .ph{padding:9px 15px}#main:has(.ddkpis-v7) .pgb{padding:8px 14px 28px}}
+
 </style>
 <style>
 /* Unified compact search — 2026-10-21; visual only, zero effect on existing grid widths. */
@@ -8149,15 +8241,31 @@ async function addCharts(buf, jobs) {
     const C0 = S._chkC = S._chkC && S._chkC.tk === tk && Date.now() - S._chkC.at < 60000 ? S._chkC : { tk, at: Date.now() };
     const day = async d => d === r.date ? r : (C0['d' + d] = C0['d' + d] || api('daily', { date: d }));
     const it = [], ok = [];
+    const groupCk = Object.create(null);
+    let groupChecked = false;
+    const grpStat = (g) => groupCk[g] || { none: 0, nt: 0, off: 0, sample: [] };
     const draw = () => {
       if (!alive()) return;
-      const act = it.filter(x => x.lv !== 'b'), fold = (() => { try { return localStorage.getItem('chkFold') === '1'; } catch (e) { return false; } })();
-      const row = (x, i) => `<div class="ckr ${x.lv}" data-ck="${i}"><i></i><span class="l">${x.t}</span><span class="n">${x.n}</span><span class="m">${x.m || ''}</span><span class="g">›</span></div>`;
-      box.className = 'card ddchk' + (fold ? ' fold' : '');
-      box.innerHTML = `<div class="ckh"><b>체크사항</b>${act.length ? `<span class="c">${act.length}</span>` : '<span class="okb">✓ 없음</span>'}${box._wait ? '<span class="muted" style="font-size:12px">확인 중…</span>' : ''}<span style="flex:1"></span><button class="sm" id="ckf">${fold ? '펼치기 ▾' : '접기 ▴'}</button></div>`
-        + (fold ? '' : it.map(row).join('') + (ok.length ? `<div class="cko">✓ ${ok.join(' · ')}</div>` : ''));
+      const fold = (() => { try { return localStorage.getItem('chkFold') === '1'; } catch (e) { return false; } })();
+      const act = it.filter(x => x.lv !== 'b' && !x.groupOnly);
+      const common = it.filter(x => !x.groupOnly);
+      // 그룹별 경고 수는 기존 '전 근무일 미입력/목표 미설정' 조회값을 재사용한다.
+      $$('[data-ddgrp]', $('#main')).forEach(el => {
+        const g = el.dataset.ddgrp, permitted = adm || mine.includes(g);
+        if (!permitted) { el.innerHTML = '<span class="muted">담당 그룹 외</span>'; return; }
+        if (!groupChecked) { el.innerHTML = '<span class="muted">확인 중…</span>'; return; }
+        const v = grpStat(g);
+        el.innerHTML = `<span class="dd-cstat ${v.none ? 'warn' : ''}">미입력 <b>${v.none}명</b></span><span class="dd-cstat ${v.nt ? 'warn' : ''}">목표 미설정 <b>${v.nt}명</b></span><span class="dd-cstat">휴무 <b>${v.off}명</b></span>`;
+      });
+      // 실적 없는 그룹도 경고가 있다면 공통 하단에 요약한다. 누락 방지.
+      const active = new Set($$('[data-ddgrp]', $('#main')).map(el => el.dataset.ddgrp));
+      const inactive = Object.entries(groupCk).filter(([g,v]) => !active.has(g) && (v.none || v.nt || v.off));
+      const other = inactive.length && groupChecked ? `<div class="dd-other-checks"><b>그 외 그룹</b>${inactive.map(([g,v]) => `<span>${gdot(g)}${v.none ? ` 미입력 ${v.none}` : ''}${v.nt ? ` · 목표 미설정 ${v.nt}` : ''}${v.off ? ` · 휴무 ${v.off}` : ''}</span>`).join('')}</div>` : '';
+      const row = (x, i) => `<button type="button" class="dd-common-ck ${x.lv}" data-ck="${i}" title="${esc(x.m || x.t)}"><span>${esc(x.t)}</span><b>${esc(x.n)}</b></button>`;
+      box.className = 'ddcombo-shared-v7' + (fold ? ' fold' : '');
+      box.innerHTML = other + `<div class="ddshared-line"><strong>공통 알림</strong>${act.length ? `<span class="ddshared-count">${act.length}</span>` : '<span class="ddshared-ok">✓ 이상 없음</span>'}<div class="ddshared-items">${fold ? '' : common.map(row).join('')}${!fold && ok.length ? `<span class="ddshared-ok">✓ ${ok.join(' · ')}</span>` : ''}${box._wait ? '<span class="muted">확인 중…</span>' : ''}</div><button type="button" class="ddshared-fold" id="ckf">${fold ? '펼치기 ▾' : '접기 ▴'}</button></div>`;
       $('#ckf', box).onclick = () => { try { localStorage.setItem('chkFold', fold ? '0' : '1'); } catch (e) { } draw(); };
-      $$('[data-ck]', box).forEach(el => (el.onclick = () => it[+el.dataset.ck].go()));
+      $$('[data-ck]', box).forEach(el => (el.onclick = () => common[+el.dataset.ck]?.go()));
     };
     const ord = { r: 0, o: 1, b: 2 }, add = x => { it.push(x); it.sort((a, b) => ord[a.lv] - ord[b.lv]); };
     // 1) 연차
@@ -8175,11 +8283,18 @@ async function addCharts(buf, jobs) {
     // 3) 전 근무일 입력 안 한 사람 · 목표 없이 입력한 사람
     jobs.push(day(r.prevWork).then(rp => { const Dp = rp === r ? D : ddModel(rp);
       const none = Dp.none.filter(inS), offN = Dp.off.filter(p => inS(p) && p.grp !== '팀장').length, supN = Dp.sup.filter(inS).length;
-      if (none.length) add({ lv: 'r', t: '입력 안 한 사람 (' + md(rp.date) + ')', n: none.length + '명', m: (adm ? byG(none) : names(none, 5)) + ` <small>· 휴무 ${offN} · 지원 ${supN} 빼고</small>`,
+      if (none.length) add({ lv: 'r', groupOnly: true, t: '입력 안 한 사람 (' + md(rp.date) + ')', n: none.length + '명', m: (adm ? byG(none) : names(none, 5)) + ` <small>· 휴무 ${offN} · 지원 ${supN} 빼고</small>`,
         go: () => { if (r.date !== rp.date) { S.ddDate = rp.date; renderDash(); } else { const g = $('.ddgroups'); if (g) g.scrollIntoView({ behavior: 'smooth' }); } } });
       else ok.push('전 근무일 입력 완료');
       const nt = Dp.work.filter(p => inS(p) && !p.target);
-      if (nt.length) add({ lv: 'o', t: '목표 안 정함', n: nt.length + '명', m: (adm ? byG(nt) : names(nt, 5)) + ' <small>· 조립 입력은 함</small>', go: () => go('manage') });
+      if (nt.length) add({ lv: 'o', groupOnly: true, t: '목표 안 정함', n: nt.length + '명', m: (adm ? byG(nt) : names(nt, 5)) + ' <small>· 조립 입력은 함</small>', go: () => go('manage') });
+      // 담당 범위 안의 그룹별 체크 건수: 표시할 그룹이 없더라도 아래 '그 외 그룹'에서 볼 수 있다.
+      const put = (p, key) => { if (!p || !p.grp || !inS(p)) return; const x = groupCk[p.grp] || (groupCk[p.grp] = { none: 0, nt: 0, off: 0 }); x[key]++; };
+      none.forEach(p => put(p, 'none'));
+      nt.forEach(p => put(p, 'nt'));
+      Dp.off.filter(inS).forEach(p => put(p, 'off'));
+      groupChecked = true;
+      draw();
     }).catch(() => { }));
     // 4) 오늘 업무배정
     if (!isRO()) jobs.push(day(r.today).then(rt => {
@@ -8228,11 +8343,14 @@ async function addCharts(buf, jobs) {
     const sh = s => s.replace(/\s*&\s*/g, '·').replace(/\s*\/\s*/g, '·');
     let h = '';
     if (staff) h += '<div class="ddinfo">전 근무일 현황입니다</div>';
-    if (!staff) h += '<div id="ddchk"></div>';
-    h += `<div class="ddkpis">
-      <div class="card ddk"><div class="l">출근</div><div class="v">${att}<small> / ${D.total}명</small></div>
-        <div class="ddstack">${seg.filter(x => x[0]).map(([n, c]) => `<i style="flex:${n};background:${c}"></i>`).join('')}</div>
-        <div class="ddlg">${seg.map(([n, c, t]) => `<span style="--c:${c}">${t}</span>`).join('')}</div></div>
+    // V7: 체크사항은 그룹별 평균환산 카드 안으로 통합. 상단에 별도 카드를 만들지 않음.
+    h += `<div class="ddkpis ddkpis-v7">
+      <div class="card ddk ddk-att-v7"><div class="l">출근 / 휴무 <small>(총 ${D.total}명)</small></div>
+        <div class="v">${att}<small> / 휴무 ${D.off.length}명</small><em class="dd-att-rate">${D.total ? Math.round(att / D.total * 100) : 0}%</em></div>
+        <div class="ddstack dd-att-stack">${att > 0 ? `<i style="flex:${att};background:#1f5fbf"></i>` : ''}${D.off.length ? `<i style="flex:${D.off.length};background:#d9344a"></i>` : ''}</div>
+        <div class="dd-att-legend"><span class="dd-att-in">출근 ${att}</span>${D.off.length ? `<button type="button" id="dd-off-toggle" class="dd-off-toggle" aria-expanded="false" aria-controls="dd-off-panel">휴무 ${D.off.length} ▾</button>` : '<span class="dd-att-off">휴무 0</span>'}<span class="dd-att-none">업무 미입력 ${D.none.length + D.zero.length}</span></div>
+        ${D.off.length ? `<div class="dd-off-pop" id="dd-off-panel" hidden><div class="dd-off-pop-title"><b>휴무자 명단 (${D.off.length}명)</b><button type="button" id="dd-off-close" aria-label="휴무자 명단 닫기">✕</button></div><div class="dd-off-list">${D.off.map(p => `<div><span>${esc(p.disp || p.name)}</span><small>${esc(p.off || '휴무')}</small></div>`).join('')}</div></div>` : ''}
+      </div>
       <div class="card ddk"><div class="l">조립 실적 <span class="muted" style="font-weight:500">· 조립 인원 ${D.work.length}명</span></div><div class="v">${f1d(D.sumV)}<small> 환산</small></div>
         ${(() => { const mx = Math.max(1, D.sumQ, D.sumShip, D.sumMQ, D.sumBan), bar = (n, c) => `<i class="qb"><i style="width:${n / mx * 100}%;background:${c}"></i></i>`;   // v28.24 : 조립 / 반조 / 출고 / 제조 나눠서
           return `<div class="qrows"><div><span>조립수량</span>${bar(D.sumQ, '#1f5fbf')}<b>${D.sumQ}대</b></div>${D.sumBan ? `<div><span>반조</span>${bar(D.sumBan, '#64748b')}<b>${D.sumBan}대</b></div>` : ''}<div><span>제조사용(출고)</span>${bar(D.sumShip, '#b45309')}<b>${D.sumShip}대</b></div><div><span>제조수량(제조)</span>${bar(D.sumMQ, '#6d3fc9')}<b>${D.sumMQ}대</b></div></div>
@@ -8242,20 +8360,37 @@ async function addCharts(buf, jobs) {
       <div class="card ddk"><div class="l">목표 달성</div><div class="v">${D.hit}<small> / ${D.tw.length}명</small></div>
         <div class="ddstack">${D.tw.length ? `<i style="flex:${D.hit};background:#1f5fbf"></i><i style="flex:${D.tw.length - D.hit};background:#f0d2ad"></i>` : ''}</div><div class="s">${D.tw.length ? '달성률 ' + Math.round(D.hit / D.tw.length * 100) + '%' : '목표 있는 조립 인원 없음'}</div></div>
     </div>`;
-    h += `<div class="ddrow2"><div class="card"><h3 class="ddh">그룹별 평균 환산<small>막대 = 평균 · 검은 선 = 평균 목표 · 조립 인원 기준</small></h3>
-      ${D.G.filter(x => x.w).map(x => `<div class="ddgb"><div class="nm">${gdot(x.g)}</div>${ddBar(x.avg, x.tg, 0, gcol(x.g))}<div class="info"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ''} · 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</div></div>`).join('')}
-      ${(() => { const E = D.G.filter(x => !x.w); if (!E.length || !D.G.length) return '';                       // v28.8 : 실적 없는 그룹은 한 줄로
+    // V7: 상단 숫자 = 요약, 그룹별 상세 카드는 아래에서 계속 표시. 
+    h += `<div class="ddrow2 ddsummary-v7">
+      <div class="card ddquick-v7"><h3 class="ddh">실적 요약</h3>
+        ${(() => { const mx = Math.max(1, D.sumQ, D.sumBan, D.sumShip, D.sumMQ);
+          const rows = [['조립수량', D.sumQ, '#1f5fbf'], ['반조', D.sumBan, '#64748b'], ['제조사용(출고)', D.sumShip, '#b45309'], ['제조수량(제조)', D.sumMQ, '#6d3fc9']];
+          return `<div class="ddquick-bars">${rows.map(([label, n, col]) => `<div class="ddquick-bar"><span>${label}</span><div class="ddquick-track"><i style="width:${n / mx * 100}%;background:${col}"></i></div><b>${n}대</b></div>`).join('')}</div>`;
+        })()}</div>
+      <div class="card dd-support-v7"><h3 class="ddh">업무지원 <small>총 ${D.sup.length}명</small></h3>
+        <div class="ddasg dd-support-grid">${tasks.concat(Object.values(D.sup.reduce((a, p) => (tasks.includes(p.task) || (a[p.task] = p.task), a), {}))).map(t => {
+          const L = D.sup.filter(p => p.task === t);
+          return L.length ? `<div class="ddac"><div class="t">${esc(t)}<span>${L.length}명</span></div><div class="dd-support-names">${L.map(p => `<span class="ddpn">${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join('')}</div></div>` : '';
+        }).join('') || '<div class="muted dd-support-empty">업무지원 배정 인원 없음</div>'}</div>
+      </div>
+    </div>`;
+    // V7: 체크사항(그룹별)과 평균환산은 카드 하나에서 같은 행으로 확인. 특이사항 열 없음.
+    const activeGroups = D.G.filter(x => x.w);
+    h += `<div class="card ddcombo-v7"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>막대 = 평균 · 검은 선 = 그룹 목표 · 체크사항은 전 근무일 기준</small></h3>
+      <div class="ddcombo-list">
+        ${activeGroups.map(x => `<div class="ddcombo-row">
+          <div class="ddcombo-name">${gdot(x.g)}</div>
+          <div class="ddcombo-graph">${ddBar(x.avg, x.tg, 0, gcol(x.g))}</div>
+          <div class="ddcombo-value"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ' / 목표 -'} <small>· 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</small></div>
+          <div class="ddcombo-checks" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>
+        </div>`).join('')}
+      </div>
+      ${(() => { const E = D.G.filter(x => !x.w); if (!E.length || !D.G.length) return '';
         const nm = E.map(x => `<span>${gdot(x.g)}${x.sup ? `<em>지원 ${x.sup}</em>` : ''}</span>`).join('');
-        return E.length === D.G.length ? `<div class="ddnone all"><b>아직 조립 실적이 없습니다</b><span class="muted">입력이 들어오면 그룹별 막대가 생깁니다</span></div>`
-          : `<div class="ddnone"><b>실적 없음</b><div>${nm}</div></div>`; })()}
-      ${D.G.length ? '' : '<div class="muted">인원 관리 명단이 없습니다</div>'}</div>
-      <div class="card"><h3 class="ddh">휴무 · 업무지원</h3>
-        ${(() => { const K = kinds.filter(k => D.off.some(p => p.off === k)), Z = kinds.filter(k => k !== '훈련' && !K.includes(k));   // v28.8 : 인원 있는 종류만 칸으로
-          return (K.length ? `<div class="ddoff">${K.map(k => { const L = D.off.filter(p => p.off === k); return `<div class="ddoi"><b>${k}</b><span class="n">${L.length}</span><div class="who">${L.map(p => `<span>${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join(' ')}</div></div>`; }).join('')}</div>` : '<div class="ddnone all"><b>휴무 없음</b></div>')
-            + (K.length && Z.length ? `<div class="muted ddz">${Z.join(' · ')} 0명</div>` : ''); })()}
-        ${D.P.some(p => p.half) ? `<div class="muted" style="font-size:12px;margin-top:6px">반차 : ${D.P.filter(p => p.half).map(p => esc(p.disp) + ' (' + esc(p.half) + ')').join(', ')}</div>` : ''}
-        <h3 class="ddh" style="margin-top:14px">업무배정<small>지원차출 ${D.sup.length}명${r.asgAt ? ' · 마지막 수정 ' + esc(r.asgAt) : ''}</small></h3>
-        <div class="ddasg">${tasks.concat(Object.values(D.sup.reduce((a, p) => (tasks.includes(p.task) || (a[p.task] = p.task), a), {}))).map(t => { const L = D.sup.filter(p => p.task === t); return L.length ? `<div class="ddac"><div class="t">${esc(t)}<span>${L.length}</span></div>${L.map(p => `<span class="ddpn">${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join('')}</div>` : ''; }).join('') || '<div class="muted" style="font-size:12.5px">배정 없음' + (staff || isRO() ? '' : ' — [업무배정 · 휴무 입력]에서 넣습니다') + '</div>'}</div></div></div>`;
+        return E.length === D.G.length ? '<div class="ddnone all"><b>아직 조립 실적이 없습니다</b><span class="muted">입력이 들어오면 그룹별 막대가 생깁니다</span></div>'
+          : `<div class="ddnone ddcombo-noresult"><b>실적 없음</b><div>${nm}</div></div>`; })()}
+      <div id="ddchk" class="ddcombo-shared-v7">${staff ? '<span class="muted">그룹별 체크사항은 관리자·매니저에게 표시됩니다</span>' : '<span class="muted">공통 체크사항 확인 중…</span>'}</div>
+    </div>`;
     h += `<div class="card ddleg"><b>그룹별 인원</b><span class="ddlg"><span style="--c:#1f5fbf">목표 달성</span><span style="--c:#e39a3b">목표 미달</span><span class="hatch">기타시간 환산</span><span style="--c:#1d2430">목표</span><span class="muted" style="font-size:inherit">수량 = 조립 · <b class="shipv">출고</b> · <b class="mfgv">제조</b> · 카드에 개인 목표/달성률 표시</span></span><span style="flex:1"></span>${staff ? '' : '<span class="muted" style="font-size:12px">이름 = 사람 카드 (특이사항 · 월 통계 · 연차) · [일일] = 그날 입력 화면 · 💬 = 특이사항 있음</span>'}</div>`;
     h += '<div class="ddgroups">' + D.G.map(x => {
       // 평균/목표는 기존 일일모델의 값 재사용. 개인 목표 미설정 또는 근무 실적 없음이면 달성률을 임의로 0% 처리하지 않음.
@@ -8310,6 +8445,17 @@ async function addCharts(buf, jobs) {
         onError: e => toast(e.message, true)
       });
       applyGroup(selected);
+    }
+    // V7: 공통 조회바는 이 화면에서만 기간 지정 바로 다음에 검색/초기화를 표시.
+    const dashFilter = $('#main .czf-v4[data-view="dash"]');
+    if (dashFilter) { const actions = $('.czf-actions', dashFilter), spacer = $('.czf-spacer', dashFilter);
+      if (actions && spacer) { spacer.before(actions); spacer.remove(); } }
+    // 휴무자 목록: 이 날짜의 D.off 값을 그대로 보여 주며, 데이터를 수정하지 않는다.
+    const offToggle = $('#dd-off-toggle'), offPanel = $('#dd-off-panel');
+    if (offToggle && offPanel) {
+      const setOpen = open => { offPanel.hidden = !open; offToggle.setAttribute('aria-expanded', String(open)); };
+      offToggle.onclick = e => { e.stopPropagation(); setOpen(offPanel.hidden); };
+      const close = $('#dd-off-close'); if (close) close.onclick = () => setOpen(false);
     }
     if (staff) return;
     ddChecks(r, D, lv);
