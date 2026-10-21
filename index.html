@@ -3347,12 +3347,15 @@ function status(){let e=$('#edustatus');if(e)e.textContent=E.changed?'● 변경
 function inputFile(){const e=document.createElement('input');e.type='file';e.accept='.xlsx,.xls,.xlsm';e.onchange=()=>{if(e.files?.[0])upload(e.files[0]);};e.click();}
 function parseDateText(txt,year){let m=String(txt||'').match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);return m?ymd(year,+m[1],+m[2]):null;}
 function parseTime(txt){let m=String(txt||'').match(/(\d{1,2})\s*:\s*(\d{2})\s*[~～\-]\s*(\d{1,2})\s*:\s*(\d{2})/);return m?[`${m[1].padStart(2,'0')}:${m[2]}`,`${m[3].padStart(2,'0')}:${m[4]}`]:['10:05','10:35'];}
-function excelYear(wb){for(const name of wb.SheetNames){const rows=window.XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:''}).slice(0,8);for(const row of rows){for(const cell of row){const match=String(cell||'').match(/(20\d{2})년/);if(match)return +match[1];}}}return +(A.S.today||'2026').slice(0,4);}
+// Fixed template coordinates must include empty leading rows and columns.
+// sheet_to_json otherwise starts at !ref (for example B2), shifting every index.
+function educationRows(sheet,options={}){if(!sheet?.['!ref'])return [];const X=window.XLSX,end=X.utils.decode_range(sheet['!ref']).e;return X.utils.sheet_to_json(sheet,{header:1,defval:'',...options,range:{s:{r:0,c:0},e:end}});}
+function excelYear(wb){for(const name of wb.SheetNames){const rows=educationRows(wb.Sheets[name]).slice(0,8);for(const row of rows){for(const cell of row){const match=String(cell||'').match(/(20\d{2})년/);if(match)return +match[1];}}}return +(A.S.today||'2026').slice(0,4);}
 function parseWorkbook(wb){const X=window.XLSX,year=excelYear(wb);let out=[],unknown=[];let source='';
  // 1. October master workbook: assembly section U:W:X; V date inherited from first row of session.
  const main=wb.SheetNames.find(n=>/사내 교육 인원리스트_본점/.test(n));
- if(main){source=main;const rows=X.utils.sheet_to_json(wb.Sheets[main],{header:1,defval:'',raw:false});let cur=null;
- let header=wb.SheetNames.find(n=>/CS교육일정/.test(n));let summary=header?X.utils.sheet_to_json(wb.Sheets[header],{header:1,defval:''}):[];
+ if(main){source=main;const rows=educationRows(wb.Sheets[main],{raw:false});let cur=null;
+ let header=wb.SheetNames.find(n=>/CS교육일정/.test(n));let summary=header?educationRows(wb.Sheets[header]):[];
  const assemblyRow=summary.find(r=>r.some(v=>String(v).includes('조립팀')))||[];
  const topic=String(assemblyRow[4]||'CS 교육'),room=String(rows[3]?.[20]||'본사 3층 B1 회의실');
  for(let i=5;i<rows.length;i++){
@@ -3363,13 +3366,13 @@ function parseWorkbook(wb){const X=window.XLSX,year=excelYear(wb);let out=[],unk
  }
  }
  // 2. Date-per-column workbook (11~12월). First row weekdays; second row dates; names from third row.
- if(!out.length){const wide=wb.SheetNames.find(n=>/11월12월|11~12|11월.?12월/.test(n));if(wide){source=wide;const rows=X.utils.sheet_to_json(wb.Sheets[wide],{header:1,defval:'',raw:false});const topic=String(rows[11]?.[2]||'교육일정'),place=String(rows[14]?.[2]||'본사 3층 교육실 B1');
+ if(!out.length){const wide=wb.SheetNames.find(n=>/11월12월|11~12|11월.?12월/.test(n));if(wide){source=wide;const rows=educationRows(wb.Sheets[wide],{raw:false});const topic=String(rows[11]?.[2]||'교육일정'),place=String(rows[14]?.[2]||'본사 3층 교육실 B1');
  const [start,end]=parseTime(String(rows[13]?.[2]||'10:05~10:35').replace(/시\s*/g,':').replace(/분/g,''));
  (rows[1]||[]).forEach((cell,i)=>{if(i<1)return;const date=parseDateText(cell,year);if(!date)return;const s={key:uid(),date,start,end,topic,place,staff:[]};out.push(s);
  for(let ri=2;ri<Math.min(rows.length,11);ri++){const name=String(rows[ri]?.[i]||'').trim();if(!name)continue;const p=findPerson(name);if(p)s.staff.push(mkPerson(p));else unknown.push({name,date,reason:'사원 명단 불일치'});}});
  }}
  // 3. Date/name pairs on general workbook 10월 H:R side-by-side.
- if(!out.length){const m=wb.SheetNames.find(n=>/10월/.test(n));if(m){source=m;const rows=X.utils.sheet_to_json(wb.Sheets[m],{header:1,defval:'',raw:false});for(const [dc,nc] of [[8,9],[13,14],[18,19]]){let cur=null;for(let i=2;i<rows.length;i++) {const date=parseDateText(rows[i]?.[dc],year);if(date){const [start,end]=parseTime(rows[i]?.[dc]);cur={key:uid(),date,start,end,topic:'교육일정',place:'본사 3층 교육실 B1',staff:[]};out.push(cur);}let name=String(rows[i]?.[nc]||'').trim();if(!name||!cur||name==='성명')continue;const p=findPerson(name);if(p)cur.staff.push(mkPerson(p));else unknown.push({name,date:cur.date,reason:'사원 명단 불일치'});}}}}
+ if(!out.length){const m=wb.SheetNames.find(n=>/10월/.test(n));if(m){source=m;const rows=educationRows(wb.Sheets[m],{raw:false});for(const [dc,nc] of [[8,9],[13,14],[18,19]]){let cur=null;for(let i=2;i<rows.length;i++) {const date=parseDateText(rows[i]?.[dc],year);if(date){const [start,end]=parseTime(rows[i]?.[dc]);cur={key:uid(),date,start,end,topic:'교육일정',place:'본사 3층 교육실 B1',staff:[]};out.push(cur);}let name=String(rows[i]?.[nc]||'').trim();if(!name||!cur||name==='성명')continue;const p=findPerson(name);if(p)cur.staff.push(mkPerson(p));else unknown.push({name,date:cur.date,reason:'사원 명단 불일치'});}}}}
  out=out.filter(s=>s.staff.length||unknown.some(u=>u.date===s.date));
  return {out,unknown,source};}
 async function upload(file){try{await A.loadLib('XLSX','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');let book=XLSX.read(await file.arrayBuffer(),{type:'array',raw:false,cellDates:false});const result=parseWorkbook(book);if(!result.out.length){A.toast('조립팀 교육 명단을 찾지 못했습니다. 업로드 양식을 확인하세요',true);return;}
