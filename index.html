@@ -1861,6 +1861,17 @@ html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
 .edu-wrap{--edu-ln:#e1e7f0;--edu-s:#f5f7fb;color:var(--ink);max-width:100%;}
 .edu-wrap .ph{margin-bottom:12px}.edu-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px!important;padding:12px 14px!important}
 .edu-sum,.edu-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px}.edu-sum>b{font-size:17px}.edu-sum>span:not(:first-child){font-size:12px;color:var(--sub)}
+/* 2026-10 : 교육 일정 월별 이동 · 월간 선택 */
+.edu-monthnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px!important;padding:11px 16px!important}
+.edu-monthnav .monthtitle{font-size:16px;font-weight:800;margin-right:2px;white-space:nowrap}
+.edu-monthnav .controls{display:inline-flex;align-items:center;gap:6px}
+.edu-monthnav .controls button{min-width:34px;padding:7px 10px}
+.edu-monthnav input[type=month]{font-weight:800;min-width:154px;max-width:180px;background:var(--field);color:var(--ink)}
+.edu-monthnav .monthsum{color:var(--sub);font-size:13px;font-weight:700;margin-left:auto}
+.edu-empty-month{grid-column:1/-1;padding:30px 24px!important;text-align:center;color:var(--sub);line-height:1.8}
+.edu-empty-month b{display:block;font-size:16px;color:var(--ink)}
+@media(max-width:760px){.edu-monthnav .monthsum{width:100%;margin-left:0}}
+
 .edu-actions button{white-space:nowrap}.edu-actions select{max-width:260px}.edu-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));align-items:start;gap:12px}
 .edu-session{border:1px solid var(--edu-ln);border-radius:12px;background:var(--panel);padding:0 0 12px;min-width:0;box-shadow:0 2px 7px rgba(30,50,80,.035)}
 .edu-session-head{display:flex;justify-content:space-between;align-items:center;padding:12px 13px 9px;border-bottom:1px solid var(--edu-ln);gap:7px}.edu-session-head b{font-size:16px}.edu-session-head span{font-weight:700;color:var(--sub);font-size:12px;margin-left:9px}
@@ -1872,6 +1883,27 @@ html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
 .edu-warning{border:1px solid #f4c7aa;border-radius:9px;background:#fff7ec;color:#9a4f0b;padding:10px 13px;margin-bottom:10px;font-size:12px}.edu-warning button{font-weight:700;margin-left:10px;color:#9a4f0b}
 .edu-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:18px 0}.edu-edit-grid label{display:flex;flex-direction:column;gap:5px;color:var(--sub);font-size:12px}.edu-edit-grid input{width:100%}.edu-edit-grid label:nth-child(n+4){grid-column:span 2}.edu-findlist{max-height:340px;overflow:auto;padding:8px 0;display:flex;flex-direction:column;gap:3px}.edu-findlist button{display:flex;justify-content:space-between;text-align:left;gap:12px;background:var(--edu-s)!important;border-color:var(--line2)!important}.edu-findlist button em{font-style:normal;color:var(--red)}.edu-unknown{display:flex;gap:7px;align-items:center;margin:8px 0}.edu-unknown input{max-width:170px}.edu-unknown span{color:var(--sub);font-size:12px}.edu-conflict-item{padding:10px;background:#fff2f2;border:1px solid #f6cccc;border-radius:6px;margin:7px 0}.edu-notice-text{font-size:14px;line-height:1.6;padding:12px 2px}
 @media(max-width:1200px){.edu-board{grid-template-columns:repeat(2,minmax(310px,1fr))}}@media(max-width:760px){.edu-board{grid-template-columns:minmax(0,1fr)}.edu-actions{justify-content:flex-start}.edu-sum{width:100%}}
+
+/* 2026-10-21: 교육 하루 전/당일 알림 — 컴팩트한 화이트 카드, 그룹 정렬 명단 */
+.modal.edu-notice-modal{width:340px;max-width:calc(100vw - 28px);max-height:90vh;overflow-y:auto;padding:17px 17px 16px;border-radius:20px!important}
+.edu-notice{color:var(--ink)}
+.edu-notice-heading{font-size:15px!important;line-height:1.3;margin:0 0 13px!important;font-weight:800;letter-spacing:-.2px}
+.edu-notice-heading span{margin-right:3px}
+.edu-notice-info{padding:0 0 12px;border-bottom:1px solid var(--line)}
+.edu-notice-topic{font-size:13px;font-weight:800;line-height:1.5;overflow-wrap:anywhere;margin-bottom:5px}
+.edu-notice-when,.edu-notice-place{font-size:12px;color:var(--sub);line-height:1.5;overflow-wrap:anywhere}
+.edu-notice-list-head{display:flex;align-items:center;justify-content:space-between;margin:11px 0 7px;font-size:12px}
+.edu-notice-list-head b{font-weight:800}.edu-notice-list-head span{color:var(--sub)}
+.edu-notice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 5px}
+.edu-notice-person{min-width:0;min-height:27px;border-radius:6px;background:var(--head);display:flex;align-items:center;justify-content:space-between;padding:4px 7px;gap:3px;border:1px solid transparent}
+.edu-notice-person b{font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edu-notice-person span{font-size:10.5px;white-space:nowrap;color:var(--sub);flex:none}
+.edu-notice-person.mine{background:#e8f0ff;border-color:#a7c6ff}
+.edu-notice-person.mine b,.edu-notice-person.mine span{color:#155bd4;font-weight:800}
+.edu-notice-modal .edu-notice-acts{display:flex;gap:7px;justify-content:flex-end;margin-top:15px!important}
+.edu-notice-modal .edu-notice-acts button{padding:7px 14px;font-size:12px}
+html[data-theme=dark] .edu-notice-person.mine{background:#1b3154;border-color:#3c67ab}
+html[data-theme=dark] .edu-notice-person.mine b,html[data-theme=dark] .edu-notice-person.mine span{color:#a7c8ff}
 
 </style>
 <style>
@@ -3376,7 +3408,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 <script>
 /* Education V8: independent UI; no mutation of existing work/leave modules. */
 (function(){'use strict';
-let A, E={batches:[],roster:[],conflicts:[],alt:[],editor:false,active:null,changed:false,unmatched:[],file:''};
+let A, E={batches:[],roster:[],conflicts:[],alt:[],editor:false,active:null,changed:false,unmatched:[],file:'',month:''};
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const uid=()=>`e${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
@@ -3385,6 +3417,19 @@ const md=d=>d?`${+d.slice(5,7)}/${+d.slice(8,10)}`:'미정';
 const wd=d=>d?['일','월','화','수','목','금','토'][new Date(d+'T12:00:00').getDay()]:'';
 const editor=()=>E.editor;
 const sessions=()=>E.active?.sessions||[];
+const eduMonthOK=m=>/^20\d\d-(0[1-9]|1[0-2])$/.test(m||'');
+const eduMonthDefault=()=>A?.S?.today?.slice(0,7)||new Date().toISOString().slice(0,7);
+const eduMonth=()=>eduMonthOK(E.month)?E.month:eduMonthDefault();
+function eduMonthShift(delta){const [y,m]=eduMonth().split('-').map(Number);const d=new Date(Date.UTC(y,m-1+delta,1));return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');}
+function eduSelectMonth(month){
+ if(!eduMonthOK(month))return;
+ // 다른 묶음에 해당 월 일정이 있는 경우, 미저장 변경이 없을 때만 전환한다.
+ const own=(E.active?.sessions||[]).some(x=>x.date?.startsWith(month));
+ if(!own){const other=E.batches.find(b=>b.id!==E.active?.id&&(b.sessions||[]).some(x=>x.date?.startsWith(month)));
+   if(other){if(E.changed){A.toast('다른 교육 편성으로 이동하려면 먼저 저장하세요',true);return;}E.active=other;E.unmatched=[];}}
+ E.month=month;draw();
+}
+
 const myName=()=>A.S.me?.name||'';
 const norm=s=>String(s||'').replace(/\s/g,'').toLowerCase();
 // Confirmed assembly-team aliases. Additional mappings are saved on this browser.
@@ -3448,30 +3493,41 @@ function parseWorkbook(wb){const X=window.XLSX,year=excelYear(wb);let out=[],unk
  return {out,unknown,source};}
 async function upload(file){try{await A.loadLib('XLSX','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');let book=XLSX.read(await file.arrayBuffer(),{type:'array',raw:false,cellDates:false});const result=parseWorkbook(book);if(!result.out.length){A.toast('조립팀 교육 명단을 찾지 못했습니다. 업로드 양식을 확인하세요',true);return;}
  if(E.changed&&!await A.confirmBox('저장하지 않은 기존 편성을 엑셀 내용으로 교체할까요?','교체'))return;
- E.active={id:null,title:'교육일정',sourceFile:file.name,revision:0,state:'draft',sessions:result.out};E.file=file.name;E.unmatched=result.unknown;setChanged();draw();A.toast(`교육 ${result.out.length}회·${allCount()}명 분석${result.unknown.length?' · 확인 필요 '+result.unknown.length+'명':''}`);
+ E.active={id:null,title:'교육일정',sourceFile:file.name,revision:0,state:'draft',sessions:result.out};E.file=file.name;E.unmatched=result.unknown;E.month=result.out[0]?.date?.slice(0,7)||eduMonth();setChanged();draw();A.toast(`교육 ${result.out.length}회·${allCount()}명 분석${result.unknown.length?' · 확인 필요 '+result.unknown.length+'명':''}`);
  }catch(ex){A.toast('엑셀 분석 실패: '+ex.message,true);}}
 function render(host){host.innerHTML='<div class="edubody"><div class="card">교육일정을 불러오는 중입니다…</div></div>';load(host);}
 async function load(host){try{const r=await A.api('eduList');E.batches=r.batches||[];E.roster=r.roster||[];E.conflicts=r.conflicts||[];E.alt=r.alt||[];E.editor=!!r.editor;
- if(!E.active||!E.changed){E.active=E.batches.find(b=>b.id===E.active?.id)||E.batches[0]||null;E.unmatched=[];E.changed=false;}draw();
+ if(!E.active||!E.changed){E.active=E.batches.find(b=>b.id===E.active?.id)||E.batches[0]||null;E.unmatched=[];E.changed=false;}if(!eduMonthOK(E.month))E.month=eduMonthDefault();draw();
  }catch(ex){host.innerHTML=`<div class="card">교육일정 데이터 연결을 확인해 주세요. <b>${esc(ex.message)}</b><div class="muted" style="margin-top:10px">V8 SQL 패치가 아직 실행되지 않았다면 교육일정 API를 먼저 설치해야 합니다.</div></div>`;}}
-function chooseBatch(id){if(E.changed){A.toast('변경사항을 먼저 저장하세요',true);return;}E.active=E.batches.find(x=>x.id===+id)||null;E.unmatched=[];draw();}
+function chooseBatch(id){if(E.changed){A.toast('변경사항을 먼저 저장하세요',true);return;}E.active=E.batches.find(x=>x.id===+id)||null;E.unmatched=[];if(E.active?.sessions?.length&&!E.active.sessions.some(x=>x.date?.startsWith(eduMonth())))E.month=E.active.sessions[0].date.slice(0,7);draw();}
 function memberRow(p,si,pi,s){const cs=hits(p,s.date),hit=cs.length;const role=p.title||'사원';return `<div class="edu-person${hit?' conflict':''}" draggable="${editor()}" data-si="${si}" data-pi="${pi}" title="${hit?'휴무 충돌 · 클릭해서 확인':'이름을 옆 회차로 드래그 이동'}"><span class="edu-grip">${editor()?'⠿':''}</span><span class="edu-role">${esc(role)}</span><b class="edu-nm">${esc(p.name)}</b><span class="edu-grp">${esc(p.grp)}</span>${hit?`<button class="edu-hit" data-hit="${si}:${pi}">휴무 충돌</button>`:'<span class="edu-ok"> </span>'}${editor()?`<button class="edu-del" data-del="${si}:${pi}" title="인원 제거">×</button>`:''}</div>`;}
 function sessionCard(s,i){return `<section class="edu-session" data-session="${i}"><div class="edu-session-head"><div><b>${fmtDate(s)}</b><span>${count(s)}명</span></div>${editor()?`<button class="sm" data-edit="${i}" title="교육 날짜·시간·내용·장소 수정">✎ 수정</button>`:''}</div><div class="edu-details">${esc(s.start)}~${esc(s.end)} · ${esc(s.topic||E.active.title)}<small>${esc(s.place||'장소 미정')}</small></div><div class="edu-members">${(s.staff||[]).map((p,j)=>memberRow(p,i,j,s)).join('')||'<div class="edu-empty">배정 인원 없음 · 여기로 드래그</div>'}</div>${editor()?`<button class="edu-add" data-add="${i}">+ 인원 추가</button>`:''}</section>`;}
 function draw(){const host=$('#main');if(!host||A.S.view!=='education')return;
- const n=allCount(),list=sessions();host.innerHTML=`<div class="edu-wrap">${A.pageHead('교육일정', '<span class="muted">엑셀 자동 편성 · 날짜별 인원 이동</span>')}
- <div class="edu-toolbar card"><div class="edu-sum"><b>${esc(E.active?.title||'교육 편성')}</b><span>교육 ${list.length}회</span><span>배정 ${n}명</span><span id="edustatus"></span></div><div class="edu-actions">
- ${editor()?`<select id="edu-batches" aria-label="저장된 교육 목록"><option value="">새 편성</option>${E.batches.map(x=>`<option value="${x.id}" ${x.id===E.active?.id?'selected':''}>${esc(x.title)} · ${x.id}</option>`).join('')}</select><button id="edu-file">📄 엑셀 업로드</button><button id="edu-name-links">이름 연결</button><button id="edu-new">+ 회차</button><button id="edu-save">편성 저장</button><button class="primary" id="edu-pub">최종 확정</button>`:''}
+ const month=eduMonth(),monthly=sessions().map((s,i)=>({s,i})).filter(v=>v.s.date?.startsWith(month));
+ const n=allCount(),monthlyCount=monthly.reduce((t,v)=>t+count(v.s),0),all=sessions();
+ const batchOpts=E.batches.map(x=>`<option value="${x.id}" ${x.id===E.active?.id?'selected':''}>${esc(x.title)} · ${x.id}</option>`).join('');
+ host.innerHTML=`<div class="edu-wrap">${A.pageHead('교육일정', '<span class="muted">엑셀 자동 편성 · 월별 일정 확인 · 날짜별 인원 이동</span>')}
+ <div class="edu-toolbar card"><div class="edu-sum"><b>${esc(E.active?.title||'교육 편성')}</b><span>전체 ${all.length}회</span><span>배정 ${n}명</span><span id="edustatus"></span></div><div class="edu-actions">
+ ${editor()?`<select id="edu-batches" aria-label="저장된 교육 목록"><option value="" ${!E.active?'selected':''}>새 편성</option>${batchOpts}</select><button id="edu-file">📄 엑셀 업로드</button><button id="edu-name-links">이름 연결</button><button id="edu-new">+ 회차</button><button id="edu-save">편성 저장</button><button class="primary" id="edu-pub">최종 확정</button>`:(E.batches.length>1?`<select id="edu-batches" aria-label="교육 목록 선택">${batchOpts}</select>`:'')}
  </div></div>
+ <div class="edu-monthnav card" aria-label="교육일정 월 이동"><span class="monthtitle">교육 월별 보기</span>
+ <div class="controls"><button id="edu-prev" aria-label="이전 달" title="이전 달">〈</button><input id="edu-month" type="month" value="${month}" aria-label="교육일정 연월 선택"><button id="edu-next" aria-label="다음 달" title="다음 달">〉</button><button id="edu-today" title="현재 월로 이동">이번 달</button></div>
+ <span class="monthsum">${+month.slice(5)}월 교육 ${monthly.length}회 · 대상 ${monthlyCount}명</span></div>
  ${E.unmatched.length?`<div class="edu-warning"><b>확인 필요 ${unresolved()}명</b> · 기존 직원명과 일치하지 않습니다. 아래에서 수정하거나 제외한 후 저장·확정하세요. <button id="edu-unresolved">명단 확인</button></div>`:''}
- <div class="edu-board">${list.map(sessionCard).join('')||'<div class="card">교육일정이 없습니다. 담당자는 엑셀을 업로드하거나 회차를 추가해 주세요.</div>'}</div>
- ${editor()?'<div class="edu-note">⠿ 직원을 잡고 다른 날짜로 드래그해 이동 · 휴무 충돌을 누르면 등록된 휴무 확인 · 수정 후 최종 확정 시 알림 배포</div>':'<div class="edu-note">확정된 교육 일정만 표시됩니다. 알림은 교육 하루 전부터 나타납니다.</div>'}</div>`;
- status();if(editor()){
+ <div class="edu-board">${monthly.map(({s,i})=>sessionCard(s,i)).join('')||`<div class="card edu-empty-month"><b>${month.replace('-','년 ')}월 교육일정이 없습니다.</b>${editor()?'[+ 회차]를 누르면 선택한 월에 교육일정을 등록할 수 있습니다.':'다른 월을 선택하거나 교육 목록을 변경해 주세요.'}</div>`}</div>
+ ${editor()?'<div class="edu-note">⠿ 직원을 잡고 다른 날짜로 드래그해 이동 · 다른 달 일정은 월 이동 버튼으로 조회 · 수정 후 저장·최종 확정 시 알림 배포</div>':'<div class="edu-note">확정된 교육 일정만 표시됩니다. 알림은 교육 하루 전부터 나타납니다.</div>'}</div>`;
+ status();
+ $('#edu-prev').onclick=()=>eduSelectMonth(eduMonthShift(-1));
+ $('#edu-next').onclick=()=>eduSelectMonth(eduMonthShift(1));
+ $('#edu-month').onchange=e=>eduSelectMonth(e.target.value);
+ $('#edu-today').onclick=()=>eduSelectMonth(eduMonthDefault());
+ if($('#edu-batches'))$('#edu-batches').onchange=e=>{if(e.target.value)chooseBatch(e.target.value);else if(editor()&&!E.changed){E.active={id:null,title:'교육일정',sessions:[],revision:0,state:'draft'};draw();}else{A.toast('먼저 저장하세요',true);draw();}};
+ if(editor()){
  $('#edu-file').onclick=inputFile;
  $('#edu-name-links').onclick=manageNameLinks;
  $('#edu-new').onclick=()=>editSession(-1);
  $('#edu-save').onclick=save;
  $('#edu-pub').onclick=publish;
- $('#edu-batches').onchange=e=>{if(e.target.value)chooseBatch(e.target.value);else if(!E.changed){E.active={id:null,title:'교육일정',sessions:[],revision:0,state:'draft'};draw();}else{A.toast('먼저 저장하세요',true);draw();}};
  $$('[data-edit]').forEach(el=>el.onclick=()=>editSession(+el.dataset.edit));
  $$('[data-add]').forEach(el=>el.onclick=()=>addPerson(+el.dataset.add));
  $$('[data-del]').forEach(el=>el.onclick=()=>removePerson(...el.dataset.del.split(':').map(Number)));
@@ -3479,13 +3535,13 @@ function draw(){const host=$('#main');if(!host||A.S.view!=='education')return;
  $$('.edu-session').forEach(el=>{el.ondragover=e=>{e.preventDefault();el.classList.add('edu-drop');};el.ondragleave=()=>el.classList.remove('edu-drop');el.ondrop=e=>{e.preventDefault();el.classList.remove('edu-drop');const [si,pi]=String(e.dataTransfer.getData('text/plain')).split(':').map(Number);movePerson(si,pi,+el.dataset.session);};});
  if($('#edu-unresolved'))$('#edu-unresolved').onclick=resolveUnknown;
  }
- $$('[data-hit]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [si,pi]=el.dataset.hit.split(':').map(Number),s=list[si],p=s?.staff[pi];if(!p)return;const info=hits(p,s.date);A.modal(`<h3>${esc(p.name)} · 휴무 충돌</h3><div class="muted" style="margin:8px 0">교육 ${esc(fmtDate(s))}</div>${info.map(x=>`<div class="edu-conflict-item">${esc(x.kind)} · ${esc(x.date)}${x.end&&x.end!==x.date?' ~ '+esc(x.end):''}${x.half?' · '+esc(x.half):''}</div>`).join('')}<div class="acts"><button data-n>닫기</button></div>`,bg=>{$('[data-n]',bg).onclick=()=>bg.remove();});});
+ $$('[data-hit]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [si,pi]=el.dataset.hit.split(':').map(Number),s=all[si],p=s?.staff[pi];if(!p)return;const info=hits(p,s.date);A.modal(`<h3>${esc(p.name)} · 휴무 충돌</h3><div class="muted" style="margin:8px 0">교육 ${esc(fmtDate(s))}</div>${info.map(x=>`<div class="edu-conflict-item">${esc(x.kind)} · ${esc(x.date)}${x.end&&x.end!==x.date?' ~ '+esc(x.end):''}${x.half?' · '+esc(x.half):''}</div>`).join('')}<div class="acts"><button data-n>닫기</button></div>`,bg=>{$('[data-n]',bg).onclick=()=>bg.remove();});});
 }
 function movePerson(si,pi,to){if(si===to||!sessions()[si]?.staff[pi]||!sessions()[to])return;const p=sessions()[si].staff[pi];if(sessions()[to].staff.some(x=>x.name===p.name)){A.toast('이 날짜에 이미 같은 직원이 배정돼 있습니다',true);return;}sessions()[si].staff.splice(pi,1);sessions()[to].staff.push(p);setChanged();draw();}
 function removePerson(si,pi){const p=sessions()[si]?.staff[pi];if(!p)return;sessions()[si].staff.splice(pi,1);setChanged();draw();A.toast(`${p.name} 편성에서 제거됨 · 저장 전`);}
-function editSession(i){const s=sessions()[i]||{date:A.S.today,start:'10:05',end:'10:35',topic:E.active?.title||'교육일정',place:'본사 3층 교육실 B1',staff:[]};A.modal(`<h3>교육 회차 ${i<0?'추가':'수정'}</h3><div class="edu-edit-grid"><label>교육 날짜<input id="e-date" type="date" value="${esc(s.date)}"></label><label>시작 시간<input id="e-start" type="time" value="${esc(s.start)}"></label><label>종료 시간<input id="e-end" type="time" value="${esc(s.end)}"></label><label>교육 주제<input id="e-topic" maxlength="200" value="${esc(s.topic)}"></label><label>장소<input id="e-place" maxlength="200" value="${esc(s.place)}"></label></div><div class="acts">${i>=0?'<button class="danger" id="e-remove">회차 삭제</button>':''}<button data-n>취소</button><button class="primary" data-y>적용</button></div>`,(bg,close)=>{
+function editSession(i){if(i<0&&!E.active)E.active={id:null,title:'교육일정',sessions:[],revision:0,state:'draft'};const pickedMonth=eduMonth();const defaultDate=pickedMonth===A.S.today?.slice(0,7)?A.S.today:pickedMonth+'-01';const s=sessions()[i]||{date:defaultDate,start:'10:05',end:'10:35',topic:E.active?.title||'교육일정',place:'본사 3층 교육실 B1',staff:[]};A.modal(`<h3>교육 회차 ${i<0?'추가':'수정'}</h3><div class="edu-edit-grid"><label>교육 날짜<input id="e-date" type="date" value="${esc(s.date)}"></label><label>시작 시간<input id="e-start" type="time" value="${esc(s.start)}"></label><label>종료 시간<input id="e-end" type="time" value="${esc(s.end)}"></label><label>교육 주제<input id="e-topic" maxlength="200" value="${esc(s.topic)}"></label><label>장소<input id="e-place" maxlength="200" value="${esc(s.place)}"></label></div><div class="acts">${i>=0?'<button class="danger" id="e-remove">회차 삭제</button>':''}<button data-n>취소</button><button class="primary" data-y>적용</button></div>`,(bg,close)=>{
  $('[data-n]',bg).onclick=close;
- $('[data-y]',bg).onclick=()=>{const date=$('#e-date',bg).value,st=$('#e-start',bg).value,en=$('#e-end',bg).value;if(!date||!st||!en||st>=en)return A.toast('날짜·시간을 확인하세요',true);const v={...s,date,start:st,end:en,topic:$('#e-topic',bg).value.trim(),place:$('#e-place',bg).value.trim(),key:s.key||uid()};if(i>=0)sessions()[i]=v;else sessions().push(v);setChanged();close();draw();};
+ $('[data-y]',bg).onclick=()=>{const date=$('#e-date',bg).value,st=$('#e-start',bg).value,en=$('#e-end',bg).value;if(!date||!st||!en||st>=en)return A.toast('날짜·시간을 확인하세요',true);const v={...s,date,start:st,end:en,topic:$('#e-topic',bg).value.trim(),place:$('#e-place',bg).value.trim(),key:s.key||uid()};if(i>=0)sessions()[i]=v;else sessions().push(v);E.month=date.slice(0,7);setChanged();close();draw();};
  if($('#e-remove',bg))$('#e-remove',bg).onclick=async()=>{if(!(await A.confirmBox('회차와 배정 인원을 함께 제거할까요?','삭제')))return;sessions().splice(i,1);setChanged();close();draw();};
  });}
 function addPerson(si){const used=new Set(sessions()[si].staff.map(x=>x.name));const opts=E.roster.filter(p=>!used.has(p.name));let filtered=opts;A.modal(`<h3>교육 대상자 추가</h3><div class="muted" style="margin-bottom:10px">${fmtDate(sessions()[si])} · 현재 ${count(sessions()[si])}명<br>이 회차에 배정된 직원만 제외됩니다. 다른 회차에 배정된 직원도 표시됩니다.</div><input id="edu-find" placeholder="직원 이름 검색" autocomplete="off" style="width:100%"><div id="edu-findlist" class="edu-findlist"></div><div class="acts"><button data-n>닫기</button></div>`,(bg,close)=>{
@@ -3501,11 +3557,48 @@ async function publish(){try{if(E.changed){await save();if(E.changed)return;}val
  else if(!await A.confirmBox(`교육 ${sessions().length}회 · ${allCount()}명을 최종 확정할까요?<br>확정 후 교육 하루 전부터 대상자와 담당 매니저에게 알림이 표시됩니다.`,'최종 확정'))return;
  const r=await A.api('eduConfirm',{id:s.id,revision:s.revision,overrideConflict:override});if(r.needsOverride)return A.toast('휴무 충돌 '+r.conflicts+'건 확인 필요',true);s.revision=r.revision;s.state='published';s.publishedAt=new Date().toISOString();E.changed=false;A.toast('교육 일정 확정 완료');draw();if(A.updateBadge)A.updateBadge();
  }catch(ex){A.toast(ex.message,true);}}
-function reset(){E={batches:[],roster:[],conflicts:[],alt:[],editor:false,active:null,changed:false,unmatched:[],file:''};}
+function reset(){E={batches:[],roster:[],conflicts:[],alt:[],editor:false,active:null,changed:false,unmatched:[],file:'',month:''};}
 function guard(){return !E.changed?Promise.resolve(true):A.confirmBox('교육 편성에서 저장되지 않은 변경사항이 있습니다. 이동할까요?','이동');}
 async function notice(){const r=await A.api('eduNotice');return r.items||[];}
-function noticePop(items){if(!items?.length)return;const x=items[0],isManager=A.S.me?.role==='매니저',n=(x.people||[]).length;
- A.modal(`<h3>🔔 ${isManager?'소속 직원 교육일정':x.date===A.S.today?'오늘 교육이 있습니다':'내일 교육이 있습니다'}</h3><div class="edu-notice-text"><b>${esc(x.topic||x.title)}</b><p>${esc(x.date)} · ${esc(x.start)}~${esc(x.end)}</p><p>${esc(x.place||'장소 미정')}</p>${n?`<p>소속 교육 대상자 ${n}명: ${esc((x.people||[]).map(v=>v.name).join(', '))}</p>`:''}</div><div class="acts"><button data-n>나중에</button><button class="primary" data-y>확인</button></div>`,(bg,close)=>{$('[data-n]',bg).onclick=close;$('[data-y]',bg).onclick=async()=>{try{await A.api('eduAck',{batchId:x.batchId,sessionKey:x.sessionKey});close();A.updateBadge?.();if(items.length>1)noticePop(items.slice(1));}catch(ex){A.toast(ex.message,true);}};});}
+// 교육 D-1 / 당일 알림: 좁은 2열 명단, 그룹 순서, 본인 강조. 확인 API는 그대로 유지한다.
+const eduNoticeGroupOrder=['1그룹','2그룹','3그룹','4그룹','라인','제조','안정화','업무지원','지원','영상','출력','매니저','팀장'];
+function eduNoticePeople(people){
+  const rank=g=>{const k=eduNoticeGroupOrder.indexOf(String(g||'').trim());return k<0?eduNoticeGroupOrder.length:k;};
+  return [...(Array.isArray(people)?people:[])].sort((a,b)=>rank(a.grp)-rank(b.grp)
+    ||String(a.grp||'').localeCompare(String(b.grp||''),'ko')
+    ||String(a.name||'').localeCompare(String(b.name||''),'ko'));
+}
+function noticePop(items){
+  if(!items?.length)return;
+  const x=items[0],isManager=A.S.me?.role==='매니저',people=eduNoticePeople(x.people),n=people.length;
+  const self=norm(myName());
+  const memberMarkup=people.map(p=>{
+    const mine=self&&norm(p.name)===self;
+    const title=mine?' title="로그인한 본인"':'';
+    return `<div class="edu-notice-person${mine?' mine':''}"${title}><b>${esc(p.name||'이름 미정')}</b><span>${esc(p.grp||'미지정')}</span></div>`;
+  }).join('');
+  const headline=isManager?'소속 직원 교육일정':x.date===A.S.today?'오늘 교육이 있습니다':'내일 교육이 있습니다';
+  const dateText=x.date?`${md(x.date)}(${wd(x.date)})`:'날짜 미정';
+  A.modal(`<section class="edu-notice" aria-label="교육일정 알림">
+    <h3 class="edu-notice-heading"><span aria-hidden="true">🔔</span> ${esc(headline)}</h3>
+    <div class="edu-notice-info">
+      <div class="edu-notice-topic">${esc(x.topic||x.title||'교육일정')}</div>
+      <div class="edu-notice-when">${esc(dateText)} · ${esc(x.start||'--:--')}~${esc(x.end||'--:--')}</div>
+      <div class="edu-notice-place">${esc(x.place||'장소 미정')}</div>
+    </div>
+    ${n?`<div class="edu-notice-list-head"><b>교육 대상자</b><span>총 ${n}명</span></div><div class="edu-notice-grid">${memberMarkup}</div>`:''}
+    <div class="acts edu-notice-acts"><button type="button" data-n title="확인 처리 없이 닫습니다">닫기</button><button type="button" class="primary" data-y>확인</button></div>
+  </section>`,(bg,close)=>{
+    $('[data-n]',bg).onclick=close;
+    $('[data-y]',bg).onclick=async()=>{
+      try{
+        await A.api('eduAck',{batchId:x.batchId,sessionKey:x.sessionKey});
+        close();A.updateBadge?.();
+        if(items.length>1)noticePop(items.slice(1));
+      }catch(ex){A.toast(ex.message,true);}
+    };
+  },'edu-notice-modal');
+}
 window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 })();
 
@@ -7228,8 +7321,8 @@ async function addCharts(buf, jobs) {
   const canHub = () => !!(S.me && (S.me.role === '관리자' || (S.me.perms || []).length));
   const canSettings = () => !!(S.me && (S.me.period || canHub()));
   const canSetPage = () => !!(S.me && (S.me.period || can('hr')));
-  const PERM_L = { stats: '통계 보기', people: '인원 현황 / 관리 + 임시 비밀번호', period: '월 기간 마감 + 항목별 분', hr: '인사평가 관리 + 월 백업 받기' };
-  const PERM_D = { stats: '관리자 설정 → 통계', people: '명단 · 일반 인원 정보 수정 · 비밀번호 초기화', period: '이 달 시작 · 마감 · 마감 취소 · 항목 점수', hr: '전 파트 평가 · 마감 · 다운로드 · 기준 · 월 백업 파일 받기' };
+  const PERM_L = { stats: '통계 보기', people: '인원 현황 / 관리 + 임시 비밀번호', period: '월 기간 마감 + 항목별 분', hr: '인사평가 관리 + 월 백업 받기', edu: '교육일정 등록·수정·최종 확정' };
+  const PERM_D = { stats: '관리자 설정 → 통계', people: '명단 · 일반 인원 정보 수정 · 비밀번호 초기화', period: '이 달 시작 · 마감 · 마감 취소 · 항목 점수', hr: '전 파트 평가 · 마감 · 다운로드 · 기준 · 월 백업 파일 받기', edu: '교육 회차·대상자 편성 · 엑셀 업로드 · 저장 · 최종 확정' };
   // v28.10 : 보기 전용 (팀장 등) = 왼쪽 메뉴 없이 위쪽 막대 + 첫 화면 박스 5개
   const RO_NAV = [['home', '처음 화면'], ['dash', '일일업무현황'], ['stats', '통계'], ['acc', '사고'], ['education', '교육일정'], ['leave', '연차현황'], ['people', '인원현황'], ['org', '조직도']];
   const layoutOf = view => isRO() ? 'ro' : 'side';      // v28.17 : 사원 · 매니저 · 관리자 모두 같은 틀 (왼쪽 분류 · 위 세부)
@@ -10930,7 +11023,8 @@ async function addCharts(buf, jobs) {
           <div class="fld" id="a_mgw"><label>담당 그룹 (업무 현황 · 연차 1차 확인)</label><div class="chks">${C.GROUP_LIST.map(gg => `<label><input type="checkbox" value="${gg}" ${(a.mg || []).includes(gg) ? 'checked' : ''}>${gg}</label>`).join('')}</div></div>
           <label class="dck" id="a_law"><input type="checkbox" id="a_la" ${a.la || a.role === '관리자' ? 'checked' : ''} ${a.role === '관리자' ? 'disabled' : ''}><span><b>연차·토요근무 확정 권한</b><small>연차 확정 · 토요 배정 · 연차 마감</small></span></label>
           <label class="dck" id="a_acw"><input type="checkbox" id="a_acc" ${a.role === '관리자' ? 'checked disabled' : ''}><span><b>사고 등록 권한</b><small>사고 등록 · 고치기 · 지우기 · 전체 그룹 사고 보기</small></span></label>
-          <div class="fld" id="a_pmw"><label>추가 권한 (관리자 기능 일부 · 전체 그룹)</label>${Object.entries(PERM_L).map(([k, t]) => `<label class="dck"><input type="checkbox" data-pm="${k}" ${(a.perms || []).includes(k) ? 'checked' : ''}><span><b>${t}</b><small>${PERM_D[k]}</small></span></label>`).join('')}</div>
+          <label class="dck" id="a_eduw"><input type="checkbox" data-pm="edu" ${(a.perms || []).includes('edu') ? 'checked' : ''}><span><b>교육일정 등록·수정·확정 권한</b><small>교육 편성 · 엑셀 업로드 · 대상자 변경 · 최종 확정 (매니저에게 부여)</small></span></label>
+          <div class="fld" id="a_pmw"><label>추가 권한 (관리자 기능 일부 · 전체 그룹)</label>${Object.entries(PERM_L).filter(([k])=>k!=='edu').map(([k, t]) => `<label class="dck"><input type="checkbox" data-pm="${k}" ${(a.perms || []).includes(k) ? 'checked' : ''}><span><b>${t}</b><small>${PERM_D[k]}</small></span></label>`).join('')}</div>
           ${S.me.period && !a.self ? `<label class="dck" id="a_paw"><input type="checkbox" id="a_pa" ${a.pa ? 'checked' : ''}><span><b>월 기간 설정 권한</b><small>월 기간 마감 · 항목별 분 · 데이터 전체 삭제</small></span></label>` : ''}
           <div class="row" style="gap:8px;margin-top:6px">${a.role !== '관리자' ? `<button data-pin>${a.nopin ? '임시 비밀번호 정하기' : '비밀번호 초기화 (임시 번호)'}</button>` : ''}${a.role === '일반' ? '<button class="danger" data-adel>계정 삭제</button>' : ''}
           <span class="muted">${a.nopin ? '비밀번호 없음 — 로그인할 수 없습니다' : a.tmp ? '임시 비밀번호 상태' : ''}</span></div>`}</div>
@@ -10955,7 +11049,7 @@ async function addCharts(buf, jobs) {
       bg._guard = () => (snap() === s0 ? Promise.resolve(true) : confirmBox('고친 내용을 저장하지 않고 닫을까요?', '저장 안 하고 닫기', '계속 고치기'));
       $$('[data-n]', bg).forEach(b => (b.onclick = async () => { if (await bg._guard()) close(); }));
       const role = $('#a_role', bg), la = $('#a_la', bg), mgw = $('#a_mgw', bg);
-      const syncA = () => { if (!role) return; const rv = role.value; mgw.classList.toggle('hide', rv !== '매니저'); $('#a_pmw', bg).classList.toggle('hide', rv !== '매니저');
+      const syncA = () => { if (!role) return; const rv = role.value; mgw.classList.toggle('hide', rv !== '매니저'); $('#a_pmw', bg).classList.toggle('hide', rv !== '매니저');$('#a_eduw', bg).classList.toggle('hide',rv!=='매니저');
         if ($('#a_paw', bg)) $('#a_paw', bg).classList.toggle('hide', rv !== '관리자'); $('#a_law', bg).classList.toggle('hide', rv === '관리자ro');
         la.disabled = rv.startsWith('관리자'); if (la.disabled) la.checked = true;
         const ac = $('#a_acc', bg); if (ac) { ac.disabled = rv.startsWith('관리자'); if (ac.disabled) ac.checked = true; else if (ac.dataset.v != null) ac.checked = ac.dataset.v === '1'; } }; syncA(); if (role) role.onchange = syncA;
