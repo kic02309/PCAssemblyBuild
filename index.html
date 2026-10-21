@@ -1930,6 +1930,58 @@ html[data-theme=dark] .czf-v4{background:var(--panel);box-shadow:none}
  .czf-hr-host .czf-v4{margin-bottom:0}
  #czfStatHost{padding:0 30px 8px}
 </style>
+<style>
+/* Read-only home: approved color tiles. Selectors do not affect other roles. */
+header.roh{height:auto;min-height:64px;flex-wrap:wrap;gap:12px 18px;padding:15px 22px;border-radius:16px}
+header.roh nav{display:flex;flex-wrap:wrap;gap:4px;margin-left:0;overflow:visible;max-width:100%}
+header.roh nav button{position:relative;border-radius:8px;padding:9px 12px;white-space:nowrap}
+header.roh .me{flex-wrap:wrap;white-space:normal;gap:8px}
+header.roh .me b{overflow-wrap:anywhere}
+.rh-home{max-width:1440px;margin:0 auto;padding:30px 30px 44px;color:var(--ink)}
+.rh-home *{box-sizing:border-box}
+.rh-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px 22px;flex-wrap:wrap}
+.rh-eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--blue)}
+.rh-eyebrow:before{content:"";width:20px;height:3px;background:var(--blue)}
+.rh-heading h1{font-size:36px;letter-spacing:-1.5px;line-height:1.2;font-weight:800;margin:9px 0 13px;color:var(--ink)}
+.rh-heading h1 span{color:var(--blue)}
+.rh-summary{display:flex;flex-wrap:wrap;gap:7px 19px;font-size:14px;line-height:1.6;color:var(--sub)}
+.rh-summary b{margin-left:5px;color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+.rh-summary .rh-date{color:var(--blue);font-weight:700}
+.rh-update{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:7px;color:var(--sub);font-size:12px}
+.rh-update button{font-size:13px;padding:8px 13px;border-radius:9px;font-weight:800;background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue)}
+.rh-update button:hover:not(:disabled){background:var(--blue);color:#fff}
+.rh-update button:disabled{opacity:.5;cursor:wait}
+.rh-section{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:29px 0 15px}
+.rh-section h2{font-size:18px;font-weight:800;margin:0;color:var(--ink)}
+.rh-section>span{font-size:12px;color:var(--sub)}
+.rh-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.rh-grid .rh-tile{--tile-a:#2968e7;--tile-b:#123aa6;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;text-align:left;min-width:0;min-height:225px;padding:23px;border:1px solid #ffffff30;border-radius:12px;background:linear-gradient(140deg,var(--tile-a),var(--tile-b));color:#fff;box-shadow:0 10px 18px #10254a25,inset 0 1px 0 #ffffff38;transition:transform .18s,box-shadow .18s;cursor:pointer;font-family:inherit}
+.rh-tile:before{content:"";position:absolute;right:-40px;top:-55px;width:160px;height:160px;border:1px solid #ffffff18;border-radius:50%;box-shadow:0 0 0 26px #ffffff04,0 0 0 52px #ffffff04;pointer-events:none}
+.rh-tile:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 38%,#ffffff0d 39%,transparent 75%);pointer-events:none}
+.rh-tile>*{position:relative;z-index:1}
+.rh-grid .rh-tile[data-go=stats]{--tile-a:#167f9c;--tile-b:#064664}
+.rh-grid .rh-tile[data-go=acc]{--tile-a:#c85730;--tile-b:#8e2d29}
+.rh-grid .rh-tile[data-go=education]{--tile-a:#8154db;--tile-b:#48229c}
+.rh-grid .rh-tile[data-go=leave]{--tile-a:#21886c;--tile-b:#075540}
+.rh-grid .rh-tile[data-go=people]{--tile-a:#407ab4;--tile-b:#234c88}
+.rh-grid .rh-tile[data-go=org]{--tile-a:#4f6386;--tile-b:#253450}
+.rh-grid .rh-tile:hover{transform:translateY(-6px);box-shadow:0 18px 28px #10254a35,inset 0 1px 0 #ffffff58}
+.rh-tile:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.rh-tile-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.rh-icon{display:grid;place-items:center;width:44px;height:44px;flex-shrink:0;border-radius:12px;background:#ffffff1f;color:#fff;box-shadow:inset 0 1px 0 #ffffff35}
+.rh-icon svg{width:25px;height:25px}
+.rh-number{font-size:34px;line-height:1;font-weight:800;letter-spacing:-1px;color:#ffffff48;font-variant-numeric:tabular-nums}
+.rh-tile>strong{font-size:23px;line-height:1.3;font-weight:800;letter-spacing:-.8px;overflow-wrap:anywhere}
+.rh-description{font-size:13px;font-weight:400;line-height:1.7;color:#f0f4ff;margin:9px 0 18px}
+.rh-tile-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:auto;padding-top:13px;border-top:1px solid #ffffff22;font-size:12px;font-weight:500;color:#f0f4ff}
+.rh-arrow{font-size:21px;line-height:1}
+@media(max-width:1250px){header.roh nav{order:3;flex-basis:100%}.roc .ph{top:116px}}
+@media(max-width:950px){.rh-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.rh-home{padding:26px 22px 38px}.rh-grid .rh-tile{padding:20px}.rh-tile>strong{font-size:21px}}
+@media(max-width:700px){header.roh{position:relative;top:0;margin:8px;padding:13px 15px}header.roh .me{margin-left:0}header.roh .logo{white-space:normal}header.roh nav{overflow:visible;gap:3px}header.roh nav button{font-size:13px;padding:9px 10px}.roc .ph{top:0}.rh-home{padding:22px 16px 32px}.rh-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.rh-grid .rh-tile{min-height:210px;padding:17px}.rh-tile>strong{font-size:20px}.rh-heading h1{font-size:31px}.rh-summary{font-size:13px;gap:6px 13px}.rh-update{padding-top:0}.rh-description{font-size:12px}}
+@media(max-width:370px){.rh-grid{grid-template-columns:1fr}.rh-grid .rh-tile{min-height:200px}}
+@media(prefers-reduced-motion:reduce){.rh-grid .rh-tile{transition:none}.rh-grid .rh-tile:hover{transform:none}}
+
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -7179,7 +7231,7 @@ async function addCharts(buf, jobs) {
   const PERM_L = { stats: '통계 보기', people: '인원 현황 / 관리 + 임시 비밀번호', period: '월 기간 마감 + 항목별 분', hr: '인사평가 관리 + 월 백업 받기' };
   const PERM_D = { stats: '관리자 설정 → 통계', people: '명단 · 일반 인원 정보 수정 · 비밀번호 초기화', period: '이 달 시작 · 마감 · 마감 취소 · 항목 점수', hr: '전 파트 평가 · 마감 · 다운로드 · 기준 · 월 백업 파일 받기' };
   // v28.10 : 보기 전용 (팀장 등) = 왼쪽 메뉴 없이 위쪽 막대 + 첫 화면 박스 5개
-  const RO_NAV = [['education', '교육일정'], ['home', '처음 화면'], ['dash', '일일 업무현황'], ['stats', '통계'], ['acc', '사고'], ['people', '인원 현황'], ['leave', '연차 현황'], ['org', '조직도']];
+  const RO_NAV = [['home', '처음 화면'], ['dash', '일일업무현황'], ['stats', '통계'], ['acc', '사고'], ['education', '교육일정'], ['leave', '연차현황'], ['people', '인원현황'], ['org', '조직도']];
   const layoutOf = view => isRO() ? 'ro' : 'side';      // v28.17 : 사원 · 매니저 · 관리자 모두 같은 틀 (왼쪽 분류 · 위 세부)
   function shell(layout) {
     const m = S.me; layout = layout || S.layout || 'top'; S.layout = layout;
@@ -10108,26 +10160,86 @@ async function addCharts(buf, jobs) {
   }
   if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__st = { stAgg, stModel, stKeys, stRange, stState };   // 시험용 (로컬에서만)
   window.addEventListener('resize', () => { clearTimeout(S._str); S._str = setTimeout(() => { if (S.view === 'stats') stDraw(); }, 200); });
-  // v28.10 : 보기 전용 첫 화면 — 박스 5개 (누르면 그 화면)
-  function renderRoHome() {
-    const main = $('#main'), cp = curPeriod();
-    const box = (v, cls, ic, h, p, id) => `<button class="hubc rob ${cls}" data-go="${v}"><span class="go">›</span><div class="ic">${ic}</div><h2>${h}</h2><p>${p}</p><div class="st" id="${id}"><span class="muted">불러오는 중…</span></div></button>`;
-    main.innerHTML = pageHead('조립팀 현황', '<span class="muted" style="font-size:14px">보기 전용 · 보고 싶은 화면을 고르세요</span>') + `<div class="pgb"><div class="robox">
-      ${box('dash', 'd big', IC.dash, '일일 업무현황', '전 근무일 출근 · 조립 실적 · 그룹별 평균<br>월 업무현황 (사람별 한 달 실적)', 'rb_d')}
-      ${box('stats', 't', IC.chart, '통계', '조립 수량 · 평균 환산 · 그룹 비교<br>주 · 월 · 분기 · 연간', 'rb_t')}
-      ${box('people', 'p', IC.ppl, '인원 현황', '명단 · 직책 · 그룹 · 계정', 'rb_p')}
-      ${box('leave', 'l', IC.cal, '연차 현황', '연차 · 대체휴무 달력 · 토요근무', 'rb_l')}
-      ${box('org', 'o', IC.org, '조직도', '그룹 · 파트장 · 인원 배치', 'rb_o')}</div></div>`;
-    const tk = S.token, put = (id, h) => { const el = $('#' + id); if (el && tk === S.token && S.view === 'home') el.innerHTML = h; };
-    put('rb_t', `<span>${cp ? esc(ymLabel(cp.ym)) + (cp.status === '진행' ? ' 진행 중' : '') : '기간 없음'}</span><span>그래프</span>`);
-    api('daily', { date: '' }).then(r => { const D = ddModel(r), dd = r.date;
-      const k = (l, v, sm) => `<div><i>${l}</i><b>${v}</b>${sm ? `<small>${sm}</small>` : ''}</div>`;
-      put('rb_d', `<div class="rokpi"><div class="rkd">${esc(dLabel(dd))} 기준</div>${k('출근', (D.total - D.off.length) + '<em> / ' + D.total + '명</em>')}${k('조립 인원', D.work.length + '<em>명</em>', D.tw.length ? '목표 달성 ' + D.hit + '명' : '')}
-        ${k('조립 수량', D.sumQ + '<em>개</em>', '출고 ' + D.sumShip + ' · 제조 ' + D.sumMQ)}${k('평균 환산', D.work.length ? f1d(D.sumV / D.work.length) : '-', D.tgAvg ? '목표 ' + f1d(D.tgAvg) : '')}</div>`);
-      put('rb_l', `<span>${esc(dLabel(dd))} 휴무 ${D.off.length}명</span>`); }).catch(() => { put('rb_d', ''); put('rb_l', ''); });
-    api('people').then(P => { S._ppl = P; const rows = P.rows, gs = new Set(rows.map(x => x.grp).filter(Boolean));
-      put('rb_p', `<span>명단 ${rows.length}명</span><span>등록 ${rows.filter(x => x.acct).length}</span>`); put('rb_o', `<span>${gs.size}개 그룹</span>`); }).catch(() => { put('rb_p', ''); put('rb_o', ''); });
+  // Read-only home: today in Korea; refresh on initial entry or explicit user request only.
+  const roToday = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const roClock = () => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+  function roSummary(r) {
+    const D = ddModel(r);
+    const hasSaved = (r.people || []).some(p => p.sum && typeof p.sum === 'object' && Object.keys(p.sum).length)
+      || !!(r.line && (r.line.conv != null || r.line.qty != null));
+    return { D, hasSaved, attendance: hasSaved ? `${D.total - D.off.length}/${D.total}명` : '집계 전',
+      assembly: hasSaved ? `${D.sumQ}개` : '집계 전', average: hasSaved ? (D.work.length ? f1d(D.sumV / D.work.length) : '—') : '집계 전' };
   }
+  function renderRoHome() {
+    if (!isRO()) return;
+    const main = $('#main');
+    const cards = [
+      ['dash', IC.dash, '일일업무현황', '출근 · 조립 실적 · 월별 현황', '전 근무일 기준'],
+      ['stats', IC.chart, '통계', '수량 · 평균 환산 · 그룹 비교', '주 · 월 · 분기 · 연간'],
+      ['acc', IC.warn, '사고', '사고 유형 · 접수 · 처리 내역', '사고 현황 확인'],
+      ['education', IC.hr, '교육일정', '교육 날짜 · 시간 · 장소', '회차별 대상자 확인'],
+      ['leave', IC.cal, '연차현황', '연차 · 대체휴무 · 토요근무', '휴무 일정 확인'],
+      ['people', IC.ppl, '인원현황', '직원 명단 · 직책 · 소속', '구성원 확인'],
+      ['org', IC.org, '조직도', '그룹 · 파트장 · 인원 배치', '조직 구성 확인']
+    ];
+    main.innerHTML = `<section id="roHome" class="rh-home">
+      <div class="rh-heading"><div><div class="rh-eyebrow">ASSEMBLY TEAM</div><h1>조립팀 <span>현황</span></h1>
+        <div class="rh-summary" aria-live="polite"><span class="rh-date" id="rhDate">오늘 ${esc(dLabel(roToday()))}</span><span title="직원 명단에서 등록된 휴무자를 제외한 인원입니다. 출퇴근 기록 집계가 아닙니다.">출근 <b id="rhAttendance">집계 전</b></span><span>조립 <b id="rhAssembly">집계 전</b></span><span>평균 환산 <b id="rhAverage">집계 전</b></span></div></div>
+        <div class="rh-update"><span id="rhUpdated" role="status">불러오는 중…</span><button type="button" id="rhRefresh" aria-label="오늘 조립팀 현황 새로고침">↻ 새로고침</button></div></div>
+      <div class="rh-section"><h2>업무 바로가기</h2><span>오늘 저장 자료 · 새로고침 버튼으로 최신 조회</span></div>
+      <div class="rh-grid">${cards.map(([v, ic, title, description, foot], i) => `<button type="button" class="rh-tile" data-go="${v}"><span class="rh-tile-top"><span class="rh-icon" aria-hidden="true">${ic}</span><span class="rh-number" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span></span><strong>${title}</strong><span class="rh-description">${description}</span><span class="rh-tile-bottom"><span id="rhFoot-${v}">${foot}</span><span class="rh-arrow" aria-hidden="true">↗</span></span></button>`).join('')}</div>
+    </section>`;
+    const home = $('#roHome');
+    home._ro = { token: S.token, uid: S.me.id, busy: false, date: roToday(), lastSuccess: '' };
+    $('#rhRefresh', home).onclick = () => refreshRoHome();
+    return refreshRoHome();
+  }
+  async function refreshRoHome() {
+    const home = $('#roHome');
+    if (!home || !home._ro || !isRO() || S.view !== 'home' || document.hidden) return;
+    const state = home._ro;
+    if (state.busy || state.token !== S.token || state.uid !== S.me.id) return;
+    const valid = () => $('#roHome') === home && S.view === 'home' && isRO() && S.token === state.token && S.me.id === state.uid;
+    const text = (id, value) => { const el = $('#' + id, home); if (el) el.textContent = value; };
+    const resetDate = date => {
+      if (date === state.date) return;
+      state.date = date; state.lastSuccess = '';
+      text('rhDate', '오늘 ' + dLabel(date));
+      ['rhAttendance', 'rhAssembly', 'rhAverage'].forEach(id => text(id, '집계 전'));
+      text('rhFoot-leave', '휴무 일정 확인');
+    };
+    const button = $('#rhRefresh', home);
+    state.busy = true; button.disabled = true;
+    let date = roToday(); resetDate(date);
+    text('rhUpdated', state.lastSuccess ? '갱신 중 · 마지막 갱신 ' + state.lastSuccess : '불러오는 중…');
+    try {
+      let r = await api('daily', { date });
+      if (!valid()) return;
+      // Use the server's Korean date if the PC clock differs or midnight passed.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(r.today || '') && r.today !== date) {
+        date = r.today; resetDate(date);
+        r = await api('daily', { date });
+        if (!valid()) return;
+      }
+      if (r.date !== date || (r.today && r.today !== date)) throw new Error('오늘 날짜의 자료를 확인하지 못했습니다');
+      if (!Array.isArray(r.people)) throw new Error('오늘 인원 자료를 확인하지 못했습니다');
+      const summary = roSummary(r), D = summary.D;
+      text('rhDate', '오늘 ' + dLabel(date));
+      text('rhAttendance', summary.attendance); text('rhAssembly', summary.assembly); text('rhAverage', summary.average);
+      text('rhFoot-leave', `오늘 등록 휴무 ${D.off.length}명`);
+      text('rhFoot-people', `명단 ${r.people.length}명`);
+      text('rhFoot-org', `${new Set(r.people.map(p => p.grp).filter(Boolean)).size}개 그룹`);
+      state.lastSuccess = roClock();
+      text('rhUpdated', '마지막 갱신 ' + state.lastSuccess + (summary.hasSaved ? '' : ' · 집계 전'));
+    } catch (e) {
+      if (!valid()) return;
+      text('rhUpdated', state.lastSuccess ? '갱신 실패 · 마지막 갱신 ' + state.lastSuccess : '조회 실패 · 새로고침해 주세요');
+    } finally {
+      state.busy = false;
+      if (valid()) button.disabled = false;
+    }
+  }
+
   // ---- v28.15 : 제조 내역 (매니저 = 담당 그룹 · 관리자 = 전체) — 관리툴 [제조 내역 조회]와 같은 기준 + 관리툴 대조 ----
   const mkind = sn => !sn ? '' : /^\d+-/.test(sn) ? '아이웍스' : /^\d+_/.test(sn) ? '추천조립' : '기타';
   const mdl = d => d.slice(5).replace('-', '/');
@@ -11045,6 +11157,7 @@ async function addCharts(buf, jobs) {
   // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
   setInterval(() => { if (S.me && S.me.acc) void updateAccBadge(); if(S.me)void updateEduBadge(false); }, 90000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && S.me && S.me.acc) void updateAccBadge(); if(!document.hidden && S.me)void updateEduBadge(false); });
+  // Read-only summary uses an initial load and the explicit refresh button only.
   boot();
 })();
 </script>
