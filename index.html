@@ -1696,6 +1696,71 @@ body.input-focus .czb > .content{flex:1 1 100%;width:100%;min-width:0}
 body.input-focus .cz #main.pg:has(>.gridwrap){padding:6px 12px 0}
 body.input-focus #main .gridwrap{max-height:calc(100vh - 240px)!important}
 body.input-focus #inputFocus{background:#1f63e6;color:#fff}
+
+/* v5 2026-10-21 : 일일 업무현황 그룹 카드 2줄형 전용. 다른 화면에 영향 없음 */
+.ddgc.ddgc-v5{min-width:0}
+.ddgc-v5 .ddgh{padding:9px 10px 10px}
+.ddgc-v5 .ddgh .t{min-width:0;gap:6px}
+.ddgc-v5 .ddgh .t>.glink{font-size:14px;font-weight:800;color:var(--ink);white-space:nowrap}
+.ddgc-v5 .ddgh .t>span:not(.glink){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ddgc-v5 .ddsum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:8px}
+.ddgc-v5 .ddsum>span{display:block;min-width:0;text-align:center;padding:5px 2px 4px;background:rgba(128,148,180,.075);border-radius:7px;line-height:1.35}
+.ddgc-v5 .ddsum small{display:block;font-size:10px;color:var(--sub);font-weight:650;white-space:nowrap}
+.ddgc-v5 .ddsum b{display:block;font-size:14px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ddgc-v5 .ddsum .ddsum-goal b{color:#1d63cf}
+.ddgc-v5 .ddsum .ddsum-rate{background:rgba(19,151,96,.08)}
+.ddgc-v5 .ddsum .ddsum-rate b{color:#0c8b61}
+.ddgc-v5 .ddvol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:5px}
+.ddgc-v5 .ddvol>span{min-width:0;display:flex;justify-content:center;align-items:center;gap:6px;padding:5px 1px;border-radius:6px;background:rgba(128,148,180,.045);font-size:11px;color:var(--sub);white-space:nowrap}
+.ddgc-v5 .ddvol b{font-weight:850;font-size:13px;font-variant-numeric:tabular-nums}
+.ddgc-v5 .ddvol .ddvol-asm b{color:#165bc3}
+.ddgc-v5 .ddvol .ddvol-ship b{color:#bc620c}
+.ddgc-v5 .ddvol .ddvol-mfg b{color:#7435cb}
+.ddgc-v5 .ddvol .glink{cursor:pointer}
+.ddgc-v5 .ddvol .glink:hover{text-decoration:underline}
+.ddgc-v5 .ddextra{font-size:10.5px;color:var(--sub);margin-top:5px}
+/* 두 줄: (왼쪽) 이름·목표·달성률 / 환산 그래프; (오른쪽) 수량·출고·제조 */
+.ddgc-v5 .ddpr.ddpr-v5{display:grid!important;grid-template-columns:minmax(0,1fr) 96px!important;grid-template-rows:auto auto;gap:5px 7px;align-items:center;min-width:0;padding:8px 9px;border-bottom:1px solid var(--line2);font-size:12px}
+.ddgc-v5 .ddpr-v5>.ddrowhead{grid-column:1;grid-row:1;display:flex;align-items:center;gap:4px;min-width:0}
+.ddgc-v5 .ddpr-v5 .n{flex:0 1 auto;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.ddgc-v5 .ddpr-v5 .n .d1{font-size:10px;margin-right:3px;padding:0 4px}
+.ddgc-v5 .ddpr-v5 .n i{font-size:10px;margin-left:2px}
+.ddgc-v5 .ddpr-v5 .ddtarget{flex-shrink:0;color:#165bc3;background:rgba(29,107,243,.07);padding:2px 4px;border-radius:5px;white-space:nowrap;font-size:10.5px;line-height:16px}
+.ddgc-v5 .ddpr-v5 .ddtarget b{font-weight:750}
+.ddgc-v5 .ddpr-v5 .ddrate{flex-shrink:0;border-radius:5px;padding:2px 4px;white-space:nowrap;font-weight:750;font-size:10.5px;line-height:16px;color:#687489;background:rgba(128,148,180,.08)}
+.ddgc-v5 .ddpr-v5 .ddrate.hit{color:#06835a;background:rgba(15,157,100,.09)}
+.ddgc-v5 .ddpr-v5 .ddperf{grid-column:1;grid-row:2;min-width:0}
+.ddgc-v5 .ddpr-v5 .ddperf .ddtr{height:16px;overflow:hidden;background:#eef1f5;border-radius:12px}
+.ddgc-v5 .ddpr-v5 .ddperf .ddtr>i{border-radius:12px}
+.ddgc-v5 .ddpr-v5 .ddperf .ddtr>i.o{border-radius:0 12px 12px 0}
+.ddgc-v5 .ddpr-v5 .ddperf .ddtr>b{top:0;bottom:0;background:#283750;width:2px;z-index:1}
+.ddgc-v5 .ddpr-v5 .ddperf .ddpv{position:absolute;right:3px;top:1px;bottom:1px;z-index:2;display:flex;align-items:center;padding:0 3px;border-radius:4px;font-size:10.5px;font-weight:800;white-space:nowrap;color:#263b5a;background:rgba(255,255,255,.76);font-variant-numeric:tabular-nums;pointer-events:none}
+.ddgc-v5 .ddpr-v5 .ddcounts{grid-column:2;grid-row:1 / span 2;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:2px;text-align:center;font-variant-numeric:tabular-nums}
+.ddgc-v5 .ddpr-v5 .ddcounts span{min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center}
+.ddgc-v5 .ddpr-v5 .ddcounts b{font-size:12.5px;font-weight:800;line-height:1.2}
+.ddgc-v5 .ddpr-v5 .ddcounts small{font-size:9px;font-weight:650;color:var(--sub);white-space:nowrap}
+.ddgc-v5 .ddpr-v5 .ddcounts .s b{color:#b46b14}
+.ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#713dcc}
+.ddgc-v5 .ddpr-v5.ddpr-status{grid-template-rows:1fr;min-height:35px}
+.ddgc-v5 .ddpr-v5.ddpr-status>.ddrowhead{grid-column:1;grid-row:1}
+.ddgc-v5 .ddpr-v5.ddpr-status>.ddst{grid-column:2;grid-row:1;justify-self:center;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+html[data-theme=dark] .ddgc-v5 .ddsum>span{background:rgba(128,148,180,.10)}
+html[data-theme=dark] .ddgc-v5 .ddsum b{color:#e9edf5}
+html[data-theme=dark] .ddgc-v5 .ddsum .ddsum-goal b{color:#8fbaff}
+html[data-theme=dark] .ddgc-v5 .ddsum .ddsum-rate b{color:#65d6ae}
+html[data-theme=dark] .ddgc-v5 .ddvol>span{background:rgba(128,148,180,.10)}
+html[data-theme=dark] .ddgc-v5 .ddvol .ddvol-asm b{color:#9cc2ff}
+html[data-theme=dark] .ddgc-v5 .ddvol .ddvol-ship b{color:#f5b972}
+html[data-theme=dark] .ddgc-v5 .ddvol .ddvol-mfg b{color:#c4a8f7}
+html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddtarget{color:#9fc4ff;background:rgba(35,106,220,.16)}
+html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddrate.hit{color:#79d9b2}
+html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddpv{color:#1b293d;background:rgba(255,255,255,.85)}
+html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .s b{color:#f5b972}
+html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
+@media (max-width:520px){.ddgc-v5 .ddpr.ddpr-v5{grid-template-columns:minmax(0,1fr) 90px!important;gap:4px 5px;padding:7px 8px}}
+@media (max-width:1200px){.ddgroups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:780px){.ddgroups{grid-template-columns:minmax(0,1fr)}}
+/* End daily dashboard v5 */
 </style>
 <style>
 /* Unified compact search — 2026-10-21; visual only, zero effect on existing grid widths. */
@@ -8164,15 +8229,28 @@ async function addCharts(buf, jobs) {
         ${D.P.some(p => p.half) ? `<div class="muted" style="font-size:12px;margin-top:6px">반차 : ${D.P.filter(p => p.half).map(p => esc(p.disp) + ' (' + esc(p.half) + ')').join(', ')}</div>` : ''}
         <h3 class="ddh" style="margin-top:14px">업무배정<small>지원차출 ${D.sup.length}명${r.asgAt ? ' · 마지막 수정 ' + esc(r.asgAt) : ''}</small></h3>
         <div class="ddasg">${tasks.concat(Object.values(D.sup.reduce((a, p) => (tasks.includes(p.task) || (a[p.task] = p.task), a), {}))).map(t => { const L = D.sup.filter(p => p.task === t); return L.length ? `<div class="ddac"><div class="t">${esc(t)}<span>${L.length}</span></div>${L.map(p => `<span class="ddpn">${gdot(p.grp).replace(/>[^<]*$/, '>')}${esc(p.disp)}</span>`).join('')}</div>` : ''; }).join('') || '<div class="muted" style="font-size:12.5px">배정 없음' + (staff || isRO() ? '' : ' — [업무배정 · 휴무 입력]에서 넣습니다') + '</div>'}</div></div></div>`;
-    h += `<div class="card ddleg"><b>그룹별 인원</b><span class="ddlg"><span style="--c:#1f5fbf">목표 달성</span><span style="--c:#e39a3b">목표 미달</span><span class="hatch">기타시간 환산</span><span style="--c:#1d2430">목표</span><span class="muted" style="font-size:inherit">수량 = 조립 · <b class="shipv">출N</b> = 출고 · <b class="mfgv">제N</b> = 제조</span></span><span style="flex:1"></span>${staff ? '' : '<span class="muted" style="font-size:12px">이름 = 사람 카드 (특이사항 · 월 통계 · 연차) · [일일] = 그날 입력 화면 · 💬 = 특이사항 있음</span>'}</div>`;
-    h += '<div class="ddgroups">' + D.G.map(x => `<div class="card ddgc" style="--gc:${gcol(x.g)}"><div class="ddgh"><div class="t">${staff ? gdot(x.g) : `<span class="glink" data-gm="${esc(x.g)}" title="${esc(x.g)} 월 업무현황">${gdot(x.g)} ›</span>`}<span>${esc(x.mg || '')}</span>${x.g === '라인' && canLine ? `<button class="sm" id="ddline">총량 입력</button>` : ''}</div>
-        <div class="s"><span>출근 <b>${x.att}</b>/${x.n}</span><span>평균 <b>${f1d(x.avg)}</b></span><span>조립 <b>${x.q}</b>${x.ship ? ` <em class="shipv">출고 ${x.ship}</em>` : ''}${x.mq ? ` <em class="mfgv${staff ? '' : ' glink'}" ${staff ? '' : `data-gmf="${esc(x.g)}" title="제조 내역"`}>제조 ${x.mq}</em>` : ''}</span>${x.sup ? `<span>지원 <b>${x.sup}</b></span>` : ''}${x.g === '라인' && r.line ? '<span class="muted">총량 배분</span>' : ''}</div></div>
+    h += `<div class="card ddleg"><b>그룹별 인원</b><span class="ddlg"><span style="--c:#1f5fbf">목표 달성</span><span style="--c:#e39a3b">목표 미달</span><span class="hatch">기타시간 환산</span><span style="--c:#1d2430">목표</span><span class="muted" style="font-size:inherit">수량 = 조립 · <b class="shipv">출고</b> · <b class="mfgv">제조</b> · 카드에 개인 목표/달성률 표시</span></span><span style="flex:1"></span>${staff ? '' : '<span class="muted" style="font-size:12px">이름 = 사람 카드 (특이사항 · 월 통계 · 연차) · [일일] = 그날 입력 화면 · 💬 = 특이사항 있음</span>'}</div>`;
+    h += '<div class="ddgroups">' + D.G.map(x => {
+      // 평균/목표는 기존 일일모델의 값 재사용. 개인 목표 미설정 또는 근무 실적 없음이면 달성률을 임의로 0% 처리하지 않음.
+      const groupRate = x.avg != null && x.tg > 0 ? Math.round(x.avg / x.tg * 100) : null;
+      return `<div class="card ddgc ddgc-v5" style="--gc:${gcol(x.g)}"><div class="ddgh"><div class="t">${staff ? gdot(x.g) : `<span class="glink" data-gm="${esc(x.g)}" title="${esc(x.g)} 월 업무현황">${gdot(x.g)} ›</span>`}<span>${esc(x.mg || '')}</span>${x.g === '라인' && canLine ? `<button class="sm" id="ddline">총량 입력</button>` : ''}</div>
+        <div class="ddsum"><span><small>출근</small><b>${x.att}/${x.n}</b></span><span><small>평균</small><b>${f1d(x.avg)}</b></span><span class="ddsum-goal"><small>목표</small><b>${x.tg > 0 ? f1d(x.tg) : '-'}</b></span><span class="ddsum-rate"><small>달성률</small><b>${groupRate == null ? '-' : groupRate + '%'}</b></span></div>
+        <div class="ddvol"><span class="ddvol-asm">조립 <b>${x.q}</b></span><span class="ddvol-ship">출고 <b>${x.ship || 0}</b></span><span class="ddvol-mfg${staff ? '' : ' glink'}" ${staff ? '' : `data-gmf="${esc(x.g)}" title="제조 내역"`}>제조 <b>${x.mq || 0}</b></span></div>
+        ${x.sup || (x.g === '라인' && r.line) ? `<div class="ddextra">${x.sup ? '지원 ' + x.sup + '명' : ''}${x.sup && x.g === '라인' && r.line ? ' · ' : ''}${x.g === '라인' && r.line ? '총량 배분' : ''}</div>` : ''}</div>
       ${x.L.map(p => {
         const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${!staff && p.note ? ` <span class="memo" title="${esc(['💬 ' + dLabel(r.date) + ' 특이사항', p.note.reason ? '사유 : ' + p.note.reason : '', p.note.feedback ? '피드백 : ' + p.note.feedback : '', p.note.by ? '— ' + p.note.by : ''].filter(Boolean).join('\n'))}">💬</span>` : ''}${canNote(p) && p.uid && p.oth > 0.05 ? `<button class="oth1" data-oth="1" title="기타시간 사유 보기 · 고치기">⏱</button>` : ''}</div>`;
-        if (p.kind === 'work') return `<div class="ddpr">${nm}${ddBar(p.v, p.target, p.oth)}<div class="v" style="color:${p.target && p.v < p.target ? '#b45309' : '#1f5fbf'}" title="${p.oth > 0.05 ? '기타시간 ' + f1d(p.oth) + ' 포함' : ''}">${f1d(p.v)}</div><div class="q" title="조립 ${p.q}대${p.ban ? ' · 반조 ' + p.ban : ''}${p.ship ? ' · 출고 ' + p.ship : ''}${p.mq ? ' · 제조 ' + p.mq : ''}">${p.q || ''}${p.ship ? `<i class="sq">출${p.ship}</i>` : ''}${p.mq ? `<i class="mq">제${p.mq}</i>` : ''}</div></div>`;
+        if (p.kind === 'work') {
+          const rate = p.target > 0 ? Math.round(p.v / p.target * 100) : null;
+          const label = f1d(p.v) + (p.target > 0 ? ' / ' + f1d(p.target) : '');
+          const bar = ddBar(p.v, p.target, p.oth).replace('</div>', `<span class="ddpv">${label}</span></div>`);
+          return `<div class="ddpr ddpr-v5 ddpr-work"><div class="ddrowhead">${nm}<span class="ddtarget">목표 <b>${p.target > 0 ? f1d(p.target) : '-'}</b></span><span class="ddrate ${rate != null && rate >= 100 ? 'hit' : ''}">${rate == null ? '-' : rate + '%'}</span></div>
+            <div class="ddperf" title="환산 ${f1d(p.v)}${p.target ? ' · 개인 목표 ' + f1d(p.target) : ' · 목표 미설정'}${p.oth > 0.05 ? ' · 기타시간 환산 ' + f1d(p.oth) : ''}">${bar}</div>
+            <div class="ddcounts" title="조립 ${p.q}대${p.ban ? ' · 반조 ' + p.ban : ''} · 출고 ${p.ship || 0}대 · 제조 ${p.mq || 0}대"><span><b>${p.q ?? 0}</b><small>수량</small></span><span class="s"><b>${p.ship || 0}</b><small>출고</small></span><span class="m"><b>${p.mq || 0}</b><small>제조</small></span></div></div>`;
+        }
         const [t, c] = p.kind === 'off' ? [p.off, DD_OFFCLS[p.off] || 'lv'] : p.kind === 'sup' ? [sh(p.task), 'up'] : p.kind === 'mgr' ? [p.title, 'ch'] : p.kind === 'zero' ? ['실적 없음', 'ch'] : ['미입력', 'no'];
-        return `<div class="ddpr">${nm}<span class="ddst ${c}">${esc(t)}</span><div></div><div></div></div>`;
-      }).join('')}</div>`).join('') + '</div>';
+        return `<div class="ddpr ddpr-v5 ddpr-status"><div class="ddrowhead">${nm}</div><span class="ddst ${c}">${esc(t)}</span></div>`;
+      }).join('')}</div>`;
+    }).join('') + '</div>';
     if (!staff) {
       const ns = (r.notes || []).map(n => D.P.find(p => p.name === normName(n.name)) && Object.assign({ p: D.P.find(p => p.name === normName(n.name)) }, n)).filter(Boolean);
       h += `<div class="card ddnotes"><h3 class="ddh">특이사항<small>관리자 · 매니저만 보임 · 담당 매니저와 관리자가 작성</small></h3>
