@@ -1469,6 +1469,9 @@ html[data-theme=dark] .hmk{background:#1d2c4d;color:#8fb4ff}
 .czr .rb{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;background:transparent;border-radius:0;color:#cfd6e2;padding:16px 2px;font-size:12px;font-weight:700;box-shadow:none;line-height:1.2}
 .czr .rb svg{width:24px;height:24px}.czr .rb:hover{background:rgba(255,255,255,.07);color:#fff}.czr .rb.on{background:#1f63e6;color:#fff}
 .czr .rb .bd{position:absolute;top:8px;right:14px;background:#e5484d;color:#fff;border-radius:99px;padding:0 6px;font-size:11px;font-weight:800;font-style:normal}
+/* 사고 당일 알림: 보기 전용 관리자 상단 메뉴에서도 같은 숫자 배지 */
+header.roh nav button[data-v="acc"]{position:relative}
+header.roh nav button .bd{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:1px 4px;line-height:15px;font-size:10px;font-style:normal;border-radius:99px;background:#e5484d;color:#fff;font-weight:800;text-align:center}
 .czr .grow{flex:1}.czr .thm{padding:12px 0}
 .cz .content{background:#fff}.cz .ph{top:60px;background:rgba(255,255,255,.94)}
 .cz .ddtabs,.cz .admseg{display:none}
@@ -6235,7 +6238,7 @@ async function addCharts(buf, jobs) {
             return `<button data-am="${ym}" class="${Z.ym === ym ? 'on' : ''} ${n ? '' : 'z'}" title="${ymLab(ym)}${m ? (m.src === 'xl' ? ' · 엑셀' : ' · 웹') : ''}${m && m.lock ? ' · 잠김' : ''}">${+ym.slice(5)}월<small>${n || ''}</small></button>`; }).join('')}</div>
           <div class="grow"></div>
           ${canEdit() ? '<button class="primary" id="acadd">+ 사고 등록</button>' : ''}
-          ${scope() === 'all' ? '<button id="acxl" title="사고현황 엑셀과 같은 양식 (달마다 시트)">기존 양식 엑셀</button><button id="acan" title="정리된 엑셀을 받아 Claude에 올리면 분석 보고서를 받을 수 있습니다">분석용 내보내기</button>' : ''}</div>
+          ${scope() === 'all' && (A.S.me.role === '관리자' || canEdit()) ? '<button id="acxl" title="사고현황 엑셀과 같은 양식 (달마다 시트)">기존 양식 엑셀</button><button id="acan" title="정리된 엑셀을 받아 Claude에 올리면 분석 보고서를 받을 수 있습니다">분석용 내보내기</button>' : ''}</div>
         <div class="r">${self ? '' : `<select id="acg"><option value="">전체 그룹</option>${groups.map(g => `<option ${g === Z.fg ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>`}
           <span class="seg sm2"><button data-ak="" class="${!Z.fk ? 'on' : ''}">전체 구분</button>${KINDS.map(k => `<button data-ak="${k}" class="${Z.fk === k ? 'on' : ''}">${k}${kc[k] ? ' ' + kc[k] : ''}</button>`).join('')}</span>
           <input id="acq" placeholder="${self ? '주문번호 · 내용' : '이름 · 주문번호 · 제품 · 내용'} 찾기" value="${esc(Z.q)}" autocomplete="off" style="width:230px"></div>
@@ -6324,7 +6327,7 @@ async function addCharts(buf, jobs) {
       if ($('[data-ed]', bg)) $('[data-ed]', bg).onclick = () => { close(); edit(it, imgs); };
       if ($('[data-del]', bg)) $('[data-del]', bg).onclick = async () => {
         if (!(await A.confirmBox(`<b>${esc(it.name)}</b> ${esc(it.d)} ${esc(it.kind)} 사고를 지울까요?<br><span class="muted">사고 통계 · 인사평가에서도 빠집니다. 지운 기록은 남습니다.</span>`, '지우기'))) return;
-        try { await A.api('accDel', { id: it.id }); close(); A.toast('지웠습니다'); reload(); } catch (e) { A.toast(e.message, true); }
+        try { await A.api('accDel', { id: it.id }); close(); A.toast('지웠습니다'); await reload(); if (A.updateAccBadge) A.updateAccBadge(); } catch (e) { A.toast(e.message, true); }
       };
     }, 'wide accd');
   }
@@ -6478,7 +6481,7 @@ async function addCharts(buf, jobs) {
           }
           dirty = false; A.toast(it ? '고쳤습니다' : '저장했습니다 · ' + ymLab(r.item.ym) + ' ' + r.item.name);
           const more = !it && $('#fmore', bg) && $('#fmore', bg).checked; close();
-          await reload(); if (more) edit(null);
+          await reload(); if (A.updateAccBadge) A.updateAccBadge(); if (more) edit(null);
         } catch (e) { A.toast(e.message, true); busy = false; $('[data-s]', bg).disabled = false; }
       };
       setTimeout(() => { if (!it) $('#fo', bg).focus(); }, 50);
@@ -6938,7 +6941,7 @@ async function addCharts(buf, jobs) {
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}</button>`).join('')}</nav>
+        <nav>${RO_NAV.map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -6972,7 +6975,7 @@ async function addCharts(buf, jobs) {
         </header>
         <div class="czb">
           <aside class="czr">
-            ${rb('work', 'dash', '업무', IC.dash)}${rb('leave', 'leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}${m.acc ? rb('acc', 'acc', m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn) : ''}${m.hr ? rb('hr', 'hr', '인사평가', IC.hr) : ''}${canSettings() ? rb('adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear) : ''}
+            ${rb('work', 'dash', '업무', IC.dash)}${rb('leave', 'leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}${m.acc ? rb('acc', 'acc', m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>') : ''}${m.hr ? rb('hr', 'hr', '인사평가', IC.hr) : ''}${canSettings() ? rb('adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear) : ''}
             <div class="grow"></div>${thmBtn('rb')}<button id="lo" class="rb" title="로그아웃"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg><span>로그아웃</span></button>
           </aside>
           <div class="content"><div id="proxy"></div><main id="main" class="pg"></main></div>
@@ -6990,6 +6993,7 @@ async function addCharts(buf, jobs) {
     $('#lo').onclick = () => logout();
     $('#pw').onclick = () => changePin();
     updateBadge();
+    void updateAccBadge();
   }
   function setNav() {
     const cur = isRO() && S.view === 'people' && S.pTab === 'org' ? 'org' : S.view;     // v28.10 : 보기 전용의 [조직도] = 인원 화면의 조직도 탭
@@ -7015,6 +7019,29 @@ async function addCharts(buf, jobs) {
     const b = $('#lvbd'), c = window.Leave && window.Leave.counts && window.Leave.counts();
     if (!b || !c) return;
     const n = c.mine; b.textContent = n; b.classList.toggle('hide', !n);
+  }
+  // v6: 오늘(한국시간) 등록한 사고만 표시. 서버가 각 계정의 조회 권한으로 건수를 계산한다.
+  // 브라우저에서 전체 건수를 받은 뒤 필터링하지 않아 일반 사원에게 타인 사고가 노출되지 않는다.
+  async function updateAccBadge() {
+    const token = S.token, uid = S.me && S.me.id;
+    if (!token || !S.me || !S.me.acc || !document.querySelector('#acbd, #acbdro')) return;
+    if (updateAccBadge._busy === token) return;
+    updateAccBadge._busy = token;
+    try {
+      const data = await api('accNotice');
+      if (token !== S.token || !S.me || uid !== S.me.id) return;
+      const n = Math.max(0, Number(data.count) || 0);
+      document.querySelectorAll('#acbd, #acbdro').forEach(b => {
+        b.textContent = n > 99 ? '99+' : String(n);
+        b.title = '오늘 등록된 사고 ' + n + '건';
+        b.classList.toggle('hide', !n);
+      });
+    } catch (e) {
+      // 연결 문제에서 기존 데이터/화면을 바꾸지 않음. 새로고침 또는 다음 확인 때 다시 조회.
+      console.warn('[사고 알림] 당일 건수를 확인하지 못했습니다:', e && e.message);
+    } finally {
+      if (updateAccBadge._busy === token) updateAccBadge._busy = null;
+    }
   }
   async function go(view, opt) {
     if (view === 'att') { if (window.HR && window.HR.quickAtt) window.HR.quickAtt(); return; }   // 근태 입력 = 창만 열림
@@ -10692,8 +10719,11 @@ async function addCharts(buf, jobs) {
     go(v, { _pop: true });
   });
   if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter, loadLib });
-  if (window.ACC) window.ACC.init({ api, modal, toast, confirmBox, S, C, saveBlob, go, gdot, gcol, loadLib, pageHead, normName, peopleNames: () => ((S._ppl && S._ppl.rows) || []).map(x => x.name) });
+  if (window.ACC) window.ACC.init({ api, modal, toast, confirmBox, S, C, saveBlob, go, gdot, gcol, loadLib, pageHead, normName, peopleNames: () => ((S._ppl && S._ppl.rows) || []).map(x => x.name), updateAccBadge });
   if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter });
+  // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
+  setInterval(() => { if (S.me && S.me.acc) void updateAccBadge(); }, 90000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && S.me && S.me.acc) void updateAccBadge(); });
   boot();
 })();
 </script>
