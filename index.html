@@ -2061,6 +2061,18 @@ html[data-theme=dark] .ptg tr.ptchg td{background:#3a3320}
 .ddcounts .hm b{font-size:12.5px}.ddcounts .hm i{font-style:normal}.ddcounts .hm .y{color:#1e7a3c}.ddcounts .hm .n{color:#c62828}
 html[data-theme=dark] .ddcounts .hm .y{color:#7fd39a}html[data-theme=dark] .ddcounts .hm .n{color:#eb9292}
 .ddgc-v5 .ddpr-v5:has(.ddcounts .hm){grid-template-columns:minmax(0,1fr) 134px!important}
+/* v28.52 : 지원 보정 · 출근 확인 */
+.adjt{display:inline-block;font-size:9.5px;font-weight:800;line-height:1;padding:2px 4px;border-radius:4px;margin-left:3px;vertical-align:1px;background:#ede9fe;color:#6d28d9;cursor:help}
+.adjt.training{background:#dcfce7;color:#15803d}.adjt.support{background:#e0f2fe;color:#0369a1}.adjt.none{background:#fee2e2;color:#b91c1c}
+table.bd td.adjc{box-shadow:inset 0 -3px 0 #8b5cf6}
+.adjn{display:block;font-size:10.5px;color:#6d28d9;font-weight:700}
+.stat.adjs{background:#f5f3ff;border:1px solid #ddd6fe}
+html[data-theme=dark] .adjt{background:#3b2f63;color:#d8ccff}html[data-theme=dark] .stat.adjs{background:#2a2442;border-color:#4c3f80}
+.mxl.mxo{font-size:11px;padding:2px 6px;margin-left:3px;opacity:.75}
+.mteam{margin-bottom:10px}
+.ddpend{background:#fff4e5!important;color:#b45309!important;border:1px solid #f5c98b!important}
+.ckb{white-space:nowrap}.ckb button{margin-right:3px}
+.stat .adjl{font-size:11px;color:#6d28d9;font-weight:700;margin-top:2px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -2460,10 +2472,49 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     return out;
   }
 
+
+  // ---- v28.52 : 지원 보정 (2026년 11월 귀속부터) — 원본 요약은 그대로 두고 계산용 복사본만 만든다
+  //  · 기타시간 6항목 합계 240분 이상 → 기타시간 점수 = 시간 × (전날까지 본인 평균 ÷ 8.5)  (30분당 1점 대신)
+  //  · 실적 0인 날 + 지원/교육 확인(또는 업무배정) → 그날 점수 = 전날까지 평균 (근무일 인정)
+  //  · 전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산
+  const ADJ_START = '2026-11', ADJ_MIN = 240;
+  const otherMinOf = s => OTHER.reduce((a, [k]) => a + num(((s || {}).o || {})[k]), 0);
+  // items : 그 귀속월의 [{date, sum}] · o : { ym, mins, prev(직전월 평균|null), conf:{date:'support'|'training'|...}, asg:{date:task}, off:{date:true} }
+  function adjustMonth(items, o) {
+    o = o || {};
+    const src = (items || []).slice().sort((a, b) => a.date < b.date ? -1 : 1);
+    if (!o.ym || o.ym < ADJ_START) return { items: src, meta: {}, avg: src.length ? calcMonth(src, 0, o.mins).f7 : null, ev: src.length ? calcMonth(src, 0, o.mins).ev : 0, on: false };
+    const conf = o.conf || {}, asg = o.asg || {}, off = o.off || {}, byDate = {};
+    src.forEach(it => (byDate[it.date] = it));
+    Object.keys(conf).forEach(d => { if (['support', 'training'].includes(conf[d]) && !byDate[d] && !off[d]) byDate[d] = { date: d, sum: null, virtual: true }; });
+    Object.keys(asg).forEach(d => { if (!byDate[d] && !off[d] && !conf[d]) byDate[d] = { date: d, sum: null, virtual: true, byAsg: true }; });
+    const dates = Object.keys(byDate).sort(), out = [], meta = {};
+    for (const d of dates) {
+      const it = byDate[d], s0 = it.sum || { d: 1, t: {}, r10: {}, o: {}, e2: 0, f7: 0 }, raw = sumDay(s0, o.mins), min = otherMinOf(s0);
+      const pre = out.length ? calcMonth(out, 0, o.mins) : null, hasPre = pre && pre.ev > 0;
+      const base = hasPre ? pre.f7 : (o.prev != null && isFinite(o.prev) && o.prev > 0 ? +o.prev : null);
+      const src2 = hasPre ? '당월 전날까지 평균' : base != null ? '직전 귀속월 평균' : '평균 자료 없음';
+      const cf = conf[d] || (asg[d] ? 'support' : ''), zero = !(Math.abs(raw.e2) > 1e-9);
+      let s = s0, kind = '', reason = '', support = min / 30;
+      if (!off[d] && zero && (cf === 'support' || cf === 'training')) {
+        const lb = cf === 'training' ? '교육' : '지원';
+        if (base != null) { const dd = num(s0.d) > 0 ? num(s0.d) : 1; s = Object.assign({}, s0, { d: dd, h7: 0, t: {}, gq: 0, r10: s0.r10 || {}, o: { U7: base * dd * 30 } }); support = base * dd; kind = cf; reason = lb + ' · 평균 대체' + (asg[d] && !conf[d] ? ' (업무배정)' : ''); }
+        else { kind = cf; reason = lb + ' · 평균 자료 없음'; if (!it.sum) s = Object.assign({}, s0); }
+      } else if (min >= ADJ_MIN && it.sum) {
+        if (base != null) { support = min / 60 * base / 8.5; const r = support / (min / 30), oo = {}; OTHER.forEach(([k]) => { if (num((s0.o || {})[k])) oo[k] = num(s0.o[k]) * r; }); s = Object.assign({}, s0, { o: oo }); kind = 'adjusted'; reason = '지원 4시간 이상 · 평균 보정'; }
+        else reason = '지원 4시간 이상 · 평균 자료 없음 (기존 계산)';
+      }
+      const now = sumDay(s, o.mins);
+      if (kind || reason) meta[d] = { kind, reason, base, source: src2, min, actual: raw.e2 - min / 30, support: kind ? support : min / 30, before: raw.f7, f7: now.f7, e2: now.e2, virtual: !!it.virtual };
+      out.push({ date: d, sum: s, _adj: meta[d] || null });
+    }
+    const m = out.length ? calcMonth(out, 0, o.mins) : null;
+    return { items: out, meta, avg: m && m.ev > 0 ? m.f7 : null, ev: m ? m.ev : 0, on: true };
+  }
   root.Core = {
     COLS, COL, DEFAULT_MINS, ASM, asmQty, qtyParts, typeCounts, QLAB, minsMap, sumDay, GROUPS, EXCLUSIVE, TIPS, TARGETS, OT_LIST, OTHER, GROUP_LIST, MAX_ROWS, BASE_ROWS, MAX_DAYS,
     num, normOrder, parseMfg, snRange, emptyDay, calcDay, daySummary, calcMonth, buildXlsx, fileName,
-    ymd, addDays, WD, sheetName, serial, pad, parseWorkbook,
+    ymd, addDays, WD, sheetName, serial, pad, parseWorkbook, adjustMonth, otherMinOf, ADJ_START, ADJ_MIN,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -5173,8 +5224,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const p = (A.S.periods || []).find(x => x.ym === month);
     if (!p) return null;                                                // 매니저 : 서버가 담당 파트 인원만 바꿔 넣음
     const r = await api('listUsers', { ym: month });
-    const C = A.C, rows = [];
-    r.users.forEach(u => {
+    const C = A.C, rows = [], adj = A.adjOn && A.adjOn(month);
+    if (adj) { A.S._mcache = A.S._mcache || {}; A.S._mcache['M|' + month] = r; try { await A.adjYm(month); } catch (e) { } }   // v28.52 : 11월 귀속부터 지원 보정 (업무 화면과 같은 값)
+    r.users.forEach(u0 => {
+      const u = adj ? Object.assign({}, u0, { items: A.adjItems(u0.name, u0.items, p.start, p.end || A.S.today) }) : u0;
       if (!u.items.length) return;
       const m = C.calcMonth(u.items, u.target, A.minsYm(month));
       let qty = 0, conv = 0;
@@ -7259,15 +7312,129 @@ async function addCharts(buf, jobs) {
   const pctR = (v, t) => Math.round(v / t * 1000) / 10;                                    // 소수 첫째 자리 (89.9 = 주의)
   const lvOf = (v, t, ym) => { if (!(t > 0)) return null; const p = pctR(v, t), g = goalOf(ym); return p >= g.ok ? 'ok' : p >= g.warn ? 'warn' : 'bad'; };
   const LVC = { ok: 'r-hi', warn: 'r-mid', bad: 'r-lo' };
+
+  // ---- v28.52 : 지원 보정 · 출근 확인 (2026년 11월 귀속부터) — 계산은 core.adjustMonth 하나만 씀
+  const adjOn = ym => !!ym && ym >= C.ADJ_START;
+  const prevYmP = ym => { const L = S.periods.map(p => p.ym).sort(), i = L.indexOf(ym); return i > 0 ? L[i - 1] : null; };
+  const periodRange = ym => { const p = S.periods.find(x => x.ym === ym); return p ? { from: p.start, to: p.end || S.today } : null; };
+  const nmKey = n => normName(n || '');
+  // 출근 확인 · 업무배정 · 휴무 (귀속월 단위, 권한 범위만)
+  async function attOf(ym) {
+    S._att = S._att || {}; if (S._att[ym]) return S._att[ym];
+    const rg = periodRange(ym); if (!rg) return null;
+    let r; try { r = await api('attList', { from: rg.from, to: rg.to }); } catch (e) { r = { conf: [], asg: [], off: [], roster: [], err: e.message }; }
+    const A = { conf: {}, asg: {}, off: {}, offk: {}, roster: {}, by: {}, rg, err: r.err || '' };
+    (r.conf || []).forEach(([n, d, k, by, at]) => { n = nmKey(n); (A.conf[n] = A.conf[n] || {})[d] = k; (A.by[n] = A.by[n] || {})[d] = by + ' · ' + String(at || '').slice(5, 16); });
+    (r.asg || []).forEach(([n, d, t]) => { n = nmKey(n); (A.asg[n] = A.asg[n] || {})[d] = t; });
+    (r.off || []).forEach(([n, a, b, k]) => { n = nmKey(n); for (let d = a; d <= b; d = C.addDays(d, 1)) { (A.off[n] = A.off[n] || {})[d] = true; (A.offk[n] = A.offk[n] || {})[d] = k; } });
+    (r.roster || []).forEach(([n, g, t, st, inr]) => (A.roster[nmKey(n)] = { grp: g, title: t, status: st, inr }));
+    A.hol = new Set(r.hol || []);
+    return (S._att[ym] = A);
+  }
+  const attReset = () => { S._att = {}; S._adj = {}; S._gm = {}; };
+  // 한 사람 한 귀속월 : 원본 items → 보정 결과 (prev = 직전 귀속월 평균)
+  function adjOne(name, ym, items, prev, A) {
+    const n = nmKey(name);
+    return C.adjustMonth(items, { ym, mins: minsYm(ym), prev, conf: (A && A.conf[n]) || {}, asg: (A && A.asg[n]) || {}, off: (A && A.off[n]) || {} });
+  }
+  // 매니저 이상 : 귀속월 전체 인원 (월 목록 자료) → { by: {이름: 결과} }
+  async function adjYm(ym, depth) {
+    if (!adjOn(ym) || !isMgrUser()) return null;
+    S._adj = S._adj || {}; S._mcache = S._mcache || {};
+    let r = S._mcache['M|' + ym]; if (!r) { r = await api('listUsers', { ym }); S._mcache['M|' + ym] = r; }
+    const c = S._adj[ym]; if (c && c.src === r) return c;
+    const pv = prevYmP(ym), A = await attOf(ym); let prevAvg = {};
+    if (pv && (depth || 0) < 24) {
+      if (adjOn(pv)) { const P = await adjYm(pv, (depth || 0) + 1); if (P) Object.keys(P.by).forEach(n => (prevAvg[n] = P.by[n].avg)); }
+      else { let q = S._mcache['M|' + pv]; if (!q) { try { q = await api('listUsers', { ym: pv }); S._mcache['M|' + pv] = q; } catch (e) { q = { users: [] }; } }
+        q.users.forEach(u => { if (u.items.length) { const m = C.calcMonth(u.items, 0, minsYm(pv)); prevAvg[nmKey(u.name)] = m.ev > 0 ? m.f7 : null; } }); }
+    }
+    const by = {};
+    r.users.concat((r.pending || []).map(p => ({ name: p.name, items: [] }))).forEach(u => { const n = nmKey(u.name); by[n] = adjOne(n, ym, u.items, prevAvg[n] ?? null, A); });
+    return (S._adj[ym] = { src: r, by, A });
+  }
+  // 한 사람 (사원 본인 화면 · 개인 월 화면) : getMonth 자료로 같은 계산
+  async function gmOf(uid, ym) { S._gm = S._gm || {}; const k = uid + '|' + ym; if (!S._gm[k]) S._gm[k] = api('getMonth', { userId: uid, ym }).catch(e => { delete S._gm[k]; throw e; }); return S._gm[k]; }
+  async function adjPerson(u, ym, items, depth) {
+    if (!adjOn(ym)) return null;
+    const pv = prevYmP(ym); let prev = null;
+    if (pv && (depth || 0) < 24) {
+      try { const g = await gmOf(u.id, pv), it = g.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(pv)) }));
+        if (adjOn(pv)) { const x = await adjPerson(u, pv, it, (depth || 0) + 1); prev = x ? x.avg : null; }
+        else if (it.length) { const m = C.calcMonth(it, 0, minsYm(pv)); prev = m.ev > 0 ? m.f7 : null; } } catch (e) { prev = null; }
+    }
+    return adjOne(u.name, ym, items, prev, await attOf(ym));
+  }
+  // 날짜 범위의 귀속월 목록 · 미리 준비
+  const ymsIn = (from, to) => S.periods.filter(p => p.start <= to && (p.end || S.today) >= from).map(p => p.ym);
+  async function adjPrep(from, to) { if (!isMgrUser()) return; if (S._dirtyAtt) { S._dirtyAtt = false; attReset(); } for (const ym of ymsIn(from, to)) if (adjOn(ym)) { try { await adjYm(ym); } catch (e) { } } }
+  // 준비된 결과로 items 바꾸기 (+ 확인으로 생긴 가상 근무일) — 동기
+  function adjItems(name, items, from, to) {
+    const n = nmKey(name), out = [], seen = new Set();
+    (items || []).forEach(it => { const p = periodOf(it.date), A = p && S._adj && S._adj[p.ym], x = A && A.by[n];
+      const y = x && x.items.find(z => z.date === it.date); seen.add(it.date); out.push(y ? { date: it.date, sum: y.sum, _adj: y._adj } : it); });
+    Object.values(S._adj || {}).forEach(A => { const x = A.by[n]; if (x) x.items.forEach(z => { if (z._adj && z._adj.virtual && !seen.has(z.date) && (!from || z.date >= from) && (!to || z.date <= to)) { seen.add(z.date); out.push({ date: z.date, sum: z.sum, _adj: z._adj }); } }); });
+    return out.sort((a, b) => a.date < b.date ? -1 : 1);
+  }
+
+  // ---- v28.52 : 출근 판정 · 팀 효율 (11월 귀속부터 · 매니저 이상 화면)
+  //  휴무 = 빼기 / 입력 있음 = 그날 점수(보정 포함) / 출근 확인 = 0점 / 지원·교육 확인·업무배정 = 평균 대체(보정 결과) / 휴무 답 = 빼기
+  //  매니저(직책) 미입력 = 자동 0점 / 미입력·확인 없음 = 확인 필요(분모에서 뺌) / 실적 0 + 확인 없음 = 0점 넣고 확인 필요 표시 / 미가입 명단 = 빼기
+  const isWorkdayA = (d, A) => { const w = new Date(d + 'T00:00:00').getDay(); return w !== 0 && w !== 6 && !(A && A.hol && A.hol.has(d)); };
+  function teamDays(ym, from, to) {
+    const X = S._adj && S._adj[ym]; if (!X) return null;
+    const A = X.A, rg = A.rg, lo = from > rg.from ? from : rg.from, hi0 = to < rg.to ? to : rg.to, hi = hi0 < S.today ? hi0 : S.today, rows = [];
+    X.src.users.forEach(u => {
+      if (u.group === '팀장') return;
+      const n = nmKey(u.name), res = X.by[n], byD = {}, ro = A.roster[n] || {}, title = u.title || ro.title || '', st = ro.status || '';
+      (res ? res.items : u.items).forEach(it => (byD[it.date] = it));
+      for (let d = lo; d <= hi; d = C.addDays(d, 1)) {
+        const it = byD[d], c = (A.conf[n] || {})[d] || '', off = (A.off[n] || {})[d] || st === '육아' || st === '병가', wk = isWorkdayA(d, A);
+        const row = { uid: u.id, name: u.name, grp: u.group, title, date: d, conf: c, by: (A.by[n] || {})[d] || '' };
+        if (it) { const v = C.sumDay(it.sum, minsYm(ym)), z = !(Math.abs(v.e2) > 1e-9), aj = it._adj;
+          rows.push(Object.assign(row, { st: aj && aj.kind ? aj.reason : z ? '실적 0' : '입력', inc: true, score: z ? 0 : v.f7, pend: z && !(aj && aj.kind) && c !== 'present', zero: z, adj: aj || null })); continue; }
+        if (off) continue;
+        if (c === 'present') { rows.push(Object.assign(row, { st: '출근 확인', inc: true, score: 0 })); continue; }
+        if (c === 'leave') { rows.push(Object.assign(row, { st: '휴무 등록 대기', inc: false, score: null, lvwait: true })); continue; }
+        if (!wk) continue;
+        if (title === '매니저') { rows.push(Object.assign(row, { st: '매니저 (자동 출근)', inc: true, score: 0, auto: true })); continue; }
+        if (d >= S.today) continue;
+        rows.push(Object.assign(row, { st: '미입력 · 확인 필요', inc: false, score: null, pend: true }));
+      }
+    });
+    return rows;
+  }
+  const TBF = { all: () => true, nm: r => r.title !== '매니저', nmp: r => r.title !== '매니저' && r.title !== '파트장' };
+  const teamSum = (rows, b, groups) => { const L = (rows || []).filter(r => (!groups || !groups.length || groups.includes(r.grp)) && TBF[b](r)), inc = L.filter(r => r.inc), sum = inc.reduce((a, r) => a + r.score, 0);
+    return { n: inc.length, sum, avg: inc.length ? sum / inc.length : null, pend: L.filter(r => r.pend).length, people: new Set(inc.map(r => r.name)).size }; };
+  // 확인 필요 목록 → 담당 매니저 확인 창 (출근 / 지원 / 교육 / 휴무)
+  const CK = [['present', '출근'], ['support', '지원'], ['training', '교육'], ['leave', '휴무']];
+  function confirmModal(rows, ym, after) {
+    const mine = r => isAdm() || (S.me.mg || []).includes(r.grp);
+    let L = rows.filter(r => (r.pend || r.conf) && mine(r)).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.name.localeCompare(b.name, 'ko'));
+    const draw = (bg) => { $('.ckl', bg).innerHTML = L.length ? `<table class="list"><thead><tr><th>날짜</th><th>이름</th><th>그룹</th><th>상태</th><th>확인</th></tr></thead><tbody>${L.map((r, i) => `<tr><td>${dLabel(r.date)}</td><td><b>${esc(r.name)}</b>${r.title ? ' <span class="rtag">' + esc(r.title) + '</span>' : ''}</td><td>${gdot(r.grp)}</td><td>${esc(r.st)}${r.by ? `<br><small class="muted">${esc(r.by)}</small>` : ''}</td>
+        <td class="ckb">${CK.filter(([k]) => !(r.zero && k === 'leave')).map(([k, t]) => [k, r.zero && k === 'present' ? '0점 맞음' : t]).map(([k, t]) => `<button class="sm ${r.conf === k ? 'primary' : ''}" data-ck="${i}|${k}" ${isRO() ? 'disabled' : ''}>${t}</button>`).join('')}${r.conf && !isRO() ? `<button class="sm" data-ck="${i}|" title="확인 지우기">✕</button>` : ''}</td></tr>`).join('')}</tbody></table>` : '<div class="muted" style="padding:16px">확인할 사람이 없습니다</div>';
+      $$('[data-ck]', bg).forEach(b => (b.onclick = async () => { const [i, k] = b.dataset.ck.split('|'), r = L[+i]; b.disabled = true;
+        try { await api('attConfirm', { name: r.name, date: r.date, kind: k }); r.conf = k; r.st = k ? CK.find(x => x[0] === k)[1] + ' 확인' : r.zero ? '실적 0' : '미입력 · 확인 필요';
+          if (k === 'leave') toast(r.name + ' ' + dLabel(r.date) + ' : 휴무로 표시 · 연차·휴무 등록은 따로 해 주세요'); else toast(r.name + ' ' + dLabel(r.date) + (k ? ' : ' + CK.find(x => x[0] === k)[1] + ' 확인' : ' : 확인 지움'));
+          S._dirtyAtt = true; draw(bg); } catch (e) { toast(e.message, true); b.disabled = false; } })); };
+    modal(`<h3>출근 확인 <small class="muted">${ymLabel(ym)} · 담당 그룹</small></h3>
+      <div class="muted" style="font-size:12.5px;line-height:1.6;margin-bottom:8px">휴무 기록이 없는데 업무데이터가 없거나 실적이 0인 날입니다. <b>지원 · 교육</b>은 그날 점수를 전날까지 평균으로 채우고, <b>출근</b>은 0점으로 팀 효율에 넣습니다. <b>휴무</b>는 팀 효율에서 빼며 연차 등록은 따로 해야 합니다.</div>
+      <div class="ckl" style="max-height:60vh;overflow:auto"></div><div class="acts"><button data-n>닫기</button></div>`, (bg, close) => { draw(bg); $('[data-n]', bg).onclick = () => { close(); if (S._dirtyAtt) { S._dirtyAtt = false; attReset(); after && after(); } }; }, 'wide');
+  }
+  const adjTag = a => a ? `<span class="adjt ${a.kind || 'none'}" title="${esc(a.reason + (a.base != null ? ' · 기준 평균 ' + f2(a.base) + ' (' + a.source + ')' : '') + ' · 실제 ' + f2(a.actual) + ' + 지원 ' + f2(a.support))}">${esc(a.kind === 'training' ? '교육' : a.kind === 'support' ? '지원' : a.kind === 'adjusted' ? '보정' : '!')}</span>` : '';
   const hmSpan = p => p.uid ? `<span class="ddhm" data-hm="${esc(p.uid)}"></span>` : '';            // 이번 달 달성일 · 미달일 (뒤에서 채움)
   const TBASE = [['all', '모든 인원'], ['nm', '매니저 제외'], ['nmp', '매니저·파트장 제외']];
   const tBase = () => { if (!S.tbase) { try { S.tbase = localStorage.getItem('tbase') || 'nm'; } catch (e) { S.tbase = 'nm'; } } return TBASE.some(x => x[0] === S.tbase) ? S.tbase : 'nm'; };
   // 팀 줄 : 목표 기준 버튼과 상관없이 항상 팀 목표로
   const teamLine = D => { const g = goalOf(D.GY), b = tBase(), W = D.work.filter(p => b === 'all' || (p.title !== '매니저' && (b === 'nm' || p.title !== '파트장')));
-    const avg = W.length ? W.reduce((a, p) => a + p.v, 0) / W.length : null, rt = avg != null && g.team ? pctR(avg, g.team) : null;
+    let avg = W.length ? W.reduce((a, p) => a + p.v, 0) / W.length : null, cnt = W.length, lab = '입력', pend = 0;
+    const T = adjOn(D.GY) && !D.r.staff ? teamDays(D.GY, D.r.date, D.r.date) : null;          // v28.52 : 출근 인원 기준 팀 효율
+    if (T) { const s = teamSum(T, b); avg = s.avg; cnt = s.n; pend = s.pend; lab = '출근'; S._teamRows = T; }
+    const rt = avg != null && g.team ? pctR(avg, g.team) : null;
     return `<div class="card ddteam"><b class="ddteam-t">팀</b><div class="seg ddtb">${TBASE.map(([k, t]) => `<button data-tb="${k}" class="${b === k ? 'on' : ''}">${t}</button>`).join('')}</div>
       <div class="ddteam-k"><small>팀 목표</small><b>${g.team ? f1d(g.team) : '-'}</b></div>
-      <div class="ddteam-k"><small>팀 평균 (${W.length}명 입력)</small><b>${f1d(avg)}</b></div>
+      <div class="ddteam-k"><small>팀 평균 (${cnt}명 ${lab})</small><b>${f1d(avg)}</b></div>${pend ? `<button class="sm ddpend" id="ddpend" title="휴무 기록이 없는데 업무데이터가 없거나 실적 0인 사람 · 확인 전까지 팀 평균에서 뺌(실적 0은 0점으로 넣음)">확인 필요 <b>${pend}</b></button>` : ''}
       <div class="ddteam-k"><small>팀 달성률</small><b class="${rt == null ? '' : LVC[lvOf(avg, g.team, D.GY)] + 't'}">${rt == null ? (g.team ? '-' : '팀 목표 없음') : rt + '%'}</b></div>
       <div class="ddteam-k"><small>오늘 ${tMode() === 't' ? '팀' : '개인'} 목표 달성</small><b>${D.hit}<span> / ${D.tw.length}명</span></b></div></div>`; };
   // 이번 달 달성일 · 미달일 : 월 목록 자료(같은 캐시)로 계산해 채움
@@ -7276,7 +7443,7 @@ async function addCharts(buf, jobs) {
     const key = 'M|' + ym, tk = S.token; S._mcache = S._mcache || {};
     let r = S._mcache[key]; if (!r) { try { r = await api('listUsers', { ym }); S._mcache[key] = r; } catch (e) { return; } }
     if (tk !== S.token) return;
-    const H = {}; (r.users || []).forEach(u => { const t = effT(u.target, ym); if (!(t > 0) || !u.items.length) return; H[u.id] = dayHits(C.calcMonth(u.items, t, minsYm(ym)).daily, t, ym); });
+    const H = {}; (r.users || []).forEach(u => { const t = effT(u.target, ym); if (!(t > 0) || !u.items.length) return; const its = adjOn(ym) ? adjItems(u.name, u.items) : u.items; H[u.id] = dayHits(C.calcMonth(its, t, minsYm(ym)).daily, t, ym); });   // v28.52 : 보정 반영
     $$('[data-hm]', scope).forEach(el => { const h = H[el.dataset.hm]; if (el.dataset.hmc) { el.firstElementChild.innerHTML = h ? `<i class="y">${h.ok}</i>·<i class="n">${h.miss}</i>` : '-'; return; } el.innerHTML = h ? `<b class="y" title="${ymLabel(ym)} 달성일">달성 ${h.ok}</b>·<b class="n" title="${ymLabel(ym)} 미달일">미달 ${h.miss}</b>` : ''; });
   }
   // 달성일 · 미달일 : 실적 있는 날만 (실적 0 · 연차 · 대체 등 입력 없는 날은 안 셈)
@@ -8307,8 +8474,25 @@ async function addCharts(buf, jobs) {
     changed();
   }
 
+  // v28.52 : 입력 화면도 지원 보정 (그 귀속월 이미 저장된 날 + 지금 입력 중인 날로 계산)
+  function inputAdj(c) {
+    const D = S.day, ym = D && D.period && D.period.ym; if (!adjOn(ym)) return null;
+    const u = who(), k = u.id + '|' + ym; S._inAdj = S._inAdj || {};
+    const ctx = S._inAdj[k];
+    if (!ctx) { S._inAdj[k] = 'wait'; (async () => { let prev = null; const pv = prevYmP(ym);
+        try { if (pv) { const g = await gmOf(u.id, pv), it = g.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(pv)) }));
+          if (adjOn(pv)) { const x = await adjPerson(u, pv, it); prev = x ? x.avg : null; } else if (it.length) { const m = C.calcMonth(it, 0, minsYm(pv)); prev = m.ev > 0 ? m.f7 : null; } } } catch (e) { }
+        S._inAdj[k] = { prev, A: await attOf(ym) }; if (S.view === 'input' && S.day === D) refreshCalc(); })(); return null; }
+    if (ctx === 'wait') return null;
+    const pc = S.pc[pcKey(u.id, ym)] || {}, MY = minsYm(ym), items = [];
+    Object.keys(pc.days || {}).forEach(d => { if (d !== S.date && pc.days[d] && pc.days[d].doc) items.push({ date: d, sum: C.daySummary(pc.days[d].doc, MY) }); });
+    items.push({ date: S.date, sum: C.daySummary(D.doc, MY) });
+    const a = adjOne(u.name, ym, items, ctx.prev, ctx.A), y = a.items.find(z => z.date === S.date);
+    if (!y || !y._adj || !y._adj.kind) return y && y._adj ? { meta: y._adj } : null;
+    c.e2 = y._adj.e2; c.f7 = y._adj.f7; c.c8 = D.target ? c.f7 / D.target : null; c.w7 = y._adj.support; return { meta: y._adj };
+  }
   function refreshCalc() {
-    const D = S.day, MN = C.minsMap(minsOf(S.date)), c = C.calcDay(D.doc, D.target, MN);
+    const D = S.day, MN = C.minsMap(minsOf(S.date)), c = C.calcDay(D.doc, D.target, MN), aj = inputAdj(c);
     const rate = c.c8 == null ? 0 : Math.max(0, c.c8), w = Math.min(100, rate * 100);
     const fill = $('#efill'), cls = c.c8 == null ? 'none' : rateCls(rate, (periodOf(S.date) || {}).ym).slice(2);   // v28.51 : 달성 기준
     fill.style.width = w + '%'; fill.className = cls;
@@ -8318,7 +8502,7 @@ async function addCharts(buf, jobs) {
     $('#stats').innerHTML = `
       ${(() => { const i6 = c.f6 - C.num(D.doc.asmOt) / 60 / 8.5 + c.e4 / 60 / 8.5, i7 = i6 ? c.e2 / i6 : 0;      // v28.17 : 실제 = 조립 야근 대신 내 실제 야근으로
         return `<div class="stat"><div class="k">평가 · <span class="real">실제</span> 평균</div><div class="v">${f2(c.f7)}<small class="real"> · ${f2(i7)}</small></div></div>`; })()}
-      <div class="stat"><div class="k">기본 환산</div><div class="v">${f2(c.e2)}</div></div>
+      <div class="stat${aj && aj.meta.kind ? ' adjs' : ''}" ${aj ? `title="${esc(aj.meta.reason + (aj.meta.base != null ? ' · 기준 평균 ' + f2(aj.meta.base) + ' (' + aj.meta.source + ')' : ''))}"` : ''}><div class="k">기본 환산${aj ? ' ' + adjTag(aj.meta) : ''}</div><div class="v">${f2(c.e2)}</div>${aj && aj.meta.kind ? `<div class="adjl">실제 ${f2(aj.meta.actual)} + 지원 ${f2(aj.meta.support)}</div>` : ''}</div>
       ${(() => { const mq = D.doc.rows.filter(r => r.k === '제조' && String(r.o).trim()).reduce((a, r) => a + C.num(r.q), 0), P = C.qtyParts({ ta: C.typeCounts(D.doc), mq });      // v28.24 : 조립 / 반조 / 출고 / 제조 나눠서
         return `<div class="stat sq"><div class="k">조립수량</div><div class="v">${P.asm}</div><div class="qchips">${qtyChips(P, !lay2(D.doc))}</div></div>${P.ban ? `<div class="stat"><div class="k">반조</div><div class="v">${P.ban}</div></div>` : ''}<div class="stat"><div class="k">제조사용(출고)</div><div class="v shipv">${P.ship}</div></div>${P.mfg ? `<div class="stat"><div class="k">제조수량</div><div class="v mfgv">${P.mfg}</div></div>` : ''}`; })()}
       <div class="stat"><div class="k">평가 · <span class="real">실제</span> 일수</div><div class="v">${f2(c.f6)}<small class="real"> · ${f2(c.f6 - C.num(D.doc.asmOt) / 60 / 8.5 + c.e4 / 60 / 8.5)}</small></div></div>
@@ -8441,7 +8625,7 @@ async function addCharts(buf, jobs) {
     return list.filter(p => p.ym >= state.from && p.ym <= state.to);
   }
   function combinePersonMonths(results) {
-    const parts = results.map(r => C.calcMonth(r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(r.period.ym)) })), r.target, minsYm(r.period.ym)));
+    const parts = results.map(r => C.calcMonth(r._items || r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(r.period.ym)) })), r.target, minsYm(r.period.ym)));
     const m = { daily: [], r10: {}, ta: {}, osum: {} }, seen = new Set();
     const totals = ['days', 'c4', 'd4', 'z', 'ev', 'otherTotal', 'sumH_AT', 'f6', 'i6', 'g2', 'e4', 'f4', 'mf', 'mq'];
     totals.forEach(k => m[k] = 0);
@@ -8492,7 +8676,11 @@ async function addCharts(buf, jobs) {
       r = multi ? Object.assign({}, results[0], { days: results.flatMap(x => x.days), target: 0, canSetTarget: false }) : results[0];
     } catch (e) { if (!stale()) main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
     if (stale()) return;                                                 // 기다리는 동안 다른 사람·화면으로 옮김   // 매니저가 고친 내용·목표까지 항상 최신으로
-    const MY = minsYm(ym), items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, MY) }));
+    const MY = minsYm(ym); let items = r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, MY) }));
+    { const parts = multi ? results : [r];                                // v28.52 : 11월 귀속부터 지원 보정 (개인 화면도 같은 계산)
+      for (const x of parts) { const xy = x.period && x.period.ym; if (!adjOn(xy)) continue;
+        try { const a = await adjPerson(u0, xy, x.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(xy)) }))); if (a) x._items = a.items; } catch (e) { } }
+      if (stale()) return; if (!multi && r._items) items = r._items; }
     let m;
     try { m = multi ? combinePersonMonths(results) : C.calcMonth(items, r.target, MY); }
     catch (e) { main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
@@ -8514,7 +8702,7 @@ async function addCharts(buf, jobs) {
       <span class="fld" style="flex-direction:row;align-items:center;gap:6px;margin-left:10px"><label style="font-size:12px">월 목표</label>
         <select id="tg" ${r.canSetTarget ? '' : 'disabled'}><option value="">선택</option>${C.TARGETS.map(t => `<option ${t === r.target ? 'selected' : ''}>${t}</option>`).join('')}</select></span>
       <span style="flex:1"></span>
-      <button class="primary" id="xl">⬇ 엑셀 다운로드 (.xlsx)</button>
+      <button class="primary" id="xl">⬇ 엑셀 다운로드 (.xlsx)</button>${multi ? '' : '<button id="xlo" title="예전 개인 엑셀 원본 양식 (지원 보정 전 계산)">원본 양식</button>'}
     </div>
     ${over && !multi ? '<div class="warn">입력된 날짜가 ' + r.days.length + '일입니다. 화면에는 전체 날짜를 집계합니다. 기존 엑셀 양식은 30일까지 지원하므로 이 달의 다운로드는 중단합니다.</div>' : ''}
     ${multi ? '<div class="muted" style="margin-bottom:10px">' + esc(label) + ' · ' + selected.length + '개 귀속월 · 월별 항목별 분을 적용해 합산 · 목표 수정 및 달성률은 월별에서 확인' + (missing.length ? '<br>귀속월 미설정으로 제외: ' + esc(missing.join(', ')) : '') + '</div>' : ''}
@@ -8554,9 +8742,10 @@ async function addCharts(buf, jobs) {
     $$('tr[data-d]').forEach(tr => (tr.onclick = () => go('input', { date: tr.dataset.d })));
     $('#xl').onclick = async () => {
       const b = $('#xl'); b.disabled = true; b.textContent = '만드는 중…';
-      try { if (multi) await downloadPersonRange(results, m, label); else await downloadXlsx(r.user, ym, r.target, r.days); } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); }
+      try { if (multi) await downloadPersonRange(results, m, label); else { if (!r.days.length) throw new Error('입력된 날짜가 없습니다'); saveBlob(await simpleXlsxBlob(r.user, ym, r.target, r.days), sxName(r.user.name, ym)); toast('엑셀을 내려받았습니다'); } } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); }
       b.disabled = false; b.textContent = '⬇ 엑셀 다운로드 (.xlsx)';
     };
+    if ($('#xlo')) $('#xlo').onclick = async () => { try { await downloadXlsx(r.user, ym, r.target, r.days); } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); } };   // v28.52 : 원본 양식
   }
   // 날짜별 평가평균 막대 (점선 = 월 목표, 진한 막대 = 목표의 90% 이상)
   function monthChart(daily, target) {
@@ -8571,6 +8760,45 @@ async function addCharts(buf, jobs) {
     const z = await C.buildXlsx(JSZip, TEMPLATE_B64, { name: user.name, ym, target, days, mins: minsYm(ym), tips: (rateSet(ym) || {}).tips, names: (rateSet(ym) || {}).names });
     return z.generateAsync({ type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   }
+
+  // ---- v28.52 : 심플 엑셀 (수식 없음 · 웹과 같은 값 · 지원 보정 포함) — 원본 양식은 '원본 양식' 버튼으로 따로
+  async function simpleXlsxBlob(user, ym, target, days, share) {
+    const EJ = await loadLib('ExcelJS', 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js');
+    const MY = minsYm(ym), raw = days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, MY), doc: d.doc }));
+    let items = raw.map(x => ({ date: x.date, sum: x.sum }));
+    if (adjOn(ym)) { try { const a = await adjPerson(user, ym, items); if (a) items = a.items; } catch (e) { } }
+    const m = C.calcMonth(items, target, MY), hits = dayHits(m.daily, target, ym), g = goalOf(ym), docOf = {}; raw.forEach(x => (docOf[x.date] = x.doc));
+    let qa = 0, qm = 0, qs = 0, qb = 0, adjN = 0, sup = 0; items.forEach(it => { const P = C.qtyParts(it.sum || {}); qa += P.asm; qm += P.mfg; qs += P.ship; qb += P.ban; if (it._adj && it._adj.kind) { adjN++; sup += it._adj.support; } });
+    const wb = new EJ.Workbook(), r2 = v => v == null || !isFinite(v) ? null : Math.round(v * 100) / 100;
+    const sheet = (name, rows, widths) => { const ws = wb.addWorksheet(name); rows.forEach(r => ws.addRow(r)); ws.getRow(1).font = { bold: true }; ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF1F5' } };
+      ws.columns.forEach((c, i) => (c.width = (widths && widths[i]) || 12)); ws.views = [{ state: 'frozen', ySplit: 1 }]; return ws; };
+    const lvT = (v, t) => { const l = lvOf(v, t, ym); return l === 'ok' ? '달성' : l === 'warn' ? '주의' : l === 'bad' ? '노력' : ''; };
+    sheet('월 요약', [['항목', '값'], ['이름', user.name], ['귀속월', ymLabel(ym)], ['근무일', m.days], ['평가에 들어간 날', m.ev], ['평가평균', r2(m.f7)], ['실제평균', r2(m.i7)],
+      ['개인 목표', target || null], ['달성률', target ? Math.round(m.f7 / target * 1000) / 10 + '%' : '-'], ['달성일', target ? hits.ok : null], ['미달일', target ? hits.miss : null],
+      ['달성 기준', '달성 ' + g.ok + '% 이상 · 주의 ' + g.warn + '% 이상 · 노력 ' + g.warn + '% 미만'], ['팀 목표', g.team || null],
+      ['조립수량 (일반·특수·프리·추천·웍스)', qa], ['제조수량', qm], ['출고', qs], ['반조', qb],
+      ['조립 점유율', share && share.totA ? Math.round(qa / share.totA * 1000) / 10 + '% (' + share.scope + ' ' + share.totA + '대 중)' : '-'],
+      ['제조 점유율', share && share.totM ? Math.round(qm / share.totM * 1000) / 10 + '% (' + share.scope + ' ' + share.totM + '대 중)' : '-'],
+      ['지원 보정 일수 (11월 귀속부터)', adjN], ['지원 점수 합', r2(sup)], ['만든 시각', new Date().toLocaleString('ko-KR')]], [34, 46]);
+    sheet('날짜별', [['날짜', '요일', '근무 구분', '근무일 값', '조립수량', '제조수량', '출고', '반조', '실제 업무 점수', '기타시간(분)', '지원 점수', '그날 환산', '그날 평가평균', '보정', '기준 평균', '목표', '달성 여부', '조립 야근(분)', '실제 야근(분)']].concat(
+      items.map(it => { const s = it.sum || {}, P = C.qtyParts(s), v = C.sumDay(s, MY), a = it._adj, dc = docOf[it.date] || {}, om = C.otherMinOf(dc.other ? { o: dc.other } : s);
+        return [it.date, C.WD[new Date(it.date + 'T00:00:00').getDay()], dc.kind || (a && a.virtual ? '확인 근무' : ''), C.num(s.d), P.asm, P.mfg, P.ship, P.ban,
+          r2(a ? a.actual : v.e2 - om / 30), om, r2(a && a.kind ? a.support : om / 30), r2(v.e2), r2(v.f7), a ? a.reason : '', a && a.base != null ? r2(a.base) : null,
+          target || null, target && Math.abs(v.e2) > 1e-9 ? lvT(v.f7, target) : '', C.num(dc.asmOt), C.num(dc.ot)]; })), [11, 5, 9, 8, 8, 8, 6, 6, 11, 10, 9, 9, 11, 22, 9, 6, 8, 10, 10]);
+    const det = [['날짜', '주문번호', '구분', '수량'].concat(C.COLS.map(x => x.c + ' ' + String(x.label || '').replace(/\n/g, ' ')), ['메모'])];
+    raw.forEach(x => (x.doc.rows || []).forEach(r => { if (!r || !String(r.o || '').trim()) return; det.push([x.date, r.o, r.k || '', r.q === '' ? null : C.num(r.q)].concat(C.COLS.map(c => (r.m || {})[c.c] ? (C.num(r.m[c.c]) || 1) : null), [r.memo || ''])); }));
+    sheet('업무 입력 상세', det);
+    const oth = [['날짜', '항목', '사유', '분']], OL = Object.fromEntries(C.OTHER);
+    raw.forEach(x => { const L = Array.isArray(x.doc.otherR) ? x.doc.otherR : []; if (L.length) L.forEach(o => oth.push([x.date, OL[o.k] || o.k, o.r || '', C.num(o.m)])); else C.OTHER.forEach(([k, t]) => { if (C.num((x.doc.other || {})[k])) oth.push([x.date, t, '', C.num(x.doc.other[k])]); }); });
+    sheet('기타시간', oth, [11, 12, 30, 8]);
+    sheet('계산 안내', [['안내'], ['수식 없이 웹 화면과 같은 값으로 만든 파일입니다. 원본 양식이 필요하면 [원본 양식] 버튼을 쓰세요.'], ['2026년 11월 귀속부터 : 기타시간 6항목 합계 240분 이상이면 기타시간 점수 = 시간 × (전날까지 본인 평균 ÷ 8.5).'],
+      ['실적 0인 날을 담당 매니저가 지원·교육으로 확인했거나 업무배정이 있으면 그날 점수 = 전날까지 평균 (근무일 인정).'], ['전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산.']], [110]);
+    return new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  const sxName = (n, ym) => n + '_' + ym + '_업무데이터.xlsx';
+  // 점유율 분모 : 지금 월 업무현황에 보이는 인원(고른 그룹 · 권한 범위) 합계
+  const shareTot = () => { const L = S._mlist || [], gs = S.manageGroup ? S.manageGroup.split(',') : [];
+    return { totA: L.reduce((a, u) => a + (u.qty || 0), 0), totM: L.reduce((a, u) => a + (u.mq || 0), 0), scope: gs.length ? gs.join('·') + ' 합계' : isAdm() || can('stats') ? '팀 전체' : '담당 그룹 합계' }; };
   function saveBlob(blob, name) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
@@ -8609,7 +8837,9 @@ async function addCharts(buf, jobs) {
       o.ptarget = +p.target || 0; o.target = effT(o.ptarget, GY);                          // v28.51 : 목표 기준 [개인 | 팀]
       o.off = off[p.name] || (st === '육아' ? '육아' : st === '병가' ? '병가' : '');
       o.half = half[p.name] || ''; o.task = asg[p.name] || ''; o.note = notes[p.name] || null;
-      const s = p.sum && Object.keys(p.sum).length ? p.sum : null;
+      let s = p.sum && Object.keys(p.sum).length ? p.sum : null;
+      { const A = !r.staff && S._adj && S._adj[GY], x = A && A.by[nmKey(p.name)], y = x && x.items.find(z => z.date === r.date);   // v28.52 : 지원 보정 (매니저 이상 화면)
+        if (y && y._adj) { s = y.sum; o.adj = y._adj; } }
       if (s) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
@@ -8656,6 +8886,8 @@ async function addCharts(buf, jobs) {
     catch (e) { const b = $('#ddb'); if (b && seq === S.ddSeq) b.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
     if (seq !== S.ddSeq || tk !== S.token || S.view !== 'dash') return;
     S.ddDate = staff ? null : r.date; S._dd = r; updateBadge();
+    { const gy = (periodOf(r.date) || {}).ym, rg = gy && periodRange(gy);                         // v28.52 : 지원 보정 · 출근 확인 준비
+      if (!staff && rg && adjOn(gy)) { await adjPrep(rg.from, rg.to); if (seq !== S.ddSeq || tk !== S.token || S.view !== 'dash') return; } }
     drawDaily(r, lv);
   }
   // v28.2 : 체크사항 (매니저 = 담당 그룹 · 관리자 = 전체) — 기존 서버 자료만 사용
@@ -8706,6 +8938,9 @@ async function addCharts(buf, jobs) {
     const cp = (S.periods || []).find(p => p.status === '진행');
     if (cp && (isAdm0() || S.me.period)) { const n = Math.round((new Date(r.today + 'T00:00:00') - new Date(cp.start + 'T00:00:00')) / 864e5) + 1;
       add({ lv: 'b', t: ymLabel(cp.ym) + ' 귀속월', n: n + '일째', m: '진행 중 · ' + md(cp.start) + ' 시작', go: () => go('settings') }); }
+      { const cy = (curPeriod() || {}).ym, rg = cy && periodRange(cy);                    // v28.52 : 출근 확인 필요 (담당 그룹 · 어제까지)
+        if (adjOn(cy) && S._adj && S._adj[cy] && rg) { const T = teamDays(cy, rg.from, rg.to) || [], Pn = T.filter(x => x.pend && (adm || mine.includes(x.grp)));
+          if (Pn.length) add({ lv: 'o', t: '출근 확인 필요', n: Pn.length + '건', m: Array.from(new Set(Pn.map(x => x.name))).slice(0, 6).map(esc).join(' · ') + ' <small>· 미입력 · 실적 0</small>', go: () => confirmModal(T, cy, () => renderDash()) }); } }
     box._wait = true; draw();
     const jobs = [];
     // 3) 전 근무일 입력 안 한 사람 · 목표 없이 입력한 사람
@@ -8771,7 +9006,7 @@ async function addCharts(buf, jobs) {
     const sh = s => s.replace(/\s*&\s*/g, '·').replace(/\s*\/\s*/g, '·');
     let h = '';
     if (staff) h += '<div class="ddinfo">전 근무일 현황입니다</div>';
-    h += teamLine(D);                                                    // v28.51 : 팀 줄
+    if (!staff || !adjOn(D.GY)) h += teamLine(D);                         // v28.51 : 팀 줄 · v28.52 : 사원 화면은 보정 자료 권한이 없어 11월 귀속부터 숨김
     // V7: 체크사항은 그룹별 평균환산 카드 안으로 통합. 상단에 별도 카드를 만들지 않음.
     h += `<div class="ddkpis ddkpis-v7">
       <div class="card ddk ddk-att-v7"><div class="l">출근 / 휴무 <small>(총 ${D.total}명)</small></div>
@@ -8831,10 +9066,10 @@ async function addCharts(buf, jobs) {
       ${x.L.map(p => {
         const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${!staff && p.note ? ` <span class="memo" title="${esc(['💬 ' + dLabel(r.date) + ' 특이사항', p.note.reason ? '사유 : ' + p.note.reason : '', p.note.feedback ? '피드백 : ' + p.note.feedback : '', p.note.by ? '— ' + p.note.by : ''].filter(Boolean).join('\n'))}">💬</span>` : ''}${canNote(p) && p.uid && p.oth > 0.05 ? `<button class="oth1" data-oth="1" title="기타시간 사유 보기 · 고치기">⏱</button>` : ''}</div>`;
         if (p.kind === 'work') {
-          const rate = p.target > 0 ? Math.round(p.v / p.target * 100) : null, pl = lvOf(p.v, p.target, D.GY);
+          const rate = p.target > 0 ? Math.round(p.v / p.target * 100) : null, pl = lvOf(p.v, p.target, D.GY), at = p.adj ? adjTag(p.adj) : '';
           const label = f1d(p.v) + (p.target > 0 ? ' / ' + f1d(p.target) : '');
           const bar = ddBar(p.v, p.target, p.oth).replace('</div>', `<span class="ddpv">${label}</span></div>`);
-          return `<div class="ddpr ddpr-v5 ddpr-work"><div class="ddrowhead">${nm}<span class="ddtarget">${tMode() === 't' ? '팀 ' : ''}목표 <b>${p.target > 0 ? f1d(p.target) : '-'}</b></span><span class="ddrate ${pl === 'ok' ? 'hit' : ''}">${rate == null ? '-' : rate + '%'}</span></div>
+          return `<div class="ddpr ddpr-v5 ddpr-work"><div class="ddrowhead">${nm}<span class="ddtarget">${tMode() === 't' ? '팀 ' : ''}목표 <b>${p.target > 0 ? f1d(p.target) : '-'}</b></span>${at}<span class="ddrate ${pl === 'ok' ? 'hit' : ''}">${rate == null ? '-' : rate + '%'}</span></div>
             <div class="ddperf" title="환산 ${f1d(p.v)}${p.target ? (tMode() === 't' ? ' · 팀 목표 ' : ' · 개인 목표 ') + f1d(p.target) : ' · 목표 미설정'}${p.oth > 0.05 ? ' · 기타시간 환산 ' + f1d(p.oth) : ''}">${bar}</div>
             <div class="ddcounts" title="조립 ${p.q}대${p.ban ? ' · 반조 ' + p.ban : ''} · 출고 ${p.ship || 0}대 · 제조 ${p.mq || 0}대"><span><b>${p.q ?? 0}</b><small>수량</small></span><span class="s"><b>${p.ship || 0}</b><small>출고</small></span><span class="m"><b>${p.mq || 0}</b><small>제조</small></span>${p.uid ? `<span class="hm" data-hm="${esc(p.uid)}" data-hmc="1" title="이번 달 달성일 · 미달일"><b>-</b><small>달성·미달</small></span>` : ''}</div></div>`;
         }
@@ -8888,6 +9123,7 @@ async function addCharts(buf, jobs) {
       const close = $('#dd-off-close'); if (close) close.onclick = () => setOpen(false);
     }
     $$('[data-tb]').forEach(b => (b.onclick = () => { S.tbase = b.dataset.tb; try { localStorage.setItem('tbase', S.tbase); } catch (e) { } drawDaily(r, lv); }));
+    if ($('#ddpend')) $('#ddpend').onclick = () => confirmModal(S._teamRows || [], D.GY, () => renderDash());
     if (staff) return;
     fillHits(D.GY, $('#main'));
     ddChecks(r, D, lv);
@@ -9201,6 +9437,8 @@ async function addCharts(buf, jobs) {
     const same = cached && JSON.stringify(cached) === JSON.stringify(r);
     S._mcache[key] = same ? cached : r;
     if (S.view !== 'manage' || S._mkey !== key) return;
+    { const rg = r.range || (r.period ? { start: r.period.start, end: r.period.end || S.today } : null);          // v28.52 : 11월 귀속부터 지원 보정 준비
+      if (rg && ymsIn(rg.start, rg.end).some(adjOn)) { await adjPrep(rg.start, rg.end); if (S.view !== 'manage' || S._mkey !== key) return; return drawManage(S._mcache[key], ym, false); } }
     if (same) { const st = $('#mstale'); if (st) st.remove(); return; }
     drawManage(r, ym, false);
   }
@@ -9214,16 +9452,18 @@ async function addCharts(buf, jobs) {
       const xym = r.period ? r.period.ym : null; S._gym = xym;
       const all = r.users.concat((r.pending || []).map(p => ({ id: 'pend:' + p.name, name: p.name, group: p.group, role: '일반', pend: true, items: [], last: '', target: 0, title: p.title || '', empno: p.empno || '', seq: p.seq, mg: [] })));   // v28.23 : 가입 안 한 명단도
       const list = all.filter(u => (!S.manageGroup || S.manageGroup.split(',').includes(u.group)) && (!S.manageQuery || [u.name, u.group, u.title, u.empno].some(v => String(v || '').toLowerCase().includes(S.manageQuery.toLowerCase())))).map(u => {
-        const tg = effT(u.target, xym), m = C.calcMonth(u.items, tg, minsYm(xym)), hits = dayHits(m.daily, tg, xym);   // v28.51 : 목표 기준 · 달성일 · 미달일
+        const rg = r.range || (r.period ? { start: r.period.start, end: r.period.end || S.today } : {}), its = adjItems(u.name, u.items, rg.start, rg.end);   // v28.52 : 지원 보정
+        const tg = effT(u.target, xym), m = C.calcMonth(its, tg, minsYm(xym)), hits = dayHits(m.daily, tg, xym);   // v28.51 : 목표 기준 · 달성일 · 미달일
         let qty = 0, conv = 0, ship = 0;
-        u.items.forEach(it => { const s = it.sum || {}, P = C.qtyParts(s); qty += P.asm; ship += P.ship; conv += C.sumDay(s, minsOf(it.date)).e2; });   // v28.24 : 조립수량 (출고 · 반조 · 제조 따로)
-        return Object.assign({ m, qty, ship, conv, mq: m.mq, days: m.c4 + m.d4, tg, hit: hits.ok, miss: hits.miss }, u);
+        let adjN = 0, sup = 0, act = 0;
+        its.forEach(it => { const s = it.sum || {}, P = C.qtyParts(s); qty += P.asm; ship += P.ship; const e = C.sumDay(s, minsOf(it.date)).e2; conv += e; if (it._adj && it._adj.kind) { adjN++; sup += it._adj.support; act += it._adj.actual; } });   // v28.24 : 조립수량 (출고 · 반조 · 제조 따로)
+        return Object.assign({ m, qty, ship, conv, mq: m.mq, days: m.c4 + m.d4, tg, hit: hits.ok, miss: hits.miss, adjN, adjSup: sup }, u, { items: its, rawItems: u.items });
       });
       // 그룹 순서 → 매니저 · 파트장 · 사원 → 사번(입사 순) → 이름
       const grpKey = u => userKey(u, r.groups);
       const SK = {
         name: u => u.name, group: u => grpKey(u), days: u => u.days, last: u => u.last || '', target: u => u.target,
-        qty: u => u.qty, conv: u => u.conv, f7: u => u.items.length ? u.m.f7 : -1, i7: u => u.items.length ? u.m.i7 : -1, c8: u => u.tg && u.items.length ? u.m.c8 : -1, hit: u => u.tg && u.items.length ? u.hit : -1, miss: u => u.tg && u.items.length ? u.miss : -1,
+        qty: u => u.qty, conv: u => u.conv, f7: u => u.items.length ? u.m.f7 : -1, i7: u => u.items.length ? u.m.i7 : -1, share: u => u.qty || 0, c8: u => u.tg && u.items.length ? u.m.c8 : -1, hit: u => u.tg && u.items.length ? u.hit : -1, miss: u => u.tg && u.items.length ? u.miss : -1,
       };
       const sk = SK[S.mSort.k] || SK.group;
       list.sort((a, b) => { const x = sk(a), y = sk(b); return (typeof x === 'string' ? x.localeCompare(y, 'ko') : x - y) * S.mSort.d; });
@@ -9248,7 +9488,7 @@ async function addCharts(buf, jobs) {
         <div class="seg"><button data-mv="list" class="${S.mView === 'list' ? 'on' : ''}">인원별 목록</button><button data-mv="board" class="${S.mView === 'board' ? 'on' : ''}">일자별 현황판</button></div>
         <span class="progress hide" id="pg"><i></i></span><span class="muted" id="pgt"></span>
 
-        <button id="zip" ${xym ? '' : 'disabled'}>⬇ 엑셀 전체 (zip)</button>
+        <button id="zip" ${xym ? '' : 'disabled'}>⬇ 엑셀 전체 (zip)</button><button id="zipo" class="sm" ${xym ? '' : 'disabled'} title="원본 양식으로 전체 (지원 보정 전)">원본 양식 zip</button>
       </div>
       ${(() => { const on = S.manageGroup ? S.manageGroup.split(',') : [], has = new Set(r.users.map(u => u.group)), ch = mgChips(r.groups).filter(([, gs]) => gs.some(g => has.has(g)));
         return `<div class="gchips"><span class="muted">그룹</span><button data-gg="" class="${on.length ? '' : 'on'}">전체</button>${ch.map(([t, gs]) => `<button data-gg="${esc(gs.join(','))}" class="${gs.every(g => on.includes(g)) ? 'on' : ''}">${gdot(gs[0]).replace(/>[^<]*$/, '>')}${esc(t)}</button>`).join('')}</div>`; })()}
@@ -9338,7 +9578,8 @@ async function addCharts(buf, jobs) {
         on = !gs.length ? [] : gs.every(g => on.includes(g)) ? on.filter(x => !gs.includes(x)) : on.concat(gs.filter(g => !on.includes(g)));
         S.manageGroup = on.join(','); renderManage();
       }));
-      $('#zip').onclick = () => xym && zipAll(xym);
+      $('#zip').onclick = () => { S._zipOrig = false; xym && zipAll(xym); };
+      if ($('#zipo')) $('#zipo').onclick = () => { S._zipOrig = true; xym && zipAll(xym); };
       S._musers = r.users;
       if ($('#bimp')) $('#bimp').onclick = bulkImport;
       if ($('#gtx')) $('#gtx').onclick = () => { S.gtOpen = false; renderManage(); };
@@ -9533,28 +9774,37 @@ async function addCharts(buf, jobs) {
       ['group', '그룹', u => u.group, r.groups], ['role', '권한', u => u.role, ['일반', '매니저', '관리자']], ['target', tMode() === 't' ? '팀 목표' : '개인 목표', u => u.tg || '', tMode() === 't' ? Array.from(new Set(S._mlist.map(u => u.tg).filter(Boolean))).map(String) : C.TARGETS.map(String)],
       ['last', '마지막 입력', u => u.pend ? '가입 안 함' : !u.last ? '입력 없음' : u.last < prevWork ? '밀림 (2근무일 이상)' : '최근 입력', ['최근 입력', '밀림 (2근무일 이상)', '입력 없음', '가입 안 함']],
       ['c8', '달성률', u => !(u.tg && u.items.length) ? '' : ({ 'r-hi': '달성', 'r-mid': '주의', 'r-lo': '노력' })[rateCls(u.m.c8, xym)], ['달성', '주의', '노력']]] });
-    const list = MF.filter(S._mlist);
+    const list = MF.filter(S._mlist), SH = shareTot();   // v28.52 : 점유율 분모
     const th = (k, t, num) => `<th class="sort ${num ? 'num' : ''} ${S.mSort.k === k ? 'on' : ''}" data-k="${k}">${t}${S.mSort.k === k ? (S.mSort.d > 0 ? ' ▲' : ' ▼') : ''}${['group', 'target', 'last', 'c8'].includes(k) ? ' ' + MF.ico(k) : k === 'name' ? ' ' + MF.ico('role') : ''}</th>`;
-    $('#mbody').innerHTML = `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="개인 목표 화면 (그룹별 표 · 한꺼번에 채우기)">🎯 개인 목표 설정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
+    const TR = (() => { const rg = r.range || (r.period ? { start: r.period.start, end: r.period.end || S.today } : null); let L = [];   // v28.52 : 팀 효율 (출근 인원·일)
+      if (rg) ymsIn(rg.start, rg.end).filter(adjOn).forEach(y => { const t = teamDays(y, rg.start, rg.end); if (t) L = L.concat(t); }); return L; })();
+    const tcard = TR.length ? (() => { const gs = S.manageGroup ? S.manageGroup.split(',') : [], b = tBase(), s = teamSum(TR, b, gs), g = goalOf(xym), rt = s.avg != null && g.team ? pctR(s.avg, g.team) : null;
+      return `<div class="card ddteam mteam"><b class="ddteam-t" title="휴무를 뺀 출근 인원·일로 나눈 1인 1일 평균 (11월 귀속부터 · 지원 보정 포함)">팀 효율</b><div class="seg ddtb">${TBASE.map(([k, t]) => `<button data-tb2="${k}" class="${b === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+        <div class="ddteam-k"><small>1인 1일 평균</small><b>${f2(s.avg)}</b></div><div class="ddteam-k"><small>출근 인원·일 (${s.people}명)</small><b>${s.n}</b></div>
+        <div class="ddteam-k"><small>팀 목표 ${g.team ? f1d(g.team) : '-'}</small><b class="${rt == null ? '' : LVC[lvOf(s.avg, g.team, xym)] + 't'}">${rt == null ? '-' : rt + '%'}</b></div>
+        <span class="muted" style="font-size:12px">${gs.length ? '고른 그룹' : '전체 그룹'} · 환산 합 ${f1d(s.sum)}</span>${s.pend && !isRO() ? `<button class="sm ddpend" id="mpend">확인 필요 <b>${s.pend}</b></button>` : s.pend ? `<span class="ddpend">확인 필요 ${s.pend}</span>` : ''}</div>`; })() : '';
+    $('#mbody').innerHTML = tcard + `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="개인 목표 화면 (그룹별 표 · 한꺼번에 채우기)">🎯 개인 목표 설정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' && S.gtOpen ? 266 : 220}px)">
-      <table class="list mlist" style="min-width:1180px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', tMode() === 't' ? '팀 목표' : '개인 목표', 1)}${th('hit', '달성일', 1)}${th('miss', '미달일', 1)}${th('qty', '조립 수량', 1)}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}<th title="이 사람 한 달 엑셀">엑셀</th></tr></thead><tbody>
+      <table class="list mlist" style="min-width:1260px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', tMode() === 't' ? '팀 목표' : '개인 목표', 1)}${th('hit', '달성일', 1)}${th('miss', '미달일', 1)}${th('qty', '조립 수량', 1)}${(() => { const T = shareTot(); return `<th class="sort num ${S.mSort.k === 'share' ? 'on' : ''}" data-k="share" title="분모 : ${esc(T.scope)} · 조립 ${T.totA}대 · 제조 ${T.totM}대">점유율<small style="display:block;font-weight:400">조립 · 제조</small></th>`; })()}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}<th title="이 사람 한 달 엑셀">엑셀</th></tr></thead><tbody>
       ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.tg && has ? u.m.c8 : null;
         let hd = '';
         if (S.mSort.k === 'group' && (i === 0 || list[i - 1].group !== u.group)) {        // 그룹 제목 줄
           const gl = list.filter(x => x.group === u.group), gr = gl.filter(x => x.tg && x.items.length), ga = gr.length ? gr.reduce((a, x) => a + x.m.c8, 0) / gr.length : null, gh = gr.reduce((a, x) => a + x.hit, 0), gm = gr.reduce((a, x) => a + x.miss, 0);
-          hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="13"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${(() => { const q = gl.reduce((a, x) => a + (x.mq || 0), 0); return q ? `<span class="mfgv">제조 ${q}대</span>` : ''; })()}${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga, xym)}t">${pct(ga)}</b></span><span>달성일 <b class="t-hi">${gh}</b> · 미달일 <b class="t-lo">${gm}</b></span>`}</td></tr>`;
+          hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="14"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${(() => { const q = gl.reduce((a, x) => a + (x.mq || 0), 0); return q ? `<span class="mfgv">제조 ${q}대</span>` : ''; })()}${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga, xym)}t">${pct(ga)}</b></span><span>달성일 <b class="t-hi">${gh}</b> · 미달일 <b class="t-lo">${gm}</b></span>`}</td></tr>`;
         }
         return hd + `<tr data-u="${u.id}" class="gc${u.pend ? ' pend' : ''}" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${u.pend ? ' <span class="rtag pendt" title="아직 업무데이터 사이트에 가입하지 않음">미가입</span>' : ''}${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인 불가 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${S.mSort.k === 'group' ? gdot(u.group).replace(/>[^<]*$/, '>') : gdot(u.group)}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : u.pend ? '가입 안 함' : '입력 없음'}</td>
-        <td class="num">${tMode() === 't' ? (u.tg ? f1d(u.tg) : '<span class="muted" title="관리자 설정 → 목표에서 팀 목표를 정하세요">-</span>') : u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has && u.tg ? `<b class="t-hi">${u.hit}</b>` : '<span class="muted">-</span>'}</td><td class="num">${has && u.tg ? `<b class="t-lo">${u.miss}</b>` : '<span class="muted">-</span>'}</td><td class="num">${has ? u.qty : '-'}${u.ship ? `<small class="mfq shipv" title="제조사용(출고) ${u.ship}대">출고 ${u.ship}</small>` : ''}${u.mq ? `<small class="mfq" title="제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
-        <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b></td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
+        <td class="num">${tMode() === 't' ? (u.tg ? f1d(u.tg) : '<span class="muted" title="관리자 설정 → 목표에서 팀 목표를 정하세요">-</span>') : u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has && u.tg ? `<b class="t-hi">${u.hit}</b>` : '<span class="muted">-</span>'}</td><td class="num">${has && u.tg ? `<b class="t-lo">${u.miss}</b>` : '<span class="muted">-</span>'}</td><td class="num">${has ? u.qty : '-'}${u.ship ? `<small class="mfq shipv" title="제조사용(출고) ${u.ship}대">출고 ${u.ship}</small>` : ''}${u.mq ? `<small class="mfq" title="제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num shr">${has && SH.totA ? `<b title="${esc(u.name)} 조립 ${u.qty}대 / ${esc(SH.scope)} ${SH.totA}대">${(Math.round(u.qty / SH.totA * 1000) / 10).toFixed(1)}%</b>` : '-'}${u.mq && SH.totM ? `<small class="mfq" title="제조 ${u.mq}대 / ${esc(SH.scope)} ${SH.totM}대">제조 ${(Math.round(u.mq / SH.totM * 1000) / 10).toFixed(1)}%</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
+        <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b>${u.adjN ? `<small class="adjn" title="11월 귀속부터 지원 보정 · 보정된 날 ${u.adjN}일 · 지원 점수 합 ${f2(u.adjSup)}">보정 ${u.adjN}일</small>` : ''}</td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
         <td class="mrate" title="막대 = 평가평균 (빗금 = 기타시간 환산) · 검은 선 = 목표">${c8 == null ? '<span class="muted">-</span>' : `<div class="mrbar">${ddBar(u.m.f7, u.tg, u.m.w7 || 0)}</div><b class="${rateCls(c8, xym)}t">${pct(c8)}</b>`}</td>
-        <td>${has && xym && !u.pend ? `<button class="mxl" data-xl="${u.id}" title="${esc(u.name)} · ${ymLabel(xym)} 엑셀 받기">⬇</button>` : ''}</td>
+        <td>${has && xym && !u.pend ? `<button class="mxl" data-xl="${u.id}" title="${esc(u.name)} · ${ymLabel(xym)} 엑셀 받기 (웹과 같은 값)">⬇</button><button class="mxl mxo" data-xl="${u.id}" data-orig="1" title="원본 양식 (지원 보정 전)">원</button>` : ''}</td>
 </tr>`;
-      }).join('') || '<tr><td colspan="13" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
+      }).join('') || '<tr><td colspan="14" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
     MF.bind();
+    $$('[data-tb2]').forEach(b => (b.onclick = () => { S.tbase = b.dataset.tb2; try { localStorage.setItem('tbase', S.tbase); } catch (e) { } renderMList(r); }));
+    if ($('#mpend')) $('#mpend').onclick = () => confirmModal(TR, xym, () => renderManage());
     if ($('#gtopen')) $('#gtopen').onclick = () => go('ptarget');   // v28.51 : 개인 목표 화면으로
     $$('.mlist th.sort').forEach(h => (h.onclick = () => { const k = h.dataset.k; S.mSort = { k, d: S.mSort.k === k ? -S.mSort.d : (['name', 'group', 'last'].includes(k) ? 1 : -1) }; drawManage(r, S.manageYm || (r.period || {}).ym, false); }));
     $$('.mlist select.mtg').forEach(sel => (sel.onchange = async () => {
@@ -9570,10 +9820,11 @@ async function addCharts(buf, jobs) {
     // v28.18 : 이름 · 달성률 칸을 누르면 사람 카드 (예전 [월 통계] · ⋯ 메뉴 대신)
     $$('.mlist .mxl').forEach(b => (b.onclick = async e => {                       // v28.24 : 한 사람 엑셀 바로 받기
       e.stopPropagation(); const u = list.find(x => x.id === b.dataset.xl), ym = xym; if (!u || !ym) return;
-      b.disabled = true; b.textContent = '…';
-      try { const mr = await api('getMonth', { userId: u.id, ym }); saveBlob(await makeXlsxBlob(mr.user, ym, mr.target, mr.days), C.fileName(u.name, ym)); toast(u.name + ' 엑셀을 받았습니다'); }
+      const bt = b.textContent; b.disabled = true; b.textContent = '…';
+      try { const mr = await api('getMonth', { userId: u.id, ym }), orig = b.dataset.orig === '1';
+        saveBlob(orig ? await makeXlsxBlob(mr.user, ym, mr.target, mr.days) : await simpleXlsxBlob(mr.user, ym, mr.target, mr.days, shareTot(u)), orig ? C.fileName(u.name, ym) : sxName(u.name, ym)); toast(u.name + ' 엑셀을 받았습니다'); }
       catch (er) { toast(er.message, true); }
-      b.disabled = false; b.textContent = '⬇';
+      b.disabled = false; b.textContent = bt;
     }));
     $$('.mlist tr[data-u] td:first-child b, .mlist tr[data-u] td.mrate').forEach(el => { el.classList.add('pclk'); el.onclick = () => {
       const u = S._mlist.find(x => x.id === el.closest('tr').dataset.u); if (!u) return;
@@ -9688,7 +9939,7 @@ async function addCharts(buf, jobs) {
     const bWhy = (n, d) => W[normName(n) + '|' + d] || '';
     const HOL = {}; ((BI && BI.hol) || []).forEach(([d, n]) => (HOL[d] = n || '공휴일'));          // v28.21 : 공휴일 머리 표시
     for (let d = r.range.start; d <= end && dates.length < 100; d = C.addDays(d, 1)) dates.push(d);
-    const byU = {}; list.forEach(u => { byU[u.id] = {}; u.items.forEach(it => (byU[u.id][it.date] = it.sum || {})); });
+    const byU = {}, byA = {}; list.forEach(u => { byU[u.id] = {}; byA[u.id] = {}; u.items.forEach(it => { byU[u.id][it.date] = it.sum || {}; if (it._adj) byA[u.id][it.date] = it._adj; }); });   // v28.52 : 보정 표시
     const cnt = {}; dates.forEach(d => (cnt[d] = list.filter(u => byU[u.id][d]).length));
     $('#mbody').innerHTML = `
       <div class="legend"><span><i class="r-no"></i>목표 미설정</span><span class="muted">색 = 위 '달성 기준' · 숫자 = 그날 평가평균 · 칸 클릭 = 그날 입력 화면</span></div>
@@ -9697,8 +9948,9 @@ async function addCharts(buf, jobs) {
       ${list.map((u, i) => (S.mSort.k === 'group' ? ghd(list, i, x => x.group, dates.length + 6, g => [g.length + '명']) : '') + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td class="bn"><b class="pclk" data-bu="${u.id}">${esc(u.name)}</b>${u.pend ? ' <span class="rtag pendt">미가입</span>' : ''}<small>${gdot(u.group)}${u.tg ? (tMode() === 't' ? ' · 팀 목표 ' : ' · 목표 ') + u.tg : ''}</small></td>${dates.map(d => {
         const s = byU[u.id][d], why = bWhy(u.name, d); if (!s) return `<td class="e${why ? ' why' : ''}${HOL[d] && !why ? ' hc' : ''}" data-d="${d}" ${why ? `title="${esc(u.name)} ${dLabel(d)} · ${esc(why)}"` : HOL[d] ? `title="${esc(HOL[d])}"` : ''}>${why ? `<span>${esc(why.length > 3 ? why.slice(0, 3) : why)}</span>` : ''}</td>`;
         const v = C.sumDay(s, minsOf(d)).f7, rc = u.tg ? LVC[lvOf(v, u.tg, S._gym)] : 'r-no';
-        if (!(v > 1e-9)) return `<td class="z" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 실적 0 (${esc(why || '사유 없음')}) · 근무일엔 들어가고 평가평균에선 빠짐">${why ? `<span>${esc(why.length > 3 ? why.slice(0, 3) : why)}</span>` : '0'}</td>`;
-        return `<td class="${rc}" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 평가평균 ${f2(v)}${u.tg ? ' (' + pct(v / u.tg) + ')' : ''} · 주문 ${s.n || 0}건">${(Math.round(v * 10) / 10).toFixed(1)}</td>`;
+        const aj = byA[u.id][d];
+        if (!(v > 1e-9)) return `<td class="z" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 실적 0 (${esc(aj ? aj.reason : why || '사유 없음')}) · 근무일엔 들어가고 평가평균에선 빠짐">${aj ? adjTag(aj) : why ? `<span>${esc(why.length > 3 ? why.slice(0, 3) : why)}</span>` : '0'}</td>`;
+        return `<td class="${rc}${aj ? ' adjc' : ''}" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 평가평균 ${f2(v)}${u.tg ? ' (' + pct(v / u.tg) + ')' : ''} · 주문 ${s.n || 0}건${aj ? ' · ' + esc(aj.reason) + ' (실제 ' + f2(aj.actual) + ' + 지원 ' + f2(aj.support) + (aj.base != null ? ' · 기준 평균 ' + f2(aj.base) : '') + ')' : ''}">${(Math.round(v * 10) / 10).toFixed(1)}${aj ? adjTag(aj) : ''}</td>`;
       }).join('')}<td class="bt">${u.items.length ? u.days : '-'}</td><td class="bt t-hi"><b>${u.items.length && u.tg ? u.hit : '-'}</b></td><td class="bt t-lo"><b>${u.items.length && u.tg ? u.miss : '-'}</b></td><td class="bt"><b>${u.items.length ? f2(u.m.f7) : '-'}</b></td><td class="bt ${u.tg && u.items.length ? rateCls(u.m.c8, S._gym) + 't' : ''}">${u.tg && u.items.length ? pct(u.m.c8) : '-'}</td></tr>`).join('') || '<tr><td class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody><tfoot><tr><td class="bn">입력 인원</td>${dates.map(d => `<td>${cnt[d] || ''}</td>`).join('')}<td class="bt" colspan="5"></td></tr></tfoot></table></div>`;
     $$('.bd td[data-d]').forEach(td => (td.onclick = () => { const u = S._mlist.find(x => x.id === td.closest('tr').dataset.u); if (!u || u.pend) return; openUser(u, 'day', td.dataset.d); }));
@@ -9712,7 +9964,7 @@ async function addCharts(buf, jobs) {
     const zip = new JSZip(); let done = 0, fails = [];
     for (const u of list) {
       pgt.textContent = done + '/' + list.length + ' ' + u.name;
-      try { const mr = await api('getMonth', { userId: u.id, ym }); zip.file(C.fileName(u.name, ym), await makeXlsxBlob(mr.user, ym, mr.target, mr.days)); }
+      try { const mr = await api('getMonth', { userId: u.id, ym }); if (S._zipOrig) zip.file(C.fileName(u.name, ym), await makeXlsxBlob(mr.user, ym, mr.target, mr.days)); else zip.file(sxName(u.name, ym), await simpleXlsxBlob(mr.user, ym, mr.target, mr.days, shareTot(u))); }
       catch (e) { fails.push(u.name); }
       done++; $('i', pg).style.width = (done / list.length * 100) + '%';
     }
@@ -10084,6 +10336,33 @@ async function addCharts(buf, jobs) {
     $$('[data-sc]').forEach(b => (b.onclick = () => { const k = b.dataset.sc; if (!k) V.sel = []; else { const ks = STC4[+k - 1][1], on = ks.every(x => V.sel.includes(x)); V.sel = V.sel.filter(x => !ks.includes(x)).concat(on ? [] : ks); } stPicks(); stDraw(); }));
     $$('[data-sg]').forEach(b => (b.onclick = () => { const k = b.dataset.sg; if (!k) V.grp = []; else tog(V.grp, k); if (V.grp.length === STG().length) V.grp = []; stPicks(); stDraw(); }));
   }
+  // v28.52 : 통계 합계(서버 집계)에 지원 보정 차이를 더함 — 날짜별 보정 결과와 같은 값이 되도록
+  async function statsAdj(D, by, F, T) {
+    const yms = Array.from(new Set(D.agg.map(r => r[1]))).filter(adjOn); if (!yms.length) return;
+    for (const ym of yms) { try { await adjYm(ym); } catch (e) { } }
+    const OT = D.oth || C.OTHER.map(x => x[0]), RL = D.cols ? D.cols.length : 0, TL = (D.tys || []).length || 7, byName = {};
+    (D.users || []).forEach(u => (byName[nmKey(u.name)] = u.id));
+    const idx = {}, rows = D.agg.map(r => r.slice()); rows.forEach((r, i) => (idx[r[0] + '|' + r[1] + '|' + (r[2] || '') + '|' + r[3]] = i));
+    const wkOf = d => { const x = new Date(d + 'T00:00:00'), k = (x.getDay() + 6) % 7; return C.addDays(d, -k); };
+    const dwOf = d => { const k = new Date(d + 'T00:00:00').getDay(); return k === 6 ? 's' : k === 0 ? 'u' : 'w'; };
+    yms.forEach(ym => { const A = S._adj && S._adj[ym]; if (!A) return;
+      Object.keys(A.by).forEach(n => { const uid = byName[n]; if (!uid) return;
+        const raw = {}; (A.src.users.find(u => nmKey(u.name) === n) || { items: [] }).items.forEach(it => (raw[it.date] = it.sum || {}));
+        A.by[n].items.forEach(it => { const a = it._adj; if (!a || !a.kind) return;
+          if (it.date < F || it.date > T) return;
+          const key = uid + '|' + ym + '|' + (by === 'week' ? wkOf(it.date) : '') + '|' + dwOf(it.date);
+          let i = idx[key];
+          if (i == null) { i = rows.length; idx[key] = i; rows.push([uid, ym, by === 'week' ? wkOf(it.date) : null, dwOf(it.date), 0, Array(RL).fill(0), Array(RL).fill(0), OT.map(() => 0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Array(TL).fill(0)]); }
+          const r = rows[i], s0 = raw[it.date] || null, s1 = it.sum || {}, md = !!(s1.t && typeof s1.t === 'object');
+          r[7] = r[7].slice(); let dm = 0;
+          OT.forEach((k, j) => { const d = C.num((s1.o || {})[k]) - C.num(((s0 || {}).o || {})[k]); r[7][j] += d; dm += d; });
+          if (md) r[14] += dm;
+          const z0 = !s0 || !(Math.abs(C.sumDay(s0, minsYm(ym)).e2) > 1e-9), z1 = !(Math.abs(C.sumDay(s1, minsYm(ym)).e2) > 1e-9);
+          if (!s0) { r[4] += 1; if (z1) r[17] += 1; }                                         // 입력 없던 날 (확인으로 생긴 근무일)
+          else if (z0 && !z1) { r[17] -= 1; r[18] -= C.num(s0.h7); r[19] -= C.num(s0.e4); r[8] -= C.num(s0.h7) - C.num(s1.h7); }
+        }); }); });
+    D.agg = rows;
+  }
   async function stLoad() {
     const V = stState(), { keys, prevKeys } = stKeys(V), P = (V.data && V.data.periods) || S.periods || [];
     const all = prevKeys.concat(keys), rs = all.map(k => stRange(V.unit, k, P));
@@ -10111,6 +10390,8 @@ async function addCharts(buf, jobs) {
         if (tk !== S.token || S.view !== 'stats') return;
         const D = Object.assign({}, meta, { agg: [], dates: [], targets: [], cols: null, oth: null });
         chunks.forEach(c => { const x = C2[c.k].d; D.cols = x.cols; D.oth = x.oth; D.agg = D.agg.concat(x.agg); D.dates = D.dates.concat(x.dates); D.targets = D.targets.concat(x.targets); });
+        await statsAdj(D, by, from, to);                                            // v28.52 : 11월 귀속부터 지원 보정 (월 목록과 같은 계산)
+        if (tk !== S.token || S.view !== 'stats') return;
         V.data = D; V.key = ck;
       }
       catch (e) { $('#stb').innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
@@ -11451,7 +11732,7 @@ async function addCharts(buf, jobs) {
   if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter, loadLib });
   if (window.EDU) window.EDU.init({api,modal,toast,confirmBox,S,loadLib,pageHead,gdot,updateBadge:()=>updateEduBadge(false)});
   if (window.ACC) window.ACC.init({ api, modal, toast, confirmBox, S, C, saveBlob, go, gdot, gcol, loadLib, pageHead, normName, peopleNames: () => ((S._ppl && S._ppl.rows) || []).map(x => x.name), updateAccBadge });
-  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter });
+  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter, adjOn, adjYm, adjItems });   // v28.52 : 지원 보정
   // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
   setInterval(() => { if (S.me && S.me.acc) void updateAccBadge(); if(S.me)void updateEduBadge(false); }, 90000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && S.me && S.me.acc) void updateAccBadge(); if(!document.hidden && S.me)void updateEduBadge(false); });
