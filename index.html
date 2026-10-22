@@ -7449,8 +7449,9 @@ async function addCharts(buf, jobs) {
     if (!S.token || !S.me || !document.querySelector('#edubd,#edubdro')) return;
     if (updateEduBadge._busy) { if (popOnFirst) updateEduBadge._pendingFor = S.token; return; }
     updateEduBadge._busy = true;
+    const oldToken=S.token;
     try {
-      const oldToken=S.token, r=await api('eduNotice');
+      const r=await api('eduNotice');
       if(oldToken!==S.token)return;
       const items=r.items||[], n=items.length;
       document.querySelectorAll('#edubd,#edubdro').forEach(b=>{b.textContent=n>99?'99+':String(n);b.classList.toggle('hide',!n);b.title='교육 하루 전·당일 미확인 일정 '+n+'건';});
