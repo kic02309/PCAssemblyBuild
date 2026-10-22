@@ -1857,6 +1857,14 @@ html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
 @media(max-width:720px){.ddkpis-v7{grid-template-columns:minmax(0,1fr)}.ddsummary-v7 .dd-support-grid{grid-template-columns:minmax(0,1fr)}.ddcombo-row{grid-template-columns:70px minmax(0,1fr);gap:6px 9px}.ddcombo-value{grid-column:2}.ddcombo-checks{grid-column:1/-1}.ddquick-bar{grid-template-columns:90px minmax(40px,1fr) 44px;gap:6px}#main:has(.ddkpis-v7) > .ph{padding:9px 15px}#main:has(.ddkpis-v7) .pgb{padding:8px 14px 28px}}
 
 
+/* 2026-10-22: 그룹별 평균 환산 상태칩 3종 동일한 행/높이/수직 정렬 */
+.ddcombo-checks{display:flex;align-items:center;align-self:center;justify-content:flex-start;gap:7px;flex-wrap:nowrap;min-height:28px;min-width:0}
+.ddcombo-checks .dd-cstat{display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:0 0 auto;box-sizing:border-box;height:28px;margin:0;line-height:1;border:1px solid var(--line2);padding:0 8px;vertical-align:middle;white-space:nowrap}
+.ddcombo-checks .dd-cstat.warn{border-color:#ffeadf}
+.ddcombo-checks .dd-cstat b{font-size:inherit;line-height:1;vertical-align:baseline}
+@media(max-width:1150px){.ddcombo-checks{grid-column:2 / -1;min-height:28px}}
+@media(max-width:720px){.ddcombo-checks{grid-column:1 / -1;flex-wrap:wrap}}
+
 /* Education V8 - isolated styles */
 .edu-wrap{--edu-ln:#e1e7f0;--edu-s:#f5f7fb;color:var(--ink);max-width:100%;}
 .edu-wrap .ph{margin-bottom:12px}.edu-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px!important;padding:12px 14px!important}
@@ -3570,14 +3578,14 @@ function eduNoticePeople(people){
 }
 function noticePop(items){
   if(!items?.length)return;
-  const x=items[0],isManager=A.S.me?.role==='매니저',people=eduNoticePeople(x.people),n=people.length;
+  const x=items[0],people=eduNoticePeople(x.people),n=people.length;
   const self=norm(myName());
   const memberMarkup=people.map(p=>{
     const mine=self&&norm(p.name)===self;
     const title=mine?' title="로그인한 본인"':'';
     return `<div class="edu-notice-person${mine?' mine':''}"${title}><b>${esc(p.name||'이름 미정')}</b><span>${esc(p.grp||'미지정')}</span></div>`;
   }).join('');
-  const headline=isManager?'소속 직원 교육일정':x.date===A.S.today?'오늘 교육이 있습니다':'내일 교육이 있습니다';
+  const headline=x.date===A.S.today?'오늘 교육이 있습니다':'내일 교육이 있습니다';
   const dateText=x.date?`${md(x.date)}(${wd(x.date)})`:'날짜 미정';
   A.modal(`<section class="edu-notice" aria-label="교육일정 알림">
     <h3 class="edu-notice-heading"><span aria-hidden="true">🔔</span> ${esc(headline)}</h3>
@@ -7439,18 +7447,18 @@ async function addCharts(buf, jobs) {
   // 교육일정 D-1 및 당일 미확인 알림 (서버가 권한별 필터링)
   async function updateEduBadge(popOnFirst) {
     if (!S.token || !S.me || !document.querySelector('#edubd,#edubdro')) return;
-    if (updateEduBadge._busy) return;
+    if (updateEduBadge._busy) { if (popOnFirst) updateEduBadge._pendingFor = S.token; return; }
     updateEduBadge._busy = true;
     try {
       const oldToken=S.token, r=await api('eduNotice');
       if(oldToken!==S.token)return;
       const items=r.items||[], n=items.length;
       document.querySelectorAll('#edubd,#edubdro').forEach(b=>{b.textContent=n>99?'99+':String(n);b.classList.toggle('hide',!n);b.title='교육 하루 전·당일 미확인 일정 '+n+'건';});
-      if(popOnFirst && n && !updateEduBadge._shownFor?.includes(oldToken)) {
+      if((popOnFirst || updateEduBadge._pendingFor===oldToken) && n && !updateEduBadge._shownFor?.includes(oldToken)) {
         updateEduBadge._shownFor=[oldToken];
-        if(window.EDU)window.EDU.noticePop(items.slice(0,1));
+        if(window.EDU)window.EDU.noticePop(items);
       }
-    }catch(e){console.warn('[교육 알림]',e.message);}finally{updateEduBadge._busy=false;}
+    }catch(e){console.warn('[교육 알림]',e.message);}finally{updateEduBadge._busy=false;if(updateEduBadge._pendingFor===oldToken)updateEduBadge._pendingFor=null;}
   }
   async function go(view, opt) {
     if (view === 'att') { if (window.HR && window.HR.quickAtt) window.HR.quickAtt(); return; }   // 근태 입력 = 창만 열림
