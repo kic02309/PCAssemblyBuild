@@ -2031,6 +2031,7 @@ header.roh .me b{overflow-wrap:anywhere}
 .pgch{display:inline-flex;gap:4px;flex-wrap:wrap;align-items:center}.toolbar .pgch{order:9;flex:1 1 100%}.pgch button{border-radius:99px;padding:5px 11px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
 .pgch button.on{background:var(--blue);border-color:var(--blue);color:#fff}.pgch button.on .gdot{box-shadow:0 0 0 2px #fff}
 .rt .rct{width:118px;font-size:12px;padding:2px 4px}
+.pill{display:inline-flex;align-items:center;gap:2px}.pill.on .gdot{box-shadow:0 0 0 2px #fff}
 </style>
 </head>
 <body>
@@ -3521,7 +3522,7 @@ async function load(host){try{const r=await A.api('eduList');E.batches=r.batches
  if(!E.active||!E.changed){E.active=E.batches.find(b=>b.id===E.active?.id)||E.batches[0]||null;E.unmatched=[];E.changed=false;}if(!eduMonthOK(E.month))E.month=eduMonthDefault();draw();
  }catch(ex){host.innerHTML=`<div class="card">교육일정 데이터 연결을 확인해 주세요. <b>${esc(ex.message)}</b><div class="muted" style="margin-top:10px">V8 SQL 패치가 아직 실행되지 않았다면 교육일정 API를 먼저 설치해야 합니다.</div></div>`;}}
 function chooseBatch(id){if(E.changed){A.toast('변경사항을 먼저 저장하세요',true);return;}E.active=E.batches.find(x=>x.id===+id)||null;E.unmatched=[];if(E.active?.sessions?.length&&!E.active.sessions.some(x=>x.date?.startsWith(eduMonth())))E.month=E.active.sessions[0].date.slice(0,7);draw();}
-function memberRow(p,si,pi,s){const cs=hits(p,s.date),hit=cs.length;const role=p.title||'사원';return `<div class="edu-person${hit?' conflict':''}" draggable="${editor()}" data-si="${si}" data-pi="${pi}" title="${hit?'휴무 충돌 · 클릭해서 확인':'이름을 옆 회차로 드래그 이동'}"><span class="edu-grip">${editor()?'⠿':''}</span><span class="edu-role">${esc(role)}</span><b class="edu-nm">${esc(p.name)}</b><span class="edu-grp">${esc(p.grp)}</span>${hit?`<button class="edu-hit" data-hit="${si}:${pi}">휴무 충돌</button>`:'<span class="edu-ok"> </span>'}${editor()?`<button class="edu-del" data-del="${si}:${pi}" title="인원 제거">×</button>`:''}</div>`;}
+function memberRow(p,si,pi,s){const cs=hits(p,s.date),hit=cs.length;const role=p.title||'사원';return `<div class="edu-person${hit?' conflict':''}" draggable="${editor()}" data-si="${si}" data-pi="${pi}" title="${hit?'휴무 충돌 · 클릭해서 확인':'이름을 옆 회차로 드래그 이동'}"><span class="edu-grip">${editor()?'⠿':''}</span><span class="edu-role">${esc(role)}</span><b class="edu-nm">${esc(p.name)}</b><span class="edu-grp">${A.gdot?A.gdot(p.grp):esc(p.grp)}</span>${hit?`<button class="edu-hit" data-hit="${si}:${pi}">휴무 충돌</button>`:'<span class="edu-ok"> </span>'}${editor()?`<button class="edu-del" data-del="${si}:${pi}" title="인원 제거">×</button>`:''}</div>`;}
 function sessionCard(s,i){return `<section class="edu-session" data-session="${i}"><div class="edu-session-head"><div><b>${fmtDate(s)}</b><span>${count(s)}명</span></div>${editor()?`<button class="sm" data-edit="${i}" title="교육 날짜·시간·내용·장소 수정">✎ 수정</button>`:''}</div><div class="edu-details">${esc(s.start)}~${esc(s.end)} · ${esc(s.topic||E.active.title)}<small>${esc(s.place||'장소 미정')}</small></div><div class="edu-members">${(s.staff||[]).map((p,j)=>memberRow(p,i,j,s)).join('')||'<div class="edu-empty">배정 인원 없음 · 여기로 드래그</div>'}</div>${editor()?`<button class="edu-add" data-add="${i}">+ 인원 추가</button>`:''}</section>`;}
 function draw(){const host=$('#main');if(!host||A.S.view!=='education')return;
  const month=eduMonth(),monthly=sessions().map((s,i)=>({s,i})).filter(v=>v.s.date?.startsWith(month));
@@ -3797,7 +3798,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const pf = s => window.AttendanceCore.isCurrentStaff(s) && (!L.part || L.part.split(',').includes(partOf(s.grp)));
     const conv = convMap();                                               // v28.32 : 토요 대체된 연차 (토요일|사람 → 연차)
     let html = own ? surveyBanner() : `
-      <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${ptOn(p) ? ' on' : ''}">${p || '전체'}</button>`).join('')}
+      <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${ptOn(p) ? ' on' : ''}">${p ? A.gdot(p) : '전체'}</button>`).join('')}
         <span style="flex:1"></span>
         <label class="lvchk"><input type="checkbox" id="lvsp" ${L.showPend ? 'checked' : ''}> 확정 전 신청도 보기</label></div>`;
     html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span><span class="lv sp">경조 · 병가</span><span class="sw lvx" style="cursor:default">토요 대체<i>↺</i></span>${own ? '<span class="lv me">나</span>' : ''}
@@ -3983,7 +3984,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <div class="muted" style="margin-bottom:8px">연차자를 토요근무로 돌리면 ${md(day)}은 대체휴무가 되어 연차 일수에서 빠집니다.${sat0 ? ` 기본 = <b>${mdw(sat0)}</b> (지금 ${satN(sat0)}명)` : ''}</div>
       ${sat0 ? '' : '<div class="banner warn" style="margin-bottom:8px">이 날은 고를 수 있는 토요일이 없습니다 (대체휴무는 토요일 -5일 ~ +8일 · 공휴일 · 마감된 달 제외)</div>'}
       <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>사유</th><th></th></tr></thead><tbody>
-      ${list.map(x => `<tr><td><b>${A.esc(x.s.name)}</b></td><td>${A.esc(x.s.grp || '')}</td><td class="muted">${A.esc(x.l.r || '')}</td><td style="white-space:nowrap">${cands.slice(0, 2).map((t, i) => `<button class="sm${i === 0 ? ' primary' : ''}" data-cv="${x.l.id}|${t}">${md(t)} 토요 대체</button>`).join(' ')}</td></tr>`).join('') || '<tr><td colspan="4" class="muted" style="padding:14px">바꿀 수 있는 연차가 없습니다 (반차 · 훈련 · 경조 · 병가 · 확인 전 신청 제외)</td></tr>'}</tbody></table>
+      ${list.map(x => `<tr><td><b>${A.esc(x.s.name)}</b></td><td>${A.gdot(x.s.grp || '')}</td><td class="muted">${A.esc(x.l.r || '')}</td><td style="white-space:nowrap">${cands.slice(0, 2).map((t, i) => `<button class="sm${i === 0 ? ' primary' : ''}" data-cv="${x.l.id}|${t}">${md(t)} 토요 대체</button>`).join(' ')}</td></tr>`).join('') || '<tr><td colspan="4" class="muted" style="padding:14px">바꿀 수 있는 연차가 없습니다 (반차 · 훈련 · 경조 · 병가 · 확인 전 신청 제외)</td></tr>'}</tbody></table>
       <div class="acts"><button data-n>닫기</button></div>`, (bg, close) => {
       A.$('[data-n]', bg).onclick = close;
       A.$$('[data-cv]', bg).forEach(b => (b.onclick = async () => { const [id, t] = b.dataset.cv.split('|'), l = D().leaves.find(z => z.id === id); if (l && await convertLeave(l, day, t)) { close(); if (LC.dayCell(L.ix, day).off > cap) overModal(day, pf); } }));
@@ -4322,7 +4323,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       </section>
       <section class="card lvsec"><div class="lvst"><b>신청 사유</b><span class="muted">신청한 날짜 순 · 줄을 누르면 달력에서 반짝</span></div>
         <table class="list lvtbl"><thead><tr><th>신청일</th><th>이름</th>${groups.length > 1 ? '<th>파트</th>' : ''}<th>기간</th><th class="num">일수</th><th>사유</th><th class="num">그날 파트 휴무</th><th></th></tr></thead><tbody>
-        ${list.map(x => { const s = staffById(x.s) || {}, pk = peak(x); return `<tr class="click" data-pr="${x.id}"><td class="muted">${A.esc((x.at || '').slice(5, 10).replace('-', '/'))}</td><td><b>${A.esc(s.name || '?')}</b></td>${groups.length > 1 ? `<td>${A.esc(s.grp || '')}</td>` : ''}<td>${mdw(x.d1)}${x.d2 !== x.d1 ? ' ~ ' + mdw(x.d2) : ''}${x.h ? ' ' + x.h : ''}</td>
+        ${list.map(x => { const s = staffById(x.s) || {}, pk = peak(x); return `<tr class="click" data-pr="${x.id}"><td class="muted">${A.esc((x.at || '').slice(5, 10).replace('-', '/'))}</td><td><b>${A.esc(s.name || '?')}</b></td>${groups.length > 1 ? `<td>${A.gdot(s.grp || '')}</td>` : ''}<td>${mdw(x.d1)}${x.d2 !== x.d1 ? ' ~ ' + mdw(x.d2) : ''}${x.h ? ' ' + x.h : ''}</td>
           <td class="num">${LC.leaveDays(x, H)}</td><td class="rs">${A.esc(x.r || '')}${x.n ? '<div class="nt">💬 ' + A.esc(x.n) + '</div>' : ''}</td><td class="num"><span class="cnt ${pk >= 3 ? 'hi' : ''}">${pk}명${pk >= 3 ? ' ⚠' : ''}</span></td><td><button class="sm" data-pe="${x.id}">날짜 수정</button></td></tr>`; }).join('') || `<tr><td colspan="8" class="muted" style="padding:18px">확인할 신청이 없습니다</td></tr>`}
         </tbody></table>
         <div class="lvgo"><div><b>확인이 끝나면 한 번만 누르세요</b><span class="muted">${list.length}건이 한 번에 ${d.canEdit ? '확정됩니다 (관리자)' : '관리자에게 넘어갑니다'}</span></div>
@@ -4392,10 +4393,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const emptySat = LC.monthSaturdays(L.ym).filter(s => !(L.ix.duty[s] || []).length);
     const closed = isClosed(L.ym), ready = !wait.length && !pre.length;
     const leftHtml = `<div class="lvcfw"><div class="lvst" style="margin:0 0 8px"><b>관리자 확정 대기 ${wait.length}건</b><span class="muted">매니저가 넘긴 신청 · 확정해야 달력 · 연차 일수에 들어갑니다</span></div>
-      <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${ptOn(p) ? ' on' : ''}">${p || '전체'} ${p ? (byPart[p] || 0) : wait.length}${p && prePart[p] ? ' <small>· 확인 전 ' + prePart[p] + '</small>' : ''}</button>`).join('')}</div>
+      <div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${ptOn(p) ? ' on' : ''}">${p ? A.gdot(p) : '전체'} ${p ? (byPart[p] || 0) : wait.length}${p && prePart[p] ? ' <small>· 확인 전 ' + prePart[p] + '</small>' : ''}</button>`).join('')}</div>
       ${Object.keys(otherM).length ? `<div class="lvw" style="margin:0 0 10px">다른 달 확정 대기 : ${Object.keys(otherM).sort().map(m => `<a href="#" data-gm="${m}">${ymLab(m)} ${otherM[m]}건</a>`).join(' · ')}</div>` : ''}
       <section class="card lvsec" style="padding:0;overflow:auto"><table class="list lvtbl"><thead><tr><th><input type="checkbox" id="cfa" aria-label="모두 선택"></th><th>이름</th><th>파트</th><th>기간</th><th class="num">일수</th><th>사유</th><th>파트 확인</th><th class="num">그날 전체</th><th></th></tr></thead><tbody>
-        ${list.map(x => { const s = staffById(x.s) || {}, pk = peak(x), ov = pk.cap && pk.m > pk.cap; return `<tr><td><input type="checkbox" class="cfc" value="${x.id}" aria-label="선택"></td><td><b class="${isMgr(s.name) ? 'mgrt' : ''}">${A.esc(s.name || '?')}</b></td><td>${A.esc(s.grp || '')}</td>
+        ${list.map(x => { const s = staffById(x.s) || {}, pk = peak(x), ov = pk.cap && pk.m > pk.cap; return `<tr><td><input type="checkbox" class="cfc" value="${x.id}" aria-label="선택"></td><td><b class="${isMgr(s.name) ? 'mgrt' : ''}">${A.esc(s.name || '?')}</b></td><td>${A.gdot(s.grp || '')}</td>
           <td>${mdw(x.d1)}${x.d2 !== x.d1 ? ' ~ ' + mdw(x.d2) : ''}${x.h ? ' ' + x.h : ''}${x.t ? ' <span class="tag tr">훈</span>' : ''}</td><td class="num">${LC.leaveDays(x, H)}</td>
           <td class="rs">${A.esc(x.r || '')}${x.n ? '<div class="nt">💬 ' + A.esc(x.n) + '</div>' : ''}</td><td class="muted">✓ ${A.esc(x.pb || '')}</td>
           <td class="num"><span class="cnt ${ov ? 'hi' : ''}">${pk.m}${pk.cap ? '/' + pk.cap : ''}</span></td>
@@ -4407,7 +4408,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     </div>`;
     const sideHtml = `<div class="lvcfside">
       <section class="card lvsec"><div class="lvst"><b>토요근무 바꾸기 요청 ${swaps.length}건</b></div>
-        ${swaps.map(w => { const s = staffById(w.s) || {}; return `<div class="swc"><div><b>${A.esc(s.name || '?')}</b> <span class="muted">${A.esc(s.grp || '')}</span></div><div>${A.esc(swapText(w))}</div>${w.r ? `<div class="muted" style="font-size:12.5px">${A.esc(w.r)}</div>` : ''}
+        ${swaps.map(w => { const s = staffById(w.s) || {}; return `<div class="swc"><div><b>${A.esc(s.name || '?')}</b> <span class="muted">${A.gdot(s.grp || '')}</span></div><div>${A.esc(swapText(w))}</div>${w.r ? `<div class="muted" style="font-size:12.5px">${A.esc(w.r)}</div>` : ''}
           <div class="a"><button class="sm danger" data-wn="${w.id}">반려</button><button class="sm primary" data-wy="${w.id}">반영</button></div></div>`; }).join('') || '<div class="muted">없음</div>'}
       </section>
       <section class="card lvsec"><div class="lvst"><b>${ymLab(L.ym)} 마감</b>${closed ? '<span class="chip closed">🔒 마감됨</span>' : ''}</div>
@@ -4638,7 +4639,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const annualAlt=annualDuties.filter(u=>u.a).length+annualLv.filter(x=>LC.leaveKind(x)==='대체'&&x.st!=='대체').reduce((a,x)=>a+LC.leaveDays(x,H,yf,yl),0);
       const alt=(d.duty||[]).filter(u=>u.s===s.id&&u.a>=f&&u.a<=l).length+lv.filter(x=>LC.leaveKind(x)==='대체'&&x.st!=='대체').reduce((a,x)=>a+LC.leaveDays(x,H,f,l),0);
       return { s, days, half: lv.filter(x => x.h).length, tr, pend, sat: du.length, alt, grant:s.grant, rem:s.grant!=null?s.grant-annualDays:null, annualUnused:annualDuties.length-annualAlt, n: all.length };
-    }).filter(r => own || r.s.roster || r.n || r.sat);
+    }).filter(r => own || r.s.roster || r.n || r.sat).filter(r => own || !L.part || L.part.split(',').includes(partOf(r.s.grp)));   // v28.50 : 파트 고르기
     const SF2 = A.colFilter({ key: 'lvsum', scope: '.lvsum2', redraw: () => drawSum(), base: () => rows0, cols: [
       ['grp', '그룹', r => r.s.grp, GORD], ['grade', '등급', r => r.s.grade, GRADES],
       ['rem', '잔여', r => r.rem == null ? '' : r.rem < 0 ? '마이너스' : r.rem <= 2 ? '2일 이하' : '3일 이상', ['마이너스', '2일 이하', '3일 이상']]] });
@@ -4658,11 +4659,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const t = A.$('.lvtiles[data-s]'); if (t) t.onclick = () => sumDetail(r.s.id);
       return;
     }
-    body().innerHTML = `<div class="muted pfrow" style="margin-bottom:8px">${monthLabel} · 선택 월 실적 · 연간 잔여 = 부여일수 − 올해 확정 연차 ${own ? '' : `<span class="muted">· ${rows.length}명</span>` + SF2.bar()}</div>
+    body().innerHTML = (own ? '' : `<div class="lvfilter"><span class="lb">파트</span>${[''].concat(PARTS).map(p => `<button data-pt="${p}" class="pill${ptOn(p) ? ' on' : ''}">${p ? A.gdot(p) : '전체'}</button>`).join('')}</div>`) + `<div class="muted pfrow" style="margin-bottom:8px">${monthLabel} · 선택 월 실적 · 연간 잔여 = 부여일수 − 올해 확정 연차 ${own ? '' : `<span class="muted">· ${rows.length}명</span>` + SF2.bar()}</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 240px)"><table class="list lvsum2"><thead><tr>${th('name', '이름')}${th('grp', '그룹', 0, 'grp')}${own ? '<th>등급</th>' : SF2.th('grade')}${th('days', '연차(일)', 1)}<th class="num">신청중(일)</th><th class="num">반차(회)</th><th class="num" title="훈련 · 경조휴가(출산·결혼·조사 등) — 연차 아님">훈련·경조·병가(일)</th>${th('sat', '주말근무(회)', 1)}<th class="num">대체휴무</th><th class="num">부여</th>${th('rem', '연간 잔여', 1, 'rem')}</tr></thead><tbody>
       ${rows.map((r, i) => (k === 'grp' ? A.ghd(rows, i, x => x.s.grp || '', 11, g => [g.length + '명', '연차 ' + g.reduce((a, x) => a + x.days, 0) + '일', '토요 ' + g.reduce((a, x) => a + x.sat, 0) + '회']) : '') + `<tr class="click gc" data-s="${r.s.id}" style="--gc:${A.gcol(r.s.grp)}"><td><b>${A.esc(r.s.name)}</b></td><td>${k === 'grp' ? A.gdot(r.s.grp || '').replace(/>[^<]*$/, '>') : A.gdot(r.s.grp || '')}</td><td>${A.esc(r.s.grade || '')}</td><td class="num"><b>${r.days || ''}</b></td><td class="num muted">${r.pend || ''}</td><td class="num">${r.half || ''}</td><td class="num">${r.tr || ''}</td><td class="num">${r.sat || ''}</td><td class="num">${r.alt || ''}</td><td class="num">${r.grant == null ? '' : r.grant}</td><td class="num ${r.rem != null && r.rem < 0 ? 'red' : ''}">${r.rem == null ? '' : r.rem}</td></tr>`).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">자료 없음</td></tr>'}
       </tbody></table></div>`;
     SF2.bind();
+    A.$$('[data-pt]', body()).forEach(b => (b.onclick = () => { ptPick(b.dataset.pt); drawSum(); }));
     A.$$('.lvsum2 th.sort').forEach(h => (h.onclick = () => { L.sumSort = h.dataset.k; drawSum(); }));
     A.$$('.lvsum2 tr[data-s]').forEach(tr => (tr.onclick = () => sumDetail(tr.dataset.s)));
     function sumDetail(sid) { {
@@ -11283,7 +11285,7 @@ async function addCharts(buf, jobs) {
     go(v, { _pop: true });
   });
   if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter, loadLib });
-  if (window.EDU) window.EDU.init({api,modal,toast,confirmBox,S,loadLib,pageHead,updateBadge:()=>updateEduBadge(false)});
+  if (window.EDU) window.EDU.init({api,modal,toast,confirmBox,S,loadLib,pageHead,gdot,updateBadge:()=>updateEduBadge(false)});
   if (window.ACC) window.ACC.init({ api, modal, toast, confirmBox, S, C, saveBlob, go, gdot, gcol, loadLib, pageHead, normName, peopleNames: () => ((S._ppl && S._ppl.rows) || []).map(x => x.name), updateAccBadge });
   if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter });
   // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
