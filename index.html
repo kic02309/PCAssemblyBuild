@@ -2501,6 +2501,29 @@ select.mcg{border:0;background:var(--chip);border-radius:12px;padding:8px 12px;f
 .mcpt{width:100%;min-height:150px;font:13px/1.6 ui-monospace,Consolas,monospace}
 td.mcr.ok{color:#12a37a;font-weight:800}td.mcr.warn{color:#c27a0e;font-weight:800}td.mcr.bad{color:#e5484d;font-weight:800}td.mcr.skip{color:var(--sub)}
 .m2big td.m2who .m2ln{max-width:560px}
+/* v28.76 : 월간계획 */
+.plbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}.plbar .seg button{padding:8px 16px;font-size:14px}
+.plbar .mcnav b{min-width:150px;text-align:center;font-size:15.5px}.plbar .mcnav button{border:0;background:transparent;font-size:18px;padding:2px 10px}
+.plmg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.plmc{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--panel);border-radius:12px;padding:8px 14px;box-shadow:var(--sh);font-size:14px}
+.plmc small{color:var(--sub);font-weight:600}.plmc em{font-style:normal;font-size:11.5px;font-weight:800;background:#eceef3;color:#5b6575;border-radius:99px;padding:1px 9px}
+.plmc.on{border-color:#2f6fe4;background:#eef4ff}.plmc.on em{background:#2f6fe4;color:#fff}
+.plg{grid-template-columns:150px minmax(0,1fr) auto auto!important}
+.plpr{display:inline-block;flex:none;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:5px}.plpr.p3{background:#fde2e2;color:#b91c1c}.plpr.p2{background:#fff1d6;color:#9a5b00}.plpr.p1{background:#eceef3;color:#5b6575}
+.wst.s0{background:#eceef3;color:#5b6575}.wst.s4{background:#fff1d6;color:#9a5b00}
+.plex{display:block;font-size:10px;font-weight:800;color:#9a5b00}
+table.plt td.pc{position:relative;padding:0}
+table.plt td.wkd,table.plt td.d.wkd{background:#f6f8fb}
+table.plt .pbr{position:absolute;left:0;right:0;top:11px;bottom:11px;background:#8fb3f3}
+table.plt .pbr.s1{background:#6f9cf0}table.plt .pbr.s2{background:#8fd3ad}table.plt .pbr.s3{background:#f2a3a3}table.plt .pbr.s4{background:#f2bf6e}table.plt .pbr.s0{background:#c3d3ee}
+table.plt .pbr.x{background:repeating-linear-gradient(135deg,#f0a93b 0 4px,#fff4e0 4px 8px)}
+table.plt .pbr.s{border-top-left-radius:7px;border-bottom-left-radius:7px}table.plt .pbr.e{border-top-right-radius:7px;border-bottom-right-radius:7px}
+table.plt .pbr.ps{left:4px}table.plt .pbr.pe{right:4px}
+table.plt .pdt{position:relative;z-index:1;color:#123a8a;font-size:12px;text-shadow:0 0 3px #fff}
+table.plt th.plw,table.plt td.plw{width:110px;min-width:110px}
+.wleg i.plg1{background:#6f9cf0}.wleg i.plg2{background:repeating-linear-gradient(135deg,#f0a93b 0 3px,#fff4e0 3px 6px)}
+html[data-theme=dark] .plmc{background:#1a1c20;border-color:#2c3846}html[data-theme=dark] .plmc.on{background:#1d2a40;border-color:#4a7be0}
+html[data-theme=dark] table.plt td.wkd{background:#16181c}html[data-theme=dark] table.plt .pdt{color:#fff;text-shadow:none}
 </style>
 </head>
 <body>
@@ -7620,7 +7643,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.75';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10797,7 +10820,7 @@ async function addCharts(buf, jobs) {
     main.innerHTML = pageHead('매니저 관리') + '<div class="pgb"><div class="muted" style="padding:20px">불러오는 중…</div></div>';
     await mgLoad(true); if (S.view !== 'mgr') return; drawMgr();
   }
-  const mgTabs = () => [['fb', '그룹 업무관리'], ['meet', '파트원 면담관리'], ['cal', '일정관리'], ['tasks', '업무관리']].concat(S.me && S.me.role === '관리자' ? [['lead', '현황']] : [['all', '전체 업무']]);
+  const mgTabs = () => [['fb', '그룹 업무관리'], ['meet', '파트원 면담관리'], ['cal', '일정관리'], ['plan', '월간계획'], ['tasks', '업무관리']].concat(S.me && S.me.role === '관리자' ? [['lead', '현황']] : [['all', '전체 업무']]);
   function mgTabN() { const n = calAlerts().length; $$('[data-mgt="cal"] .mgtn, [data-mt="cal"] .mgtn').forEach(x => { x.textContent = n; x.classList.toggle('hide', !n); }); }
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-mgt]'); if (!b || !S.me) return; S.mgv = S.mgv || { tab: 'fb', cal: 'month', calD: S.today, grp: '' }; S.mgv.tab = b.dataset.mgt; if (S.view === 'mgr' && S.mgD) drawMgr(); else go('mgr', { tab: b.dataset.mgt }); });
   function drawMgr() {
@@ -10805,18 +10828,18 @@ async function addCharts(buf, jobs) {
     const TABS = mgTabs(), top = !!$('.czn');   // v28.74 : 탭은 위 흰 막대(세부 메뉴)로 올림 · 보기 전용 화면은 그대로
     if (!TABS.some(t => t[0] === v.tab)) v.tab = TABS[0][0];
     const head = pageHead(top ? esc(TABS.find(t => t[0] === v.tab)[1]) : '매니저 관리', top ? '' : `<div class="seg mgseg">${TABS.map(([k, t]) => `<button data-mt="${k}" class="${v.tab === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('')}</div>`,
-      (lead ? '<button id="mgcfgb">⚙ 면담 기준</button>' : '') + (ro ? '<span class="chip none">팀장 보기 · 일정관리만 등록 · 수정</span>' : `${v.tab === 'meet' || v.tab === 'cal' ? '' : '<button id="mgnt">＋ 업무</button>'}<button id="mgne">＋ 교육 · 면담</button><button class="primary" id="mgrp">📋 일일보고</button>`));
+      (lead ? '<button id="mgcfgb">⚙ 면담 기준</button>' : '') + (ro ? '<span class="chip none">팀장 보기 · 일정관리만 등록 · 수정</span>' : `${['meet', 'cal', 'plan'].includes(v.tab) ? '' : '<button id="mgnt">＋ 업무</button>'}<button id="mgne">＋ 교육 · 면담</button><button class="primary" id="mgrp">📋 일일보고</button>`));
     if (D.err) { main.innerHTML = head + `<div class="pgb"><div class="warn">${esc(D.err)}</div></div>`; return; }
     main.innerHTML = head.replace('class="ph"', 'class="ph mgph"') + `<div class="pgb mgpg" id="mgbody"></div>`; if (top) setNav();
     $$('[data-mt]').forEach(b => (b.onclick = () => { v.tab = b.dataset.mt; drawMgr(); }));
     if ($('#mgcfgb')) $('#mgcfgb').onclick = () => mgCfgModal(() => drawMgr());
     if ($('#mgnt')) $('#mgnt').onclick = () => mgTask(null); if ($('#mgne')) { $('#mgne').onclick = () => mgEvent(null); $('#mgrp').onclick = () => mgReport(S.me.id); }
-    ({ fb: mgFbTab, meet: mgMeet, home: mgHome, tasks: mgTasks, group: mgGroup, cal: mgCal, all: mgAll, lead: mgLeadAll })[v.tab]($('#mgbody'));
+    ({ fb: mgFbTab, meet: mgMeet, home: mgHome, tasks: mgTasks, group: mgGroup, cal: mgCal, plan: mgPlan, all: mgAll, lead: mgLeadAll })[v.tab]($('#mgbody'));
     mgBadge();
   }
   const mgChip = (k, t) => `<span class="mgk ${k}">${esc(t || MGK[k][0])}</span>`;
   const stChip = t => `<span class="mgst ${t.status === '완료' ? 'done' : mgLate(t) ? 'late' : t.status === '진행 중' ? 'ing' : 'wait'}">${mgLate(t) ? '기한 지남' : t.status}</span>`;
-  const priChip = p => p && p !== '보통' ? `<span class="mgpr p${PRI[p]}">${p}</span>` : '';
+  const priChip = p => p && p !== '보통' ? `<span class="mgpr p${PRI[p]}">${PRN[p] || p}</span>` : '';
   const pbar = n => `<span class="mgbar"><i style="width:${+n || 0}%"></i></span><small>${+n || 0}%</small>`;
   const lastLog = id => { const L = mgLogs(id); return L.length ? L[L.length - 1].date : ''; };
   // 7일 기록 없음 : 진행 중 업무(또는 시작일이 지난 예정 업무) 중 마지막 진행 기록(없으면 시작일) 이후 7일 경과 · 새로 등록한 업무는 바로 경고하지 않음
@@ -10851,7 +10874,7 @@ async function addCharts(buf, jobs) {
     const showDone = !!v.done; const L = T.filter(t => showDone || t.status !== '완료').sort((a, b) => (mgLate(b) - mgLate(a)) || (a.status === '완료') - (b.status === '완료') || (PRI[b.priority] - PRI[a.priority]) || (a.due < b.due ? -1 : 1));
     box.innerHTML = `<div class="toolbar">${adm ? `<select id="mgown"><option value="">매니저 전체</option>${owners.map(o => `<option value="${o}" ${v.own === o ? 'selected' : ''}>${esc(mgName(o))}</option>`).join('')}</select>` : ''}<label class="row" style="gap:4px"><input type="checkbox" id="mgdone" ${showDone ? 'checked' : ''}>완료 포함</label><span class="muted">예정 → 진행 중 → 완료 · 승인 없음 · 마감일은 스케줄러에 자동 표시</span></div>
       <div class="card" style="padding:0;overflow:auto"><table class="list"><thead><tr>${adm ? '<th>매니저</th>' : ''}<th>우선순위</th><th>업무명</th><th>기간</th><th>상태</th><th>진행률</th><th>최근 기록</th><th>지연 사유</th></tr></thead><tbody>
-      ${L.map(t => { const ll = lastLog(t.id), stale = mgStale(t); return `<tr class="click" data-tk="${t.id}">${adm ? `<td>${esc(mgName(t.owner))}</td>` : ''}<td>${priChip(t.priority) || '보통'}</td><td><b>${esc(t.title)}</b></td><td>${dLabel(t.start)} ~ ${dLabel(t.due)}</td><td>${stChip(t)}</td><td>${pbar(t.progress)}</td><td class="${stale ? 't-lo' : ''}">${ll ? dLabel(ll) : '없음'}${stale ? ' ⚠' : ''}</td><td>${mgLate(t) ? (t.delayReason ? esc(t.delayReason) : '<span class="t-lo">미입력</span>') : '-'}</td></tr>`; }).join('') || `<tr><td colspan="8" class="muted" style="padding:24px">업무가 없습니다</td></tr>`}
+      ${L.map(t => { const ll = lastLog(t.id), stale = mgStale(t); return `<tr class="click" data-tk="${t.id}">${adm ? `<td>${esc(mgName(t.owner))}</td>` : ''}<td>${priChip(t.priority) || '후순위'}</td><td><b>${esc(t.title)}</b></td><td>${dLabel(t.start)} ~ ${dLabel(t.due)}</td><td>${stChip(t)}</td><td>${pbar(t.progress)}</td><td class="${stale ? 't-lo' : ''}">${ll ? dLabel(ll) : '없음'}${stale ? ' ⚠' : ''}</td><td>${mgLate(t) ? (t.delayReason ? esc(t.delayReason) : '<span class="t-lo">미입력</span>') : '-'}</td></tr>`; }).join('') || `<tr><td colspan="8" class="muted" style="padding:24px">업무가 없습니다</td></tr>`}
       </tbody></table></div><div class="muted" style="margin-top:6px">⚠ = 7일 넘게 진행 기록 없음 (팀장 현황에도 표시)</div>`;
     if ($('#mgown')) $('#mgown').onchange = e => { v.own = e.target.value; drawMgr(); };
     $('#mgdone').onchange = e => { v.done = e.target.checked; drawMgr(); };
@@ -10953,8 +10976,8 @@ async function addCharts(buf, jobs) {
   const cSun = d => C.addDays(d, -cDow(d));
   const calAdm = () => !!(S.me && S.me.role === '관리자');
   const calCanW = () => canMgr() && !S.pv;
-  const calCanE = e => calCanW() && (calAdm() || e.owner === S.me.id);
-  const calCat = id => ((S.cal || {}).cats || []).find(c => String(c.id) === String(id)) || { name: '?', color: '#64748b' };
+  const calCanE = e => !e.plan && calCanW() && (calAdm() || e.owner === S.me.id);
+  const calCat = id => id === 'plan' ? PLAN_CAT : ((S.cal || {}).cats || []).find(c => String(c.id) === String(id)) || { name: '?', color: '#64748b' };
   const calMine = e => e.grp === '전체' || calAdm() || (S.me.mg || []).includes(e.grp);    // 알림 대상 : 전체 일정 = 모두 · 그룹 일정 = 그 그룹 매니저 + 관리자 · 팀장
   const calRange = d => { const f = C.addDays(cSun(d.slice(0, 8) + '01'), -7); return { from: f, to: C.addDays(f, 55) }; };
   const calRg = e => e.e > e.d ? dLabel(e.d) + ' ~ ' + dLabel(e.e) : dLabel(e.d);
@@ -10968,7 +10991,7 @@ async function addCharts(buf, jobs) {
   }
   const calAlerts = () => ((S.cal || {}).soon || []).filter(calMine).map(e => { const g = dGap(S.today, e.d);
     return { key: 'cal|' + e.id, o: { tag: g ? 'D-' + g : 'D-day', cls: 'cal', who: calCat(e.cat).name, text: `${e.title} · ${dLabel(e.d)}${e.tm ? ' ' + e.tm : ''}${e.e > e.d ? ' ~ ' + dLabel(e.e) : ''}${e.grp !== '전체' ? ' · ' + e.grp : ''}`, date: e.d, lv: g <= 1 ? '긴급' : '높음', act: { cal: e.id } } }; });
-  const calToday = () => ((S.cal || {}).ev || []).filter(e => e.d <= S.today && e.e >= S.today && calMine(e));
+  const calToday = () => ((S.cal || {}).ev || []).filter(e => !e.plan && e.d <= S.today && e.e >= S.today && calMine(e));
   async function calRefresh() { await calLoad(S.mgv && S.mgv.c ? S.mgv.c.cur : S.today, true); void mgAlertLoad(); if (S.view === 'mgr' && S.mgv.tab === 'cal' && $('#mgbody')) calDraw($('#mgbody')); }
   function calGo(id) {   // 알림 → 그 일정으로
     const e = ((S.cal || {}).soon || []).concat((S.cal || {}).ev || []).find(x => String(x.id) === String(id)); if (!e) return;
@@ -10984,16 +11007,18 @@ async function addCharts(buf, jobs) {
   function calDraw(box) {
     const c = S.mgv.c, D = S.cal, T = S.today, HOL = calHol();
     if (D.err) { box.innerHTML = `<div class="warn">${esc(D.err)}</div>`; return; }
+    D.ev = D.ev.filter(e => !e.plan).concat(calPlanEv().filter(e => e.d >= D.from && e.d <= D.to));   // v28.76 : 계획 마감
+    const CK = D.cats.concat(D.ev.some(e => e.plan) ? [PLAN_CAT] : []);
     const off = new Set((c.off || []).map(String));
     const scope = e => (c.grp === '전체' || e.grp === '전체' || e.grp === c.grp) && (!c.mine || e.owner === S.me.id);
     const L = D.ev.filter(e => !off.has(String(e.cat)) && scope(e)), cover = (e, d) => e.d <= d && e.e >= d;
     const m0 = c.cur.slice(0, 8) + '01', dim = new Date(+c.cur.slice(0, 4), +c.cur.slice(5, 7), 0).getDate(), mE = c.cur.slice(0, 8) + String(dim).padStart(2, '0');
     const inM = L.filter(e => e.d <= mE && e.e >= m0), soonN = calAlerts().length;
     const card = (cls, ic, k, val, sub, go) => `<div class="m2k ${cls}" ${go ? `data-kgo="${go}"` : ''}><span class="m2ki">${ic}</span><span class="m2kt"><small>${k}</small><b>${val}<em>건</em></b><span>${sub}</span></span></div>`;
-    const kpi = `<div class="m2ks c4 mcks">${card('blue', IC.cal, (+c.cur.slice(5, 7)) + '월 일정', inM.length, '필터 기준 · 기간 일정 포함')}${card('violet', IC.clip, '오늘 일정', L.filter(e => cover(e, T)).length, dLabel(T), 'today')}${card('amber', IC.warn, '다가오는 일정', soonN, '3일 안에 시작 · 알림 숫자', 'soon')}${card('green', IC.pen, '내가 등록', inM.filter(e => e.owner === S.me.id).length, (+c.cur.slice(5, 7)) + '월 · 내 이름으로 등록', 'mine')}</div>`;
+    const kpi = `<div class="m2ks c4 mcks">${card('blue', IC.cal, (+c.cur.slice(5, 7)) + '월 일정', inM.length, '필터 기준 · 기간 일정 포함')}${card('violet', IC.clip, '오늘 일정', L.filter(e => cover(e, T)).length, dLabel(T), 'today')}${card('amber', IC.warn, '다가오는 일정', soonN, '3일 안에 시작 · 알림 숫자', 'soon')}${card('green', IC.pen, '내가 등록', inM.filter(e => !e.plan && e.owner === S.me.id).length, (+c.cur.slice(5, 7)) + '월 · 내 이름으로 등록', 'mine')}</div>`;
     const title = c.list ? `${dLabel(cSun(c.sel))} ~ ${dLabel(C.addDays(cSun(c.sel), 6))}` : c.view === 'm' ? ymLabel(c.cur.slice(0, 7)) : c.view === 'w' ? `${dLabel(cSun(c.cur))} ~ ${dLabel(C.addDays(cSun(c.cur), 6))}` : dLabel(c.cur) + (HOL[c.cur] ? ' · ' + HOL[c.cur] : '');
     const cnt = id => D.ev.filter(e => String(e.cat) === String(id) && scope(e)).length;
-    const chips = `<span class="mcpill"><button class="mcch all ${off.size ? '' : 'on'}" data-cfa="1">전체</button>${D.cats.map(k => `<button class="mcch ${off.has(String(k.id)) ? 'off' : 'on'}" style="--c:${k.color}" data-cf="${k.id}"><i></i>${esc(k.name)}<em>${cnt(k.id)}</em></button>`).join('')}</span>`;
+    const chips = `<span class="mcpill"><button class="mcch all ${off.size ? '' : 'on'}" data-cfa="1">전체</button>${CK.map(k => `<button class="mcch ${off.has(String(k.id)) ? 'off' : 'on'}" style="--c:${k.color}" data-cf="${k.id}"><i></i>${esc(k.name)}<em>${cnt(k.id)}</em></button>`).join('')}</span>`;
     const grp = `<select class="mcg" id="mcgrp">${['전체'].concat(C.GROUP_LIST).map(g => `<option value="${g}" ${g === c.grp ? 'selected' : ''}>${g === '전체' ? '그룹 전체' : g}</option>`).join('')}</select>`;
     const bar = `<div class="mcbar"><div class="mcnav"><button id="mcp" title="이전">‹</button><b>${title}</b><button id="mcn" title="다음">›</button></div><button id="mct">오늘</button>
       ${c.list ? '' : `<div class="seg">${[['d', '일'], ['w', '주'], ['m', '월']].map(([k, t]) => `<button data-cv="${k}" class="${c.view === k ? 'on' : ''}">${t}</button>`).join('')}</div>`}
@@ -11034,7 +11059,7 @@ async function addCharts(buf, jobs) {
     $$('[data-cv]', box).forEach(b => (b.onclick = () => { c.view = b.dataset.cv; if (c.view !== 'm') c.cur = c.sel; re(); }));
     $$('[data-cl]', box).forEach(b => (b.onclick = () => { c.list = b.dataset.cl === '1'; re(); }));
     $$('[data-cf]', box).forEach(b => (b.onclick = () => { const id = b.dataset.cf, s = new Set((c.off || []).map(String));
-      if (!s.size) { c.off = D.cats.map(k => String(k.id)).filter(x => x !== id); } else { s.has(id) ? s.delete(id) : s.add(id); c.off = s.size >= D.cats.length ? [] : [...s]; } re(); }));   // 처음 누르면 그 구분만 보기 (지도 필터처럼)
+      if (!s.size) { c.off = CK.map(k => String(k.id)).filter(x => x !== id); } else { s.has(id) ? s.delete(id) : s.add(id); c.off = s.size >= CK.length ? [] : [...s]; } re(); }));   // 처음 누르면 그 구분만 보기 (지도 필터처럼)
     $('[data-cfa]', box).onclick = () => { c.off = []; re(); };
     $('#mcgrp', box).onchange = e => { c.grp = e.target.value; re(); };
     $('#mcmine', box).onchange = e => { c.mine = e.target.checked; re(); };
@@ -11042,6 +11067,7 @@ async function addCharts(buf, jobs) {
     $$('[data-ev]', box).forEach(x => (x.onclick = ev => { ev.stopPropagation(); const e = D.ev.find(z => String(z.id) === x.dataset.ev); if (!e) return; c.ev = e.id; if (!cover(e, c.sel)) c.sel = e.d < m0 && !c.list && c.view === 'm' ? m0 : e.d; re(); }));
     $$('[data-ca]', box).forEach(b => (b.onclick = ev => { ev.stopPropagation(); calForm(null, b.dataset.ca); }));
     $$('[data-ce]', box).forEach(b => (b.onclick = ev => { ev.stopPropagation(); calForm(D.ev.find(z => String(z.id) === b.dataset.ce)); }));
+    $$('[data-cpl]', box).forEach(b => (b.onclick = ev => { ev.stopPropagation(); planGo(b.dataset.cpl); }));
     $$('[data-cx]', box).forEach(b => (b.onclick = async ev => { ev.stopPropagation(); if (!(await confirmBox('이 일정을 지울까요?', '삭제'))) return; try { await api('calSave', { op: 'evDel', id: b.dataset.cx }); c.ev = null; toast('지웠습니다'); calRefresh(); } catch (er) { toast(er.message, true); } }));
     $$('[data-kgo]', box).forEach(b => (b.onclick = () => { const k = b.dataset.kgo; if (k === 'today') { c.cur = c.sel = T; c.ev = null; c.list = false; } else if (k === 'soon') { c.sel = T; c.cur = T; c.list = true; c.off = []; c.mine = false; } else if (k === 'mine') { c.mine = !c.mine; } if (!need()) re(); }));
     if ($('#mcad', box)) { $('#mcad', box).onclick = () => calForm(null, c.sel); $('#mcps', box).onclick = () => calPaste(); $('#mccat', box).onclick = () => calCats(); }
@@ -11053,7 +11079,7 @@ async function addCharts(buf, jobs) {
     const detail = e => { const k = calCat(e.cat), n = dGap(e.d, e.e) + 1;
       return `<div class="mcit pk" style="--c:${k.color}"><div class="r1"><span class="mctag">${esc(k.name)}</span>${esc(e.grp === '전체' ? '조립팀 전체' : e.grp)}</div><b class="tt">${esc(e.title)}</b>
         <div class="mm">📅 ${calRg(e)}${n > 1 ? ` (${n}일간)` : ''} · 🕒 ${esc(e.tm || '종일')}</div><div class="mm">✍ 작성 ${esc(e.by)}</div>${e.memo ? `<div class="mcmemo">${esc(e.memo)}</div>` : ''}
-        <div class="mcacts">${calCanE(e) ? `<button class="sm" data-ce="${e.id}">수정</button><button class="sm" data-cx="${e.id}" style="color:var(--red)">삭제</button>` : `<span class="mclock">🔒 작성자(${esc(e.by)})와 팀장 · 관리자만 수정</span>`}</div></div>`; };
+        <div class="mcacts">${e.plan ? `<button class="sm" data-cpl="${e.plan}">월간계획에서 보기 ›</button>` : calCanE(e) ? `<button class="sm" data-ce="${e.id}">수정</button><button class="sm" data-cx="${e.id}" style="color:var(--red)">삭제</button>` : `<span class="mclock">🔒 작성자(${esc(e.by)})와 팀장 · 관리자만 수정</span>`}</div></div>`; };
     let h = '';
     if (!c.list) {
       h += `<div class="mcsh"><b>${dLabel(c.sel)}</b><small>${HOL[c.sel] ? esc(HOL[c.sel]) + ' · ' : ''}${day.length}건</small></div>`;
@@ -11178,7 +11204,7 @@ async function addCharts(buf, jobs) {
     modal(`<h3>${!id ? '업무 등록' : ed ? '업무 진행관리' : '업무 상세 (확인만)'}${id && t.owner !== S.me.id ? ' · ' + esc(mgName(t.owner)) : ''}</h3>
       <div class="fld"><label>업무명 *</label><input id="tt" maxlength="120" value="${esc(t.title)}" placeholder="예: 출고 검수 체크리스트 개정" ${dis}></div>
       <div class="fields2"><div class="fld"><label>시작일</label><input type="date" id="ts" value="${t.start}" ${dis}></div><div class="fld"><label>마감일 *</label><input type="date" id="td" value="${t.due}" ${dis}></div>
-      <div class="fld"><label>상태</label><select id="tst" ${dis}>${['예정', '진행 중', '완료'].map(x => `<option ${x === t.status ? 'selected' : ''}>${x}</option>`).join('')}</select></div><div class="fld"><label>우선순위</label><select id="tp" ${dis}>${['보통', '중요', '긴급'].map(x => `<option ${x === t.priority ? 'selected' : ''}>${x}</option>`).join('')}</select></div></div>
+      <div class="fld"><label>상태</label><select id="tst" ${dis}>${['예정', '진행 중', '완료'].map(x => `<option ${x === t.status ? 'selected' : ''}>${x}</option>`).join('')}</select></div><div class="fld"><label>우선순위</label><select id="tp" ${dis}>${['긴급', '중요', '보통'].map(x => `<option value="${x}" ${x === t.priority ? 'selected' : ''}>${PRN[x]}</option>`).join('')}</select></div></div>
       <div class="fld"><label>진행률 <b id="tpv">${t.progress}%</b></label><input type="range" id="tg" min="0" max="100" step="10" value="${t.progress}" ${dis}></div>
       <div class="fld"><label>메모 · 실행 계획</label><textarea id="tn" maxlength="2000" ${ed ? '' : 'readonly'}>${esc(t.note || '')}</textarea></div>
       ${late ? `<div class="warn">⚠ 마감 ${dGap(t.due, S.today)}일 지남 — 지연 사유와 처리 예정일을 적어 주세요 (완료 전까지 계속 '기한 지남')</div><div class="fields2"><div class="fld" style="grid-column:span 3"><label>지연 사유 *</label><input id="tdr" value="${esc(t.delayReason || '')}" maxlength="500" ${dis}></div><div class="fld"><label>처리 예정일 *</label><input type="date" id="tdp" value="${t.delayPlan || C.addDays(S.today, 1)}" ${dis}></div></div>` : ''}
@@ -11259,6 +11285,129 @@ async function addCharts(buf, jobs) {
       if ($('#rpo', bg)) $('#rpo', bg).onchange = e => { R.owner = e.target.value; draw(bg); };
     }, 'wide mgrpm');
   }
+  // ================================================================ v28.76 : 월간계획 (영상업무 월간 업무표 구조 · 기존 업무 · 진행 기록 자료 그대로)
+  // 월간 = 달력월 1일 ~ 말일 / 주간 = 월 ~ 일 · 업무 줄 = 시작 ~ 종료예정 막대 (연장 = 빗금) · 기록 줄 = 처리일자 칸 ●
+  // 보기 : 본인 = 전부 · 다른 매니저 = 제목 · 기간 · 상태 · 우선순위 · 기록 개수 (서버가 상세를 안 보냄) · 팀장 · 관리자 = 상세 / 작성 · 수정 = 본인만
+  const PRN = { '긴급': '우선', '중요': '차순위', '보통': '후순위' };
+  const plPri = p => `<span class="plpr p${PRI[p] || 1}">${PRN[p] || '후순위'}</span>`;
+  const plEnd = t => (t.delayPlan && t.delayPlan > t.due ? t.delayPlan : t.due);
+  const plSt = t => t.status === '완료' ? ['완료', 's2'] : plEnd(t) < S.today ? ['기한 지남', 's3'] : t.delayPlan && t.delayPlan > t.due && t.due < S.today ? ['연장', 's4'] : t.status === '진행 중' ? ['진행 중', 's1'] : ['예정', 's0'];
+  const plMon = d => C.addDays(d, -((cDow(d) + 6) % 7));
+  function plOwners() {
+    const D = S.mgD || {}, L = (D.managers || []).slice();
+    if (!isRO() && !L.some(m => m.id === S.me.id) && ['관리자', '매니저'].includes(S.me.role)) L.push({ id: S.me.id, name: S.me.name, group: S.me.group || '', mg: S.me.mg || [] });
+    const gk = m => ((m.mg && m.mg.length ? m.mg : [m.group || '']).join(' · '));
+    return L.map(m => Object.assign({}, m, { gl: gk(m) })).sort((a, b) => a.gl.localeCompare(b.gl, 'ko', { numeric: true }) || a.name.localeCompare(b.name, 'ko'));
+  }
+  function plRange(p) {
+    if (p.mode === 'w') { const f = plMon(p.wk); return { from: f, to: C.addDays(f, 6) }; }
+    const [y, m] = p.ym.split('-').map(Number), n = new Date(y, m, 0).getDate();
+    return { from: p.ym + '-01', to: p.ym + '-' + String(n).padStart(2, '0') };
+  }
+  function mgPlan(box) {
+    const D = S.mgD, v = S.mgv, OW = plOwners();
+    const p = v.pl = v.pl || { mode: 'm', ym: S.today.slice(0, 7), wk: plMon(S.today), own: '', open: {} };
+    if (!p.own || !OW.some(o => o.id === p.own)) p.own = (OW.find(o => o.id === S.me.id) || OW[0] || {}).id || '';
+    const R = plRange(p), own = OW.find(o => o.id === p.own) || { name: '-', gl: '' }, mine = p.own === S.me.id && !isRO() && !S.pv;
+    const inR = t => t.start <= R.to && plEnd(t) >= R.from;
+    const lgs = id => mgLogs(id).filter(l => l.date >= R.from && l.date <= R.to).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id));
+    const T = (D.tasks || []).filter(t => t.owner === p.own && (inR(t) || lgs(t.id).length)).sort((a, b) => (PRI[b.priority] - PRI[a.priority]) || (a.start < b.start ? -1 : 1) || (a.id - b.id));
+    const cntOf = o => (D.tasks || []).filter(t => t.owner === o && (inR(t))).reduce((s, t) => s + (+t.nlog || 0), 0);
+    const days = []; for (let d = R.from; d <= R.to; d = C.addDays(d, 1)) days.push(d);
+    const HOL = calHol(), wide = p.mode === 'w';
+    const lab = d => { const w = cDow(d); return `<th class="d ${HOL[d] ? 'hol' : w === 6 ? 'sat wk' : w === 0 ? 'sun wk' : ''}${d === S.today ? ' today' : ''}${wide ? ' plw' : ''}" title="${d}${HOL[d] ? ' ' + esc(HOL[d]) : ''}">${wide ? dLabel(d).replace(/\(.*/, '') : +d.slice(8)}<small>${HOL[d] ? esc(HOL[d].replace(/\(.*\)/, '').slice(0, 3)) : C.WD[w]}</small></th>`; };
+    const sh = d => (d ? dLabel(d).replace(/\(.*/, '') : '');
+    const OPEN = p.open, isOpen = id => OPEN[id] !== false;
+    const pcell = (t, d, ld) => { const e = plEnd(t), st = plSt(t)[1], inb = d >= t.start && d <= e, ext = t.delayPlan && t.delayPlan > t.due && d > t.due && d <= e;
+      return `<td class="d pc${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}">${inb ? `<i class="pbr ${st}${ext ? ' x' : ''}${d === t.start || d === R.from ? ' s' : ''}${d === e || d === R.to ? ' e' : ''}${d === t.start ? ' ps' : ''}${d === e ? ' pe' : ''}"></i>` : ''}${ld.has(d) ? '<b class="pdt">●</b>' : ''}</td>`; };
+    const rows = T.map(t => { const L = t.full ? lgs(t.id) : [], ld = new Set(L.map(l => l.date)), [stx, stc] = plSt(t), op = t.full && isOpen(t.id), ext = t.delayPlan && t.delayPlan > t.due;
+      return `<tr class="pj"><td class="f f0">${sh(t.start)}</td><td class="f f1">${sh(plEnd(t))}${ext ? '<span class="plex">연장</span>' : ''}</td><td class="f f2 lk" data-plt="${t.id}"><div class="wtt2">${t.full ? `<span class="tog">${op ? '▾' : '▸'}</span>` : '<span class="tog">🔒</span>'}${plPri(t.priority)}<span class="cl" title="${esc(t.title)}">${esc(t.title)}</span><span class="cnt">${t.full ? '기록 ' + (+t.nlog || mgLogs(t.id).length) + '건' : '기록 ' + (+t.nlog || 0) + '건 · 상세 비공개'}</span>${t.full ? `<button class="sm ped" data-ple="${t.id}" title="${mine ? '계획 수정' : '계획 보기'}">${mine ? '✎' : 'ⓘ'}</button>` : ''}</div></td><td class="f f3"><span class="wst ${stc}">${stx}</span></td>${days.map(d => pcell(t, d, ld)).join('')}</tr>`
+        + (op ? L.map(l => `<tr class="rc"><td class="f f0">${sh(l.date)}</td><td class="f f1"></td><td class="f f2 lk" data-pll="${l.id}" title="${esc(dLabel(l.date) + ' · ' + l.text + (l.by ? '\n작성 ' + l.by : ''))}"><div class="cl2">${esc(l.text)}</div></td><td class="f f3"></td>${days.map(d => `<td class="d${d === l.date ? ' won' : ''}${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}"></td>`).join('')}</tr>`).join('') : ''); }).join('');
+    const sheet = T.length ? `<table class="wt plt"><thead><tr><th class="f f0">시작일</th><th class="f f1">종료예정</th><th class="f f2">업무 ${T.some(t => t.full) ? `<button class="sm wtall" id="plall">${T.filter(t => t.full).every(t => isOpen(t.id)) ? '모두 접기' : '모두 펼치기'}</button>` : ''}</th><th class="f f3">상태</th>${days.map(lab).join('')}</tr></thead><tbody>${rows}</tbody></table>`
+      : `<div class="muted" style="padding:30px;text-align:center">${p.mode === 'w' ? '이번 주' : '이 달'}에 표시할 계획이 없습니다.${mine ? ' [＋ 계획]으로 추가하세요.' : ''}</div>`;
+    const late = T.filter(t => plSt(t)[0] === '기한 지남').length, nrec = T.reduce((s, t) => s + (t.full ? lgs(t.id).length : 0), 0);
+    const kpi = `<div class="wkpi"><span>계획 <b>${T.length}</b></span><span>진행 중 <b class="c1">${T.filter(t => t.status === '진행 중').length}</b></span><span>완료 <b class="c2">${T.filter(t => t.status === '완료').length}</b></span><span>기한 지남 <b class="${late ? 'c3' : ''}">${late}</b></span>${T.some(t => t.full) ? `<span>${p.mode === 'w' ? '이번 주' : '이 달'} 기록 <b>${nrec}</b></span>` : ''}</div>`;
+    const act = T.filter(t => t.status !== '완료');
+    const defD = S.today >= R.from && S.today <= R.to ? S.today : R.to < S.today ? R.to : S.today;
+    const ent = mine ? `<div class="card wtent"><div class="wtehd"><b>진행 현황 기록</b><span class="muted">처리일자를 고르고 저장하면 그날 칸에 ● · 주간 업무 목표와 같은 자료</span>${kpi}</div>
+      ${act.length ? `<div class="wtg plg"><input type="date" id="pld" value="${defD}" max="${S.today}"><select id="plp">${act.map(t => `<option value="${t.id}">${esc(PRN[t.priority] + ' · ' + t.title)}</option>`).join('')}</select><button id="plnew">＋ 계획</button><button class="primary" id="plsv">기록 저장</button></div>
+      <textarea id="plx" maxlength="1000" rows="1" placeholder="진행 현황을 적으세요 (예: 구매1팀 강대진 팀장과 브랜드관 개편 사전 조율)"></textarea>` : `<div class="row"><span class="muted">진행 중인 계획이 없습니다.</span><button class="primary" id="plnew">＋ 계획</button></div>`}</div>`
+      : `<div class="card wtent ro">${kpi}</div>`;
+    const title = p.mode === 'w' ? `${dLabel(R.from)} ~ ${dLabel(R.to)}` : ymLabel(p.ym);
+    box.innerHTML = `<div class="plbar"><div class="seg">${[['m', '월간 계획'], ['w', '주간 업무 목표']].map(([k, t]) => `<button data-plm="${k}" class="${p.mode === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+        <div class="mcnav"><button id="plprev" title="이전">‹</button><b>${title}</b><button id="plnext" title="다음">›</button></div><button id="pltd">${p.mode === 'w' ? '이번 주' : '이번 달'}</button><span style="flex:1"></span><span class="muted">달력월 기준 · 귀속월과 무관</span></div>
+      <div class="plmg">${OW.map(o => `<button class="plmc ${o.id === p.own ? 'on' : ''}" data-plo="${o.id}"><b>${esc(o.name)}</b>${o.gl ? `<small>${esc(o.gl)}</small>` : ''}<em>기록 ${cntOf(o.id)}</em></button>`).join('') || '<span class="muted">매니저가 없습니다</span>'}</div>
+      ${ent}
+      <div class="card wtc"><div class="wth"><b>${p.mode === 'w' ? '주간 업무 목표' : (+p.ym.slice(5)) + '월 월간 계획'}</b><span class="muted">담당 : ${esc(own.name)}${own.gl ? ' · ' + esc(own.gl) : ''} · ${title}</span>${!mine && T.some(t => !t.full) ? '<span class="chip none">🔒 다른 매니저 계획 = 제목 · 기간 · 상태만 (상세는 작성자 · 팀장 · 관리자)</span>' : ''}${p.own !== S.me.id || isRO() ? '<span class="chip none">보기 전용</span>' : ''}</div>
+        <div class="wsw">${sheet}</div>
+        <div class="muted wleg"><i class="plg1"></i>계획 기간 (시작 ~ 종료예정) <i class="plg2"></i>연장 기간 <i class="won"></i>진행 기록 (처리일자) · 업무 줄 = 눌러서 기록 펼치기 / 접기 · ${mine ? '✎ = 계획 수정 · 기록 줄 = 보기 / 삭제' : T.some(t => t.full) ? 'ⓘ = 계획 상세' : '🔒 = 상세 비공개'} · 종료예정일은 일정관리 달력에 '계획 마감'으로 표시</div></div>`;
+    const rd = () => { const w = $('.wsw', box), sl = w ? w.scrollLeft : 0; mgPlan(box); const w2 = $('.wsw', box); if (w2) w2.scrollLeft = sl; };
+    $$('[data-plm]', box).forEach(b => (b.onclick = () => { p.mode = b.dataset.plm; if (p.mode === 'w' && !(p.wk >= p.ym + '-01' && p.wk <= p.ym + '-31')) p.wk = plMon(p.ym === S.today.slice(0, 7) ? S.today : p.ym + '-01'); if (p.mode === 'm') p.ym = plMon(p.wk) < p.wk ? p.wk.slice(0, 7) : C.addDays(p.wk, 3).slice(0, 7); mgPlan(box); }));
+    const mv = k => { if (p.mode === 'w') p.wk = C.addDays(plMon(p.wk), 7 * k); else { const [y, m] = p.ym.split('-').map(Number), x = new Date(y, m - 1 + k, 1); p.ym = x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'); } mgPlan(box); };
+    $('#plprev', box).onclick = () => mv(-1); $('#plnext', box).onclick = () => mv(1);
+    $('#pltd', box).onclick = () => { p.ym = S.today.slice(0, 7); p.wk = plMon(S.today); mgPlan(box); };
+    $$('[data-plo]', box).forEach(b => (b.onclick = () => { p.own = b.dataset.plo; mgPlan(box); }));
+    { const w = $('.wsw', box), t = w && w.querySelector('th.today'); if (w && t && !wide) w.scrollLeft = Math.max(0, t.offsetLeft - w.clientWidth + 160); }
+    $$('[data-plt]', box).forEach(td => (td.onclick = e => { if (e.target.closest('[data-ple]')) return; const t = T.find(x => String(x.id) === td.dataset.plt); if (!t) return; if (!t.full) return toast('다른 매니저 계획은 제목 · 기간 · 상태만 볼 수 있습니다'); OPEN[t.id] = !isOpen(t.id); rd(); }));
+    if ($('#plall', box)) $('#plall', box).onclick = () => { const F = T.filter(t => t.full), all = F.every(t => isOpen(t.id)); F.forEach(t => (OPEN[t.id] = !all)); rd(); };
+    $$('[data-ple]', box).forEach(b => (b.onclick = e => { e.stopPropagation(); planForm(b.dataset.ple); }));
+    $$('[data-pll]', box).forEach(td => (td.onclick = () => planLog(td.dataset.pll)));
+    if (!mine) return;
+    $('#plnew', box).onclick = () => planForm(null);
+    if (!$('#plsv', box)) return;
+    $('#plsv', box).onclick = async () => {
+      const body = { op: 'log', task: $('#plp', box).value, date: $('#pld', box).value, text: $('#plx', box).value.trim() };
+      if (!body.date) return toast('처리일자를 고르세요', true); if (body.date > S.today) return toast('처리일자는 오늘까지', true);
+      if (body.text.length < 2) return toast('내용을 2자 이상 적으세요', true);
+      const b = $('#plsv', box); b.disabled = true;
+      try { await api('mgSave', body); OPEN[body.task] = true; toast('저장했습니다 — ' + dLabel(body.date) + ' 칸 ●'); await mgLoad(true); if (S.view === 'mgr' && S.mgv.tab === 'plan') drawMgr(); } catch (e) { toast(e.message, true); b.disabled = false; }
+    };
+  }
+  function planForm(id) {
+    const D = S.mgD, t0 = id ? D.tasks.find(t => String(t.id) === String(id)) : null; if (id && (!t0 || !t0.full)) return toast('볼 수 없는 계획입니다', true);
+    const t = t0 || { title: '', start: S.today, due: C.addDays(S.today, 14), status: '예정', priority: '중요', progress: 0, note: '', etc: '', delayReason: '', delayPlan: '', owner: S.me.id, full: true };
+    const ed = !isRO() && !S.pv && t.owner === S.me.id, dis = ed ? '' : 'disabled', late = id && mgLate(t), L = id ? mgLogs(id).slice().sort((a, b) => (a.date < b.date ? 1 : -1)) : [];
+    modal(`<h3>${!id ? '계획 등록' : ed ? '계획 수정' : '계획 상세 (확인만)'}${id && t.owner !== S.me.id ? ' · ' + esc(mgName(t.owner)) : ''}</h3>
+      <div class="fld"><label>업무명 *</label><input id="pt" maxlength="120" value="${esc(t.title)}" placeholder="예: 부품 테스트 가이드 작성" ${dis}></div>
+      <div class="fields2"><div class="fld"><label>시작일 *</label><input type="date" id="ps" value="${t.start}" ${dis}></div><div class="fld"><label>종료예정 *</label><input type="date" id="pd" value="${t.due}" ${dis}></div>
+      <div class="fld"><label>진행 상태</label><select id="pst" ${dis}>${['예정', '진행 중', '완료'].map(x => `<option ${x === t.status ? 'selected' : ''}>${x}</option>`).join('')}</select></div><div class="fld"><label>우선순위</label><select id="pp" ${dis}>${['긴급', '중요', '보통'].map(x => `<option value="${x}" ${x === t.priority ? 'selected' : ''}>${PRN[x]}</option>`).join('')}</select></div></div>
+      <div class="fld"><label>업무 처리내용</label><textarea id="pn" maxlength="2000" ${ed ? '' : 'readonly'} placeholder="무엇을 어떻게 할지">${esc(t.note || '')}</textarea></div>
+      <div class="fields2"><div class="fld"><label>연장 종료일 ${late ? '*' : '(연장할 때만)'}</label><input type="date" id="px" value="${t.delayPlan || ''}" ${dis}></div><div class="fld" style="grid-column:span 3"><label>연장 사유 ${late ? '*' : ''}</label><input id="pr" maxlength="500" value="${esc(t.delayReason || '')}" placeholder="예: 테스트 항목 추가 요청" ${dis}></div></div>
+      ${late && t.status !== '완료' ? `<div class="warn">⚠ 종료예정(${dLabel(t.due)})이 ${dGap(t.due, S.today)}일 지났습니다 — 완료로 바꾸거나 연장 종료일 · 사유를 적어 주세요</div>` : ''}
+      <div class="fld"><label>기타</label><input id="pe" maxlength="1000" value="${esc(t.etc || '')}" ${dis}></div>
+      ${id ? `<div class="mgch" style="padding:8px 0 4px"><b>진행 현황 ${L.length}건</b></div><div class="mglogs">${L.map(l => `<div class="mglg"><b>${dLabel(l.date)}</b> ${esc(l.text)}${ed ? ` <button class="sm" data-dl="${l.id}" title="지우기">✕</button>` : ''}</div>`).join('') || '<div class="muted">없음</div>'}</div>` : ''}
+      <div class="muted" style="margin-top:6px">다른 매니저에게는 업무명 · 기간 · 상태 · 우선순위만 보입니다 · 처리내용 · 진행 현황 · 연장 사유 · 기타는 본인 · 팀장 · 관리자만</div>
+      <div class="acts">${ed && id ? '<button id="pdel" style="color:var(--red);margin-right:auto">삭제</button>' : ''}<button data-c>닫기</button>${ed ? '<button class="primary" data-s>저장</button>' : ''}</div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close; if (!ed) return;
+      const done = async () => { await mgLoad(true); if (S.view === 'mgr') drawMgr(); };
+      $('[data-s]', bg).onclick = async () => {
+        const st = $('#pst', bg).value, b = { op: 'task', id: id || '', title: $('#pt', bg).value.trim(), start: $('#ps', bg).value, due: $('#pd', bg).value, status: st, priority: $('#pp', bg).value,
+          progress: st === '완료' ? 100 : (+t.progress || 0), note: $('#pn', bg).value, etc: $('#pe', bg).value.trim(), delayPlan: $('#px', bg).value, delayReason: $('#pr', bg).value.trim() };
+        if (b.title.length < 2) return toast('업무명을 2자 이상', true); if (!b.start || !b.due) return toast('시작일 · 종료예정을 넣으세요', true); if (b.due < b.start) return toast('종료예정은 시작일 이후로', true);
+        if (b.delayPlan && b.delayPlan < b.due) return toast('연장 종료일은 종료예정 이후로', true);
+        if (b.delayPlan && b.delayReason.length < 2) return toast('연장 사유를 적어 주세요', true);
+        if (!b.delayPlan && b.delayReason) return toast('연장 종료일을 넣거나 연장 사유를 비우세요', true);
+        if (late && st !== '완료' && b.due < S.today && !b.delayPlan) return toast('기한 지난 계획은 완료로 바꾸거나 연장 종료일 · 사유를 적어 주세요', true);
+        try { await api('mgSave', b); close(); toast('저장했습니다'); await done(); } catch (e) { toast(e.message, true); }
+      };
+      $$('[data-dl]', bg).forEach(x => (x.onclick = async () => { if (!(await confirmBox('이 기록을 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'logDel', id: x.dataset.dl }); close(); await done(); planForm(id); } catch (e) { toast(e.message, true); } }));
+      if ($('#pdel', bg)) $('#pdel', bg).onclick = async () => { if (!(await confirmBox('이 계획과 진행 현황을 모두 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'taskDel', id }); close(); toast('지웠습니다'); await done(); } catch (e) { toast(e.message, true); } };
+    }, 'wide');
+  }
+  function planLog(lid) {
+    const l = ((S.mgD || {}).logs || []).find(x => String(x.id) === String(lid)); if (!l) return;
+    const t = (S.mgD.tasks || []).find(x => String(x.id) === String(l.task)) || {}, ed = !isRO() && !S.pv && t.owner === S.me.id;
+    modal(`<h3>진행 현황</h3><div class="muted">${esc(t.title || '')}</div><div class="fld" style="margin-top:8px"><label>처리일자</label><b>${dLabel(l.date)}</b></div>
+      <div class="fld"><label>내용</label><div class="mcmemo" style="white-space:pre-wrap">${esc(l.text)}</div></div><div class="muted">${l.by ? '작성 ' + esc(l.by) : ''}</div>
+      <div class="acts">${ed ? '<button id="ldel" style="color:var(--red);margin-right:auto">삭제</button>' : ''}<button data-c>닫기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      if ($('#ldel', bg)) $('#ldel', bg).onclick = async () => { if (!(await confirmBox('이 기록을 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'logDel', id: l.id }); close(); toast('지웠습니다'); await mgLoad(true); if (S.view === 'mgr') drawMgr(); } catch (e) { toast(e.message, true); } };
+    });
+  }
+  // 일정관리 달력에 계획 종료예정일(연장 시 연장 종료일) = '계획 마감' (읽기 전용 · 눌러서 월간계획으로)
+  const PLAN_CAT = { id: 'plan', name: '계획 마감', color: '#e8902a' };
+  const calPlanEv = () => ((S.mgD || {}).tasks || []).filter(t => t.status !== '완료').map(t => { const d = plEnd(t); return { id: 'p' + t.id, plan: t.id, d, e: d, tm: '', title: mgName(t.owner) + ' · ' + t.title, cat: 'plan', grp: '전체', memo: '', owner: t.owner, by: mgName(t.owner), at: '' }; });
+  function planGo(tid) { const t = ((S.mgD || {}).tasks || []).find(x => String(x.id) === String(tid)); if (!t) return; const p = S.mgv.pl = S.mgv.pl || { mode: 'm', open: {} }; p.mode = 'm'; p.ym = plEnd(t).slice(0, 7); p.wk = plMon(plEnd(t)); p.own = t.owner; p.open = p.open || {}; S.mgv.tab = 'plan'; drawMgr(); }
   // ================================================================ v28.55 : 영상업무 월간 업무표
   const WT_ST = ['대기', '진행중', '완료', '보류'], WT_OTH = ['포장지원', '정리지원', '청소', '담당/교육', '불량처리', '기타시간'];
   const wtUsers = () => (S.wt && S.wt.users) || [];
