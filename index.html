@@ -7321,17 +7321,18 @@ async function addCharts(buf, jobs) {
   // 출근 확인 · 업무배정 · 휴무 (귀속월 단위, 권한 범위만)
   async function attOf(ym) {
     S._att = S._att || {}; if (S._att[ym]) return S._att[ym];
-    const rg = periodRange(ym); if (!rg) return null;
-    let r; try { r = await api('attList', { from: rg.from, to: rg.to }); } catch (e) { r = { conf: [], asg: [], off: [], roster: [], err: e.message }; }
+    const rg = periodRange(ym); if (!rg) return null; const tk = S.token;
+    let r; try { r = await api('attList', { from: rg.from, to: rg.to }); } catch (e) { r = { conf: [], asg: [], off: [], roster: [], err: e.message }; }   // v28.53 : 실패는 기억하지 않음 (다음에 다시 조회)
     const A = { conf: {}, asg: {}, off: {}, offk: {}, roster: {}, by: {}, rg, err: r.err || '' };
     (r.conf || []).forEach(([n, d, k, by, at]) => { n = nmKey(n); (A.conf[n] = A.conf[n] || {})[d] = k; (A.by[n] = A.by[n] || {})[d] = by + ' · ' + String(at || '').slice(5, 16); });
     (r.asg || []).forEach(([n, d, t]) => { n = nmKey(n); (A.asg[n] = A.asg[n] || {})[d] = t; });
     (r.off || []).forEach(([n, a, b, k]) => { n = nmKey(n); for (let d = a; d <= b; d = C.addDays(d, 1)) { (A.off[n] = A.off[n] || {})[d] = true; (A.offk[n] = A.offk[n] || {})[d] = k; } });
     (r.roster || []).forEach(([n, g, t, st, inr]) => (A.roster[nmKey(n)] = { grp: g, title: t, status: st, inr }));
     A.hol = new Set(r.hol || []);
+    if (A.err || tk !== S.token) return A;                                              // 다른 계정으로 바뀌었으면 기억하지 않음
     return (S._att[ym] = A);
   }
-  const attReset = () => { S._att = {}; S._adj = {}; S._gm = {}; };
+  const attReset = () => { S._att = {}; S._adj = {}; S._gm = {}; S._inAdj = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } };   // v28.53 : 입력 화면 · 통계까지
   // 한 사람 한 귀속월 : 원본 items → 보정 결과 (prev = 직전 귀속월 평균)
   function adjOne(name, ym, items, prev, A) {
     const n = nmKey(name);
@@ -7340,7 +7341,7 @@ async function addCharts(buf, jobs) {
   // 매니저 이상 : 귀속월 전체 인원 (월 목록 자료) → { by: {이름: 결과} }
   async function adjYm(ym, depth) {
     if (!adjOn(ym) || !isMgrUser()) return null;
-    S._adj = S._adj || {}; S._mcache = S._mcache || {};
+    S._adj = S._adj || {}; S._mcache = S._mcache || {}; const tk = S.token;
     let r = S._mcache['M|' + ym]; if (!r) { r = await api('listUsers', { ym }); S._mcache['M|' + ym] = r; }
     const c = S._adj[ym]; if (c && c.src === r) return c;
     const pv = prevYmP(ym), A = await attOf(ym); let prevAvg = {};
@@ -7351,7 +7352,8 @@ async function addCharts(buf, jobs) {
     }
     const by = {};
     r.users.concat((r.pending || []).map(p => ({ name: p.name, items: [] }))).forEach(u => { const n = nmKey(u.name); by[n] = adjOne(n, ym, u.items, prevAvg[n] ?? null, A); });
-    return (S._adj[ym] = { src: r, by, A });
+    const out = { src: r, by, A }; if (tk !== S.token || !A || A.err) return out;            // v28.53 : 계정 바뀜 · 확인 자료 실패면 기억 안 함
+    return (S._adj[ym] = out);
   }
   // 한 사람 (사원 본인 화면 · 개인 월 화면) : getMonth 자료로 같은 계산
   async function gmOf(uid, ym) { S._gm = S._gm || {}; const k = uid + '|' + ym; if (!S._gm[k]) S._gm[k] = api('getMonth', { userId: uid, ym }).catch(e => { delete S._gm[k]; throw e; }); return S._gm[k]; }
@@ -7392,7 +7394,8 @@ async function addCharts(buf, jobs) {
         const it = byD[d], c = (A.conf[n] || {})[d] || '', off = (A.off[n] || {})[d] || st === '육아' || st === '병가', wk = isWorkdayA(d, A);
         const row = { uid: u.id, name: u.name, grp: u.group, title, date: d, conf: c, by: (A.by[n] || {})[d] || '' };
         if (it) { const v = C.sumDay(it.sum, minsYm(ym)), z = !(Math.abs(v.e2) > 1e-9), aj = it._adj;
-          rows.push(Object.assign(row, { st: aj && aj.kind ? aj.reason : z ? '실적 0' : '입력', inc: true, score: z ? 0 : v.f7, pend: z && !(aj && aj.kind) && c !== 'present', zero: z, adj: aj || null })); continue; }
+          if (off && z) continue;                                                          // v28.53 : 휴무일 0점 기록 = 휴무 (실적이 있으면 실제로 일한 것으로 출근)
+          rows.push(Object.assign(row, { st: aj && aj.kind ? aj.reason : z ? '실적 0' : '입력', inc: true, score: z ? 0 : v.f7, pend: z && !(aj && aj.kind) && c !== 'present' && d < S.today, zero: z, adj: aj || null })); continue; }
         if (off) continue;
         if (c === 'present') { rows.push(Object.assign(row, { st: '출근 확인', inc: true, score: 0 })); continue; }
         if (c === 'leave') { rows.push(Object.assign(row, { st: '휴무 등록 대기', inc: false, score: null, lvwait: true })); continue; }
@@ -7551,6 +7554,7 @@ async function addCharts(buf, jobs) {
     clearTimeout(S.timer);
     if (!silent) { try { sessionStorage.removeItem(DRAFT_KEY); sessionStorage.removeItem('pending'); } catch (e) { } }
     S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
+    attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;   // v28.53 : 공용 PC — 앞사람 자료 남기지 않기
     // 공용 PC : 다음 사람에게 앞사람이 보던 날짜·달·필터·창이 남지 않게
     S.date = null; S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
     S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
@@ -8574,6 +8578,7 @@ async function addCharts(buf, jobs) {
       if (S.day === day && JSON.stringify(doc) === snapshotDirty) { S.dirty = false; dropDraft(uid, date); }
       else if (S.day === day) keepDraft();
       S.saving = false; if (S.day === day) showSaveState();
+      S._adj = {}; S._gm = {}; S.stCache = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; }   // v28.53 : 저장 후 보정 · 통계 다시 계산
       if (manual) toast('저장했습니다');
       return true;
     } catch (e) {
@@ -8742,7 +8747,7 @@ async function addCharts(buf, jobs) {
     $$('tr[data-d]').forEach(tr => (tr.onclick = () => go('input', { date: tr.dataset.d })));
     $('#xl').onclick = async () => {
       const b = $('#xl'); b.disabled = true; b.textContent = '만드는 중…';
-      try { if (multi) await downloadPersonRange(results, m, label); else { if (!r.days.length) throw new Error('입력된 날짜가 없습니다'); saveBlob(await simpleXlsxBlob(r.user, ym, r.target, r.days), sxName(r.user.name, ym)); toast('엑셀을 내려받았습니다'); } } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); }
+      try { if (multi) await downloadPersonRange(results, m, label); else { if (!r.days.length && !(r._items && r._items.length)) throw new Error('입력된 날짜가 없습니다'); saveBlob(await simpleXlsxBlob(r.user, ym, r.target, r.days), sxName(r.user.name, ym)); toast('엑셀을 내려받았습니다'); } } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); }
       b.disabled = false; b.textContent = '⬇ 엑셀 다운로드 (.xlsx)';
     };
     if ($('#xlo')) $('#xlo').onclick = async () => { try { await downloadXlsx(r.user, ym, r.target, r.days); } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); } };   // v28.52 : 원본 양식
@@ -8781,9 +8786,9 @@ async function addCharts(buf, jobs) {
       ['제조 점유율', share && share.totM ? Math.round(qm / share.totM * 1000) / 10 + '% (' + share.scope + ' ' + share.totM + '대 중)' : '-'],
       ['지원 보정 일수 (11월 귀속부터)', adjN], ['지원 점수 합', r2(sup)], ['만든 시각', new Date().toLocaleString('ko-KR')]], [34, 46]);
     sheet('날짜별', [['날짜', '요일', '근무 구분', '근무일 값', '조립수량', '제조수량', '출고', '반조', '실제 업무 점수', '기타시간(분)', '지원 점수', '그날 환산', '그날 평가평균', '보정', '기준 평균', '목표', '달성 여부', '조립 야근(분)', '실제 야근(분)']].concat(
-      items.map(it => { const s = it.sum || {}, P = C.qtyParts(s), v = C.sumDay(s, MY), a = it._adj, dc = docOf[it.date] || {}, om = C.otherMinOf(dc.other ? { o: dc.other } : s);
+      items.map(it => { const s = it.sum || {}, P = C.qtyParts(s), v = C.sumDay(s, MY), a = it._adj, dc = docOf[it.date] || {}, om = docOf[it.date] ? C.otherMinOf({ o: dc.other || {} }) : 0;   // v28.53 : 실제 입력 시간만 (가상 지원일 = 0)
         return [it.date, C.WD[new Date(it.date + 'T00:00:00').getDay()], dc.kind || (a && a.virtual ? '확인 근무' : ''), C.num(s.d), P.asm, P.mfg, P.ship, P.ban,
-          r2(a ? a.actual : v.e2 - om / 30), om, r2(a && a.kind ? a.support : om / 30), r2(v.e2), r2(v.f7), a ? a.reason : '', a && a.base != null ? r2(a.base) : null,
+          r2(a ? (a.virtual ? 0 : a.actual) : v.e2 - om / 30), om, r2(a && a.kind ? a.support : om / 30), r2(v.e2), r2(v.f7), a ? a.reason : '', a && a.base != null ? r2(a.base) : null,
           target || null, target && Math.abs(v.e2) > 1e-9 ? lvT(v.f7, target) : '', C.num(dc.asmOt), C.num(dc.ot)]; })), [11, 5, 9, 8, 8, 8, 6, 6, 11, 10, 9, 9, 11, 22, 9, 6, 8, 10, 10]);
     const det = [['날짜', '주문번호', '구분', '수량'].concat(C.COLS.map(x => x.c + ' ' + String(x.label || '').replace(/\n/g, ' ')), ['메모'])];
     raw.forEach(x => (x.doc.rows || []).forEach(r => { if (!r || !String(r.o || '').trim()) return; det.push([x.date, r.o, r.k || '', r.q === '' ? null : C.num(r.q)].concat(C.COLS.map(c => (r.m || {})[c.c] ? (C.num(r.m[c.c]) || 1) : null), [r.memo || ''])); }));
@@ -9785,7 +9790,7 @@ async function addCharts(buf, jobs) {
         <span class="muted" style="font-size:12px">${gs.length ? '고른 그룹' : '전체 그룹'} · 환산 합 ${f1d(s.sum)}</span>${s.pend && !isRO() ? `<button class="sm ddpend" id="mpend">확인 필요 <b>${s.pend}</b></button>` : s.pend ? `<span class="ddpend">확인 필요 ${s.pend}</span>` : ''}</div>`; })() : '';
     $('#mbody').innerHTML = tcard + `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="개인 목표 화면 (그룹별 표 · 한꺼번에 채우기)">🎯 개인 목표 설정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' && S.gtOpen ? 266 : 220}px)">
-      <table class="list mlist" style="min-width:1260px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', tMode() === 't' ? '팀 목표' : '개인 목표', 1)}${th('hit', '달성일', 1)}${th('miss', '미달일', 1)}${th('qty', '조립 수량', 1)}${(() => { const T = shareTot(); return `<th class="sort num ${S.mSort.k === 'share' ? 'on' : ''}" data-k="share" title="분모 : ${esc(T.scope)} · 조립 ${T.totA}대 · 제조 ${T.totM}대">점유율<small style="display:block;font-weight:400">조립 · 제조</small></th>`; })()}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}<th title="이 사람 한 달 엑셀">엑셀</th></tr></thead><tbody>
+      <table class="list mlist" style="min-width:1260px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', tMode() === 't' ? '팀 목표' : '개인 목표', 1)}${th('hit', '달성일', 1)}${th('miss', '미달일', 1)}${th('qty', '조립 수량', 1)}${(() => { const T = shareTot(); return `<th class="sort num ${S.mSort.k === 'share' ? 'on' : ''}" data-k="share" title="분모 : ${esc(T.scope)} · 조립 ${T.totA}대 · 제조 ${T.totM}대 (고른 그룹 기준 · 표 필터와 무관)">점유율<small style="display:block;font-weight:400">조립 · 제조</small></th>`; })()}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}<th title="이 사람 한 달 엑셀">엑셀</th></tr></thead><tbody>
       ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.tg && has ? u.m.c8 : null;
         let hd = '';
@@ -10338,7 +10343,7 @@ async function addCharts(buf, jobs) {
   }
   // v28.52 : 통계 합계(서버 집계)에 지원 보정 차이를 더함 — 날짜별 보정 결과와 같은 값이 되도록
   async function statsAdj(D, by, F, T) {
-    const yms = Array.from(new Set(D.agg.map(r => r[1]))).filter(adjOn); if (!yms.length) return;
+    const yms = Array.from(new Set(D.agg.map(r => r[1]).concat(ymsIn(F, T)))).filter(adjOn); if (!yms.length) return;   // v28.53 : 입력 없이 확인만 있는 달도
     for (const ym of yms) { try { await adjYm(ym); } catch (e) { } }
     const OT = D.oth || C.OTHER.map(x => x[0]), RL = D.cols ? D.cols.length : 0, TL = (D.tys || []).length || 7, byName = {};
     (D.users || []).forEach(u => (byName[nmKey(u.name)] = u.id));
@@ -11706,6 +11711,7 @@ async function addCharts(buf, jobs) {
     try {
       const r = pre && pre.me ? pre : await api('me', { withDay: true });
       S.me = r.me; S.periods = r.periods; S.today = r.today || S.today; S.rates = r.rates || [];
+      attReset(); S.stCache = {}; S.stv = null;                                           // v28.53 : 로그인할 때 앞 계정 자료 비움
       try { S.goals = (await api('goalCfg')).goals || []; } catch (e) { S.goals = []; }   // v28.51 : SQL 전이면 기본 기준(90/80)
       S.pc = {};
       if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {}, asm: r.day.asm || {} };
