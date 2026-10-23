@@ -245,7 +245,7 @@ table.wt .d{width:34px;min-width:34px}
 table.wt tr.pj td{background:#eef3fb;font-weight:700}
 table.wt tr.rc td.f2{padding-left:20px;font-weight:400;color:#2f3846}
 table.wt td.lk{cursor:pointer}table.wt td.lk:hover{text-decoration:underline}
-table.wt td.lv{background:#fff1d9!important;color:#8c6019;font-size:10px;font-weight:700}table.wt td.lv span{display:block}
+table.wt td.wlv{background:#fff1d9!important;color:#8c6019;font-size:10px;font-weight:700}table.wt td.lv span{display:block}
 table.wt th.sat{color:#1f5fbf}table.wt th.sun,table.wt th.hol{color:#d32f2f}table.wt th.wk{background:#dce7fb}
 table.wt th.today,table.wt td.today{box-shadow:inset 0 0 0 2px #8eb6ff}
 table.wt .dot{color:#1f6feb;font-size:13px}
@@ -255,7 +255,7 @@ table.wt .dot{color:#1f6feb;font-size:13px}
 .wsup{color:#7a2fd0}
 html[data-theme=dark] table.wt th,html[data-theme=dark] table.wt td{background:#1a1c20;border-color:#2c3846}
 html[data-theme=dark] table.wt thead th{background:#202a36}html[data-theme=dark] table.wt thead th small{color:#ccd4e0}
-html[data-theme=dark] table.wt tr.pj td{background:#1d2633}html[data-theme=dark] table.wt td.lv{background:#3a3115!important;color:#f1d58a}
+html[data-theme=dark] table.wt tr.pj td{background:#1d2633}html[data-theme=dark] table.wt td.wlv{background:#3a3115!important;color:#f1d58a}
 html[data-theme=dark] table.wt th.wk{background:#22324a}html[data-theme=dark] table.wt tr.rc td.f2{color:#d5dbe4}
 html[data-theme=dark] table.bd td.wtc{background:#241d33;color:#cbb6ff}
 @media(max-width:800px){.wtg{grid-template-columns:1fr}table.wt .f2{width:220px;min-width:220px;max-width:220px}table.wt .f3{left:328px}}
@@ -274,7 +274,7 @@ html[data-theme=dark] .pvr{border-color:#2c3846}html[data-theme=dark] .pvl > but
 .pmon{padding-top:14px}
 .pmon .pstrip{margin:0 0 12px}.pmon .pstrip table.bd td[data-sd]{cursor:pointer;font-weight:700}
 .pmon .pdt table.list td.lvc{font-weight:800}
-.pmon .pdt td.lvc,.pmon .pdt td.lvp,.pmon .pdt th.lvh{text-align:center!important}
+.pmon .pdt td.lvc,.pmon .pdt td.lvp,.pmon .pdt th.lvhd{text-align:center!important}
 .pmon .pstrip table.bd th:not(.bn):not(.bt),.pmon .pstrip table.bd td:not(.bn):not(.bt){min-width:33px}
 .pmon .pgoal{margin:0 0 10px}.pmon .pgoal .gbar{justify-content:flex-start}.pmon .pgoal .gmode{box-shadow:0 0 0 2px #1f6feb33;border-radius:10px}
 .pmon .pdt td.r-hi{background:#cfe0fb;color:#0d3f8f}.pmon .pdt td.r-mid{background:#fff0b3;color:#6b5200}.pmon .pdt td.r-lo{background:#fdd3d3;color:#9b1c1c}
@@ -2167,6 +2167,41 @@ html[data-theme=dark] table.list th,html[data-theme=dark] table.list td,html[dat
 .stats .stat .qchips{justify-content:center}.stats .stat .bar{margin-left:auto;margin-right:auto}
 table.list th,table.list td,.hrw .tbl th,.hrw .tbl td,.pmon .pdt td,.pmon .pdt th{text-align:center!important}
 table.list tr.ghd td{text-align:left!important}
+
+/* v28.58 : 영상 업무표 다듬기 — 일한 날 = 칸 칠하기 · 연차 = 세로 빨간 음영(머리에만 글자) · 줄 높이 낮게(최대 2줄) · 접기/펼치기 */
+.wtent{padding:12px 16px}.wtent.ro{padding:10px 16px}
+.wtehd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}.wtehd>b{font-size:15px}
+.wkpi{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;flex:1}
+.wtent.ro .wkpi{justify-content:center}
+.wkpi span{background:#f2f4f8;border:1px solid #e1e6ec;border-radius:999px;padding:4px 12px;font-size:12.5px;color:#46505e;white-space:nowrap}
+.wkpi b{font-size:14.5px;color:#1d2430;margin-left:2px}.wkpi b.c1{color:#1d4ed8}.wkpi b.c2{color:#1e7a3c}.wkpi b.c3{color:#c62828}
+.wtg{display:grid;grid-template-columns:150px minmax(0,1fr) 120px auto auto;gap:8px;margin-bottom:8px;align-items:center}
+.wtent textarea{min-height:40px;height:40px}
+.wtk{display:none}
+table.wt td,table.wt th{padding:1px 3px;height:38px;box-sizing:border-box}
+table.wt tbody tr{height:38px}
+table.wt thead th{height:44px}
+table.wt td.f2{line-height:1.25;font-size:11.5px}
+table.wt .cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+table.wt .wtt2{display:flex;align-items:center;gap:6px}table.wt .wtt2 .cl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.wt .wtt2 .tog{color:#5d6675;width:12px;flex:none}table.wt .wtt2 .cnt{font-size:10.5px;color:#5d6675;font-weight:600;flex:none}
+table.wt .ped{padding:1px 7px;font-size:11px;flex:none}
+table.wt .wtall{padding:1px 7px;font-size:10.5px;margin-left:6px;font-weight:600}
+table.wt td.d{padding:0}
+table.wt td.wlv{background:#fde7e7!important}
+table.wt thead th.wlvh{background:#f9d4d4!important;color:#9b1c1c}
+table.wt thead th .lvt{display:block;font-style:normal;font-size:10px;font-weight:800;color:#c62828}
+table.wt td.won{background:#5b8def!important;box-shadow:inset 0 0 0 2px #fff}
+table.wt td.wonp{background:#bcd3fa!important}
+table.wt td.wlv.won{background:#5b8def!important;box-shadow:inset 0 0 0 2px #fde7e7}
+table.wt td.wlv.wonp{background:#bcd3fa!important;box-shadow:inset 0 -3px 0 #f0a3a3}
+table.wt tr.pj td.f2{cursor:pointer}
+.wleg{padding:8px 14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.wleg i{display:inline-block;width:14px;height:12px;border-radius:3px;margin-left:8px}
+.wleg i.won{background:#5b8def}.wleg i.wlv{background:#fde7e7;border:1px solid #f0a3a3}.wleg i.wk{background:#dce7fb}
+html[data-theme=dark] .wkpi span{background:#202733;border-color:#2c3846;color:#c9d1dd}html[data-theme=dark] .wkpi b{color:#e6e9ef}
+html[data-theme=dark] table.wt td.wlv{background:#3a2020!important}html[data-theme=dark] table.wt thead th.wlvh{background:#4a2626!important;color:#f3b0b0}
+html[data-theme=dark] table.wt td.won{background:#4a7be0!important;box-shadow:inset 0 0 0 2px #1a1c20}html[data-theme=dark] table.wt td.wonp{background:#2c4677!important}
+@media(max-width:900px){.wtg{grid-template-columns:1fr 1fr}.wtg select#wp{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -10135,12 +10170,13 @@ async function addCharts(buf, jobs) {
     const L = wtUsers().filter(w => w.view), rows = wtRows(D), dd = wtDays(D), OFF = wtOffMap(D), HOL = {}; (D.hol || []).forEach(([d, n]) => (HOL[d] = n || '공휴일'));
     const sup = D.recs.filter(r => r.kind === 'support').reduce((a, r) => a + (+r.mins || 0), 0);
     const ps = rows.map(x => x.p), inP = r => D.recs.filter(x => x.date === r).length;
-    const cell = (d, has) => { const o = OFF[d]; return `<td class="d${o ? ' lv' : ''}${d === today ? ' today' : ''}">${o ? `<span>${esc(o)}</span>` : ''}${has ? '<b class="dot">●</b>' : ''}</td>`; };
-    const lab = d => { const w = new Date(d + 'T00:00:00').getDay(); return `<th class="d ${HOL[d] ? 'hol' : w === 6 ? 'sat wk' : w === 0 ? 'sun wk' : ''}${d === today ? ' today' : ''}" title="${d}${HOL[d] ? ' ' + esc(HOL[d]) : ''}${w % 6 === 0 ? ' · 주말 기록이 있어 생긴 칸' : ''}">${+d.slice(5, 7)}/${+d.slice(8)}<small>${HOL[d] ? esc(HOL[d].replace(/\(.*\)/, '').slice(0, 3)) : C.WD[w]}</small></th>`; };
-    const sheet = rows.length ? `<table class="wt"><thead><tr><th class="f f0">시작일</th><th class="f f1">예상완료</th><th class="f f2">업무 / 프로젝트</th><th class="f f3">상태</th>${dd.map(lab).join('')}</tr></thead><tbody>${rows.map(({ p, recs }) => {
-      const ds = new Set(recs.map(r => r.date)), st = wtState(p, ym), lt = wtLate(p, ym, today);
-      return `<tr class="pj"><td class="f f0">${p.start ? dLabel(p.start).replace(/\(.*/, '') : ''}</td><td class="f f1">${p.due ? dLabel(p.due).replace(/\(.*/, '') : ''}</td><td class="f f2 lk" data-wp="${p.id}">${esc(p.title)}${p.created < ym ? `<span class="wcar">${ymLabel(p.created)}에서 이월</span>` : ''}</td><td class="f f3"><span class="wst s${WT_ST.indexOf(st)}">${st}</span>${lt ? '<span class="wlate">기한 초과</span>' : ''}</td>${dd.map(d => cell(d, ds.has(d))).join('')}</tr>`
-        + recs.map(r => `<tr class="rc"><td class="f f0"></td><td class="f f1"></td><td class="f f2 lk" data-wr="${r.id}" title="${esc((r.by ? '작성 ' + r.by : ''))}"> - ${r.kind === 'support' ? `<b class="wsup">[${esc(r.cat)} ${r.mins}분]</b> ` : ''}${esc(r.text)}</td><td class="f f3"></td>${dd.map(d => cell(d, d === r.date)).join('')}</tr>`).join('');
+    const OPEN = S.wtOpen = S.wtOpen || {}, isOpen = id => OPEN[id] !== false;   // v28.58 : 프로젝트 줄 눌러 기록 펼치기 / 접기 (기본 펼침)
+    const cell = (d, has, pj) => { const o = OFF[d]; return `<td class="d${o ? ' wlv' : ''}${has ? (pj ? ' wonp' : ' won') : ''}${d === today ? ' today' : ''}"${has ? ` title="${dLabel(d)}${o ? ' · ' + esc(o) : ''}"` : o ? ` title="${dLabel(d)} · ${esc(o)}"` : ''}></td>`; };
+    const lab = d => { const w = new Date(d + 'T00:00:00').getDay(), o = OFF[d]; return `<th class="d ${HOL[d] ? 'hol' : w === 6 ? 'sat wk' : w === 0 ? 'sun wk' : ''}${o ? ' wlvh' : ''}${d === today ? ' today' : ''}" title="${d}${HOL[d] ? ' ' + esc(HOL[d]) : ''}${o ? ' · ' + esc(o) : ''}${w % 6 === 0 ? ' · 주말 기록이 있어 생긴 칸' : ''}">${+d.slice(5, 7)}/${+d.slice(8)}<small>${HOL[d] ? esc(HOL[d].replace(/\(.*\)/, '').slice(0, 3)) : C.WD[w]}</small>${o ? `<em class="lvt">${esc(o)}</em>` : ''}</th>`; };
+    const sheet = rows.length ? `<table class="wt"><thead><tr><th class="f f0">시작일</th><th class="f f1">예상완료</th><th class="f f2">업무 / 프로젝트 <button class="sm wtall" id="wtall">${rows.every(x => isOpen(x.p.id)) ? '모두 접기' : '모두 펼치기'}</button></th><th class="f f3">상태</th>${dd.map(lab).join('')}</tr></thead><tbody>${rows.map(({ p, recs }) => {
+      const ds = new Set(recs.map(r => r.date)), st = wtState(p, ym), lt = wtLate(p, ym, today), op = isOpen(p.id);
+      return `<tr class="pj"><td class="f f0">${p.start ? dLabel(p.start).replace(/\(.*/, '') : ''}</td><td class="f f1">${p.due ? dLabel(p.due).replace(/\(.*/, '') : ''}</td><td class="f f2 lk" data-wt="${p.id}"><div class="wtt2"><span class="tog">${op ? '▾' : '▸'}</span><span class="cl">${esc(p.title)}</span>${p.created < ym ? `<span class="wcar">${ymLabel(p.created)}에서 이월</span>` : ''}<span class="cnt">${recs.length}건</span>${ed || true ? `<button class="sm ped" data-wp="${p.id}" title="${ed ? '프로젝트 수정' : '프로젝트 보기'}">${ed ? '✎' : 'ⓘ'}</button>` : ''}</div></td><td class="f f3"><span class="wst s${WT_ST.indexOf(st)}">${st}</span>${lt ? '<span class="wlate">기한 초과</span>' : ''}</td>${dd.map(d => cell(d, ds.has(d), true)).join('')}</tr>`
+        + (op ? recs.map(r => `<tr class="rc"><td class="f f0"></td><td class="f f1"></td><td class="f f2 lk" data-wr="${r.id}" title="${esc(wtText(r) + (r.by ? '\n작성 ' + r.by : ''))}"><div class="cl2">${r.kind === 'support' ? `<b class="wsup">[${esc(r.cat)} ${r.mins}분]</b> ` : ''}${esc(r.text)}</div></td><td class="f f3"></td>${dd.map(d => cell(d, d === r.date, false)).join('')}</tr>`).join('') : '');
     }).join('')}</tbody></table>` : '<div class="muted" style="padding:30px;text-align:center">이 귀속월에 표시할 프로젝트가 없습니다.' + (ed ? ' [＋ 프로젝트]로 추가하세요.' : '') + '</div>';
     const pOpts = ps.filter(p => wtState(p, ym) !== '완료' || true).map(p => `<option value="${p.id}">${esc(p.title)} · ${wtState(p, ym)}</option>`).join('');
     const defD = today >= D.period.start && today <= D.period.end ? today : D.period.end < today ? D.period.end : D.period.start;
@@ -10151,16 +10187,14 @@ async function addCharts(buf, jobs) {
         ${D.on ? '<span class="chip open">업무표 사용 중</span>' : '<span class="chip none">이 달은 업무표 미사용 (수량 입력 달)</span>'}
         <span style="flex:1"></span>${ed ? '' : '<span class="chip none">보기 전용</span>'}<button class="primary" id="wtxl">⬇ 엑셀 (업무표 모양)</button>
       </div>
-      ${ed ? `<div class="card wtent"><div class="row" style="margin-bottom:8px"><b style="font-size:15px">오늘 한 일</b><span class="muted">저장하면 표에 ● 가 찍힙니다 · 주말에 쓰면 그날 칸이 생김 · 마감된 달도 고칠 수 있음</span></div>
-        ${ps.length ? `<div class="wtg"><input type="date" id="wd" value="${defD}" min="${D.period.start}" max="${D.period.end < today ? D.period.end : today}"><select id="wp">${pOpts}</select><select id="wk"><option value="work">진행 기록</option><option value="support">지원 업무</option></select></div>
+      ${ed ? `<div class="card wtent"><div class="wtehd"><b>오늘 한 일</b><span class="muted">저장하면 그날 칸이 칠해집니다 · 마감된 달도 고칠 수 있음</span>${`<div class="wkpi"><span>프로젝트 <b>${ps.length}</b></span><span>진행 중 <b class="c1">${ps.filter(p => wtState(p, ym) === '진행중').length}</b></span><span>완료 <b class="c2">${ps.filter(p => wtState(p, ym) === '완료').length}</b></span><span>기록 <b>${D.recs.length}</b>${sup ? ` · 지원 <b>${sup}</b>분` : ''}</span><span>기한 초과 <b class="${ps.some(p => wtLate(p, ym, today)) ? 'c3' : ''}">${ps.filter(p => wtLate(p, ym, today)).length}</b></span></div>`}</div>
+        ${ps.length ? `<div class="wtg"><input type="date" id="wd" value="${defD}" min="${D.period.start}" max="${D.period.end < today ? D.period.end : today}"><select id="wp">${pOpts}</select><select id="wk"><option value="work">진행 기록</option><option value="support">지원 업무</option></select><button id="wnp">＋ 프로젝트</button><button class="primary" id="wsv">기록 저장</button></div>
         <div class="wsupf hide" id="wsf"><select id="wc">${WT_OTH.map(o => `<option ${o === '정리지원' ? 'selected' : ''}>${o}</option>`).join('')}</select><input id="wm" inputmode="numeric" placeholder="분" style="width:80px"><span class="muted">기타시간처럼 항목 + 사유 + 분</span></div>
-        <textarea id="wtx" maxlength="500" placeholder="예: 원팬편 사운드 작업 · 쌍팬편 편집 시작"></textarea>
-        <div class="row" style="justify-content:flex-end;margin-top:8px"><button id="wnp">＋ 프로젝트</button><button class="primary" id="wsv">기록 저장</button></div>`
-        : `<div class="row"><span class="muted">먼저 프로젝트를 추가하세요.</span><button class="primary" id="wnp">＋ 프로젝트</button></div>`}</div>` : ''}
-      <div class="stats s5 wtk"><div class="stat"><div class="k">프로젝트</div><div class="v">${ps.length}</div></div><div class="stat"><div class="k">진행 중</div><div class="v">${ps.filter(p => wtState(p, ym) === '진행중').length}</div></div><div class="stat"><div class="k">완료</div><div class="v">${ps.filter(p => wtState(p, ym) === '완료').length}</div></div><div class="stat"><div class="k">진행 기록 · 지원</div><div class="v">${D.recs.length}<small> / ${sup}분</small></div></div><div class="stat"><div class="k">기한 초과</div><div class="v" style="color:var(--red)">${ps.filter(p => wtLate(p, ym, today)).length}</div></div></div>
+        <textarea id="wtx" maxlength="500" rows="1" placeholder="한 일을 적으세요 (예: 원팬편 사운드 작업 · 쌍팬편 편집 시작)"></textarea>`
+        : `<div class="row"><span class="muted">먼저 프로젝트를 추가하세요.</span><button class="primary" id="wnp">＋ 프로젝트</button></div>`}</div>` : `<div class="card wtent ro">${`<div class="wkpi"><span>프로젝트 <b>${ps.length}</b></span><span>진행 중 <b class="c1">${ps.filter(p => wtState(p, ym) === '진행중').length}</b></span><span>완료 <b class="c2">${ps.filter(p => wtState(p, ym) === '완료').length}</b></span><span>기록 <b>${D.recs.length}</b>${sup ? ` · 지원 <b>${sup}</b>분` : ''}</span><span>기한 초과 <b class="${ps.some(p => wtLate(p, ym, today)) ? 'c3' : ''}">${ps.filter(p => wtLate(p, ym, today)).length}</b></span></div>`}</div>`}
       <div class="card wtc"><div class="wth"><b>20${ymLabel(ym)} 영상업무 월간 업무표</b><span class="muted">담당자 : ${esc(D.user.name)} · 귀속 ${D.period.start.slice(5).replace('-', '/')} ~ ${D.period.status === '마감' ? D.period.end.slice(5).replace('-', '/') : '진행중'}</span></div>
         <div class="wsw">${sheet}</div>
-        <div class="muted" style="padding:8px 14px">● 진행한 날 (기록에서 자동) · 연차 · 반차 · 대체 = 연차 자료에서 자동 · 파란 머리 칸 = 주말 기록 칸 · ${ed ? '프로젝트 · 기록 줄을 누르면 수정 / 삭제' : '누르면 내용 보기'}</div></div>
+        <div class="muted wleg"><i class="won"></i>일한 날 (기록에서 자동) <i class="wlv"></i>연차 · 반차 · 대체 (연차 자료에서 자동) <i class="wk"></i>주말 기록 칸 · 프로젝트 줄 = 눌러서 기록 펼치기 / 접기 · ${ed ? '✎ = 프로젝트 수정 · 기록 줄 = 수정 / 삭제' : 'ⓘ / 기록 줄 = 내용 보기'}</div></div>
     </div>`;
     if ($('#wtcfg')) $('#wtcfg').onclick = wtCfg;
     if ($('#wtu')) $('#wtu').onchange = e => { S.wtv.uid = e.target.value; renderWt(); };
@@ -10169,7 +10203,9 @@ async function addCharts(buf, jobs) {
     $('#wtp').onclick = () => mv(-1); $('#wtn').onclick = () => mv(1);
     $('#wtxl').onclick = async () => { try { saveBlob(await wtXlsx(D, rows, dd, OFF), ymLabel(ym) + '_' + D.user.name + '_월간업무표.xlsx'); toast('엑셀을 내려받았습니다'); } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); } };
     { const w = $('.wsw'); const t = w && w.querySelector('th.today'); if (t) w.scrollLeft = Math.max(0, t.offsetLeft - w.clientWidth + 120); }
-    $$('[data-wp]').forEach(td => (td.onclick = () => wtProj(D.projects.find(p => String(p.id) === td.dataset.wp), ed)));
+    $$('[data-wp]').forEach(b => (b.onclick = e => { e.stopPropagation(); wtProj(D.projects.find(p => String(p.id) === b.dataset.wp), ed); }));
+    $$('[data-wt]').forEach(td => (td.onclick = () => { const id = td.dataset.wt; S.wtOpen[id] = !isOpen(id); const sl = $('.wsw').scrollLeft; drawWt(); $('.wsw').scrollLeft = sl; }));
+    if ($('#wtall')) $('#wtall').onclick = e => { e.stopPropagation(); const all = rows.every(x => isOpen(x.p.id)); rows.forEach(x => (S.wtOpen[x.p.id] = !all)); drawWt(); };
     $$('[data-wr]').forEach(td => (td.onclick = () => wtRec(D.recs.find(r => String(r.id) === td.dataset.wr), ed, ps)));
     if (!ed) return;
     $('#wnp').onclick = () => wtProj(null, true);
@@ -10180,7 +10216,7 @@ async function addCharts(buf, jobs) {
       if (body.text.length < 2) return toast('내용을 2자 이상 적으세요', true);
       if (k === 'support') { body.cat = $('#wc').value; body.mins = parseInt($('#wm').value, 10); if (!(body.mins >= 1 && body.mins <= 720)) return toast('지원 시간은 1~720분', true); }
       const b = $('#wsv'); b.disabled = true;
-      try { await api('wtSave', body); toast('저장했습니다 — ' + dLabel(body.date) + ' 칸에 ●'); renderWt(); } catch (e) { toast(e.message, true); b.disabled = false; }
+      try { await api('wtSave', body); toast('저장했습니다 — ' + dLabel(body.date) + ' 칸 표시'); renderWt(); } catch (e) { toast(e.message, true); b.disabled = false; }
     };
   }
   function wtProj(p, ed) {
@@ -10242,10 +10278,11 @@ async function addCharts(buf, jobs) {
     ws.columns = [{ width: 11 }, { width: 11 }, { width: 70 }, { width: 9 }].concat(dd.map(() => ({ width: 5.2 })));
     ws.mergeCells(1, 1, 1, N); const t = ws.getCell(1, 1); t.value = '20' + ymLabel(ym) + ' 영상업무 월간 업무표'; t.font = { bold: true, size: 16 }; t.alignment = { horizontal: 'center', vertical: 'middle' }; ws.getRow(1).height = 30;
     ws.mergeCells(2, 3, 2, N); const p = ws.getCell(2, 3); p.value = '담당자 : ' + D.user.name; p.alignment = { horizontal: 'right' };
-    const h = ws.getRow(4); ['시작일', '예상완료', '업무 / 프로젝트', '상태'].concat(dd.map(d => +d.slice(8))).forEach((v, i) => { const c = h.getCell(i + 1); c.value = v; c.font = { bold: true }; c.alignment = { horizontal: 'center', vertical: 'middle' }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9EDF2' } }; c.border = B; });
+    const h = ws.getRow(4); ['시작일', '예상완료', '업무 / 프로젝트', '상태'].concat(dd.map(d => (+d.slice(5, 7)) + '/' + (+d.slice(8)) + (OFF[d] ? '\n' + OFF[d] : ''))).forEach((v, i) => { const c = h.getCell(i + 1); c.value = v; const lv = i >= 4 && OFF[dd[i - 4]]; c.font = { bold: true, color: lv ? { argb: 'FFC62828' } : undefined }; c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: lv ? 'FFF9D4D4' : 'FFE9EDF2' } }; c.border = B; }); h.height = 30;
     let r = 5; const ymd = s => s ? s.slice(0, 10) : '';
     rows.forEach(({ p: pj, recs }) => {
-      const put = (vals, ds, isP) => { const row = ws.getRow(r++); vals.concat(dd.map(d => { const o = OFF[d], has = ds.has(d); return (o ? o : '') + (has ? (o ? '·' : '') + '●' : ''); })).forEach((v, i) => { const c = row.getCell(i + 1); c.value = v; c.border = B; c.alignment = { horizontal: i === 2 ? 'left' : 'center', vertical: 'middle', wrapText: i === 2 }; if (isP) { c.font = { bold: true }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF3FB' } }; } if (i >= 4 && OFF[dd[i - 4]]) { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF1D9' } }; c.font = { color: { argb: 'FF8C6019' }, size: 9, bold: !!isP }; } if (i >= 4 && String(v).includes('●') && !OFF[dd[i - 4]]) c.font = { color: { argb: 'FF1F6FEB' }, bold: true }; }); };
+      const put = (vals, ds, isP) => { const row = ws.getRow(r++); vals.concat(dd.map(d => ds.has(d) ? '●' : '')).forEach((v, i) => { const c = row.getCell(i + 1); c.value = v; c.border = B; c.alignment = { horizontal: i === 2 ? 'left' : 'center', vertical: 'middle', wrapText: i === 2 }; if (isP) { c.font = { bold: true }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF3FB' } }; }
+        if (i >= 4) { const d = dd[i - 4], on = ds.has(d); if (on) { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isP ? 'FFBCD3FA' : 'FF5B8DEF' } }; c.font = { color: { argb: isP ? 'FF1D4ED8' : 'FFFFFFFF' }, bold: true }; } else if (OFF[d]) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDE7E7' } }; } }); };
       put([ymd(pj.start), ymd(pj.due), pj.title, wtState(pj, ym) + (wtLate(pj, ym, D.today) ? ' (기한 초과)' : '')], new Set(recs.map(x => x.date)), true);
       recs.forEach(x => put(['', '', ' - ' + wtText(x), ''], new Set([x.date]), false));
     });
@@ -10270,8 +10307,8 @@ async function addCharts(buf, jobs) {
   function personDayTable(m, RAW, ADJ, tg, ym) {
     const hasMf = !!m.mf, oth = s => C.OTHER.map(([k, l]) => [l, Math.round(+((s && s.o) || {})[k] || 0)]).filter(x => x[1]);
     const head = ['날짜', '구분', '주문'].map(t => `<th${t === '주문' ? ' class="num"' : ''}>${t}</th>`).join('') + (hasMf ? '<th class="num mfgv">제조</th>' : '')
-      + '<th class="num">조립수량</th><th class="num">출고</th><th class="num" title="포장지원 · 정리지원 · 청소 · 담당/교육 · 불량처리 · 기타시간 합계">기타시간(분)</th><th class="num">실제야근(분)</th><th class="num">조립야근(분)</th><th class="num">기본환산</th><th class="lvh">평가평균</th>'
-      + (tg ? '<th class="lvh">목표 대비</th>' : '') + '<th class="num">토요가산</th><th>보정</th>';
+      + '<th class="num">조립수량</th><th class="num">출고</th><th class="num" title="포장지원 · 정리지원 · 청소 · 담당/교육 · 불량처리 · 기타시간 합계">기타시간(분)</th><th class="num">실제야근(분)</th><th class="num">조립야근(분)</th><th class="num">기본환산</th><th class="lvhd">평가평균</th>'
+      + (tg ? '<th class="lvhd">목표 대비</th>' : '') + '<th class="num">토요가산</th><th>보정</th>';
     const cols = 13 + (hasMf ? 1 : 0) + (tg ? 1 : 0);
     const T = { q: 0, ship: 0, o: 0 };
     const rows = m.daily.map(d => {
