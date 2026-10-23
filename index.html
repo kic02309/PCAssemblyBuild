@@ -2325,7 +2325,7 @@ html[data-theme=dark] .mgev{color:#e6e9ef;background:#262c36}html[data-theme=dar
 .prc{margin-bottom:14px;padding:0}.prc .mgch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line,#e5e7eb)}.prc .mgch .muted{font-size:12px}
 table.prt th,table.prt td{text-align:center;vertical-align:middle;padding:5px 6px}table.prt input,table.prt select{text-align:center;padding:4px 5px;font-size:12.5px}
 table.prt select.need{border-color:#e53935;background:#fff5f5}tr.prbad td{background:#fffaf0}tr.prout td{opacity:.45}
-.rtag.pmob{background:#e8f0ff;color:#1d4ed8;margin-right:3px}
+.rtag.pmt{background:#e8f0ff;color:#1d4ed8;margin-right:3px}
 .prst{font-size:12.5px;font-weight:700;margin-left:10px;color:#64748b}.prst.ok{color:#1e7a3c}.prst.fail,.prst.conflict{color:#c62828}.prst.saving,.prst.wait{color:#b45309}
 #prcf{margin-left:8px}.mgst.wait{background:#fff4d6;color:#8a5a00}
 .stat.prs{border-color:#9cc1ff;background:#f3f8ff}.stat.prs .v{color:#1d4ed8}
@@ -2351,7 +2351,9 @@ html[data-theme=dark] .pmcf{background:#163323;color:#8fe0a8}html[data-theme=dar
 .edu-role{font-size:10px;padding:1px 1px}.edu-grp{font-size:10.5px}.edu-add{margin:5px 8px 0!important;padding:4px!important;font-size:12px}.edu-session{padding-bottom:7px}
 .prsum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.prsum>div{flex:1 1 130px;min-width:120px;background:var(--panel,#fff);border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:9px 12px;text-align:center}
 .prsum small{display:block;font-size:11.5px;color:#64748b;font-weight:700}.prsum b{display:block;font-size:22px;margin-top:2px;color:#1d2430}.prsum .c1{color:#1d4ed8}.prsum .c2{color:#1e7a3c}.prsum em{font-style:normal;font-size:11px;color:#64748b;font-weight:600}
-.prc .tbs{max-height:420px;overflow:auto}table.prt tr.prsub td{background:#f5f8ff;font-weight:800}
+.prc .tbs{max-height:420px;overflow:auto}
+.prb .prbb{padding:12px 16px;font-size:13px;line-height:1.75}.prb ol,ol.prhelp{padding-left:20px;margin:0 0 8px}.prb li{margin-bottom:6px}.prb ul{margin:2px 0 2px;padding-left:18px;color:var(--sub)}.prb ul li{margin:0}ol.prhelp li{margin-bottom:7px;line-height:1.7}ol.prhelp code,.prb code{background:var(--line2);padding:1px 6px;border-radius:5px;font-size:12.5px}
+table.prt tr.prsub td{background:#f5f8ff;font-weight:800}
 html[data-theme=dark] .prsum>div{background:#1a1c21;border-color:#2e323a}html[data-theme=dark] .prsum b{color:#fff}html[data-theme=dark] table.prt tr.prsub td{background:#1d2a44}
 </style>
 </head>
@@ -7461,7 +7463,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -12731,13 +12733,78 @@ async function addCharts(buf, jobs) {
     const D = {}; (P.days || []).forEach(d => (D[d.userId] = d));
     items.filter(x => x.src === '개별' && x.who && x.no).forEach(x => { const d = D[x.who]; if (d && (d.orders || []).includes(String(x.no))) iss.push(`${x.no} : ${x.whoName || '수행자'} 개인 업무데이터에 같은 제조번호가 이미 있음 (중복 확인)`); });
     oth.forEach(x => { if (x.cat === '청소' && /기본/.test(x.reason || '')) iss.push('기본 청소 15분은 기타시간에 넣지 않습니다'); });
-    return { items, oth, ppl, S: Sv, H, O, T, M: Mt, iss: [...new Set(iss)], qty: items.reduce((a, x) => a + (+x.q || 0), 0) };
+    return { CS, CL, items, oth, ppl, S: Sv, H, O, T, M: Mt, iss: [...new Set(iss)], qty: items.reduce((a, x) => a + (+x.q || 0), 0) };
+  }
+
+  // v28.64 : 계산 방법 · 설정 · 이 날 계산 근거 (매니저 · 관리자 · 팀장 · 이사 · 입력 권한자)
+  const prShowHelp = P => !!(P && (P.edit || S.me.role === '관리자' || S.me.role === '매니저' || isRO()));
+  const PRL = ['A', 'B', 'C', 'D', 'E', 'F'];
+  function prCfgLine() {
+    const c = ((S.prCfg || {}).cfg) || {};
+    return `근무 구성(참고) : 출근 ${esc(c.start || '-')} ~ 퇴근 ${esc(c.end || '-')} · 식사 ${+c.meal || 0}분 · 휴식 ${+c.rest || 0}분${c.note ? ' · ' + esc(c.note) : ''}`;
+  }
+  function prBasis(P, R) {
+    const n = x => f2(x), CS = R.CS || {}, CL = R.CL || {};
+    const rows = R.items.filter(x => x.conv != null).map(x => `<li>${esc(x.no || '-')} ${esc(x.model || '')} : <b>${+x.q}대</b> × (케이스 ${esc(x.cs)} ${CS[x.cs]}분 + 쿨러 ${esc(x.cl)} ${CL[x.cl]}분) ÷ 30 = <b>${n(x.conv)}</b></li>`).join('') || '<li class="muted">입력된 생산 건이 없습니다</li>';
+    const oth = R.oth.filter(x => +x.mins > 0).map(x => `<li>${esc(x.whoName || (P.users || []).find(u => u.id === x.who)?.name || '')} · ${esc(x.cat || '')} <b>${+x.mins}분</b>${x.reason ? ' (' + esc(x.reason) + ')' : ''}</li>`).join('') || '<li class="muted">기타시간 없음</li>';
+    const inc = R.ppl, full = inc.filter(p => !p.half && p.line !== false && !(p.st === '지원')).length;
+    const ex = inc.find(p => p.m > 0 && R.M > 0);
+    return `<div class="card prc prb"><div class="mgch"><b>④ 이 날 계산 근거</b><span class="muted">입력된 숫자로 계산 과정을 그대로 풀어 쓴 것입니다 (누가 봐도 따라 계산할 수 있게)</span></div>
+      <div class="prbb"><ol>
+        <li><b>생산 환산 (S)</b> = Σ 수량 × (케이스 분 + 쿨러 분) ÷ 30<ul>${rows}</ul><div>→ 합계 <b>S = ${n(R.S)}</b></div></li>
+        <li><b>기타시간 환산 (O)</b> = 기타시간 분 합 ÷ 30<ul>${oth}</ul><div>→ ${R.H}분 ÷ 30 = <b>O = ${n(R.O)}</b></div></li>
+        <li><b>총 환산 (T)</b> = S + O = ${n(R.S)} + ${n(R.O)} = <b>${n(R.T)}</b></li>
+        <li><b>인정분 합 (M)</b> = 참여자 각자의 인정분(정상 480 · 반차 240 · 지원자는 실제 참여분 + 야근 참여분)을 모두 더함 → 참여 ${inc.length}명, <b>M = ${R.M}분</b></li>
+        <li><b>개인 실적</b> = T × (본인 인정분 ÷ M)${ex ? `<div>예) ${esc(ex.name)} : ${n(R.T)} × (${ex.m} ÷ ${R.M}) = ${n(R.T)} × ${pct(ex.m / R.M)} = <b>${n(ex.p)}</b> (생산 ${n(ex.s)} + 기타 ${n(ex.o)})</div>` : ''}</li>
+      </ol>
+      <div class="note">${prCfgLine()}<br>※ 식사·휴식 시간은 참고용이며 계산에는 쓰이지 않습니다. 계산은 인정분(정상 480분 · 반차 240분)을 기준으로 합니다. 기본 청소 15분은 기타시간에 넣지 않습니다. 확정하면 이 개인 실적이 참여자의 업무데이터에 반영됩니다.</div></div></div>`;
+  }
+  function prHelp(P) {
+    const ym = (P.period && P.period.ym) || ymOfDate(P.date), M = C.minsMap(minsYm(ym));
+    const cs = [M.K, M.L, M.M, M.N, M.O, M.P], cl = [M.Q, M.R, M.S, M.T, M.U, M.V];
+    modal(`<h3>생산업무 계산 방법</h3>
+      <div class="note">라인에서 함께 만든 생산을 <b>환산 점수</b>로 바꾼 뒤, 그날 라인에 참여한 시간 비율로 나눠서 개인 실적에 넣습니다.</div>
+      <ol class="prhelp">
+        <li><b>생산 환산 (S)</b> : 제조번호마다 <code>수량 × (케이스 분 + 쿨러 분) ÷ 30</code> 을 구해 모두 더합니다. 케이스와 쿨러의 난이도(A~F)에 따라 분이 정해집니다.</li>
+        <li><b>기타시간 환산 (O)</b> : 지원 · 정리 · 불량처리 등 생산 외 시간(분)을 모두 더해 <code>÷ 30</code> 합니다. 사유가 반드시 필요하고, 기본 청소 15분은 넣지 않습니다.</li>
+        <li><b>총 환산 (T)</b> : <code>S + O</code></li>
+        <li><b>인정분</b> : 참여자마다 정상 480분, 반차 240분, 지원자는 실제 참여분을 씁니다. 공식 야근에 참여했다면 그 분(야근분)을 더합니다. 인정분을 모두 더한 값이 M 입니다.</li>
+        <li><b>개인 실적</b> : <code>T × (본인 인정분 ÷ M)</code> — 생산(S분)과 기타(O분)로 나눠 표시합니다.</li>
+        <li><b>확정</b> : 입력 담당자가 [실적 확정]을 누르면 참여자의 업무데이터에 반영됩니다. 확정 뒤 고치면 "재확정 필요"로 바뀝니다.</li>
+      </ol>
+      <h4 style="margin:10px 0 4px">난이도별 분 (${esc(ymLabel(ym))} 기준 · 보기만)</h4>
+      <table class="list prt"><thead><tr><th></th>${PRL.map(x => `<th>${x}</th>`).join('')}<th>없음</th></tr></thead><tbody>
+        <tr><td><b>케이스</b></td>${cs.map(v => `<td>${v}</td>`).join('')}<td>-</td></tr><tr><td><b>CPU 쿨러</b></td>${cl.map(v => `<td>${v}</td>`).join('')}<td>0</td></tr></tbody></table>
+      <div class="note" style="margin-top:8px">예) 케이스 C(${M.M}분) + 쿨러 B(${M.R}분)인 PC 2대 → 2 × (${M.M} + ${M.R}) ÷ 30 = ${f2(2 * (M.M + M.R) / 30)}</div>
+      <div class="acts"><button data-c>닫기</button></div>`, (bg, close) => { $('[data-c]', bg).onclick = close; });
+  }
+  async function prSettings(P) {
+    let R; try { R = await api('prSettings'); S.prCfg = R; } catch (e) { return toast(e.message, true); }
+    const c = R.cfg || {}, adm = !!R.admin && !S.pv, dis = adm ? '' : 'disabled';
+    modal(`<h3>생산업무 설정</h3>
+      <h4 style="margin:4px 0">계산 기준 (보기만)</h4>
+      <table class="list prt"><tbody><tr><td>하루 인정분 (정상)</td><td><b>480분</b></td></tr><tr><td>반차 인정분</td><td><b>240분</b></td></tr><tr><td>환산 기준</td><td><b>30분 = 1</b></td></tr><tr><td>기본 청소 15분</td><td>기타시간에 넣지 않음</td></tr><tr><td>케이스 · 쿨러 난이도 분</td><td>[📖 계산 방법]에서 확인</td></tr></tbody></table>
+      <h4 style="margin:12px 0 4px">근무 구성 (참고용 · 계산에는 쓰이지 않음)</h4>
+      <div class="fld"><label>출근 시각</label><input id="ps_s" type="time" value="${esc(c.start || '')}" ${dis}></div>
+      <div class="fld"><label>퇴근 시각</label><input id="ps_e" type="time" value="${esc(c.end || '')}" ${dis}></div>
+      <div class="fld"><label>식사 (분)</label><input id="ps_m" type="number" min="0" max="600" value="${+c.meal || 0}" ${dis}></div>
+      <div class="fld"><label>휴식 (분)</label><input id="ps_r" type="number" min="0" max="600" value="${+c.rest || 0}" ${dis}></div>
+      <div class="fld"><label>메모</label><input id="ps_n" maxlength="100" value="${esc(c.note || '')}" placeholder="예: 점심 12:00~13:00, 오전·오후 휴식 각 15분" ${dis}></div>
+      ${adm ? '' : '<div class="muted">수정은 관리자만 할 수 있습니다</div>'}${R.by ? `<div class="muted" style="margin-top:6px">마지막 수정 ${esc(R.by)} ${esc((R.at || '').slice(5, 16))}</div>` : ''}
+      <div class="acts"><button data-c>${adm ? '취소' : '닫기'}</button>${adm ? '<button class="primary" data-s>저장</button>' : ''}</div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      if ($('[data-s]', bg)) $('[data-s]', bg).onclick = async () => {
+        try { const r = await api('prSettings', { mode: 'set', cfg: { start: $('#ps_s', bg).value, end: $('#ps_e', bg).value, meal: +$('#ps_m', bg).value || 0, rest: +$('#ps_r', bg).value || 0, note: $('#ps_n', bg).value.trim() } }); S.prCfg = r; toast('저장했습니다'); close(); drawProdBody(); }
+        catch (e) { toast(e.message, true); }
+      };
+    });
   }
   async function prWho() { if (S.me.role === '관리자' || S.me.role === '매니저') return; try { S.prEd = !!(await api('prWho')).editor; } catch (e) { S.prEd = false; } }
   // ---------- PC 화면
   async function renderProd(opt) {
     S.prv = S.prv || { d: S.today }; if (opt && opt.date) S.prv.d = opt.date;
     const main = $('#main'); main.innerHTML = pageHead('생산업무') + '<div class="pgb"><div class="muted" style="padding:20px">불러오는 중…</div></div>';
+    api('prSettings').then(r => { S.prCfg = r; }).catch(() => { });
     let P; try { P = await api('prGet', { date: S.prv.d }); } catch (e) { main.innerHTML = pageHead('생산업무') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
     if (S.view !== 'prod') return;
     if (!P.draft || !P.draft.people) P.draft = Object.assign({ items: [], oth: [], mobEx: [], mobEdit: {} }, P.draft || {}, { people: prAutoPeople(P) });
@@ -12771,9 +12838,10 @@ async function addCharts(buf, jobs) {
   function drawProd() {
     const P = S.prP, main = $('#main');
     main.innerHTML = pageHead('생산업무', `<div class="row" style="gap:6px;margin-left:12px"><button id="prpv">‹</button><input type="date" id="prd" value="${P.date}"><button id="prnx">›</button><button id="prtd">오늘</button></div><span id="prst" class="prst"></span><span id="prcf"></span>`,
-      `${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
+      `${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button><button id="prset">⚙ 설정</button>' : ''}${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
     const mv = k => { S.prv.d = C.addDays(P.date, k); renderProd(); };
     $('#prpv').onclick = () => mv(-1); $('#prnx').onclick = () => mv(1); $('#prtd').onclick = () => { S.prv.d = S.today; renderProd(); }; $('#prd').onchange = e => { S.prv.d = e.target.value || S.today; renderProd(); };
+    if ($('#prhelp')) $('#prhelp').onclick = () => prHelp(P); if ($('#prset')) $('#prset').onclick = () => prSettings(P);
     if ($('#prok')) $('#prok').onclick = prConfirm; if ($('#pred')) $('#pred').onclick = prEditors;
     prStatus(); prConfBar(); drawProdBody();
   }
@@ -12787,7 +12855,7 @@ async function addCharts(buf, jobs) {
       ${R.iss.length ? `<div class="warn" style="margin-bottom:10px"><b>확정 전에 고칠 것 ${R.iss.length}건</b> · ${R.iss.map(esc).join(' · ')}</div>` : '<div class="note" style="margin-bottom:10px">✓ 확정할 수 있습니다</div>'}
       <div class="card prc"><div class="mgch"><b>① 생산 목록</b><span class="muted">공동생산 + 개별 조립 · 사양표는 한 번에 여러 건 붙여넣기 가능</span><span style="flex:1"></span>${ed ? '<button id="prpaste" class="primary sm">📋 사양표 붙여넣기</button><button id="pradd" class="sm">＋ 직접 추가</button>' : ''}</div>
         <div style="overflow:auto"><table class="list prt"><thead><tr><th>구분</th><th>제조번호</th><th>모델명</th><th>케이스</th><th>난이도</th><th>CPU쿨러</th><th>난이도</th><th>파워</th><th>수량</th><th>환산</th><th></th></tr></thead><tbody>
-        ${R.items.map(x => { const mob = !!x.mob; return `<tr data-it="${x.id}" class="${x.conv == null ? 'prbad' : ''}"><td>${mob ? '<span class="rtag pmob">폰</span>' : ''}<select class="i-src" ${dis || (mob ? 'disabled' : '')}>${opt(['공동', '개별'], x.src)}</select>${x.src === '개별' ? (mob ? `<div class="muted">${esc(x.whoName || uname(x.who))}</div>` : who(x.who, 'i-who')) : ''}</td>
+        ${R.items.map(x => { const mob = !!x.mob; return `<tr data-it="${x.id}" class="${x.conv == null ? 'prbad' : ''}"><td>${mob ? '<span class="rtag pmt">폰</span>' : ''}<select class="i-src" ${dis || (mob ? 'disabled' : '')}>${opt(['공동', '개별'], x.src)}</select>${x.src === '개별' ? (mob ? `<div class="muted">${esc(x.whoName || uname(x.who))}</div>` : who(x.who, 'i-who')) : ''}</td>
           <td><input class="i-no" value="${esc(x.no || '')}" ${dis || (mob ? 'disabled' : '')} style="width:110px"></td><td><input class="i-model" value="${esc(x.model || '')}" placeholder="확인 필요" ${dis} style="width:170px"></td>
           <td><input class="i-case" value="${esc(x.case || '')}" placeholder="확인 필요" ${dis} style="width:130px"></td><td><select class="i-cs ${x.cs ? '' : 'need'}" ${dis}><option value="">-</option>${opt(PR_CS, x.cs)}</select></td>
           <td><input class="i-cooler" value="${esc(x.cooler || '')}" placeholder="확인 필요" ${dis} style="width:130px"></td><td><select class="i-cl ${x.cl ? '' : 'need'}" ${dis}><option value="">-</option>${opt(PR_CL, x.cl)}</select></td>
@@ -12797,7 +12865,7 @@ async function addCharts(buf, jobs) {
     <div class="prgrid"><div>
       <div class="card prc"><div class="mgch"><b>③ 기타시간 (지원 · 정리 등)</b><span class="muted">실제 한 사람 · 항목 · 분 · 사유 → 전체 실적에 합산 후 참여시간 비율로 나눔 · 기본 청소 15분은 넣지 않음</span><span style="flex:1"></span>${ed ? '<button id="proadd" class="sm">＋ 추가</button>' : ''}</div>
         <table class="list prt"><thead><tr><th>수행자</th><th>항목</th><th>분</th><th>사유</th><th></th></tr></thead><tbody>
-        ${R.oth.map(x => { const mob = !!x.mob; return `<tr data-ot="${x.id}"><td>${mob ? '<span class="rtag pmob">폰</span> ' + esc(x.whoName || uname(x.who)) : who(x.who, 'o-who')}</td><td><select class="o-cat" ${dis || (mob ? 'disabled' : '')}>${opt(PR_OTH, x.cat)}</select></td><td><input class="o-min" type="number" min="1" value="${esc(x.mins || '')}" ${dis || (mob ? 'disabled' : '')} style="width:70px"></td><td><input class="o-rs" value="${esc(x.reason || '')}" ${dis || (mob ? 'disabled' : '')} placeholder="예: 2층 정리" style="width:100%"></td><td>${ed ? '<button class="sm o-del">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="muted" style="padding:12px">없음 (모두 라인 작업)</td></tr>'}
+        ${R.oth.map(x => { const mob = !!x.mob; return `<tr data-ot="${x.id}"><td>${mob ? '<span class="rtag pmt">폰</span> ' + esc(x.whoName || uname(x.who)) : who(x.who, 'o-who')}</td><td><select class="o-cat" ${dis || (mob ? 'disabled' : '')}>${opt(PR_OTH, x.cat)}</select></td><td><input class="o-min" type="number" min="1" value="${esc(x.mins || '')}" ${dis || (mob ? 'disabled' : '')} style="width:70px"></td><td><input class="o-rs" value="${esc(x.reason || '')}" ${dis || (mob ? 'disabled' : '')} placeholder="예: 2층 정리" style="width:100%"></td><td>${ed ? '<button class="sm o-del">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="muted" style="padding:12px">없음 (모두 라인 작업)</td></tr>'}
         </tbody></table></div>
     </div><div>
       <div class="card prc"><div class="mgch"><b>② 참여 인원 · 배분</b><span class="muted">정상 480 · 반차 240 · 공식 야근 ${P.asmOt || 0}분</span><span style="flex:1"></span>${ed ? `<button id="prpadd" class="sm">＋ 타 그룹 지원자</button><button id="prpre" class="sm" title="출근 · 연차 다시 불러오기">↻</button>` : ''}</div>
@@ -12807,7 +12875,7 @@ async function addCharts(buf, jobs) {
           <td>${on ? pct(R.M ? r.m / R.M : 0) : '-'}</td><td>${on ? f2(r.s) : '-'}</td><td>${on ? f2(r.o) : '-'}</td><td><b>${on ? f2(r.p) : '-'}</b></td></tr>`; }).join('')}
         </tbody></table></div>
         </tbody></table></div>
-    </div></div>`;
+    </div></div>${prShowHelp(P) ? prBasis(P, R) : ''}`;
     if (!ed) return;
     const itemOf = tr => { const id = tr.dataset.it; if (id[0] === 'm' && !dr.items.find(x => x.id === id)) { const mid = id.slice(1); dr.mobEdit[mid] = dr.mobEdit[mid] || {}; return dr.mobEdit[mid]; } return dr.items.find(x => x.id === id); };
     const bindF = (sel, key, num) => $$(sel, box).forEach(el => (el.onchange = () => { const it = itemOf(el.closest('tr')); if (!it) return; it[key] = num ? +el.value : el.value; prDirty(); }));
