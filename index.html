@@ -2448,6 +2448,58 @@ html[data-theme=dark] .pmcf{background:#163323;color:#8fe0a8}html[data-theme=dar
 .prb .prbb{padding:12px 16px;font-size:13px;line-height:1.75}.prb ol,ol.prhelp{padding-left:20px;margin:0 0 8px}.prb li{margin-bottom:6px}.prb ul{margin:2px 0 2px;padding-left:18px;color:var(--sub)}.prb ul li{margin:0}ol.prhelp li{margin-bottom:7px;line-height:1.7}ol.prhelp code,.prb code{background:var(--line2);padding:1px 6px;border-radius:5px;font-size:12.5px}
 table.prt tr.prsub td{background:#f5f8ff;font-weight:800}
 html[data-theme=dark] .prsum>div{background:#1a1c21;border-color:#2e323a}html[data-theme=dark] .prsum b{color:#fff}html[data-theme=dark] table.prt tr.prsub td{background:#1d2a44}
+/* v28.74 : 매니저 관리 탭 = 위 흰 막대 · 일정관리 달력 */
+.ph.mgph{min-height:64px}.ph.mgph h1{font-size:23px}
+.mgtn{display:inline-block;min-width:17px;height:17px;line-height:17px;padding:0 5px;margin-left:5px;border-radius:99px;background:#e5484d;color:#fff;font-size:10.5px;font-weight:800;font-style:normal;text-align:center;vertical-align:1px}.mgtn.hide{display:none}
+header.roh nav button[data-v="mgr"]{position:relative}
+.mcks{margin-bottom:12px}
+.mcbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.mcnav{display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;box-shadow:var(--sh)}
+.mcnav button{border:0;background:transparent;box-shadow:none;width:32px;height:32px;border-radius:9px;font-size:18px;font-weight:800;padding:0;color:var(--ink)}.mcnav button:hover{background:var(--blue-soft);color:var(--blue)}
+.mcnav b{min-width:150px;text-align:center;font-size:16px;letter-spacing:-.3px;padding:0 6px}
+.mcsw{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;padding:7px 12px;border-radius:12px;background:var(--chip);cursor:pointer;white-space:nowrap}.mcsw input{margin:0}.mcsw.on{background:var(--blue-soft);color:var(--blue)}
+.mcpill{display:inline-flex;align-items:center;gap:2px;background:var(--chip);border-radius:12px;padding:3px;flex-wrap:wrap}
+.mcch,.mcpick .mcch{border:0;background:transparent;box-shadow:none;border-radius:9px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--sub);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.mcch i{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}.mcch em{font-style:normal;font-size:11.5px;opacity:.65}
+.mcch.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 4px rgba(16,24,40,.13)}.mcch.off{opacity:.5}.mcch.off:hover{opacity:.85}.mcch.all.on{color:var(--blue)}
+.mcpick{display:flex;gap:4px;flex-wrap:wrap;background:var(--chip);border-radius:12px;padding:3px}
+select.mcg{border:0;background:var(--chip);border-radius:12px;padding:8px 12px;font-weight:700;width:auto;min-width:0}
+.mcmain{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}.mcmain.list{grid-template-columns:minmax(0,1fr)}
+@media(max-width:1250px){.mcmain{grid-template-columns:minmax(0,1fr)}}
+.mccv{padding:0!important;overflow:hidden}
+.mchd{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--head);border-bottom:1px solid var(--line)}.mchd span{text-align:center;padding:10px 0;font-size:12.5px;font-weight:800;color:var(--sub)}.mchd span:first-child{color:#e5484d}.mchd span:last-child{color:#2f6fe4}
+.mcwk{position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line2)}.mcwk:last-child{border-bottom:0}
+.mcdc{position:relative;border-right:1px solid var(--line2);padding:6px 8px;cursor:pointer;min-width:0}.mcdc:last-child{border-right:0}.mcdc:hover{background:color-mix(in srgb,var(--blue) 4%,transparent)}
+.mcdc.out{background:var(--head)}.mcdc.out .mcdn,.mcdc.out .mchol{opacity:.4}.mcdc.sel{background:color-mix(in srgb,var(--blue) 6%,transparent);box-shadow:inset 0 0 0 2px var(--blue)}
+.mcdn{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:99px;font-size:13px;font-weight:800;color:var(--ink)}.mcdc.sun .mcdn{color:#e5484d}.mcdc.sat .mcdn{color:#2f6fe4}.mcdc.today .mcdn{background:var(--blue);color:#fff}
+.mchol{font-size:10.5px;font-weight:800;color:#e5484d;margin-left:4px}
+.mcadd{position:absolute;top:5px;right:5px;width:22px;height:22px;padding:0;border-radius:7px;font-size:14px;line-height:1;opacity:0;border:0;background:var(--chip);box-shadow:none;color:var(--sub)}.mcdc:hover .mcadd{opacity:1}.mcadd:hover{background:var(--blue);color:#fff}
+.mcb{position:absolute;z-index:2;height:14px;line-height:14px;padding:0 7px;border:0;box-shadow:none;font-size:10.5px;font-weight:700;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:4px;cursor:pointer;background:color-mix(in srgb,var(--c) 17%,transparent);color:color-mix(in srgb,var(--c) 70%,var(--ink));border-left:2px solid var(--c)}
+.mcb.rng{background:color-mix(in srgb,var(--c) 32%,transparent);border-left:0;border-radius:99px;padding:0 10px}
+.mcb.cl{border-top-left-radius:0;border-bottom-left-radius:0}.mcb.cr{border-top-right-radius:0;border-bottom-right-radius:0}
+.mcb:hover{background:color-mix(in srgb,var(--c) 42%,transparent);box-shadow:0 2px 6px rgba(16,24,40,.12)}.mcb.pick{outline:1.5px solid var(--ink);outline-offset:0}
+.mcmore{position:absolute;bottom:3px;z-index:2;border:0;background:transparent;box-shadow:none;padding:0 4px;font-size:11.5px;font-weight:800;color:var(--sub)}.mcmore:hover{color:var(--blue)}
+.mcsd{padding:0!important;overflow:hidden;position:sticky;top:96px}
+.mcsh{padding:15px 18px 11px;border-bottom:1px solid var(--line2);display:flex;align-items:baseline;gap:8px}.mcsh b{font-size:18px;letter-spacing:-.4px}.mcsh small{color:var(--sub);font-weight:700}
+.mcit{padding:12px 18px;border-bottom:1px solid var(--line2);cursor:pointer}.mcit:hover{background:color-mix(in srgb,var(--blue) 4%,transparent)}
+.mcit.pk{background:color-mix(in srgb,var(--c) 7%,var(--panel));box-shadow:inset 3px 0 0 var(--c);cursor:default}
+.mctag{display:inline-block;font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:99px;background:color-mix(in srgb,var(--c) 16%,transparent);color:color-mix(in srgb,var(--c) 72%,var(--ink));white-space:nowrap}
+.mcit .r1{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub);flex-wrap:wrap}.mcit .tt{display:block;font-size:15px;font-weight:800;margin-top:5px;line-height:1.4}.mcit.pk .tt{font-size:17px}
+.mcit .mm{font-size:12.5px;color:var(--sub);margin-top:4px}.mcmemo{margin-top:8px;padding:9px 11px;border-radius:10px;background:var(--head);font-size:13.5px;white-space:pre-wrap;line-height:1.55}
+.mcacts{display:flex;gap:6px;margin-top:10px;align-items:center}.mclock{font-size:12px;color:var(--sub)}
+.mce{padding:28px 18px;text-align:center;color:var(--sub)}
+.mcaddday{display:block;width:calc(100% - 36px);margin:12px 18px}
+.mcsec{padding:14px 18px 6px;font-size:12.5px;font-weight:800;color:var(--sub);display:flex;gap:8px;align-items:baseline}.mcsec small{font-weight:600}
+.mcwl{display:grid;grid-template-columns:58px minmax(0,1fr);gap:8px;padding:8px 18px;border-top:1px solid var(--line2);cursor:pointer}.mcwl:hover,.mcwl.sel{background:color-mix(in srgb,var(--blue) 4%,transparent)}
+.mcwl .dd{font-weight:800;font-size:13.5px}.mcwl .dd small{display:block;font-weight:600;color:var(--sub);font-size:11.5px}.mcwl.sun .dd{color:#e5484d}.mcwl.sat .dd{color:#2f6fe4}.mcwl.today .dd{color:var(--blue)}
+.mcln{display:flex;gap:7px;align-items:center;font-size:13.5px;padding:2px 0;cursor:pointer;min-width:0}.mcln i{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}.mcln b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mcln>span:last-child{margin-left:auto;font-size:12px;color:var(--sub);white-space:nowrap}.mcln:hover b{color:var(--blue)}
+.mcmain.list .mcwl{grid-template-columns:96px minmax(0,1fr);padding:12px 24px}.mcmain.list .mcwl .dd{font-size:16px}.mcmain.list .mcln{font-size:15px;padding:6px 0;gap:10px}.mcmain.list .mcsd{position:static}
+.mcstat{display:flex;gap:16px;flex-wrap:wrap;padding:11px 18px;border-top:1px solid var(--line2);background:var(--head);font-size:12.5px;color:var(--sub);font-weight:700}.mcstat b{color:var(--ink);font-size:14.5px}
+.mcday .row{display:grid;grid-template-columns:70px minmax(0,1fr);gap:14px;padding:14px 22px;border-bottom:1px solid var(--line2);cursor:pointer}.mcday .row:hover{background:color-mix(in srgb,var(--blue) 4%,transparent)}.mcday .tm{color:var(--sub)}.mcday .tt{display:block;font-size:16px;margin-top:4px}
+.mccr{display:grid;grid-template-columns:34px minmax(0,1fr) 72px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2)}.mccr small{text-align:right}
+.mcsw2{width:30px;height:30px;border-radius:9px;border:0;padding:0;background:color-mix(in srgb,var(--c) 45%,transparent);box-shadow:inset 0 0 0 2px var(--c)}.mcsw2:disabled{opacity:1;cursor:default}
+.mcpt{width:100%;min-height:150px;font:13px/1.6 ui-monospace,Consolas,monospace}
+td.mcr.ok{color:#12a37a;font-weight:800}td.mcr.warn{color:#c27a0e;font-weight:800}td.mcr.bad{color:#e5484d;font-weight:800}td.mcr.skip{color:var(--sub)}
 </style>
 </head>
 <body>
@@ -7567,7 +7619,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.73';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.74';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -7953,7 +8005,7 @@ async function addCharts(buf, jobs) {
     attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;   // v28.53 : 공용 PC — 앞사람 자료 남기지 않기
     // 공용 PC : 다음 사람에게 앞사람이 보던 날짜·달·필터·창이 남지 않게
     S.date = null; S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
-    S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
+    S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.cal = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
     document.querySelectorAll('.modal-bg, .hr-ov').forEach(x => x.remove()); try { hidePad(); } catch (e) { }
     if (window.Leave) window.Leave.reset();
     if (window.ACC) window.ACC.reset();
@@ -8005,7 +8057,7 @@ async function addCharts(buf, jobs) {
     S.target = null; S.day = null; S.dirty = false; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
     attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;
     S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
-    S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.personMonth = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
+    S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.cal = null; S.personMonth = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
     document.querySelectorAll('.modal-bg, .hr-ov').forEach(x => x.remove()); try { hidePad(); } catch (e) { }
     if (window.Leave) window.Leave.reset(); if (window.ACC) window.ACC.reset(); if (window.EDU) window.EDU.reset(); updateEduBadge._shownFor = null; if (window.HR) window.HR.reset();
   }
@@ -8054,7 +8106,7 @@ async function addCharts(buf, jobs) {
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canProd() ? [['prod', '생산업무']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canProd() ? [['prod', '생산업무']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -8123,9 +8175,9 @@ async function addCharts(buf, jobs) {
       const it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
-        : cat === 'mgr' ? [['mgr', '매니저 관리']] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '생산업무']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
+        : cat === 'mgr' ? [] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '생산업무']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '인사평가']];
-      $('.czn').innerHTML = it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}">${t}</button>`).join('');
+      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}">${t}</button>`).join('');
     }
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
@@ -10421,7 +10473,7 @@ async function addCharts(buf, jobs) {
     if (!canMgr()) return null;
     if (S.mgD && !force) return S.mgD;
     try { S.mgD = await api('mgList'); } catch (e) { S.mgD = { err: e.message, tasks: [], logs: [], events: [], managers: [], me: { id: S.me.id } }; }
-    mgBadge(); if (!isRO()) void mgAlertLoad(); return S.mgD;
+    mgBadge(); void mgAlertLoad(); return S.mgD;
   }
   const mgMine = () => { const D = S.mgD || {}; return { T: (D.tasks || []).filter(t => t.owner === S.me.id), E: (D.events || []).filter(e => e.owner === S.me.id) }; };
   const mgName = id => { const D = S.mgD || {}; const m = (D.managers || []).find(x => x.id === id); return m ? m.name : id === S.me.id ? S.me.name : '?'; };
@@ -10456,8 +10508,8 @@ async function addCharts(buf, jobs) {
   function mgBadge() {          // v28.70 : 떠 있는 '이번 주 할 일' 탭 대신 왼쪽 메뉴 숫자 = 처리 필요 건수
     const t = document.getElementById('mgtab'); if (t) t.remove(); const p = document.getElementById('mgpanel'); if (p) p.remove(); S.mgPanel = false;
     const bd = document.getElementById('mgbd'); if (!bd) return;
-    const n = canMgr() && !isRO() ? (S.mgAl || []).length : 0;
-    bd.textContent = n > 99 ? '99+' : String(n); bd.classList.toggle('hide', !n); bd.title = '처리 필요 ' + n + '건 (피드백 · 업무 지연 · 오늘 마감 · 면담 충돌 · 면담 기한)';
+    const n = canMgr() ? (S.mgAl || []).length : 0;
+    bd.textContent = n > 99 ? '99+' : String(n); bd.classList.toggle('hide', !n); bd.title = '처리 필요 ' + n + '건 (피드백 · 업무 지연 · 오늘 마감 · 면담 충돌 · 면담 기한 · 다가오는 일정)';
   }
   function mgPanel(toggle) {
     if (toggle) S.mgPanel = !S.mgPanel;
@@ -10536,9 +10588,10 @@ async function addCharts(buf, jobs) {
   }
   // ---------- 처리 필요 알림 (메뉴 숫자 = 이 목록 개수 · 같은 건은 1번만)
   async function mgAlertLoad() {
-    if (!canMgr() || isRO() || !S.mgD || S.mgD.err) { S.mgAl = []; mgBadge(); return; }
+    if (!canMgr() || !S.mgD || S.mgD.err) { S.mgAl = []; mgBadge(); return; }
     const L = [], seen = new Set(), add = (key, o) => { if (!seen.has(key)) { seen.add(key); L.push(o); } };
-    try {
+    try { if (!S.cal || S.cal.err || Date.now() - S.cal.t > 300000) await calLoad(S.mgv && S.mgv.c ? S.mgv.c.cur : S.today, true); calAlerts().forEach(a => add(a.key, a.o)); } catch (e) { }   // v28.74 : 다가오는 일정 (팀장도)
+    if (!isRO()) { try {
       if (mgCfg().missAlert !== false) { const M = (await mgMembers(mgScope().filter(g => !MG_NOFB.includes(g)))).filter(x => !/파트장|매니저|팀장/.test(x.title || '') && !['매니저', '관리자'].includes(x.u.role)), R = mgRecent(M);
         M.forEach(x => mgMissOf(x).L.filter(m => R.includes(m.date)).forEach(m => { if (!mgFbOf(x.u.id, m.date)) add('fb|' + x.u.id + '|' + m.date, { tag: '피드백', cls: 'fb', who: x.name, text: `${dLabel(m.date)} 목표 미달 (${f2(m.v)} / ${m.t}) · 특이사항 · 피드백 미작성`, date: m.date, lv: '긴급', act: { fb: x.u.id + '|' + m.date } }); })); }
     } catch (e) { }
@@ -10549,8 +10602,8 @@ async function addCharts(buf, jobs) {
     E.filter(e => e.kind === 'm' && e.result === '예정').forEach(e => { const st = mgEvSt(e), nm = e.people.join(', ');
       if (e.date < S.today) add('e|' + e.id, { tag: '면담기한', cls: 'meet', who: nm, text: `${dLabel(e.date)} 면담 예정일이 지났습니다 → 실시 · 취소 처리`, date: e.date, lv: '긴급', act: { ev: e.id } });
       else if (st.late) add('e|' + e.id, { tag: '기한초과', cls: 'meet', who: nm, text: `기한 ${dLabel(st.due)} 넘긴 예약 (${dLabel(e.date)}) · 연차 · 휴무 예외 확인`, date: e.date, lv: '높음', act: { ev: e.id } });
-      else if (st.conflict) add('e|' + e.id, { tag: '일정충돌', cls: 'conf', who: nm, text: `${dLabel(e.date)} ${e.time || ''} 면담이 다른 일정과 겹침 → 시간 조정`, date: e.date, lv: '높음', act: { ev: e.id } }); });
-    S.mgAl = L; mgBadge();
+      else if (st.conflict) add('e|' + e.id, { tag: '일정충돌', cls: 'conf', who: nm, text: `${dLabel(e.date)} ${e.time || ''} 면담이 다른 일정과 겹침 → 시간 조정`, date: e.date, lv: '높음', act: { ev: e.id } }); }); }
+    S.mgAl = L; mgBadge(); mgTabN();
     if (S.view === 'mgr' && S.mgv && S.mgv.tab === 'fb' && $('#mgal')) mgAlDraw();
   }
   const M2C = ['#2f6fe4', '#7c4dff', '#12a37a', '#e8902a', '#d6409f', '#0f9fb5', '#e5484d', '#5b6ee1'];
@@ -10560,7 +10613,7 @@ async function addCharts(buf, jobs) {
     const el = $('#mgal'); if (!el) return; const L = S.mgAl || [], fbN = L.filter(a => a.cls === 'fb').length, oth = L.map((a, i) => [a, i]).filter(z => z[0].cls !== 'fb'), ex = !!(S.mgv && S.mgv.alx), lim = ex ? oth : oth.slice(0, 7);
     const row = ([a, i]) => `<button class="m2a" data-al="${i}"><span class="m2t ${a.cls}">${a.tag}</span><span class="m2x"><b>${esc(a.who || '')}</b>${esc(a.text)}</span><span class="m2l ${a.lv === '긴급' ? 'hi' : ''}">${a.lv}</span></button>`;
     el.innerHTML = `<div class="m2h"><b>확인 및 조치가 필요한 항목</b><span class="m2n ${L.length ? 'on' : ''}">${L.length}</span></div>` + (L.length ? (fbN ? `<button class="m2a m2sum" data-alfb="1"><span class="m2t fb">피드백</span><span class="m2x"><b>미작성 ${fbN}건</b>목표 미달 파트원 특이사항 · 피드백 방향을 적어 주세요</span><span class="m2l hi">보기 ›</span></button>` : '') + lim.map(row).join('') + (oth.length > 7 ? `<button class="m2more" data-alx="1">${ex ? '접기 ▲' : `나머지 ${oth.length - 7}건 더 보기 ▼`}</button>` : '') : '<div class="m2e">처리할 항목이 없습니다 👍</div>');
-    $$('[data-al]', el).forEach(b => (b.onclick = () => { const a = L[+b.dataset.al].act; if (a.task) mgTask(a.task); else if (a.ev) mgEvent(a.ev); else if (a.fb) { const [u, d] = a.fb.split('|'); mgFbOpen(u, d); } }));
+    $$('[data-al]', el).forEach(b => (b.onclick = () => { const a = L[+b.dataset.al].act; if (a.task) mgTask(a.task); else if (a.ev) mgEvent(a.ev); else if (a.cal) calGo(a.cal); else if (a.fb) { const [u, d] = a.fb.split('|'); mgFbOpen(u, d); } }));
     if ($('[data-alfb]', el)) $('[data-alfb]', el).onclick = () => { const t = $('#m2list'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     if ($('[data-alx]', el)) $('[data-alx]', el).onclick = () => { S.mgv.alx = !S.mgv.alx; mgAlDraw(); };
   }
@@ -10591,7 +10644,7 @@ async function addCharts(buf, jobs) {
     const gst = (g, ds) => { let tot = 0, ok = 0, miss = 0, todo = 0, ing = 0; const who = new Set(); M.filter(x => x.group === g).forEach(x => { const dm = DM.get(x.u.id); ds.forEach(d => { const q = dm[d]; if (!q) return; tot++; if (q.miss) { miss++; who.add(x.u.id); const f = mgFbOf(x.u.id, d); if (!f) todo++; else if (mgFbSt(f) === '진행 중') ing++; } else ok++; }); }); return { tot, ok, miss, todo, ing, ppl: who.size }; };
     const sel = SG.filter(g => !v.fbg || g === v.fbg), cntBy = d => sel.reduce((t, g) => t + gst(g, [d]).miss, 0);
     const tot = sel.reduce((t, g) => { const q = gst(g, DS); t.todo += q.todo; t.ppl += q.ppl; return t; }, { todo: 0, ppl: 0 });
-    const rcN = ((S.mgD || {}).fb || []).filter(f => mgFbRc(f) && sel.includes(f.group)).length, { E, T } = mgMine(), todayN = E.filter(e => e.date === S.today && e.result !== '취소').length + T.filter(t => t.status !== '완료' && t.due === S.today).length;
+    const rcN = ((S.mgD || {}).fb || []).filter(f => mgFbRc(f) && sel.includes(f.group)).length, { E, T } = mgMine(), todayN = calToday().length + E.filter(e => e.kind === 'm' && e.date === S.today && e.result === '예정').length + T.filter(t => t.status !== '완료' && t.due === S.today).length;   // v28.74 : 오늘 일정 = 조립팀 일정(오늘 걸친 것) + 내 오늘 면담 + 오늘 마감 업무
     const card = (cls, ic, k, val, sub) => `<div class="m2k ${cls}"><span class="m2ki">${ic}</span><span class="m2kt"><small>${k}</small><b>${val}<em>${k === '미달 인원' ? '명' : '건'}</em></b><span>${sub}</span></span></div>`;
     const wl = `${dLabel(wk[0])} ~ ${dLabel(wk[4])}`;
     const chips = `<div class="m2dbar"><span class="m2dl">근무일</span><button class="m2ar" id="m2wp" ${prevOk ? '' : 'disabled'} title="지난주">‹</button><span class="m2wl">${wl}</span><button class="m2ar" id="m2wn" ${nextOk ? '' : 'disabled'} title="다음주">›</button>
@@ -10616,7 +10669,7 @@ async function addCharts(buf, jobs) {
             <td>${canE || f ? `<button class="m2sb" data-fe="${esc(r.x.u.id)}|${r.d}" title="${canE ? (f ? '수정' : '특이사항 · 피드백 작성') : '내용 보기'}">${pill}</button>` : pill}</td></tr>`; }).join('') || `<tr><td colspan="5" class="muted" style="padding:30px;font-size:15px">이 날 목표 미달 인원이 없습니다 👍</td></tr>`}
         </tbody></table></div><div class="muted m2ft"><b>미작성</b> = 아직 안 씀 · <b>진행 중</b> = 피드백을 주고 지켜보는 중 (재확인일에 알림) · <b>완료</b> = 재확인까지 끝남 · 작성한 내용은 일일보고에 자동으로 들어갑니다</div></div>`;
     }
-    box.innerHTML = `<div class="m2ks c4">${card('red', IC.warn, '미달 인원', tot.ppl, dLabel(v.fbd) + ' 근무자 중')}${card('amber', IC.pen, '미작성 피드백', tot.todo, '특이사항 · 피드백 필요')}${card('violet', IC.clip, '재확인 필요', rcN, '재확인일이 된 피드백')}${card('blue', IC.cal, '오늘 일정', todayN, '면담 · 교육 · 업무 마감')}</div>${chips}${body}`;
+    box.innerHTML = `<div class="m2ks c4">${card('red', IC.warn, '미달 인원', tot.ppl, dLabel(v.fbd) + ' 근무자 중')}${card('amber', IC.pen, '미작성 피드백', tot.todo, '특이사항 · 피드백 필요')}${card('violet', IC.clip, '재확인 필요', rcN, '재확인일이 된 피드백')}${card('blue', IC.cal, '오늘 일정', todayN, '조립팀 일정 · 면담 · 업무 마감')}</div>${chips}${body}`;
     const goWeek = k => { const nm = C.addDays(mon, 7 * k), ds = [0, 1, 2, 3, 4, 5].map(i => C.addDays(nm, i)).filter(d => d < S.today); v.fbd = ds.filter(hasD).pop() || ds.filter(d => mgDow(d) !== 6).pop() || nm; drawMgr(); };
     if ($('#m2wp')) $('#m2wp').onclick = () => goWeek(-1); if ($('#m2wn')) $('#m2wn').onclick = () => goWeek(1);
     $$('[data-fd]', box).forEach(b => (b.onclick = () => { v.fbd = b.dataset.fd; drawMgr(); }));
@@ -10721,14 +10774,17 @@ async function addCharts(buf, jobs) {
     main.innerHTML = pageHead('매니저 관리') + '<div class="pgb"><div class="muted" style="padding:20px">불러오는 중…</div></div>';
     await mgLoad(true); if (S.view !== 'mgr') return; drawMgr();
   }
+  const mgTabs = () => [['fb', '그룹 업무관리'], ['meet', '파트원 면담관리'], ['cal', '일정관리'], ['tasks', '업무관리']].concat(S.me && S.me.role === '관리자' ? [['lead', '현황']] : [['all', '전체 업무']]);
+  function mgTabN() { const n = calAlerts().length; $$('[data-mgt="cal"] .mgtn, [data-mt="cal"] .mgtn').forEach(x => { x.textContent = n; x.classList.toggle('hide', !n); }); }
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-mgt]'); if (!b || !S.me) return; S.mgv = S.mgv || { tab: 'fb', cal: 'month', calD: S.today, grp: '' }; S.mgv.tab = b.dataset.mgt; if (S.view === 'mgr' && S.mgD) drawMgr(); else go('mgr', { tab: b.dataset.mgt }); });
   function drawMgr() {
     const D = S.mgD, main = $('#main'), v = S.mgv, ro = isRO(), lead = S.me.role === '관리자';
-    const TABS = [['fb', '그룹 업무관리'], ['meet', '파트원 면담관리'], ['cal', '일정관리'], ['tasks', '업무관리']].concat(lead ? [['lead', '현황']] : [['all', '전체 업무']]);   // v28.70 : 매니저 관리 v2 탭
+    const TABS = mgTabs(), top = !!$('.czn');   // v28.74 : 탭은 위 흰 막대(세부 메뉴)로 올림 · 보기 전용 화면은 그대로
     if (!TABS.some(t => t[0] === v.tab)) v.tab = TABS[0][0];
-    const head = pageHead('매니저 관리', `<div class="seg mgseg">${TABS.map(([k, t]) => `<button data-mt="${k}" class="${v.tab === k ? 'on' : ''}">${t}</button>`).join('')}</div>`,
-      (lead ? '<button id="mgcfgb">⚙ 면담 기준</button>' : '') + (ro ? '<span class="chip none">팀장 보기 · 확인만</span>' : `<button id="mgnt">＋ 업무</button><button id="mgne">＋ 교육 · 면담</button><button class="primary" id="mgrp">📋 일일보고</button>`));
+    const head = pageHead(top ? esc(TABS.find(t => t[0] === v.tab)[1]) : '매니저 관리', top ? '' : `<div class="seg mgseg">${TABS.map(([k, t]) => `<button data-mt="${k}" class="${v.tab === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('')}</div>`,
+      (lead ? '<button id="mgcfgb">⚙ 면담 기준</button>' : '') + (ro ? '<span class="chip none">팀장 보기 · 일정관리만 등록 · 수정</span>' : `<button id="mgnt">＋ 업무</button><button id="mgne">＋ 교육 · 면담</button><button class="primary" id="mgrp">📋 일일보고</button>`));
     if (D.err) { main.innerHTML = head + `<div class="pgb"><div class="warn">${esc(D.err)}</div></div>`; return; }
-    main.innerHTML = head + `<div class="pgb mgpg" id="mgbody"></div>`;
+    main.innerHTML = head.replace('class="ph"', 'class="ph mgph"') + `<div class="pgb mgpg" id="mgbody"></div>`; if (top) setNav();
     $$('[data-mt]').forEach(b => (b.onclick = () => { v.tab = b.dataset.mt; drawMgr(); }));
     if ($('#mgcfgb')) $('#mgcfgb').onclick = () => mgCfgModal(() => drawMgr());
     if ($('#mgnt')) { $('#mgnt').onclick = () => mgTask(null); $('#mgne').onclick = () => mgEvent(null); $('#mgrp').onclick = () => mgReport(S.me.id); }
@@ -10866,22 +10922,200 @@ async function addCharts(buf, jobs) {
       $$('[data-ee]', bg).forEach(b => (b.onclick = () => { close(); mgEvent(b.dataset.ee); }));
     }, 'wide');
   }
-  function mgCal(box) {
-    const v = S.mgv, D = S.mgD, adm = S.me.role === '관리자', base = v.calD || S.today;
-    let days = []; if (v.cal === 'week') { const m = wkMon(base); days = Array.from({ length: 7 }, (_, i) => C.addDays(m, i)); }
-    else { const st = base.slice(0, 8) + '01', n = new Date(+base.slice(0, 4), +base.slice(5, 7), 0).getDate(), off = (new Date(st + 'T00:00:00').getDay() + 6) % 7; days = Array.from({ length: Math.ceil((n + off) / 7) * 7 }, (_, i) => C.addDays(st, i - off)); }
-    const mineOnly = !adm || !v.calAll;
-    const items = D.tasks.filter(t => t.status !== '완료' && (!mineOnly || t.owner === S.me.id)).map(t => ({ type: 'w', id: t.id, date: t.due, title: t.title + ' 마감', owner: t.owner }))
-      .concat(D.events.filter(e => e.result !== '취소' && (!mineOnly || e.owner === S.me.id || e.kind === 'e')).map(e => ({ type: e.kind, id: e.id, date: e.date, time: e.time, title: e.title + (e.people.length ? ' · ' + (e.people.length > 2 ? e.people.slice(0, 2).join(', ') + ' 외 ' + (e.people.length - 2) : e.people.join(', ')) : ''), owner: e.owner, plan: e.result === '예정' })));
-    const mv = k => { const d = new Date(base + 'T00:00:00'); if (v.cal === 'week') d.setDate(d.getDate() + 7 * k); else d.setMonth(d.getMonth() + k, 1); v.calD = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); drawMgr(); };
-    box.innerHTML = `<div class="toolbar"><div class="seg">${[['week', '주'], ['month', '월']].map(([k, t]) => `<button data-cv="${k}" class="${v.cal === k ? 'on' : ''}">${t}</button>`).join('')}</div><button id="cp">‹</button><b>${v.cal === 'week' ? dLabel(days[0]) + ' ~ ' + dLabel(days[6]) : base.slice(0, 4) + '년 ' + (+base.slice(5, 7)) + '월'}</b><button id="cn">›</button><button id="ct">오늘</button>${adm ? `<label class="row" style="gap:4px"><input type="checkbox" id="call" ${v.calAll ? 'checked' : ''}>모든 매니저</label>` : ''}<span style="flex:1"></span>${['w', 'e', 'm', 'p'].map(k => mgChip(k)).join('')}</div>
-      <div class="card" style="padding:0;overflow:auto"><div class="mgcal ${v.cal}">${['월', '화', '수', '목', '금', '토', '일'].map(x => `<div class="mgcdh">${x}</div>`).join('')}${days.map(d => `<div class="mgcd${d === S.today ? ' today' : ''}${v.cal === 'month' && d.slice(0, 7) !== base.slice(0, 7) ? ' out' : ''}" data-cd="${d}"><div class="mgcdn">${+d.slice(8)}${isRO() ? '' : '<button class="sm mgcadd" data-ca="' + d + '" title="이 날 일정 추가">＋</button>'}</div>${items.filter(x => x.date === d).sort((a, b) => String(a.time || '99').localeCompare(String(b.time || '99'))).map(x => `<button class="mgev ${x.type}${x.plan ? ' plan' : ''}" data-mo="${x.type}:${x.id}" title="${esc(x.title)}${adm && x.owner !== S.me.id ? ' · ' + esc(mgName(x.owner)) : ''}">${x.time ? '<small>' + esc(x.time) + '</small> ' : ''}${esc(x.title)}${adm && v.calAll && x.owner !== S.me.id ? ' <small>· ' + esc(mgName(x.owner)) + '</small>' : ''}</button>`).join('')}</div>`).join('')}</div></div>
-      <div class="muted" style="margin-top:6px">업무 마감일은 업무관리에서 자동 · 교육은 매니저끼리 공유 · 면담 · 개인 일정은 본인과 팀장 · 관리자만 · 점선 = 예정</div>`;
-    $$('[data-cv]', box).forEach(b => (b.onclick = () => { v.cal = b.dataset.cv; drawMgr(); }));
-    $('#cp').onclick = () => mv(-1); $('#cn').onclick = () => mv(1); $('#ct').onclick = () => { v.calD = S.today; drawMgr(); };
-    if ($('#call')) $('#call').onchange = e => { v.calAll = e.target.checked; drawMgr(); };
-    $$('[data-mo]', box).forEach(b => (b.onclick = e => { e.stopPropagation(); const [t, id] = b.dataset.mo.split(':'); t === 'w' ? mgTask(id) : mgEvent(id); }));
-    $$('[data-ca]', box).forEach(b => (b.onclick = e => { e.stopPropagation(); mgEvent(null, { date: b.dataset.ca }); }));
+  // ================================================================ v28.74 : 일정관리 (조립팀 일정 달력 · 구분 · 붙여넣기 · 다가오는 일정 알림)
+  // 보기 = 매니저 · 관리자 · 팀장 (이사 제외) / 등록 · 구분 추가 = 같음 / 수정 · 삭제 = 작성자 + 관리자 · 팀장 / 구분 이름 · 색 = 관리자 · 팀장
+  const CAL_PAL = ['#2f6fe4', '#7c4dff', '#12a37a', '#64748b', '#e8902a', '#d6409f', '#0f9fb5', '#e5484d', '#5b6ee1'];
+  const CAL_W = ['일', '월', '화', '수', '목', '금', '토'];
+  const cDow = d => new Date(d + 'T00:00:00').getDay();
+  const cSun = d => C.addDays(d, -cDow(d));
+  const calAdm = () => !!(S.me && S.me.role === '관리자');
+  const calCanW = () => canMgr() && !S.pv;
+  const calCanE = e => calCanW() && (calAdm() || e.owner === S.me.id);
+  const calCat = id => ((S.cal || {}).cats || []).find(c => String(c.id) === String(id)) || { name: '?', color: '#64748b' };
+  const calMine = e => e.grp === '전체' || calAdm() || (S.me.mg || []).includes(e.grp);    // 알림 대상 : 전체 일정 = 모두 · 그룹 일정 = 그 그룹 매니저 + 관리자 · 팀장
+  const calRange = d => { const f = C.addDays(cSun(d.slice(0, 8) + '01'), -7); return { from: f, to: C.addDays(f, 55) }; };
+  const calRg = e => e.e > e.d ? dLabel(e.d) + ' ~ ' + dLabel(e.e) : dLabel(e.d);
+  const calHol = () => { const o = {}; (((S._mgBI || {}).v || {}).hol || []).forEach(h => (o[h[0]] = h[1] || '공휴일')); return o; };
+  async function calLoad(d, force) {
+    const R = calRange(d || S.today), c = S.cal;
+    if (!force && c && !c.err && c.from <= R.from && c.to >= R.to && Date.now() - c.t < 300000) return c;
+    try { const r = await api('calList', R); S.cal = { cats: r.cats || [], ev: r.ev || [], soon: r.soon || [], from: r.from, to: r.to, t: Date.now() }; }
+    catch (e) { S.cal = { err: e.message, cats: [], ev: [], soon: [], from: '', to: '', t: Date.now() }; }
+    return S.cal;
+  }
+  const calAlerts = () => ((S.cal || {}).soon || []).filter(calMine).map(e => { const g = dGap(S.today, e.d);
+    return { key: 'cal|' + e.id, o: { tag: g ? 'D-' + g : 'D-day', cls: 'cal', who: calCat(e.cat).name, text: `${e.title} · ${dLabel(e.d)}${e.tm ? ' ' + e.tm : ''}${e.e > e.d ? ' ~ ' + dLabel(e.e) : ''}${e.grp !== '전체' ? ' · ' + e.grp : ''}`, date: e.d, lv: g <= 1 ? '긴급' : '높음', act: { cal: e.id } } }; });
+  const calToday = () => ((S.cal || {}).ev || []).filter(e => e.d <= S.today && e.e >= S.today && calMine(e));
+  async function calRefresh() { await calLoad(S.mgv && S.mgv.c ? S.mgv.c.cur : S.today, true); void mgAlertLoad(); if (S.view === 'mgr' && S.mgv.tab === 'cal' && $('#mgbody')) calDraw($('#mgbody')); }
+  function calGo(id) {   // 알림 → 그 일정으로
+    const e = ((S.cal || {}).soon || []).concat((S.cal || {}).ev || []).find(x => String(x.id) === String(id)); if (!e) return;
+    S.mgv.c = Object.assign(S.mgv.c || {}, { view: 'm', cur: e.d, sel: e.d, ev: e.id, list: false }); S.mgv.tab = 'cal'; if (S.view === 'mgr') drawMgr(); else go('mgr', { tab: 'cal' });
+  }
+  async function mgCal(box) {
+    const v = S.mgv; v.c = v.c || { view: 'm', cur: S.today, sel: S.today, ev: null, off: [], grp: '전체', mine: false, list: false };
+    const R = calRange(v.c.cur);
+    if (!S.cal || S.cal.err || !(S.cal.from <= R.from && S.cal.to >= R.to)) { box.innerHTML = '<div class="muted" style="padding:20px">일정 불러오는 중…</div>'; await calLoad(v.c.cur); if (S.view !== 'mgr' || v.tab !== 'cal') return; }
+    if (!S._mgBI) mgBI().then(() => { if (S.view === 'mgr' && v.tab === 'cal' && $('#mgbody')) calDraw($('#mgbody')); }).catch(() => { });
+    calDraw(box);
+  }
+  function calDraw(box) {
+    const c = S.mgv.c, D = S.cal, T = S.today, HOL = calHol();
+    if (D.err) { box.innerHTML = `<div class="warn">${esc(D.err)}</div>`; return; }
+    const off = new Set((c.off || []).map(String));
+    const scope = e => (c.grp === '전체' || e.grp === '전체' || e.grp === c.grp) && (!c.mine || e.owner === S.me.id);
+    const L = D.ev.filter(e => !off.has(String(e.cat)) && scope(e)), cover = (e, d) => e.d <= d && e.e >= d;
+    const m0 = c.cur.slice(0, 8) + '01', dim = new Date(+c.cur.slice(0, 4), +c.cur.slice(5, 7), 0).getDate(), mE = c.cur.slice(0, 8) + String(dim).padStart(2, '0');
+    const inM = L.filter(e => e.d <= mE && e.e >= m0), soonN = calAlerts().length;
+    const card = (cls, ic, k, val, sub, go) => `<div class="m2k ${cls}" ${go ? `data-kgo="${go}"` : ''}><span class="m2ki">${ic}</span><span class="m2kt"><small>${k}</small><b>${val}<em>건</em></b><span>${sub}</span></span></div>`;
+    const kpi = `<div class="m2ks c4 mcks">${card('blue', IC.cal, (+c.cur.slice(5, 7)) + '월 일정', inM.length, '필터 기준 · 기간 일정 포함')}${card('violet', IC.clip, '오늘 일정', L.filter(e => cover(e, T)).length, dLabel(T), 'today')}${card('amber', IC.warn, '다가오는 일정', soonN, '3일 안에 시작 · 알림 숫자', 'soon')}${card('green', IC.pen, '내가 등록', inM.filter(e => e.owner === S.me.id).length, (+c.cur.slice(5, 7)) + '월 · 내 이름으로 등록', 'mine')}</div>`;
+    const title = c.list ? `${dLabel(cSun(c.sel))} ~ ${dLabel(C.addDays(cSun(c.sel), 6))}` : c.view === 'm' ? ymLabel(c.cur.slice(0, 7)) : c.view === 'w' ? `${dLabel(cSun(c.cur))} ~ ${dLabel(C.addDays(cSun(c.cur), 6))}` : dLabel(c.cur) + (HOL[c.cur] ? ' · ' + HOL[c.cur] : '');
+    const cnt = id => D.ev.filter(e => String(e.cat) === String(id) && scope(e)).length;
+    const chips = `<span class="mcpill"><button class="mcch all ${off.size ? '' : 'on'}" data-cfa="1">전체</button>${D.cats.map(k => `<button class="mcch ${off.has(String(k.id)) ? 'off' : 'on'}" style="--c:${k.color}" data-cf="${k.id}"><i></i>${esc(k.name)}<em>${cnt(k.id)}</em></button>`).join('')}</span>`;
+    const grp = `<select class="mcg" id="mcgrp">${['전체'].concat(C.GROUP_LIST).map(g => `<option value="${g}" ${g === c.grp ? 'selected' : ''}>${g === '전체' ? '그룹 전체' : g}</option>`).join('')}</select>`;
+    const bar = `<div class="mcbar"><div class="mcnav"><button id="mcp" title="이전">‹</button><b>${title}</b><button id="mcn" title="다음">›</button></div><button id="mct">오늘</button>
+      ${c.list ? '' : `<div class="seg">${[['d', '일'], ['w', '주'], ['m', '월']].map(([k, t]) => `<button data-cv="${k}" class="${c.view === k ? 'on' : ''}">${t}</button>`).join('')}</div>`}
+      <div class="seg">${[[0, '달력'], [1, '주간 목록']].map(([k, t]) => `<button data-cl="${k}" class="${+!!c.list === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+      <span style="flex:1"></span>${chips}${grp}<label class="mcsw ${c.mine ? 'on' : ''}"><input type="checkbox" id="mcmine" ${c.mine ? 'checked' : ''}>내 일정만</label>
+      ${calCanW() ? `<button id="mccat">⚙ 구분</button><button id="mcps">📋 붙여넣기</button><button class="primary" id="mcad">＋ 일정 등록</button>` : ''}</div>`;
+    // 한 주 줄 : 구분 이름만 보이는 얇은 막대 · 기간 일정은 여러 칸에 걸친 막대 · 겹치는 만큼 줄 높이가 늘어남 (12줄 넘으면 +N건)
+    const row = (ws, lo, hi, minH, cap) => {
+      const we = C.addDays(ws, 6), ev = L.filter(e => e.d <= we && e.e >= ws).map(e => ({ e, c0: cDow(e.d < ws ? ws : e.d), c1: cDow(e.e > we ? we : e.e) }));
+      ev.sort((a, b) => a.c0 - b.c0 || (b.c1 - b.c0) - (a.c1 - a.c0) || String(a.e.tm || '~').localeCompare(String(b.e.tm || '~')) || (a.e.id - b.e.id));
+      const lanes = []; ev.forEach(x => { let l = 0; while ((lanes[l] = lanes[l] || []).some(r => !(x.c1 < r[0] || x.c0 > r[1]))) l++; lanes[l].push([x.c0, x.c1]); x.l = l; });
+      const nl = lanes.length, shown = Math.min(nl, cap), h = Math.max(minH, 36 + shown * 17 + (nl > cap ? 20 : 8));
+      let o = `<div class="mcwk" style="height:${h}px">`;
+      for (let i = 0; i < 7; i++) { const d = C.addDays(ws, i), out = lo && (d < lo || d > hi);
+        o += `<div class="mcdc${out ? ' out' : ''}${d === T ? ' today' : ''}${d === c.sel ? ' sel' : ''}${i === 0 || HOL[d] ? ' sun' : i === 6 ? ' sat' : ''}" data-cd="${d}"><span class="mcdn">${+d.slice(8)}</span>${HOL[d] ? `<small class="mchol">${esc(HOL[d])}</small>` : ''}${calCanW() ? `<button class="mcadd" data-ca="${d}" title="${dLabel(d)} 일정 등록">＋</button>` : ''}</div>`; }
+      ev.forEach(x => { if (x.l >= cap) return; const e = x.e, k = calCat(e.cat), cl = e.d < ws, cr = e.e > we;
+        o += `<button class="mcb${e.e > e.d ? ' rng' : ''}${cl ? ' cl' : ''}${cr ? ' cr' : ''}${String(c.ev) === String(e.id) ? ' pick' : ''}" data-ev="${e.id}" style="--c:${k.color};left:calc(${x.c0 / 7 * 100}% + ${cl ? 0 : 4}px);width:calc(${(x.c1 - x.c0 + 1) / 7 * 100}% - ${(cl ? 0 : 4) + (cr ? 0 : 4)}px);top:${34 + x.l * 17}px" title="${esc(e.title)} · ${calRg(e)}${e.tm ? ' ' + esc(e.tm) : ''} · ${esc(e.grp)} · ${esc(e.by)}">${esc(k.name)}</button>`; });
+      if (nl > cap) for (let i = 0; i < 7; i++) { const d = C.addDays(ws, i), n = ev.filter(x => x.l >= cap && x.c0 <= i && x.c1 >= i).length; if (n) o += `<button class="mcmore" data-cd="${d}" style="left:calc(${i / 7 * 100}% + 6px)">+${n}건 더</button>`; }
+      return o + '</div>';
+    };
+    const hd = `<div class="mchd">${CAL_W.map(w => `<span>${w}</span>`).join('')}</div>`;
+    let cal = '';
+    if (!c.list) {
+      if (c.view === 'm') { const s0 = cSun(m0), nr = Math.ceil((cDow(m0) + dim) / 7); cal = hd; for (let r = 0; r < nr; r++) cal += row(C.addDays(s0, r * 7), m0, mE, 128, 12); }
+      else if (c.view === 'w') cal = hd + row(cSun(c.cur), '', '', 440, 30);
+      else { const ev = L.filter(e => cover(e, c.cur)).sort((a, b) => String(a.tm || '~').localeCompare(String(b.tm || '~')));
+        cal = `<div class="mcday">${ev.map(e => { const k = calCat(e.cat); return `<div class="row" data-ev="${e.id}" style="--c:${k.color}"><b class="tm">${esc(e.tm || '종일')}</b><div><span class="mctag">${esc(k.name)}</span> <span class="muted">${esc(e.grp)} · ${esc(e.by)}${e.e > e.d ? ' · ' + calRg(e) : ''}</span><b class="tt">${esc(e.title)}</b></div></div>`; }).join('') || '<div class="mce">이 날 일정이 없습니다</div>'}</div>`; }
+    }
+    box.innerHTML = kpi + bar + `<div class="mcmain${c.list ? ' list' : ''}">${c.list ? '' : `<div class="card mccv">${cal}</div>`}<div class="card mcsd">${calSide(L, HOL)}</div></div>`;
+    // ---- 이벤트
+    const re = () => calDraw(box), need = () => { const R = calRange(c.cur); if (!(D.from <= R.from && D.to >= R.to)) { mgCal(box); return true; } return false; };
+    const mv = k => { if (c.list) { c.sel = C.addDays(c.sel, 7 * k); c.cur = c.sel; }
+      else if (c.view === 'm') { const d = new Date(+c.cur.slice(0, 4), +c.cur.slice(5, 7) - 1 + k, 1); c.cur = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01'; c.sel = c.cur.slice(0, 7) === T.slice(0, 7) ? T : c.cur; }
+      else { c.cur = C.addDays(c.cur, k * (c.view === 'w' ? 7 : 1)); c.sel = c.cur; }
+      c.ev = null; if (!need()) re(); };
+    $('#mcp', box).onclick = () => mv(-1); $('#mcn', box).onclick = () => mv(1);
+    $('#mct', box).onclick = () => { c.cur = c.sel = T; c.ev = null; if (!need()) re(); };
+    $$('[data-cv]', box).forEach(b => (b.onclick = () => { c.view = b.dataset.cv; if (c.view !== 'm') c.cur = c.sel; re(); }));
+    $$('[data-cl]', box).forEach(b => (b.onclick = () => { c.list = b.dataset.cl === '1'; re(); }));
+    $$('[data-cf]', box).forEach(b => (b.onclick = () => { const id = b.dataset.cf, s = new Set((c.off || []).map(String));
+      if (!s.size) { c.off = D.cats.map(k => String(k.id)).filter(x => x !== id); } else { s.has(id) ? s.delete(id) : s.add(id); c.off = s.size >= D.cats.length ? [] : [...s]; } re(); }));   // 처음 누르면 그 구분만 보기 (지도 필터처럼)
+    $('[data-cfa]', box).onclick = () => { c.off = []; re(); };
+    $('#mcgrp', box).onchange = e => { c.grp = e.target.value; re(); };
+    $('#mcmine', box).onchange = e => { c.mine = e.target.checked; re(); };
+    $$('[data-cd]', box).forEach(x => (x.onclick = () => { c.sel = x.dataset.cd; c.ev = null; if (c.view !== 'm' || c.list) c.cur = c.sel; re(); }));
+    $$('[data-ev]', box).forEach(x => (x.onclick = ev => { ev.stopPropagation(); const e = D.ev.find(z => String(z.id) === x.dataset.ev); if (!e) return; c.ev = e.id; if (!cover(e, c.sel)) c.sel = e.d < m0 && !c.list && c.view === 'm' ? m0 : e.d; re(); }));
+    $$('[data-ca]', box).forEach(b => (b.onclick = ev => { ev.stopPropagation(); calForm(null, b.dataset.ca); }));
+    $$('[data-ce]', box).forEach(b => (b.onclick = ev => { ev.stopPropagation(); calForm(D.ev.find(z => String(z.id) === b.dataset.ce)); }));
+    $$('[data-cx]', box).forEach(b => (b.onclick = async ev => { ev.stopPropagation(); if (!(await confirmBox('이 일정을 지울까요?', '삭제'))) return; try { await api('calSave', { op: 'evDel', id: b.dataset.cx }); c.ev = null; toast('지웠습니다'); calRefresh(); } catch (er) { toast(er.message, true); } }));
+    $$('[data-kgo]', box).forEach(b => (b.onclick = () => { const k = b.dataset.kgo; if (k === 'today') { c.cur = c.sel = T; c.ev = null; c.list = false; } else if (k === 'soon') { c.sel = T; c.cur = T; c.list = true; c.off = []; c.mine = false; } else if (k === 'mine') { c.mine = !c.mine; } if (!need()) re(); }));
+    if ($('#mcad', box)) { $('#mcad', box).onclick = () => calForm(null, c.sel); $('#mcps', box).onclick = () => calPaste(); $('#mccat', box).onclick = () => calCats(); }
+  }
+  function calSide(L, HOL) {
+    const c = S.mgv.c, D = S.cal, T = S.today, cover = (e, d) => e.d <= d && e.e >= d, ws = cSun(c.sel), we = C.addDays(ws, 6);
+    const pk = c.ev ? D.ev.find(e => String(e.id) === String(c.ev)) : null, day = L.filter(e => cover(e, c.sel)).sort((a, b) => String(a.tm || '~').localeCompare(String(b.tm || '~')));
+    const item = e => { const k = calCat(e.cat); return `<div class="mcit" data-ev="${e.id}" style="--c:${k.color}"><div class="r1"><span class="mctag">${esc(k.name)}</span>${esc(e.tm || '종일')} · ${esc(e.grp)}${e.e > e.d ? ' · ' + calRg(e) : ''}</div><b class="tt">${esc(e.title)}</b></div>`; };
+    const detail = e => { const k = calCat(e.cat), n = dGap(e.d, e.e) + 1;
+      return `<div class="mcit pk" style="--c:${k.color}"><div class="r1"><span class="mctag">${esc(k.name)}</span>${esc(e.grp === '전체' ? '조립팀 전체' : e.grp)}</div><b class="tt">${esc(e.title)}</b>
+        <div class="mm">📅 ${calRg(e)}${n > 1 ? ` (${n}일간)` : ''} · 🕒 ${esc(e.tm || '종일')}</div><div class="mm">✍ 작성 ${esc(e.by)}</div>${e.memo ? `<div class="mcmemo">${esc(e.memo)}</div>` : ''}
+        <div class="mcacts">${calCanE(e) ? `<button class="sm" data-ce="${e.id}">수정</button><button class="sm" data-cx="${e.id}" style="color:var(--red)">삭제</button>` : `<span class="mclock">🔒 작성자(${esc(e.by)})와 팀장 · 관리자만 수정</span>`}</div></div>`; };
+    let h = '';
+    if (!c.list) {
+      h += `<div class="mcsh"><b>${dLabel(c.sel)}</b><small>${HOL[c.sel] ? esc(HOL[c.sel]) + ' · ' : ''}${day.length}건</small></div>`;
+      if (pk) h += detail(pk);
+      h += day.filter(e => !pk || e.id !== pk.id).map(item).join('') || (pk ? '' : '<div class="mce">이 날 일정이 없습니다</div>');
+      if (calCanW()) h += `<button class="mcaddday" data-ca="${c.sel}">＋ ${dLabel(c.sel)} 일정 등록</button>`;
+    } else if (pk) h += detail(pk);
+    h += `<div class="mcsec">이번 주 일정<small>${dLabel(ws)} ~ ${dLabel(we)}</small></div>`;
+    let wn = 0;
+    for (let i = 0; i < 7; i++) { const d = C.addDays(ws, i), ev = L.filter(e => e.d === d || (i === 0 && e.d < ws && e.e >= ws)).sort((a, b) => String(a.tm || '~').localeCompare(String(b.tm || '~')));
+      if (!ev.length && !c.list) continue; wn += ev.length;
+      h += `<div class="mcwl${d === c.sel ? ' sel' : ''}${d === T ? ' today' : ''}${i === 0 || HOL[d] ? ' sun' : i === 6 ? ' sat' : ''}" data-cd="${d}"><div class="dd">${+d.slice(5, 7)}/${+d.slice(8)}<small>${CAL_W[i]}${HOL[d] ? ' · ' + esc(HOL[d]) : ''}${d === T ? ' · 오늘' : ''}</small></div><div>${ev.map(e => { const k = calCat(e.cat); return `<div class="mcln" data-ev="${e.id}" style="--c:${k.color}"><i></i>${c.list ? `<span class="mctag">${esc(k.name)}</span>` : ''}<b>${esc(e.title)}</b>${c.list && e.grp !== '전체' ? `<small class="muted">${esc(e.grp)}</small>` : ''}<span>${e.e > e.d ? (e.d < ws ? '~' + dLabel(e.e) : calRg(e)) : esc(e.tm || '종일')}${c.list ? ' · ' + esc(e.by) : ''}</span></div>`; }).join('') || '<span class="muted">-</span>'}</div></div>`; }
+    if (!wn && !c.list) h += '<div class="mce" style="padding:16px">이번 주 일정 없음</div>';
+    h += `<div class="mcstat"><span>이번 주 <b>${wn}</b>건</span><span>오늘 <b>${L.filter(e => cover(e, T)).length}</b>건</span><span>다가오는 일정 <b>${calAlerts().length}</b>건</span></div>`;
+    return h;
+  }
+  function calForm(e0, d0) {
+    if (!calCanW()) return;
+    const D = S.cal, e = e0 || { d: d0 || S.today, e: d0 || S.today, tm: '', title: '', cat: (D.cats[0] || {}).id, grp: '전체', memo: '' };
+    if (e0 && !calCanE(e0)) return toast('작성자와 팀장 · 관리자만 고칠 수 있습니다', true);
+    modal(`<h3>${e0 ? '일정 수정' : '일정 등록'}</h3><div class="muted" style="margin:-4px 0 10px">작성자 ${esc(e0 ? e0.by : S.me.name)} · 달력에는 <b>구분 이름만</b> 보이고 제목 · 시간 · 메모는 눌렀을 때 오른쪽에 보입니다</div>
+      <div class="fields2"><div class="fld"><label>시작일 *</label><input type="date" id="cfd" value="${e.d}"></div><div class="fld"><label>종료일 <span class="muted">(기간 일정만)</span></label><input type="date" id="cfe" value="${e.e}"></div>
+      <div class="fld"><label>시간 <span class="muted">(비우면 종일)</span></label><input type="time" id="cft" value="${esc(e.tm)}"></div><div class="fld"><label>대상 그룹</label><select id="cfg">${['전체'].concat(C.GROUP_LIST).map(g => `<option ${g === e.grp ? 'selected' : ''}>${g}</option>`).join('')}</select></div></div>
+      <div class="fld"><label>제목 *</label><input id="cfx" maxlength="120" value="${esc(e.title)}" placeholder="예: R-5193 모델 오픈"></div>
+      <div class="fld"><label>구분 *</label><div class="mcpick">${D.cats.map(k => `<button class="mcch ${String(k.id) === String(e.cat) ? 'on' : 'off'}" style="--c:${k.color}" data-pk="${k.id}"><i></i>${esc(k.name)}</button>`).join('')}</div></div>
+      <div class="fld"><label>메모</label><textarea id="cfm" maxlength="2000" style="min-height:80px">${esc(e.memo)}</textarea></div>
+      <div class="acts">${e0 ? '<button id="cfdel" style="color:var(--red);margin-right:auto">삭제</button>' : ''}<button data-c>닫기</button><button class="primary" data-s>저장</button></div>`, (bg, close) => {
+      let cat = e.cat; $('[data-c]', bg).onclick = close;
+      $$('[data-pk]', bg).forEach(b => (b.onclick = () => { cat = b.dataset.pk; $$('[data-pk]', bg).forEach(x => { x.classList.toggle('on', x === b); x.classList.toggle('off', x !== b); }); }));
+      $('#cfd', bg).onchange = ev => { const x = $('#cfe', bg); if (!x.value || x.value < ev.target.value) x.value = ev.target.value; };
+      $('[data-s]', bg).onclick = async () => {
+        const b = { op: 'ev', id: e0 ? e0.id : '', d: $('#cfd', bg).value, e: $('#cfe', bg).value || $('#cfd', bg).value, tm: $('#cft', bg).value, title: $('#cfx', bg).value.trim(), cat, grp: $('#cfg', bg).value, memo: $('#cfm', bg).value };
+        if (!b.d || !b.title) return toast('날짜와 제목을 넣으세요', true); if (b.e < b.d) return toast('종료일은 시작일 이후로', true);
+        try { const r = await api('calSave', b); close(); toast('저장했습니다'); const c = S.mgv.c; if (c) { c.sel = b.d; c.ev = r.ev ? r.ev.id : null; if (c.off && c.off.includes(String(cat))) c.off = c.off.filter(x => x !== String(cat)); if (c.view === 'm' && b.d.slice(0, 7) !== c.cur.slice(0, 7)) c.cur = b.d.slice(0, 8) + '01'; } calRefresh(); } catch (er) { toast(er.message, true); }
+      };
+      if ($('#cfdel', bg)) $('#cfdel', bg).onclick = async () => { if (!(await confirmBox('이 일정을 지울까요?', '삭제'))) return; try { await api('calSave', { op: 'evDel', id: e0.id }); close(); if (S.mgv.c) S.mgv.c.ev = null; toast('지웠습니다'); calRefresh(); } catch (er) { toast(er.message, true); } };
+    }, 'wide');
+  }
+  function calCats() {
+    const adm = calAdm() && calCanW(), D = S.cal;
+    const draw = (bg) => {
+      $('.mccl', bg).innerHTML = D.cats.map(k => `<div class="mccr" style="--c:${k.color}"><button class="mcsw2" data-sw="${k.id}" title="${adm ? '눌러서 색 바꾸기' : ''}" ${adm ? '' : 'disabled'}></button><input data-nm="${k.id}" value="${esc(k.name)}" maxlength="12" ${adm ? '' : 'disabled'}><small class="muted">${k.used || 0}건 사용</small></div>`).join('');
+      $$('[data-nm]', bg).forEach(i => (i.onchange = async () => { const k = D.cats.find(x => String(x.id) === i.dataset.nm), n = i.value.trim(); if (!n || n === k.name) { i.value = k.name; return; } try { await api('calSave', { op: 'cat', id: k.id, name: n }); k.name = n; toast('이름을 바꿨습니다'); calRefresh(); } catch (er) { toast(er.message, true); i.value = k.name; } }));
+      $$('[data-sw]', bg).forEach(b => (b.onclick = async () => { const k = D.cats.find(x => String(x.id) === b.dataset.sw), col = CAL_PAL[(CAL_PAL.indexOf(k.color) + 1) % CAL_PAL.length]; try { await api('calSave', { op: 'cat', id: k.id, name: k.name, color: col }); k.color = col; draw(bg); calRefresh(); } catch (er) { toast(er.message, true); } }));
+    };
+    modal(`<h3>⚙ 구분 관리</h3><div class="muted" style="margin:-4px 0 10px">새 구분 추가 = 매니저 이상 누구나 · <b>이름 · 색 변경 = 팀장 · 관리자만</b> · 삭제는 없습니다 (한 번 쓴 구분은 다시 쓰이는 경우가 많아서)</div><div class="mccl"></div>
+      ${adm ? '' : '<div class="muted" style="margin-top:8px">🔒 이름 · 색은 팀장 · 관리자만 바꿀 수 있습니다</div>'}
+      <div class="fld" style="margin-top:14px"><label>새 구분 추가 <span class="muted">(12자까지 · 짧을수록 달력에서 잘 보입니다)</span></label><div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="ccn" maxlength="12" placeholder="예: 판매 일정"><button class="primary" id="cca">추가</button></div></div>
+      <div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close; draw(bg);
+      $('#cca', bg).onclick = async () => { const n = $('#ccn', bg).value.trim(); if (!n) return; if (D.cats.some(k => k.name === n)) return toast('이미 있는 구분입니다', true);
+        try { const r = await api('calSave', { op: 'cat', name: n, color: CAL_PAL[D.cats.length % CAL_PAL.length] }); D.cats.push(Object.assign({ used: 0 }, r.cat)); $('#ccn', bg).value = ''; draw(bg); toast('추가했습니다'); calRefresh(); } catch (er) { toast(er.message, true); } };
+    });
+  }
+  // 붙여넣기 : 엑셀 복사(탭) 또는 쉼표 · 날짜 · 시간 · 제목 · 구분 · 그룹 · 메모 / 날짜에 11/10~11/14 = 기간 일정 / 같은 날짜 · 시간 · 제목은 건너뜀
+  function calPaste() {
+    const D = S.cal, yr = +S.today.slice(0, 4);
+    const pd = s => { s = String(s || '').trim(); let m = /^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$/.exec(s); if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+      m = /^(\d{1,2})[-./월]\s*(\d{1,2})일?$/.exec(s); if (!m) return ''; let y = yr; const d = `${y}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`; return dGap(d, S.today) > 180 ? `${y + 1}${d.slice(4)}` : d; };
+    let rows = [];
+    modal(`<h3>📋 붙여넣어 일정 등록</h3><div class="muted" style="margin:-4px 0 8px">엑셀에서 복사해 붙여넣기 (탭 구분) · 한 줄에 한 건 · 순서 : <b>날짜 · 시간 · 제목 · 구분 · 그룹 · 메모</b> (시간 · 그룹 · 메모는 비워도 됨) · 기간 일정은 날짜에 <b>11/10~11/14</b></div>
+      <textarea id="cpt" class="mcpt" placeholder="11/10&#9;10:00&#9;R-6001 모델 오픈&#9;모델오픈&#9;전체&#10;11/11~11/13&#9;&#9;안전 교육&#9;교육&#9;2그룹"></textarea>
+      <div class="acts" style="justify-content:flex-start"><button class="primary" id="cpv">미리보기</button><span class="muted">없는 구분은 새로 만들어 등록합니다 · 같은 날짜 · 시간 · 제목이 이미 있으면 건너뜀</span></div><div id="cpr"></div>
+      <div class="acts"><button data-c>닫기</button><button class="primary" id="cpg" style="display:none">등록</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      $('#cpv', bg).onclick = () => {
+        const seen = new Set(D.ev.map(e => e.d + '|' + e.tm + '|' + e.title)), mine = new Set();
+        rows = $('#cpt', bg).value.split(/\r?\n/).filter(x => x.trim()).map(l => { const p = (l.includes('\t') ? l.split('\t') : l.split(/\s*,\s*/)).map(x => x.trim());
+          const [ds, tm0, t, k, g, m] = p, dd = String(ds || '').split('~'), r = { d: pd(dd[0]), e: dd[1] ? pd(dd[1]) : '', tm: tm0 || '', title: t || '', cat: k || '', grp: g || '전체', memo: m || '', st: 'ok', msg: '등록' };
+          if (!r.d) return Object.assign(r, { st: 'bad', msg: '날짜를 알 수 없음 (11/10 · 2026-11-10)', d: ds || '' });
+          if (!r.e) r.e = r.d; if (dd[1] && !pd(dd[1])) return Object.assign(r, { st: 'bad', msg: '종료일을 알 수 없음' }); if (r.e < r.d) return Object.assign(r, { st: 'bad', msg: '종료일이 시작일보다 앞' });
+          if (!r.title) return Object.assign(r, { st: 'bad', msg: '제목 없음' });
+          const w = []; if (r.tm && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(r.tm)) { w.push('시간 형식 확인 → 종일로'); r.tm = ''; }
+          if (r.grp !== '전체' && !C.GROUP_LIST.includes(r.grp)) { w.push(`그룹 "${r.grp}" 모름 → 전체`); r.grp = '전체'; }
+          const key = r.d + '|' + r.tm + '|' + r.title; if (seen.has(key) || mine.has(key)) return Object.assign(r, { st: 'skip', msg: '이미 있음 → 건너뜀' }); mine.add(key);
+          if (!r.cat) { r.cat = (D.cats[0] || {}).name || ''; w.push('구분 비어 있음 → ' + r.cat); } else if (!D.cats.some(c => c.name === r.cat)) { if (r.cat.length > 12) return Object.assign(r, { st: 'bad', msg: '구분 이름은 12자까지' }); w.push(`새 구분 "${r.cat}" 만들기`); }
+          if (w.length) Object.assign(r, { st: 'warn', msg: w.join(' · ') }); return r; });
+        const n = rows.filter(r => r.st === 'ok' || r.st === 'warn').length;
+        $('#cpr', bg).innerHTML = rows.length ? `<div class="tbs" style="max-height:340px;overflow:auto;margin-top:10px"><table class="list"><thead><tr><th>#</th><th>날짜</th><th>시간</th><th>제목</th><th>구분</th><th>그룹</th><th>결과</th></tr></thead><tbody>${rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.d && r.d.length === 10 ? dLabel(r.d) + (r.e !== r.d ? ' ~ ' + dLabel(r.e) : '') : r.d)}</td><td>${esc(r.tm || '-')}</td><td style="text-align:left">${esc(r.title || '-')}</td><td>${esc(r.cat || '-')}</td><td>${esc(r.grp)}</td><td class="mcr ${r.st}">${esc(r.msg)}</td></tr>`).join('')}</tbody></table></div><div class="muted" style="margin-top:6px">등록 <b>${n}</b>건 · 건너뜀 ${rows.filter(r => r.st === 'skip').length} · 오류 ${rows.filter(r => r.st === 'bad').length} (오류 줄은 고쳐서 다시 미리보기)</div>` : '<div class="muted" style="margin-top:8px">붙여넣은 줄이 없습니다</div>';
+        $('#cpg', bg).style.display = n ? '' : 'none'; $('#cpg', bg).textContent = n + '건 등록';
+      };
+      $('#cpg', bg).onclick = async () => { const R = rows.filter(r => r.st === 'ok' || r.st === 'warn').map(r => ({ d: r.d, e: r.e, tm: r.tm, title: r.title, cat: r.cat, grp: r.grp, memo: r.memo, color: CAL_PAL[(D.cats.length + 4) % CAL_PAL.length] }));
+        if (!R.length) return; $('#cpg', bg).disabled = true;
+        try { const r = await api('calSave', { op: 'bulk', rows: R }); close(); toast(`${r.added}건 등록${r.skipped ? ' · ' + r.skipped + '건 건너뜀' : ''}${r.newCats ? ' · 새 구분 ' + r.newCats + '개' : ''}`); calRefresh(); } catch (er) { toast(er.message, true); $('#cpg', bg).disabled = false; } };
+    }, 'wide');
   }
   function mgAll(box) {
     const D = S.mgD, adm = S.me.role === '관리자', T = D.tasks.filter(t => t.status !== '완료' || dGap(t.due, S.today) < 14);
