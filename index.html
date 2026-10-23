@@ -2142,6 +2142,16 @@ html[data-theme=dark] .adjt{background:#3b2f63;color:#d8ccff}html[data-theme=dar
 .ckb{white-space:nowrap}.ckb button{margin-right:3px}
 .stat .adjl{font-size:11px;color:#6d28d9;font-weight:700;margin-top:2px;white-space:nowrap}
 .lver{font-style:normal;margin-left:10px;font-size:11.5px;font-weight:700;color:#a9b8d8;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:2px 9px;vertical-align:3px}.czv{font-style:normal;margin-left:6px;font-size:10px;font-weight:700;color:#7b8699;background:#eef1f5;border-radius:99px;padding:1px 6px;vertical-align:2px;white-space:nowrap}html[data-theme=dark] .czv{background:#2a3242;color:#a9b4c6}
+
+/* v28.56 : 모든 목록 표 — 칸 세로 구분선 + 가운데 정렬 (첫 칸 · 글이 긴 칸은 왼쪽) */
+table.list th,table.list td,.hrw .tbl th,.hrw .tbl td{text-align:center;border-right:1px solid #e3e7ee}
+table.list td.num,table.list th.num{text-align:center}
+table.list th:last-child,table.list td:last-child,.hrw .tbl th:last-child,.hrw .tbl td:last-child{border-right:0}
+table.list tr > th:first-child,table.list tr > td:first-child,.hrw .tbl tr > th:first-child,.hrw .tbl tr > td:first-child{text-align:left}
+table.list tr.ghd td,table.list td[colspan],table.list td.rs,table.list td.memo,table.list td.txt,table.list td.l,.hrw .tbl td.l{text-align:left;border-right:0}
+table.list td[colspan].muted{text-align:center}
+table.list td .bar,table.list td .rbar{margin-left:auto;margin-right:auto}
+html[data-theme=dark] table.list th,html[data-theme=dark] table.list td,html[data-theme=dark] .hrw .tbl th,html[data-theme=dark] .hrw .tbl td{border-right-color:#2c3846}
 </style>
 </head>
 <body>
@@ -7248,7 +7258,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.55';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10299,6 +10309,33 @@ async function addCharts(buf, jobs) {
     { const bx = $('#mbody .board'); if (bx && !bx._sc) { bx.scrollLeft = bx.scrollWidth; } }   // v28.55 : 최근 날짜가 보이게
     $$('.bd [data-bu]').forEach(b => (b.onclick = () => { const u = S._mlist.find(x => x.id === b.dataset.bu); if (u && u.pend) return personCard({ name: u.name, group: u.group }); if (u) personCard({ id: u.id, name: u.name, group: u.group, role: u.role, date: u.last || S.today, edit: isAdm() && !isRO() ? () => editUser(u) : null }); }));
   }
+  // v28.56 : 월 백업 받기 (설정 화면 · 알림 창 같이 씀)
+  async function bkDownload(ym) {
+    const x = await api('bkMonth', { ym }); delete x.ok; delete x._ms;
+    saveBlob(new Blob([JSON.stringify(x)], { type: 'application/json' }), '업무데이터_월백업_' + ym + '_' + S.today + '.json');
+    return x;
+  }
+  // v28.56 : 월 백업 알림 (백업 권한자 · 하루 한 번) — 마감한 달을 아직 안 받았거나 받은 뒤 바뀐 달 · 진행 중인 달은 14일 넘게 안 받았을 때
+  async function bkRemind() {
+    if (!S.me || S.pv || isRO() || !can('hr')) return;
+    try { if (localStorage.getItem('bkSnooze') === S.today || sessionStorage.getItem('bkAsked')) return; sessionStorage.setItem('bkAsked', '1'); } catch (e) { }
+    let r; try { r = await api('bkList'); } catch (e) { return; }
+    const age = t => t ? (Date.now() - new Date(String(t).replace(' ', 'T') + '+09:00')) / 864e5 : 1e9, cp = curPeriod();
+    const L = (r.months || []).filter(x => x.period === '마감' && (!x.backupAt || x.changed) && x.days > 0);
+    const cur = (r.months || []).find(x => cp && x.ym === cp.ym && x.period === '진행');
+    if (cur && cp.start && (Date.now() - new Date(cp.start + 'T00:00:00+09:00')) / 864e5 >= 14 && age(cur.backupAt) >= 14) L.push(Object.assign({ mid: true }, cur));
+    if (!L.length || !S.me) return;
+    modal(`<h3>💾 월 백업을 받아 둘까요?</h3>
+      <div class="note">월 백업 = 한 달 자료를 파일 1개로 (업무 · 연차 · 평가 · 업무배정 · 출근 확인 · 영상 업무표 …). PC나 공유 폴더에 보관하세요. 매일 자동 백업과 별도 사본입니다.</div>
+      <table class="list" style="margin:10px 0"><thead><tr><th>귀속월</th><th>상태</th><th>마지막 백업</th><th></th></tr></thead><tbody>
+      ${L.map(x => `<tr><td><b>${ymLabel(x.ym)}</b></td><td>${x.mid ? '진행 중' : '마감'}</td><td>${x.backupAt ? esc(x.backupAt.slice(0, 16)) + (x.changed ? ' <b class="t-lo">· 그 뒤 바뀜</b>' : '') : '<b class="t-lo">없음</b>'}</td><td><button class="primary sm" data-bkr="${x.ym}">받기</button></td></tr>`).join('')}
+      </tbody></table>
+      <div class="acts"><button data-snz>오늘은 그만</button><button data-c>닫기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      $('[data-snz]', bg).onclick = () => { try { localStorage.setItem('bkSnooze', S.today); } catch (e) { } close(); };
+      $$('[data-bkr]', bg).forEach(b => (b.onclick = async () => { b.disabled = true; try { const x = await bkDownload(b.dataset.bkr); b.textContent = '받음 ✓'; toast(ymLabel(b.dataset.bkr) + ' 백업을 받았습니다 (일일 ' + x.days.length + '건)'); } catch (e) { toast(e.message, true); b.disabled = false; } }));
+    });
+  }
   async function zipAll(ym) {
     const list = (S._mlist || []).filter(u => u.items.length);
     if (!list.length) return toast('받을 데이터가 없습니다', true);
@@ -11544,8 +11581,7 @@ async function addCharts(buf, jobs) {
     $$('[data-bk]', box).forEach(b => (b.onclick = async () => {
       const ym = b.dataset.bk; b.disabled = true;
       try {
-        const x = await api('bkMonth', { ym }); delete x.ok; delete x._ms;
-        saveBlob(new Blob([JSON.stringify(x)], { type: 'application/json' }), '업무데이터_월백업_' + ym + '_' + S.today + '.json');
+        const x = await bkDownload(ym);
         toast(ymLabel(ym) + ' 백업을 받았습니다 (일일 ' + x.days.length + ' · 연차 ' + x.leaves.length + ' · 평가 ' + x.hrRec.length + ')'); drawBackup();
       } catch (e) { toast(e.message, true); b.disabled = false; }
     }));
@@ -12065,6 +12101,7 @@ async function addCharts(buf, jobs) {
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
       S.layout = null; shell(layoutOf(v0)); go(v0, { date: d0, _pop: true }); setTimeout(() => { if(S.me) void updateEduBadge(true); },900);
+      setTimeout(() => { void bkRemind(); }, 2500);                                           // v28.56 : 월 백업 알림
       if (!pre && r.mustChange) changePin('관리자가 준 <b>임시 비밀번호</b>입니다. 본인만 아는 새 번호로 바꿔야 쓸 수 있습니다.', true);   // 새로고침해도 다시
       if (isManager()) setTimeout(() => { prefetchManage(); if (window.Leave) window.Leave.prefetch().then(updateBadge).catch(() => { }); }, 600);
     } catch (e) { if (S.token) { toast(e.message, true); } renderLogin(); }
@@ -12079,8 +12116,10 @@ async function addCharts(buf, jobs) {
   if (window.ACC) window.ACC.init({ api, modal, toast, confirmBox, S, C, saveBlob, go, gdot, gcol, loadLib, pageHead, normName, peopleNames: () => ((S._ppl && S._ppl.rows) || []).map(x => x.name), updateAccBadge });
   if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter, adjOn, adjYm, adjItems });   // v28.52 : 지원 보정
   // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
-  setInterval(() => { if (S.me && S.me.acc) void updateAccBadge(); if(S.me)void updateEduBadge(false); }, 90000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && S.me && S.me.acc) void updateAccBadge(); if(!document.hidden && S.me)void updateEduBadge(false); });
+  // v28.56 : 화면을 안 보고 있을 때(최소화 · 다른 탭 · 화면 꺼짐)는 알림 확인을 쉼 → 서버 호출 줄이기 · 다시 보면 바로 1번 확인
+  const pollBadges = () => { S._pollAt = Date.now(); if (S.me && S.me.acc) void updateAccBadge(); if (S.me) void updateEduBadge(false); };
+  setInterval(() => { if (!document.hidden && document.hasFocus && (document.hasFocus() || Date.now() - (S._pollAt || 0) > 5 * 60000)) pollBadges(); }, 90000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - (S._pollAt || 0) > 60000) pollBadges(); });
   // Read-only summary uses an initial load and the explicit refresh button only.
   boot();
 })();
