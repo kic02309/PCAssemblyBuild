@@ -2089,6 +2089,75 @@ header.roh .me b{overflow-wrap:anywhere}
 @media(max-width:700px){header.roh{position:relative;top:0;margin:8px;padding:13px 15px}header.roh .me{margin-left:0}header.roh .logo{white-space:normal}header.roh nav{overflow:visible;gap:3px}header.roh nav button{font-size:13px;padding:9px 10px}.roc .ph{top:0}.rh-home{padding:22px 16px 32px}.rh-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.rh-grid .rh-tile{min-height:210px;padding:17px}.rh-tile>strong{font-size:20px}.rh-heading h1{font-size:31px}.rh-summary{font-size:13px;gap:6px 13px}.rh-update{padding-top:0}.rh-description{font-size:12px}}
 @media(max-width:370px){.rh-grid{grid-template-columns:1fr}.rh-grid .rh-tile{min-height:200px}}
 @media(prefers-reduced-motion:reduce){.rh-grid .rh-tile{transition:none}.rh-grid .rh-tile:hover{transform:none}}
+/* v28.64 팀장·이사 처음 화면 — 절제된 흰 카드 · 얇은 선 아이콘 · 왼쪽 색 띠 */
+.rh2 .rh2-row{display:grid;gap:14px;margin-top:14px}
+.rh2 .rh2-row.r2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rh2 .rh2-row.r3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rh2 .rh2-row.r4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.rh2 .r4 .rh2-card{grid-template-columns:auto 1fr;padding:16px 16px 16px 18px}.rh2 .r4 .rh2-ar{display:none}.rh2 .r4 .rh2-ft{grid-column:1/3}
+.rh2 .rh2-row.r2:has(>.rh2-card:only-child){grid-template-columns:1fr}
+.rh2-card{--ac:var(--blue);--acs:var(--blue-soft);position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 14px;text-align:left;min-width:0;padding:18px 20px 18px 22px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);box-shadow:0 1px 2px #1d243012;overflow:hidden;transition:border-color .15s,box-shadow .15s,transform .15s}
+.rh2-card:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--ac)}
+.rh2-card:hover{border-color:var(--ac);box-shadow:0 6px 16px #1d24301a;transform:translateY(-2px)}
+.rh2-card:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.rh2-card.rh2w{--ac:var(--red);--acs:var(--red-soft)}
+.rh2-ic{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:var(--acs);color:var(--ac)}
+.rh2-ic svg{width:22px;height:22px}
+.rh2-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rh2-tx strong{font-size:16px;font-weight:800;letter-spacing:-.4px;line-height:1.3}
+.rh2-ds{font-size:12.5px;color:var(--sub);line-height:1.5}
+.rh2-ar{font-size:17px;color:var(--sub);transition:transform .15s,color .15s}
+.rh2-card:hover .rh2-ar{transform:translateX(3px);color:var(--ac)}
+.rh2-ft{grid-column:2/3;grid-row:2;font-size:12.5px;font-weight:700;color:var(--ac);font-variant-numeric:tabular-nums;padding-top:6px;border-top:1px solid var(--line2);margin-top:6px}
+.rh2-card:not(.big):not(.wd) .rh2-ar{grid-column:3;grid-row:1}
+.rh2-card.big{padding:22px 24px 22px 26px;grid-template-columns:auto 1fr auto;min-height:150px}
+.rh2-card.big .rh2-ic{width:50px;height:50px;border-radius:12px}.rh2-card.big .rh2-ic svg{width:26px;height:26px}
+.rh2-card.big .rh2-tx strong{font-size:21px;letter-spacing:-.7px}
+.rh2-kpi{grid-column:1/4;grid-row:2;display:flex;gap:10px;margin-top:10px;padding-top:12px;border-top:1px solid var(--line2)}
+.rh2-kpi>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:center}
+.rh2-kpi small{font-size:11.5px;color:var(--sub);font-weight:600}
+.rh2-kpi b{font-size:19px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.rh2 .wd .rh2-card{padding:14px 18px 14px 22px;background:var(--head)}
+.rh2 .wd .rh2-card .rh2-ft{grid-column:auto;grid-row:auto;border:0;margin:0;padding:0}
+.rh2 .wd .rh2-card{grid-template-columns:auto 1fr auto auto}
+.rh2 .wd .rh2-ic{width:36px;height:36px}
+.rh2-card[data-k=wt]{--ac:#a03a78;--acs:#f8e9f2}
+html[data-theme=dark] .rh2-card[data-k=wt]{--acs:#3a1f30;--ac:#e08cbd}
+html[data-theme=dark] .rh2-card{box-shadow:none}
+@media(max-width:1100px){.rh2 .rh2-row.r4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:950px){.rh2 .rh2-row.r3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.rh2 .rh2-row.r2{grid-template-columns:1fr}.rh2 .rh2-row.r4,.rh2 .rh2-row.r3{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rh2-card.big{min-height:0}.rh2-kpi b{font-size:17px}.rh2 .r3 .rh2-card,.rh2 .r4 .rh2-card{grid-template-columns:auto 1fr;padding:13px 12px 13px 16px;gap:4px 10px}.rh2 .r3 .rh2-ic,.rh2 .r4 .rh2-ic{width:34px;height:34px}.rh2 .r4 .rh2-ic svg{width:19px;height:19px}.rh2 .r4 .rh2-ds{display:none}.rh2 .r4 .rh2-ft{font-size:12px}.rh2 .r4 .rh2-tx strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.rh2-card,.rh2-ar{transition:none}.rh2-card:hover{transform:none}}
+/* v28.64b 중간 단계 — 색 있는 부드러운 카드 + 색 아이콘 칩 + 은은한 장식 원 (일러스트 없음) */
+.rh2-card{--a1:#2f6fe4;--a2:#1b49b0;background:linear-gradient(135deg,color-mix(in srgb,var(--a1) 15%,var(--panel)),color-mix(in srgb,var(--a1) 4%,var(--panel)) 70%);border-color:color-mix(in srgb,var(--a1) 22%,var(--line));--ac:var(--a1)}
+.rh2-card:before{left:auto;top:-46px;right:-34px;bottom:auto;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--a1) 20%,transparent),transparent 68%);pointer-events:none}
+.rh2-card>*{position:relative;z-index:1}
+.rh2-ic{background:linear-gradient(145deg,var(--a1),var(--a2));color:#fff;box-shadow:0 4px 10px color-mix(in srgb,var(--a1) 40%,transparent)}
+.rh2-ft{color:color-mix(in srgb,var(--a2) 80%,var(--ink));border-top-color:color-mix(in srgb,var(--a1) 18%,transparent)}
+html[data-theme=dark] .rh2-ft{color:color-mix(in srgb,var(--a1) 70%,#fff)}
+.rh2-card[data-k=education]{--a1:#7c4dff;--a2:#5127c8}
+.rh2-card[data-k=leave]{--a1:#12a37a;--a2:#0a6f52}
+.rh2-card[data-k=people]{--a1:#2f7fe0;--a2:#1b4fb0}
+.rh2-card[data-k=stats]{--a1:#0f9fb5;--a2:#0a6a82}
+.rh2-card[data-k=acc]{--a1:#ee6a3c;--a2:#c23a24}
+.rh2-card[data-k=prod]{--a1:#17a86b;--a2:#0b7a4a}
+.rh2-card[data-k=org]{--a1:#5d7396;--a2:#38496a}
+.rh2-card[data-k=wt]{--a1:#e0488f;--a2:#b02270}
+.rh2 .wd .rh2-card{background:linear-gradient(135deg,color-mix(in srgb,var(--a1) 12%,var(--panel)),color-mix(in srgb,var(--a1) 3%,var(--panel)))}
+/* 큰 카드 : 진한 색 + 흰 글씨 */
+.rh2-card.big{color:#fff;border-color:transparent;box-shadow:0 10px 22px color-mix(in srgb,var(--a1) 35%,transparent)}
+.rh2-card.big[data-k=dash]{--a1:#2a63e6;--a2:#16399f;background:linear-gradient(135deg,#2f6df0,#15389c)}
+.rh2-card.big[data-k=mgr]{--a1:#7a4df0;--a2:#4425b5;background:linear-gradient(135deg,#8656f5,#432299)}
+.rh2-card.big:before{top:-70px;right:-50px;width:240px;height:240px;background:radial-gradient(circle,#ffffff26,transparent 68%)}
+.rh2-card.big:after{content:"";position:absolute;right:70px;bottom:-60px;width:170px;height:170px;border-radius:50%;border:1px solid #ffffff1f;pointer-events:none}
+.rh2-card.big .rh2-ic{background:#ffffff26;box-shadow:inset 0 1px 0 #ffffff40;color:#fff}
+.rh2-card.big .rh2-ds,.rh2-card.big .rh2-kpi small{color:#e6ecff}
+.rh2-card.big .rh2-kpi b{color:#fff}
+.rh2-card.big .rh2-kpi{border-top-color:#ffffff30}
+.rh2-card.big .rh2-ar{color:#fff}
+.rh2-card.big:hover .rh2-ar{color:#fff}
+.rh2-card.big:hover{box-shadow:0 14px 28px color-mix(in srgb,var(--a1) 45%,transparent)}
+html[data-theme=dark] .rh2-card.big{box-shadow:0 8px 20px #0007}
 
 
 /* v28.47 : 조회 바 버튼을 조회 칸 바로 옆으로 (오른쪽 끝 X) */
@@ -7392,7 +7461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.63';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -11558,26 +11627,39 @@ async function addCharts(buf, jobs) {
   function renderRoHome() {
     if (!isRO()) return;
     const main = $('#main');
-    const cards = [
-      ['dash', IC.dash, '일일업무현황', '출근 · 조립 실적 · 월별 현황', '전 근무일 기준'],
-      ['stats', IC.chart, '통계', '수량 · 평균 환산 · 그룹 비교', '주 · 월 · 분기 · 연간'],
-      ['acc', IC.warn, '사고', '사고 유형 · 접수 · 처리 내역', '사고 현황 확인'],
-      ['education', IC.hr, '교육일정', '교육 날짜 · 시간 · 장소', '회차별 대상자 확인'],
-      ['leave', IC.cal, '연차현황', '연차 · 대체휴무 · 토요근무', '휴무 일정 확인'],
-      ['people', IC.ppl, '인원현황', '직원 명단 · 직책 · 소속', '구성원 확인'],
-      ['org', IC.org, '조직도', '그룹 · 파트장 · 인원 배치', '조직 구성 확인']
-    ].concat(canWtMenu() ? [['wt', IC.video, '영상업무', '월간 업무표 · 프로젝트 · 진행 기록', '업무표 ' + wtUsers().filter(w => wtOnU(w, (curPeriod() || {}).ym)).length + '명']] : []);   // v28.58
-    main.innerHTML = `<section id="roHome" class="rh-home">
+    // v28.64 : 팀장 · 이사 처음 화면 — 큰 카드 2 · 중간 카드 6 · 아래 가로 카드 2 (얇은 선 아이콘 · 흰 바탕 · 오늘 숫자)
+    const cd = (v, ic, title, desc, foot, tone) => `<button type="button" class="rh2-card${tone ? ' ' + tone : ''}" data-go="${v}" data-k="${v}"><span class="rh2-ic" aria-hidden="true">${ic}</span><span class="rh2-tx"><strong>${title}</strong><span class="rh2-ds">${desc}</span></span><span class="rh2-ft" id="rhFoot-${v}">${foot}</span><span class="rh2-ar" aria-hidden="true">→</span></button>`;
+    const big = [
+      `<button type="button" class="rh2-card big" data-go="dash" data-k="dash"><span class="rh2-ic" aria-hidden="true">${IC.dash}</span><span class="rh2-tx"><strong>일일업무현황</strong><span class="rh2-ds">출근 · 조립 실적 · 월별 현황</span></span>
+        <span class="rh2-kpi"><span><small>출근</small><b id="rhAttendance">집계 전</b></span><span><small>조립</small><b id="rhAssembly">집계 전</b></span><span><small>평균 환산</small><b id="rhAverage">집계 전</b></span></span><span class="rh2-ar" aria-hidden="true">→</span></button>`,
+      canMgr() ? `<button type="button" class="rh2-card big" data-go="mgr" data-k="mgr"><span class="rh2-ic" aria-hidden="true">${IC.clip}</span><span class="rh2-tx"><strong>매니저 관리</strong><span class="rh2-ds">이번 주 할 일 · 면담 · 피드백</span></span><span class="rh2-kpi"><span><small>바로 열기</small><b>상세 보기</b></span></span><span class="rh2-ar" aria-hidden="true">→</span></button>` : ''];
+    const mid = [
+      cd('acc', IC.warn, '사고', '사고 유형 · 접수 · 처리', S.me.acc ? '확인 중…' : '사고 현황 확인', 'rh2w'),
+      cd('stats', IC.chart, '통계', '수량 · 평균 환산 · 그룹 비교', '주 · 월 · 분기 · 연간'),
+      canProd() ? cd('prod', IC.box, '생산업무', '라인 생산 · 실적 배분', '확정 · 배분 현황') : '',
+      cd('people', IC.ppl, '인원현황', '직원 명단 · 직책 · 소속', '구성원 확인')];
+    const wide = [
+      cd('leave', IC.cal, '연차현황', '연차 · 대체휴무 · 토요근무', '휴무 일정 확인'),
+      cd('education', IC.hr, '교육일정', '교육 날짜 · 시간 · 장소', '확인 중…'),
+      canWtMenu() ? cd('wt', IC.video, '영상업무', '월간 업무표 · 프로젝트', '업무표 ' + wtUsers().filter(w => wtOnU(w, (curPeriod() || {}).ym)).length + '명') : '',
+      cd('org', IC.org, '조직도', '그룹 · 파트장 · 인원 배치', '구성 확인')];
+    main.innerHTML = `<section id="roHome" class="rh-home rh2">
       <div class="rh-heading"><div><div class="rh-eyebrow">ASSEMBLY TEAM</div><h1>조립팀 <span>현황</span></h1>
-        <div class="rh-summary" aria-live="polite"><span class="rh-date" id="rhDate">오늘 ${esc(dLabel(roToday()))}</span><span title="직원 명단에서 등록된 휴무자를 제외한 인원입니다. 출퇴근 기록 집계가 아닙니다.">출근 <b id="rhAttendance">집계 전</b></span><span>조립 <b id="rhAssembly">집계 전</b></span><span>평균 환산 <b id="rhAverage">집계 전</b></span></div></div>
+        <div class="rh-summary"><span class="rh-date" id="rhDate">오늘 ${esc(dLabel(roToday()))}</span></div></div>
         <div class="rh-update"><span id="rhUpdated" role="status">불러오는 중…</span><button type="button" id="rhRefresh" aria-label="오늘 조립팀 현황 새로고침">↻ 새로고침</button></div></div>
-      <div class="rh-section"><h2>업무 바로가기</h2><span>오늘 저장 자료 · 새로고침 버튼으로 최신 조회</span></div>
-      <div class="rh-grid">${cards.map(([v, ic, title, description, foot], i) => `<button type="button" class="rh-tile" data-go="${v}"><span class="rh-tile-top"><span class="rh-icon" aria-hidden="true">${ic}</span><span class="rh-number" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span></span><strong>${title}</strong><span class="rh-description">${description}</span><span class="rh-tile-bottom"><span id="rhFoot-${v}">${foot}</span><span class="rh-arrow" aria-hidden="true">↗</span></span></button>`).join('')}</div>
+      <div class="rh2-row r2">${big.join('')}</div>
+      <div class="rh2-row r4">${mid.join('')}</div>
+      <div class="rh2-row r4">${wide.join('')}</div>
     </section>`;
     const home = $('#roHome');
     home._ro = { token: S.token, uid: S.me.id, busy: false, date: roToday(), lastSuccess: '' };
     $('#rhRefresh', home).onclick = () => refreshRoHome();
     return refreshRoHome();
+  }
+  // 교육 미확인 · 오늘 사고 접수 건수 (카드 아래 한 줄) — 실패해도 카드는 그대로
+  async function roHomeCounts(home, valid, text) {
+    try { const r = await api('eduNotice'); if (!valid()) return; const n = (r.items || []).length; text('rhFoot-education', n ? `하루 전·당일 미확인 ${n}건` : '미확인 일정 없음'); } catch (e) { if (valid()) text('rhFoot-education', '교육 일정 확인'); }
+    if (S.me.acc) { try { const r = await api('accNotice'); if (!valid()) return; const n = Math.max(0, Number(r.count) || 0); text('rhFoot-acc', n ? `오늘 접수 ${n}건` : '오늘 접수 없음'); } catch (e) { if (valid()) text('rhFoot-acc', '사고 현황 확인'); } }
   }
   async function refreshRoHome() {
     const home = $('#roHome');
@@ -11614,6 +11696,7 @@ async function addCharts(buf, jobs) {
       text('rhFoot-leave', `오늘 등록 휴무 ${D.off.length}명`);
       text('rhFoot-people', `명단 ${r.people.length}명`);
       text('rhFoot-org', `${new Set(r.people.map(p => p.grp).filter(Boolean)).size}개 그룹`);
+      roHomeCounts(home, valid, text);
       state.lastSuccess = roClock();
       text('rhUpdated', '마지막 갱신 ' + state.lastSuccess + (summary.hasSaved ? '' : ' · 집계 전'));
     } catch (e) {
