@@ -2073,6 +2073,7 @@ header.roh .me b{overflow-wrap:anywhere}
 .rh-grid .rh-tile[data-go=leave]{--tile-a:#21886c;--tile-b:#075540}
 .rh-grid .rh-tile[data-go=people]{--tile-a:#407ab4;--tile-b:#234c88}
 .rh-grid .rh-tile[data-go=org]{--tile-a:#4f6386;--tile-b:#253450}
+.rh-grid .rh-tile[data-go=wt]{--tile-a:#b23d84;--tile-b:#6e1b51}
 .rh-grid .rh-tile:hover{transform:translateY(-6px);box-shadow:0 18px 28px #10254a35,inset 0 1px 0 #ffffff58}
 .rh-tile:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
 .rh-tile-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
@@ -2143,6 +2144,14 @@ html[data-theme=dark] .adjt{background:#3b2f63;color:#d8ccff}html[data-theme=dar
 .stat .adjl{font-size:11px;color:#6d28d9;font-weight:700;margin-top:2px;white-space:nowrap}
 .lver{font-style:normal;margin-left:10px;font-size:11.5px;font-weight:700;color:#a9b8d8;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:2px 9px;vertical-align:3px}.czv{font-style:normal;margin-left:6px;font-size:10px;font-weight:700;color:#7b8699;background:#eef1f5;border-radius:99px;padding:1px 6px;vertical-align:2px;white-space:nowrap}html[data-theme=dark] .czv{background:#2a3242;color:#a9b4c6}
 
+/* v28.58 : 관리자 · 매니저 화면도 팀장 보기처럼 회색 바탕 + 흰 카드 (카드 윤곽 또렷하게) */
+.cz .content{background:#eef0f5}.cz .ph{background:rgba(238,240,245,.94)}
+.cz #main .card,.cz #main .stat,.cz #main .czf-v4{border-color:#d9dee7;box-shadow:0 1px 3px rgba(17,24,39,.07)}
+/* v28.58 : 현황판 이름 밑 목표 크게 */
+.tgl{font-size:12px;font-weight:700;color:#3d4757;white-space:nowrap}.tgl b{color:#1f5fbf;font-size:13.5px;font-weight:800}
+table.bd .bn small .tgl{font-size:11.5px}
+table.bd .bn{min-width:168px}table.bd .bn small{white-space:nowrap}
+html[data-theme=dark] .tgl{color:#c9d1dd}html[data-theme=dark] .tgl b{color:#9ebff1}
 /* v28.56 : 모든 목록 표 — 칸 세로 구분선 + 가운데 정렬 (첫 칸 · 글이 긴 칸은 왼쪽) */
 table.list th,table.list td,.hrw .tbl th,.hrw .tbl td{text-align:center;border-right:1px solid #e3e7ee}
 table.list td.num,table.list th.num{text-align:center}
@@ -7258,7 +7267,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.58';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10244,7 +10253,7 @@ async function addCharts(buf, jobs) {
     const dates = []; for (let d = st; d <= en && dates.length < 100; d = C.addDays(d, 1)) dates.push(d);
     const h = dayHits(m.daily, tg, ym);
     return `<div class="card board pstrip" style="padding:0;overflow:auto"><table class="bd"><thead><tr><th class="bn">일자별 현황판</th>${dates.map(d => { const w = new Date(d + 'T00:00:00').getDay(); return `<th class="${w === 6 ? 'sat' : w === 0 ? 'sun' : ''}">${+d.slice(8)}<small>${C.WD[w]}</small></th>`; }).join('')}<th class="bt r4">근무일</th><th class="bt r3 t-hi">달성일</th><th class="bt r2 t-lo">미달일</th><th class="bt r1">평가평균</th><th class="bt r0">달성률</th></tr></thead><tbody><tr>
-      <td class="bn"><b>${esc(r.user.name)}</b><small>${tg ? (tMode() === 't' ? '팀 목표 ' : '목표 ') + tg : '목표 없음'}</small></td>${dates.map(d => {
+      <td class="bn"><b>${esc(r.user.name)}</b><small><span class="tgl">${tg ? `${tMode() === 't' ? '팀 목표' : '개인 목표'} <b>${tg}</b>` : '목표 없음'}</span></small></td>${dates.map(d => {
         const x = D[d], aj = ADJ[d], w = new Date(d + 'T00:00:00').getDay();
         if (!x) return `<td class="e${w === 0 || w === 6 ? ' hc' : ''}"></td>`;
         if (x.zero) return `<td class="z" data-sd="${d}" title="${dLabel(d)} · 실적 0${aj ? ' (' + esc(aj.reason) + ')' : ''}">${aj ? adjTag(aj) : '0'}</td>`;
@@ -10297,7 +10306,7 @@ async function addCharts(buf, jobs) {
       <div class="legend"><span><i class="r-no"></i>목표 미설정</span><span class="muted">색 = 위 '달성 기준' · 숫자 = 그날 평가평균 · 칸 클릭 = 그날 입력 화면</span></div>
       <div class="card board" style="padding:0;overflow:auto;max-height:calc(100vh - 220px)">
       <table class="bd"><thead><tr><th class="bn">이름</th>${dates.map(d => { const w = new Date(d + 'T00:00:00').getDay(), hn = HOL[d]; return `<th class="${hn ? 'hol' : w === 6 ? 'sat' : w === 0 ? 'sun' : ''}" ${hn ? `title="${esc(hn)}"` : ''}>${+d.slice(8)}<small>${hn ? esc(hn.replace(/\(.*\)/, '').slice(0, 3)) : C.WD[w]}</small></th>`; }).join('')}<th class="bt r4">근무일</th><th class="bt r3 t-hi">달성일</th><th class="bt r2 t-lo">미달일</th><th class="bt r1">평가평균</th><th class="bt r0">달성률</th></tr></thead><tbody>
-      ${list.map((u, i) => (S.mSort.k === 'group' ? ghd(list, i, x => x.group, dates.length + 6, g => [g.length + '명']) : '') + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td class="bn"><b class="pclk" data-bu="${u.id}">${esc(u.name)}</b>${wtOnU(u, S._gym) ? ' <span class="rtag wtt">업무표</span>' : ''}${u.pend ? ' <span class="rtag pendt">미가입</span>' : ''}<small>${gdot(u.group)}${u.tg ? (tMode() === 't' ? ' · 팀 목표 ' : ' · 목표 ') + u.tg : ''}</small></td>${dates.map(d => {
+      ${list.map((u, i) => (S.mSort.k === 'group' ? ghd(list, i, x => x.group, dates.length + 6, g => [g.length + '명']) : '') + `<tr data-u="${u.id}" class="gc" style="--gc:${gcol(u.group)}"><td class="bn"><b class="pclk" data-bu="${u.id}">${esc(u.name)}</b>${wtOnU(u, S._gym) ? ' <span class="rtag wtt">업무표</span>' : ''}${u.pend ? ' <span class="rtag pendt">미가입</span>' : ''}<small>${gdot(u.group)}${u.tg ? ` · <span class="tgl">${tMode() === 't' ? '팀 목표' : '개인 목표'} <b>${u.tg}</b></span>` : ''}</small></td>${dates.map(d => {
         const s = byU[u.id][d], why = bWhy(u.name, d), wn = WTD[u.id + '|' + d]; if (!s && wn) return `<td class="wtc${why ? ' why' : ''}" title="${esc(u.name)} ${dLabel(d)} · 업무표 기록 ${wn}건${why ? ' · ' + esc(why) : ''}">${why ? `<span>${esc(whyAb(why))}</span>` : ''}●${wn > 1 ? wn : ''}</td>`; if (!s) return `<td class="e${why ? ' why' : ''}${HOL[d] && !why ? ' hc' : ''}" data-d="${d}" ${why ? `title="${esc(u.name)} ${dLabel(d)} · ${esc(why)}"` : HOL[d] ? `title="${esc(HOL[d])}"` : ''}>${why ? `<span>${esc(whyAb(why))}</span>` : ''}</td>`;
         const v = C.sumDay(s, minsOf(d)).f7, rc = u.tg ? LVC[lvOf(v, u.tg, S._gym)] : 'r-no';
         const aj = byA[u.id][d];
@@ -11053,7 +11062,7 @@ async function addCharts(buf, jobs) {
       ['leave', IC.cal, '연차현황', '연차 · 대체휴무 · 토요근무', '휴무 일정 확인'],
       ['people', IC.ppl, '인원현황', '직원 명단 · 직책 · 소속', '구성원 확인'],
       ['org', IC.org, '조직도', '그룹 · 파트장 · 인원 배치', '조직 구성 확인']
-    ];
+    ].concat(canWtMenu() ? [['wt', IC.video, '영상업무', '월간 업무표 · 프로젝트 · 진행 기록', '업무표 ' + wtUsers().filter(w => wtOnU(w, (curPeriod() || {}).ym)).length + '명']] : []);   // v28.58
     main.innerHTML = `<section id="roHome" class="rh-home">
       <div class="rh-heading"><div><div class="rh-eyebrow">ASSEMBLY TEAM</div><h1>조립팀 <span>현황</span></h1>
         <div class="rh-summary" aria-live="polite"><span class="rh-date" id="rhDate">오늘 ${esc(dLabel(roToday()))}</span><span title="직원 명단에서 등록된 휴무자를 제외한 인원입니다. 출퇴근 기록 집계가 아닙니다.">출근 <b id="rhAttendance">집계 전</b></span><span>조립 <b id="rhAssembly">집계 전</b></span><span>평균 환산 <b id="rhAverage">집계 전</b></span></div></div>
