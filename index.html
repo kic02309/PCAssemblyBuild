@@ -2273,6 +2273,17 @@ table.prt select.need{border-color:#e53935;background:#fff5f5}tr.prbad td{backgr
 @media(max-width:700px){body.pmobm .czr,body.pmobm .czn,body.pmobm .czd,body.pmobm .czu .tag,body.pmobm #pw,body.pmobm .czv{display:none}body.pmobm .czt{padding:8px 12px;min-width:0}body.pmobm .czb{display:block}body.pmobm .content{margin:0;padding:0}}
 html[data-theme=dark] table.prt select.need{background:#3a1d1d}html[data-theme=dark] tr.prbad td{background:#2b2618}html[data-theme=dark] .stat.prs{background:#1d2a44;border-color:#2f4f8f}html[data-theme=dark] .stat.prs .v{color:#8fb4ff}
 html[data-theme=dark] .pmcf{background:#163323;color:#8fe0a8}html[data-theme=dark] .pmcf.wait,html[data-theme=dark] .mgst.wait{background:#33291a;color:#f0c674}
+
+/* v28.63 : 교육일정 칸 줄이기 (줄 높이 · 글자 · 폭) · 생산업무 요약 */
+.edu-board{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.edu-session-head{padding:8px 11px 6px}.edu-session-head b{font-size:14px}.edu-details{padding:7px 11px;font-size:12.5px;line-height:1.4}.edu-details small{font-size:13px;margin-top:3px}
+.edu-members{padding:4px 7px 2px;max-height:460px;min-height:40px}
+.edu-person{grid-template-columns:14px 40px minmax(48px,1fr) 38px auto 16px;gap:3px;padding:2px 3px;min-height:24px;font-size:12px}
+.edu-role{font-size:10px;padding:1px 1px}.edu-grp{font-size:10.5px}.edu-add{margin:5px 8px 0!important;padding:4px!important;font-size:12px}.edu-session{padding-bottom:7px}
+.prsum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.prsum>div{flex:1 1 130px;min-width:120px;background:var(--panel,#fff);border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:9px 12px;text-align:center}
+.prsum small{display:block;font-size:11.5px;color:#64748b;font-weight:700}.prsum b{display:block;font-size:22px;margin-top:2px;color:#1d2430}.prsum .c1{color:#1d4ed8}.prsum .c2{color:#1e7a3c}.prsum em{font-style:normal;font-size:11px;color:#64748b;font-weight:600}
+.prc .tbs{max-height:420px;overflow:auto}table.prt tr.prsub td{background:#f5f8ff;font-weight:800}
+html[data-theme=dark] .prsum>div{background:#1a1c21;border-color:#2e323a}html[data-theme=dark] .prsum b{color:#fff}html[data-theme=dark] table.prt tr.prsub td{background:#1d2a44}
 </style>
 </head>
 <body>
@@ -7440,7 +7451,7 @@ async function addCharts(buf, jobs) {
     el.textContent = '응답 ' + (ms / 1000).toFixed(2) + '초' + (sms != null ? ' (서버 ' + (sms / 1000).toFixed(2) + ')' : '') + ' · ' + action;
   }
   // v28.54 : 관리자 '직급별 화면 미리보기' — 읽기만 허용, 저장·수정 요청은 보내지 않음
-  const PV_READ = new Set(['me', 'logout', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
+  const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
     'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
   const pvRead = (a, d) => PV_READ.has(a) || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
@@ -7868,7 +7879,7 @@ async function addCharts(buf, jobs) {
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canProd() ? [['prod', '생산업무']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -7902,7 +7913,7 @@ async function addCharts(buf, jobs) {
         </header>
         <div class="czb">
           <aside class="czr">
-            ${rb('work', 'dash', '업무', IC.dash)}${canWtMenu() ? rb('video', 'wt', '영상업무', IC.video) : ''}${canMgr() ? rb('mgr', 'mgr', '매니저 관리', IC.clip) : ''}${rb('leave', 'leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}${rb('education', 'education', '교육일정', IC.cal, '<i class="bd hide" id="edubd"></i>')}${m.acc ? rb('acc', 'acc', m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>') : ''}${m.hr ? rb('hr', 'hr', '인사평가', IC.hr) : ''}${canSettings() ? rb('adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear) : ''}
+            ${rb('work', 'dash', '업무', IC.dash)}${canWtMenu() ? rb('video', 'wt', '영상업무', IC.video) : ''}${canMgr() ? rb('mgr', 'mgr', '매니저 관리', IC.clip) : ''}${rb('leave', 'leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}${canProd() ? rb('prod', 'prod', '생산업무', IC.box) : ''}${rb('education', 'education', '교육일정', IC.cal, '<i class="bd hide" id="edubd"></i>')}${rb('org', 'org', '조직도', IC.org)}${m.acc ? rb('acc', 'acc', m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>') : ''}${m.hr ? rb('hr', 'hr', '인사평가', IC.hr) : ''}${canSettings() ? rb('adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear) : ''}
             <div class="grow"></div>${thmBtn('rb')}<button id="lo" class="rb" title="로그아웃"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg><span>로그아웃</span></button>
           </aside>
           <div class="content"><div id="proxy"></div><main id="main" class="pg"></main></div>
@@ -7928,15 +7939,15 @@ async function addCharts(buf, jobs) {
     void updateEduBadge();
   }
   function setNav() {
-    const cur = isRO() && S.view === 'people' && S.pTab === 'org' ? 'org' : S.view;     // v28.10 : 보기 전용의 [조직도] = 인원 화면의 조직도 탭
+    const cur = S.view;     // v28.10 : 보기 전용의 [조직도] = 인원 화면의 조직도 탭
     $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === cur || (b.dataset.v === 'dash' && S.view === 'manage') || (b.dataset.v === 'admin' && (S.view === 'settings' || S.view === 'people' || S.view === 'stats' || S.view === 'goal'))) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
     if ($('.czn')) {                                                      // v28.17 : 분류 켜짐 + 위 막대 세부 메뉴
-      const v = S.view, cat = v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'goal'].includes(v) ? 'adm' : 'work';
+      const v = S.view, cat = v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'goal'].includes(v) ? 'adm' : 'work';
       $$('.czr [data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
-      const it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']]).concat(canProd() && !isRO() ? [['prod', '생산업무']] : [])
-          : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']].concat(canProd() ? [['prod', '생산업무']] : []).concat(canPmob() ? [['pmob', '📱 폰 입력']] : []))
+      const it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
+          : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
-        : cat === 'mgr' ? [['mgr', '매니저 관리']] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
+        : cat === 'mgr' ? [['mgr', '매니저 관리']] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '생산업무']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '인사평가']];
       $('.czn').innerHTML = it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}">${t}</button>`).join('');
     }
@@ -8000,9 +8011,9 @@ async function addCharts(buf, jobs) {
     if (view !== 'input' && document.body.classList.contains('input-focus')) setInputFocus(false);
     if (isRO()) {                                                        // v28.10 : 보기 전용은 박스 5개 화면만
       opt = opt || {};
-      if (view === 'org') { view = 'people'; opt.tab = 'org'; } else if (view === 'people' && !opt.tab && !opt._pop) opt.tab = 'list';
+      if (view === 'people' && !opt.tab && !opt._pop) opt.tab = 'list';
       if (view === 'people' && opt.tab) S.pTab = opt.tab;                  // 위쪽 막대 [인원 현황] / [조직도] 켜짐이 바로 맞게
-      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr'].includes(view) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
+      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org'].includes(view) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
     }
     if (view === 'admin' && canHub()) {                                    // v28.8 : 고르기 화면 없이 바로 (마지막에 본 탭 → 인원 → 설정 → 통계)
       const ok = k => k === 'people' ? can('people') : k === 'settings' ? canSetPage() : k === 'stats' ? can('stats') : k === 'goal' ? isAdm0() && !isRO() : false;
@@ -8019,6 +8030,7 @@ async function addCharts(buf, jobs) {
     if (view === 'wt') { $('#proxy').innerHTML = ''; return canWtMenu() ? renderWt(opt) : go('dash'); }
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
     document.body.classList.toggle('pmobm', view === 'pmob');
+    if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
     if (view === 'prod') { $('#proxy').innerHTML = ''; return canProd() ? renderProd(opt) : go('dash'); }   // v28.63 : 생산업무
     if (view === 'pmob') { $('#proxy').innerHTML = ''; return canPmob() ? renderPmob() : go('dash'); }
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
@@ -8426,13 +8438,24 @@ async function addCharts(buf, jobs) {
     fit(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
   }
 
+  // v28.63 : 엑셀 ↔ 웹 비교 — 이미 웹에 있는 날도 내용이 같은지 다른지 보여 줌 (다르면 골라서 덮어쓰기)
+  const docSig = doc => JSON.stringify({ r: (doc.rows || []).filter(r => String(r.o || '').trim() || Object.keys(r.m || {}).length).map(r => [String(r.o || '').trim(), +r.q || 0, Object.keys(r.m || {}).sort().map(k => k + ':' + r.m[k])]),
+    o: Object.keys(doc.other || {}).sort().map(k => k + ':' + doc.other[k]), d: +doc.days || 0, ot: +doc.ot || 0 });
+  const docInfo = (doc, date) => { const c = C.calcDay(doc, 0, minsOf(date)); return { f7: c.f7, n: (doc.rows || []).filter(r => String(r.o || '').trim()).length, q: (doc.rows || []).reduce((a, r) => a + (String(r.o || '').trim() ? (+r.q || 0) : 0), 0), sig: docSig(doc) }; };
+  async function webDocs(uid, dates) {
+    const M = {}, yms = [...new Set(dates.map(d => (periodOf(d) || {}).ym).filter(Boolean))];
+    for (const ym of yms) { try { const g = await api('getMonth', { userId: uid, ym }); (g.days || []).forEach(d => { M[d.date] = docInfo(d.doc || {}, d.date); }); } catch (e) { } }
+    return M;
+  }
+  const cmpWeb = (x, existing) => { const w = existing.web && existing.web[x.date]; if (!w) return null; const f = docInfo(x.doc, x.date); return { same: w.sig === f.sig && Math.abs(w.f7 - f.f7) < 0.005, w, f }; };
+  const cmpTxt = c => `웹 ${f2(c.w.f7)} · ${c.w.n}건 ${c.w.q}대 → 파일 ${f2(c.f.f7)} · ${c.f.n}건 ${c.f.q}대`;
   // ---- 여러 명 엑셀 한꺼번에 가져오기 (관리 화면) ----
   function impStatus(x, all, existing) {
     if (!x.date) return { k: 'bad', t: '날짜 확인 필요', dis: true };
     if (!periodOf(x.date)) return { k: 'bad', t: '월 기간 없음', dis: true };
     if (all.filter(y => y.date === x.date).length > 1) return { k: 'warn', t: '날짜 중복', dis: false, off: true };
     if (x.date > S.today) return { k: 'warn', t: '미래 날짜 — 시트 이름 확인', dis: false, off: true };
-    if (existing.has(x.date)) return { k: 'warn', t: '이미 웹에 있음', dis: false, off: true, exist: true };
+    if (existing.has(x.date)) { const c = cmpWeb(x, existing); return c ? (c.same ? { k: 'ok', t: '웹과 같음', dis: false, off: true, exist: true, same: true } : { k: 'bad', t: '웹과 다름 · ' + cmpTxt(c), dis: false, off: true, exist: true, diff: true }) : { k: 'warn', t: '이미 웹에 있음', dis: false, off: true, exist: true }; }
     return { k: 'ok', t: '새로 넣음', dis: false };
   }
   function matchUser(fname, users) {
@@ -8445,7 +8468,7 @@ async function addCharts(buf, jobs) {
     const ds = items.map(x => x.date).filter(Boolean).sort();
     if (!ds.length || !uid) return new Set();
     const en = ds[ds.length - 1], st = ds[0] < C.addDays(en, -85) ? C.addDays(en, -85) : ds[0];
-    return new Set((await api('listDates', { userId: uid, start: st, end: en })).dates);
+    const s = new Set((await api('listDates', { userId: uid, start: st, end: en })).dates); s.web = s.size ? await webDocs(uid, [...s]) : {}; return s;
   }
   function bulkImport() {
     const fi = document.createElement('input'); fi.type = 'file'; fi.multiple = true; fi.accept = '.xlsm,.xlsx';
@@ -8470,14 +8493,14 @@ async function addCharts(buf, jobs) {
     let overwrite = false;
     const recalc = it => { it.items.forEach(x => { const s = impStatus(x, it.items, it.existing); x.on = !s.dis && (!s.off || (overwrite && s.exist)); }); };
     list.forEach(it => { recalc(it); it.on = !!it.user && !it.err && it.items.some(x => x.on); });
-    const counts = it => { const c = { ok: 0, ex: 0, chk: 0, sel: 0 }; it.items.forEach(x => { const s = impStatus(x, it.items, it.existing); if (s.k === 'ok') c.ok++; else if (s.exist) c.ex++; else c.chk++; if (x.on) c.sel++; }); return c; };
+    const counts = it => { const c = { ok: 0, ex: 0, chk: 0, sel: 0, df: 0 }; it.items.forEach(x => { const s = impStatus(x, it.items, it.existing); if (s.diff) c.df++; if (s.exist) c.ex++; else if (s.k === 'ok') c.ok++; else c.chk++; if (x.on) c.sel++; }); return c; };
     const uopts = sel => '<option value="">— 인원 선택 —</option>' + users.map(u => `<option value="${u.id}" ${sel && sel.id === u.id ? 'selected' : ''}>${esc(u.name)} (${esc(u.group)})</option>`).join('');
     const rowHtml = (it, i) => {
       const c = counts(it);
       return `<tr data-f="${i}" class="bf"><td><input type="checkbox" class="bon" ${it.on ? 'checked' : ''} ${!it.user || it.err ? 'disabled' : ''}></td>
         <td class="bfn" title="${esc(it.file)}">${esc(it.file)}</td>
         <td><select class="bus ${it.user ? '' : 'miss'}">${uopts(it.user)}</select>${it.user ? '' : '<div class="muted" style="font-size:11.5px">같은 이름 계정 없음 ([처음 등록] 먼저)</div>'}</td>
-        <td class="num">${it.items.length}</td><td class="num ist ok">${c.ok}</td><td class="num ist warn">${c.ex}</td><td class="num ist ${c.chk ? 'bad' : ''}">${c.chk}</td>
+        <td class="num">${it.items.length}</td><td class="num ist ok">${c.ok}</td><td class="num ist warn">${c.ex}${c.df ? `<div class="ist bad" style="font-size:11px">다름 ${c.df}</div>` : ''}</td><td class="num ist ${c.chk ? 'bad' : ''}">${c.chk}</td>
         <td class="num"><b>${c.sel}</b>일</td>
         <td>${it.err ? `<span class="ist bad">${esc(it.err)}</span>` : `<button class="bdt">상세 ▾</button>`}</td></tr>
         <tr class="bdet hide" data-d="${i}"><td colspan="9"></td></tr>`;
@@ -8487,7 +8510,7 @@ async function addCharts(buf, jobs) {
         return `<tr data-j="${j}"><td><input type="checkbox" class="don" ${x.on ? 'checked' : ''} ${s.dis ? 'disabled' : ''}></td><td>${esc(x.sheet)}</td><td><input type="date" class="ddt" value="${x.date}" style="width:150px"></td><td>${esc(x.doc.kind)}</td><td class="num">${c.orders}</td><td class="num">${f2(c.f7)}</td><td class="ist ${s.k}">${s.t}</td></tr>`; }).join('') + '</tbody></table>';
     modal(`<h3>📥 여러 명 엑셀 가져오기 — 파일 ${list.length}개</h3>
       <div class="muted" style="margin-bottom:6px">빨간 칸은 인원을 직접 고르세요. 웹에 이미 있는 날짜는 건너뜁니다.</div>
-      <label style="display:inline-flex;gap:6px;align-items:center;margin-bottom:6px"><input type="checkbox" id="bow"> 웹에 있는 날짜도 엑셀로 덮어쓰기</label>
+      <div class="row" style="gap:10px;margin-bottom:6px"><button class="primary sm" id="bdf">웹과 다른 날만 모두 선택 (<b id="bdfn">0</b>일)</button><label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="bow"> 웹에 있는 날짜 모두 엑셀로 덮어쓰기</label></div>
       <div style="max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:8px">
       <table class="list bimp"><thead><tr><th><input type="checkbox" id="ball"></th><th>파일</th><th>인원</th><th class="num">날짜</th><th class="num">새로</th><th class="num">이미 있음</th><th class="num">확인 필요</th><th class="num">넣을 날짜</th><th></th></tr></thead>
       <tbody id="bbody"></tbody></table></div>
@@ -8528,6 +8551,9 @@ async function addCharts(buf, jobs) {
       const bind = () => list.forEach((it, i) => bindRow(i));
       draw();
       $('#bow', bg).onchange = e => { overwrite = e.target.checked; list.forEach(recalc); draw(); };
+      const dfAll = () => list.reduce((a, it) => a + (it.user && !it.err ? it.items.filter(x => impStatus(x, it.items, it.existing).diff).length : 0), 0);
+      $('#bdfn', bg).textContent = dfAll();
+      $('#bdf', bg).onclick = () => { list.forEach(it => { if (!it.user || it.err) return; let any = false; it.items.forEach(x => { if (impStatus(x, it.items, it.existing).diff) { x.on = true; any = true; } }); if (any) it.on = true; }); draw(); toast('웹과 다른 날 ' + dfAll() + '일을 골랐습니다 · [가져오기]를 누르면 엑셀 내용으로 바뀝니다'); };
       $('#ball', bg).onchange = e => { list.forEach(it => { if (it.user && !it.err) it.on = e.target.checked; }); draw(); };
       $('[data-c]', bg).onclick = () => { close(); renderManage(); };
       $('[data-s]', bg).onclick = async () => {
@@ -8542,7 +8568,7 @@ async function addCharts(buf, jobs) {
         let ok = 0; const fails = [];
         for (let k = 0; k < jobs.length; k++) {
           const { it, x } = jobs[k]; $('#bpt', bg).textContent = (k + 1) + '/' + jobs.length + ' ' + it.user.name + ' ' + dLabel(x.date);
-          try { await api('saveDay', { userId: it.user.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc, minsOf(x.date)) }); ok++; it.existing.add(x.date); x.on = false; }
+          try { await api('saveDay', { userId: it.user.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc, minsOf(x.date)) }); ok++; it.existing.add(x.date); it.existing.web = it.existing.web || {}; it.existing.web[x.date] = docInfo(x.doc, x.date); x.on = false; }
           catch (e) { fails.push(it.user.name + ' ' + dLabel(x.date) + ': ' + e.message); }
           $('#bpg i', bg).style.width = ((k + 1) / jobs.length * 100) + '%';
         }
@@ -8571,7 +8597,7 @@ async function addCharts(buf, jobs) {
       if (valid.length) {
         try {
           const st = valid[0] < C.addDays(valid[valid.length - 1], -85) ? C.addDays(valid[valid.length - 1], -85) : valid[0];
-          existing = new Set((await api('listDates', { userId: u.id, start: st, end: valid[valid.length - 1] })).dates);
+          existing = new Set((await api('listDates', { userId: u.id, start: st, end: valid[valid.length - 1] })).dates); existing.web = existing.size ? await webDocs(u.id, [...existing]) : {};
         } catch (e) { toast(e.message, true); }
       }
       showImport(f.name, u, items, existing);
@@ -8584,7 +8610,7 @@ async function addCharts(buf, jobs) {
       if (!periodOf(x.date)) return { k: 'bad', t: '월 기간 없음 (기간 설정 필요)', dis: true };
       if (all.filter(y => y.date === x.date).length > 1) return { k: 'warn', t: '날짜 중복 — 하나만 선택', dis: false, off: true };
       if (x.date > S.today) return { k: 'warn', t: '미래 날짜 — 시트 이름 확인', dis: false, off: true };
-      if (existing.has(x.date)) return { k: 'warn', t: '이미 웹에 있음 — 체크하면 덮어씀', dis: false, off: true };
+      if (existing.has(x.date)) { const c = cmpWeb(x, existing); return c ? (c.same ? { k: 'ok', t: '웹과 같음', dis: false, off: true } : { k: 'bad', t: '웹과 다름 — 체크하면 엑셀로 바꿈 · ' + cmpTxt(c), dis: false, off: true, diff: true }) : { k: 'warn', t: '이미 웹에 있음 — 체크하면 덮어씀', dis: false, off: true }; }
       return { k: 'ok', t: '새로 넣음', dis: false };
     };
     items.forEach(x => { const s = st(x, items); x.on = !s.dis && !s.off; });
@@ -8596,7 +8622,7 @@ async function addCharts(buf, jobs) {
         <td class="ist ${s.k}">${s.t}</td></tr>`;
     }).join('');
     modal(`<h3>📥 엑셀 가져오기 — ${esc(u.name)} (${esc(u.group)})</h3>
-      <div class="muted" style="margin-bottom:8px">${esc(fname)} · 날짜 시트 ${items.length}개 · 체크한 날짜만 저장</div>
+      <div class="row" style="margin-bottom:8px;gap:10px"><span class="muted">${esc(fname)} · 날짜 시트 ${items.length}개 · 체크한 날짜만 저장</span><span style="flex:1"></span>${items.some(x => st(x, items).diff) ? `<button class="primary sm" id="idf">웹과 다른 날만 선택 (${items.filter(x => st(x, items).diff).length}일)</button>` : ''}</div>
       <div style="max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:8px">
       <table class="list imp"><thead><tr><th><input type="checkbox" id="iall"></th><th>시트</th><th>날짜</th><th>구분</th><th class="num">주문</th><th class="num">평가평균</th><th>상태</th></tr></thead><tbody id="ibody">${rowsHtml()}</tbody></table></div>
       <div class="row" style="margin-top:10px"><span class="muted" id="icnt"></span><span style="flex:1"></span><span class="progress hide" id="ipg"><i></i></span><span class="muted" id="ipt"></span></div>
@@ -8617,6 +8643,7 @@ async function addCharts(buf, jobs) {
         });
       };
       bind(); cnt();
+      if ($('#idf', bg)) $('#idf', bg).onclick = () => { items.forEach(x => { x.on = !!st(x, items).diff; }); $('#ibody', bg).innerHTML = rowsHtml(); bind(); cnt(); };
       $('#iall', bg).onchange = e => { items.forEach(x => { if (!st(x, items).dis) x.on = e.target.checked; }); $('#ibody', bg).innerHTML = rowsHtml(); bind(); cnt(); };
       $('[data-c]', bg).onclick = () => { close(); loadDay(S.date); };
       $('[data-s]', bg).onclick = async () => {
@@ -8628,7 +8655,7 @@ async function addCharts(buf, jobs) {
         let ok = 0; const fails = [];
         for (let i = 0; i < sel.length; i++) {
           const x = sel[i]; $('#ipt', bg).textContent = (i + 1) + '/' + sel.length + ' ' + dLabel(x.date);
-          try { await api('saveDay', { userId: u.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc, minsOf(x.date)) }); ok++; existing.add(x.date); x.on = false; }
+          try { await api('saveDay', { userId: u.id, date: x.date, doc: x.doc, sum: C.daySummary(x.doc, minsOf(x.date)) }); ok++; existing.add(x.date); existing.web = existing.web || {}; existing.web[x.date] = docInfo(x.doc, x.date); x.on = false; }
           catch (e) { fails.push(dLabel(x.date) + ': ' + e.message); }
           $('#ipg i', bg).style.width = ((i + 1) / sel.length * 100) + '%';
         }
@@ -12183,7 +12210,8 @@ async function addCharts(buf, jobs) {
       { name: '4그룹 (일반 & 추천)', cols: [['4그룹']], min: 20 }, { name: '5그룹 (라인 / 제조)', cols: [['라인'], ['제조']], min: 20 },
       { name: '안정화 & O/S', cols: [['안정화']], min: 0 }, { name: '출력 & 재고 & 지원', cols: [['출력', '지원', '영상']], min: 0 }],
   };
-  const orgCfg = () => { const o = Object.assign({}, ORG_DEF, (S._ppl && S._ppl.org) || {}); if (!Array.isArray(o.blocks) || !o.blocks.length) o.blocks = ORG_DEF.blocks; if (!Array.isArray(o.top)) o.top = ORG_DEF.top; return o; };
+  let ORGV = null;   // v28.63 : 조직도 보기 전용 자료 (모든 사용자)
+  const orgCfg = () => { const o = Object.assign({}, ORG_DEF, ((ORGV || S._ppl) && (ORGV || S._ppl).org) || {}); if (!Array.isArray(o.blocks) || !o.blocks.length) o.blocks = ORG_DEF.blocks; if (!Array.isArray(o.top)) o.top = ORG_DEF.top; return o; };
   const LV = ['A', 'B', 'C', 'D'];
   const pRank = r => r.title === '팀장' ? -1 : r.title === '매니저' ? 0 : ['육아', '병가'].includes(r.status) ? 9 : r.title === '파트장' ? 1 : LV.includes(r.level) ? 2 + LV.indexOf(r.level) : 6;
   const listRank = r => r.title === '팀장' ? 0 : r.title === '매니저' ? 1 : r.title === '파트장' ? 2 : 3;   // 명단 · 업무 현황 · 연차 : 매니저 → 파트장 → 사원(사번 = 입사 순)
@@ -12192,7 +12220,7 @@ async function addCharts(buf, jobs) {
   const orgC4 = r => r.title === '매니저' ? '매' : r.title === '파트장' ? '파트' : (r.job || '');
   const orgKind = r => r.title === '팀장' ? 'tl' : r.title === '매니저' ? 'mg' : ['육아', '병가'].includes(r.status) ? 'off' : r.title === '파트장' ? 'pl' : '';
   function orgData() {
-    const rows = (S._ppl.rows || []).slice().sort(pSort), cfg = orgCfg();
+    const rows = ((ORGV || S._ppl).rows || []).slice().sort(pSort), cfg = orgCfg();
     const blocks = cfg.blocks.map(b => {
       const cols = b.cols.map(gs => rows.filter(r => gs.includes(r.grp)));
       const mg = []; cols.forEach(c => c.filter(r => r.title === '매니저').forEach(r => mg.push(r.disp || r.name)));
@@ -12210,6 +12238,13 @@ async function addCharts(buf, jobs) {
   const loadLib = (name, url) => window[name] ? Promise.resolve(window[name]) : (_libs[name] = _libs[name] || new Promise((ok, no) => {
     const sc = document.createElement('script'); sc.src = url; sc.onload = () => ok(window[name]); sc.onerror = () => { _libs[name] = null; no(new Error('엑셀 도구를 불러오지 못했습니다 (인터넷 확인)')); }; document.head.appendChild(sc);
   }));
+  async function renderOrgView() {
+    const main = $('#main'); main.innerHTML = pageHead('조직도') + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
+    const tk = S.token; let r;
+    try { r = isAdm0() || (S.me.perms || []).includes('people') || isRO() ? await api('people') : await api('orgView'); } catch (e) { try { r = await api('orgView'); } catch (e2) { main.innerHTML = pageHead('조직도') + `<div class="pgb"><div class="warn">${esc(e2.message)}</div></div>`; return; } }
+    if (tk !== S.token || S.view !== 'org') return;
+    ORGV = r; main.innerHTML = pageHead('조직도', `<span class="muted">명단 ${r.rows.length}명</span>`) + '<div class="pgb" id="pbody"></div>'; drawOrg(true);
+  }
   async function renderPeople(tab) {
     const main = $('#main'); if (tab) S.pTab = tab; if (!S.pTab) { try { S.pTab = sessionStorage.getItem('pTab'); } catch (e) { } } S.pTab = S.pTab === 'org' ? 'org' : 'list';
     main.innerHTML = admHead('인원 현황 / 관리', 'people') + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
@@ -12219,6 +12254,7 @@ async function addCharts(buf, jobs) {
     drawPeople();
   }
   function drawPeople() {
+    ORGV = null;
     const P = S._ppl, rows = P.rows, reg = rows.filter(x => x.acct).length;
     $('#main').innerHTML = isRO() ? pageHead(S.pTab === 'org' ? '조직도' : '인원 현황', `<span class="muted">명단 ${rows.length}명 · 등록 ${reg}</span>`) + '<div class="pgb" id="pbody"></div>' : admHead('인원 현황 / 관리', 'people', `<span class="muted">명단 ${rows.length}명 · 등록 ${reg} · 아직 등록 안 함 ${rows.length - reg}${P.extra.length ? ' · <b class="t-lo">명단 외 계정 ' + P.extra.length + '</b>' : ''}</span>`,
       `<div class="seg"><button data-pt="list" class="${S.pTab === 'list' ? 'on' : ''}">명단</button><button data-pt="org" class="${S.pTab === 'org' ? 'on' : ''}">조직도</button></div>`) + '<div class="pgb" id="pbody"></div>';
@@ -12373,6 +12409,7 @@ async function addCharts(buf, jobs) {
           <label class="dck" id="a_law"><input type="checkbox" id="a_la" ${a.la || a.role === '관리자' ? 'checked' : ''} ${a.role === '관리자' ? 'disabled' : ''}><span><b>연차·토요근무 확정 권한</b><small>연차 확정 · 토요 배정 · 연차 마감</small></span></label>
           <label class="dck" id="a_acw"><input type="checkbox" id="a_acc" ${a.role === '관리자' ? 'checked disabled' : ''}><span><b>사고 등록 권한</b><small>사고 등록 · 고치기 · 지우기 · 전체 그룹 사고 보기</small></span></label>
           <label class="dck" id="a_eduw"><input type="checkbox" data-pm="edu" ${(a.perms || []).includes('edu') ? 'checked' : ''}><span><b>교육일정 등록·수정·확정 권한</b><small>교육 편성 · 엑셀 업로드 · 대상자 변경 · 최종 확정 (매니저에게 부여)</small></span></label>
+          <label class="dck" id="a_prw"><input type="checkbox" id="a_prd" ${a.role === '관리자' ? 'checked disabled' : ''}><span><b>생산업무 입력·확정 권한</b><small>생산 목록 · 참여 인원 입력 · 실적 확정 (일반 사원 · 매니저 모두 줄 수 있음 · 역할은 그대로)</small></span></label>
           <div class="fld" id="a_pmw"><label>추가 권한 (관리자 기능 일부 · 전체 그룹)</label>${Object.entries(PERM_L).filter(([k])=>k!=='edu').map(([k, t]) => `<label class="dck"><input type="checkbox" data-pm="${k}" ${(a.perms || []).includes(k) ? 'checked' : ''}><span><b>${t}</b><small>${PERM_D[k]}</small></span></label>`).join('')}</div>
           ${S.me.period && !a.self ? `<label class="dck" id="a_paw"><input type="checkbox" id="a_pa" ${a.pa ? 'checked' : ''}><span><b>월 기간 설정 권한</b><small>월 기간 마감 · 항목별 분 · 데이터 전체 삭제</small></span></label>` : ''}
           <div class="row" style="gap:8px;margin-top:6px">${a.role !== '관리자' ? `<button data-pin>${a.nopin ? '임시 비밀번호 정하기' : '비밀번호 초기화 (임시 번호)'}</button>` : ''}${a.role === '일반' ? '<button class="danger" data-adel>계정 삭제</button>' : ''}
@@ -12401,8 +12438,13 @@ async function addCharts(buf, jobs) {
       const syncA = () => { if (!role) return; const rv = role.value; mgw.classList.toggle('hide', rv !== '매니저'); $('#a_pmw', bg).classList.toggle('hide', rv !== '매니저');$('#a_eduw', bg).classList.toggle('hide',rv!=='매니저');
         if ($('#a_paw', bg)) $('#a_paw', bg).classList.toggle('hide', rv !== '관리자'); $('#a_law', bg).classList.toggle('hide', rv === '관리자ro');
         la.disabled = rv.startsWith('관리자'); if (la.disabled) la.checked = true;
+        const pr = $('#a_prd', bg); if (pr) { if (rv.startsWith('관리자')) { pr.disabled = true; pr.checked = true; } else if (pr.dataset.v != null) { pr.disabled = false; pr.checked = pr.dataset.v === '1'; } }
         const ac = $('#a_acc', bg); if (ac) { ac.disabled = rv.startsWith('관리자'); if (ac.disabled) ac.checked = true; else if (ac.dataset.v != null) ac.checked = ac.dataset.v === '1'; } }; syncA(); if (role) role.onchange = syncA;
       // v28.43 : 사고 등록 권한 (사고 담당 이름 목록) — 지금 값 불러오기
+      const prd0 = { v: null }, prI = $('#a_prd', bg);
+      if (prI && a && a.role !== '관리자') { prI.disabled = true;
+        api('prEditors', { mode: 'get' }).then(r => { prd0.v = (r.editors || []).includes(a.id); prI.dataset.v = prd0.v ? '1' : '0'; prI.checked = prd0.v; prI.disabled = !!(role && role.value.startsWith('관리자')); })
+          .catch(() => { prI.closest('label').querySelector('small').textContent = '불러오지 못했습니다 (SQL v28.63 실행 후 사용)'; }); }
       const acc0 = { v: null }, acI = $('#a_acc', bg);
       if (acI && a && a.role !== '관리자') { acI.disabled = true;
         api('accAdmins', {}).then(r => { acc0.v = (r.admins || []).some(z => z.name === v.name); acI.dataset.v = acc0.v ? '1' : '0'; acI.checked = acc0.v; acI.disabled = role && role.value.startsWith('관리자'); s0 = snap(); })
@@ -12446,6 +12488,7 @@ async function addCharts(buf, jobs) {
             if (nr !== a.role || nro !== !!a.ro || nla !== !!a.la || (nr === '매니저' && mg.join() !== (a.mg || []).join()) || pm.slice().sort().join() !== (nr === '매니저' ? (a.perms || []).slice().sort().join() : '') || (npa !== null && npa !== !!a.pa))
               await api('updateUser', Object.assign({ userId: a.id, name: r.saved, group: p.grp || a.group, role: nr, mg: nr === '매니저' ? mg : [], leaveAdmin: nla, perms: pm, readOnly: nro }, npa !== null ? { periodAdmin: npa } : {}));
           }
+          if (a && role && prI && prd0.v !== null && !role.value.startsWith('관리자') && prI.checked !== prd0.v) await api('prEditors', { mode: prI.checked ? 'add' : 'del', userId: a.id });
           if (a && role && acI && acc0.v !== null && !role.value.startsWith('관리자') && acI.checked !== acc0.v) await api('accAdmins', { mode: acI.checked ? 'add' : 'del', name: r.saved || p.name });
           S._ppl = (a && role) ? await api('people') : r;
           if (a && a.self) { const m = await api('me'); S.me = m.me; shell(S.layout); setNav(); }
@@ -12471,19 +12514,20 @@ async function addCharts(buf, jobs) {
     });
   }
   // ---- 조직도 (웹) : 엑셀 조직도 시트와 같은 배치
-  function drawOrg() {
+  function drawOrg(view) {
     const D = orgData(), cfg = D.cfg;
     const cell = r => r ? `<tr class="ok-${orgKind(r)}" data-n="${esc(r.name)}"><td class="no"></td><td class="nm">${esc(r.disp || r.name)}</td><td>${esc(orgC3(r))}</td><td>${esc(orgC4(r))}</td></tr>` : '';
     const col = (list, n) => { let h = ''; for (let i = 0; i < n; i++) { const r = list[i]; h += r ? cell(r).replace('<td class="no"></td>', `<td class="no">${i + 1}</td>`) : `<tr class="empty"><td class="no">${i + 1}</td><td></td><td></td><td></td></tr>`; } return h; };
-    $('#pbody').innerHTML = `<div class="toolbar"><span class="muted">${isRO() ? '이름 클릭 = 정보 보기' : '이름 클릭 = 수정'} · 배치 : 매니저 → 파트장 → 사원(A→D) → 육아·병가</span><span style="flex:1"></span>
-        ${isRO() ? '' : '<button id="orgcfg">조직도 제목 · 블록 설정</button>'}<button class="primary" id="orgxl">⬇ 조직도 엑셀</button></div>
+    $('#pbody').innerHTML = `<div class="toolbar"><span class="muted">${view ? '조직도 보기' : '이름 클릭 = 수정'} · 배치 : 매니저 → 파트장 → 사원(A→D) → 육아·병가</span><span style="flex:1"></span>
+        ${view ? (isAdm0() && !isRO() ? '<button id="orgedit">✎ 편집 (인원 현황/관리)</button>' : '') : '<button id="orgcfg">조직도 제목 · 블록 설정</button>'}<button class="primary" id="orgxl">⬇ 조직도 엑셀</button></div>
       <div class="card orgwrap"><div class="orgtitle">${esc(cfg.title)}</div>
         <div class="orgtop">${cfg.top.map(t => `<div class="orgbox"><span>${esc(t.rank)}</span><b>${esc(t.name)}</b></div>`).join('')}${D.heads.map(r => `<div class="orgbox tl" data-n="${esc(r.name)}"><span>팀장</span><b>${esc(r.disp || r.name)}</b></div>`).join('')}</div>
         <div class="orgrow">${D.blocks.map(b => `<div class="orgblk" style="--gc:${gcol(b.g)}"><div class="orgmg">${esc(b.mgr)}</div><div class="orgnm">${esc(b.name)}</div>
             <div class="orgcols">${b.cols.map(c => `<table class="orgt">${col(c, b.n)}</table>`).join('')}</div></div>`).join('')}
           <div class="orgblk orgsum"><div class="orgmg">&nbsp;</div><div class="orgnm">조립팀 인원현황</div><table class="orgt">${D.sum.map(([k, n]) => `<tr><td class="nm">${k}</td><td class="num">${n}</td></tr>`).join('')}</table>
             <div class="orglg"><span class="ok-mg">매니저</span><span class="ok-pl">파트장</span><span class="ok-off">육아 · 병가</span></div></div></div></div>`;
-    $$('#pbody [data-n]').forEach(t => (t.onclick = () => personEdit(S._ppl.rows.find(x => x.name === t.dataset.n))));
+    if (!view) $$('#pbody [data-n]').forEach(t => (t.onclick = () => personEdit(S._ppl.rows.find(x => x.name === t.dataset.n))));
+    else if ($('#orgedit')) $('#orgedit').onclick = () => { S.pTab = 'org'; try { sessionStorage.setItem('pTab', 'org'); } catch (e) { } go('people', { tab: 'org' }); };
     $('#orgxl').onclick = orgExcel;
     if ($('#orgcfg')) $('#orgcfg').onclick = orgCfgEdit;
   }
@@ -12562,7 +12606,7 @@ async function addCharts(buf, jobs) {
   // ================================================================ v28.62 : 생산업무 (라인 공동실적 → 개인 배분) + 모바일 입력
   const PR_CS = ['A', 'B', 'C', 'D', 'E', 'F'], PR_CL = ['A', 'B', 'C', 'D', 'E', 'F', '없음'], PR_OTH = ['포장지원', '정리지원', '청소', '담당/교육', '불량처리', '기타시간'];
   const canPmob = () => !!(S.me && !isRO() && (S.me.group === '라인' || S.prEd));
-  const canProd = () => !!(S.me && (S.me.role === '관리자' || S.me.role === '매니저' || S.prEd));
+  const canProd = () => !!(S.me && (S.me.role === '관리자' || S.me.role === '매니저' || S.prEd || S.me.group === '라인' || isRO()));   // 보기 = 라인 · 매니저 · 관리자 · 팀장 / 입력 · 확정은 서버가 정함
   const prUid = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   // 사양표 붙여넣기 → 제조번호 · 모델 · 수량 · 케이스 · 쿨러 · 파워 (여러 건 한 번에) — 못 읽으면 빈칸 + '확인 필요' (추측 금지)
   function prParseOne(txt) {
@@ -12600,7 +12644,7 @@ async function addCharts(buf, jobs) {
     items.forEach(x => { if (x.conv == null) iss.push(`${x.no || '(제조번호 없음)'} : ${!(+x.q >= 1) ? '수량' : !x.cs ? '케이스 난이도' : '쿨러 난이도'} 미선택`); if (!x.no) iss.push('제조번호 없는 줄이 있습니다'); if (x.src === '개별' && !x.who) iss.push(`${x.no} : 개별 조립 수행자를 고르세요`); });
     oth.forEach(x => { if (!x.who) iss.push('기타시간 수행자를 고르세요'); if (!(+x.mins > 0)) iss.push('기타시간 분을 넣으세요'); if (!(String(x.reason || '').trim().length >= 2)) iss.push(`기타시간 사유 (${x.cat || ''} ${x.mins || ''}분)`); });
     if (!ppl.length) iss.push('참여자가 없습니다'); else if (!(Mt > 0)) iss.push('참여시간 합계가 0입니다');
-    ppl.forEach(p => { if (!p.userId) iss.push(`${p.name} : 사이트 계정 없음 (가입 후 확정)`); if (!(p.m > 0)) iss.push(`${p.name} : 인정분 0`); if ((+p.ot || 0) > (P.asmOt || 0)) iss.push(`${p.name} : 야근 참여분이 공식 야근 ${P.asmOt || 0}분을 넘음`); });
+    ppl.forEach(p => { if (!p.userId && !String(p.name || '').trim()) iss.push('이름 없는 참여자가 있습니다'); if (!(p.m > 0)) iss.push(`${p.name} : 인정분 0`); if ((+p.ot || 0) > (P.asmOt || 0)) iss.push(`${p.name} : 야근 참여분이 공식 야근 ${P.asmOt || 0}분을 넘음`); });
     const D = {}; (P.days || []).forEach(d => (D[d.userId] = d));
     items.filter(x => x.src === '개별' && x.who && x.no).forEach(x => { const d = D[x.who]; if (d && (d.orders || []).includes(String(x.no))) iss.push(`${x.no} : ${x.whoName || '수행자'} 개인 업무데이터에 같은 제조번호가 이미 있음 (중복 확인)`); });
     oth.forEach(x => { if (x.cat === '청소' && /기본/.test(x.reason || '')) iss.push('기본 청소 15분은 기타시간에 넣지 않습니다'); });
@@ -12653,10 +12697,12 @@ async function addCharts(buf, jobs) {
   function drawProdBody() {
     const P = S.prP, box = $('#prbody'); if (!box) return; const R = prCalc(P), ed = P.edit && !S.pv, dis = ed ? '' : 'disabled', dr = P.draft;
     const U = P.users || [], uname = id => (U.find(u => u.id === id) || {}).name || '', opt = (arr, v) => arr.map(x => `<option ${x === v ? 'selected' : ''}>${x}</option>`).join('');
-    const ppl = dr.people || [], who = (v, cls) => `<select class="${cls}" ${dis}><option value="">수행자</option>${ppl.filter(p => p.userId).map(p => `<option value="${p.userId}" ${p.userId === v ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}${v && !ppl.some(p => p.userId === v) ? `<option value="${v}" selected>${esc(uname(v))}</option>` : ''}</select>`;
+    const ppl = dr.people || [], who = (v, cls) => `<select class="${cls}" ${dis}><option value="">수행자</option>${ppl.map(p => { const k = p.userId || 'x:' + p.name; return `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(p.name)}</option>`; }).join('')}${v && !ppl.some(p => (p.userId || 'x:' + p.name) === v) ? `<option value="${esc(v)}" selected>${esc(uname(v) || String(v).replace(/^x:/, ''))}</option>` : ''}</select>`;
     const same = (P.same || []).length ? `<div class="note">다른 날 같은 제조번호 : ${(P.same || []).map(s => `${esc(s.no)} (${dLabel(s.d)} ${s.q}대)`).join(' · ')} — 분할 생산이면 그대로 두세요</div>` : '';
     const byP = {}; R.ppl.forEach(p => (byP[p.userId || p.name] = p));
-    box.innerHTML = `<div class="card prc"><div class="mgch"><b>① 생산 목록</b><span class="muted">공동생산 + 개별 조립 · 사양표는 한 번에 여러 건 붙여넣기 가능</span><span style="flex:1"></span>${ed ? '<button id="prpaste" class="primary sm">📋 사양표 붙여넣기</button><button id="pradd" class="sm">＋ 직접 추가</button>' : ''}</div>
+    box.innerHTML = `<div class="prsum"><div><small>총 생산수량</small><b>${R.qty}<em> 대</em></b></div><div><small>생산 환산 (S)</small><b class="c1">${f2(R.S)}</b></div><div><small>기타시간</small><b>${R.H}<em> 분 → ${f2(R.O)}</em></b></div><div><small>총 환산 (T)</small><b class="c2">${f2(R.T)}</b></div><div><small>작업 인원</small><b>${R.ppl.length}<em> 명 · ${R.M}분</em></b></div></div>
+      ${R.iss.length ? `<div class="warn" style="margin-bottom:10px"><b>확정 전에 고칠 것 ${R.iss.length}건</b> · ${R.iss.map(esc).join(' · ')}</div>` : '<div class="note" style="margin-bottom:10px">✓ 확정할 수 있습니다</div>'}
+      <div class="card prc"><div class="mgch"><b>① 생산 목록</b><span class="muted">공동생산 + 개별 조립 · 사양표는 한 번에 여러 건 붙여넣기 가능</span><span style="flex:1"></span>${ed ? '<button id="prpaste" class="primary sm">📋 사양표 붙여넣기</button><button id="pradd" class="sm">＋ 직접 추가</button>' : ''}</div>
         <div style="overflow:auto"><table class="list prt"><thead><tr><th>구분</th><th>제조번호</th><th>모델명</th><th>케이스</th><th>난이도</th><th>CPU쿨러</th><th>난이도</th><th>파워</th><th>수량</th><th>환산</th><th></th></tr></thead><tbody>
         ${R.items.map(x => { const mob = !!x.mob; return `<tr data-it="${x.id}" class="${x.conv == null ? 'prbad' : ''}"><td>${mob ? '<span class="rtag pmob">폰</span>' : ''}<select class="i-src" ${dis || (mob ? 'disabled' : '')}>${opt(['공동', '개별'], x.src)}</select>${x.src === '개별' ? (mob ? `<div class="muted">${esc(x.whoName || uname(x.who))}</div>` : who(x.who, 'i-who')) : ''}</td>
           <td><input class="i-no" value="${esc(x.no || '')}" ${dis || (mob ? 'disabled' : '')} style="width:110px"></td><td><input class="i-model" value="${esc(x.model || '')}" placeholder="확인 필요" ${dis} style="width:170px"></td>
@@ -12670,17 +12716,13 @@ async function addCharts(buf, jobs) {
         <table class="list prt"><thead><tr><th>수행자</th><th>항목</th><th>분</th><th>사유</th><th></th></tr></thead><tbody>
         ${R.oth.map(x => { const mob = !!x.mob; return `<tr data-ot="${x.id}"><td>${mob ? '<span class="rtag pmob">폰</span> ' + esc(x.whoName || uname(x.who)) : who(x.who, 'o-who')}</td><td><select class="o-cat" ${dis || (mob ? 'disabled' : '')}>${opt(PR_OTH, x.cat)}</select></td><td><input class="o-min" type="number" min="1" value="${esc(x.mins || '')}" ${dis || (mob ? 'disabled' : '')} style="width:70px"></td><td><input class="o-rs" value="${esc(x.reason || '')}" ${dis || (mob ? 'disabled' : '')} placeholder="예: 2층 정리" style="width:100%"></td><td>${ed ? '<button class="sm o-del">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="muted" style="padding:12px">없음 (모두 라인 작업)</td></tr>'}
         </tbody></table></div>
-      <div class="card prc"><div class="mgch"><b>④ 계산 결과</b><span class="muted">확정 전엔 개인 실적에 반영되지 않음</span></div>
-        <div class="wkpi" style="justify-content:flex-start;padding:10px 14px"><span>생산 <b>${R.qty}</b>대</span><span>생산환산 S <b class="c1">${f2(R.S)}</b></span><span>기타 <b>${R.H}</b>분 = <b>${f2(R.O)}</b></span><span>총환산 T <b class="c2">${f2(R.T)}</b></span><span>참여 <b>${R.ppl.length}</b>명 · <b>${R.M}</b>분</span></div>
-        <table class="list prt"><thead><tr><th>이름</th><th>인정분</th><th>비율</th><th>생산 배분</th><th>기타 배분</th><th>합계</th></tr></thead><tbody>${R.ppl.map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${p.m}분</td><td>${pct(R.M ? p.m / R.M : 0)}</td><td>${f2(p.s)}</td><td>${f2(p.o)}</td><td><b>${f2(p.p)}</b></td></tr>`).join('')}</tbody></table>
-        <div class="muted" style="padding:6px 14px">표시는 소수 둘째 자리 · 내부는 정밀값 (합계 = 총환산)</div>
-        ${R.iss.length ? `<div class="warn" style="margin:8px 14px 12px"><b>확정 전에 고칠 것 ${R.iss.length}건</b><br>${R.iss.map(esc).join('<br>')}</div>` : '<div class="note" style="margin:8px 14px 12px">✓ 확정할 수 있습니다</div>'}</div>
     </div><div>
-      <div class="card prc"><div class="mgch"><b>② 참여 인원</b><span class="muted">출근자 자동 · 정상 480 · 반차 240 · 공식 야근 ${P.asmOt || 0}분</span><span style="flex:1"></span>${ed ? `<button id="prpadd" class="sm">＋ 타 그룹 지원자</button><button id="prpre" class="sm" title="출근 · 연차 다시 불러오기">↻</button>` : ''}</div>
-        <table class="list prt"><thead><tr><th>참여</th><th>이름</th><th>상태</th><th>인정분</th><th>야근분</th><th>배분 합계</th></tr></thead><tbody>
-        ${ppl.map((p, i) => { const r = byP[p.userId || p.name]; return `<tr data-pp="${i}" class="${p.inc ? '' : 'prout'}"><td><input type="checkbox" class="p-inc" ${p.inc ? 'checked' : ''} ${dis}></td><td><b>${esc(p.name)}</b>${!p.userId ? ' <span class="rtag pendt">미가입</span>' : ''}${p.line ? '' : ` <span class="rtag">${esc(p.group || '지원')}</span>`}</td>
-          <td>${p.st && p.st !== '출근' ? `<span class="mgst ${p.st === '반차' ? 'ing' : 'wait'}">${esc(p.st)}</span>` : '출근'}</td><td><input class="p-base" type="number" min="0" max="720" value="${p.base}" ${dis} style="width:64px"></td><td><input class="p-ot" type="number" min="0" max="${P.asmOt || 0}" value="${p.ot || 0}" ${dis || (!(P.asmOt > 0) ? 'disabled' : '')} style="width:56px"></td>
-          <td><b>${r && p.inc ? f2(r.p) : '-'}</b></td></tr>`; }).join('')}
+      <div class="card prc"><div class="mgch"><b>② 참여 인원 · 배분</b><span class="muted">정상 480 · 반차 240 · 공식 야근 ${P.asmOt || 0}분</span><span style="flex:1"></span>${ed ? `<button id="prpadd" class="sm">＋ 타 그룹 지원자</button><button id="prpre" class="sm" title="출근 · 연차 다시 불러오기">↻</button>` : ''}</div>
+        <div class="tbs"><table class="list prt"><thead><tr><th>참여</th><th>이름</th><th>상태</th><th>인정분</th><th>야근분</th><th>비율</th><th>생산</th><th>기타</th><th>합계</th></tr></thead><tbody>
+        ${ppl.map((p, i) => { const r = byP[p.userId || p.name]; const on = r && p.inc; return `<tr data-pp="${i}" class="${p.inc ? '' : 'prout'}"><td><input type="checkbox" class="p-inc" ${p.inc ? 'checked' : ''} ${dis}></td><td><b>${esc(p.name)}</b>${!p.userId ? ' <span class="rtag pendt" title="계정이 없어 배분만 계산하고 개인 실적에는 반영되지 않습니다">개인반영 없음</span>' : ''}${p.line || !p.userId && !p.ext ? '' : ` <span class="rtag">${esc(p.group || '지원')}</span>`}</td>
+          <td>${p.st && p.st !== '출근' ? `<span class="mgst ${p.st === '반차' ? 'ing' : 'wait'}">${esc(p.st)}</span>` : '출근'}</td><td><input class="p-base" type="number" min="0" max="720" value="${p.base}" ${dis} style="width:56px"></td><td><input class="p-ot" type="number" min="0" max="${P.asmOt || 0}" value="${p.ot || 0}" ${dis || (!(P.asmOt > 0) || !p.userId ? 'disabled' : '')} style="width:48px"></td>
+          <td>${on ? pct(R.M ? r.m / R.M : 0) : '-'}</td><td>${on ? f2(r.s) : '-'}</td><td>${on ? f2(r.o) : '-'}</td><td><b>${on ? f2(r.p) : '-'}</b></td></tr>`; }).join('')}
+        </tbody></table></div>
         </tbody></table></div>
     </div></div>`;
     if (!ed) return;
@@ -12701,9 +12743,18 @@ async function addCharts(buf, jobs) {
     $('#prpaste').onclick = prPaste;
     $('#prpre').onclick = async () => { if (!(await confirmBox('출근 · 연차를 다시 불러와 참여 인원을 새로 만들까요?<br><span class="muted">직접 고친 인정분 · 야근분 · 추가한 지원자는 초기화됩니다</span>', '다시 불러오기'))) return; dr.people = prAutoPeople(P); prDirty(); };
     $('#prpadd').onclick = () => {
-      const have = new Set(dr.people.map(p => p.userId));
-      modal(`<h3>타 그룹 지원자 추가</h3><div class="fld"><label>사람</label><select id="pau">${U.filter(u => !have.has(u.id) && u.group !== '팀장').map(u => `<option value="${u.id}">${esc(u.name)} · ${esc(u.group)}</option>`).join('')}</select></div><div class="fld"><label>실제 라인 참여 시간 (분)</label><input id="pam" type="number" min="1" max="720" value="120"></div><div class="acts"><button data-c>취소</button><button class="primary" data-s>추가</button></div>`, (bg, close) => {
-        $('[data-c]', bg).onclick = close; $('[data-s]', bg).onclick = () => { const u = U.find(x => x.id === $('#pau', bg).value), m = +$('#pam', bg).value; if (!u || !(m > 0)) return toast('사람 · 시간을 넣으세요', true); dr.people.push({ name: u.name, userId: u.id, group: u.group, st: '지원', inc: true, half: false, base: m, ot: 0, line: false }); close(); prDirty(); };
+      const have = new Set(dr.people.map(p => p.userId).filter(Boolean));
+      modal(`<h3>타 그룹 · 계약직 · 일용직 추가</h3><div class="seg" style="margin:6px 0"><button class="on" data-pm="acct">계정 있는 사람</button><button data-pm="ext">계정 없는 사람 (이름 입력)</button></div>
+        <div class="fld" id="pbA"><label>사람</label><select id="pau">${U.filter(u => !have.has(u.id) && u.group !== '팀장').map(u => `<option value="${u.id}">${esc(u.name)} · ${esc(u.group)}</option>`).join('')}</select></div>
+        <div class="fld hide" id="pbE"><label>이름</label><input id="pan" maxlength="20" placeholder="예: 홍길동"><label style="margin-top:6px">구분</label><select id="pag"><option>계약직</option><option>일용직</option><option>타 부서</option><option>기타</option></select><div class="note" style="margin-top:6px">계정이 없으면 <b>배분 계산에는 포함</b>되지만 <b>개인 실적에는 반영되지 않습니다</b> (화면에만 기록).</div></div>
+        <div class="fld"><label>실제 라인 참여 시간 (분)</label><input id="pam" type="number" min="1" max="720" value="120"></div><div class="acts"><button data-c>취소</button><button class="primary" data-s>추가</button></div>`, (bg, close) => {
+        let md = 'acct'; $$('[data-pm]', bg).forEach(b => (b.onclick = () => { md = b.dataset.pm; $$('[data-pm]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#pbA', bg).classList.toggle('hide', md !== 'acct'); $('#pbE', bg).classList.toggle('hide', md !== 'ext'); }));
+        $('[data-c]', bg).onclick = close; $('[data-s]', bg).onclick = () => {
+          const m = +$('#pam', bg).value; if (!(m > 0)) return toast('시간을 넣으세요', true);
+          if (md === 'acct') { const u = U.find(x => x.id === $('#pau', bg).value); if (!u) return toast('사람을 고르세요', true); dr.people.push({ name: u.name, userId: u.id, group: u.group, st: '지원', inc: true, half: false, base: m, ot: 0, line: false }); }
+          else { const n = $('#pan', bg).value.trim(); if (n.length < 2) return toast('이름을 넣으세요', true); if (dr.people.some(p => p.name === n)) return toast('이미 있는 이름입니다', true); dr.people.push({ name: n, userId: '', ext: true, group: $('#pag', bg).value, st: '지원', inc: true, half: false, base: m, ot: 0, line: false }); }
+          close(); prDirty();
+        };
       });
     };
   }
@@ -12739,7 +12790,7 @@ async function addCharts(buf, jobs) {
       $('[data-c]', bg).onclick = close;
       $('[data-s]', bg).onclick = async () => {
         const b = $('[data-s]', bg); b.disabled = true;
-        const alloc = R.ppl.map(p => ({ userId: p.userId, name: p.name, m: p.m, s: p.s, o: p.o, p: p.p, ot: +p.ot || 0, half: !!p.half, line: !!p.line }));
+        const alloc = R.ppl.map(p => ({ userId: p.userId, name: p.name, m: p.m, s: p.s, o: p.o, p: p.p, ot: +p.ot || 0, half: !!p.half, line: !!p.line, ext: !p.userId }));
         try { const r = await api('prConfirm', { date: P.date, ver: P.ver, alloc, tot: { S: R.S, H: R.H, O: R.O, T: R.T, M: R.M, qty: R.qty, ym: P.period && P.period.ym }, mobileIds: (P.mobile || []).map(m => m.id) });
           close(); toast(r.same ? '이미 같은 내용으로 확정돼 있습니다' : r.n + '명 개인 실적에 반영했습니다'); S._mcache = {}; attReset && attReset(); renderProd(); }
         catch (e) { toast(e.message, true); b.disabled = false; }
@@ -12747,13 +12798,12 @@ async function addCharts(buf, jobs) {
     }, 'wide');
   }
   async function prEditors() {
-    const P = S.prP, cur = new Set(P.editors || []);
-    modal(`<h3>👤 생산업무 입력 담당자</h3><div class="note">체크한 사람만 생산 입력 · 실적 확정을 할 수 있습니다 (관리자는 항상 가능). 역할(일반 · 매니저)은 바뀌지 않습니다.</div>
-      <div style="max-height:50vh;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:4px">${(P.users || []).filter(u => u.role !== '관리자').map(u => `<label class="row" style="gap:4px"><input type="checkbox" class="ped" value="${u.id}" ${cur.has(u.id) ? 'checked' : ''}>${esc(u.name)} <small class="muted">${esc(u.group)}</small></label>`).join('')}</div>
-      <div class="acts"><button data-c>취소</button><button class="primary" data-s>저장</button></div>`, (bg, close) => {
-      $('[data-c]', bg).onclick = close;
-      $('[data-s]', bg).onclick = async () => { try { const r = await api('prEditors', { ids: $$('.ped', bg).filter(x => x.checked).map(x => x.value) }); P.editors = r.editors; close(); toast('저장했습니다'); } catch (e) { toast(e.message, true); } };
-    }, 'wide');
+    const P = S.prP, cur = new Set(P.editors || []), U = (P.users || []).filter(u => cur.has(u.id));
+    modal(`<h3>👤 생산업무 입력 담당자</h3><div class="note">입력 · 실적 확정을 할 수 있는 사람입니다 (관리자는 항상 가능).<br>추가 · 빼기는 <b>관리자 설정 › 인원 현황/관리 › 이름 클릭 › 계정 탭 › [생산업무 입력·확정 권한]</b>에서 합니다 (사고 · 교육 권한과 같은 방식).</div>
+      <div style="padding:8px 2px;line-height:1.9">${U.length ? U.map(u => `<b>${esc(u.name)}</b> <small class="muted">${esc(u.group)} · ${esc(u.role)}</small>`).join('<br>') : '<span class="muted">지정된 사람 없음</span>'}</div>
+      <div class="acts"><button data-c>닫기</button>${P.admin ? '<button class="primary" data-g>인원 현황/관리 열기</button>' : ''}</div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close; if ($('[data-g]', bg)) $('[data-g]', bg).onclick = () => { close(); S.pTab = 'list'; go('people', { tab: 'list' }); };
+    });
   }
   // ---------- 모바일 간편 입력 (라인 인원 · 오늘 · 본인) → 그날 생산업무 초안 → 담당자 확정
   async function renderPmob() {
@@ -12814,7 +12864,7 @@ async function addCharts(buf, jobs) {
       let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr'] : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob'].concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org'] : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'org'].concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
