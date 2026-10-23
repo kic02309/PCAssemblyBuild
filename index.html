@@ -2053,6 +2053,11 @@ html[data-theme=dark] .m2sum{background:linear-gradient(90deg,#3a232666,transpar
 .m2s.s4{background:#fff1e0;color:#b45309}.m2rcd{font-size:11px;white-space:nowrap}
 html[data-theme=dark] .m2dt.on{background:var(--blue);color:#fff}html[data-theme=dark] .m2gb{background:#3a2326;color:#ff9aa0}html[data-theme=dark] .m2gb.ok{background:#1e3326;color:#7fd39a}html[data-theme=dark] .m2pb{background:#3a2326}html[data-theme=dark] .m2gn b.t-lo,html[data-theme=dark] .m2gf b.t-lo{color:#ff9aa0}
 @media(max-width:1100px){.m2ks.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v28.72 휴일근무 */
+td.hwc{background:#f1ecfb;color:#5b3fb8;font-weight:700}td.hwc i{font-style:normal;font-size:10px;margin-left:2px;padding:0 3px;border-radius:4px;background:#5b3fb8;color:#fff}
+.hwt{display:inline-block;padding:1px 7px;border-radius:99px;background:#f1ecfb;color:#5b3fb8;font-size:11.5px;font-weight:800}tr.hwr td{background:#faf8fe}
+html[data-theme=dark] td.hwc{background:#2c2145;color:#c9b3ff}html[data-theme=dark] .hwt{background:#2c2145;color:#c9b3ff}html[data-theme=dark] tr.hwr td{background:#211b30}
 @media(max-width:1300px){.m2ks{grid-template-columns:repeat(3,minmax(0,1fr))}.m2g{grid-template-columns:1fr}}
 @media(max-width:700px){.m2ks{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
@@ -2599,6 +2604,12 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     return { e2, f7: f6 ? e2 / f6 : 0 };
   }
 
+  // ---- v28.72 : 휴일근무 (연휴 임시 출근 · 일요일 단축근무) — 근무일 수에 넣지 않고 실적만 총량에 더함 (토요 가산 없음)
+  // 적용 : from(10월 귀속월 시작일) 이후 · 일요일은 자동 · 그 밖의 날은 관리자가 등록한 날짜
+  let HW = { from: '9999-12-31', set: new Set() };
+  function setHW(list, from) { HW = { from: from || '9999-12-31', set: new Set((list || []).map(x => typeof x === 'string' ? x : x && x.d).filter(Boolean)) }; }
+  const isHW = d => !!d && d >= HW.from && (HW.set.has(d) || new Date(d + 'T00:00:00').getDay() === 0);
+
   // ---- 월 계산 (엑셀 통계 시트와 동일) ----
   // items: [{date:'yyyy-mm-dd', sum: daySummary}]  (날짜순)
   function calcMonth(items, target, mins) {
@@ -2606,23 +2617,23 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     items = items.slice().sort((a, b) => a.date < b.date ? -1 : 1);
     let c4 = 0, d4 = 0; const osum = {}; OTHER.forEach(([k]) => (osum[k] = 0));
     const r10 = {}; COLS.forEach(x => (r10[x.c] = 0)); const ta = {}; EXCLUSIVE.type.forEach(c => (ta[c] = 0));
-    let sumAU = 0, sumAV = 0, sumAW = 0, sumP = 0, otCount = 0, mf = 0, mq = 0, z = 0, zAV = 0, zAU = 0;   // v28.18 : z = 실적 0인 날 (지원 등) — 근무일엔 넣고 평균에선 뺌
+    let sumAU = 0, sumAV = 0, sumAW = 0, sumP = 0, otCount = 0, mf = 0, mq = 0, z = 0, zAV = 0, zAU = 0, hwN = 0;   // v28.18 : z = 실적 0인 날 (지원 등) — 근무일엔 넣고 평균에선 뺌
     const daily = items.map(it => {
-      const s = it.sum, dow = new Date(it.date + 'T00:00:00').getDay();
-      if (dow === 6) d4++; else c4++;
+      const s = it.sum, dow = new Date(it.date + 'T00:00:00').getDay(), hw = isHW(it.date);
+      if (hw) hwN++; else if (dow === 6) d4++; else c4++;
       OTHER.forEach(([k]) => (osum[k] += num((s.o || {})[k])));
       COLS.forEach(x => (r10[x.c] += num((s.r10 || {})[x.c])));
       { const T = s.ta || s.r10 || {}; EXCLUSIVE.type.forEach(c => (ta[c] += num(T[c]))); }   // v28.24 : 제조 줄 뺀 조립 구분 수량 (예전 기록은 r10)
       sumAU += num(s.e4); sumAV += num(s.h7); if (num(s.e4) > 0) otCount++; sumP += num(s.prod);   // v28.62 : 생산업무 배분
       const sd = sumDay(s, mins);
-      const aw = (dow === 6 || dow === 0) && sd.e2 ? sd.e2 * 0.25 : 0;
-      const zero = !(Math.abs(sd.e2) > 1e-9); if (zero) { z++; zAV += num(s.h7); zAU += num(s.e4); }
+      const aw = !hw && (dow === 6 || dow === 0) && sd.e2 ? sd.e2 * 0.25 : 0;
+      const zero = !(Math.abs(sd.e2) > 1e-9); if (zero && !hw) { z++; zAV += num(s.h7); zAU += num(s.e4); }
       sumAW += aw; mf += num(s.mf); mq += num(s.mq);
-      return { date: it.date, dow, zero, f7: sd.f7, e2: sd.e2, e4: num(s.e4), h7: num(s.h7), n: s.n || 0, mf: num(s.mf), mq: num(s.mq), kind: s.kind, aw };
+      return { date: it.date, dow, zero, hw, f7: sd.f7, e2: sd.e2, e4: num(s.e4), h7: num(s.h7), n: s.n || 0, mf: num(s.mf), mq: num(s.mq), kind: s.kind, aw };
     });
     const days = items.length;
     const otherTotal = OTHER.reduce((a, [k]) => a + osum[k], 0);
-    const ev = Math.max(0, days - z);                                   // 평가에 들어가는 날
+    const ev = Math.max(0, days - z - hwN);                             // v28.72 : 휴일근무 날은 평가 일수에서 뺌                                   // 평가에 들어가는 날
     const w7 = ev ? (otherTotal / 30) / ev : 0;
     let sumH_AT = 0;
     COLS.forEach(x => { if (x.kind !== 'type') sumH_AT += r10[x.c] * M[x.c] / 30; });
@@ -2636,7 +2647,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const e2 = (ce ? sumH_AT / ce : 0) + g4;
     const g2 = asmQty(r10);
     return {
-      days, c4, d4, z, ev, osum, otherTotal, w7, r10, ta, sumH_AT, prodT: sumP, g4, f6, f7, i6, i7, e2, g2,
+      days, c4, d4, z, ev, hw: hwN, osum, otherTotal, w7, r10, ta, sumH_AT, prodT: sumP, g4, f6, f7, i6, i7, e2, g2,
       e4: sumAU, f4: otCount, c8: target ? f7 / target : null, daily, truncated: false, mf, mq,   // v28.9 : 제조 건수 · 대수
     };
   }
@@ -2736,10 +2747,15 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const sv = {};
     days.forEach((it, i) => (sv['A' + (14 + i)] = serial(it.date)));
     if (num(info.target)) sv.C2 = num(info.target);
-    { const zs = mc.daily.filter(d => d.zero && d.dow === 6).length, zw = mc.z - zs; sv.C4 = Math.max(0, mc.c4 - zw); sv.D4 = Math.max(0, mc.d4 - zs); }   // v28.18 : 실적 0인 날 빼고 (웹 평가평균과 같게)
+    { const zs = mc.daily.filter(d => d.zero && !d.hw && d.dow === 6).length, zw = mc.z - zs; sv.C4 = Math.max(0, mc.c4 - zw); sv.D4 = Math.max(0, mc.d4 - zs); }   // v28.18 : 실적 0인 날 빼고 (웹 평가평균과 같게)
     OTHER.forEach(([k]) => (sv[k] = mc.osum[k]));
     sv.W7 = mc.w7;
     sheets[0].xml = fillCells(stat, sv);
+    // v28.72 : 휴일근무 — 통계 시트 토요 가산(AW열) 식에서 일요일 · 등록한 휴일근무일 빼기 (10월 귀속월부터 · 웹 계산과 같게)
+    if (days.length && days[0].date >= HW.from) {
+      const L = days.filter(it => isHW(it.date)).map(it => serial(it.date));
+      sheets[0].xml = sheets[0].xml.replace(/OR\(WEEKDAY\(\$A(\d+)\)=7, WEEKDAY\(\$A\1\)=1\)/g, (m, r) => L.length ? `AND(WEEKDAY($A${r})=7, ISNA(MATCH($A${r}, {${L.join(',')}}, 0)))` : `WEEKDAY($A${r})=7`);
+    }
 
     // 통합문서 구성
     let wbSheets = '', wbRels = '', ct = '';
@@ -2872,7 +2888,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   root.Core = {
     COLS, COL, DEFAULT_MINS, ASM, asmQty, qtyParts, typeCounts, QLAB, minsMap, sumDay, GROUPS, EXCLUSIVE, TIPS, TARGETS, OT_LIST, OTHER, GROUP_LIST, MAX_ROWS, BASE_ROWS, MAX_DAYS,
     num, normOrder, parseMfg, snRange, emptyDay, calcDay, daySummary, calcMonth, buildXlsx, fileName,
-    ymd, addDays, WD, sheetName, serial, pad, parseWorkbook, adjustMonth, otherMinOf, ADJ_START, ADJ_MIN,
+    ymd, addDays, WD, sheetName, serial, pad, parseWorkbook, adjustMonth, otherMinOf, ADJ_START, ADJ_MIN, setHW, isHW,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -7537,7 +7553,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.71';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.72';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -7815,7 +7831,7 @@ async function addCharts(buf, jobs) {
     $$('[data-hm]', scope).forEach(el => { const h = H[el.dataset.hm]; if (el.dataset.hmc) { el.firstElementChild.innerHTML = h ? `<i class="y">${h.ok}</i>·<i class="n">${h.miss}</i>` : '-'; return; } el.innerHTML = h ? `<b class="y" title="${ymLabel(ym)} 달성일">달성 ${h.ok}</b>·<b class="n" title="${ymLabel(ym)} 미달일">미달 ${h.miss}</b>` : ''; });
   }
   // 달성일 · 미달일 : 실적 있는 날만 (실적 0 · 연차 · 대체 등 입력 없는 날은 안 셈)
-  const dayHits = (daily, t, ym) => { let ok = 0, miss = 0; if (t > 0) (daily || []).forEach(d => { if (d.zero) return; if (lvOf(d.f7, t, ym) === 'ok') ok++; else miss++; }); return { ok, miss }; };
+  const dayHits = (daily, t, ym) => { let ok = 0, miss = 0; if (t > 0) (daily || []).forEach(d => { if (d.zero || d.hw) return; if (lvOf(d.f7, t, ym) === 'ok') ok++; else miss++; }); return { ok, miss }; };
   const goalBar = (ym, multi) => { const g = goalOf(ym || (curPeriod() || {}).ym), m = tMode();
     const tip = multi ? '날짜마다 그 귀속월의 기준으로 계산 · ' + ((S.goals || []).map(x => ymLabel(x.ym) + ' ' + x.ok + '/' + x.warn + '%' + (x.team ? ' 팀 ' + x.team : '')).join(' · ') || '모든 달 기본 90/80%') : '';
     return `<div class="gbar"><div class="seg gmode" title="달성률 · 달성일 · 칸 색을 어느 목표로 계산할지"><span class="muted">목표 기준</span><button data-tm="p" class="${m === 'p' ? 'on' : ''}">개인 목표</button><button data-tm="t" class="${m === 't' ? 'on' : ''}">팀 목표</button></div>
@@ -10470,11 +10486,11 @@ async function addCharts(buf, jobs) {
   function mgMissOf(x) {
     const ym = x.ym, t = effT(x.u.target, ym), out = { ok: 0, miss: 0, L: [], t };
     if (!(t > 0) || x.u.pend) return out;
-    (x.u.items || []).forEach(it => { if (it.date >= S.today || mgDow(it.date) === 0) return; const v = C.sumDay(it.sum, minsYm(ym)).f7; if (!(v > 1e-9)) return; if (lvOf(v, t, ym) === 'ok') out.ok++; else { out.miss++; out.L.push({ date: it.date, v, t }); } });
+    (x.u.items || []).forEach(it => { if (it.date >= S.today || mgDow(it.date) === 0 || C.isHW(it.date)) return; const v = C.sumDay(it.sum, minsYm(ym)).f7; if (!(v > 1e-9)) return; if (lvOf(v, t, ym) === 'ok') out.ok++; else { out.miss++; out.L.push({ date: it.date, v, t }); } });
     out.L.sort((a, b) => (a.date < b.date ? 1 : -1)); return out;
   }
   // 최근 5근무일 = 오늘 전, 팀에 업무데이터가 있는 날 5개
-  const mgRecent = M => [...new Set([].concat(...M.map(x => (x.u.items || []).map(i => i.date))).filter(d => d < S.today))].sort().reverse().slice(0, 5);
+  const mgRecent = M => [...new Set([].concat(...M.map(x => (x.u.items || []).map(i => i.date))).filter(d => d < S.today && mgDow(d) !== 0 && !C.isHW(d)))].sort().reverse().slice(0, 5);
   function mgEvSt(e) {
     const D = S.mgD || {}, cfg = mgCfg(), mine = (D.events || []).filter(o => o.owner === e.owner && o.id !== e.id && o.result !== '취소' && o.date === e.date);
     const dayM = (D.events || []).filter(o => o.owner === e.owner && o.kind === 'm' && o.result === '예정' && o.date === e.date).sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')) || (+a.id - +b.id));
@@ -10539,14 +10555,14 @@ async function addCharts(buf, jobs) {
   const mgFbRc = f => !!(f && mgFbSt(f) === '진행 중' && f.rc && f.rc <= S.today);   // 재확인일 도래
   function mgDays(x) {   // 날짜별 결과 (근무한 날 · 일요일 휴일근무 제외)
     const t = effT(x.u.target, x.ym), o = {}; if (!(t > 0) || x.u.pend) return o;
-    (x.u.items || []).forEach(it => { if (it.date >= S.today || mgDow(it.date) === 0) return; const v = C.sumDay(it.sum, minsYm(x.ym)).f7; if (!(v > 1e-9)) return; o[it.date] = { v, t, miss: lvOf(v, t, x.ym) !== 'ok' }; });
+    (x.u.items || []).forEach(it => { if (it.date >= S.today || mgDow(it.date) === 0 || C.isHW(it.date)) return; const v = C.sumDay(it.sum, minsYm(x.ym)).f7; if (!(v > 1e-9)) return; o[it.date] = { v, t, miss: lvOf(v, t, x.ym) !== 'ok' }; });
     return o;
   }
   async function mgFbTab(box) {
     const v = S.mgv, adm = S.me.role === '관리자', SG = adm ? mgAllG() : (S.me.mg || []);
     box.innerHTML = '<div class="muted" style="padding:20px">파트원 불러오는 중…</div>';
     const M = await mgMembers(SG); if (S.view !== 'mgr' || v.tab !== 'fb') return;
-    const R = mgRecent(M), P = curPeriod() || {}, all = [...new Set([].concat(...M.map(x => (x.u.items || []).map(i => i.date))).filter(d => d < S.today && mgDow(d) !== 0 && (!P.start || d >= P.start)))].sort().reverse();
+    const R = mgRecent(M), P = curPeriod() || {}, all = [...new Set([].concat(...M.map(x => (x.u.items || []).map(i => i.date))).filter(d => d < S.today && mgDow(d) !== 0 && (!P.start || d >= P.start) && !C.isHW(d)))].sort().reverse();
     const multi = SG.length > 1; if (!multi) v.fbg = SG[0] || ''; else if (v.fbg && !SG.includes(v.fbg)) v.fbg = '';
     if (!v.fbd || (v.fbd !== '*' && !R.includes(v.fbd))) v.fbd = R[0] || '*';
     const DS = v.fbd === '*' ? all : [v.fbd], DM = new Map(M.map(x => [x.u.id, mgDays(x)]));
@@ -11132,6 +11148,7 @@ async function addCharts(buf, jobs) {
         const x = D[d], aj = ADJ[d], w = new Date(d + 'T00:00:00').getDay();
         if (!x) return `<td class="e${w === 0 || w === 6 ? ' hc' : ''}" data-hd="${d}"></td>`;
         if (x.zero) return `<td class="z" data-sd="${d}" title="${dLabel(d)} · 실적 0${aj ? ' (' + esc(aj.reason) + ')' : ''}">${aj ? adjTag(aj) : '0'}</td>`;
+        if (x.hw) return `<td class="hwc" data-sd="${d}" title="${dLabel(d)} · 휴일근무 — 근무일에 넣지 않고 실적 ${f2(x.e2)}만 총량에 더함">${f2(x.e2)}<i>휴</i></td>`;   // v28.72
         const rc = tg ? LVC[lvOf(x.f7, tg, ym)] : 'r-no';
         return `<td class="${rc}${aj ? ' adjc' : ''}" data-sd="${d}" title="${dLabel(d)} · 평가평균 ${f2(x.f7)}${tg ? ' (' + pct(x.f7 / tg) + ')' : ''} · 주문 ${x.n}건">${(Math.round(x.f7 * 10) / 10).toFixed(1)}${aj ? adjTag(aj) : ''}</td>`;
       }).join('')}<td class="bt r4">${m.daily.length || '-'}</td><td class="bt r3 t-hi"><b>${tg ? h.ok : '-'}</b></td><td class="bt r2 t-lo"><b>${tg ? h.miss : '-'}</b></td><td class="bt r1"><b>${m.daily.length ? f2(m.f7) : '-'}</b></td><td class="bt r0 ${tg && m.daily.length ? rateCls(m.c8, ym) + 't' : ''}">${tg && m.daily.length ? pct(m.c8) : '-'}</td></tr></tbody></table></div>`;
@@ -11166,13 +11183,13 @@ async function addCharts(buf, jobs) {
     const rows = m.daily.map(d => {
       const s = RAW[d.date] || {}, P = C.qtyParts(s), O = oth(s), om = O.reduce((a, x) => a + x[1], 0), aj = ADJ[d.date];
       T.q += P.asm; T.ship += P.ship; T.o += om;
-      const lv = tg && !d.zero ? lvOf(d.f7, tg, ym) : null;
-      return `<tr class="click" data-d="${d.date}"><td class="${d.dow === 6 ? 'sat' : d.dow === 0 ? 'sun' : ''}">${dLabel(d.date)}</td><td>${esc(d.kind || '')}</td><td class="num">${d.n - (d.mf || 0)}</td>${hasMf ? `<td class="num mfgv">${d.mf ? d.mq + '대' : ''}</td>` : ''}`
+      const lv = tg && !d.zero && !d.hw ? lvOf(d.f7, tg, ym) : null;
+      return `<tr class="click${d.hw ? ' hwr' : ''}" data-d="${d.date}"><td class="${d.dow === 6 ? 'sat' : d.dow === 0 ? 'sun' : ''}">${dLabel(d.date)}</td><td>${d.hw ? '<span class="hwt" title="근무일에 넣지 않고 실적만 총량에 더함 · 토요 가산 없음">휴일근무</span>' : esc(d.kind || '')}</td><td class="num">${d.n - (d.mf || 0)}</td>${hasMf ? `<td class="num mfgv">${d.mf ? d.mq + '대' : ''}</td>` : ''}`
         + `<td class="num" title="${esc(P.by.filter(x => x[1]).map(([c, n]) => C.QLAB[c] + ' ' + n).join(' · ') || '')}">${P.asm || ''}</td><td class="num shipv">${P.ship || ''}</td>`
         + `<td class="num" title="${esc(O.map(x => x[0] + ' ' + x[1] + '분').join('\n'))}">${om || ''}</td><td class="num">${d.e4 || ''}</td><td class="num">${d.h7 || ''}</td>`
-        + `<td class="num">${f2(d.e2)}</td><td class="lvc${lv ? ' ' + LVC[lv] : ''}"><b>${f2(d.f7)}</b></td>${tg ? `<td class="lvp ${lv ? LVC[lv] + 't' : ''}">${d.zero ? '' : pct(d.f7 / tg)}</td>` : ''}<td class="num">${d.aw ? f2(d.aw) : ''}</td><td>${aj ? adjTag(aj) : ''}</td></tr>`;
+        + `<td class="num">${f2(d.e2)}</td><td class="lvc${lv ? ' ' + LVC[lv] : ''}"><b>${f2(d.f7)}</b></td>${tg ? `<td class="lvp ${lv ? LVC[lv] + 't' : ''}">${d.zero || d.hw ? '' : pct(d.f7 / tg)}</td>` : ''}<td class="num">${d.aw ? f2(d.aw) : ''}</td><td>${aj ? adjTag(aj) : ''}</td></tr>`;
     }).join('');
-    const foot = m.daily.length ? `<tfoot><tr><td>합계 · 평균</td><td>${m.daily.length}일</td><td class="num">${m.daily.reduce((a, d) => a + d.n - (d.mf || 0), 0)}</td>${hasMf ? `<td class="num mfgv">${m.mq}대</td>` : ''}<td class="num">${T.q}</td><td class="num shipv">${T.ship}</td><td class="num">${T.o}</td><td class="num">${m.e4 || ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.h7, 0) || ''}</td><td class="num">${f2(m.e2)}</td><td class="lvc"><b>${f2(m.f7)}</b></td>${tg ? `<td class="lvp">${m.c8 != null ? pct(m.c8) : ''}</td>` : ''}<td class="num">${m.g4 ? f2(m.g4) : ''}</td><td></td></tr></tfoot>` : '';
+    const foot = m.daily.length ? `<tfoot><tr><td>합계 · 평균</td><td>${m.daily.length - (m.hw || 0)}일${m.hw ? `<small> + 휴일 ${m.hw}</small>` : ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.n - (d.mf || 0), 0)}</td>${hasMf ? `<td class="num mfgv">${m.mq}대</td>` : ''}<td class="num">${T.q}</td><td class="num shipv">${T.ship}</td><td class="num">${T.o}</td><td class="num">${m.e4 || ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.h7, 0) || ''}</td><td class="num">${f2(m.e2)}</td><td class="lvc"><b>${f2(m.f7)}</b></td>${tg ? `<td class="lvp">${m.c8 != null ? pct(m.c8) : ''}</td>` : ''}<td class="num">${m.g4 ? f2(m.g4) : ''}</td><td></td></tr></tfoot>` : '';
     return `<div class="card pdt" style="padding:0;overflow:auto;max-height:calc(100vh - 300px)"><table class="list"><thead><tr>${head}</tr></thead><tbody>${rows || `<tr><td colspan="${cols}" class="muted" style="padding:24px">입력된 날짜가 없습니다</td></tr>`}</tbody>${foot}</table></div>`;
   }
   const whyAb = w => /^영상/.test(w) ? '영상' : w.length > 3 ? w.slice(0, 3) : w;   // v28.54 : 영상 업무배정 = '영상' (영상 전용 업무표는 추후)
@@ -12181,6 +12198,35 @@ async function addCharts(buf, jobs) {
       $('#hbs').insertAdjacentHTML('beforeend', `<span>자동 백업 ${r.on ? '켜짐' + (r.last ? ' · ' + esc(r.last.slice(5, 16)) : '') : '<b class="t-lo">꺼짐</b>'}</span>`); }).catch(() => { });
   }
 
+  // ---- v28.72 : 휴일근무일 (일요일 자동 + 관리자 등록) — 10월 귀속월부터 근무일 수에 넣지 않고 실적만 총량에 더함
+  const HW_YM = '2026-10';
+  const hwFrom = () => { const p = (S.periods || []).filter(x => x.ym >= HW_YM && x.start).sort((a, b) => (a.ym < b.ym ? -1 : 1))[0]; return p ? p.start : HW_YM + '-01'; };   // 10월 귀속월 시작일
+  function hwApply(list) { if (list) S.hw = list; C.setHW(S.hw || [], hwFrom()); S._mcache = {}; S.pc = {}; S.stCache = {}; }
+  function hwCard(box) {
+    let L = (S.hw || []).map(x => ({ d: x.d, n: x.n || '' })).sort((a, b) => (a.d < b.d ? -1 : 1)); const from = hwFrom();
+    const draw = () => {
+      box.innerHTML = `<div class="card scard gset" style="margin-top:16px"><div class="sct"><b>휴일근무일</b><span>연휴 중 임시 출근 · 단축근무 날 — 그날은 <b>근무일 수에 넣지 않고 실적만 월 총량에 더합니다</b> (토요 가산 없음) · 일요일은 자동 · ${dLabel(from)}(10월 귀속월)부터 적용</span></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px"><input type="date" id="hwd" style="width:auto"><input id="hwn" placeholder="메모 (예: 추석 연휴 마지막날 단축 출근)" maxlength="40" style="flex:1;min-width:220px"><button id="hwadd">＋ 추가</button></div>
+        <table class="list"><thead><tr><th>날짜</th><th>메모</th><th></th></tr></thead><tbody>${L.map((x, i) => `<tr><td>${dLabel(x.d)}${x.d < from ? ' <small class="t-lo">적용 전 날짜</small>' : ''}</td><td class="l">${esc(x.n || '')}</td><td><button class="sm" data-hx="${i}">빼기</button></td></tr>`).join('') || '<tr><td colspan="3" class="muted" style="padding:16px">등록한 날짜가 없습니다 (일요일은 등록하지 않아도 자동 적용)</td></tr>'}</tbody></table>
+        <div class="row" style="margin-top:12px;gap:8px"><span class="muted" style="flex:1" id="hwmsg">저장 전에 [영향 미리보기]로 평가평균이 바뀌는 사람을 확인할 수 있습니다</span><button id="hwpv">영향 미리보기</button><button class="primary" id="hwsave">저장</button></div><div id="hwres"></div></div>`;
+      $('#hwadd', box).onclick = () => { const d = $('#hwd', box).value, n = $('#hwn', box).value.trim(); if (!d) return toast('날짜를 고르세요', true); if (L.some(x => x.d === d)) return toast('이미 있는 날짜입니다', true); if (mgDow(d) === 0) return toast('일요일은 자동 적용이라 등록하지 않아도 됩니다', true); L.push({ d, n }); L.sort((a, b) => (a.d < b.d ? -1 : 1)); draw(); };
+      $$('[data-hx]', box).forEach(b => (b.onclick = () => { L.splice(+b.dataset.hx, 1); draw(); }));
+      $('#hwpv', box).onclick = () => hwPreview(L, $('#hwres', box));
+      $('#hwsave', box).onclick = async () => {
+        if (!(await confirmBox(`휴일근무일 <b>${L.length}</b>개를 저장합니다.<br>그날 일한 사람의 평가평균 · 달성일 · 엑셀 통계가 바로 다시 계산됩니다.`, '저장'))) return;
+        try { const r = await api('goalSave', { op: 'hw', hw: L }); hwApply(r.hw || []); toast('휴일근무일을 저장했습니다'); hwCard(box); } catch (e) { toast(e.message, true); }
+      };
+    };
+    draw();
+  }
+  async function hwPreview(L, el) {
+    const P = curPeriod(); if (!P) return; el.innerHTML = '<div class="muted" style="padding:10px">계산 중…</div>';
+    let r; try { r = await api('listUsers', { ym: P.ym }); } catch (e) { el.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+    const calc = (list, from) => { C.setHW(list, from || hwFrom()); const o = {}; (r.users || []).forEach(u => { if (!u.items || !u.items.length) return; const its = adjOn(P.ym) ? adjItems(u.name, u.items) : u.items, m = C.calcMonth(its, 0, minsYm(P.ym)); o[u.id] = { n: u.name, g: u.group, f7: m.f7, ev: m.ev, hw: m.hw }; }); return o; };
+    const A = calc([], '9999-12-31'), B = calc(L); C.setHW(S.hw || [], hwFrom());
+    const ch = Object.keys(B).map(k => ({ ...B[k], a: A[k] ? A[k].f7 : null, aev: A[k] ? A[k].ev : 0 })).filter(x => x.a == null || Math.abs(x.f7 - x.a) > 0.005 || x.ev !== x.aev).sort((a, b) => (b.f7 - b.a) - (a.f7 - a.a));
+    el.innerHTML = `<div class="sct" style="margin-top:14px"><b>${ymLabel(P.ym)} 미리보기</b><span>휴일근무 적용 전 → 적용 후 (일요일 + 지금 목록) · 바뀌는 사람 ${ch.length}명</span></div>` + (ch.length ? `<table class="list"><thead><tr><th>이름</th><th>그룹</th><th>평가 일수</th><th>평가평균</th><th>차이</th></tr></thead><tbody>${ch.map(x => `<tr><td>${esc(x.n)}</td><td>${gdot(x.g)}</td><td>${x.aev} → <b>${x.ev}</b>${x.hw ? ` <small class="muted">(휴일 ${x.hw})</small>` : ''}</td><td>${x.a == null ? '-' : f2(x.a)} → <b>${f2(x.f7)}</b></td><td class="${x.f7 - x.a >= 0 ? 'c1' : 't-lo'}">${x.f7 - x.a >= 0 ? '+' : ''}${f2(x.f7 - x.a)}</td></tr>`).join('')}</tbody></table>` : '<div class="muted" style="padding:10px">바뀌는 사람이 없습니다</div>');
+  }
   // ---- v28.51 : 관리자 설정 → 목표 (팀 목표 · 달성 기준) · 관리자만
   function goalYms() { const s = new Set(S.periods.map(p => p.ym).concat((S.goals || []).map(g => g.ym))); const last = Array.from(s).sort().pop() || S.today.slice(0, 7); s.add(nextYmOf(last)); return Array.from(s).sort().reverse(); }
   function renderGoal(ym0) {
@@ -12198,6 +12244,7 @@ async function addCharts(buf, jobs) {
       <div class="row" style="margin-top:14px"><span class="muted" style="flex:1">팀 목표를 바꿔도 사람들의 개인 목표는 바뀌지 않습니다 · '팀 목표' 기준 화면과 팀 달성률에만 쓰입니다</span><button class="primary" id="gsave">${ymLabel(ym)} 저장</button></div>
       ${(S.goals || []).length ? `<table class="list" style="margin-top:16px"><thead><tr><th>정한 달</th><th class="num">팀 목표</th><th class="num">달성 %</th><th class="num">주의 %</th><th>정한 사람</th></tr></thead><tbody>${S.goals.slice().reverse().map(x => `<tr><td>${ymLabel(x.ym)}부터</td><td class="num">${x.team ? f1d(+x.team) : '-'}</td><td class="num">${x.ok}</td><td class="num">${x.warn}</td><td class="muted">${esc(x.by || '')} · ${esc((x.at || '').slice(0, 16))}</td></tr>`).join('')}</tbody></table>` : ''}
     </div></div>`;
+    $('.pgb', main).insertAdjacentHTML('beforeend', '<div id="hwbox"></div>'); hwCard($('#hwbox'));
     $('#gym').onchange = e => renderGoal(e.target.value);
     $('#gsave').onclick = async () => {
       const team = $('#gteam').value.trim(), ok = +$('#gok').value, warn = +$('#gwarn').value;
@@ -13324,7 +13371,8 @@ async function addCharts(buf, jobs) {
       const r = pre && pre.me ? pre : await api('me', { withDay: true });
       S.me = r.me; S.periods = r.periods; S.today = r.today || S.today; S.rates = r.rates || [];
       attReset(); S.stCache = {}; S.stv = null;                                           // v28.53 : 로그인할 때 앞 계정 자료 비움
-      try { S.goals = (await api('goalCfg')).goals || []; } catch (e) { S.goals = []; }   // v28.51 : SQL 전이면 기본 기준(90/80)
+      try { const gc = await api('goalCfg'); S.goals = gc.goals || []; S.hw = gc.hw || []; } catch (e) { S.goals = []; S.hw = []; }   // v28.51 : SQL 전이면 기본 기준(90/80) · v28.72 휴일근무일
+      hwApply();
       S.prEd = false; S.prP = null; await prWho();                                        // v28.63 : 생산업무 담당자
       S.wt = null; S.wtv = null; await wtLoad();                                          // v28.55 : 업무표 사용자
       S.mgD = null; S.mgv = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); });   // v28.59 : 매니저 관리
