@@ -1986,7 +1986,7 @@ html[data-theme=dark] .edu-notice-person.mine b,html[data-theme=dark] .edu-notic
 .m2ks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px}
 .m2k{--a1:#2f6fe4;--a2:#1b49b0;display:flex;align-items:center;gap:12px;text-align:left;padding:14px 16px;border-radius:12px;border:1px solid color-mix(in srgb,var(--a1) 22%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--a1) 13%,var(--panel)),color-mix(in srgb,var(--a1) 3%,var(--panel)) 75%);color:var(--ink);cursor:default;min-width:0}
 /* v28.80 : 월 통계 요약칸 = 글자 + 숫자 한 줄 · 달성률 숫자 옆에 막대 · 조립수량은 넓게 (칩이 오른쪽 빈자리로) · 그래프 카드 높이 고정 */
-.stats.s6{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.15fr) minmax(0,2.2fr)!important;align-items:stretch}
+.stats.s6{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.15fr) minmax(0,2.2fr)!important;align-items:stretch}
 .mchb .mtl span{display:none}   /* 위 설명에 '점선 = 월 목표'가 있음 · 막대 숫자와 겹침 방지 */
 .stats.s6 .stat{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:10px;row-gap:2px;padding:9px 12px;min-height:54px}
 .stats.s6 .stat .k{margin:0;white-space:nowrap}.stats.s6 .stat .v{margin:0;white-space:nowrap}
@@ -7651,7 +7651,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.80';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.81';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9276,7 +9276,7 @@ async function addCharts(buf, jobs) {
     ${!multi && !TG ? '<div class="warn">' + (tMode() === 't' ? '팀 목표가 아직 정해지지 않았습니다. ' : '') + '월 목표가 없어 달성률이 안 나옵니다. ' + (r.canSetTarget ? '위에서 월 목표를 선택하세요.' : '담당 매니저에게 목표를 요청하세요.') + '</div>' : ''}
     <div class="stats s6">
       <div class="stat"><div class="k">평가 평균</div><div class="v">${f2(m.f7)}</div></div>
-      <div class="stat"><div class="k">달성률</div><div class="v">${TG ? pct(m.c8) : '-'}</div>${m.c8 != null ? `<div class="bar"><i class="${{ 'r-hi': 'hi', 'r-lo': 'lo' }[rateCls(m.c8, r.period && r.period.ym)] || ''}" style="width:${Math.min(100, m.c8 * 100)}%"></i></div>` : ''}</div>
+      <div class="stat"><div class="k">달성률</div><div class="v ${m.c8 != null && TG ? { 'r-hi': 'r-hit', 'r-mid': 'r-midt', 'r-lo': 'r-lot' }[rateCls(m.c8, r.period && r.period.ym)] || '' : ''}">${TG ? pct(m.c8) : '-'}</div></div>
       <div class="stat"><div class="k">실제 평균</div><div class="v">${f2(m.i7)}</div></div>
       <div class="stat"><div class="k">기본 평균</div><div class="v">${f2(m.e2)}</div></div>
       <div class="stat"><div class="k">근무일 (평일 / 토요)</div><div class="v">${m.c4}<small>/ ${m.d4}</small></div></div>
