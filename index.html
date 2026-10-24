@@ -7643,7 +7643,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.78';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -7703,7 +7703,7 @@ async function addCharts(buf, jobs) {
   }
   // v28.54 : 관리자 '직급별 화면 미리보기' — 읽기만 허용, 저장·수정 요청은 보내지 않음
   const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
-    'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList']);
+    'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
   const pvRead = (a, d) => PV_READ.has(a) || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
   async function api(action, data) {
@@ -10559,7 +10559,7 @@ async function addCharts(buf, jobs) {
       const done = M.filter(e => e.result === '실시').map(e => e.date).sort(), lastM = done[done.length - 1] || '', nextM = M.filter(e => e.result === '예정' && e.date >= S.today).map(e => e.date).sort()[0] || '';
       const lastE = Ed.filter(e => e.result === '실시').map(e => e.date).sort().pop() || '';
       let f7 = null, c8 = null; if (u.items && u.items.length) { const its = adjOn(ym) ? adjItems(u.name, u.items) : u.items, t = effT(u.target, ym), m = C.calcMonth(its, t, minsYm(ym)); f7 = m.f7; c8 = t ? m.c8 : null; }
-      const due = !nextM && (!lastM || dGap(lastM, S.today) >= mgCfg().cycle);
+      const due = !u.pend && !nextM && (!lastM || dGap(lastM, S.today) >= mgCfg().cycle);
       return { u, name: u.name, n, group: u.group, title: u.title || '', lastM, nextM, cntM: done.length, lastE, f7, c8, due, ym };
     });
   }
@@ -11015,7 +11015,7 @@ async function addCharts(buf, jobs) {
     const m0 = c.cur.slice(0, 8) + '01', dim = new Date(+c.cur.slice(0, 4), +c.cur.slice(5, 7), 0).getDate(), mE = c.cur.slice(0, 8) + String(dim).padStart(2, '0');
     const inM = L.filter(e => e.d <= mE && e.e >= m0), soonN = calAlerts().length;
     const card = (cls, ic, k, val, sub, go) => `<div class="m2k ${cls}" ${go ? `data-kgo="${go}"` : ''}><span class="m2ki">${ic}</span><span class="m2kt"><small>${k}</small><b>${val}<em>건</em></b><span>${sub}</span></span></div>`;
-    const kpi = `<div class="m2ks c4 mcks">${card('blue', IC.cal, (+c.cur.slice(5, 7)) + '월 일정', inM.length, '필터 기준 · 기간 일정 포함')}${card('violet', IC.clip, '오늘 일정', L.filter(e => cover(e, T)).length, dLabel(T), 'today')}${card('amber', IC.warn, '다가오는 일정', soonN, '3일 안에 시작 · 알림 숫자', 'soon')}${card('green', IC.pen, '내가 등록', inM.filter(e => !e.plan && e.owner === S.me.id).length, (+c.cur.slice(5, 7)) + '월 · 내 이름으로 등록', 'mine')}</div>`;
+    const kpi = `<div class="m2ks c4 mcks">${card('blue', IC.cal, (+c.cur.slice(5, 7)) + '월 일정', inM.length, '필터 기준 · 기간 일정 포함')}${card('violet', IC.clip, '오늘 일정', L.filter(e => !e.plan && cover(e, T)).length, dLabel(T), 'today')}${card('amber', IC.warn, '다가오는 일정', soonN, '3일 안에 시작 · 알림 숫자', 'soon')}${card('green', IC.pen, '내가 등록', inM.filter(e => !e.plan && e.owner === S.me.id).length, (+c.cur.slice(5, 7)) + '월 · 내 이름으로 등록', 'mine')}</div>`;
     const title = c.list ? `${dLabel(cSun(c.sel))} ~ ${dLabel(C.addDays(cSun(c.sel), 6))}` : c.view === 'm' ? ymLabel(c.cur.slice(0, 7)) : c.view === 'w' ? `${dLabel(cSun(c.cur))} ~ ${dLabel(C.addDays(cSun(c.cur), 6))}` : dLabel(c.cur) + (HOL[c.cur] ? ' · ' + HOL[c.cur] : '');
     const cnt = id => D.ev.filter(e => String(e.cat) === String(id) && scope(e)).length;
     const chips = `<span class="mcpill"><button class="mcch all ${off.size ? '' : 'on'}" data-cfa="1">전체</button>${CK.map(k => `<button class="mcch ${off.has(String(k.id)) ? 'off' : 'on'}" style="--c:${k.color}" data-cf="${k.id}"><i></i>${esc(k.name)}<em>${cnt(k.id)}</em></button>`).join('')}</span>`;
@@ -11152,7 +11152,8 @@ async function addCharts(buf, jobs) {
           if (!r.d) return Object.assign(r, { st: 'bad', msg: '날짜를 알 수 없음 (11/10 · 2026-11-10)', d: ds || '' });
           if (!r.e) r.e = r.d; if (dd[1] && !pd(dd[1])) return Object.assign(r, { st: 'bad', msg: '종료일을 알 수 없음' }); if (r.e < r.d) return Object.assign(r, { st: 'bad', msg: '종료일이 시작일보다 앞' });
           if (!r.title) return Object.assign(r, { st: 'bad', msg: '제목 없음' });
-          const w = []; if (r.tm && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(r.tm)) { w.push('시간 형식 확인 → 종일로'); r.tm = ''; }
+          if (r.tm && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(r.tm)) return Object.assign(r, { st: 'bad', msg: `시간 형식 오류 "${r.tm}" (09:30 처럼) · 고치거나 비우세요` });   // v28.77 : 잘못된 시간은 오류 (종일로 바꾸지 않음)
+          const w = [];
           if (r.grp !== '전체' && !C.GROUP_LIST.includes(r.grp)) { w.push(`그룹 "${r.grp}" 모름 → 전체`); r.grp = '전체'; }
           const key = r.d + '|' + r.tm + '|' + r.title; if (seen.has(key) || mine.has(key)) return Object.assign(r, { st: 'skip', msg: '이미 있음 → 건너뜀' }); mine.add(key);
           if (!r.cat) { r.cat = (D.cats[0] || {}).name || ''; w.push('구분 비어 있음 → ' + r.cat); } else if (!D.cats.some(c => c.name === r.cat)) { if (r.cat.length > 12) return Object.assign(r, { st: 'bad', msg: '구분 이름은 12자까지' }); w.push(`새 구분 "${r.cat}" 만들기`); }
@@ -11178,7 +11179,7 @@ async function addCharts(buf, jobs) {
     if (!adm) { box.innerHTML = '<div class="card" style="padding:30px;text-align:center" class="muted">팀장 현황은 팀장 · 관리자만 볼 수 있습니다.</div>'; return; }
     const ym = S.today.slice(0, 7), mon0 = S.today.slice(0, 8) + '01', wkEnd = C.addDays(wkMon(S.today), 4), cfg = mgCfg();
     box.innerHTML = '<div class="muted" style="padding:20px">계산 중…</div>';
-    const all = await mgMembers(null); if (S.view !== 'mgr' || S.mgv.tab !== 'lead') return;
+    const all = (await mgMembers(null)).filter(x => !x.u.pend); if (S.view !== 'mgr' || S.mgv.tab !== 'lead') return;   // v28.77 : 가입 안 한 인원은 면담 집계에서 뺌 (면담관리와 같은 기준)
     const rows = (D.managers || []).map(m => {
       const T = D.tasks.filter(t => t.owner === m.id), E = D.events.filter(e => e.owner === m.id), act = T.filter(t => t.status !== '완료');
       const stale = act.filter(mgStale).length;
@@ -11330,7 +11331,7 @@ async function addCharts(buf, jobs) {
     const act = T.filter(t => t.status !== '완료');
     const defD = S.today >= R.from && S.today <= R.to ? S.today : R.to < S.today ? R.to : S.today;
     const ent = mine ? `<div class="card wtent"><div class="wtehd"><b>진행 현황 기록</b><span class="muted">처리일자를 고르고 저장하면 그날 칸에 ● · 주간 업무 목표와 같은 자료</span>${kpi}</div>
-      ${act.length ? `<div class="wtg plg"><input type="date" id="pld" value="${defD}" max="${S.today}"><select id="plp">${act.map(t => `<option value="${t.id}">${esc(PRN[t.priority] + ' · ' + t.title)}</option>`).join('')}</select><button id="plnew">＋ 계획</button><button class="primary" id="plsv">기록 저장</button></div>
+      ${act.length ? `<div class="wtg plg"><input type="date" id="pld" value="${defD}"><select id="plp">${act.map(t => `<option value="${t.id}">${esc(PRN[t.priority] + ' · ' + t.title)}</option>`).join('')}</select><button id="plnew">＋ 계획</button><button class="primary" id="plsv">기록 저장</button></div>
       <textarea id="plx" maxlength="1000" rows="1" placeholder="진행 현황을 적으세요 (예: 구매1팀 강대진 팀장과 브랜드관 개편 사전 조율)"></textarea>` : `<div class="row"><span class="muted">진행 중인 계획이 없습니다.</span><button class="primary" id="plnew">＋ 계획</button></div>`}</div>`
       : `<div class="card wtent ro">${kpi}</div>`;
     const title = p.mode === 'w' ? `${dLabel(R.from)} ~ ${dLabel(R.to)}` : ymLabel(p.ym);
@@ -11357,7 +11358,7 @@ async function addCharts(buf, jobs) {
     if (!$('#plsv', box)) return;
     $('#plsv', box).onclick = async () => {
       const body = { op: 'log', task: $('#plp', box).value, date: $('#pld', box).value, text: $('#plx', box).value.trim() };
-      if (!body.date) return toast('처리일자를 고르세요', true); if (body.date > S.today) return toast('처리일자는 오늘까지', true);
+      if (!body.date) return toast('처리일자를 고르세요', true);
       if (body.text.length < 2) return toast('내용을 2자 이상 적으세요', true);
       const b = $('#plsv', box); b.disabled = true;
       try { await api('mgSave', body); OPEN[body.task] = true; toast('저장했습니다 — ' + dLabel(body.date) + ' 칸 ●'); await mgLoad(true); if (S.view === 'mgr' && S.mgv.tab === 'plan') drawMgr(); } catch (e) { toast(e.message, true); b.disabled = false; }
@@ -11812,7 +11813,8 @@ async function addCharts(buf, jobs) {
       const r10 = {}, t = {}, o = {}; CO.forEach((c, i) => { if (ra[i]) r10[c] = ra[i]; if (ta[i]) t[c] = ta[i]; }); OT.forEach((k, i) => { if (oa[i]) o[k] = oa[i]; });
       const M = mm(ym), id = u + '|' + key;
       const a = out[id] = out[id] || { u, key, n: 0, c4: 0, d4: 0, z: 0, zh: 0, sumH: 0, av: 0, au: 0, otc: 0, aw: 0, oth: 0, q: 0, ship: 0, ban: 0, mf: 0, mq: 0, r10: {}, rmin: {}, ot: {}, yms: {} };
-      a.n += n; a.z += +z || 0; a.zh += +zh || 0; a.mf += +mf || 0; a.mq += +mq || 0; if (dw === 's') a.d4 += n; else a.c4 += n;
+      const hw = dw === 'h';   // v28.78 : 휴일근무 (서버가 'h'로 보냄) — 월 현황(Core.calcMonth)과 같게 근무일 · 0실적일 · 주말 가산에서 뺌, 실적 · 시간은 더함
+      if (hw) a.hw = (a.hw || 0) + n; else { a.n += n; a.z += +z || 0; a.zh += +zh || 0; } a.mf += +mf || 0; a.mq += +mq || 0; if (dw === 's') a.d4 += n; else if (!hw) a.c4 += n;
       let e2w = (+mgq || 0) * 0.1 + (+mos || 0) / 30;
       for (const c in r10) { const v = +r10[c] || 0, x = C.COL[c]; if (!x) continue; a.r10[c] = (a.r10[c] || 0) + v; a.rmin[c] = (a.rmin[c] || 0) + v * (M[c] || 0); if (x.kind !== 'type') a.sumH += v * (M[c] || 0) / 30; if (x.kind === 'type' && !tya) a.q += v; }
       if (tya) { const TY = D.tys || [], T = {}; TY.forEach((c, i) => (T[c] = +tya[i] || 0)); a.q += C.asmQty(T); a.ship += T.F || 0; a.ban += T.G || 0; }   // v28.24 : 조립수량 = 일반·특수·프리·추천·웍스 (제조 줄 · 출고 · 반조 따로)
@@ -11820,7 +11822,7 @@ async function addCharts(buf, jobs) {
       for (const k in o) { a.ot[k] = (a.ot[k] || 0) + (+o[k] || 0); a.oth += +o[k] || 0; }
       a.av += +h7 || 0; a.au += +e4 || 0; a.otc += +otc || 0;
       if (dw === 's' || dw === 'u') a.aw += 0.25 * (e2w + (+le2 || 0));
-      a.yms[ym] = (a.yms[ym] || 0) + n;
+      if (!hw) a.yms[ym] = (a.yms[ym] || 0) + n;
     });
     Object.values(out).forEach(a => {
       const cd = Math.max(0, a.c4 + a.d4 - a.z), g4 = cd ? a.aw / cd : 0, f6 = cd + (a.av - a.zh) / 60 / 8.5, w7 = cd ? (a.oth / 30) / cd : 0;   // v28.18 : 실적 0인 날 빼고
@@ -12080,7 +12082,7 @@ async function addCharts(buf, jobs) {
     (D.users || []).forEach(u => (byName[nmKey(u.name)] = u.id));
     const idx = {}, rows = D.agg.map(r => r.slice()); rows.forEach((r, i) => (idx[r[0] + '|' + r[1] + '|' + (r[2] || '') + '|' + r[3]] = i));
     const wkOf = d => { const x = new Date(d + 'T00:00:00'), k = (x.getDay() + 6) % 7; return C.addDays(d, -k); };
-    const dwOf = d => { const k = new Date(d + 'T00:00:00').getDay(); return k === 6 ? 's' : k === 0 ? 'u' : 'w'; };
+    const dwOf = d => { if (C.isHW(d)) return 'h'; const k = new Date(d + 'T00:00:00').getDay(); return k === 6 ? 's' : k === 0 ? 'u' : 'w'; };   // v28.78 : 휴일근무 = 'h' (서버와 같게)
     yms.forEach(ym => { const A = S._adj && S._adj[ym]; if (!A) return;
       Object.keys(A.by).forEach(n => { const uid = byName[n]; if (!uid) return;
         const raw = {}; (A.src.users.find(u => nmKey(u.name) === n) || { items: [] }).items.forEach(it => (raw[it.date] = it.sum || {}));
@@ -12386,7 +12388,7 @@ async function addCharts(buf, jobs) {
       <div class="muted" style="font-size:12px;margin-top:8px">"월" 표시 = 월 마감 자료(인사평가에 올린 업무통계) · 그룹 안 순위 = 같은 그룹 · 근무일 ${minD}일 이상 · 보이는 달 = 지금 통계 화면이 불러온 기간</div>`,
       (bg, close) => { $('[data-n]', bg).onclick = close; }, 'wide');
   }
-  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__st = { stAgg, stModel, stKeys, stRange, stState };   // 시험용 (로컬에서만)
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__st = { stAgg, stModel, stKeys, stRange, stState, minsYm };   // 시험용 (로컬에서만)
   window.addEventListener('resize', () => { clearTimeout(S._str); S._str = setTimeout(() => { if (S.view === 'stats') stDraw(); }, 200); });
   // Read-only home: today in Korea; refresh on initial entry or explicit user request only.
   const roToday = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
