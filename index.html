@@ -7651,7 +7651,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.81';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.83';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9219,7 +9219,7 @@ async function addCharts(buf, jobs) {
     X.utils.book_append_sheet(book, X.utils.aoa_to_sheet([['이름', results[0].user.name], ['조회', label], ['평가 평균', m.f7], ['실제 평균', m.i7], ['기본 평균', m.e2], ['평일', m.c4], ['토요', m.d4], ['조립수량', C.qtyParts(m).asm], ['기타시간(분)', m.otherTotal], ['실제야근(분)', m.e4]]), '기간 요약');
     saveBlob(new Blob([X.write(book, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), results[0].user.name + '_' + label.replace(/[^0-9가-힣~-]/g, '') + '.xlsx');
   }
-  async function renderMonth(ym) {
+  async function renderMonth(ym, reuse) {   // v28.83 : reuse = 목표 기준(개인/팀) 전환처럼 표시만 바뀔 때 방금 받은 월 자료를 다시 씀 (저장 · 월 변경 · 새 조회는 항상 새로 받음)
     const main = $('#main');
     if (!S.periods.length) { main.innerHTML = '<div class="warn">월 기간이 없습니다. 관리자가 열면 쓸 수 있습니다.</div>'; return; }
     ym = ym || S.monthYm || (periodOf(S.date || S.today) || curPeriod()).ym;
@@ -9235,7 +9235,9 @@ async function addCharts(buf, jobs) {
     const stale = () => seq !== S.monthSeq || S.view !== 'month' || !S.me || who().id !== u0.id;
     try {
       if (!selected.length) throw new Error('해당 기간에 설정된 귀속월이 없습니다.');
-      results = await Promise.all(selected.map(p => api('getMonth', { userId: u0.id, ym: p.ym })));
+      const rkey = selected.map(p => p.ym).join(',');
+      results = reuse && S._pmRes && S._pmRes.uid === u0.id && S._pmRes.key === rkey && S._pmRes.tk === S.token ? S._pmRes.results : await Promise.all(selected.map(p => api('getMonth', { userId: u0.id, ym: p.ym })));
+      S._pmRes = { uid: u0.id, key: rkey, tk: S.token, results };
       r = multi ? Object.assign({}, results[0], { days: results.flatMap(x => x.days), target: 0, canSetTarget: false }) : results[0];
     } catch (e) { if (!stale()) main.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
     if (stale()) return;                                                 // 기다리는 동안 다른 사람·화면으로 옮김   // 매니저가 고친 내용·목표까지 항상 최신으로
@@ -9308,7 +9310,7 @@ async function addCharts(buf, jobs) {
     };
     $$('tr[data-d]').forEach(tr => (tr.onclick = () => go('input', { date: tr.dataset.d })));
     $$('.pstrip td[data-sd]').forEach(td => (td.onclick = () => go('input', { date: td.dataset.sd })));
-    bindGoalBar(() => renderMonth()); { const ps = $('.pstrip'); if (ps) ps.scrollLeft = ps.scrollWidth; }   // v28.54 : 목표 기준 · 현황판 최근 날짜 보이게
+    bindGoalBar(() => renderMonth(undefined, true)); { const ps = $('.pstrip'); if (ps) ps.scrollLeft = ps.scrollWidth; }   // v28.54 : 목표 기준 · 현황판 최근 날짜 보이게
     $('#xl').onclick = async () => {
       const b = $('#xl'); b.disabled = true; b.textContent = '만드는 중…';
       try { if (multi) await downloadPersonRange(results, m, label); else { if (!r.days.length && !(r._items && r._items.length)) throw new Error('입력된 날짜가 없습니다'); saveBlob(await simpleXlsxBlob(r.user, ym, r.target, r.days), sxName(r.user.name, ym)); toast('엑셀을 내려받았습니다'); } } catch (e) { toast('엑셀 생성 실패: ' + e.message, true); }
@@ -9989,7 +9991,7 @@ async function addCharts(buf, jobs) {
     if (!(ym || S.mMode === 'range')) return drawManage(null, ym, false);
     // 직전에 본 목록을 먼저 보여주고, 뒤에서 새로 받아 바뀐 게 있으면 다시 그림
     const key = S.mMode === 'range' && !monthRange ? 'R|' + S.mRange.start + '|' + S.mRange.end : 'M|' + ym;
-    S._mcache = S._mcache || {}; S._mkey = key;
+    S._mcache = S._mcache || {}; S._mkey = key; S._mym = ym;
     const cached = S._mcache[key];
     if (cached) drawManage(cached, ym, true); else main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
     let r; const tk = S.token;
@@ -10100,7 +10102,7 @@ async function addCharts(buf, jobs) {
           S.mMode = 'range'; S.mRange = { start, end: t, q: mode === '당일' ? 'd' : mode === '주간' ? 'w' : 'q' }; renderManage();
         },
         onRange: (from, to) => { S.mMode = 'range'; S.mRange = { start: from, end: to, q: '' }; renderManage(); },
-        onGroup: key => { S.manageGroup = window.CZFilterV4.toggle(S.manageGroup, key).join(','); renderManage(); },
+        onGroup: key => { S.manageGroup = window.CZFilterV4.toggle(S.manageGroup, key).join(','); const c0 = S._mcache && S._mcache[S._mkey]; if (c0 && S.view === 'manage') drawManage(c0, S._mym, false); else renderManage(); },   // v28.83 : 그룹 바꿀 때 이미 받은 목록을 다시 그림 (서버 재조회 없음)
         onSearch: () => { const k = $('#czfMKeyword'); if (k) S.manageQuery = k.value.trim(); renderManage(); },
         onReset: () => { S.manageGroup = ''; S.manageQuery = ''; S.mMode = 'month'; S.manageYm = (curPeriod() || {}).ym; renderManage(); },
         onDetail: (open, detail) => { if (open) detail.innerHTML = '<label class="muted">이름·사번 검색 <input id="czfMKeyword" placeholder="이름 / 사번" style="margin-left:8px;width:170px" value="' + esc(S.manageQuery || '') + '"></label><button id="czfMApply" class="sm primary" style="margin-left:7px">적용</button>'; if (open) { const b = $('#czfMApply'); b.onclick = () => { S.manageQuery = $('#czfMKeyword').value.trim(); renderManage(); }; } },
