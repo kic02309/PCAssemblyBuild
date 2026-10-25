@@ -6024,15 +6024,24 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
   // 2026-10-21 v4: 인사평가 조회 영역. 기간 조회는 평가자료를 읽기만 하고 입력/마감을 변경하지 않는다.
   const hrAddMonth = (month, step) => { const d = new Date(+month.slice(0,4),+month.slice(5,7)-1+step,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+  // v28.84 F1: 조회 탭별 실제 그룹 선택값. 빈 값은 관리자 전체 그룹.
+  const hrFilterPart = () => ST.tab === 'overview' ? (ST.overviewPart || '') : ST.tab === 'att' ? (ST.attPart !== undefined ? ST.attPart : (admin() ? '' : ST.part)) : (ST.part || '');
+  const hrNameMatches = name => !ST.hrv4keyword || String(name || '').includes(ST.hrv4keyword);
   function attachHrFilter(){
     if (!window.CZFilterV4 || !META || !$('#hrFilterHost')) return;
+    if (!['overview', 'eval', 'mypart', 'att'].includes(ST.tab)) {
+      $('#hrFilterHost').innerHTML = '';
+      const monthSelect = $('#hrMonth'); if (monthSelect) monthSelect.style.display = '';
+      return;
+    }
     const parts = admin() ? META.parts.map(p => p.name) : META.myParts;
+    const allowAll = admin() && ['overview', 'att'].includes(ST.tab);
     const current=ST.hrv4mode||'귀속월';
     const bar=window.CZFilterV4.mount($('#hrFilterHost'),{
       id:'hr',modes:['귀속월','3개월','6개월','연간'],mode:current,
       label: ST.hrRange ? ST.hrRange.from+' ~ '+ST.hrRange.to : ST.month,
       todayLabel:'이번 달',onToday:async()=>{const m=META.current||META.months[0];if(!m||!(await guard()))return;ST.hrv4mode='귀속월';ST.hrRange=null;ST.month=m;ST.sel=null;await autoSync(m);go(ST.tab);},
-      groups: parts.map(g=>({label:g,value:g})),selected:ST.part||'',
+      groups: (allowAll ? [{label:'전체 그룹',value:'*'}] : []).concat(parts.map(g=>({label:g,value:g}))),selected:hrFilterPart()||(allowAll?'*':''),
       range:{type:'month',from:ST.hrRange?.from||hrAddMonth(ST.month,-2),to:ST.hrRange?.to||ST.month,note:'선택 기간의 월별 평가 데이터를 읽기 전용으로 비교합니다 (최대 12개월).'},
       onStep:async step=>{if(ST.hrRange){const a=hrAddMonth(ST.hrRange.from,step),b=hrAddMonth(ST.hrRange.to,step);if(!META.months.includes(b))return toast('해당 평가월은 등록되지 않았습니다',true);ST.hrRange={from:a,to:b};attachHrFilter();return showHrRange();}
         const k=META.months.indexOf(ST.month),next=hrAddMonth(ST.month,step);if(!META.months.includes(next)||k<0)return toast('해당 평가월은 등록되지 않았습니다',true);
@@ -6044,11 +6053,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ST.hrRange={from,to:ST.month};attachHrFilter();showHrRange();
       },
       onRange:async(from,to)=>{if(!(await guard()))return;ST.hrv4mode='기간 지정';ST.hrRange={from,to};attachHrFilter();showHrRange();},
-      onGroup:async g=>{if(!g||!parts.includes(g)||!(await guard()))return;ST.part=g;ST.sel=null;if(ST.hrRange){attachHrFilter();showHrRange();}else go(ST.tab);},
+      onGroup:async g=>{if(!(parts.includes(g)||(allowAll&&g==='*'))||!(await guard()))return;
+        const part=g==='*'?'':g;
+        if(ST.tab==='overview')ST.overviewPart=part;
+        else if(ST.tab==='att')ST.attPart=part;
+        else ST.part=part;
+        ST.sel=null;if(ST.hrRange){attachHrFilter();showHrRange();}else go(ST.tab);},
       onSearch:()=>ST.hrRange?showHrRange(): (ST.tab==='eval'&&ST.data?renderPList():go(ST.tab)),
-      onReset:async()=>{if(!(await guard()))return;ST.hrRange=null;ST.hrv4mode='귀속월';ST.hrv4keyword='';ST.part=parts[0]||'';ST.month=META.current||META.months[0];ST.sel=null;go(ST.tab);},
+      onReset:async()=>{if(!(await guard()))return;ST.hrRange=null;ST.hrv4mode='귀속월';ST.hrv4keyword='';ST.part=parts[0]||'';ST.overviewPart='';ST.attPart=admin()?'':ST.part;ST.month=META.current||META.months[0];ST.sel=null;go(ST.tab);},
       onDetail:(on,box)=>{if(on){box.innerHTML='<label class="muted">이름 검색 <input id="czfHrKeyword" placeholder="이름" style="margin-left:8px;width:180px" value="'+esc(ST.hrv4keyword||'')+'"></label><button id="czfHrApply" class="sm primary" style="margin-left:6px">적용</button>';
-        $('#czfHrApply').onclick=()=>{ST.hrv4keyword=$('#czfHrKeyword').value.trim();if(ST.hrRange)showHrRange();else if(ST.tab==='eval'&&ST.data)renderPList();};}},
+        $('#czfHrApply').onclick=()=>{ST.hrv4keyword=$('#czfHrKeyword').value.trim();if(ST.hrRange)showHrRange();else if(ST.tab==='eval'&&ST.data)renderPList();else go(ST.tab);};}},
       onError:e=>toast(e.message,true)
     });
     if(ST.hrv4keyword){const b=bar.querySelector('[data-czf-detail]');if(b)b.click();}
@@ -6059,7 +6073,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const keys=[],existing=new Set(META.months||[]);let m=range.from;
     for(let i=0;i<13&&m<=range.to;i++,m=hrAddMonth(m,1))keys.push(m);
     if(keys.length>12||!keys.length||keys[keys.length-1]!==range.to)return toast('한 번에 최대 12개월까지 조회할 수 있습니다',true);
-    const seq=ST.hrRangeSeq=(ST.hrRangeSeq||0)+1,tk=A.S.token,part=ST.part;
+    const seq=ST.hrRangeSeq=(ST.hrRangeSeq||0)+1,tk=A.S.token,part=hrFilterPart();
     body().innerHTML='<div class="muted" style="padding:20px">선택 기간의 평가자료를 조회하는 중…</div>';
     try{
       const all=[];for(const key of keys){if(!existing.has(key))continue;const data=await api('hrMonth',{month:key,part:part||''});
@@ -6128,8 +6142,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     ST.partSelHtml = partSel;
     d.list.sort((a, b) => cmpPeople(a, b));
     renderPList();
-    if (keepSel && ST.sel && d.list.some(x => x.person.name === ST.sel)) selectPerson(ST.sel, true);
-    else if (d.list.length) selectPerson(d.list[0].person.name, true);
+    const visiblePeople=d.list.filter(x=>hrNameMatches(x.person.name));
+    if (keepSel && ST.sel && visiblePeople.some(x => x.person.name === ST.sel)) selectPerson(ST.sel, true);
+    else if (visiblePeople.length) selectPerson(visiblePeople[0].person.name, true);
   }
 
   function renderPList() {
@@ -6156,7 +6171,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     EF.bind();
     $('#plist').querySelectorAll('tbody tr[data-n]').forEach(el => (el.onclick = () => selectPerson(el.dataset.n)));
     $('#plist').querySelectorAll('[data-sort]').forEach(b => (b.onclick = () => { setSortMode(b.dataset.sort); d.list.sort((p, q) => cmpPeople(p, q)); renderPList(); }));
-    if ($('#partSel')) $('#partSel').onchange = async e => { const v = e.target.value; e.target.value = ST.part; if (!(await guard())) return; ST.part = v; ST.sel = null; viewEval(); };
+    if ($('#partSel')) $('#partSel').onchange = async e => { const v = e.target.value; e.target.value = ST.part; if (!(await guard())) return; ST.part = v; ST.sel = null; viewEval(); attachHrFilter(); };
   }
   const curPerson = () => ST.data.list.find(x => x.person.name === ST.sel);
 
@@ -6403,9 +6418,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ============================================================ 관리자 — 현황
   async function viewOverview() {
     body().innerHTML = '<div class="muted" style="padding:20px">불러오는 중…</div>';
-    let d; try { d = await getMonth(ST.month, ''); } catch (e) { toast(e.message, 1); return; }
+    const seq=ST.filterReadSeq=(ST.filterReadSeq||0)+1, month=ST.month, part=ST.overviewPart||'';
+    let d; try { d = await getMonth(month, part); } catch (e) { if(seq===ST.filterReadSeq)toast(e.message, 1); return; }
+    if(seq!==ST.filterReadSeq||ST.tab!=='overview'||ST.month!==month)return;
+    d.list=d.list.filter(x=>hrNameMatches(x.person.name));
     ST.data = d;
-    const parts = META.parts;
+    const parts = META.parts.filter(p=>!part||p.name===part);
     const st = x => x.rec ? x.rec['상태'] : '미작성';
     const byPart = parts.map(p => { const l = d.list.filter(x => x.person.part === p.name); return { p, n: l.length, done: l.filter(x => st(x) === '완료').length, draft: l.filter(x => st(x) === '작성중').length }; });
     const diffCount = x => { if (!x.rec) return 0; let c = 0; for (let i = 1; i <= SLOTS; i++) { const v = num(x.rec['점수' + i]), r = num(x.rec['참고' + i]); if (v !== null && r !== null && v !== r) c++; } return c; };
@@ -6422,7 +6440,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="card kpi"><span>작성중</span><b>${draft}<small> 명</small></b><em>미작성 ${d.list.length - done.length - draft}명</em></div>
         <div class="card kpi"><span>완료 인원 평균 점수</span><b>${avgDone === null ? '-' : f1(avgDone)}<small> 점</small></b><em>${d.locked ? '🔒 마감된 달' : '진행중'}</em></div>
         <div class="card kpi"><span>${ymLab(d.month)} 근태 기록</span><b>${attN}<small> 건</small></b><em>${H.ATT_KINDS.map(k => k + ' ' + (att[k] || 0)).join(' · ')}</em></div></div>
-      <div class="banner ${src.n ? 'info' : 'warn'}" style="margin:12px 0">${src.n ? `업무데이터 ${src.n}명 · ${src.src === 'web' ? '업무데이터에서 자동 반영' : '업무통계 엑셀로 올림'} (${esc(src.at)})${noData ? ` · 업무데이터 없는 인원 ${noData}명` : ''}` : '이 달의 업무데이터가 아직 없습니다 → [데이터] 탭'}</div>
+      <div class="banner ${src.n ? 'info' : 'warn'}" style="margin:12px 0">${src.n ? `이 달 전체 업무원본 ${src.n}명 · ${src.src === 'web' ? '업무데이터에서 자동 반영' : '업무통계 엑셀로 올림'} (${esc(src.at)})${noData ? ` · 업무데이터 없는 인원 ${noData}명` : ''}` : '이 달의 업무데이터가 아직 없습니다 → [데이터] 탭'}</div>
       <section class="card dsec" style="margin:4px 0 14px"><div class="dst" style="margin-bottom:6px"><b>파트별 진행</b><span class="muted">누르면 그 파트 평가 입력으로</span></div>
         <div class="prows">${byPart.map(b => `<div class="prow" data-pp="${esc(b.p.name)}" style="--gc:${A.gcol(b.p.name)}"><b><span class="gdot" style="background:${A.gcol(b.p.name)}"></span>${esc(b.p.name)}</b><span class="mg">${esc(b.p.manager || '')}</span>
           <div class="bar"><i style="width:${b.n ? b.done / b.n * 100 : 0}%"></i></div><span class="nm">완료 <b>${b.done}</b> / ${b.n}${b.draft ? ` · 작성중 ${b.draft}` : ''}</span>
@@ -6442,7 +6460,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <td class="r">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td class="r">${pct(x.data.달성률)}</td><td>${x.rec ? esc(x.rec['작성자']) : ''}</td><td class="muted">${x.rec ? esc(String(x.rec['저장시각'] || '').slice(5, 16)) : ''}</td>
           <td class="r"><button class="sm" data-open="${esc(x.person.name)}" data-part="${esc(x.person.part)}">열기</button></td></tr>`; }).join('') + '</tbody>';
       OF.bind();
-      $('#ovTbl').querySelectorAll('[data-open]').forEach(b => (b.onclick = () => { ST.part = b.dataset.part; ST.sel = b.dataset.open; ST.tab = 'eval'; document.querySelectorAll('#hrTabs [data-hrt]').forEach(t => t.classList.toggle('on', t.dataset.hrt === 'eval')); viewEval(true); }));
+      $('#ovTbl').querySelectorAll('[data-open]').forEach(b => (b.onclick = () => { ST.part = b.dataset.part; ST.sel = b.dataset.open; ST.tab = 'eval'; document.querySelectorAll('#hrTabs [data-hrt]').forEach(t => t.classList.toggle('on', t.dataset.hrt === 'eval')); viewEval(true); attachHrFilter(); }));
     };
     draw();
   }
@@ -6451,6 +6469,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function viewMyPart() {
     const parts = META.myParts;
     let d; try { d = await getMonth(ST.month, ST.part); } catch (e) { toast(e.message, 1); return; }
+    d.list=d.list.filter(x=>hrNameMatches(x.person.name));
     d.list.sort((a, b) => cmpPeople(a, b));
     const done = d.list.filter(x => x.rec && x.rec['상태'] === '완료').length;
     const all = usedItems(d.items, { role: '전체' });
@@ -6466,7 +6485,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <td class="c"><b>${dash(r['합계'])}</b></td><td class="r">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td class="r">${pct(x.data.달성률)}</td></tr>`; }).join('')}
       </tbody></table></div></section>`;
     MF.bind();
-    if ($('#mpPart')) $('#mpPart').onchange = e => { ST.part = e.target.value; viewMyPart(); };
+    if ($('#mpPart')) $('#mpPart').onchange = e => { ST.part = e.target.value; viewMyPart(); attachHrFilter(); };
     $('#myDl').onclick = async () => {
       try { busy(true, '엑셀 만드는 중…'); await libs('ExcelJS'); const hist = (await api('hrHist12', { month: d.month })).map; const blob = await buildWorkbook(d.month, d.items, d.list, d.order, hist); const [y, m] = d.month.split('-'); A.saveBlob(blob, `인사평가_${d.part}_${y.slice(2)}년${+m}월.xlsx`); }
       catch (e) { toast(e.message, 1); } finally { busy(false); }
@@ -6481,7 +6500,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const parts = admin() ? META.parts.map(p => p.name) : META.myParts;
     ST.attPart = ST.attPart !== undefined ? ST.attPart : (admin() ? '' : ST.part);
     body().innerHTML = '<div class="muted" style="padding:20px">불러오는 중…</div>';
-    let r; try { r = await api('hrAtt', { month: ST.month, part: ST.attPart || (admin() ? '' : ST.part) }); } catch (e) { toast(e.message, 1); return; }
+    const seq=ST.filterReadSeq=(ST.filterReadSeq||0)+1, month=ST.month;
+    let r; try { r = await api('hrAtt', { month, part: hrFilterPart() }); } catch (e) { if(seq===ST.filterReadSeq)toast(e.message, 1); return; }
+    if(seq!==ST.filterReadSeq||ST.tab!=='att'||ST.month!==month)return;
+    r={...r,list:r.list.filter(x=>hrNameMatches(x.name)),people:r.people.filter(x=>hrNameMatches(x.name))};
     const sum = {}; r.list.forEach(t => { const s = (sum[t.name] = sum[t.name] || { part: t.part }); s[t.kind] = (s[t.kind] || 0) + 1; });
     const ded = {}; try { (CFG && CFG['감점기준'] || []).forEach(x => { if (x['구분'] === '근태') ded[x['항목']] = num(x['감점']) || 0; }); } catch (e) { }
     if (!Object.keys(ded).length) { ded['지각'] = 5; ded['조퇴'] = 2; ded['결근'] = 10; }
@@ -6499,7 +6521,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ${Object.keys(sum).sort((a, b) => a.localeCompare(b, 'ko')).map(n => { const s = sum[n], cut = H.ATT_KINDS.reduce((a, k) => a + (s[k] || 0) * (ded[k] || 0), 0);
           return `<tr><td><b>${esc(n)}</b></td>${H.ATT_KINDS.map(k => `<td class="c">${s[k] || '-'}</td>`).join('')}<td class="r"><b class="red">${cut ? '-' + cut : '0'}</b></td></tr>`; }).join('') || '<tr><td colspan="6" class="muted" style="padding:16px">기록 없음</td></tr>'}
         </tbody></table><div class="muted" style="font-size:12px;margin-top:8px">기록 없는 인원 ${r.people.length - Object.keys(sum).length}명은 감점 없음</div></section></div>`;
-    if ($('#atPart')) $('#atPart').onchange = e => { ST.attPart = e.target.value; viewAtt(); };
+    if ($('#atPart')) $('#atPart').onchange = e => { ST.attPart = e.target.value; viewAtt(); attachHrFilter(); };
     if ($('#atAdd')) $('#atAdd').onclick = () => attModal(r);
     body().querySelectorAll('[data-ed]').forEach(b => (b.onclick = () => attModal(r, r.list.find(t => t.id === b.dataset.ed))));
   }
@@ -7339,7 +7361,7 @@ async function addCharts(buf, jobs) {
   }
 
   document.addEventListener('click', e => { const t = e.target; if (t && t.matches && t.matches('.hrw input[type=month]') && t.showPicker) { try { t.showPicker(); } catch (er) { } } });
-  function reset() { clearTimeout(ST.timer); Object.assign(ST, { tab: null, month: null, part: null, data: null, sel: null, dirty: false, timer: null, meta: null, synced: {}, attPart: undefined, cfgSub: undefined, rseq: (ST.rseq || 0) + 1 }); META = null; CFG = null; }
+  function reset() { clearTimeout(ST.timer); Object.assign(ST, { tab: null, month: null, part: null, data: null, sel: null, dirty: false, timer: null, meta: null, synced: {}, overviewPart: '', attPart: undefined, filterReadSeq: (ST.filterReadSeq||0)+1, cfgSub: undefined, rseq: (ST.rseq || 0) + 1 }); META = null; CFG = null; }
   // 왼쪽 메뉴 [근태 입력] : 인사평가 화면을 열지 않고 바로 입력 창
   async function quickAtt(nm) {       // v28.18 : 사람 카드에서 부르면 그 사람이 골라진 채로
     try {
@@ -7914,7 +7936,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.84';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.84-F1';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
