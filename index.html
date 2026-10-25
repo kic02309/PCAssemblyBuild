@@ -2533,6 +2533,269 @@ table.plt th.plw,table.plt td.plw{width:110px;min-width:110px}
 html[data-theme=dark] .plmc{background:#1a1c20;border-color:#2c3846}html[data-theme=dark] .plmc.on{background:#1d2a40;border-color:#4a7be0}
 html[data-theme=dark] table.plt td.wkd{background:#16181c}html[data-theme=dark] table.plt .pdt{color:#fff;text-shadow:none}
 </style>
+
+<!-- v28.83 Design D1: presentation-only overrides; APP_VER and application scripts unchanged. -->
+<style id="assembly-design-d1">
+/* v28.83 Design D1 / 2026-10-25. Presentation only; no application script changes. */
+/* Deliberately exclude HR evaluation and the daily spreadsheet entry surface. */
+#main:not(:has(.hrw)):not(:has(table.grid)) { --design-gap:14px; }
+#main .mgpg, #main .prpg, #main .edu-wrap { min-width:0; }
+body:has(#main):not(:has(#main .hrw, #main table.grid)) .czn>button { flex:0 0 auto;white-space:nowrap; }
+#main:not(:has(.hrw)):not(:has(table.grid)) :is(.toolbar,.ph) { gap:10px; flex-wrap:wrap; }
+#main:not(:has(.hrw)):not(:has(table.grid)) :is(button,select) { font-family:inherit; }
+#main:not(:has(.hrw)):not(:has(table.grid)) button:not(.mcadd):not(.mcb):not(.edu-del):not(.edu-hit):not(.m2gc):not(.m2a):not(.ddpr):not(.mcch) { min-height:32px; }
+#main:not(:has(.hrw)):not(:has(table.grid)) :is(button,input,select,textarea):focus-visible,
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#rbody)) :is(button,input,select,textarea):focus-visible,
+#mgpanel button:focus-visible { outline:3px solid var(--blue,#2165df); outline-offset:3px; }
+#main:not(:has(.hrw)):not(:has(table.grid)) button:disabled { cursor:not-allowed; }
+/* Manager summary and group cards. Short metric labels never split. */
+.mgpg .m2ks { grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.mgpg .m2ks.c4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.mgpg .m2k { padding:15px 16px; gap:10px; border-radius:12px; background:var(--panel); box-shadow:0 2px 8px #16243b08; }
+.mgpg .m2ki { width:36px;height:36px;border-radius:9px;box-shadow:none; }
+.mgpg .m2kt { gap:3px; }
+.mgpg .m2kt small { font-size:13px;line-height:1.4;overflow-wrap:anywhere; }
+.mgpg .m2kt b { font-size:26px;line-height:1.2;white-space:nowrap; }
+.mgpg .m2kt>span { font-size:12px;white-space:normal;line-height:1.45;overflow:visible;text-overflow:clip; }
+.mgpg .m2gg { grid-template-columns:repeat(4,minmax(0,1fr));gap:14px; }
+.mgpg .m2gc { min-width:0;padding:16px;gap:12px;border-radius:12px;box-shadow:0 2px 8px #16243b08; }
+.mgpg .m2gc:hover { transform:none;box-shadow:0 3px 12px #16243b12; }
+.mgpg .m2gh { font-size:17px;flex-wrap:wrap;row-gap:7px; }
+.mgpg .m2gb { font-size:12px;white-space:nowrap; }
+.mgpg .m2gn { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0; }
+.mgpg .m2gn:not(:has(>span:nth-child(4))) { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.mgpg .m2gn>span { min-width:0;background:transparent;padding:5px 6px;gap:7px;border-radius:0;white-space:nowrap;font-size:12px;line-height:1.4; }
+.mgpg .m2gn>span+span { border-left:1px solid var(--line2); }
+.mgpg .m2gn b { font-size:23px;line-height:1.2;font-variant-numeric:tabular-nums; }
+.mgpg .m2gf { font-size:12px;line-height:1.6; }
+.mgpg .m2pb { height:6px;background:var(--line2); }
+.mgpg .m2gc.calm { opacity:1; }
+.mgpg .m2dbar { gap:8px;row-gap:10px;margin-bottom:14px; }
+.mgpg .m2h { padding:13px 16px;gap:10px;background:var(--head); }
+.mgpg .m2chips { gap:7px; }
+.mgpg .m2ln { display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow:hidden;overflow-wrap:anywhere;line-height:1.5;max-height:3em; }
+.mgpg .m2ln em { display:inline-block;margin-right:7px;vertical-align:baseline;white-space:nowrap; }
+.mgpg .m2sc { max-height:65vh;overflow:auto;overscroll-behavior:contain; }
+.mgpg table.list :is(th,td) { padding:11px 12px; }
+.mgpg table.list th { font-size:13px;line-height:1.4; }
+.mgpg table.list td { font-variant-numeric:tabular-nums; }
+.mgpg table.list td.l { white-space:normal;overflow-wrap:anywhere; }
+.mgpg .m2who { min-width:290px!important; }
+.mgpg .m2dtl { gap:5px; }
+.mgpg .m2dtl>span { min-width:48px; }
+.mgpg .m2ft { padding:10px 16px;line-height:1.65; }
+.mgpg .mgkpi { gap:8px;row-gap:10px; }
+.mgpg .mgkpi>span { padding:7px 11px;font-size:13px; }
+.mgpg .mgkpi b { font-variant-numeric:tabular-nums; }
+/* Calendar: period/view/filter row, full-width wrapping category row, then actions. */
+.mgpg .mcbar { gap:9px;row-gap:12px;align-items:center; }
+.mgpg .mcbar>span[style] { display:none; }
+.mgpg .mcbar>.mcpill { order:10;flex:1 0 100%;box-sizing:border-box;min-width:0;display:flex;flex-wrap:wrap;gap:7px;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px; }
+.mgpg .mcbar>.mcpill::before { content:'구분';align-self:center;font-size:13px;font-weight:800;color:var(--sub);padding:5px 8px; }
+.mgpg .mcbar>.mcpill .mcch { white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%;gap:6px;line-height:1.4;padding:7px 10px; }
+.mgpg .mcbar>.mcpill .mcch i,.mgpg .mcbar>.mcpill .mcch em { flex-shrink:0; }
+.mgpg .mcbar>:is(#mccat,#mcps,#mcad) { order:11; }
+.mgpg .mcbar>#mccat { margin-left:auto; }
+.mgpg .mcmain { min-width:0;grid-template-columns:minmax(0,1fr) minmax(290px,360px); }
+.mgpg .mcsh { padding:15px 16px; }
+.mgpg .mcit { padding:14px 16px; }
+.mgpg .mcsd { top:90px; }
+.mgpg .mcwl { min-width:0; }
+.mgpg .mcln { align-items:flex-start; }
+.mgpg .mcln b { white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.5; }
+.mgpg .mcstat { gap:10px 16px; }
+.mgpg .plbar { gap:10px;row-gap:12px; }
+.mgpg .plmg { gap:8px; }
+.mgpg .plmc { min-width:0;flex-wrap:wrap;padding:9px 12px;box-shadow:none; }
+.mgpg .plmc small { white-space:normal; }
+.mgpg .plg { grid-template-columns:150px minmax(180px,1fr) auto auto!important;gap:10px; }
+.mgpg .plex { font-size:12px; }
+/* Scope pop-up improvements to the existing manager, calendar and rate controls. */
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) { border-radius:16px!important;padding:22px;max-height:90dvh;overflow:auto;box-sizing:border-box;scrollbar-gutter:stable; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) h3 { margin:0 0 16px;font-size:18px;line-height:1.5; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) .fld { margin-bottom:14px;min-width:0; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) .fld>label { font-size:13px;line-height:1.5;margin-bottom:6px; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) :is(input:not([type=range]):not([type=checkbox]),select,textarea) { border-radius:8px;min-height:36px;box-sizing:border-box;font-size:14px; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) textarea { resize:vertical;line-height:1.65;min-height:88px; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt)) .fields2 { gap:12px; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) .acts { position:sticky;bottom:-22px;background:var(--panel,#fff);border-top:1px solid var(--line);padding:14px 0 8px;margin-top:18px;gap:8px;z-index:3; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) .acts button { min-height:36px;min-width:64px;border-radius:8px; }
+.modal:has(:is(#tt:disabled,#pt:disabled,#ek:disabled,#ffb[readonly])) h3::after { content:'확인 전용 · 이 화면에서는 내용을 수정할 수 없습니다';display:block;margin-top:10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--head);color:var(--sub);font-size:12px;font-weight:600; }
+.modal:has(:is(#tt,#ek,#ffb,#cfd,#pt)) :is(input,select,textarea):disabled { opacity:.85;color:var(--sub); }
+.modal:has(#ek) .fields2 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.modal:has(#ek) .fields2>.fld:has(#et) { grid-column:span 3; }
+.modal:has(#ek) .fields2>.fld:has(#ed) { grid-column:span 2; }
+.modal:has(#ek) #epw { padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--head); }
+.modal:has(#ek) .mgpp { gap:8px;padding:4px 0 8px;max-height:190px;overscroll-behavior:contain; }
+.modal:has(#ek) .mgpn { min-height:34px;padding:5px 12px;border-radius:8px; }
+.modal:has(#ek) .mgpn:not(.on) { background:var(--panel);color:var(--ink);border-color:var(--line); }
+.modal:has(#ek) .mgpn.on { background:var(--blue);color:#fff;border-color:var(--blue); }
+.modal:has(#ek) #epx { width:100%;margin-top:8px!important; }
+.modal:has(#ffb) .fld:has(#ffb) { display:flex;flex-direction:column;position:relative;padding-bottom:24px; }
+.modal:has(#ffb) .fld:has(#ffb)>label { display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px; }
+.modal:has(#ffb) #fbc { position:absolute;left:0;bottom:0;font-size:12px;font-weight:400;line-height:1.5; }
+.modal:has(#tt) .mglogs,.modal:has(#pt) .mglogs { max-height:240px;padding:4px 12px;border:1px solid var(--line);background:var(--head); }
+.modal:has(#tt) .mglg,.modal:has(#pt) .mglg { display:grid;grid-template-columns:72px minmax(0,1fr) 30px;align-items:start;gap:8px;padding:10px 0;font-size:13px;line-height:1.6;overflow-wrap:anywhere; }
+.modal:has(#tt) .mglg>b,.modal:has(#pt) .mglg>b { grid-column:1;white-space:nowrap; }
+.modal:has(#tt) .mglg button,.modal:has(#pt) .mglg button { grid-column:3;min-width:28px;min-height:28px;padding:2px;font-size:15px; }
+.modal:has(#rpb) { width:min(1280px,96vw); }
+.modal:has(#rpb)>.row { display:flex;align-items:center;gap:10px!important;flex-wrap:wrap; }
+.modal:has(#rpb)>.row>h3 { flex:1 0 100%; }
+.modal:has(#rpb) :is(#rpo,#rpd) { width:auto;max-width:100%;min-width:170px; }
+.modal:has(#rpb)>.row>button { margin-left:auto;min-height:36px; }
+.modal:has(#rpb) .mgrps { border-top:1px solid var(--line);padding-top:16px;margin-top:20px;gap:8px;flex-wrap:wrap; }
+.modal:has(#rpb) table.list { display:table;width:100%;max-width:100%;table-layout:fixed; }
+.modal:has(#rpb) table.list :is(th,td) { padding:9px 11px;white-space:normal;overflow-wrap:anywhere; }
+.modal:has(#rpb) table.list td.l { white-space:normal;overflow-wrap:anywhere; }
+.modal:has(#ccn) { width:min(560px,94vw); }
+.modal:has(#ccn) .mccl { max-height:45vh;overflow:auto; }
+.modal:has(#ccn) .mccr { grid-template-columns:34px minmax(0,1fr) 84px;gap:12px;padding:10px 0; }
+.modal:has(#rbody) table.rt :is(th,td) { padding:8px 10px; }
+.modal:has(#rbody) table.rt .rtp { min-width:300px; }
+.modal:has(#rbody) table.rt .rm { width:76px;text-align:right;font-variant-numeric:tabular-nums; }
+/* Alerts: titles wrap independently of dates; existing links/actions unchanged. */
+#mgpanel { width:min(370px,100vw); }
+#mgpanel .mgpi { align-items:flex-start;gap:10px;padding:10px; }
+#mgpanel .mgpi b { white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.5;overflow:hidden; }
+#mgpanel .mgpi small { flex-shrink:0;padding-top:2px; }
+/* Shared query controls, excluding HR and daily input. */
+#main:not(:has(.hrw)):not(:has(table.grid)) .czf-v4 { padding:14px 16px; }
+#main:not(:has(.hrw)):not(:has(table.grid)) .czf-line { gap:9px;row-gap:10px;flex-wrap:wrap;white-space:normal; }
+#main:not(:has(.hrw)):not(:has(table.grid)) .czf-modes { flex:0 0 auto;max-width:100%; }
+#main:not(:has(.hrw)):not(:has(table.grid)) :is(.czf-step,.czf-actions) { flex-shrink:0; }
+#main:not(:has(.hrw)):not(:has(table.grid)) .czf-extra { flex-basis:100%;margin-left:0;padding:10px 0 0;border-top:1px solid var(--line2);margin-top:4px; }
+#main:not(:has(.hrw)):not(:has(table.grid)) .czf-groups { flex-wrap:wrap;gap:6px; }
+#main:not(:has(.hrw)):not(:has(table.grid)) .czf-actions { gap:7px; }
+#main :is(.ddleg,.ddlg) { gap:9px;row-gap:8px;line-height:1.6; }
+#main .ddkpi .kpi { padding:14px; }
+#main .manage-toolbar { gap:10px;row-gap:12px; }
+#main table.list:has(.mtg) td { font-variant-numeric:tabular-nums; }
+#main :is(.tbs,.lvz2,.lvz,.orgwrap) { overscroll-behavior:contain; }
+#main table.mlist .mtg { min-width:76px;min-height:32px;padding:4px 8px; }
+#main table.mlist :is(th,td) { padding:10px 12px;font-variant-numeric:tabular-nums; }
+#main table.mlist td.mrate { min-width:210px; }
+#main table.mlist td.mrate .mrbar { width:150px; }
+#main table.mlist td.mrate>b { display:inline-block;min-width:52px;text-align:right; }
+/* Leave: existing status meanings/colors retained; readable legends and badges. */
+#main :is(.lvlg,.lvlegend,.lvfilter,.lvfilters,.lvtabs,.lvph) { flex-wrap:wrap;gap:8px;line-height:1.6; }
+#main :is(.lvz,.lvz2,.lvtbl) .tag { font-size:12px;line-height:1.5;padding:2px 7px; }
+#main :is(.lvz,.lvz2) td.rs { white-space:normal;overflow-wrap:anywhere;line-height:1.5; }
+/* Education retains drag/drop, conflict warnings and role-based controls. */
+.edu-wrap .edu-person { grid-template-columns:20px minmax(0,1fr) auto 30px;grid-template-rows:auto auto;gap:3px 8px;padding:8px 4px;min-height:48px; }
+.edu-wrap .edu-grip { grid-column:1;grid-row:1/3;align-self:center; }
+.edu-wrap .edu-nm { grid-column:2;grid-row:1;white-space:normal;overflow-wrap:anywhere;font-size:13px; }
+.edu-wrap .edu-role { grid-column:3;grid-row:1;font-size:11px;padding:2px 5px;max-width:100%; }
+.edu-wrap .edu-grp { grid-column:2;grid-row:2;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.4; }
+.edu-wrap :is(.edu-hit,.edu-ok) { grid-column:3;grid-row:2;min-width:0; }
+.edu-wrap .edu-del { grid-column:4;grid-row:1/3;width:28px;height:28px;align-self:center; }
+.edu-wrap .edu-board { grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px; }
+.edu-wrap .edu-actions { gap:8px; }
+.edu-wrap .edu-note { font-size:12px;line-height:1.7; }
+/* Production: scroll the table, do not squeeze live input controls. */
+#main .prpg table.prt { min-width:640px; }
+#main .prpg .prc:first-of-type table.prt { min-width:1120px; }
+#main .prpg table.prt :is(th,td) { padding:9px 8px;vertical-align:middle; }
+#main .prpg table.prt input:not([type=checkbox]),#main .prpg table.prt select { min-height:32px;font-size:13px;padding:5px 7px; }
+#main .prpg table.prt .i-model { min-width:170px; }
+#main .prpg table.prt :is(.i-case,.i-cooler) { min-width:130px; }
+#main .prpg table.prt :is(.i-cs,.i-cl) { min-width:50px; }
+#main .prpg table.prt .i-q { text-align:right;font-variant-numeric:tabular-nums; }
+#main .prpg .mgch { gap:8px 12px;padding:12px 14px;line-height:1.6; }
+#main .prpg .prc { overflow:hidden; }
+#main .prpg .prgrid>div { min-width:0; }
+#main .prpg .prgrid .prc>table.prt { display:block;max-width:100%;overflow:auto;min-width:0; }
+/* Video schedule: preserve the fixed-column geometry and all dates. */
+#main table.wt .f2 { white-space:normal;overflow-wrap:anywhere;line-height:1.5; }
+#main table.wt .f2 :is(b,.wtitle) { white-space:normal; }
+#main .wtg { gap:10px;align-items:start; }
+#main table.wt th { font-variant-numeric:tabular-nums; }
+/* Accident text, account tables, settings and statistics (not HR evaluation). */
+#main table.acctl td.tx,#main table.acctl td.tx2 { white-space:normal;overflow-wrap:anywhere;line-height:1.6; }
+#main table.acctl .acc-product-summary { white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden; }
+#main table.plist :is(th,td) { padding:10px 12px; }
+#main table.plist td:nth-child(5),#main table.plist td:last-child { background:color-mix(in srgb,var(--blue) 3%,var(--panel)); }
+#main table.plist .rtag { display:inline-block;border:1px solid var(--line);border-radius:7px;padding:2px 7px;line-height:1.5; }
+#main table.plist th:first-child { position:sticky;left:0;z-index:4; }
+#main table.plist td:first-child:not([colspan]) { position:sticky;left:0;z-index:1;background:var(--panel);border-right:1px solid var(--line); }
+#main table.plist td:first-child[colspan] { background:var(--head); }
+#main .sgrid { gap:18px; }
+#main .scard { border-radius:12px;padding:18px; }
+#main .sct { gap:6px;line-height:1.6;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--line2); }
+#main :is(#pmwipe,#pwipe) { border:1px solid var(--red);padding:8px 12px; }
+#main #bkbox { border:1px solid var(--line);border-radius:10px;padding:12px; }
+#main #bkbox button.danger { border:1px solid var(--red); }
+#main .stkpis .kpi { min-width:0;padding:16px; }
+#main .stkpis .kpi b { font-variant-numeric:tabular-nums;line-height:1.25; }
+#main .stkpis .kpi :is(i,em) { line-height:1.5; }
+#main .gset .gfrm { gap:14px;align-items:stretch; }
+#main .gset .gf { min-width:0;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel); }
+#main .gset .gf>label { font-size:13px;font-weight:700;margin-bottom:8px; }
+#main .gset .gf input { font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.3;max-width:100%; }
+#main .gset .gf small { display:block;font-size:12px;line-height:1.6;margin-top:8px; }
+.modal:has(.asgb) .asgpick::before { content:'인원 선택';display:block;font-weight:800;font-size:14px;margin-bottom:12px; }
+.modal:has(.asgb) .asgr::before { content:'업무 배정';display:block;font-weight:800;font-size:14px;margin-bottom:12px; }
+.modal:has(.asgb) { max-height:92dvh;overflow:auto;border-radius:16px!important; }
+.modal:has(.asgb) :is(.asgpick,.asgr) { border:1px solid var(--line);border-radius:10px;padding:12px;overscroll-behavior:contain; }
+.modal:has(.asgb) .asgt { margin:12px 0 8px;font-size:14px; }
+.modal:has(.asgb) .asgtb { gap:10px; }
+.modal:has(.asgb) .asgsel { border:1px solid var(--blue); }
+.mgpg .wleg { padding:12px 16px;line-height:1.9;white-space:normal;border-top:1px solid var(--line2); }
+.mgpg .wleg i { margin-left:10px;margin-right:4px; }
+@media(max-width:800px) {
+ .modal:has(.asgb) .asgb { grid-template-columns:minmax(0,1fr);max-height:none; }
+ .modal:has(.asgb) :is(.asgpick,.asgr) { max-height:38vh; }
+}
+/* Dark theme: preserve palette variables and distinguish selection/focus. */
+html[data-theme=dark] .mgpg .m2gc,html[data-theme=dark] .mgpg .m2k { box-shadow:0 2px 8px #0002; }
+html[data-theme=dark] .mgpg :is(.mcch.on,.plmc.on,.mgpn.on) { outline:1px solid var(--blue); }
+html[data-theme=dark] .modal:has(:is(#tt,#ek,#ffb,#cfd,#pt)) :is(input,select,textarea):disabled { opacity:1;color:var(--sub); }
+@media(min-width:1800px) { .mgpg .m2gg { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(max-width:1500px) {
+ .mgpg .m2gg { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .mgpg .m2ks { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .mgpg .m2ks.c4 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:1250px) {
+ .mgpg .m2gg { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .mgpg .mcmain { grid-template-columns:minmax(0,1fr); }
+ .mgpg .mcsd { position:static; }
+ .mgpg .plg { grid-template-columns:140px minmax(0,1fr)!important; }
+}
+@media(max-width:1000px) {
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czt { position:relative;height:auto;min-height:60px;flex-wrap:wrap;gap:0 12px;padding-right:12px; }
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czl { min-height:60px;flex:0 0 170px; }
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czd { display:none; }
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czu { margin-left:auto;max-width:100%;flex-wrap:wrap;justify-content:flex-end;gap:6px;white-space:normal; }
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czn { order:10;flex:1 0 100%;width:100%;min-height:44px;border-top:1px solid var(--line2);overflow-x:auto;scrollbar-width:thin; }
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czn>button { padding:10px 13px; }
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czr { top:0;height:100vh; }
+ body:has(#main):not(:has(#main .hrw, #main table.grid)) .cz .ph { position:static; }
+ .modal:has(:is(#tt,#ek,#pt,#cfd)) .fields2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .modal:has(#ek) .fields2>.fld:has(#et) { grid-column:1/-1!important; }
+ .modal:has(#ek) .fields2>.fld:has(#ed) { grid-column:auto; }
+ .modal:has(:is(#tt,#pt)) .fields2>.fld[style*="grid-column"] { grid-column:1/-1!important; }
+}
+@media(max-width:780px) {
+ .mgpg .m2gg { grid-template-columns:minmax(0,1fr); }
+ .mgpg .m2ks,.mgpg .m2ks.c4 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .mgpg .m2gn:has(>span:nth-child(4)) { grid-template-columns:repeat(2,minmax(0,1fr));row-gap:10px; }
+ .mgpg .m2gn>span:nth-child(3) { border-left:0; }
+ .mgpg .m2dt { padding:7px 9px;font-size:13px; }
+ .mgpg .m2wl { min-width:0;font-size:13px; }
+ .mgpg .plg { grid-template-columns:minmax(0,1fr)!important; }
+ .modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) { padding:16px;max-height:92dvh; }
+ .modal:has(:is(#tt,#ek,#ffb,#cfd,#pt,#rpb,#ccn,#cpt,#rbody)) .acts { bottom:-16px; }
+ .modal:has(#rpb) :is(#rpo,#rpd) { flex:1 1 140px;min-width:0; }
+ #main:not(:has(.hrw)) .stkpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:520px) {
+ .mgpg .m2ks,.mgpg .m2ks.c4 { grid-template-columns:minmax(0,1fr); }
+ .modal:has(:is(#tt,#ek,#pt,#cfd)) .fields2 { grid-template-columns:minmax(0,1fr); }
+ .modal:has(:is(#tt,#ek,#pt,#cfd)) .fields2>.fld { grid-column:1/-1!important; }
+ .modal:has(#ccn) .mccr { grid-template-columns:30px minmax(0,1fr) 70px;gap:8px; }
+}
+
+</style>
 </head>
 <body>
 <div id="app"></div>
