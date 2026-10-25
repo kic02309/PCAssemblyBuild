@@ -5958,9 +5958,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function syncWeb(month, force) {
     const p = (A.S.periods || []).find(x => x.ym === month);
     if (!p) return null;                                                // 매니저 : 서버가 담당 파트 인원만 바꿔 넣음
-    const r = await api('listUsers', { ym: month });
+    const r = await api('listUsers', { ym: month, hr: 1 });          // v28.84 : 그 평가월 명단의 소속·담당 기준
     const C = A.C, rows = [], adj = A.adjOn && A.adjOn(month);
-    if (adj) { A.S._mcache = A.S._mcache || {}; A.S._mcache['M|' + month] = r; try { await A.adjYm(month); } catch (e) { } }   // v28.52 : 11월 귀속부터 지원 보정 (업무 화면과 같은 값)
+    if (adj) { A.S._mcache = A.S._mcache || {}; const k = 'M|' + month, had = k in A.S._mcache, old = A.S._mcache[k]; A.S._mcache[k] = r; try { await A.adjYm(month); } catch (e) { } if (had) A.S._mcache[k] = old; else delete A.S._mcache[k]; }   // v28.84 : 업무 화면 캐시는 원래대로   // v28.52 : 11월 귀속부터 지원 보정 (업무 화면과 같은 값)
     r.users.forEach(u0 => {
       const u = adj ? Object.assign({}, u0, { items: A.adjItems(u0.name, u0.items, p.start, p.end || A.S.today) }) : u0;
       if (!u.items.length) return;
@@ -7914,7 +7914,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.83';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.84';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
