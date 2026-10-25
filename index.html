@@ -7956,7 +7956,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.84-F2';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.85';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10863,8 +10863,8 @@ async function addCharts(buf, jobs) {
     $$('[data-mf]', p).forEach(b => (b.onclick = () => mgMissFb(MS[+b.dataset.mf])));
   }
   // ---------- 그룹원 (이번 달 업무데이터 + 면담 · 교육 이력)
-  async function mgMembers(groups) {
-    const ym = (curPeriod() || {}).ym; if (!ym) return [];
+  async function mgMembers(groups, month) {
+    const ym = month || (curPeriod() || {}).ym; if (!ym) return [];
     const key = 'M|' + ym; S._mcache = S._mcache || {};
     let r = S._mcache[key]; if (!r) { try { r = await api('listUsers', { ym }); S._mcache[key] = r; } catch (e) { r = { users: [] }; } }
     const all = (r.users || []).concat((r.pending || []).map(p => ({ id: 'pend:' + p.name, name: p.name, group: p.group, role: '일반', pend: true, items: [], target: 0, title: p.title || '' })));
@@ -10966,16 +10966,25 @@ async function addCharts(buf, jobs) {
   }
   const MG_NOFB = ['라인', '지원', '출력', '영상'];   // 실업무량이 없는 그룹은 이 화면에서 뺌
   const mgWeekMon = d => C.addDays(d, mgDow(d) === 0 ? -6 : 1 - mgDow(d));
+  // v28.85: 그룹 업무 조회일과 귀속월을 함께 선택한다. 다른 매니저 탭의 기준은 유지.
+  const mgFbPeriod = date => (S.periods || []).filter(p => p.start <= date && (!p.end || date <= p.end)).sort((a,b) => b.start.localeCompare(a.start))[0] || null;
+  const mgPeriodLabel = p => p ? `${ymLabel(p.ym)} 귀속월 · ${p.start} ~ ${p.end || '종료일 미정'} · ${p.status || '상태 미확인'}` : '귀속월 미설정';
   async function mgFbTab(box) {
     const v = S.mgv, adm = S.me.role === '관리자', SG = (adm ? mgAllG() : (S.me.mg || [])).filter(g => !MG_NOFB.includes(g));
     box.innerHTML = '<div class="muted" style="padding:20px">그룹원 불러오는 중…</div>';
-    const M = (await mgMembers(SG)).filter(x => !/파트장|매니저|팀장/.test(x.title || '') && !['매니저', '관리자'].includes(x.u.role));   // 매니저 · 파트장은 미달 대상에서 뺌
-    if (S.view !== 'mgr' || v.tab !== 'fb') return;
-    const P = curPeriod() || {}, multi = SG.length > 1; if (!multi) v.fbg = SG[0] || ''; else if (v.fbg && !SG.includes(v.fbg)) v.fbg = '';
+    const initial = !v.fbd || v.fbd >= S.today;
+    if (initial) v.fbd = C.addDays(S.today, -1);
+    const requested = v.fbd, P = mgFbPeriod(requested);
+    if (!P) { box.innerHTML = '<div class="warn">조회일의 귀속월이 설정되지 않았습니다.</div>'; return; }
+    const seq = v.fbReadSeq = (v.fbReadSeq || 0) + 1;
+    const M = (await mgMembers(SG, P.ym)).filter(x => !/파트장|매니저|팀장/.test(x.title || '') && !['매니저', '관리자'].includes(x.u.role));
+    if (S.view !== 'mgr' || S.mgv !== v || v.tab !== 'fb' || seq !== v.fbReadSeq || v.fbd !== requested) return;
+    const multi = SG.length > 1; if (!multi) v.fbg = SG[0] || ''; else if (v.fbg && !SG.includes(v.fbg)) v.fbg = '';
     const DM = new Map(M.map(x => [x.u.id, mgDays(x)])), hasD = d => M.some(x => DM.get(x.u.id)[d]);
     const dates = [...new Set([].concat(...M.map(x => Object.keys(DM.get(x.u.id)))))].sort();
-    if (!v.fbd || v.fbd >= S.today) v.fbd = dates[dates.length - 1] || C.addDays(S.today, -1);
-    const mon = mgWeekMon(v.fbd), wmin = P.start ? mgWeekMon(P.start) : mon, wk = [0, 1, 2, 3, 4].map(i => C.addDays(mon, i));
+    if (initial && dates.length) v.fbd = dates[dates.length - 1];
+    const earliest = (S.periods || []).reduce((a,p) => !a || p.start < a ? p.start : a, '');
+    const mon = mgWeekMon(v.fbd), wmin = earliest ? mgWeekMon(earliest) : mon, wk = [0, 1, 2, 3, 4].map(i => C.addDays(mon, i));
     if (dates.includes(C.addDays(mon, 5))) wk.push(C.addDays(mon, 5));   // 토요근무한 주는 토요일도 보임
     const prevOk = mon > wmin, nextOk = C.addDays(mon, 7) < S.today;
     const DS = [v.fbd];
@@ -10986,8 +10995,9 @@ async function addCharts(buf, jobs) {
     const rcN = ((S.mgD || {}).fb || []).filter(f => mgFbRc(f) && sel.includes(f.group)).length, { E, T } = mgMine(), todayN = calToday().length + E.filter(e => e.kind === 'm' && e.date === S.today && e.result === '예정').length + T.filter(t => t.status !== '완료' && t.due === S.today).length;   // v28.74 : 오늘 일정 = 조립팀 일정(오늘 걸친 것) + 내 오늘 면담 + 오늘 마감 업무
     const card = (cls, ic, k, val, sub, key) => `<div class="m2k ${cls}" ${key ? `data-kl="${key}" title="누르면 목록"` : ''}><span class="m2ki">${ic}</span><span class="m2kt"><small>${k}</small><b>${val}<em>${k === '미달 인원' ? '명' : '건'}</em></b><span>${sub}</span></span></div>`;
     const wl = `${dLabel(wk[0])} ~ ${dLabel(wk[4])}`;
-    const chips = `<div class="m2dbar"><span class="m2dl">근무일</span><button class="m2ar" id="m2wp" ${prevOk ? '' : 'disabled'} title="지난주">‹</button><span class="m2wl">${wl}</span><button class="m2ar" id="m2wn" ${nextOk ? '' : 'disabled'} title="다음주">›</button>
-      ${wk.map(d => { const off = d >= S.today, n = off ? 0 : cntBy(d); return `<button class="m2dt ${v.fbd === d ? 'on' : ''}" data-fd="${d}" ${off ? 'disabled' : ''}>${dLabel(d)}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}<span style="flex:1"></span><span class="muted" style="font-size:13px">그날 근무한 인원 중 개인 목표를 못 채운 사람만 보입니다 · 매니저 · 파트장 · 일요일 휴일근무 제외</span></div>`;
+    const periodBar = `<div class="card" style="padding:10px 12px;margin:10px 0;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><label>조회일 <input id="mgFbDate" type="date" value="${v.fbd}" min="${earliest}" max="${C.addDays(S.today,-1)}" style="width:auto"></label><label>귀속월 <select id="mgFbMonth" style="width:auto">${(S.periods||[]).filter(p=>p.start<S.today).slice().sort((a,b)=>b.ym.localeCompare(a.ym)).map(p=>`<option value="${p.ym}" ${p.ym===P.ym?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label><span class="muted">${esc(mgPeriodLabel(P))}</span></div>`;
+    const chips = periodBar + `<div class="m2dbar"><span class="m2dl">근무일</span><button class="m2ar" id="m2wp" ${prevOk ? '' : 'disabled'} title="지난주">‹</button><span class="m2wl">${wl}</span><button class="m2ar" id="m2wn" ${nextOk ? '' : 'disabled'} title="다음주">›</button>
+      ${wk.map(d => { const off = d >= S.today || !mgFbPeriod(d), n = off ? 0 : cntBy(d); return `<button class="m2dt ${v.fbd === d ? 'on' : ''}" data-fd="${d}" ${off ? 'disabled' : ''}>${dLabel(d)}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}<span style="flex:1"></span><span class="muted" style="font-size:13px">그날 근무한 인원 중 개인 목표를 못 채운 사람만 보입니다 · 매니저 · 파트장 · 일요일 휴일근무 제외</span></div>`;
     let body = '';
     if (!SG.length) body = '<div class="card m2c"><div class="m2e">이 화면에서 볼 그룹이 없습니다</div></div>';
     else if (multi && !v.fbg) {
@@ -11019,7 +11029,9 @@ async function addCharts(buf, jobs) {
       today: () => mgKList('오늘 일정', dLabel(S.today), [].concat(calToday().map(e => ({ a: e.title, b: '조립팀 일정', c: (e.tm || '종일') })), mgMine().E.filter(e => e.kind === 'm' && e.date === S.today && e.result === '예정').map(e => ({ a: e.title || '면담', b: '면담', c: (e.time || '') + ' ' + (e.people || []).join(', ') })), mgMine().T.filter(t => t.status !== '완료' && t.due === S.today).map(t => ({ a: t.title, b: '업무 마감', c: '오늘 마감' })))),
     };
     $$('[data-kl]', box).forEach(b => (b.onclick = () => KL[b.dataset.kl] && KL[b.dataset.kl]()));
-    const goWeek = k => { const nm = C.addDays(mon, 7 * k), ds = [0, 1, 2, 3, 4, 5].map(i => C.addDays(nm, i)).filter(d => d < S.today); v.fbd = ds.filter(hasD).pop() || ds.filter(d => mgDow(d) !== 6).pop() || nm; drawMgr(); };
+    const goWeek = k => { const nm = C.addDays(mon, 7 * k), ds = [0, 1, 2, 3, 4, 5].map(i => C.addDays(nm, i)).filter(d => d < S.today && mgFbPeriod(d)); v.fbd = ds.filter(hasD).pop() || ds.filter(d => mgDow(d) !== 6).pop() || nm; drawMgr(); };
+    $('#mgFbDate').onchange = e => { const date=e.target.value; if(!date || date>=S.today || !mgFbPeriod(date)){e.target.value=v.fbd;return toast('귀속월이 설정된 지난 날짜를 선택하세요',true);} v.fbd=date;drawMgr(); };
+    $('#mgFbMonth').onchange = e => { const p=(S.periods||[]).find(p=>p.ym===e.target.value);if(!p)return;v.fbd=p.end && p.end<S.today?p.end:C.addDays(S.today,-1);drawMgr(); };
     if ($('#m2wp')) $('#m2wp').onclick = () => goWeek(-1); if ($('#m2wn')) $('#m2wn').onclick = () => goWeek(1);
     $$('[data-fd]', box).forEach(b => (b.onclick = () => { v.fbd = b.dataset.fd; drawMgr(); }));
     $$('[data-gg]', box).forEach(b => (b.onclick = () => { v.fbg = b.dataset.gg; drawMgr(); }));
@@ -11036,7 +11048,7 @@ async function addCharts(buf, jobs) {
     });
   }
   async function mgFbOpen(uid, d, M) {
-    M = M || await mgMembers(mgScope().concat(mgGroupsOf())); const x = M.find(y => y.u.id === uid); if (!x) return toast('파트원을 찾을 수 없습니다', true);
+    M = M || await mgMembers(mgScope().concat(mgGroupsOf()), (mgFbPeriod(d) || {}).ym); const x = M.find(y => y.u.id === uid); if (!x) return toast('파트원을 찾을 수 없습니다', true);
     const m = (mgDays(x)[d]) || { v: null, t: mgMissOf(x).t }, f = mgFbOf(uid, d) || { note: '', na: false, fb: '', status: '진행 중', rc: '' }, ed = mgCanEditFb(x.group);
     const cnt = s => String(s || '').replace(/\s/g, '').length;
     modal(`<h3>목표 미달 피드백 · ${esc(x.name)} <small class="muted">${esc(x.group)} · ${dLabel(d)}</small></h3>
@@ -12498,16 +12510,35 @@ async function addCharts(buf, jobs) {
     });
   }
   const stCard = (id, wide, html) => `<section class="card stcard ${wide ? 'wide' : ''}" data-stk="${id}">${html}</section>`;
+  // v28.85: 월 통계는 종료일뿐 아니라 저장된 귀속월 마감 상태를 따른다.
+  function stKeyLive(unit, key, periods, today) {
+    const p = unit === 'month' ? (periods || []).find(p => p.ym === key) : null;
+    if (p && p.status === '마감') return false;
+    if (p && p.status === '진행') return true;
+    return stRange(unit, key, periods)[1] >= today;
+  }
+  function stPeriodCaption(unit, keys, periods, today) {
+    if (unit === 'month' && keys.length === 1) {
+      const p = (periods || []).find(p => p.ym === keys[0]);
+      if (p) return mgPeriodLabel(p);
+    }
+    const from=stRange(unit,keys[0],periods)[0], to=stRange(unit,keys[keys.length-1],periods)[1];
+    return `${unit==='week'?'달력 주':'귀속월 묶음'} 기준 · 조회 기간 ${from} ~ ${to} · ${keys.some(k=>stKeyLive(unit,k,periods,today))?'진행 중':'조회 기간 종료'}`;
+  }
   function stDraw() {
     const V = stState(), box = $('#stb'); if (!box || !V.data) return;
     const m = stModel(V), { u, keys, B, R, P, gs } = m, labs = keys.map(k => stLab(u, k, true)), labsL = keys.map(k => stLab(u, k)), AK = keys.length - 1;
     const show = k => !V.sel.length || V.sel.includes(k), one = V.sel.length === 1, wide = V.sel.length > 0;
     const W = Math.max(520, box.clientWidth - 60), Wh = wide || window.innerWidth <= 1300 ? W : Math.max(420, Math.floor((box.clientWidth - 74) / 2) - 44);   // 1300px 이하는 한 줄에 하나 (CSS와 같은 기준)
-    const gl = V.grp.length ? V.grp.join(' · ') : '전체', live = !V.custom ? stRange(u, keys[AK], V.data.periods)[1] >= V.data.today : keys.length && stRange(u, keys[AK], V.data.periods)[1] >= V.data.today;
+    const periodMap = new Map((V.data.periods || []).map(p=>[p.ym,p]));
+    (S.periods || []).forEach(p=>periodMap.set(p.ym,Object.assign({},periodMap.get(p.ym)||{},p)));
+    const viewPeriods = [...periodMap.values()];
+    const focusKeys = V.custom ? keys : [keys[AK]];
+    const gl = V.grp.length ? V.grp.join(' · ') : '전체', live = focusKeys.some(k=>stKeyLive(u,k,viewPeriods,V.data.today));
     const rl = (V.custom ? labsL[0] + ' ~ ' + labsL[AK] : labsL[AK]) + (live ? ' (진행 중)' : '');
     const pv = V.custom ? '앞 같은 기간 대비' : { week: '지난주 대비', month: '지난달 대비', quarter: '지난 분기 대비', year: '작년 대비' }[u];
     const dl = (a, b, fmt, good, unit) => a == null || b == null ? `<i>${pv} -</i>` : (() => { const d = a - b; if (Math.abs(d) < 1e-9) return `<em class="eq">－ 0${unit || ''}</em> <i>${pv}</i>`; return `<em class="${good == null ? 'eq' : (d > 0) === good ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'} ${fmt(Math.abs(d))}${unit || ''}</em> <i>${pv}</i>`; })();
-    let h = '';
+    let h = `<div class="banner info" style="margin-bottom:12px">${esc(stPeriodCaption(u,focusKeys,viewPeriods,V.data.today))}</div>`;
     if (!V.data.agg.length && !(V.data.hrm || []).length) h += `<div class="banner warn" style="margin-bottom:14px">이 기간에 입력된 데이터가 없습니다.</div>`;
     if (show('kpi') && R.hist) h += `<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">※ ${esc(rl)} : <b>월 마감 자료</b>(인사평가에 올린 업무통계)로 계산 · 일별 숫자는 없음 · 근무 인원은 근무일수로 추정 (업무 종류는 5월 이후 업무통계만 · 운송 방법 제외)</div>`;
     // 요약
