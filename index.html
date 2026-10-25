@@ -6027,6 +6027,26 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // v28.84 F1: 조회 탭별 실제 그룹 선택값. 빈 값은 관리자 전체 그룹.
   const hrFilterPart = () => ST.tab === 'overview' ? (ST.overviewPart || '') : ST.tab === 'att' ? (ST.attPart !== undefined ? ST.attPart : (admin() ? '' : ST.part)) : (ST.part || '');
   const hrNameMatches = name => !ST.hrv4keyword || String(name || '').includes(ST.hrv4keyword);
+  // v28.84 F2: 이름 검색 뒤 목록과 평가 대상을 함께 맞춘다.
+  async function applyHrNameSearch(keyword) {
+    const tab = ST.tab, month = ST.month, tseq = ST.tseq, wasDirty = ST.dirty;
+    if (!(await guard())) return;
+    if (ST.tab !== tab || ST.month !== month || ST.tseq !== tseq) return;
+    ST.hrv4keyword = String(keyword || '').trim();
+    if (ST.hrRange) return showHrRange();
+    if (ST.tab !== 'eval' || !ST.data) return go(ST.tab);
+    renderPList();
+    const names = [...$('#plist').querySelectorAll('tbody tr[data-n]')].map(row => row.dataset.n);
+    if (names.includes(ST.sel)) {
+      if (wasDirty) return selectPerson(ST.sel, true);
+      return;
+    }
+    if (names.length) return selectPerson(names[0], true);
+    ST.sel = null;
+    ST.dirty = false;
+    clearTimeout(ST.timer);
+    $('#editor').innerHTML = '<div class="card muted">검색 조건에 맞는 인원이 없습니다.</div>';
+  }
   function attachHrFilter(){
     if (!window.CZFilterV4 || !META || !$('#hrFilterHost')) return;
     if (!['overview', 'eval', 'mypart', 'att'].includes(ST.tab)) {
@@ -6059,10 +6079,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         else if(ST.tab==='att')ST.attPart=part;
         else ST.part=part;
         ST.sel=null;if(ST.hrRange){attachHrFilter();showHrRange();}else go(ST.tab);},
-      onSearch:()=>ST.hrRange?showHrRange(): (ST.tab==='eval'&&ST.data?renderPList():go(ST.tab)),
+      onSearch:()=>applyHrNameSearch($('#czfHrKeyword') ? $('#czfHrKeyword').value : ST.hrv4keyword),
       onReset:async()=>{if(!(await guard()))return;ST.hrRange=null;ST.hrv4mode='귀속월';ST.hrv4keyword='';ST.part=parts[0]||'';ST.overviewPart='';ST.attPart=admin()?'':ST.part;ST.month=META.current||META.months[0];ST.sel=null;go(ST.tab);},
       onDetail:(on,box)=>{if(on){box.innerHTML='<label class="muted">이름 검색 <input id="czfHrKeyword" placeholder="이름" style="margin-left:8px;width:180px" value="'+esc(ST.hrv4keyword||'')+'"></label><button id="czfHrApply" class="sm primary" style="margin-left:6px">적용</button>';
-        $('#czfHrApply').onclick=()=>{ST.hrv4keyword=$('#czfHrKeyword').value.trim();if(ST.hrRange)showHrRange();else if(ST.tab==='eval'&&ST.data)renderPList();else go(ST.tab);};}},
+        $('#czfHrApply').onclick=()=>applyHrNameSearch($('#czfHrKeyword').value);}},
       onError:e=>toast(e.message,true)
     });
     if(ST.hrv4keyword){const b=bar.querySelector('[data-czf-detail]');if(b)b.click();}
@@ -7936,7 +7956,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.84-F1';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.84-F2';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
