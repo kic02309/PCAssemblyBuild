@@ -2878,6 +2878,31 @@ html[data-theme=dark] .ddq .ddq-day.ddq-default{background:#263f64;color:#a9c9ff
 @media(max-width:900px){.ddq-dates{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:480px){.ddq-head{gap:5px 10px}.ddq-head>small{margin-left:0}.ddq .ddq-day strong{font-size:13px}.ddq-dates{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.ddq .ddq-day{padding:7px 2px}}
 
+</style><style>
+
+/* v28.96: daily date/query row and group/goal row. Other screens retain their layout. */
+#main .czf-v4[data-view="dash"] .ddq{padding-bottom:10px;margin-bottom:0}
+#main .czf-v4[data-view="dash"] .ddq-layout{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
+#main .czf-v4[data-view="dash"] .ddq-layout .ddq-dates{flex:1 1 720px;max-width:1000px;min-width:0}
+#main .czf-v4[data-view="dash"] .ddq-query{flex:0 1 auto;margin:0 0 0 auto;padding:0;border:0;min-height:0;max-width:100%;overflow:visible;gap:5px;row-gap:8px;flex-wrap:wrap;white-space:normal}
+#main .czf-v4[data-view="dash"] .ddq-query .czf-caption{display:inline;margin-right:2px}
+#main .czf-v4[data-view="dash"] .ddq-query .czf-step{margin-left:0}
+#main .czf-v4[data-view="dash"] .ddq-query .czf-actions{margin-left:0}
+#main .czf-v4[data-view="dash"] .ddq-filters{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding-top:10px;margin-top:0;border:0;white-space:normal}
+#main .czf-v4[data-view="dash"] .ddq-filters>.czf-caption{display:inline;margin-right:0}
+#main .czf-v4[data-view="dash"] .ddq-filters .czf-groups{flex:0 1 auto;min-width:0;flex-wrap:wrap;overflow:visible;gap:6px}
+#main .czf-v4[data-view="dash"] .ddq-filters .czf-extra{flex:0 1 auto;margin:0 0 0 auto;padding:0 0 0 14px;border:0;border-left:1px solid var(--line2);max-width:100%}
+#main .czf-v4[data-view="dash"] .ddq-filters .gcrit{flex-wrap:wrap;gap:5px 9px}
+@media(max-width:1100px){
+ #main .czf-v4[data-view="dash"] .ddq-layout .ddq-dates{flex-basis:100%;max-width:none}
+ #main .czf-v4[data-view="dash"] .ddq-query{margin-left:0}
+ #main .czf-v4[data-view="dash"] .ddq-filters .czf-extra{margin-left:0;padding-left:0;border-left:0}
+}
+@media(max-width:480px){
+ #main .czf-v4[data-view="dash"] .ddq-query .czf-date{min-width:0}
+ #main .czf-v4[data-view="dash"] .ddq-filters .gcrit{font-size:11px;padding:5px 8px}
+}
+
 </style></head>
 <body>
 <div id="app"></div>
@@ -8043,7 +8068,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.95';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.96';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9807,10 +9832,16 @@ async function addCharts(buf, jobs) {
   function ddQuickMount(bar, r) {
     if (!bar) return;
     const full = ddCanRange(), first = $('.czf-line',bar);
-    // Keep goal switches and group filters. Only the daily screen's broad query toolbar is removed.
+    const groups = $('.czf-groups',bar), groupLine = groups && groups.parentElement;
+    // v28.96: retain existing event delegation while moving daily-only controls.
+    const extra = first && $('.czf-extra',first);
+    if (groupLine) {
+      groupLine.classList.add('ddq-filters');
+      if (extra) groupLine.appendChild(extra);
+    }
+    const todayButton = first && $('[data-czf-today]',first);
+    if (todayButton) todayButton.remove(); // Today is already a date tile.
     if (!full && first) {
-      const extra = $('.czf-extra',first);
-      if (extra) { const line=document.createElement('div'); line.className='czf-line ddq-goals'; line.appendChild(extra); first.after(line); }
       first.remove();
       const pop=$('.czf-pop',bar); if(pop) pop.remove();
     }
@@ -9822,6 +9853,14 @@ async function addCharts(buf, jobs) {
       const status=def?'기본'+(on?' ✓':' 조회'):today?'오늘'+(on?' ✓':''):on?'조회 중':future?'예정':new Date(d+'T00:00:00').getDay()===6?'토요근무':d<mon?'지난주':'';
       return `<button type="button" class="ddq-day${def?' ddq-default':''}${today?' ddq-today':''}${on?' ddq-selected':''}" data-ddq-date="${d}" aria-label="${d} ${esc(status)}" aria-pressed="${on}" ${future?'disabled':''}><strong>${label(d)}</strong><small>${esc(status)||'&nbsp;'}</small></button>`;
     }).join('')}</div>`;
+    const layout=document.createElement('div'); layout.className='ddq-layout';
+    const tiles=$('.ddq-dates',box); layout.appendChild(tiles);
+    if (full && first) {
+      first.classList.add('ddq-query');
+      const spacer=$('.czf-spacer',first); if(spacer) spacer.remove();
+      layout.appendChild(first);
+    }
+    box.appendChild(layout);
     bar.prepend(box);
     box.addEventListener('click',e=>{const b=e.target.closest('[data-ddq-date]'); if(!b || b.disabled || b.dataset.ddqDate===r.date) return; S.ddDate=b.dataset.ddqDate; renderDash();});
   }
@@ -10154,10 +10193,6 @@ async function addCharts(buf, jobs) {
       bindGoalBar(() => drawDaily(r, lv));
       applyGroup(selected);
     }
-    // V7: 공통 조회바는 이 화면에서만 기간 지정 바로 다음에 검색/초기화를 표시.
-    const dashFilter = $('#main .czf-v4[data-view="dash"]');
-    if (dashFilter) { const actions = $('.czf-actions', dashFilter), spacer = $('.czf-spacer', dashFilter);
-      if (actions && spacer) { spacer.before(actions); spacer.remove(); } }
     // 휴무자 목록: 이 날짜의 D.off 값을 그대로 보여 주며, 데이터를 수정하지 않는다.
     const offToggle = $('#dd-off-toggle'), offPanel = $('#dd-off-panel');
     if (offToggle && offPanel) {
