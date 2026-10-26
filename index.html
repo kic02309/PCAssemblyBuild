@@ -2827,7 +2827,26 @@ body.dark .ddline-state,[data-theme="dark"] .ddline-state{background:#243f68;col
 .ddcombo-tail{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;min-width:0}.ddcombo-tail .ddcombo-checks{display:flex;flex-wrap:wrap;grid-column:auto;min-width:0}.ddcombo-tail>.ddline-state{flex:0 0 auto;margin-left:auto;max-width:100%}.ddcombo-name{min-width:0}
 @media(max-width:1150px){.ddcombo-tail{grid-column:2/-1}}
 @media(max-width:720px){.ddcombo-tail{grid-column:1/-1}}
-</style></head>
+</style><style>
+/* v28.91: production-only layout; original handlers and calculations retained. */
+#main .prpg #prbody>.prc{width:100%;margin-bottom:12px}
+#main .prpg .pr-items table.prt{table-layout:fixed;width:100%;min-width:1120px}
+#main .prpg .pr-items table.prt :is(th,td){padding:7px 4px}
+#main .prpg .pr-items table.prt :is(input,select){width:100%!important;min-width:0!important;max-width:100%;box-sizing:border-box}
+#main .prpg .pr-items table.prt :is(.i-model,.i-case,.i-cooler,.i-psu){text-align:left}
+#main .prpg .pr-items table.prt .i-del{padding:5px 7px}
+#main .prpg .pr-items table.prt :is(.i-cs,.i-cl){padding-left:2px;padding-right:2px;white-space:nowrap}
+#main .prpg .pr-people table.prt{width:100%;min-width:800px;table-layout:fixed}
+#main .prpg .pr-people table.prt th:first-child{width:64px}
+#main .prpg .pr-people table.prt th:nth-child(2){width:180px}
+#main .prpg .pr-people table.prt :is(th,td){padding:7px 6px}
+#main .prpg .pr-other table.prt{display:table;width:100%;min-width:640px;table-layout:fixed}
+#main .prpg .pr-other-scroll{overflow:auto}
+#main .prpg .pr-other table.prt :is(th,td){padding:7px 6px}
+#main .prpg .pr-other table.prt :is(input,select){box-sizing:border-box;max-width:100%}
+#main .prpg .pr-other table.prt .o-rs{width:100%;text-align:left}
+</style>
+</head>
 <body>
 <div id="app"></div>
 <div id="toast"></div>
@@ -7992,7 +8011,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.91';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -14208,8 +14227,8 @@ async function addCharts(buf, jobs) {
     const byP = {}; R.ppl.forEach(p => (byP[p.userId || p.name] = p));
     box.innerHTML = `<div class="prsum"><div><small>총 생산수량</small><b>${R.qty}<em> 대</em></b></div><div><small>생산 환산 (S)</small><b class="c1">${f2(R.S)}</b></div><div><small>기타시간</small><b>${R.H}<em> 분 → ${f2(R.O)}</em></b></div><div><small>총 환산 (T)</small><b class="c2">${f2(R.T)}</b></div><div><small>작업 인원</small><b>${R.ppl.length}<em> 명 · ${R.M}분</em></b></div></div>
       ${R.iss.length ? `<div class="warn" style="margin-bottom:10px"><b>확정 전에 고칠 것 ${R.iss.length}건</b> · ${R.iss.map(esc).join(' · ')}</div>` : '<div class="note" style="margin-bottom:10px">✓ 확정할 수 있습니다</div>'}
-      <div class="card prc"><div class="mgch"><b>① 생산 목록</b><span class="muted">공동생산 + 개별 조립 · 사양표는 한 번에 여러 건 붙여넣기 가능</span><span style="flex:1"></span>${ed ? '<button id="prpaste" class="primary sm">📋 사양표 붙여넣기</button><button id="pradd" class="sm">＋ 직접 추가</button>' : ''}</div>
-        <div style="overflow:auto"><table class="list prt"><thead><tr><th>구분</th><th>제조번호</th><th>모델명</th><th>케이스</th><th>난이도</th><th>CPU쿨러</th><th>난이도</th><th>파워</th><th>수량</th><th>환산</th><th></th></tr></thead><tbody>
+      <div class="card prc pr-items"><div class="mgch"><b>① 생산 목록</b><span class="muted">공동생산 + 개별 조립 · 사양표는 한 번에 여러 건 붙여넣기 가능</span><span style="flex:1"></span>${ed ? '<button id="prpaste" class="primary sm">📋 사양표 붙여넣기</button><button id="pradd" class="sm">＋ 직접 추가</button>' : ''}</div>
+        <div style="overflow:auto"><table class="list prt"><colgroup><col style="width:6%"><col style="width:10%"><col style="width:20%"><col style="width:15%"><col style="width:5%"><col style="width:15%"><col style="width:5%"><col style="width:11%"><col style="width:5%"><col style="width:5%"><col style="width:3%"></colgroup><thead><tr><th>구분</th><th>제조번호</th><th>모델명</th><th>케이스</th><th>난이도</th><th>CPU쿨러</th><th>난이도</th><th>파워</th><th>수량</th><th>환산</th><th></th></tr></thead><tbody>
         ${R.items.map(x => { const mob = !!x.mob; return `<tr data-it="${x.id}" class="${x.conv == null ? 'prbad' : ''}"><td>${mob ? '<span class="rtag pmt">폰</span>' : ''}<select class="i-src" ${dis || (mob ? 'disabled' : '')}>${opt(['공동', '개별'], x.src)}</select>${x.src === '개별' ? (mob ? `<div class="muted">${esc(x.whoName || uname(x.who))}</div>` : who(x.who, 'i-who')) : ''}</td>
           <td><input class="i-no" value="${esc(x.no || '')}" ${dis || (mob ? 'disabled' : '')} style="width:110px"></td><td><input class="i-model" value="${esc(x.model || '')}" placeholder="확인 필요" ${dis} style="width:170px"></td>
           <td><input class="i-case" value="${esc(x.case || '')}" placeholder="확인 필요" ${dis} style="width:130px"></td><td><select class="i-cs ${x.cs ? '' : 'need'}" ${dis}><option value="">-</option>${opt(PR_CS, x.cs)}</select></td>
@@ -14217,20 +14236,18 @@ async function addCharts(buf, jobs) {
           <td><input class="i-psu" value="${esc(x.psu || '')}" placeholder="확인 필요" ${dis} style="width:110px"></td><td><input class="i-q" type="number" min="1" value="${esc(x.q || '')}" ${dis} style="width:56px"></td>
           <td><b>${x.conv == null ? '-' : f2(x.conv)}</b>${x.unit != null && +x.q > 1 ? `<div class="muted">대당 ${f2(x.unit)}</div>` : ''}</td><td>${ed ? `<button class="sm i-del" title="${mob ? '이 폰 입력 빼기' : '삭제'}">✕</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="11" class="muted" style="padding:18px">[📋 사양표 붙여넣기]로 생산 목록을 넣으세요</td></tr>'}
         </tbody></table></div>${same}</div>
-    <div class="prgrid"><div>
-      <div class="card prc"><div class="mgch"><b>③ 기타시간 (지원 · 정리 등)</b><span class="muted">실제 한 사람 · 항목 · 분 · 사유 → 전체 실적에 합산 후 참여시간 비율로 나눔 · 기본 청소 15분은 넣지 않음</span><span style="flex:1"></span>${ed ? '<button id="proadd" class="sm">＋ 추가</button>' : ''}</div>
-        <table class="list prt"><thead><tr><th>수행자</th><th>항목</th><th>분</th><th>사유</th><th></th></tr></thead><tbody>
-        ${R.oth.map(x => { const mob = !!x.mob; return `<tr data-ot="${x.id}"><td>${mob ? '<span class="rtag pmt">폰</span> ' + esc(x.whoName || uname(x.who)) : who(x.who, 'o-who')}</td><td><select class="o-cat" ${dis || (mob ? 'disabled' : '')}>${opt(PR_OTH, x.cat)}</select></td><td><input class="o-min" type="number" min="1" value="${esc(x.mins || '')}" ${dis || (mob ? 'disabled' : '')} style="width:70px"></td><td><input class="o-rs" value="${esc(x.reason || '')}" ${dis || (mob ? 'disabled' : '')} placeholder="예: 2층 정리" style="width:100%"></td><td>${ed ? '<button class="sm o-del">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="muted" style="padding:12px">없음 (모두 라인 작업)</td></tr>'}
-        </tbody></table></div>
-    </div><div>
-      <div class="card prc"><div class="mgch"><b>② 참여 인원 · 배분</b><span class="muted">정상 480 · 반차 240 · 공식 야근 ${P.asmOt || 0}분</span><span style="flex:1"></span>${ed ? `<button id="prpadd" class="sm">＋ 타 그룹 지원자</button><button id="prpre" class="sm" title="출근 · 연차 다시 불러오기">↻</button>` : ''}</div>
+    <div class="card prc pr-people"><div class="mgch"><b>② 참여 인원 · 배분</b><span class="muted">정상 480 · 반차 240 · 공식 야근 ${P.asmOt || 0}분</span><span style="flex:1"></span>${ed ? `<button id="prpadd" class="sm">＋ 타 그룹 지원자</button><button id="prpre" class="sm" title="출근 · 연차 다시 불러오기">↻</button>` : ''}</div>
         <div class="tbs"><table class="list prt"><thead><tr><th>참여</th><th>이름</th><th>상태</th><th>인정분</th><th>야근분</th><th>비율</th><th>생산</th><th>기타</th><th>합계</th></tr></thead><tbody>
         ${ppl.map((p, i) => { const r = byP[p.userId || p.name]; const on = r && p.inc; return `<tr data-pp="${i}" class="${p.inc ? '' : 'prout'}"><td><input type="checkbox" class="p-inc" ${p.inc ? 'checked' : ''} ${dis}></td><td><b>${esc(p.name)}</b>${!p.userId ? ' <span class="rtag pendt" title="계정이 없어 배분만 계산하고 개인 실적에는 반영되지 않습니다">개인반영 없음</span>' : ''}${p.line || !p.userId && !p.ext ? '' : ` <span class="rtag">${esc(p.group || '지원')}</span>`}</td>
           <td>${p.st && p.st !== '출근' ? `<span class="mgst ${p.st === '반차' ? 'ing' : 'wait'}">${esc(p.st)}</span>` : '출근'}</td><td><input class="p-base" type="number" min="0" max="720" value="${p.base}" ${dis} style="width:56px"></td><td><input class="p-ot" type="number" min="0" max="${P.asmOt || 0}" value="${p.ot || 0}" ${dis || (!(P.asmOt > 0) || !p.userId ? 'disabled' : '')} style="width:48px"></td>
           <td>${on ? pct(R.M ? r.m / R.M : 0) : '-'}</td><td>${on ? f2(r.s) : '-'}</td><td>${on ? f2(r.o) : '-'}</td><td><b>${on ? f2(r.p) : '-'}</b></td></tr>`; }).join('')}
         </tbody></table></div>
-        </tbody></table></div>
-    </div></div>${prShowHelp(P) ? prBasis(P, R) : ''}`;
+      </div>
+    <div class="card prc pr-other"><div class="mgch"><b>③ 기타시간 (지원 · 정리 등)</b><span class="muted">실제 한 사람 · 항목 · 분 · 사유 → 전체 실적에 합산 후 참여시간 비율로 나눔 · 기본 청소 15분은 넣지 않음</span><span style="flex:1"></span>${ed ? '<button id="proadd" class="sm">＋ 추가</button>' : ''}</div>
+        <div class="pr-other-scroll"><table class="list prt"><colgroup><col style="width:140px"><col style="width:140px"><col style="width:90px"><col><col style="width:48px"></colgroup><thead><tr><th>수행자</th><th>항목</th><th>분</th><th>사유</th><th></th></tr></thead><tbody>
+        ${R.oth.map(x => { const mob = !!x.mob; return `<tr data-ot="${x.id}"><td>${mob ? '<span class="rtag pmt">폰</span> ' + esc(x.whoName || uname(x.who)) : who(x.who, 'o-who')}</td><td><select class="o-cat" ${dis || (mob ? 'disabled' : '')}>${opt(PR_OTH, x.cat)}</select></td><td><input class="o-min" type="number" min="1" value="${esc(x.mins || '')}" ${dis || (mob ? 'disabled' : '')} style="width:70px"></td><td><input class="o-rs" value="${esc(x.reason || '')}" ${dis || (mob ? 'disabled' : '')} placeholder="예: 2층 정리" style="width:100%"></td><td>${ed ? '<button class="sm o-del">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="muted" style="padding:12px">없음 (모두 라인 작업)</td></tr>'}
+        </tbody></table></div></div>
+    ${prShowHelp(P) ? prBasis(P, R) : ''}`;
     if (!ed) return;
     const itemOf = tr => { const id = tr.dataset.it; if (id[0] === 'm' && !dr.items.find(x => x.id === id)) { const mid = id.slice(1); dr.mobEdit[mid] = dr.mobEdit[mid] || {}; return dr.mobEdit[mid]; } return dr.items.find(x => x.id === id); };
     const bindF = (sel, key, num) => $$(sel, box).forEach(el => (el.onchange = () => { const it = itemOf(el.closest('tr')); if (!it) return; it[key] = num ? +el.value : el.value; prDirty(); }));
