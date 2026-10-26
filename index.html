@@ -2082,6 +2082,19 @@ table.m2t td.m2who,table.m2t th.m2who{min-width:320px;max-width:520px;text-align
 .m2kt small{font-size:13px}.m2kt span{font-size:12.5px}.m2h>b{font-size:16px}.m2chips span{font-size:13px}
 @media(max-width:1300px){.m2ks{grid-template-columns:repeat(3,minmax(0,1fr))}.m2g{grid-template-columns:1fr}}
 @media(max-width:700px){.m2ks{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v28.99: targets at a glance; concise monthly quantity and admin export controls. */
+.monthly-qty{min-width:206px;padding-left:12px!important;padding-right:12px!important}
+.monthly-qty-grid{display:grid;grid-template-columns:repeat(3,minmax(48px,1fr));gap:0;align-items:center;text-align:center}
+.monthly-qty-grid>span+span{border-left:1px solid var(--line,#e3e8ee)}
+.monthly-qty-grid small{display:block;font-size:11px;font-weight:400;color:var(--muted,#64748b);margin-bottom:3px}
+.monthly-qty-grid b{font-size:14px;font-variant-numeric:tabular-nums}
+.monthly-person-group{display:block;color:var(--muted,#64748b);font-size:11px;margin-top:4px}
+.monthly-download{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.monthly-download>small{color:var(--muted,#64748b);font-size:11px}
+.people-target-reference{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;background:var(--bg,#f6f8fb);border:1px solid var(--line,#e3e8ee);border-radius:8px;font-size:12px}
+.people-target-reference small{color:var(--muted,#64748b)}
+.people-goal{font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 <style>
 /* Unified compact search — 2026-10-21; visual only, zero effect on existing grid widths. */
@@ -2995,7 +3008,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     AQ: 'A급 케이스에 쌍팬 또는 풀보드 장착할 경우/메모리 조립형 방열판 장착', AR: 'S/W테스트 / 5090그래픽카드 포장',
     AS: '반조립된 주문건 처리시', AT: '당일/경동/새벽/개인택배 포장건',
   };
-  const TARGETS = [8, 10, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19];
+  const TARGETS = [8, 9, 10, 11, 12, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19];
   const OT_LIST = []; for (let i = 0; i <= 180; i += 10) OT_LIST.push(i);
   const OTHER = [['K7', '포장지원'], ['M7', '정리지원'], ['O7', '청 소'], ['Q7', '담당/교육'], ['S7', '불량처리'], ['U7', '기타시간']];
   const GROUP_LIST = ['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원', '출력', '영상'];
@@ -8093,7 +8106,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.98';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.99';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8230,6 +8243,9 @@ async function addCharts(buf, jobs) {
   // ---- v28.51 : 팀 목표 · 달성 기준 (귀속월마다, 안 바꾸면 다음 달로 이어짐) · 목표 기준 [개인 | 팀]
   const goalOf = ym => { let g = null; (S.goals || []).forEach(x => { if (ym && x.ym <= ym) g = x; });
     return g ? { ym: g.ym, team: g.team != null && +g.team > 0 ? +g.team : null, ok: +g.ok || 90, warn: +g.warn || 80 } : { ym: null, team: null, ok: 90, warn: 80 }; };
+  // v28.99: retain any previously saved custom target in each selector.
+  const targetChoices = value => [...new Set(C.TARGETS.concat(+value > 0 ? [+value] : []))].sort((a, b) => a - b);
+  const canMonthlyExport = () => isAdm0() && !isRO() && !S.pv;
   const tMode = () => { if (!S.tmode) { try { S.tmode = localStorage.getItem('tmode') === 't' ? 't' : 'p'; } catch (e) { S.tmode = 'p'; } } return S.tmode; };
   const setTMode = m => { S.tmode = m === 't' ? 't' : 'p'; try { localStorage.setItem('tmode', S.tmode); } catch (e) { } };
   const effT = (pt, ym) => tMode() === 't' ? (goalOf(ym).team || 0) : (+pt || 0);          // 지금 기준의 목표
@@ -8899,7 +8915,7 @@ async function addCharts(buf, jobs) {
     ${lockMsg ? '<div class="' + (D.period && ro ? 'lock' : 'warn') + '">' + lockMsg + '</div>' : ''}
     <div class="erow"><div class="energy" id="energy">
       <div class="el"><b>개인목표 달성</b><span>월 목표</span>
-        ${D.canSetTarget ? `<select id="etg" ${D.period ? '' : 'disabled'}><option value="">선택</option>${C.TARGETS.map(t => `<option ${t === D.target ? 'selected' : ''}>${t}</option>`).join('')}</select>`
+        ${D.canSetTarget ? `<select id="etg" ${D.period ? '' : 'disabled'}><option value="">선택</option>${targetChoices(D.target).map(t => `<option ${t === +D.target ? 'selected' : ''}>${t}</option>`).join('')}</select>`
           : `<b class="tgv">${D.target || '미설정'}</b>`}</div>
       <div class="eb"><i id="efill"></i><span id="etxt"></span><em class="m90"></em><em class="m50"></em></div>
       <div class="ep" id="epct"></div>
@@ -9721,7 +9737,7 @@ async function addCharts(buf, jobs) {
         : state.mode === 'range' ? '<select id="personFrom" aria-label="시작월">' + monthOpts(state.from) + '</select> ~ <select id="personTo" aria-label="종료월">' + monthOpts(state.to) + '</select><button id="personQuery" class="primary">조회</button>'
         : '<select id="personYear" aria-label="연도">' + years.map(y => '<option ' + (y === state.year ? 'selected' : '') + '>' + y + '</option>').join('') + '</select><button id="personQuery" class="primary">조회</button>'}
       <span class="fld" style="flex-direction:row;align-items:center;gap:6px;margin-left:10px"><label style="font-size:12px">월 목표</label>
-        <select id="tg" ${r.canSetTarget ? '' : 'disabled'}><option value="">선택</option>${C.TARGETS.map(t => `<option ${t === r.target ? 'selected' : ''}>${t}</option>`).join('')}</select></span>
+        <select id="tg" ${r.canSetTarget ? '' : 'disabled'}><option value="">선택</option>${targetChoices(r.target).map(t => `<option ${t === +r.target ? 'selected' : ''}>${t}</option>`).join('')}</select></span>
       <span style="flex:1"></span>
       <button class="primary" id="xl">⬇ 엑셀 다운로드 (.xlsx)</button>${multi ? '' : '<button id="xlo" title="예전 개인 엑셀 원본 양식 (지원 보정 전 계산)">원본 양식</button>'}
     </div>
@@ -10578,7 +10594,7 @@ async function addCharts(buf, jobs) {
         <div class="seg"><button data-mv="list" class="${S.mView === 'list' ? 'on' : ''}">인원별 목록</button><button data-mv="board" class="${S.mView === 'board' ? 'on' : ''}">일자별 현황판</button></div>
         <span class="progress hide" id="pg"><i></i></span><span class="muted" id="pgt"></span>
 
-        <button id="zip" ${xym ? '' : 'disabled'}>⬇ 엑셀 전체 (zip)</button><button id="zipo" class="sm" ${xym ? '' : 'disabled'} title="원본 양식으로 전체 (지원 보정 전)">원본 양식 zip</button>
+        ${canMonthlyExport() ? `<span class="monthly-download"><small>관리자 다운로드</small><button id="zip" ${xym ? '' : 'disabled'}>⬇ 엑셀 전체 (zip)</button><button id="zipo" class="sm" ${xym ? '' : 'disabled'} title="원본 양식으로 전체 (지원 보정 전)">원본 양식 zip</button></span>` : ''}
       </div>
       ${(() => { const on = S.manageGroup ? S.manageGroup.split(',') : [], has = new Set(r.users.map(u => u.group)), ch = mgChips(r.groups).filter(([, gs]) => gs.some(g => has.has(g)));
         return `<div class="gchips"><span class="muted">그룹</span><button data-gg="" class="${on.length ? '' : 'on'}">전체</button>${ch.map(([t, gs]) => `<button data-gg="${esc(gs.join(','))}" class="${gs.every(g => on.includes(g)) ? 'on' : ''}">${gdot(gs[0]).replace(/>[^<]*$/, '>')}${esc(t)}</button>`).join('')}</div>`; })()}
@@ -10668,7 +10684,7 @@ async function addCharts(buf, jobs) {
         on = !gs.length ? [] : gs.every(g => on.includes(g)) ? on.filter(x => !gs.includes(x)) : on.concat(gs.filter(g => !on.includes(g)));
         S.manageGroup = on.join(','); renderManage();
       }));
-      $('#zip').onclick = () => { S._zipOrig = false; xym && zipAll(xym); };
+      if ($('#zip')) $('#zip').onclick = () => { S._zipOrig = false; xym && zipAll(xym); };
       if ($('#zipo')) $('#zipo').onclick = () => { S._zipOrig = true; xym && zipAll(xym); };
       S._musers = r.users;
       if ($('#bimp')) $('#bimp').onclick = bulkImport;
@@ -10979,26 +10995,26 @@ async function addCharts(buf, jobs) {
         <div class="ddteam-k"><small>1인 1일 평균</small><b>${f2(s.avg)}</b></div><div class="ddteam-k"><small>출근 인원·일 (${s.people}명)</small><b>${s.n}</b></div>
         <div class="ddteam-k"><small>팀 목표 ${g.team ? f1d(g.team) : '-'}</small><b class="${rt == null ? '' : LVC[lvOf(s.avg, g.team, xym)] + 't'}">${rt == null ? '-' : rt + '%'}</b></div>
         <span class="muted" style="font-size:12px">${gs.length ? '고른 그룹' : '전체 그룹'} · 환산 합 ${f1d(s.sum)}</span>${s.pend && !isRO() ? `<button class="sm ddpend" id="mpend">확인 필요 <b>${s.pend}</b></button>` : s.pend ? `<span class="ddpend">확인 필요 ${s.pend}</span>` : ''}</div>`; })() : '';
-    $('#mbody').innerHTML = tcard + `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="개인 목표 화면 (그룹별 표 · 한꺼번에 채우기)">🎯 개인 목표 설정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
+    $('#mbody').innerHTML = tcard + `<div class="pfrow"><span class="muted">${list.length}명</span>${MF.bar()}${S.mSort.k !== 'group' || S.mSort.d !== 1 ? '<button class="sm" id="mgrouporder">그룹순으로 보기</button>' : ''}<span style="flex:1"></span>${S.mMode === 'month' && xym && !isRO() ? (() => { const nt = r.users.filter(u => u.role === '일반' && !u.target).length; return `<button id="gtopen" class="sm ${S.gtOpen ? 'on' : ''}" title="개인 목표 화면 (그룹별 표 · 한꺼번에 채우기)">🎯 개인 목표 설정${nt ? ` <span class="gtn">미지정 ${nt}</span>` : ''}</button>`; })() : ''}</div>
       <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - ${S.mMode === 'month' && S.gtOpen ? 266 : 220}px)">
-      <table class="list mlist" style="min-width:1260px"><thead><tr>${th('name', '이름')}${th('group', '그룹')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', tMode() === 't' ? '팀 목표' : '개인 목표', 1)}${th('hit', '달성일', 1)}${th('miss', '미달일', 1)}${th('qty', '조립 수량', 1)}${(() => { const T = shareTot(); return `<th class="sort num ${S.mSort.k === 'share' ? 'on' : ''}" data-k="share" title="분모 : ${esc(T.scope)} · 조립 ${T.totA}대 · 제조 ${T.totM}대 (고른 그룹 기준 · 표 필터와 무관)">점유율<small style="display:block;font-weight:400">조립 · 제조</small></th>`; })()}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}<th title="이 사람 한 달 엑셀">엑셀</th></tr></thead><tbody>
+      <table class="list mlist" style="min-width:1260px"><thead><tr>${th('name', '이름')}${th('days', '근무일', 1)}${th('last', '마지막 입력')}${th('target', tMode() === 't' ? '팀 목표' : '개인 목표', 1)}${th('hit', '달성일', 1)}${th('miss', '미달일', 1)}${th('qty', '업무 수량', 1)}${(() => { const T = shareTot(); return `<th class="sort num ${S.mSort.k === 'share' ? 'on' : ''}" data-k="share" title="분모 : ${esc(T.scope)} · 조립 ${T.totA}대 · 제조 ${T.totM}대 (고른 그룹 기준 · 표 필터와 무관)">점유율<small style="display:block;font-weight:400">조립 · 제조</small></th>`; })()}${th('conv', '환산 합계', 1)}${th('f7', '평가평균', 1)}${th('i7', '실제평균', 1)}${th('c8', '달성률 (주문 + 기타시간)')}</tr></thead><tbody>
       ${list.map((u, i) => {
         const stale = u.last && u.last < prevWork, has = u.items.length, c8 = u.tg && has ? u.m.c8 : null;
         let hd = '';
         if (S.mSort.k === 'group' && (i === 0 || list[i - 1].group !== u.group)) {        // 그룹 제목 줄
           const gl = list.filter(x => x.group === u.group), gr = gl.filter(x => x.tg && x.items.length), ga = gr.length ? gr.reduce((a, x) => a + x.m.c8, 0) / gr.length : null, gh = gr.reduce((a, x) => a + x.hit, 0), gm = gr.reduce((a, x) => a + x.miss, 0);
-          hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="14"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${(() => { const q = gl.reduce((a, x) => a + (x.mq || 0), 0); return q ? `<span class="mfgv">제조 ${q}대</span>` : ''; })()}${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga, xym)}t">${pct(ga)}</b></span><span>달성일 <b class="t-hi">${gh}</b> · 미달일 <b class="t-lo">${gm}</b></span>`}</td></tr>`;
+          hd = `<tr class="ghd" style="--gc:${gcol(u.group)}"><td colspan="12"><b>${gdot(u.group)}</b><span>${gl.length}명</span><span>입력 ${gl.filter(x => x.items.length).length}명</span>${(() => { const q = gl.reduce((a, x) => a + (x.mq || 0), 0); return q ? `<span class="mfgv">제조 ${q}대</span>` : ''; })()}${ga == null ? '' : `<span>평균 달성률 <b class="${rateCls(ga, xym)}t">${pct(ga)}</b></span><span>달성일 <b class="t-hi">${gh}</b> · 미달일 <b class="t-lo">${gm}</b></span>`}</td></tr>`;
         }
-        return hd + `<tr data-u="${u.id}" class="gc${u.pend ? ' pend' : ''}" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${wtOnU(u, xym) ? ' <span class="rtag wtt" title="월간 업무표 사용 (수량 · 목표 · 팀 효율 제외)">업무표</span>' : ''}${u.pend ? ' <span class="rtag pendt" title="아직 업무데이터 사이트에 가입하지 않음">미가입</span>' : ''}${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인 불가 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}</td><td>${S.mSort.k === 'group' ? gdot(u.group).replace(/>[^<]*$/, '>') : gdot(u.group)}</td>
+        return hd + `<tr data-u="${u.id}" class="gc${u.pend ? ' pend' : ''}" style="--gc:${gcol(u.group)}"><td><b>${esc(u.name)}</b>${wtOnU(u, xym) ? ' <span class="rtag wtt" title="월간 업무표 사용 (수량 · 목표 · 팀 효율 제외)">업무표</span>' : ''}${u.pend ? ' <span class="rtag pendt" title="아직 업무데이터 사이트에 가입하지 않음">미가입</span>' : ''}${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}${u.nopin ? ' <span class="rtag" style="background:#fdecea;color:#c62828" title="로그인 불가 — [편집]에서 임시 비밀번호를 주세요">비밀번호 없음</span>' : ''}${u.la && u.role !== '관리자' ? ' <span class="rtag">연차입력</span>' : ''}${S.mSort.k !== 'group' ? `<small class="monthly-person-group">${esc(u.group)}</small>` : ''}</td>
         <td class="num">${has ? u.days : '-'}</td><td class="${!u.last ? 'muted' : stale ? 'sun' : ''}">${u.last ? dLabel(u.last) : u.pend ? '가입 안 함' : '입력 없음'}</td>
-        <td class="num">${tMode() === 't' ? (u.tg ? f1d(u.tg) : '<span class="muted" title="관리자 설정 → 목표에서 팀 목표를 정하세요">-</span>') : u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${C.TARGETS.map(t => `<option ${t === u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has && u.tg ? `<b class="t-hi">${u.hit}</b>` : '<span class="muted">-</span>'}</td><td class="num">${has && u.tg ? `<b class="t-lo">${u.miss}</b>` : '<span class="muted">-</span>'}</td><td class="num">${has ? u.qty : '-'}${u.ship ? `<small class="mfq shipv" title="제조사용(출고) ${u.ship}대">출고 ${u.ship}</small>` : ''}${u.mq ? `<small class="mfq" title="제조 ${u.mq}대">제조 ${u.mq}</small>` : ''}</td><td class="num shr">${has && SH.totA ? `<b title="${esc(u.name)} 조립 ${u.qty}대 / ${esc(SH.scope)} ${SH.totA}대">${(Math.round(u.qty / SH.totA * 1000) / 10).toFixed(1)}%</b>` : '-'}${u.mq && SH.totM ? `<small class="mfq" title="제조 ${u.mq}대 / ${esc(SH.scope)} ${SH.totM}대">제조 ${(Math.round(u.mq / SH.totM * 1000) / 10).toFixed(1)}%</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
+        <td class="num">${tMode() === 't' ? (u.tg ? f1d(u.tg) : '<span class="muted" title="관리자 설정 → 목표에서 팀 목표를 정하세요">-</span>') : u.pend ? '<span class="muted">-</span>' : xym && !isRO() ? `<select class="mtg" title="${ymLabel(xym)} 월 목표"><option value="">-</option>${targetChoices(u.target).map(t => `<option ${t === +u.target ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (u.target || '<span class="muted">-</span>')}</td><td class="num">${has && u.tg ? `<b class="t-hi">${u.hit}</b>` : '<span class="muted">-</span>'}</td><td class="num">${has && u.tg ? `<b class="t-lo">${u.miss}</b>` : '<span class="muted">-</span>'}</td><td class="num monthly-qty"><div class="monthly-qty-grid">${[['조립', u.qty], ['제조', u.mq], ['출고', u.ship]].map(([label, value]) => `<span><small>${label}</small><b>${has ? (value || 0) : '-'}</b></span>`).join('')}</div></td><td class="num shr">${has && SH.totA ? `<b title="${esc(u.name)} 조립 ${u.qty}대 / ${esc(SH.scope)} ${SH.totA}대">${(Math.round(u.qty / SH.totA * 1000) / 10).toFixed(1)}%</b>` : '-'}${u.mq && SH.totM ? `<small class="mfq" title="제조 ${u.mq}대 / ${esc(SH.scope)} ${SH.totM}대">제조 ${(Math.round(u.mq / SH.totM * 1000) / 10).toFixed(1)}%</small>` : ''}</td><td class="num">${has ? f2(u.conv) : '-'}</td>
         <td class="num"><b>${has ? f2(u.m.f7) : '-'}</b>${u.adjN ? `<small class="adjn" title="11월 귀속부터 지원 보정 · 보정된 날 ${u.adjN}일 · 지원 점수 합 ${f2(u.adjSup)}">보정 ${u.adjN}일</small>` : ''}</td><td class="num">${has ? f2(u.m.i7) : '-'}</td>
-        <td class="mrate" title="막대 = 평가평균 (빗금 = 기타시간 환산) · 검은 선 = 목표">${c8 == null ? '<span class="muted">-</span>' : `<div class="mrbar">${ddBar(u.m.f7, u.tg, u.m.w7 || 0)}</div><b class="${rateCls(c8, xym)}t">${pct(c8)}</b>`}</td>
-        <td>${has && xym && !u.pend ? `<button class="mxl" data-xl="${u.id}" title="${esc(u.name)} · ${ymLabel(xym)} 엑셀 받기 (웹과 같은 값)">⬇</button><button class="mxl mxo" data-xl="${u.id}" data-orig="1" title="원본 양식 (지원 보정 전)">원</button>` : ''}</td>
+        <td class="mrate" title="막대 = 평가평균 (연한 부분 = 기타시간 환산) · 검은 선 = 목표">${c8 == null ? '<span class="muted">-</span>' : `<div class="mrbar">${ddBar(u.m.f7, u.tg, u.m.w7 || 0)}</div><b class="${rateCls(c8, xym)}t">${pct(c8)}</b>`}</td>
 </tr>`;
-      }).join('') || '<tr><td colspan="14" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
+      }).join('') || '<tr><td colspan="12" class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody></table></div>`;
     MF.bind();
+    if ($('#mgrouporder')) $('#mgrouporder').onclick = () => { S.mSort = { k: 'group', d: 1 }; drawManage(r, S.manageYm || (r.period || {}).ym, false); };
     $$('[data-tb2]').forEach(b => (b.onclick = () => { S.tbase = b.dataset.tb2; try { localStorage.setItem('tbase', S.tbase); } catch (e) { } renderMList(r); }));
     if ($('#mpend')) $('#mpend').onclick = () => confirmModal(TR, xym, () => renderManage());
     if ($('#gtopen')) $('#gtopen').onclick = () => go('ptarget');   // v28.51 : 개인 목표 화면으로
@@ -11014,14 +11030,6 @@ async function addCharts(buf, jobs) {
       } catch (e) { toast(e.message, true); sel.value = u.target || ''; sel.disabled = false; }
     }));
     // v28.18 : 이름 · 달성률 칸을 누르면 사람 카드 (예전 [월 통계] · ⋯ 메뉴 대신)
-    $$('.mlist .mxl').forEach(b => (b.onclick = async e => {                       // v28.24 : 한 사람 엑셀 바로 받기
-      e.stopPropagation(); const u = list.find(x => x.id === b.dataset.xl), ym = xym; if (!u || !ym) return;
-      const bt = b.textContent; b.disabled = true; b.textContent = '…';
-      try { const mr = await api('getMonth', { userId: u.id, ym }), orig = b.dataset.orig === '1';
-        saveBlob(orig ? await makeXlsxBlob(mr.user, ym, mr.target, mr.days) : await simpleXlsxBlob(mr.user, ym, mr.target, mr.days, shareTot(u)), orig ? C.fileName(u.name, ym) : sxName(u.name, ym)); toast(u.name + ' 엑셀을 받았습니다'); }
-      catch (er) { toast(er.message, true); }
-      b.disabled = false; b.textContent = bt;
-    }));
     $$('.mlist tr[data-u] td:first-child b, .mlist tr[data-u] td.mrate').forEach(el => { el.classList.add('pclk'); el.onclick = () => {
       const u = S._mlist.find(x => x.id === el.closest('tr').dataset.u); if (!u) return;
       if (u.pend) return personCard({ name: u.name, group: u.group, note: null });
@@ -11405,12 +11413,24 @@ async function addCharts(buf, jobs) {
       $$('[data-ki]', bg).forEach(b => (b.onclick = () => { const r = rows[+b.dataset.ki]; close(); r.go(); }));
     });
   }
+  // v28.99: the modal shows the entire attribution month, even in day/week views.
+  async function mgFeedbackMonthMiss(x, date) {
+    const p = mgFbPeriod(date), ym = p ? p.ym : x.ym;
+    if (!ym) return { ym: null, count: null };
+    const members = await mgMembers([x.group], ym), full = members.find(y => y.u.id === x.u.id);
+    if (!full) return { ym, count: null };
+    const days = mgDays(full, true);
+    return { ym, count: Object.entries(days).filter(([d, q]) => q.miss && (!p || (d >= p.start && (!p.end || d <= p.end)))).length };
+  }
   async function mgFbOpen(uid, d, M) {
     M = M || await mgMembers(mgScope().concat(mgGroupsOf()), (mgFbPeriod(d) || {}).ym); const x = M.find(y => y.u.id === uid); if (!x) return toast('파트원을 찾을 수 없습니다', true);
-    const m = (mgDays(x)[d]) || { v: null, t: mgMissOf(x).t }, f = mgFbOf(uid, d) || { note: '', na: false, fb: '', status: '진행 중', rc: '' }, ed = mgCanEditFb(x.group);
+    const token = S.token, view = S.view, seq = S._fbOpenSeq = (S._fbOpenSeq || 0) + 1;
+    const monthMiss = await mgFeedbackMonthMiss(x, d);
+    if (token !== S.token || view !== S.view || seq !== S._fbOpenSeq) return;
+    const m = (mgDays(x, true)[d]) || { v: null, t: mgMissOf(x).t }, f = mgFbOf(uid, d) || { note: '', na: false, fb: '', status: '진행 중', rc: '' }, ed = mgCanEditFb(x.group);
     const cnt = s => String(s || '').replace(/\s/g, '').length;
     modal(`<h3>목표 미달 피드백 · ${esc(x.name)} <small class="muted">${esc(x.group)} · ${dLabel(d)}</small></h3>
-      <div class="m2info"><span>개인목표 환산 <b class="t-lo">${m.v == null ? '-' : f2(m.v)}</b></span><span>목표 <b>${m.t || '-'}</b></span><span>달성률 <b class="t-lo">${m.v == null || !m.t ? '-' : pct(m.v / m.t)}</b></span><span>이번 달 미달 <b>${mgMissOf(x).miss}일</b></span></div>
+      <div class="m2info"><span>개인목표 환산 <b class="t-lo">${m.v == null ? '-' : f2(m.v)}</b></span><span>목표 <b>${m.t || '-'}</b></span><span>달성률 <b class="t-lo">${m.v == null || !m.t ? '-' : pct(m.v / m.t)}</b></span><span title="${esc(monthMiss.ym ? ymLabel(monthMiss.ym) + ' 귀속월 전체 · 오늘 저장된 근무기록 포함' : '귀속월 미설정')}">귀속월 미달 (오늘 포함) <b>${monthMiss.count == null ? '조회 불가' : monthMiss.count + '일'}</b></span></div>
       <div class="fld"><label>업무 특이사항 <label class="row" style="gap:4px;display:inline-flex;margin-left:8px;font-weight:400"><input type="checkbox" id="fna" ${f.na ? 'checked' : ''} ${ed ? '' : 'disabled'}>해당 없음</label></label><textarea id="fnt" maxlength="1000" placeholder="예: 오후 지원 업무 2시간 · 신규 모델 첫 조립" ${ed ? '' : 'readonly'} ${f.na ? 'disabled' : ''}>${esc(f.note)}</textarea></div>
       <div class="fld"><label>피드백 방향 <span class="muted" id="fbc">(${cnt(f.fb)}자 / 공백 빼고 10자 이상)</span></label><textarea id="ffb" maxlength="2000" style="min-height:90px" placeholder="예: 조립 순서 표준 재교육 · 5일간 작업량 지켜보기" ${ed ? '' : 'readonly'}>${esc(f.fb)}</textarea></div>
       <div class="note">저장하면 자동으로 작성완료로 표시됩니다. 수정 후에도 작성완료 상태가 유지됩니다.</div>
@@ -12413,6 +12433,7 @@ async function addCharts(buf, jobs) {
     }, 'bk-reminder');
   }
   async function zipAll(ym) {
+    if (!canMonthlyExport()) return toast('관리자만 월 업무현황 엑셀을 다운로드할 수 있습니다', true);
     const list = (S._mlist || []).filter(u => u.items.length);
     if (!list.length) return toast('받을 데이터가 없습니다', true);
     if (!(await confirmBox(list.length + '명의 엑셀을 zip 하나로 받습니다. 몇 분 걸릴 수 있습니다.', '받기'))) return;
@@ -13464,7 +13485,7 @@ async function addCharts(buf, jobs) {
           ${L.map(u => { const o = P[u.id] || {}, v = T[u.id], d = v && g.team ? Math.round((v - g.team) * 10) / 10 : null, chg = v !== (+u.target || 0);
             return `<tr data-pu="${u.id}" class="${chg ? 'ptchg' : ''}${!v && u.role === '일반' ? ' ptnone' : ''}"><td><b>${esc(u.name)}</b>${u.role !== '일반' ? ` <span class="rtag">${esc(u.role)}</span>` : ''}</td>
               <td class="num">${o.n ? f1d(o.s / o.n) : '<span class="muted">-</span>'}</td><td class="num muted">${o.prev ? o.prev : '-'}</td>
-              <td class="num"><select class="ptv"><option value="">${v ? '-' : '미설정'}</option>${C.TARGETS.map(t => `<option ${t === v ? 'selected' : ''}>${t}</option>`).join('')}</select></td>
+              <td class="num"><select class="ptv"><option value="">${v ? '-' : '미설정'}</option>${targetChoices(v).map(t => `<option ${t === +v ? 'selected' : ''}>${t}</option>`).join('')}</select></td>
               <td>${d == null ? '<span class="muted">-</span>' : d > 0 ? `<b class="t-hi">▲ +${d}</b>` : d < 0 ? `<b class="t-lo">▼ ${d}</b>` : '<span class="muted">= 같음</span>'}</td></tr>`; }).join('')}</tbody></table></div>`; }).join('')}</div>
         <div class="card ptfoot"><span class="muted">${c ? `<b>고친 칸 ${c}개</b> · ` : ''}일반 인원 미설정 ${nt}명 · 안 바꾸면 지난달 목표가 이어집니다</span><span style="flex:1"></span><button id="pundo" ${c ? '' : 'disabled'}>되돌리기</button><button class="primary" id="psave" ${c ? '' : 'disabled'}>개인 목표 저장${c ? ' (' + c + '명)' : ''}</button></div>`;
       $('#pym').onchange = async e => { if (ch().length && !(await confirmBox('저장하지 않은 칸이 있습니다. 다른 달로 옮길까요?', '옮기기'))) { e.target.value = ym; return; } renderPTarget(e.target.value); };
@@ -13875,9 +13896,14 @@ async function addCharts(buf, jobs) {
   async function renderPeople(tab) {
     const main = $('#main'); if (tab) S.pTab = tab; if (!S.pTab) { try { S.pTab = sessionStorage.getItem('pTab'); } catch (e) { } } S.pTab = S.pTab === 'org' ? 'org' : 'list';
     main.innerHTML = admHead('인원 현황 / 관리', 'people') + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
-    const tk = S.token;
-    try { S._ppl = await api('people'); } catch (e) { main.innerHTML = admHead('인원 현황 / 관리', 'people') + '<div class="warn">' + esc(e.message) + '</div>'; return; }
-    if (tk !== S.token || S.view !== 'people') return;
+    const tk = S.token, seq = S._peopleReadSeq = (S._peopleReadSeq || 0) + 1, period = curPeriod();
+    // Read targets through the same API as monthly work; inherited values stay consistent.
+    const [people, targets] = await Promise.allSettled([api('people'), period ? api('listUsers', { ym: period.ym }) : Promise.resolve(null)]);
+    if (tk !== S.token || S.view !== 'people' || seq !== S._peopleReadSeq) return;
+    if (people.status !== 'fulfilled') { main.innerHTML = admHead('인원 현황 / 관리', 'people') + '<div class="warn">' + esc(people.reason.message) + '</div>'; return; }
+    S._ppl = people.value;
+    const users = targets.status === 'fulfilled' && targets.value ? targets.value.users || [] : [];
+    S._pplTargets = { ym: period ? period.ym : null, failed: targets.status === 'rejected', byId: new Map(users.map(u => [String(u.id), u])), byName: new Map(users.map(u => [normName(u.name), u])) };
     drawPeople();
   }
   function drawPeople() {
@@ -13933,8 +13959,16 @@ async function addCharts(buf, jobs) {
     ['acct', '계정', x => !x.acct ? '미등록' : x.acct.nopin ? '비밀번호 없음' : x.acct.tmp ? '임시 비밀번호' : '등록됨']];
   const pBase = () => { const P = S._ppl, g = S.pG || '', f = S.pF || ''; return P.rows.filter(x => (!g || g.split(',').includes(x.grp)) && (!f || (f === 'y') === !!x.acct || (f === 'hr' && x.hr_use) || (f === 'sat' && x.in_roster))); };
   const PF = colFilter({ key: 'ppl', cols: PCOL, base: pBase, redraw: () => drawPList(), scope: '.plist' });
+  function peopleTargetValue(x) {
+    const T = S._pplTargets || {};
+    if (!T.ym) return '귀속월 없음';
+    if (!x.acct) return '계정 미등록';
+    if (T.failed) return '조회 불가';
+    const u = (T.byId && T.byId.get(String(x.acct.id))) || (T.byName && T.byName.get(normName(x.name)));
+    return !u ? '조회 불가' : +u.target > 0 ? f1d(+u.target) : '미설정';
+  }
   function drawPList() {
-    const P = S._ppl, g = S.pG || '', f = S.pF || '';
+    const P = S._ppl, g = S.pG || '', f = S.pF || '', targetYm = (S._pplTargets || {}).ym, teamTarget = targetYm && goalOf(targetYm).team;
     const rows = PF.filter(pBase())
       .sort((a, b) => (P.groups.indexOf(a.grp) - P.groups.indexOf(b.grp)) || listRank(a) - listRank(b) || (a.empno ? String(a.empno).padStart(12, '0') : '999999999999').localeCompare((b.empno ? String(b.empno).padStart(12, '0') : '999999999999')) || a.name.localeCompare(b.name, 'ko'));
     const acc = x => !x.acct ? '<span class="muted">미등록</span>' : (x.acct.role !== '일반' ? '<span class="rtag">' + esc(x.acct.role) + '</span> ' : '') + (x.acct.nopin ? '<span class="rtag" style="background:#fdecea;color:#c62828">비밀번호 없음</span>' : x.acct.tmp ? '<span class="rtag">임시 비밀번호</span>' : '등록됨');
@@ -13945,11 +13979,12 @@ async function addCharts(buf, jobs) {
         <span class="muted" id="pcnt">${rows.length}명</span>${PF.bar()}<span style="flex:1"></span>
         ${isAdm0() && !isRO() ? `<label class="btn-file" title="처음 한 번 조직도 엑셀(조립팀 시트)로 명단을 채울 때만"><input type="file" id="rsfile" accept=".xlsm,.xlsx,.xls" hidden><span>조직도 엑셀로 한 번에 넣기…</span></label>` : ''}
         ${isRO() ? '' : '<button class="primary" id="padd">+ 인원 추가</button>'}</div>
-      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 230px)"><table class="list plist" style="min-width:1000px"><thead><tr>
-        <th>이름</th>${PCOL.slice(0, 5).map(c => PF.th(c[0])).join('')}<th>사번</th>${PCOL.slice(5).map(c => PF.th(c[0])).join('')}</tr></thead><tbody>
-      ${rows.map((x, i) => ghd(rows, i, y => y.grp, 11, g => [g.length + '명', '등록 ' + g.filter(y => y.acct).length]) + `<tr data-n="${esc(x.name)}" class="gc" style="cursor:pointer;--gc:${gcol(x.grp)}"><td><b>${esc(x.disp || x.name)}</b></td><td>${esc(x.title)}</td><td>${esc(x.rank)}</td><td>${esc(x.level)}</td>
+      <div class="people-target-reference"><span>목표 기준: <b>${targetYm ? esc(ymLabel(targetYm)) + ' 귀속월' : '귀속월 미설정'}</b></span><small>조회 전용 · 개인 목표 화면에서 설정${(S._pplTargets || {}).failed ? ' · 개인 목표 조회에 실패했습니다. 메뉴를 다시 열어 주세요.' : ''}</small></div>
+      <div class="card" style="padding:0;overflow:auto;max-height:calc(100vh - 270px)"><table class="list plist" style="min-width:1120px"><thead><tr>
+        <th>이름</th>${PCOL.slice(0, 5).map(c => PF.th(c[0])).join('')}<th>사번</th>${PCOL.slice(5, -1).map(c => PF.th(c[0])).join('')}<th class="num">팀 목표</th><th class="num">개인 목표</th>${PF.th('acct')}</tr></thead><tbody>
+      ${rows.map((x, i) => ghd(rows, i, y => y.grp, 13, g => [g.length + '명', '등록 ' + g.filter(y => y.acct).length]) + `<tr data-n="${esc(x.name)}" class="gc" style="cursor:pointer;--gc:${gcol(x.grp)}"><td><b>${esc(x.disp || x.name)}</b></td><td>${esc(x.title)}</td><td>${esc(x.rank)}</td><td>${esc(x.level)}</td>
         <td>${esc(x.status)}</td><td>${esc(x.job)}</td><td>${esc(x.empno)}</td><td>${esc(x.lv_grade)}</td><td>${x.in_roster ? '✓' : '<span class="muted">-</span>'}</td>
-        <td>${x.hr_use ? esc(x.hr_grade || '-') : '<span class="muted">대상 아님</span>'}</td><td>${acc(x)}</td></tr>`).join('')}<tr id="pnone" style="display:none"><td colspan="11" class="muted" style="padding:20px">없음</td></tr>
+        <td>${x.hr_use ? esc(x.hr_grade || '-') : '<span class="muted">대상 아님</span>'}</td><td class="num people-goal">${teamTarget ? f1d(teamTarget) : '<span class="muted">미설정</span>'}</td><td class="num people-goal">${esc(peopleTargetValue(x))}</td><td>${acc(x)}</td></tr>`).join('')}<tr id="pnone" style="display:none"><td colspan="13" class="muted" style="padding:20px">없음</td></tr>
       </tbody></table></div>
       ${P.extra.length ? `<div class="card" style="margin-top:14px"><h4 style="margin:0 0 6px">명단 외 계정 <span class="muted">${P.extra.length}개 · 명단에 없는 이름의 계정 (테스트 · 중복 · 퇴사)</span></h4>
         <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>권한</th><th class="num">입력일수</th><th>마지막 입력</th><th></th></tr></thead><tbody>
