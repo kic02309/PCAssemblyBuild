@@ -2819,6 +2819,10 @@ html[data-theme=dark] .modal:has(:is(#tt,#ek,#ffb,#cfd,#pt)) :is(input,select,te
 @media(max-width:820px){.omremote .omlayout{grid-template-columns:1fr}.omremote .omleft{border-right:0;border-bottom:1px solid var(--line);padding:0 0 14px}.omremote .omright{max-height:none}}
 @media(max-width:430px){.omremote .omrow{grid-template-columns:minmax(60px,1fr) 88px 47px 13px 43px;gap:3px}.omremote .otr select{width:80px}.omremote .otr input[data-f="m"]{width:42px}.omremote .omrow input,.omremote .omrow select{padding:6px 4px}}
 </style>
+<style>
+.ddline-live{display:flex;align-items:center;gap:10px 20px;flex-wrap:wrap;padding:14px 18px;margin-bottom:14px}.ddline-live small{color:#64748b}.ddline-state{display:inline-block;border-radius:12px;background:#e8f0ff;color:#245cc5;padding:3px 9px;font-size:12px;white-space:nowrap}.ddrowhead{flex-wrap:wrap}
+body.dark .ddline-state,[data-theme="dark"] .ddline-state{background:#243f68;color:#c0d8ff}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -7984,7 +7988,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.88';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.89';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8471,7 +8475,7 @@ async function addCharts(buf, jobs) {
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canProd() ? [['prod', '생산업무']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canProd() ? [['prod', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -8505,7 +8509,7 @@ async function addCharts(buf, jobs) {
         </header>
         <div class="czb">
           <aside class="czr">
-            ${rb('work', 'dash', '업무', IC.dash)}${canWtMenu() ? rb('video', 'wt', '영상업무', IC.video) : ''}${canMgr() ? rb('mgr', 'mgr', '매니저 관리', IC.clip, '<i class="bd hide" id="mgbd"></i>') : ''}${rb('leave', 'leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}${canProd() ? rb('prod', 'prod', '생산업무', IC.box) : ''}${rb('education', 'education', '교육일정', IC.cal, '<i class="bd hide" id="edubd"></i>')}${rb('org', 'org', '조직도', IC.org)}${m.acc ? rb('acc', 'acc', m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>') : ''}${m.hr ? rb('hr', 'hr', '인사평가', IC.hr) : ''}${canSettings() ? rb('adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear) : ''}
+            ${rb('work', 'dash', '업무', IC.dash)}${canWtMenu() ? rb('video', 'wt', '영상업무', IC.video) : ''}${canMgr() ? rb('mgr', 'mgr', '매니저 관리', IC.clip, '<i class="bd hide" id="mgbd"></i>') : ''}${rb('leave', 'leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}${canProd() ? rb('prod', 'prod', '라인생산', IC.box) : ''}${rb('education', 'education', '교육일정', IC.cal, '<i class="bd hide" id="edubd"></i>')}${rb('org', 'org', '조직도', IC.org)}${m.acc ? rb('acc', 'acc', m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>') : ''}${m.hr ? rb('hr', 'hr', '인사평가', IC.hr) : ''}${canSettings() ? rb('adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear) : ''}
             <div class="grow"></div>${thmBtn('rb')}<button id="lo" class="rb" title="로그아웃"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg><span>로그아웃</span></button>
           </aside>
           <div class="content"><div id="proxy"></div><main id="main" class="pg"></main></div>
@@ -8540,7 +8544,7 @@ async function addCharts(buf, jobs) {
       const it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
-        : cat === 'mgr' ? [] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '생산업무']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
+        : cat === 'mgr' ? [] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '인사평가']];
       $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}">${t}</button>`).join('');
     }
@@ -9728,7 +9732,30 @@ async function addCharts(buf, jobs) {
   function bindDailyTabs() { $$('[data-dt]').forEach(b => (b.onclick = () => { if (b.dataset.dt !== S.view) go(b.dataset.dt); })); }
   const ddStep = (d, k) => { let x = C.addDays(d, k); for (let i = 0; i < 7; i++) { const w = new Date(x + 'T00:00:00').getDay(); if (w !== 0 && w !== 6) break; x = C.addDays(x, k); } return x; };
   // 서버 자료 → 사람별 상태 · 환산
-  function ddModel(r) {
+  // v28.89: read-only current production overlay. Never writes personal day records.
+  function ddProdOverlay(P) {
+    if (!P || !P.ver || !P.draft) return null;
+    const R = prCalc(P);
+    if (!R.items.length && !R.oth.length && !P.conf) return null;
+    const status = P.status === 'confirmed' ? '확정' : P.status === 'changed' ? '재확정 필요' : '라인업무 진행중';
+    const current = Object.fromEntries(R.ppl.filter(p => p.userId).map(p => [p.userId, p]));
+    const old = Object.fromEntries((P.days || []).filter(d => d.prod).map(d => [d.userId, +d.prod.v || 0]));
+    return { current, old, status, qty: R.qty, H: R.H, T: R.T, n: R.ppl.length, incomplete: R.iss.length > 0 };
+  }
+  function ddProdPerson(o, s, live, M) {
+    const p = live.current[o.uid], old = live.old[o.uid] || 0;
+    if (!p && !old) return;
+    // Keep personal work, remove previous confirmed allocation, then add current allocation once.
+    const base = s ? C.sumDay(s, M).e2 - old : 0;
+    const f6 = s ? (+s.d || 0) + (+s.h7 || 0) / 60 / 8.5 : (o.half ? 0.5 : 1);
+    o.v = f6 > 0 ? (base + (p ? p.p : 0)) / f6 : 0;
+    o.oth = (o.oth || 0) + (f6 > 0 && p ? p.o / f6 : 0);
+    o.q = o.q || 0;
+    o.lineState = p ? live.status : '재확정 필요';
+    o.lineValue = p ? p.p : 0;
+    if (!o.off && (!['매니저','팀장'].includes(o.title) || p)) o.kind = 'work';
+  }
+  function ddModel(r, liveView = false) {
     const N = s => normName(s || ''), off = {}, half = {}, why = {};
     (r.leaves || []).forEach(l => { const n = N(l.name); if (l.half) half[n] = l.half; else { off[n] = l.train ? '훈련' : lvKind(l.reason) || '연차'; why[n] = l.reason || ''; } });
     (r.alts || []).forEach(n => { if (!off[N(n)]) off[N(n)] = '대체'; });
@@ -9750,10 +9777,11 @@ async function addCharts(buf, jobs) {
         { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; }   // v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
       o.kind = o.off ? 'off' : o.task ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
+      if (liveView && r._prod) ddProdPerson(o, s, r._prod, M);
       return o;
     });
     // 라인 총량 : 출근한 라인 인원(휴무 · 업무지원 · 매니저 제외)에게 똑같이 나눔
-    if (r.line && (r.line.conv != null || r.line.qty != null)) {
+    if (!(liveView && r._prod) && r.line && (r.line.conv != null || r.line.qty != null)) {
       const L = P.filter(p => p.grp === '라인' && !p.off && !p.task && !['매니저', '팀장'].includes(p.title));
       L.forEach(p => { p.kind = 'work'; p.v = L.length ? num(r.line.conv) / L.length : 0; p.oth = 0; p.q = L.length ? Math.round(num(r.line.qty) / L.length * 10) / 10 : 0; p.lineSplit = true; });
     }
@@ -9792,6 +9820,11 @@ async function addCharts(buf, jobs) {
     S.ddDate = staff ? null : r.date; S._dd = r; updateBadge();
     { const gy = (periodOf(r.date) || {}).ym, rg = gy && periodRange(gy);                         // v28.52 : 지원 보정 · 출근 확인 준비
       if (!staff && rg && adjOn(gy)) { await adjPrep(rg.from, rg.to); if (seq !== S.ddSeq || tk !== S.token || S.view !== 'dash') return; } }
+    if (!staff) {
+      try { r._prod = ddProdOverlay(await api('prGet', { date: r.date })); }
+      catch (e) { r._prodError = true; }
+      if (seq !== S.ddSeq || tk !== S.token || S.view !== 'dash') return;
+    }
     drawDaily(r, lv);
   }
   // v28.2 : 체크사항 (매니저 = 담당 그룹 · 관리자 = 전체) — 기존 서버 자료만 사용
@@ -9824,7 +9857,7 @@ async function addCharts(buf, jobs) {
       // 실적 없는 그룹도 경고가 있다면 공통 하단에 요약한다. 누락 방지.
       const active = new Set($$('[data-ddgrp]', $('#main')).map(el => el.dataset.ddgrp));
       const inactive = Object.entries(groupCk).filter(([g,v]) => !active.has(g) && (v.none || v.nt || v.off));
-      const other = inactive.length && groupChecked ? `<div class="dd-other-checks"><b>그 외 그룹</b>${inactive.map(([g,v]) => `<span>${gdot(g)}${v.none ? ` 미입력 ${v.none}` : ''}${v.nt ? ` · 목표 미설정 ${v.nt}` : ''}${v.off ? ` · 휴무 ${v.off}` : ''}</span>`).join('')}</div>` : '';
+      const other = inactive.length && groupChecked ? `<div class="dd-other-checks"><b>그 외 그룹 (전 근무일)</b>${inactive.map(([g,v]) => `<span>${gdot(g)}${v.none ? ` 미입력 ${v.none}` : ''}${v.nt ? ` · 목표 미설정 ${v.nt}` : ''}${v.off ? ` · 휴무 ${v.off}` : ''}</span>`).join('')}</div>` : '';
       const row = (x, i) => `<button type="button" class="dd-common-ck ${x.lv}" data-ck="${i}" title="${esc(x.m || x.t)}"><span>${esc(x.t)}</span><b>${esc(x.n)}</b></button>`;
       box.className = 'ddcombo-shared-v7' + (fold ? ' fold' : '');
       box.innerHTML = other + `<div class="ddshared-line"><strong>공통 알림</strong>${act.length ? `<span class="ddshared-count">${act.length}</span>` : '<span class="ddshared-ok">✓ 이상 없음</span>'}<div class="ddshared-items">${fold ? '' : common.map(row).join('')}${!fold && ok.length ? `<span class="ddshared-ok">✓ ${ok.join(' · ')}</span>` : ''}${box._wait ? '<span class="muted">확인 중…</span>' : ''}</div><button type="button" class="ddshared-fold" id="ckf">${fold ? '펼치기 ▾' : '접기 ▴'}</button></div>`;
@@ -9894,7 +9927,8 @@ async function addCharts(buf, jobs) {
     await Promise.all(jobs); box._wait = false; draw();
   }
   function drawDaily(r, lv) {
-    const staff = !!r.staff, D = ddModel(r), me = S.me, mine = r.myGroups || [];
+    const staff = !!r.staff, D = ddModel(r, true), me = S.me, mine = r.myGroups || [];
+    if (r._prod) { D.sumQ += r._prod.qty; const line = D.G.find(x => x.g === '라인'); if (line) line.q += r._prod.qty; }
     const canNote = p => !staff && !isRO() && (isAdm() || mine.includes(p.grp));
     const canLine = !staff && !isRO() && (isAdm() || mine.includes('라인'));
     const dl = r.date, isPrev = dl === r.prevWork;
@@ -9942,12 +9976,17 @@ async function addCharts(buf, jobs) {
         }).join('') || '<div class="muted dd-support-empty">업무지원 배정 인원 없음</div>'}</div>
       </div>
     </div>`;
+    if (r._prodError) h += '<div class="warn">라인생산 진행 현황을 불러오지 못했습니다. 현재 화면은 확정 실적 기준입니다. 새로고침 후 확인하세요.</div>';
+    if (r._prod) {
+      const p = r._prod;
+      h += `<div class="card ddline-live"><b>● 라인생산</b><span>수량 <b>${p.qty}대</b></span><span>기타 <b>${p.H}분</b></span><span>총환산 <b>${f2(p.T)}</b></span><span>참여 <b>${p.n}명</b></span><strong class="ddline-state">${esc(p.status)}</strong>${p.incomplete ? '<span class="t-lo">미완성 항목 있음 · 환산 가능한 입력만 계산</span>' : ''}<small>임시저장 완료 기준 · 월 통계·엑셀은 확정 실적 기준</small></div>`;
+    }
     // V7: 체크사항(그룹별)과 평균환산은 카드 하나에서 같은 행으로 확인. 특이사항 열 없음.
     const activeGroups = D.G.filter(x => x.w);
     h += `<div class="card ddcombo-v7"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>막대 = 평균 · 검은 선 = 그룹 목표 · 체크사항은 전 근무일 기준</small></h3>
       <div class="ddcombo-list">
         ${activeGroups.map(x => `<div class="ddcombo-row">
-          <div class="ddcombo-name">${gdot(x.g)}</div>
+          <div class="ddcombo-name">${gdot(x.g)}${x.g === '라인' && r._prod ? `<small class="ddline-state">${esc(r._prod.status)}</small>` : ''}</div>
           <div class="ddcombo-graph">${ddBar(x.avg, x.tg, 0, gcol(x.g))}</div>
           <div class="ddcombo-value"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ' / 목표 -'} <small>· 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</small></div>
           <div class="ddcombo-checks" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>
@@ -9973,7 +10012,7 @@ async function addCharts(buf, jobs) {
           const rate = p.target > 0 ? Math.round(p.v / p.target * 100) : null, pl = lvOf(p.v, p.target, D.GY), at = p.adj ? adjTag(p.adj) : '';
           const label = f1d(p.v) + (p.target > 0 ? ' / ' + f1d(p.target) : '');
           const bar = ddBar(p.v, p.target, p.oth).replace('</div>', `<span class="ddpv">${label}</span></div>`);
-          return `<div class="ddpr ddpr-v5 ddpr-work"><div class="ddrowhead">${nm}<span class="ddtarget">${tMode() === 't' ? '팀 ' : ''}목표 <b>${p.target > 0 ? f1d(p.target) : '-'}</b></span>${at}<span class="ddrate ${pl === 'ok' ? 'hit' : ''}">${rate == null ? '-' : rate + '%'}</span></div>
+          return `<div class="ddpr ddpr-v5 ddpr-work"><div class="ddrowhead">${nm}${p.lineState ? `<span class="ddline-state">${esc(p.lineState)}</span>` : ''}<span class="ddtarget">${tMode() === 't' ? '팀 ' : ''}목표 <b>${p.target > 0 ? f1d(p.target) : '-'}</b></span>${at}<span class="ddrate ${pl === 'ok' ? 'hit' : ''}">${rate == null ? '-' : rate + '%'}</span></div>
             <div class="ddperf" title="환산 ${f1d(p.v)}${p.target ? (tMode() === 't' ? ' · 팀 목표 ' : ' · 개인 목표 ') + f1d(p.target) : ' · 목표 미설정'}${p.oth > 0.05 ? ' · 기타시간 환산 ' + f1d(p.oth) : ''}">${bar}</div>
             <div class="ddcounts" title="조립 ${p.q}대${p.ban ? ' · 반조 ' + p.ban : ''} · 출고 ${p.ship || 0}대 · 제조 ${p.mq || 0}대"><span><b>${p.q ?? 0}</b><small>수량</small></span><span class="s"><b>${p.ship || 0}</b><small>출고</small></span><span class="m"><b>${p.mq || 0}</b><small>제조</small></span>${p.uid ? `<span class="hm" data-hm="${esc(p.uid)}" data-hmc="1" title="이번 달 달성일 · 미달일"><b>-</b><small>달성·미달</small></span>` : ''}</div></div>`;
         }
@@ -10044,7 +10083,7 @@ async function addCharts(buf, jobs) {
     api('asmOt', { date: r.date }).then(x => asmShow(x.min)).catch(() => { });
     if ($('#ddasm')) $('#ddasm').onclick = () => asmModal(r.today || r.date, m => asmShow(m), r.date);
     if (S._openAfter) { const k = S._openAfter; S._openAfter = null; if (k === 'asg' && !staff && !isRO()) setTimeout(() => ddAsgModal(r, D), 50); }
-    $('#ddxl').onclick = () => ddExcel(r, D);
+    $('#ddxl').onclick = () => ddExcel(r, ddModel(r));
     if ($('#ddline')) $('#ddline').onclick = () => ddLineModal(r, D);
     // v28.18 : 이름 = 사람 카드 (특이사항은 카드 안) · [일일] = 그날 입력 화면 바로
     $$('[data-nt]').forEach(x => (x.onclick = e => {
@@ -12920,7 +12959,7 @@ async function addCharts(buf, jobs) {
     const mid = [
       cd('acc', IC.warn, '사고', '사고 유형 · 접수 · 처리', S.me.acc ? '확인 중…' : '사고 현황 확인', 'rh2w'),
       cd('stats', IC.chart, '통계', '수량 · 평균 환산 · 그룹 비교', '주 · 월 · 분기 · 연간'),
-      canProd() ? cd('prod', IC.box, '생산업무', '라인 생산 · 실적 배분', '확정 · 배분 현황') : '',
+      canProd() ? cd('prod', IC.box, '라인생산', '라인 생산 · 실적 배분', '확정 · 배분 현황') : '',
       cd('people', IC.ppl, '인원현황', '직원 명단 · 직책 · 소속', '구성원 확인')];
     const wide = [
       cd('leave', IC.cal, '연차현황', '연차 · 대체휴무 · 토요근무', '휴무 일정 확인'),
@@ -14115,9 +14154,9 @@ async function addCharts(buf, jobs) {
   // ---------- PC 화면
   async function renderProd(opt) {
     S.prv = S.prv || { d: S.today }; if (opt && opt.date) S.prv.d = opt.date;
-    const main = $('#main'); main.innerHTML = pageHead('생산업무') + '<div class="pgb"><div class="muted" style="padding:20px">불러오는 중…</div></div>';
+    const main = $('#main'); main.innerHTML = pageHead('라인생산') + '<div class="pgb"><div class="muted" style="padding:20px">불러오는 중…</div></div>';
     api('prSettings').then(r => { S.prCfg = r; }).catch(() => { });
-    let P; try { P = await api('prGet', { date: S.prv.d }); } catch (e) { main.innerHTML = pageHead('생산업무') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
+    let P; try { P = await api('prGet', { date: S.prv.d }); } catch (e) { main.innerHTML = pageHead('라인생산') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
     if (S.view !== 'prod') return;
     if (!P.draft || !P.draft.people) P.draft = Object.assign({ items: [], oth: [], mobEx: [], mobEdit: {} }, P.draft || {}, { people: prAutoPeople(P) });
     P.draft.items = P.draft.items || []; P.draft.oth = P.draft.oth || []; P.draft.mobEx = P.draft.mobEx || []; P.draft.mobEdit = P.draft.mobEdit || {};
@@ -14149,7 +14188,7 @@ async function addCharts(buf, jobs) {
   }
   function drawProd() {
     const P = S.prP, main = $('#main');
-    main.innerHTML = pageHead('생산업무', `<div class="row" style="gap:6px;margin-left:12px"><button id="prpv">‹</button><input type="date" id="prd" value="${P.date}"><button id="prnx">›</button><button id="prtd">오늘</button></div><span id="prst" class="prst"></span><span id="prcf"></span>`,
+    main.innerHTML = pageHead('라인생산', `<div class="row" style="gap:6px;margin-left:12px"><button id="prpv">‹</button><input type="date" id="prd" value="${P.date}"><button id="prnx">›</button><button id="prtd">오늘</button></div><span id="prst" class="prst"></span><span id="prcf"></span>`,
       `${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button><button id="prset">⚙ 설정</button>' : ''}${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
     const mv = k => { S.prv.d = C.addDays(P.date, k); renderProd(); };
     $('#prpv').onclick = () => mv(-1); $('#prnx').onclick = () => mv(1); $('#prtd').onclick = () => { S.prv.d = S.today; renderProd(); }; $('#prd').onchange = e => { S.prv.d = e.target.value || S.today; renderProd(); };
