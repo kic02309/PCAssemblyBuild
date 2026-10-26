@@ -2823,7 +2823,11 @@ html[data-theme=dark] .modal:has(:is(#tt,#ek,#ffb,#cfd,#pt)) :is(input,select,te
 .ddline-live{display:flex;align-items:center;gap:10px 20px;flex-wrap:wrap;padding:14px 18px;margin-bottom:14px}.ddline-live small{color:#64748b}.ddline-state{display:inline-block;border-radius:12px;background:#e8f0ff;color:#245cc5;padding:3px 9px;font-size:12px;white-space:nowrap}.ddrowhead{flex-wrap:wrap}
 body.dark .ddline-state,[data-theme="dark"] .ddline-state{background:#243f68;color:#c0d8ff}
 </style>
-</head>
+<style>
+.ddcombo-tail{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;min-width:0}.ddcombo-tail .ddcombo-checks{display:flex;flex-wrap:wrap;grid-column:auto;min-width:0}.ddcombo-tail>.ddline-state{flex:0 0 auto;margin-left:auto;max-width:100%}.ddcombo-name{min-width:0}
+@media(max-width:1150px){.ddcombo-tail{grid-column:2/-1}}
+@media(max-width:720px){.ddcombo-tail{grid-column:1/-1}}
+</style></head>
 <body>
 <div id="app"></div>
 <div id="toast"></div>
@@ -7988,7 +7992,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.89';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9986,10 +9990,10 @@ async function addCharts(buf, jobs) {
     h += `<div class="card ddcombo-v7"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>막대 = 평균 · 검은 선 = 그룹 목표 · 체크사항은 전 근무일 기준</small></h3>
       <div class="ddcombo-list">
         ${activeGroups.map(x => `<div class="ddcombo-row">
-          <div class="ddcombo-name">${gdot(x.g)}${x.g === '라인' && r._prod ? `<small class="ddline-state">${esc(r._prod.status)}</small>` : ''}</div>
+          <div class="ddcombo-name">${gdot(x.g)}</div>
           <div class="ddcombo-graph">${ddBar(x.avg, x.tg, 0, gcol(x.g))}</div>
           <div class="ddcombo-value"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ' / 목표 -'} <small>· 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</small></div>
-          <div class="ddcombo-checks" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>
+          <div class="ddcombo-tail"><div class="ddcombo-checks" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>${x.g === '라인' && r._prod ? `<span class="ddline-state">${esc(r._prod.status)}</span>` : ''}</div>
         </div>`).join('')}
       </div>
       ${(() => { const E = D.G.filter(x => !x.w); if (!E.length || !D.G.length) return '';
