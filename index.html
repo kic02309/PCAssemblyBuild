@@ -7618,9 +7618,9 @@ async function addCharts(buf, jobs) {
   function edit(it, imgs0) {
     const D = Z.data, today = A.S.today;
     const P = (D.people || []).filter(p => p[2] !== '퇴사' || (it && it.name === p[0]));
-    const f = it ? JSON.parse(JSON.stringify(it)) : { d: today, ym: '', ord: '', name: '', kind: '', sym: '', part: '', txt: '', act: '', actD: '', prods: [] };
+    const f = it ? JSON.parse(JSON.stringify(it)) : { d: today, ym: ymOf(today), ord: '', name: '', kind: '', sym: '', part: '', txt: '', act: '', actD: '', prods: [] };
     const imgs = (imgs0 || []).map(m => ({ id: m.id, data: m.data })); const imgDel = [];
-    let ymSet = !!(it && it.ym && it.ym !== ymOf(it.d)), dirty = false, busy = false;
+    let ymSet = it ? !!(it.ym && it.ym !== ymOf(it.d)) : true, dirty = false, busy = false;
     const html = `<h3>${it ? '사고 고치기' : '사고 등록'}</h3>
       <div class="accf">
         <div class="g4">
