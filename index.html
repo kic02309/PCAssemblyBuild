@@ -2852,6 +2852,14 @@ body.dark .ddline-state,[data-theme="dark"] .ddline-state{background:#243f68;col
 </style><style>
 .mg-query-week{display:flex;align-items:center;gap:7px;flex-wrap:wrap;border-top:1px solid var(--line2);padding-top:10px;margin-top:10px}.mg-query-week>b{font-size:12px;margin-right:5px}.mg-query-chip{display:inline-flex;align-items:center;gap:6px}.mg-query-dot{display:inline-block;flex:0 0 8px;width:8px;height:8px;border-radius:50%}.mg-query-chip.mg-selected{border-color:var(--mg-group);background:color-mix(in srgb,var(--mg-group) 16%,transparent);box-shadow:inset 0 0 0 1px var(--mg-group)}.mg-query-chip.mg-selected[data-mq-group=""]{background:#2563eb;color:#fff}.mg-day-missing{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:12px 14px;margin-top:12px}.mg-day-missing small{color:var(--sub)}
 html[data-theme=dark] #mgbody .m2t td{color:var(--ink)}
+</style><style>
+/* v28.94: group → name picker, responsive without changing shared forms. */
+.modal.pv-picker{width:600px;max-width:calc(100vw - 32px)}
+.pvl .pv-select-row{display:grid;grid-template-columns:56px minmax(100px,1fr) minmax(110px,1.2fr) auto;gap:10px;align-items:end}
+.pv-select-row button{white-space:nowrap;min-width:54px}
+.pv-select-row>b{align-self:center}.pv-select-row label{display:flex;flex-direction:column;gap:5px;font-size:12px;min-width:0}
+.pv-select-row select{width:100%;min-width:0}.pv-select-row button{align-self:end}
+@media(max-width:520px){.pvl .pv-select-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.pv-select-row>b{grid-column:1/-1}}
 </style></head>
 <body>
 <div id="app"></div>
@@ -8017,7 +8025,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.93';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.94';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8077,26 +8085,29 @@ async function addCharts(buf, jobs) {
   }
   // v28.54 : 관리자 '직급별 화면 미리보기' — 읽기만 허용, 저장·수정 요청은 보내지 않음
   const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
-    'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList']);
+    'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList', 'previewPeople', 'previewCheck', 'previewAccounts']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
   const pvRead = (a, d) => PV_READ.has(a) || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
   async function api(action, data) {
-    if (S.pv && !pvRead(action, data)) throw new Error('미리보기 중에는 저장·수정되지 않습니다 (아래 [관리자로 돌아가기])');
+    if (S.pv && !pvRead(action, data)) throw new Error('미리보기 중에는 저장·수정되지 않습니다 (아래 [내 화면으로 돌아가기])');
     if (!SB_URL || SB_URL.indexOf('__') === 0) throw new Error('설치가 끝나지 않았습니다: index.html 의 SB_URL / SB_KEY 를 설정하세요');
     const tk0 = S.token;
-    const body = JSON.stringify({ req: Object.assign({ action, token: tk0 }, data || {}) });
+    const staffPreview = !!(S.pv && S.pv.mode === 'staff' && !['previewCheck','previewPeople','previewAccounts'].includes(action));
+    const previewRpc = staffPreview || action === 'previewPeople' || action === 'previewCheck';
+    if (action === 'previewAccounts' && realMe().role !== '관리자') throw new Error('권한이 없습니다');
+    const body = JSON.stringify({ req: Object.assign({}, data || {}, { action: action === 'previewAccounts' ? 'people' : action === 'previewPeople' ? 'people' : action === 'previewCheck' ? 'check' : action, token: tk0 }, staffPreview ? {previewUserId:S.pv.userId} : {}) });
     const tries = SAFE_RETRY.has(action) ? 3 : 1;
     let res = null, last = '', fatal = '';
     for (let t = 0; t < tries && !res && !fatal; t++) {
       if (t) await new Promise(r => setTimeout(r, 600 * t + Math.random() * 400));
       const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 20000), t0 = performance.now();
       try {
-        const r = await fetch(SB_URL + '/rest/v1/rpc/api', { method: 'POST', headers: API_HEADERS(), body, signal: ac.signal });
+        const r = await fetch(SB_URL + '/rest/v1/rpc/' + (previewRpc ? 'staff_preview' : 'api'), { method: 'POST', headers: API_HEADERS(), body, signal: ac.signal });
         const txt = await r.text(); let j = null;
         try { j = JSON.parse(txt); } catch (e) { }
         if (r.ok && j && typeof j === 'object' && 'ok' in j) { res = j; perf(action, performance.now() - t0, j._ms); }
         else if (r.status === 401 || r.status === 403) fatal = '서버 접속 키 오류 (index.html SB_KEY 확인)';
-        else if (r.status === 404) fatal = '서버 설정이 안 되어 있습니다 (Supabase SQL 확인)';
+        else if (r.status === 404) fatal = previewRpc ? '사원 미리보기 SQL을 먼저 적용해 주세요' : '서버 설정이 안 되어 있습니다 (Supabase SQL 확인)';
         else { last = 'server'; console.warn('[업무데이터] 서버 응답 오류', r.status, txt.slice(0, 300)); }
       } catch (e) { last = navigator.onLine === false ? 'offline' : e.name === 'AbortError' ? 'timeout' : 'net'; console.warn('[업무데이터] 연결 오류', e); }
       finally { clearTimeout(tm); }
@@ -8399,7 +8410,7 @@ async function addCharts(buf, jobs) {
     clearTimeout(S.timer);
     if (!silent) { try { sessionStorage.removeItem(DRAFT_KEY); sessionStorage.removeItem('pending'); } catch (e) { } }
     S.pv = null; S.realMe = null; S.mgD = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); }); document.body.classList.remove('pvmode'); { const b = document.getElementById('pvbar'); if (b) b.remove(); }   // v28.54
-    S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
+    S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S._gm = {}; S._pmRes = null; S._bi = null; S._pbi = {}; S._wtd = null; S._mgBI = null; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
     attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;   // v28.53 : 공용 PC — 앞사람 자료 남기지 않기
     // 공용 PC : 다음 사람에게 앞사람이 보던 날짜·달·필터·창이 남지 않게
     S.date = null; S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
@@ -8448,11 +8459,11 @@ async function addCharts(buf, jobs) {
   const layoutOf = view => isRO() ? 'ro' : 'side';      // v28.17 : 사원 · 매니저 · 관리자 모두 같은 틀 (왼쪽 분류 · 위 세부)
   // v28.54 : 직급별 화면 미리보기 (관리자만) — 팀장(보기 전용) · 매니저 · 사원 화면을 그대로 띄워 봄 · 저장은 막음
   const realMe = () => S.realMe || S.me;
-  const canPv = () => { const r = realMe(); return !!(r && r.role === '관리자' && !r.ro); };
+  const canPv = () => { const r = realMe(); return !!(r && ['관리자', '매니저'].includes(r.role) && !r.ro); };
   const PVN = { lead: '팀장 보기', mgr: '매니저', staff: '사원' };
-  const pvBtn = () => canPv() ? `<button id="pvb" class="pvb${S.pv ? ' on' : ''}" title="다른 직급 화면 미리보기 (저장 안 됨)">👁 ${S.pv ? esc(PVN[S.pv.mode] + (S.pv.mode === 'lead' ? '' : ' · ' + S.me.name)) : '직급 보기'} ▾</button>` : '';
+  const pvBtn = () => canPv() ? `<button id="pvb" class="pvb${S.pv ? ' on' : ''}" title="다른 직급 화면 미리보기 (저장 안 됨)">👁 ${S.pv ? esc(PVN[S.pv.mode] + (S.pv.mode === 'lead' ? '' : ' · ' + S.me.name)) : (realMe().role === '매니저' ? '사원 미리보기' : '직급 보기')} ▾</button>` : '';
   function pvClear() {
-    S.target = null; S.day = null; S.dirty = false; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
+    S.target = null; S.day = null; S.dirty = false; S._gm = {}; S._pmRes = null; S._bi = null; S._pbi = {}; S._wtd = null; S._mgBI = null; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
     attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;
     S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
     S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.cal = null; S.personMonth = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
@@ -8460,41 +8471,49 @@ async function addCharts(buf, jobs) {
     if (window.Leave) window.Leave.reset(); if (window.ACC) window.ACC.reset(); if (window.EDU) window.EDU.reset(); updateEduBadge._shownFor = null; if (window.HR) window.HR.reset();
   }
   async function pvSet(mode, acct) {
+    const R = realMe();
+    if (mode && (!canPv() || !['lead','mgr','staff'].includes(mode) || (R.role === '매니저' && mode !== 'staff') || (mode !== 'lead' && (!acct || acct.role !== (mode === 'staff' ? '일반' : '매니저'))))) throw new Error('미리보기 권한이 없습니다');
     if (!(await saveFirst())) return;
-    const R = realMe(); let me;
+    // Check SQL readiness and server-authorized staff identity before changing the screen.
+    if (mode === 'staff') { const v = await api('previewCheck', {previewUserId:acct.id}); acct = v.user; }
+    let me;
     if (!mode) { S.pv = null; me = R; S.realMe = null; }
     else if (mode === 'lead') me = Object.assign({}, R, { ro: true, la: false, period: false, perms: [], acc: { scope: 'all', edit: false } });
     else if (mode === 'mgr') me = { id: acct.id, name: acct.name, group: acct.group, role: '매니저', mg: acct.mg || [], perms: acct.perms || [], ro: false, la: !!acct.la, period: !!acct.pa || (acct.perms || []).includes('period'), acc: { scope: 'all', edit: true }, hr: true };
     else me = { id: acct.id, name: acct.name, group: acct.group, role: '일반', mg: [], perms: [], ro: false, la: false, period: false, acc: { scope: 'self', edit: false }, hr: false };
-    if (mode) { S.realMe = R; S.pv = { mode }; }
+    if (mode) { S.realMe = R; S.pv = { mode, userId: mode === 'staff' ? acct.id : null }; }
     pvClear(); document.body.classList.toggle('pvmode', !!mode);
     await boot({ me, periods: S.periods, today: S.today, rates: S.rates });
-    pvBar(); toast(mode ? PVN[mode] + ' 화면 미리보기 — 저장·수정은 되지 않습니다' : '관리자 화면으로 돌아왔습니다');
+    pvBar(); toast(mode ? PVN[mode] + ' 화면 미리보기 — 저장·수정은 되지 않습니다' : '내 화면으로 돌아왔습니다');
   }
   function pvBar() {
     let b = document.getElementById('pvbar'); if (!S.pv) { if (b) b.remove(); return; }
     if (!b) { b = document.createElement('div'); b.id = 'pvbar'; document.body.appendChild(b); }
-    b.innerHTML = `<b>👁 미리보기</b><span>${esc(PVN[S.pv.mode])}${S.pv.mode === 'lead' ? '' : ' · ' + esc(S.me.name) + ' (' + esc(S.me.group) + ')'}</span><span class="muted">저장·수정 안 됨 · 일부 개인 자료(내 연차·내 교육 등)는 관리자 본인 것으로 보일 수 있음</span><button id="pvx" class="primary sm">관리자로 돌아가기</button>`;
+    b.innerHTML = `<b>👁 미리보기</b><span>${esc(PVN[S.pv.mode])}${S.pv.mode === 'lead' ? '' : ' · ' + esc(S.me.name) + ' (' + esc(S.me.group) + ')'}</span><span class="muted">저장·수정 안 됨 · ${S.pv.mode === 'staff' ? '선택한 사원의 자료를 조회합니다' : '일부 개인 자료는 로그인한 본인 기준일 수 있음'}</span><button id="pvx" class="primary sm">내 화면으로 돌아가기</button>`;
     $('#pvx', b).onclick = () => pvSet(null);
   }
+  // v28.94: full-group staff picker; permission is checked again by staff_preview.
+  const pvGroups = (A, role) => [...new Set(A.filter(a => a.role === role).map(a => a.group || '미지정'))].sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
+  const pvMembers = (A, role, group) => A.filter(a => a.role === role && (a.group || '미지정') === group).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
   async function pvPick() {
-    let P; try { P = await api('people'); } catch (e) { return toast(e.message, true); }
-    const A = (P.rows || []).filter(x => x.acct && x.acct.id).map(x => Object.assign({ name: x.name }, x.acct));
-    const opt = role => A.filter(a => a.role === role && !(role === '관리자')).map(a => `<option value="${esc(a.id)}">${esc(a.name)} · ${esc(a.group)}</option>`).join('');
-    modal(`<h3>직급별 화면 미리보기</h3>
-      <div class="note">관리자 계정 그대로, 고른 직급의 메뉴·화면으로 바뀝니다. 어느 메뉴를 눌러도 그 직급 화면이며, <b>저장·수정은 막힙니다</b>.</div>
-      <div class="pvl">
-        <button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면 (처음 화면 · 현황 · 통계 …)</small></button>
-        <div class="pvr"><b>매니저</b><select id="pvm">${opt('매니저') || '<option value="">매니저 계정 없음</option>'}</select><button data-pm="mgr" class="primary sm">보기</button></div>
-        <div class="pvr"><b>사원</b><select id="pvs">${opt('일반') || '<option value="">사원 계정 없음</option>'}</select><button data-pm="staff" class="primary sm">보기</button></div>
-        ${S.pv ? '<button data-pm="">관리자 화면으로 돌아가기</button>' : ''}
-      </div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
-      $('[data-c]', bg).onclick = close;
-      $$('[data-pm]', bg).forEach(b => (b.onclick = () => {
-        const m = b.dataset.pm; let a = null;
-        if (m === 'mgr' || m === 'staff') { const id = $(m === 'mgr' ? '#pvm' : '#pvs', bg).value; a = A.find(x => String(x.id) === id); if (!a) return toast('사람을 고르세요', true); }
-        close(); pvSet(m || null, a);
-      }));
+    if (!canPv()) return toast('미리보기 권한이 없습니다', true);
+    const admin = realMe().role === '관리자';
+    let P; try { P = await api(admin ? 'previewAccounts' : 'previewPeople'); } catch(e) { return toast(e.message, true); }
+    const A = admin ? (P.rows || []).filter(x=>x.acct && x.acct.id).map(x=>Object.assign({name:x.name},x.acct)) : (P.users || []);
+    const row = (role,id,label) => `<div class="pvr pv-select-row"><b>${label}</b><label>그룹<select id="${id}g" aria-label="${label} 그룹">${pvGroups(A,role).map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('') || '<option value="">그룹 없음</option>'}</select></label><label>이름<select id="${id}" aria-label="${label} 이름"></select></label><button data-pm="${role === '일반' ? 'staff' : 'mgr'}" class="primary sm">보기</button></div>`;
+    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}</div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
+      const panel = $('.modal',bg); if(panel) panel.classList.add('pv-picker');
+      $('[data-c]',bg).onclick=close;
+      for(const [role,id] of [['매니저','pvm'],['일반','pvs']]) {
+        const g=$('#'+id+'g',bg), n=$('#'+id,bg); if(!g || !n) continue;
+        const fill=()=>{n.innerHTML=pvMembers(A,role,g.value).map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('') || '<option value="">사원 없음</option>'; const b=$(`[data-pm="${role==='일반'?'staff':'mgr'}"]`,bg); b.disabled=!n.value;};
+        g.onchange=fill; fill();
+      }
+      $$('[data-pm]',bg).forEach(b=>b.onclick=async()=>{
+        const m=b.dataset.pm; let a=null;
+        if(m==='mgr'||m==='staff') { const id=$(m==='mgr'?'#pvm':'#pvs',bg).value; a=A.find(x=>String(x.id)===id && x.role===(m==='mgr'?'매니저':'일반')); if(!a) return toast('사람을 고르세요',true); }
+        b.disabled=true; try { await pvSet(m||null,a); close(); } catch(e) { b.disabled=false; toast(e.message,true); }
+      });
     });
   }
   function shell(layout) {
@@ -11172,7 +11191,7 @@ async function addCharts(buf, jobs) {
   // v28.85: 그룹 업무 조회일과 귀속월을 함께 선택한다. 다른 매니저 탭의 기준은 유지.
   const mgFbPeriod = date => (S.periods || []).filter(p => p.start <= date && (!p.end || date <= p.end)).sort((a,b) => b.start.localeCompare(a.start))[0] || null;
   const mgPeriodLabel = p => p ? `${ymLabel(p.ym)} 귀속월 · ${p.start} ~ ${p.end || '종료일 미정'} · ${p.status || '상태 미확인'}` : '귀속월 미설정';
-  // v28.93: day-first query; future feedback dates blocked, future interviews may be viewed.
+  // v28.94: day-first query; future feedback dates blocked, future interviews may be viewed.
   function mgQueryRange(v,key) {
     const q=v[key]=v[key]||{mode:'day',date:S.today};
     if(!['day','week','month','period'].includes(q.mode))q.mode='day';
