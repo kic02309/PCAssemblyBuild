@@ -2853,13 +2853,31 @@ body.dark .ddline-state,[data-theme="dark"] .ddline-state{background:#243f68;col
 .mg-query-week{display:flex;align-items:center;gap:7px;flex-wrap:wrap;border-top:1px solid var(--line2);padding-top:10px;margin-top:10px}.mg-query-week>b{font-size:12px;margin-right:5px}.mg-query-chip{display:inline-flex;align-items:center;gap:6px}.mg-query-dot{display:inline-block;flex:0 0 8px;width:8px;height:8px;border-radius:50%}.mg-query-chip.mg-selected{border-color:var(--mg-group);background:color-mix(in srgb,var(--mg-group) 16%,transparent);box-shadow:inset 0 0 0 1px var(--mg-group)}.mg-query-chip.mg-selected[data-mq-group=""]{background:#2563eb;color:#fff}.mg-day-missing{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:12px 14px;margin-top:12px}.mg-day-missing small{color:var(--sub)}
 html[data-theme=dark] #mgbody .m2t td{color:var(--ink)}
 </style><style>
-/* v28.94: group → name picker, responsive without changing shared forms. */
+/* v28.95: group → name picker, responsive without changing shared forms. */
 .modal.pv-picker{width:600px;max-width:calc(100vw - 32px)}
 .pvl .pv-select-row{display:grid;grid-template-columns:56px minmax(100px,1fr) minmax(110px,1.2fr) auto;gap:10px;align-items:end}
 .pv-select-row button{white-space:nowrap;min-width:54px}
 .pv-select-row>b{align-self:center}.pv-select-row label{display:flex;flex-direction:column;gap:5px;font-size:12px;min-width:0}
 .pv-select-row select{width:100%;min-width:0}.pv-select-row button{align-self:end}
 @media(max-width:520px){.pvl .pv-select-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.pv-select-row>b{grid-column:1/-1}}
+</style><style>
+/* v28.95 compact date selection; all selectors are limited to the daily screen. */
+.ddq{padding:2px 0 12px;border-bottom:1px solid var(--line,#e1e6ef);margin-bottom:10px}
+.ddq-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px;color:var(--ink,#223047);font-size:12px}
+.ddq-head b{font-weight:600}.ddq-head>span{color:var(--sub,#65758b)}.ddq-head>small{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:11px;color:var(--sub,#65758b)}
+.ddq-head i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:5px}.ddq-blue{background:#2563eb}.ddq-green{background:#0b8b65}
+.ddq-dates{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px;max-width:1000px}
+.ddq .ddq-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:62px;padding:7px 4px;border:1px solid #dfe6ef;border-radius:10px;background:#f5f7fa;color:#26354b;box-shadow:none;min-width:0}
+.ddq .ddq-day strong{font-size:15px;font-weight:650;white-space:nowrap;line-height:1.25}.ddq .ddq-day small{font-size:11px;line-height:1.3;min-height:14px;white-space:nowrap}
+.ddq .ddq-day.ddq-default{background:#eaf1ff;color:#225bce;border-color:#8eb2fa}.ddq .ddq-day.ddq-today{background:#e8f7f0;color:#087e60;border-color:#83c9b1}
+.ddq .ddq-day.ddq-selected{box-shadow:inset 0 0 0 1px currentColor}.ddq .ddq-day:disabled{opacity:.42;cursor:default}
+.ddq .ddq-day:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.ddq-goals .czf-extra{margin:0}.ddq-goals{padding-top:0}
+html[data-theme=dark] .ddq{border-color:#354359}html[data-theme=dark] .ddq .ddq-day{background:#263349;border-color:#40516b;color:#e5edf8}
+html[data-theme=dark] .ddq .ddq-day.ddq-default{background:#263f64;color:#a9c9ff;border-color:#658dc8}html[data-theme=dark] .ddq .ddq-day.ddq-today{background:#1c4339;color:#8de5c4;border-color:#539b82}
+@media(max-width:900px){.ddq-dates{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:480px){.ddq-head{gap:5px 10px}.ddq-head>small{margin-left:0}.ddq .ddq-day strong{font-size:13px}.ddq-dates{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.ddq .ddq-day{padding:7px 2px}}
+
 </style></head>
 <body>
 <div id="app"></div>
@@ -8025,7 +8043,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.94';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.95';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8492,7 +8510,7 @@ async function addCharts(buf, jobs) {
     b.innerHTML = `<b>👁 미리보기</b><span>${esc(PVN[S.pv.mode])}${S.pv.mode === 'lead' ? '' : ' · ' + esc(S.me.name) + ' (' + esc(S.me.group) + ')'}</span><span class="muted">저장·수정 안 됨 · ${S.pv.mode === 'staff' ? '선택한 사원의 자료를 조회합니다' : '일부 개인 자료는 로그인한 본인 기준일 수 있음'}</span><button id="pvx" class="primary sm">내 화면으로 돌아가기</button>`;
     $('#pvx', b).onclick = () => pvSet(null);
   }
-  // v28.94: full-group staff picker; permission is checked again by staff_preview.
+  // v28.95: full-group staff picker; permission is checked again by staff_preview.
   const pvGroups = (A, role) => [...new Set(A.filter(a => a.role === role).map(a => a.group || '미지정'))].sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
   const pvMembers = (A, role, group) => A.filter(a => a.role === role && (a.group || '미지정') === group).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
   async function pvPick() {
@@ -9778,6 +9796,36 @@ async function addCharts(buf, jobs) {
     return `<div class="seg ddtabs"><button data-dt="dash" class="${on === 'dash' ? 'on' : ''}">일일 현황</button><button data-dt="manage" class="${on === 'manage' ? 'on' : ''}">월 업무현황</button></div>`;
   }
   function bindDailyTabs() { $$('[data-dt]').forEach(b => (b.onclick = () => { if (b.dataset.dt !== S.view) go(b.dataset.dt); })); }
+  // v28.95: compact, single-day date picker. Range aggregation remains an explicit admin action.
+  const ddCanRange = () => !!(S.me && S.me.role === '관리자');
+  function ddQuickDates(today, defaultDate) {
+    const mon = C.addDays(today, -((new Date(today+'T00:00:00').getDay()+6)%7));
+    const dates = [C.addDays(mon,-3), C.addDays(mon,-2), ...[0,1,2,3,4,5].map(i=>C.addDays(mon,i))];
+    if (defaultDate && !dates.includes(defaultDate)) dates.push(defaultDate);
+    return [...new Set(dates)].sort();
+  }
+  function ddQuickMount(bar, r) {
+    if (!bar) return;
+    const full = ddCanRange(), first = $('.czf-line',bar);
+    // Keep goal switches and group filters. Only the daily screen's broad query toolbar is removed.
+    if (!full && first) {
+      const extra = $('.czf-extra',first);
+      if (extra) { const line=document.createElement('div'); line.className='czf-line ddq-goals'; line.appendChild(extra); first.after(line); }
+      first.remove();
+      const pop=$('.czf-pop',bar); if(pop) pop.remove();
+    }
+    const dates=ddQuickDates(r.today,r.prevWork), mon=C.addDays(r.today,-((new Date(r.today+'T00:00:00').getDay()+6)%7));
+    const box=document.createElement('div'); box.className='ddq';
+    const label=d=>`${+d.slice(5,7)}/${+d.slice(8)} (${C.WD[new Date(d+'T00:00:00').getDay()]})`;
+    box.innerHTML=`<div class="ddq-head"><b>날짜 선택</b><span>${esc(label(r.date))} 업무현황</span><small><i class="ddq-blue"></i>기본 조회 <i class="ddq-green"></i>오늘</small></div><div class="ddq-dates" role="group" aria-label="일일업무현황 날짜 선택">${dates.map(d=>{
+      const def=d===r.prevWork, today=d===r.today, on=d===r.date, future=d>r.today;
+      const status=def?'기본'+(on?' ✓':' 조회'):today?'오늘'+(on?' ✓':''):on?'조회 중':future?'예정':new Date(d+'T00:00:00').getDay()===6?'토요근무':d<mon?'지난주':'';
+      return `<button type="button" class="ddq-day${def?' ddq-default':''}${today?' ddq-today':''}${on?' ddq-selected':''}" data-ddq-date="${d}" aria-label="${d} ${esc(status)}" aria-pressed="${on}" ${future?'disabled':''}><strong>${label(d)}</strong><small>${esc(status)||'&nbsp;'}</small></button>`;
+    }).join('')}</div>`;
+    bar.prepend(box);
+    box.addEventListener('click',e=>{const b=e.target.closest('[data-ddq-date]'); if(!b || b.disabled || b.dataset.ddqDate===r.date) return; S.ddDate=b.dataset.ddqDate; renderDash();});
+  }
+
   const ddStep = (d, k) => { let x = C.addDays(d, k); for (let i = 0; i < 7; i++) { const w = new Date(x + 'T00:00:00').getDay(); if (w !== 0 && w !== 6) break; x = C.addDays(x, k); } return x; };
   // 서버 자료 → 사람별 상태 · 환산
   // v28.89: read-only current production overlay. Never writes personal day records.
@@ -9857,7 +9905,8 @@ async function addCharts(buf, jobs) {
   };
   async function renderDash() {
     const main = $('#main'), staff = !isMgrUser();
-    S.ddDate = staff ? null : S.ddDate;
+    if (S._ddDateToday !== S.today) { S.ddDate = null; S._ddDateToday = S.today; }
+    if (!ddCanRange() && S.ddDate && !ddQuickDates(S.today).includes(S.ddDate)) S.ddDate = null;
     main.innerHTML = pageHead('일일 업무현황', dailyTabs('dash'), '') + '<div class="pgb" id="ddb"><div class="muted" style="padding:30px">불러오는 중…</div></div>';
     bindDailyTabs();
     const seq = S.ddSeq = (S.ddSeq || 0) + 1, tk = S.token;
@@ -9865,7 +9914,9 @@ async function addCharts(buf, jobs) {
     try { [r, lv] = await Promise.all([api('daily', { date: S.ddDate || '' }), !staff && window.Leave ? window.Leave.prefetch().catch(() => null) : null]); }
     catch (e) { const b = $('#ddb'); if (b && seq === S.ddSeq) b.innerHTML = '<div class="warn">' + esc(e.message) + '</div>'; return; }
     if (seq !== S.ddSeq || tk !== S.token || S.view !== 'dash') return;
-    S.ddDate = staff ? null : r.date; S._dd = r; updateBadge();
+    if (staff && r.dailyVersion !== 2) { $('#ddb').innerHTML = '<div class="warn">사원 날짜 선택용 v28.95 SQL을 먼저 적용해 주세요.</div>'; return; }
+    if (S.ddDate && r.date !== S.ddDate) { $('#ddb').innerHTML = '<div class="warn">선택한 날짜와 서버 응답이 다릅니다. 새로고침 후 다시 확인해 주세요.</div>'; return; }
+    S.ddDate = r.date; S._dd = r; updateBadge();
     { const gy = (periodOf(r.date) || {}).ym, rg = gy && periodRange(gy);                         // v28.52 : 지원 보정 · 출근 확인 준비
       if (!staff && rg && adjOn(gy)) { await adjPrep(rg.from, rg.to); if (seq !== S.ddSeq || tk !== S.token || S.view !== 'dash') return; } }
     if (!staff) {
@@ -9991,7 +10042,7 @@ async function addCharts(buf, jobs) {
     const tasks = r.tasks || [];
     const sh = s => s.replace(/\s*&\s*/g, '·').replace(/\s*\/\s*/g, '·');
     let h = '';
-    if (staff) h += '<div class="ddinfo">전 근무일 현황입니다</div>';
+    if (staff) h += '<div class="ddinfo">' + esc(dLabel(r.date)) + ' 업무현황' + (r.date === r.prevWork ? ' · 기본 조회' : r.date === r.today ? ' · 오늘 입력된 현황' : '') + '</div>';
     if (!staff || !adjOn(D.GY)) h += teamLine(D);                         // v28.51 : 팀 줄 · v28.52 : 사원 화면은 보정 자료 권한이 없어 11월 귀속부터 숨김
     // V7: 체크사항은 그룹별 평균환산 카드 안으로 통합. 상단에 별도 카드를 만들지 않음.
     h += `<div class="ddkpis ddkpis-v7">
@@ -10084,21 +10135,22 @@ async function addCharts(buf, jobs) {
         const ch = $('#main .czf-v4'); if (ch) $$('[data-czf-group]', ch).forEach(b => { const on = b.dataset.czfGroup ? gs.includes(b.dataset.czfGroup) : !gs.length; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
       };
       window.CZFilterV4.mount($('#main .pgb'), {
-        id: 'dash', modes: staff ? ['당일'] : ['당일', '주간', '월간'], mode: '당일', label: dl,
+        id: 'dash', modes: ddCanRange() ? ['당일', '주간', '월간'] : [], mode: '당일', label: dl,
         canStep: !staff, groups: [{ value: '', label: '전체 그룹' }, ...D.G.map(x => ({ value: x.g, label: x.g }))], selected,
         todayLabel: '오늘', onToday: staff ? null : () => { S.ddDate = r.today; renderDash(); },
         range: staff ? null : { type: 'date', from: dl, to: dl, note: '기간 조회는 월 업무현황의 기간별 목록으로 이동합니다.' },
         onStep: step => { if (!staff) { S.ddDate = ddStep(dl, step); renderDash(); } },
-        onMode: m => { if (staff || m === '당일') return;
+        onMode: m => { if (!ddCanRange() || m === '당일') return;
           const t = r.today, dow = (new Date(t + 'T00:00:00').getDay() + 6) % 7;
           S.mMode = 'range'; S.mRange = m === '주간'
             ? { start: C.addDays(t, -dow), end: t, q: 'w' }
             : { start: t.slice(0, 7) + '-01', end: t, q: '' }; go('manage'); },
-        onRange: (from, to) => { S.mMode = 'range'; S.mRange = { start: from, end: to, q: '' }; go('manage'); },
+        onRange: (from, to) => { if (!ddCanRange()) return; S.mMode = 'range'; S.mRange = { start: from, end: to, q: '' }; go('manage'); },
         onGroup: g => applyGroup(window.CZFilterV4.toggle(S.ddGroup, g)), onSearch: () => applyGroup(Array.isArray(S.ddGroup) ? S.ddGroup : []),
         onReset: () => { S.ddGroup = []; applyGroup([]); if (!staff && dl !== r.today) { S.ddDate = r.today; renderDash(); } },
         onError: e => toast(e.message, true), extra: goalBar(D.GY)
       });
+      ddQuickMount($('#main .czf-v4[data-view="dash"]'), r);
       bindGoalBar(() => drawDaily(r, lv));
       applyGroup(selected);
     }
@@ -10116,7 +10168,8 @@ async function addCharts(buf, jobs) {
     $$('[data-tb]').forEach(b => (b.onclick = () => { S.tbase = b.dataset.tb; try { localStorage.setItem('tbase', S.tbase); } catch (e) { } drawDaily(r, lv); }));
     if ($('#ddpend')) $('#ddpend').onclick = () => confirmModal(S._teamRows || [], D.GY, () => renderDash());
     if (staff) return;
-    fillHits(D.GY, $('#main'));
+    if (ddCanRange() || (S._mcache && S._mcache['M|' + D.GY])) fillHits(D.GY, $('#main'));
+    else $$('[data-hm]', $('#main')).forEach(el => { el.hidden = true; });
     ddChecks(r, D, lv);
     const goDate = d => { if (!d) return; S.ddDate = d > r.today ? r.today : d; renderDash(); };
     $('#ddp').onclick = () => goDate(ddStep(dl, -1));
@@ -11191,7 +11244,7 @@ async function addCharts(buf, jobs) {
   // v28.85: 그룹 업무 조회일과 귀속월을 함께 선택한다. 다른 매니저 탭의 기준은 유지.
   const mgFbPeriod = date => (S.periods || []).filter(p => p.start <= date && (!p.end || date <= p.end)).sort((a,b) => b.start.localeCompare(a.start))[0] || null;
   const mgPeriodLabel = p => p ? `${ymLabel(p.ym)} 귀속월 · ${p.start} ~ ${p.end || '종료일 미정'} · ${p.status || '상태 미확인'}` : '귀속월 미설정';
-  // v28.94: day-first query; future feedback dates blocked, future interviews may be viewed.
+  // v28.95: day-first query; future feedback dates blocked, future interviews may be viewed.
   function mgQueryRange(v,key) {
     const q=v[key]=v[key]||{mode:'day',date:S.today};
     if(!['day','week','month','period'].includes(q.mode))q.mode='day';
@@ -14446,6 +14499,7 @@ async function addCharts(buf, jobs) {
     if (!S.token) return renderLogin();
     try {
       const r = pre && pre.me ? pre : await api('me', { withDay: true });
+      S.ddDate = null; S._ddDateToday = null;
       S.me = r.me; S.periods = r.periods; S.today = r.today || S.today; S.rates = r.rates || [];
       attReset(); S.stCache = {}; S.stv = null;                                           // v28.53 : 로그인할 때 앞 계정 자료 비움
       try { const gc = await api('goalCfg'); S.goals = gc.goals || []; S.hw = gc.hw || []; } catch (e) { S.goals = []; S.hw = []; }   // v28.51 : SQL 전이면 기본 기준(90/80) · v28.72 휴일근무일
