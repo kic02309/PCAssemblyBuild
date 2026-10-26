@@ -2846,7 +2846,10 @@ body.dark .ddline-state,[data-theme="dark"] .ddline-state{background:#243f68;col
 #main .prpg .pr-other table.prt :is(input,select){box-sizing:border-box;max-width:100%}
 #main .prpg .pr-other table.prt .o-rs{width:100%;text-align:left}
 </style>
-</head>
+<style>
+.mg-query{padding:12px 14px;margin:10px 0}.mg-query-period,.mg-query-groups{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}.mg-query-period label{display:flex;align-items:center;gap:7px}.mg-query-period input,.mg-query-period select{width:auto;max-width:100%}.mg-query-groups{border-top:1px solid var(--line2);padding-top:10px;margin-top:10px}.mg-query-note{font-size:12px;padding:0 2px 12px}.mg-query button{white-space:nowrap}.mg-query-period .seg{flex-wrap:wrap}
+@media(max-width:600px){.mg-query-period>span{flex-basis:100%}}
+</style></head>
 <body>
 <div id="app"></div>
 <div id="toast"></div>
@@ -8011,7 +8014,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.91';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.92';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -11156,6 +11159,7 @@ async function addCharts(buf, jobs) {
   const mgFbSt = f => !f ? '미작성' : f.status === '완료' ? '완료' : '진행 중';   // 예전 값(작성 · 실시)은 '진행 중'으로 봄
   const mgFbRc = f => !!(f && mgFbSt(f) === '진행 중' && f.rc && f.rc <= S.today);   // 재확인일 도래
   function mgDays(x) {   // 날짜별 결과 (근무한 날 · 일요일 휴일근무 제외)
+    if (x._mgDM) return x._mgDM;
     const t = effT(x.u.target, x.ym), o = {}; if (!(t > 0) || x.u.pend) return o;
     (x.u.items || []).forEach(it => { if (it.date >= S.today || mgDow(it.date) === 0 || C.isHW(it.date)) return; const v = C.sumDay(it.sum, minsYm(x.ym)).f7; if (!(v > 1e-9)) return; o[it.date] = { v, t, miss: lvOf(v, t, x.ym) !== 'ok' }; });
     return o;
@@ -11165,71 +11169,95 @@ async function addCharts(buf, jobs) {
   // v28.85: 그룹 업무 조회일과 귀속월을 함께 선택한다. 다른 매니저 탭의 기준은 유지.
   const mgFbPeriod = date => (S.periods || []).filter(p => p.start <= date && (!p.end || date <= p.end)).sort((a,b) => b.start.localeCompare(a.start))[0] || null;
   const mgPeriodLabel = p => p ? `${ymLabel(p.ym)} 귀속월 · ${p.start} ~ ${p.end || '종료일 미정'} · ${p.status || '상태 미확인'}` : '귀속월 미설정';
+  // v28.92: presentation/query ranges only. Automatic interview rules stay anchored to today.
+  function mgQueryRange(v, key) {
+    const q = v[key] = v[key] || { mode: 'week', date: S.today };
+    if (!['week','month','period'].includes(q.mode)) q.mode = 'week';
+    if (!q.date || q.date > S.today) q.date = S.today;
+    let from, to, label;
+    if (q.mode === 'week') { from = wkMon(q.date); to = C.addDays(from,4); label = '주간 (월~금)'; }
+    else if (q.mode === 'month') { from = q.date.slice(0,7)+'-01'; const d = new Date(from+'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth()+1); to = C.addDays(d.toISOString().slice(0,10),-1); label = '월간'; }
+    else { const p = (S.periods||[]).find(p=>p.ym===q.ym && p.start<=S.today) || mgFbPeriod(q.date); if (p) { q.ym=p.ym; from=p.start; to=p.end||S.today; label=ymLabel(p.ym)+' 귀속월'; } else { from=q.date;to=q.date;label='귀속월 미설정'; } }
+    return { from,to,label,mode:q.mode,date:q.date,ym:q.ym };
+  }
+  const mgRangeHas = (r,d) => !!d && d>=r.from && d<=r.to && (r.mode!=='week' || (mgDow(d)>0 && mgDow(d)<6));
+  function mgQueryBar(v,key,groups,selected) {
+    const r=mgQueryRange(v,key), q=v[key];
+    return `<div class="card mg-query"><div class="mg-query-period"><div class="seg">${[['week','주간'],['month','월간'],['period','귀속월']].map(([k,t])=>`<button data-mq-mode="${k}" class="${q.mode===k?'on':''}">${t}</button>`).join('')}</div><label>기준일 <input data-mq-date type="date" value="${q.date}" max="${S.today}"></label>${q.mode==='period'?`<label>귀속월 <select data-mq-ym>${(S.periods||[]).filter(p=>p.start<=S.today).slice().sort((a,b)=>b.ym.localeCompare(a.ym)).map(p=>`<option value="${p.ym}" ${q.ym===p.ym?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label>`:''}<span class="muted">${esc(r.label)} · ${r.from} ~ ${r.to}</span></div><div class="mg-query-groups"><b>그룹</b>${[['','전체 그룹'],...groups.map(g=>[g,g])].map(([g,t])=>`<button class="sm ${selected===g?'primary':''}" data-mq-group="${esc(g)}">${esc(t)}</button>`).join('')}</div></div>`;
+  }
+  function mgQueryBind(box,v,key,groupKey) {
+    $$('[data-mq-mode]',box).forEach(b=>b.onclick=()=>{v[key].mode=b.dataset.mqMode;drawMgr();});
+    const d=$('[data-mq-date]',box); if(d)d.onchange=()=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d.value)||d.value>S.today){d.value=v[key].date;return;}v[key].date=d.value;delete v[key].ym;drawMgr();};
+    const ym=$('[data-mq-ym]',box); if(ym)ym.onchange=()=>{const p=(S.periods||[]).find(p=>p.ym===ym.value&&p.start<=S.today);if(!p)return;v[key].ym=p.ym;v[key].date=p.start;drawMgr();};
+    $$('[data-mq-group]',box).forEach(b=>b.onclick=()=>{v[groupKey]=b.dataset.mqGroup;drawMgr();});
+  }
+  async function mgQueryMembers(groups,range) {
+    const periods=(S.periods||[]).filter(p=>p.start<=range.to && (!p.end||p.end>=range.from) && p.start<=S.today);
+    const merged=new Map();
+    // Cached per accounting month; no polling and no duplicate month requests.
+    for(const p of periods) {
+      const members=await mgMembers(groups,p.ym);
+      for(const x of members) {
+        let m=merged.get(x.u.id);
+        if(!m){m={...x,u:{...x.u,items:[]},_mgDM:{}};merged.set(x.u.id,m);}
+        const dm=mgDays(x);
+        for(const [d,val] of Object.entries(dm))if(mgRangeHas(range,d))m._mgDM[d]={...val,ym:p.ym};
+        m.u.items.push(...(x.u.items||[]).filter(it=>mgRangeHas(range,it.date)));
+      }
+    }
+    return [...merged.values()];
+  }
+
   async function mgFbTab(box) {
     const v = S.mgv, adm = S.me.role === '관리자', SG = (adm ? mgAllG() : (S.me.mg || [])).filter(g => !MG_NOFB.includes(g));
     box.innerHTML = '<div class="muted" style="padding:20px">그룹원 불러오는 중…</div>';
-    const initial = !v.fbd || v.fbd >= S.today;
-    if (initial) v.fbd = C.addDays(S.today, -1);
-    const requested = v.fbd, P = mgFbPeriod(requested);
-    if (!P) { box.innerHTML = '<div class="warn">조회일의 귀속월이 설정되지 않았습니다.</div>'; return; }
+    const range = mgQueryRange(v,'fbQuery');
     const seq = v.fbReadSeq = (v.fbReadSeq || 0) + 1;
-    const M = (await mgMembers(SG, P.ym)).filter(x => !/파트장|매니저|팀장/.test(x.title || '') && !['매니저', '관리자'].includes(x.u.role));
-    if (S.view !== 'mgr' || S.mgv !== v || v.tab !== 'fb' || seq !== v.fbReadSeq || v.fbd !== requested) return;
-    const multi = SG.length > 1; if (!multi) v.fbg = SG[0] || ''; else if (v.fbg && !SG.includes(v.fbg)) v.fbg = '';
-    const DM = new Map(M.map(x => [x.u.id, mgDays(x)])), hasD = d => M.some(x => DM.get(x.u.id)[d]);
-    const dates = [...new Set([].concat(...M.map(x => Object.keys(DM.get(x.u.id)))))].sort();
-    if (initial && dates.length) v.fbd = dates[dates.length - 1];
-    const earliest = (S.periods || []).reduce((a,p) => !a || p.start < a ? p.start : a, '');
-    const mon = mgWeekMon(v.fbd), wmin = earliest ? mgWeekMon(earliest) : mon, wk = [0, 1, 2, 3, 4].map(i => C.addDays(mon, i));
-    if (dates.includes(C.addDays(mon, 5))) wk.push(C.addDays(mon, 5));   // 토요근무한 주는 토요일도 보임
-    const prevOk = mon > wmin, nextOk = C.addDays(mon, 7) < S.today;
-    const DS = [v.fbd];
+    const M = (await mgQueryMembers(SG,range)).filter(x => !/파트장|매니저|팀장/.test(x.title || '') && !['매니저','관리자'].includes(x.u.role));
+    if (S.view !== 'mgr' || S.mgv !== v || v.tab !== 'fb' || seq !== v.fbReadSeq) return;
+    const multi = SG.length > 1; if (!multi) v.fbg=SG[0]||''; else if(v.fbg && !SG.includes(v.fbg))v.fbg='';
+    const DM = new Map(M.map(x=>[x.u.id,mgDays(x)]));
+    const DS = [...new Set(M.flatMap(x=>Object.keys(mgDays(x))))].sort();
+    const periodBar = mgQueryBar(v,'fbQuery',SG,v.fbg||'');
     const rowsOf = (g, ds) => { const out = []; M.filter(x => x.group === g).forEach(x => { const dm = DM.get(x.u.id); ds.forEach(d => { if (dm[d] && dm[d].miss) out.push({ x, d, m: dm[d], f: mgFbOf(x.u.id, d) }); }); }); return out; };
     const gst = (g, ds) => { let tot = 0, ok = 0, miss = 0, todo = 0, ing = 0; const who = new Set(); M.filter(x => x.group === g).forEach(x => { const dm = DM.get(x.u.id); ds.forEach(d => { const q = dm[d]; if (!q) return; tot++; if (q.miss) { miss++; who.add(x.u.id); const f = mgFbOf(x.u.id, d); if (!f) todo++; else if (mgFbSt(f) === '진행 중') ing++; } else ok++; }); }); return { tot, ok, miss, todo, ing, ppl: who.size }; };
-    const sel = SG.filter(g => !v.fbg || g === v.fbg), cntBy = d => sel.reduce((t, g) => t + gst(g, [d]).miss, 0);
+    const sel = SG.filter(g => !v.fbg || g === v.fbg);
     const tot = sel.reduce((t, g) => { const q = gst(g, DS); t.todo += q.todo; t.ppl += q.ppl; return t; }, { todo: 0, ppl: 0 });
     const rcN = ((S.mgD || {}).fb || []).filter(f => mgFbRc(f) && sel.includes(f.group)).length, { E, T } = mgMine(), todayN = calToday().length + E.filter(e => e.kind === 'm' && e.date === S.today && e.result === '예정').length + T.filter(t => t.status !== '완료' && t.due === S.today).length;   // v28.74 : 오늘 일정 = 조립팀 일정(오늘 걸친 것) + 내 오늘 면담 + 오늘 마감 업무
     const card = (cls, ic, k, val, sub, key) => `<div class="m2k ${cls}" ${key ? `data-kl="${key}" title="누르면 목록"` : ''}><span class="m2ki">${ic}</span><span class="m2kt"><small>${k}</small><b>${val}<em>${k === '미달 인원' ? '명' : '건'}</em></b><span>${sub}</span></span></div>`;
-    const wl = `${dLabel(wk[0])} ~ ${dLabel(wk[4])}`;
-    const periodBar = `<div class="card" style="padding:10px 12px;margin:10px 0;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><label>조회일 <input id="mgFbDate" type="date" value="${v.fbd}" min="${earliest}" max="${C.addDays(S.today,-1)}" style="width:auto"></label><label>귀속월 <select id="mgFbMonth" style="width:auto">${(S.periods||[]).filter(p=>p.start<S.today).slice().sort((a,b)=>b.ym.localeCompare(a.ym)).map(p=>`<option value="${p.ym}" ${p.ym===P.ym?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label><span class="muted">${esc(mgPeriodLabel(P))}</span></div>`;
-    const chips = periodBar + `<div class="m2dbar"><span class="m2dl">근무일</span><button class="m2ar" id="m2wp" ${prevOk ? '' : 'disabled'} title="지난주">‹</button><span class="m2wl">${wl}</span><button class="m2ar" id="m2wn" ${nextOk ? '' : 'disabled'} title="다음주">›</button>
-      ${wk.map(d => { const off = d >= S.today || !mgFbPeriod(d), n = off ? 0 : cntBy(d); return `<button class="m2dt ${v.fbd === d ? 'on' : ''}" data-fd="${d}" ${off ? 'disabled' : ''}>${dLabel(d)}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}<span style="flex:1"></span><span class="muted" style="font-size:13px">그날 근무한 인원 중 개인 목표를 못 채운 사람만 보입니다 · 매니저 · 파트장 · 일요일 휴일근무 제외</span></div>`;
+    const chips = periodBar + `<div class="muted mg-query-note">미달·피드백 집계: 선택 기간 중 어제까지의 근무 기록 · 오늘 자료는 집계 대기 · 미달 인원은 중복 제외, 발생·처리는 건수 기준</div>`;
     let body = '';
     if (!SG.length) body = '<div class="card m2c"><div class="m2e">이 화면에서 볼 그룹이 없습니다</div></div>';
     else if (multi && !v.fbg) {
-      body = `<div class="m2gg">${SG.map(g => { const q = gst(g, DS), pc = q.tot ? Math.round(q.ok / q.tot * 100) : 0; return `<button class="m2gc ${q.miss ? '' : 'calm'}" data-gg="${esc(g)}"><span class="m2gh">${gdot(g)}<span style="flex:1"></span>${q.miss ? `<span class="m2gb">미달 ${q.ppl}명</span>` : q.tot ? '<span class="m2gb ok">전원 달성</span>' : '<span class="m2gb off">근무 없음</span>'}</span>
-          <span class="m2gn"><span>총원<b>${q.tot}</b></span><span>달성<b class="c-ok">${q.ok}</b></span><span>미달<b class="${q.miss ? 't-lo' : ''}">${q.miss}</b></span></span><span class="m2pb"><i style="width:${pc}%"></i></span>
-          <span class="m2gf">${q.miss ? `미작성 <b class="${q.todo ? 't-lo' : ''}">${q.todo}</b> · 진행 중 <b>${q.ing}</b> · 완료 <b>${q.miss - q.todo - q.ing}</b>` : (q.tot ? '피드백 작성할 인원이 없습니다' : '이 날 근무 기록이 없습니다')}</span></button>`; }).join('')}</div>`;
+      body = `<div class="m2gg">${SG.map(g => { const q = gst(g, DS), pc = q.tot ? Math.round(q.ok / q.tot * 100) : 0; return `<button class="m2gc ${q.miss ? '' : 'calm'}" data-gg="${esc(g)}"><span class="m2gh">${gdot(g)}<span style="flex:1"></span>${q.miss ? `<span class="m2gb">미달 ${q.ppl}명</span>` : q.tot ? '<span class="m2gb ok">전원 달성</span>' : '<span class="m2gb off">집계 기록 없음</span>'}</span>
+          <span class="m2gn"><span>근무기록<b>${q.tot}</b></span><span>달성<b class="c-ok">${q.ok}</b></span><span>미달<b class="${q.miss ? 't-lo' : ''}">${q.miss}</b></span></span><span class="m2pb"><i style="width:${pc}%"></i></span>
+          <span class="m2gf">${q.miss ? `미작성 <b class="${q.todo ? 't-lo' : ''}">${q.todo}</b> · 진행 중 <b>${q.ing}</b> · 완료 <b>${q.miss - q.todo - q.ing}</b>` : (q.tot ? '피드백 작성할 인원이 없습니다' : '선택 기간에 집계할 근무 기록이 없습니다')}</span></button>`; }).join('')}</div>`;
     } else {
       const rows = rowsOf(v.fbg, DS); rows.sort((a, b) => ((a.f ? 1 : 0) - (b.f ? 1 : 0)) || a.m.v / a.m.t - b.m.v / b.m.t);
       const q = gst(v.fbg, DS), canE = mgCanEditFb(v.fbg);
       const det = r => { const it = (r.x.u.items || []).find(i => i.date === r.d), s = (it && it.sum) || {}, Q = C.qtyParts(s), om = Object.values(s.o || {}).reduce((a, n) => a + (+n || 0), 0);
         return `<span class="m2dtl"><span><small>조립</small><b>${Q.asm || '-'}</b></span><span><small>출고</small><b>${Q.ship || '-'}</b></span><span><small>제조</small><b>${s.mq ? s.mq + '대' : '-'}</b></span><span><small>기타</small><b>${om ? om + '분' : '-'}</b></span></span>`; };
-      body = `<div class="card m2c"><div class="m2h">${multi ? '<button class="sm" id="m2back">‹ 전체 그룹</button>' : ''}<b>${gdot(v.fbg)} 목표 미달 · ${dLabel(v.fbd)}</b><span class="m2chips"><span>총원 <b>${q.tot}</b></span><span>달성 <b class="c-ok">${q.ok}</b></span><span>미달 <b class="t-lo">${q.miss}</b></span><span>미작성 <b class="${q.todo ? 't-lo' : ''}">${q.todo}</b></span></span></div>
+      body = `<div class="card m2c"><div class="m2h">${multi ? '<button class="sm" id="m2back">‹ 전체 그룹</button>' : ''}<b>${gdot(v.fbg)} 목표 미달 · ${esc(range.label)}</b><span class="m2chips"><span>근무기록 <b>${q.tot}</b></span><span>달성 <b class="c-ok">${q.ok}</b></span><span>미달 <b class="t-lo">${q.miss}</b></span><span>미작성 <b class="${q.todo ? 't-lo' : ''}">${q.todo}</b></span></span></div>
         <div class="tbs m2sc"><table class="list m2t m2big"><thead><tr><th style="text-align:left">이름 · 특이사항 · 피드백</th><th>개인목표 <small class="muted">(목표 / 환산)</small></th><th>달성률</th><th>업무 세부 <small class="muted">(조립 · 출고 · 제조 · 기타)</small></th><th>상태</th></tr></thead><tbody>
         ${rows.map(r => { const f = r.f, st = mgFbSt(f), rc = mgFbRc(f); const pill = `<span class="m2s ${st === '미작성' ? '' : st === '완료' ? 's3' : rc ? 's4' : 's1'}">${rc ? '재확인 필요' : st}</span>${f && f.rc && st === '진행 중' ? `<small class="muted m2rcd">재확인 ${dLabel(f.rc)}</small>` : ''}`;
-          return `<tr class="${f ? '' : 'm2todo'}"><td class="l m2who"><div class="m2nm1"><b class="pclk" data-pc="${esc(r.x.name)}" data-date="${r.d}">${esc(r.x.name)}</b>${r.x.title ? `<small class="muted"> ${esc(r.x.title)}</small>` : ''}</div>
+          return `<tr class="${f ? '' : 'm2todo'}"><td class="l m2who"><div class="m2nm1"><b class="pclk" data-pc="${esc(r.x.name)}" data-date="${r.d}">${esc(r.x.name)}</b><small class="muted"> · ${esc(dLabel(r.d))}</small>${r.x.title ? `<small class="muted"> ${esc(r.x.title)}</small>` : ''}</div>
             <div class="m2ln"><em>특이사항</em>${f ? (f.na ? '<span class="muted">해당 없음</span>' : esc(f.note)) : '<span class="muted">-</span>'}</div><div class="m2ln"><em>피드백</em>${f ? esc(f.fb) : '<span class="muted">-</span>'}</div></td>
-            <td><span class="m2gs">목표 <b>${r.m.t}</b> / 환산 <b class="t-lo">${f2(r.m.v)}</b></span></td><td>${m2bar(r.m.v / r.m.t, r.x.ym)}</td><td>${det(r)}</td>
-            <td>${canE || f ? `<button class="m2sb" data-fe="${esc(r.x.u.id)}|${r.d}" title="${canE ? (f ? '수정' : '특이사항 · 피드백 작성') : '내용 보기'}">${pill}</button>` : pill}</td></tr>`; }).join('') || `<tr><td colspan="5" class="muted" style="padding:30px;font-size:15px">이 날 목표 미달 인원이 없습니다 👍</td></tr>`}
+            <td><span class="m2gs">목표 <b>${r.m.t}</b> / 환산 <b class="t-lo">${f2(r.m.v)}</b></span></td><td>${m2bar(r.m.v / r.m.t, r.m.ym || r.x.ym)}</td><td>${det(r)}</td>
+            <td>${canE || f ? `<button class="m2sb" data-fe="${esc(r.x.u.id)}|${r.d}" title="${canE ? (f ? '수정' : '특이사항 · 피드백 작성') : '내용 보기'}">${pill}</button>` : pill}</td></tr>`; }).join('') || `<tr><td colspan="5" class="muted" style="padding:30px;font-size:15px">선택 기간에 집계된 목표 미달 인원이 없습니다 👍</td></tr>`}
         </tbody></table></div><div class="muted m2ft"><b>미작성</b> = 아직 안 씀 · <b>진행 중</b> = 피드백을 주고 지켜보는 중 (재확인일에 알림) · <b>완료</b> = 재확인까지 끝남 · 작성한 내용은 일일보고에 자동으로 들어갑니다</div></div>`;
     }
     const ALL = [].concat(...sel.map(g => rowsOf(g, DS))), doneN = ALL.filter(r => r.f && mgFbSt(r.f) === '완료').length;   // v28.79 : 완료 칸 (선택한 날 미달 피드백 중 완료)
-    box.innerHTML = `<div class="m2ks">${card('red', IC.warn, '미달 인원', tot.ppl, dLabel(v.fbd) + ' 근무자 중', 'ppl')}${card('amber', IC.pen, '미작성 피드백', tot.todo, '특이사항 · 피드백 필요', 'todo')}${card('violet', IC.clip, '재확인 필요', rcN, '재확인일이 된 피드백', 'rc')}${card('green', IC.chk || IC.pen, '피드백 완료', doneN, dLabel(v.fbd) + ' 미달 중 완료', 'done')}${card('blue', IC.cal, '오늘 일정', todayN, '조립팀 일정 · 면담 · 업무 마감', 'today')}</div>${chips}${body}`;
+    box.innerHTML = `<div class="m2ks">${card('red', IC.warn, '미달 인원', tot.ppl, range.label + ' · 중복 제외', 'ppl')}${card('amber', IC.pen, '미작성 피드백', tot.todo, '특이사항 · 피드백 필요', 'todo')}${card('violet', IC.clip, '재확인 필요', rcN, '재확인일이 된 피드백', 'rc')}${card('green', IC.chk || IC.pen, '피드백 완료', doneN, range.label + ' 미달 중 완료', 'done')}${card('blue', IC.cal, '오늘 일정', todayN, '조립팀 일정 · 면담 · 업무 마감', 'today')}</div>${chips}${body}`;
     const fbRow = r => ({ a: r.x.name, b: r.x.group, c: `${dLabel(r.d)} · 환산 ${f2(r.m.v)} / 목표 ${r.m.t} · ${mgFbSt(r.f)}`, go: () => mgFbOpen(r.x.u.id, r.d, M) });
     const KL = {
-      ppl: () => mgKList('미달 인원', dLabel(v.fbd), ALL.map(fbRow)),
-      todo: () => mgKList('미작성 피드백', dLabel(v.fbd), ALL.filter(r => !r.f).map(fbRow)),
-      done: () => mgKList('피드백 완료', dLabel(v.fbd), ALL.filter(r => r.f && mgFbSt(r.f) === '완료').map(fbRow)),
+      ppl: () => mgKList('미달 인원', esc(range.label), ALL.map(fbRow)),
+      todo: () => mgKList('미작성 피드백', esc(range.label), ALL.filter(r => !r.f).map(fbRow)),
+      done: () => mgKList('피드백 완료', esc(range.label), ALL.filter(r => r.f && mgFbSt(r.f) === '완료').map(fbRow)),
       rc: () => mgKList('재확인 필요', '재확인일이 된 피드백', ((S.mgD || {}).fb || []).filter(f => mgFbRc(f) && sel.includes(f.group)).map(f => ({ a: f.name, b: f.group, c: `미달 ${dLabel(f.date)} · 재확인 ${dLabel(f.rc)}`, go: () => mgFbOpen(f.userId, f.date, M) }))),
       today: () => mgKList('오늘 일정', dLabel(S.today), [].concat(calToday().map(e => ({ a: e.title, b: '조립팀 일정', c: (e.tm || '종일') })), mgMine().E.filter(e => e.kind === 'm' && e.date === S.today && e.result === '예정').map(e => ({ a: e.title || '면담', b: '면담', c: (e.time || '') + ' ' + (e.people || []).join(', ') })), mgMine().T.filter(t => t.status !== '완료' && t.due === S.today).map(t => ({ a: t.title, b: '업무 마감', c: '오늘 마감' })))),
     };
     $$('[data-kl]', box).forEach(b => (b.onclick = () => KL[b.dataset.kl] && KL[b.dataset.kl]()));
-    const goWeek = k => { const nm = C.addDays(mon, 7 * k), ds = [0, 1, 2, 3, 4, 5].map(i => C.addDays(nm, i)).filter(d => d < S.today && mgFbPeriod(d)); v.fbd = ds.filter(hasD).pop() || ds.filter(d => mgDow(d) !== 6).pop() || nm; drawMgr(); };
-    $('#mgFbDate').onchange = e => { const date=e.target.value; if(!date || date>=S.today || !mgFbPeriod(date)){e.target.value=v.fbd;return toast('귀속월이 설정된 지난 날짜를 선택하세요',true);} v.fbd=date;drawMgr(); };
-    $('#mgFbMonth').onchange = e => { const p=(S.periods||[]).find(p=>p.ym===e.target.value);if(!p)return;v.fbd=p.end && p.end<S.today?p.end:C.addDays(S.today,-1);drawMgr(); };
-    if ($('#m2wp')) $('#m2wp').onclick = () => goWeek(-1); if ($('#m2wn')) $('#m2wn').onclick = () => goWeek(1);
-    $$('[data-fd]', box).forEach(b => (b.onclick = () => { v.fbd = b.dataset.fd; drawMgr(); }));
+    mgQueryBind(box,v,'fbQuery','fbg');
     $$('[data-gg]', box).forEach(b => (b.onclick = () => { v.fbg = b.dataset.gg; drawMgr(); }));
     if ($('#m2back')) $('#m2back').onclick = () => { v.fbg = ''; drawMgr(); };
     $$('[data-fe]', box).forEach(b => (b.onclick = () => { const [u, d] = b.dataset.fe.split('|'); mgFbOpen(u, d, M); }));
@@ -11272,41 +11300,46 @@ async function addCharts(buf, jobs) {
   // ---------- 2. 파트원 면담관리
   const mgCanAuto = () => !isRO() && !S.pv && (S.me.mg || []).length > 0;
   async function mgMeet(box) {
-    const v = S.mgv, adm = S.me.role === '관리자', cfg = mgCfg(), G = mgGroupsOf();
+    const v = S.mgv, adm = S.me.role === '관리자', cfg = mgCfg(), G = mgGroupsOf(), range=mgQueryRange(S.mgv,'meetQuery');
+    const readSeq=v.meetReadSeq=(v.meetReadSeq||0)+1;
     box.innerHTML = '<div class="muted" style="padding:20px">파트원 불러오는 중…</div>';
-    const M = await mgMembers(G); if (S.view !== 'mgr' || v.tab !== 'meet') return;
+    const M = await mgMembers(G); if (S.view !== 'mgr' || S.mgv!==v || v.tab !== 'meet' || readSeq!==v.meetReadSeq) return;
     let BI = null, biErr = ''; try { BI = await mgBI(); } catch (e) { biErr = e.message; }
+    if (S.view!=='mgr'||S.mgv!==v||v.tab!=='meet'||readSeq!==v.meetReadSeq)return;
     const hol = new Set(((BI && BI.hol) || []).map(h => h[0]));
     if (BI && mgCanAuto()) { let k = ''; try { k = 'mga|' + S.me.id + '|' + S.today; } catch (e) { }
       let done = false; try { done = sessionStorage.getItem(k) === '1'; } catch (e) { done = !!v.autoDone; }
       if (!done && !v.autoDone) { v.autoDone = true; try { sessionStorage.setItem(k, '1'); } catch (e) { } const r = await mgAutoRun(M, BI, true); if (r && r.added) { await mgLoad(true); if (S.view === 'mgr' && v.tab === 'meet') drawMgr(); return; } } }
     // ---- v28.75 : 그룹 카드 → 그룹별 목록 → 이름 누르면 면담 내용 (그룹 업무관리와 같은 구조)
     const adm0 = S.me.role === '관리자', SG = adm0 ? mgAllG() : (S.me.mg || []);
-    const rows = M.filter(x => !x.u.pend && SG.includes(x.group)).map(x => mgMeetRow(x, hol));
+    const allRows = M.filter(x => !x.u.pend && SG.includes(x.group)).map(x => mgMeetRow(x, hol));
+    const selected=v.mmg && SG.includes(v.mmg)?v.mmg:'';
+    allRows.forEach(r=>{r.cntP=((S.mgD||{}).events||[]).filter(e=>e.kind==='m' && e.result==='실시' && (e.people||[]).map(normName).includes(r.n) && mgRangeHas(range,e.date)).length;});
+    const rows=allRows.filter(r=>!selected||r.x.group===selected);
     const stOf = r => { if (r.sch) { const s = r.st, past = r.sch.date < S.today; return past ? ['처리 필요', 'red'] : s.late ? ['기한 초과 예외', 'red'] : s.conflict ? ['일정 충돌', 'amber'] : [s.auto ? '자동 예약' : '예약', 'blue']; }
       if (r.need === 'miss') return r.due < S.today ? ['기한 초과', 'red'] : ['면담 필요 (미달)', 'amber']; if (r.need === 'cycle') return ['면담 필요 (주기)', 'gray']; return ['정상', 'green']; };
     const rk = r => r.need === 'miss' && !r.sch ? 0 : r.sch && (r.st.late || r.st.conflict || r.sch.date < S.today) ? 1 : r.need === 'miss' ? 2 : r.need === 'cycle' && !r.sch ? 3 : r.sch ? 4 : 5;
     const isOver = r => (r.need === 'miss' && !r.sch && r.due < S.today) || (r.sch && (r.st.late || r.sch.date < S.today));
     const gs = L => ({ n: L.length, need: L.filter(r => r.need && !r.sch).length, bk: L.filter(r => r.sch).length, over: L.filter(isOver).length, cm: L.reduce((a, r) => a + r.cntP, 0), cnt: L.reduce((a, r) => a + r.cntAll, 0), done: L.filter(r => r.lastM && dGap(r.lastM, S.today) < cfg.cycle).length });
-    const T = gs(rows), single = SG.length === 1 || !adm0;
+    const T = gs(rows), single = SG.length === 1;
     if (single || !SG.includes(v.mmg)) { if (single) v.mmg = SG.length === 1 ? SG[0] : v.mmg; else if (!SG.includes(v.mmg)) v.mmg = ''; }
     const lastEv = r => ((S.mgD || {}).events || []).filter(e => e.kind === 'm' && e.result === '실시' && e.people.map(normName).includes(r.n)).sort((a, b) => (a.date < b.date ? 1 : -1))[0] || null;
     const one = s => String(s || '').replace(/\s+/g, ' ').trim();
     const card = (cls, ic, k, val, sub, u, key) => `<div class="m2k ${cls}" ${key ? `data-kl="${key}" title="누르면 목록"` : ''}><span class="m2ki">${ic}</span><span class="m2kt"><small>${k}</small><b>${val}<em>${u || '건'}</em></b><span>${sub}</span></span></div>`;
-    const kpi = `<div class="m2ks">${card('red', IC.warn, '면담 필요', T.need, '미달 5근무일 · 주기 도래, 예약 전', '명', 'need')}${card('amber', IC.clip, '기한 초과 · 처리 필요', T.over, '예정일이 지났거나 기한 넘김', '건', 'over')}${card('blue', IC.cal, '예약된 면담', T.bk, '자동 예약 포함', '건', 'bk')}${card('violet', IC.pen, '이번 귀속월 면담 실시', T.cm, '누적 ' + T.cnt + '회 · 인원 ' + T.n + '명', '건', 'cm')}${card('green', IC.chk || IC.pen, '주기 내 면담 완료', T.done, '최근 ' + cfg.cycle + '일 안에 면담한 인원', '명', 'done')}</div>`;
+    const kpi = `<div class="m2ks">${card('red', IC.warn, '면담 필요', T.need, '미달 5근무일 · 주기 도래, 예약 전', '명', 'need')}${card('amber', IC.clip, '기한 초과 · 처리 필요', T.over, '예정일이 지났거나 기한 넘김', '건', 'over')}${card('blue', IC.cal, '현재 예약된 면담', T.bk, '자동 예약 포함', '건', 'bk')}${card('violet', IC.pen, '선택 기간 면담 실시', T.cm, '누적 ' + T.cnt + '회 · 인원 ' + T.n + '명', '건', 'cm')}${card('green', IC.chk || IC.pen, '주기 내 면담 완료', T.done, '최근 ' + cfg.cycle + '일 안에 면담한 인원', '명', 'done')}</div>`;
     const auto = mgCanAuto() ? '<button id="m2auto" class="primary sm">🗓 면담 자동 배치</button>' : '';
     let body = '';
     if (!SG.length) body = '<div class="card m2c"><div class="m2e">담당 그룹이 없습니다</div></div>';
     else if (!v.mmg) {
-      body = `<div class="m2gg">${SG.map(g => { const L = rows.filter(r => r.x.group === g), q = gs(L), pc = q.n ? Math.round(q.done / q.n * 100) : 0;
+      body = `<div class="m2gg">${SG.map(g => { const L = allRows.filter(r => r.x.group === g), q = gs(L), pc = q.n ? Math.round(q.done / q.n * 100) : 0;
         return `<button class="m2gc ${q.need || q.over ? '' : 'calm'}" data-mg="${esc(g)}"><span class="m2gh">${gdot(g)}<span style="flex:1"></span>${q.over ? `<span class="m2gb">기한 초과 ${q.over}</span>` : q.need ? `<span class="m2gb">면담 필요 ${q.need}</span>` : '<span class="m2gb ok">양호</span>'}</span>
-          <span class="m2gn"><span>인원<b>${q.n}</b></span><span>면담 필요<b class="${q.need ? 't-lo' : ''}">${q.need}</b></span><span>예약<b>${q.bk}</b></span><span>이번 달 면담<b class="c-ok">${q.cm}</b></span></span><span class="m2pb"><i style="width:${pc}%"></i></span>
+          <span class="m2gn"><span>인원<b>${q.n}</b></span><span>면담 필요<b class="${q.need ? 't-lo' : ''}">${q.need}</b></span><span>예약<b>${q.bk}</b></span><span>기간 내 면담<b class="c-ok">${q.cm}</b></span></span><span class="m2pb"><i style="width:${pc}%"></i></span>
           <span class="m2gf">최근 ${cfg.cycle}일 면담 완료 <b>${q.done}/${q.n}명</b> · 누적 <b>${q.cnt}회</b></span></button>`; }).join('')}</div>`;
     } else {
       const L = rows.filter(r => r.x.group === v.mmg).sort((a, b) => rk(a) - rk(b) || (a.due || a.next || '9').localeCompare(b.due || b.next || '9') || a.name.localeCompare(b.name)), q = gs(L);
-      body = `<div class="card m2c"><div class="m2h">${single ? '' : '<button class="sm" id="mmback">‹ 전체 그룹</button>'}<b>${gdot(v.mmg)} 면담</b><span class="m2chips"><span>인원 <b>${q.n}</b></span><span>면담 필요 <b class="${q.need ? 't-lo' : ''}">${q.need}</b></span><span>예약 <b>${q.bk}</b></span><span>이번 달 면담 <b>${q.cm}</b></span><span>누적 <b>${q.cnt}</b></span></span><span style="flex:1"></span>${auto}</div>
+      body = `<div class="card m2c"><div class="m2h">${single ? '' : '<button class="sm" id="mmback">‹ 전체 그룹</button>'}<b>${gdot(v.mmg)} 면담</b><span class="m2chips"><span>인원 <b>${q.n}</b></span><span>면담 필요 <b class="${q.need ? 't-lo' : ''}">${q.need}</b></span><span>예약 <b>${q.bk}</b></span><span>기간 내 면담 <b>${q.cm}</b></span><span>누적 <b>${q.cnt}</b></span></span><span style="flex:1"></span>${auto}</div>
         ${biErr ? `<div class="warn" style="margin:8px 14px">휴무 · 연차 정보를 불러오지 못해 자동 예약을 하지 않았습니다 (${esc(biErr)}) — 새로고침 후 다시 시도하세요</div>` : ''}
-        <div class="tbs m2sc"><table class="list m2t m2big"><thead><tr><th style="text-align:left">이름 · 최근 면담 · 후속 조치</th><th>이달 평가평균</th><th>달성률</th><th>면담 일정</th><th>다음 면담</th><th title="누적 / 이번 귀속월">면담 횟수</th><th>상태</th></tr></thead><tbody>
+        <div class="tbs m2sc"><table class="list m2t m2big"><thead><tr><th style="text-align:left">이름 · 최근 면담 · 후속 조치</th><th>현재 귀속월 평가평균</th><th>달성률</th><th>면담 일정</th><th>다음 면담</th><th title="누적 / 선택 기간">면담 횟수</th><th>상태</th></tr></thead><tbody>
         ${L.map(r => { const [s, c] = stOf(r), x = r.x, le = lastEv(r);
           return `<tr class="click" data-mh="${esc(x.name)}"><td class="l m2who"><div class="m2nm1"><b>${esc(x.name)}</b>${x.title ? `<small class="muted"> ${esc(x.title)}</small>` : ''}</div>
             <div class="m2ln"><em>최근 면담</em>${le ? esc(dLabel(le.date) + ' · ' + (one(le.detail) || le.title)) : '<span class="muted">기록 없음</span>'}</div><div class="m2ln"><em>후속 조치</em>${le && le.followup ? esc(one(le.followup)) : '<span class="muted">-</span>'}</div></td>
@@ -11315,13 +11348,18 @@ async function addCharts(buf, jobs) {
             <td>${r.next ? dLabel(r.next) : '<span class="muted">기록 없음</span>'}</td><td><b>${r.cntAll}</b> / ${r.cntP}</td><td><span class="m2st ${c}">${s}</span></td></tr>`; }).join('') || '<tr><td colspan="7" class="muted" style="padding:26px">파트원이 없습니다</td></tr>'}
         </tbody></table></div><div class="muted m2ft">목표 미달 인원 = 판정일부터 <b>5근무일 안에</b> 실제 면담 (예약은 완료가 아님) · 그 외 = 주기 <b>${cfg.cycle}일</b> 기준 · ${cfg.days.map(d => C.WD[d]).join('·')} ${cfg.time}부터 ${cfg.step}분 간격 · 하루 ${cfg.perDay}명 · 연차 · 휴무 · 공휴일 피함 · 이름을 누르면 면담 내용 · 이력이 열립니다 (본인이 기록한 면담 + 팀장 · 관리자)</div></div>`;
     }
-    box.innerHTML = kpi + body;
+    const periodNames=new Set(rows.map(r=>r.n));
+    const periodEvents=((S.mgD||{}).events||[]).filter(e=>e.kind==='m' && mgRangeHas(range,e.date) && (e.people||[]).map(normName).some(n=>periodNames.has(n))).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    const periodInfo=`<div class="mg-query-period mg-query-note"><b>선택 기간 면담</b><span>예정 ${periodEvents.filter(e=>e.result==='예정').length}건 · 실시 ${periodEvents.filter(e=>e.result==='실시').length}건 · 취소 ${periodEvents.filter(e=>e.result==='취소').length}건</span><button class="sm" id="mgPeriodEvents">기간 내역 보기</button><span class="muted">실시 건수는 면담 일정 기준 · 인원별 횟수는 참여 인원별 집계</span></div>`;
+    box.innerHTML = mgQueryBar(v,'meetQuery',SG,v.mmg||'') + `<div class="muted mg-query-note">상태 기준일 ${S.today} · 현재 ${esc(mgPeriodLabel(curPeriod()))}<br>면담 필요·기한 초과·예약·최근 면담은 오늘 기준 / 실시 건수는 선택 기간 기준</div>` + periodInfo + kpi + body;
+    mgQueryBind(box,v,'meetQuery','mmg');
+    $('#mgPeriodEvents',box).onclick=()=>mgKList('선택 기간 면담 내역',range.from+' ~ '+range.to,periodEvents.map(e=>({a:e.date+' '+(e.time||''),b:(e.people||[]).filter(n=>periodNames.has(normName(n))).join(', '),c:(e.result||'')+' · '+(e.title||''),go:()=>mgEvent(e.id)})));
     const mRow = r => { const [st] = stOf(r); return { a: r.x.name, b: r.x.group, c: `${st}${r.sch ? ' · 예약 ' + dLabel(r.sch.date) : ''}${r.lastM ? ' · 최근 면담 ' + dLabel(r.lastM) : ''}`, go: () => mgHist(r.x.name) }; };
     const KL = {
       need: () => mgKList('면담 필요', '예약 전', rows.filter(r => r.need && !r.sch).map(mRow)),
       over: () => mgKList('기한 초과 · 처리 필요', '', rows.filter(isOver).map(mRow)),
       bk: () => mgKList('예약된 면담', '', rows.filter(r => r.sch).map(mRow)),
-      cm: () => mgKList('이번 귀속월 면담 실시', '', rows.filter(r => r.cntP > 0).map(r => Object.assign(mRow(r), { c: `이번 귀속월 ${r.cntP}회 · 누적 ${r.cntAll}회` }))),
+      cm: () => mgKList('선택 기간 면담 실시', '', rows.filter(r => r.cntP > 0).map(r => Object.assign(mRow(r), { c: `선택 기간 ${r.cntP}회 · 누적 ${r.cntAll}회` }))),
       done: () => mgKList('주기 내 면담 완료', `최근 ${cfg.cycle}일`, rows.filter(r => r.lastM && dGap(r.lastM, S.today) < cfg.cycle).map(mRow)),
     };
     $$('[data-kl]', box).forEach(b => (b.onclick = () => KL[b.dataset.kl] && KL[b.dataset.kl]()));
