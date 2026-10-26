@@ -4575,7 +4575,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const go = k => { const ny = +nextYm(L.ym, k).slice(0, 4); L.ym = nextYm(L.ym, k); if (ny !== L.year) render(main); else draw(); };
     A.$('#lvp').onclick = () => go(-1); A.$('#lvn').onclick = () => go(1);
     A.$('#lvt').onclick = () => { L.ym = A.S.today.slice(0, 7); render(main); };
-    A.$$('[data-lt]').forEach(b => (b.onclick = () => { L.tab = b.dataset.lt; draw(); }));
+    A.$$('[data-lt]').forEach(b => (b.onclick = () => { L.tab = b.dataset.lt; L.pAuto = false; draw(); }));
     if (A.$('#lvimp')) A.$('#lvimp').onclick = importXlsx;
     if (A.$('#lvxl')) A.$('#lvxl').onclick = exportXlsx;
     if (A.$('#lvadd')) A.$('#lvadd').onclick = () => leaveModal({ d1: A.S.today, d2: A.S.today });
@@ -5126,6 +5126,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const gOff = date => onDay(date).length + alts(date).length;
     const peak = x => { let m = 0; for (let t = x.d1; t <= x.d2; t = LC.addDays(t, 1)) if (LC.isWork(t, H)) m = Math.max(m, gOff(t)); return m; };
     const days = []; for (let t = f; t <= l; t = LC.addDays(t, 1)) if (LC.dow(t) >= 1 && LC.dow(t) <= 5) days.push(t);
+    if (!list.length && !L.pAuto && Object.keys(other).length) {                  // v28.86 : 이 달에 확인할 신청이 없고 다른 달에 있으면 그 달로 이동 (한 번만)
+      L.pAuto = true; L.ym = Object.keys(other).sort()[0];
+      if (+L.ym.slice(0, 4) !== L.year) render(L.main); else draw();
+      return;
+    }
     const gl = groups.join(' · '), nm = id => A.esc((staffById(id) || {}).name || '?');
     const lead = days.length ? LC.dow(days[0]) - 1 : 0;
     const cell = t => { const L0 = onDay(t), al = alts(t), n = L0.length + al.length, hol = !LC.isWork(t, H);
@@ -5638,7 +5643,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     fi.click();
   }
 
-  window.Leave = { init, render, prefetch, counts: () => L.counts, reset: () => { if (window.ActualAttendance) window.ActualAttendance.reset(); L.data = null; L.year = null; L.counts = null; L.tab = null; L.ym = null; L.part = ''; L.recQ = ''; L.setQ = ''; L.showPend = true; L.sumSort = null; L.main = null; L.ix = null; } };
+  window.Leave = { init, render, prefetch, counts: () => L.counts, reset: () => { if (window.ActualAttendance) window.ActualAttendance.reset(); L.data = null; L.year = null; L.counts = null; L.tab = null; L.ym = null; L.part = ''; L.pAuto = false; L.recQ = ''; L.setQ = ''; L.showPend = true; L.sumSort = null; L.main = null; L.ix = null; } };
 })();
 </script>
 <script>/* 인사평가 계산 (예전 구글 앱스 스크립트 Code.gs 의 buildMonth_ · items_ · orderRows_ 를 그대로 옮김) */
@@ -7956,7 +7961,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.85';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.86';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
