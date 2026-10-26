@@ -2917,6 +2917,17 @@ html[data-theme=dark] .login2 .login{border-color:#647b98}html[data-theme=dark] 
 .ddkpis .ddstack>i,.ddkpis .qb>i,.ddquick-track>i{opacity:.6}
 @media(max-width:1250px){.mg-query-compact .mg-query-period{flex-wrap:wrap}.mg-query-compact .mg-query-caption{margin-left:0;white-space:normal}}
 @media(max-width:800px){.login2 .lhero-ai{flex-basis:100%;min-height:440px;padding:28px;background-position:center 65%;gap:20px}.login2 .lform{flex-basis:100%;padding:28px 20px}.lhero-ai h1{font-size:26px}.ddfeedback .nt{grid-template-columns:1fr}.bk-remind-table table.list th,.bk-remind-table table.list td{font-size:12px;padding:8px 4px}}
+</style><style>
+/* v28.98: screenshot review corrections; no calculation or storage changes. */
+.mg-query-compact .mg-query-inline-groups{display:inline-flex;align-items:center;gap:6px;margin:0 3px;flex-shrink:0}.mg-query-inline-groups>b{font-size:12px;white-space:nowrap;margin-right:2px}.mg-query-compact .mg-query-chip{padding:6px 10px;border:1px solid transparent;border-radius:99px;font-size:12px}.mg-query-compact .mg-query-chip.mg-selected{border-color:var(--mg-group)}
+.ddfeedback .ddfeedback-person{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}.ddfeedback-group{display:inline-flex;align-items:center;white-space:nowrap;background:var(--line2);padding:3px 8px;border-radius:7px;font-size:12px;line-height:1.4}.ddfeedback-name{display:block;font-size:14px;line-height:1.5;padding:2px 0}.ddfeedback .nt{grid-template-columns:170px minmax(0,1fr);column-gap:22px}.ddfeedback-group .gdot{margin-right:5px;flex-shrink:0}
+.ddcombo-row:has(.ddline-integrated){position:relative}.ddline-integrated{grid-column:2/-1;grid-row:2;display:flex;align-items:center;gap:7px 16px;flex-wrap:wrap;font-size:12px;color:var(--sub);padding:3px 0 4px}.ddline-integrated b{color:var(--ink)}.ddline-integrated small{font-size:11px}.ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:4;grid-row:1}
+#main .acc .acckpi{grid-template-columns:minmax(170px,210px) minmax(0,1fr);gap:10px}#main .acc .acckpi .card{padding:12px 14px}#main .acc .acckb{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 16px}#main .acc .acckb b{font-size:12px;white-space:nowrap}#main .acc .acckb em{font-size:14px}#main .acc .acckpi .card>b{font-size:25px}
+#main .acc table.acctl{width:100%;table-layout:fixed}#main .acc table.acc-team{min-width:1000px}#main .acc table.acc-self{min-width:640px}#main .acc table.acctl td,#main .acc table.acctl th{padding:9px 8px}#main .acc table.acctl td.pr,#main .acc table.acctl td.tx,#main .acc table.acctl td.tx2{min-width:0;max-width:none;width:auto;text-align:left;white-space:normal;overflow-wrap:anywhere;line-height:1.5}#main .acc table.acctl .acc-product-summary{display:block;max-width:none;-webkit-line-clamp:unset;white-space:normal;overflow:visible}
+@media(max-width:1500px){.mg-query-compact .mg-query-period{flex-wrap:wrap}.mg-query-compact .mg-query-caption{flex-basis:100%;margin:0;font-size:11px}.mg-query-compact .mg-query-inline-groups{flex-wrap:wrap;flex-shrink:1}}
+@media(min-width:721px) and (max-width:1150px){.ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:2/-1;grid-row:3}}
+@media(max-width:1000px){#main .acc .acckpi{grid-template-columns:170px minmax(0,1fr)}#main .acc .acckb{grid-template-columns:repeat(3,minmax(0,1fr))}.ddfeedback .nt{grid-template-columns:150px minmax(0,1fr)}}
+@media(max-width:720px){#main .acc .acckpi{grid-template-columns:1fr}#main .acc .acckb{grid-template-columns:repeat(2,minmax(0,1fr))}.ddfeedback .nt{grid-template-columns:1fr;gap:8px}.ddline-integrated{grid-column:1/-1;grid-row:auto}.ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:1/-1;grid-row:auto}}
 </style></head>
 <body>
 <div id="app"></div>
@@ -7651,7 +7662,7 @@ async function addCharts(buf, jobs) {
         <div class="card"><span>${Z.mode === '기간 지정' && Z.range ? ymLab(Z.range.from) + ' ~ ' + ymLab(Z.range.to) : Z.mode === '전체' ? '전체 기간' : Z.mode === '월간' && Z.ym ? ymLab(Z.ym) : Z.year + '년'} 사고</span><b>${sel.length}<small> 건</small></b><em>${self ? (sel.length ? '종류는 오른쪽 · 줄을 누르면 자세히' : '사고가 없습니다 👍') : '사고 난 인원 ' + ppl + '명 · 웹 등록 ' + nWeb + '건 · 엑셀 ' + (sel.length - nWeb) + '건'}</em></div>
         <div class="card wide"><span>구분별</span><div class="acckb">${KINDS.map(k => { const v = kc[k] || 0; return `<div><i style="background:${KC[k]}"></i><b>${k}</b><em>${v}<small>건</small></em><span class="t"><i style="width:${sel.length ? v / sel.length * 100 : 0}%;background:${KC[k]}"></i></span></div>`; }).join('')}</div></div>
       </div>
-      <div class="card" style="padding:0;overflow:auto"><table class="list acctl"><thead><tr><th>출고일</th>${Z.ym || self ? '' : '<th>귀속월</th>'}${self ? '' : '<th>이름</th><th>그룹</th>'}<th>구분</th><th>주문번호</th>${self ? '' : '<th>제품</th>'}<th>증상 · 내용</th><th>처리</th>${self ? '' : '<th></th>'}</tr></thead><tbody>
+      <div class="card" style="padding:0;overflow:auto"><table class="list acctl ${self ? 'acc-self' : 'acc-team'}"><colgroup><col style="width:74px">${Z.ym || self ? '' : '<col style="width:76px">'}${self ? '' : '<col style="width:88px"><col style="width:82px">'}<col style="width:86px"><col style="width:110px">${self ? '' : '<col style="width:25%">'}<col><col style="width:25%">${self ? '' : '<col style="width:34px">'}</colgroup><thead><tr><th>출고일</th>${Z.ym || self ? '' : '<th>귀속월</th>'}${self ? '' : '<th>이름</th><th>그룹</th>'}<th>구분</th><th>주문번호</th>${self ? '' : '<th>제품</th>'}<th>증상 · 내용</th><th>처리</th>${self ? '' : '<th></th>'}</tr></thead><tbody>
         ${rows.slice(0, 500).map((r, i) => `<tr class="click" data-ai="${all.indexOf(r)}"><td class="nw">${r.d ? md(r.d) : '<span class="muted">-</span>'}</td>${Z.ym || self ? '' : `<td class="nw">${+r.ym.slice(5)}월</td>`}${self ? '' : `<td class="nw"><b>${esc(r.name)}</b></td><td class="nw">${A.gdot(r.grp)}</td>`}
           <td>${kTag(r.kind)}</td><td class="nw">${esc(r.ord) || '<span class="muted">-</span>'}</td>
           ${self ? '' : `<td class="pr">${(r.prods || []).length ? '<span class="acc-product-summary" title="' + esc(r.prods.map(p => accProductName(p.name || p.code)).join(' / ')) + '">' + esc(accProductSummary(r.prods)) + '</span>' : '<span class="muted">-</span>'}</td>`}
@@ -8082,7 +8093,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.97';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.98';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9960,7 +9971,7 @@ async function addCharts(buf, jobs) {
     const row=(n,legacy=false)=>{
       const p=D.P.find(p=>p.uid===n.userId||normName(p.name)===normName(n.name));
       const grp=n.group||(p&&p.grp)||'', name=(p&&p.disp)||n.name;
-      return `<div class="nt"><div>${gdot(grp)}<b>${esc(name)}</b></div><div><div class="r">${esc(n.na?'해당 없음':(n.note||n.reason||''))}</div><div class="f">${esc(n.fb||n.feedback||'')}</div><div class="by">${esc(n.by||'')} · ${esc(n.at||'')}${legacy?' · 이전 일일 특이사항':' · 작성완료'}</div></div></div>`;
+      return `<div class="nt"><div class="ddfeedback-person"><span class="ddfeedback-group">${gdot(grp)}</span><b class="ddfeedback-name">${esc(name)}</b></div><div><div class="r">${esc(n.na?'해당 없음':(n.note||n.reason||''))}</div><div class="f">${esc(n.fb||n.feedback||'')}</div><div class="by">${esc(n.by||'')} · ${esc(n.at||'')}${legacy?' · 이전 일일 특이사항':' · 작성완료'}</div></div></div>`;
     };
     return `<div class="card ddnotes ddfeedback"><h3 class="ddh">특이사항 · 업무 피드백<small>${esc(dLabel(r.date))} 기준 · 그룹업무관리 작성 내용 · 읽기 전용</small></h3>${r.feedbackVersion===1?((r.feedbacks||[]).map(n=>row(n)).join('')||'<div class="muted">해당 업무일에 작성된 피드백이 없습니다.</div>'):'<div class="warn">피드백 연동용 v28.97 SQL을 먼저 적용해 주세요.</div>'}${(r.notes||[]).length?`<details class="ddlegacy"><summary>이전 일일 특이사항 ${(r.notes||[]).length}건 · 보존 기록</summary>${r.notes.map(n=>row(n,true)).join('')}</details>`:''}</div>`;
   }
@@ -10137,22 +10148,19 @@ async function addCharts(buf, jobs) {
       </div>
     </div>`;
     if (r._prodError) h += '<div class="warn">라인생산 진행 현황을 불러오지 못했습니다. 현재 화면은 확정 실적 기준입니다. 새로고침 후 확인하세요.</div>';
-    if (r._prod) {
-      const p = r._prod;
-      h += `<div class="card ddline-live"><b>● 라인생산</b><span>수량 <b>${p.qty}대</b></span><span>기타 <b>${p.H}분</b></span><span>총환산 <b>${f2(p.T)}</b></span><span>참여 <b>${p.n}명</b></span><strong class="ddline-state">${esc(p.status)}</strong>${p.incomplete ? '<span class="t-lo">미완성 항목 있음 · 환산 가능한 입력만 계산</span>' : ''}<small>임시저장 완료 기준 · 월 통계·엑셀은 확정 실적 기준</small></div>`;
-    }
     // V7: 체크사항(그룹별)과 평균환산은 카드 하나에서 같은 행으로 확인. 특이사항 열 없음.
-    const activeGroups = D.G.filter(x => x.w);
+    const activeGroups = D.G.filter(x => x.w || (x.g === '라인' && r._prod));
     h += `<div class="card ddcombo-v7"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>막대 = 평균 · 검은 선 = 그룹 목표 · 체크사항은 전 근무일 기준</small></h3>
       <div class="ddcombo-list">
         ${activeGroups.map(x => `<div class="ddcombo-row">
           <div class="ddcombo-name">${gdot(x.g)}</div>
           <div class="ddcombo-graph" style="--soft-group:${gcol(x.g)}">${ddBar(x.avg, x.tg, 0, gcol(x.g))}</div>
           <div class="ddcombo-value"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ' / 목표 -'} <small>· 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</small></div>
+          ${x.g === '라인' && r._prod ? `<div class="ddline-integrated"><span>생산수량 <b>${r._prod.qty}대</b></span><span>기타시간 <b>${r._prod.H}분</b></span><span>총환산 <b>${f2(r._prod.T)}</b></span><span>생산 참여 <b>${r._prod.n}명</b></span>${r._prod.incomplete ? '<span class="t-lo">미완성 항목 있음 · 환산 가능한 입력만 계산</span>' : ''}<small>임시저장 완료 기준 · 월 통계·엑셀은 확정 실적 기준</small></div>` : ''}
           <div class="ddcombo-tail"><div class="ddcombo-checks" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>${x.g === '라인' && r._prod ? `<span class="ddline-state">${esc(r._prod.status)}</span>` : ''}</div>
         </div>`).join('')}
       </div>
-      ${(() => { const E = D.G.filter(x => !x.w); if (!E.length || !D.G.length) return '';
+      ${(() => { const E = D.G.filter(x => !x.w && !(x.g === '라인' && r._prod)); if (!E.length || !D.G.length) return '';
         const nm = E.map(x => `<span>${gdot(x.g)}${x.sup ? `<em>지원 ${x.sup}</em>` : ''}</span>`).join('');
         return E.length === D.G.length ? '<div class="ddnone all"><b>아직 조립 실적이 없습니다</b><span class="muted">입력이 들어오면 그룹별 막대가 생깁니다</span></div>'
           : `<div class="ddnone ddcombo-noresult"><b>실적 없음</b><div>${nm}</div></div>`; })()}
@@ -11297,7 +11305,7 @@ async function addCharts(buf, jobs) {
   const mgRangeHas=(r,d)=>!!d&&d>=r.from&&d<=r.to&&(r.mode!=='week'||(mgDow(d)>0&&mgDow(d)<6));
   function mgQueryBar(v,key,groups,selected){
     const r=mgQueryRange(v,key),q=v[key],mon=wkMon(q.date),P=mgFbPeriod(q.date),fb=key==='fbQuery';
-    return `<div class="card mg-query mg-query-compact"><div class="mg-query-period"><div class="seg">${[['day','일간'],['week','주간'],['month','월간'],['period','귀속월']].map(([k,t])=>`<button data-mq-mode="${k}" class="${q.mode===k?'on':''}" aria-pressed="${q.mode===k}">${t}</button>`).join('')}</div><label>조회일 <input data-mq-date type="date" value="${q.date}" ${fb?`max="${S.today}"`:''}></label>${q.mode==='period'?`<label>귀속월 <select data-mq-ym>${(S.periods||[]).filter(p=>p.start<=S.today).slice().sort((a,b)=>b.ym.localeCompare(a.ym)).map(p=>`<option value="${p.ym}" ${q.ym===p.ym?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label>`:''}<button class="sm" data-mq-today>오늘</button><label>그룹 <select data-mq-group-select aria-label="조회 그룹"><option value="">전체 그룹</option>${groups.map(g=>`<option value="${esc(g)}" ${selected===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label><button class="sm" data-mq-refresh>새로고침</button><span class="muted mg-query-caption">${esc(r.label)} · ${r.from}${r.to!==r.from?' ~ '+r.to:''} · ${P?esc(ymLabel(P.ym))+' 귀속월':'귀속월 미설정'}</span></div></div>`;
+    return `<div class="card mg-query mg-query-compact"><div class="mg-query-period"><div class="seg">${[['day','일간'],['week','주간'],['month','월간'],['period','귀속월']].map(([k,t])=>`<button data-mq-mode="${k}" class="${q.mode===k?'on':''}" aria-pressed="${q.mode===k}">${t}</button>`).join('')}</div><label>조회일 <input data-mq-date type="date" value="${q.date}" ${fb?`max="${S.today}"`:''}></label>${q.mode==='period'?`<label>귀속월 <select data-mq-ym>${(S.periods||[]).filter(p=>p.start<=S.today).slice().sort((a,b)=>b.ym.localeCompare(a.ym)).map(p=>`<option value="${p.ym}" ${q.ym===p.ym?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label>`:''}<button class="sm" data-mq-today>오늘</button><div class="mg-query-inline-groups" role="group" aria-label="그룹 선택"><b>그룹</b>${[['','전체 그룹'],...groups.map(g=>[g,g])].map(([g,t])=>`<button type="button" class="sm mg-query-chip ${selected===g?'mg-selected':''}" data-mq-group="${esc(g)}" aria-pressed="${selected===g}" style="--mg-group:${g?gcol(g):'#2563eb'}">${g?`<i class="mg-query-dot" style="background:${gcol(g)}"></i>`:''}${esc(t)}</button>`).join('')}</div><button class="sm" data-mq-refresh>새로고침</button><span class="muted mg-query-caption">${esc(r.label)} · ${r.from}${r.to!==r.from?' ~ '+r.to:''} · ${P?esc(ymLabel(P.ym))+' 귀속월':'귀속월 미설정'}</span></div></div>`;
   }
   function mgQueryRefresh(range){
     for(const p of S.periods||[])if(p.start<=range.to&&(!p.end||p.end>=range.from)){if(S._mcache)delete S._mcache['M|'+p.ym];}
