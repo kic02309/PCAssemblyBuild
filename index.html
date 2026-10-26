@@ -7984,7 +7984,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.87';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.88';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9968,7 +9968,7 @@ async function addCharts(buf, jobs) {
         <div class="ddvol"><span class="ddvol-asm">조립 <b>${x.q}</b></span><span class="ddvol-ship">출고 <b>${x.ship || 0}</b></span><span class="ddvol-mfg${staff ? '' : ' glink'}" ${staff ? '' : `data-gmf="${esc(x.g)}" title="제조 내역"`}>제조 <b>${x.mq || 0}</b></span></div>
         ${x.sup || (x.g === '라인' && r.line) ? `<div class="ddextra">${x.sup ? '지원 ' + x.sup + '명' : ''}${x.sup && x.g === '라인' && r.line ? ' · ' : ''}${x.g === '라인' && r.line ? '총량 배분' : ''}</div>` : ''}</div>
       ${x.L.map(p => {
-        const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${!staff && p.note ? ` <span class="memo" title="${esc(['💬 ' + dLabel(r.date) + ' 특이사항', p.note.reason ? '사유 : ' + p.note.reason : '', p.note.feedback ? '피드백 : ' + p.note.feedback : '', p.note.by ? '— ' + p.note.by : ''].filter(Boolean).join('\n'))}">💬</span>` : ''}${canNote(p) && p.uid && p.oth > 0.05 ? `<button class="oth1" data-oth="1" title="기타시간 사유 보기 · 고치기">⏱</button>` : ''}</div>`;
+        const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${!staff && p.note ? ` <span class="memo" title="${esc(['💬 ' + dLabel(r.date) + ' 특이사항', p.note.reason ? '사유 : ' + p.note.reason : '', p.note.feedback ? '피드백 : ' + p.note.feedback : '', p.note.by ? '— ' + p.note.by : ''].filter(Boolean).join('\n'))}">💬</span>` : ''}${canNote(p) && p.uid ? `<button class="oth1" data-oth="1" title="기타시간 · 주문 메모 보기 · 고치기">⏱</button>` : ''}</div>`;
         if (p.kind === 'work') {
           const rate = p.target > 0 ? Math.round(p.v / p.target * 100) : null, pl = lvOf(p.v, p.target, D.GY), at = p.adj ? adjTag(p.adj) : '';
           const label = f1d(p.v) + (p.target > 0 ? ' / ' + f1d(p.target) : '');
