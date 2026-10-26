@@ -2796,6 +2796,29 @@ html[data-theme=dark] .modal:has(:is(#tt,#ek,#ffb,#cfd,#pt)) :is(input,select,te
 }
 
 </style>
+<style>
+/* v28.87: 기존 기타시간 팝업에 주문 메모 표시 */
+.modal.otm.omremote{width:min(1060px,96vw)}
+.omremote .omhint{margin:-4px 0 12px;font-size:12px}
+.omremote .omlayout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px}
+.omremote h4{margin:0 0 10px;font-size:13px;color:var(--sub)}
+.omremote .omleft{border-right:1px solid var(--line);padding-right:18px;min-width:0}
+.omremote .omright{min-width:0;max-height:55vh;overflow:auto}
+.omremote .otr{gap:5px}.omremote .otr select{width:100px;padding:7px}
+.omremote .otr input[data-f="m"]{width:55px;text-align:right}
+.omremote .otr button{padding:3px}
+.omremote #omadd{margin-top:8px}
+.omremote .omitem{padding:10px 0;border-bottom:1px solid var(--line)}
+.omremote .omitem:first-child{padding-top:0}
+.omremote .omrow{display:grid;grid-template-columns:minmax(85px,1fr) 105px 58px 16px 48px;gap:5px;align-items:center}
+.omremote .omrow b{font-size:12px;overflow-wrap:anywhere}
+.omremote .omrow input,.omremote .omrow select{min-width:0;width:100%;padding:7px;font-size:12px}
+.omremote .omrow input{text-align:right}.omremote .omrow button{padding:7px}
+.omremote .omtext{margin-top:7px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.omremote .omstate{font-size:11px;margin-top:4px}
+@media(max-width:820px){.omremote .omlayout{grid-template-columns:1fr}.omremote .omleft{border-right:0;border-bottom:1px solid var(--line);padding:0 0 14px}.omremote .omright{max-height:none}}
+@media(max-width:430px){.omremote .omrow{grid-template-columns:minmax(60px,1fr) 88px 47px 13px 43px;gap:3px}.omremote .otr select{width:80px}.omremote .otr input[data-f="m"]{width:42px}.omremote .omrow input,.omremote .omrow select{padding:6px 4px}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -7961,7 +7984,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v28.86';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v28.87';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10483,7 +10506,7 @@ async function addCharts(buf, jobs) {
   // ---- v28.18 : 기타시간 [사유 + 분] — 줄마다 사유 필수 · 칸 값 = 합계 (doc.otherR = [{k, r, m}])
   const OTH_L = Object.fromEntries(C.OTHER);
   function othLines(doc) {
-    const L = (Array.isArray(doc.otherR) ? doc.otherR : []).map(x => ({ k: x.k, r: x.r || '', m: +x.m || 0 })).filter(x => OTH_L[x.k] && x.m > 0);
+    const L = (Array.isArray(doc.otherR) ? doc.otherR : []).map(x => ({ k: x.k, r: x.r || '', m: +x.m || 0, ...(x.mr ? { mr: x.mr } : {}) })).filter(x => OTH_L[x.k] && x.m > 0);
     C.OTHER.forEach(([k]) => { const sum = L.filter(x => x.k === k).reduce((a, x) => a + x.m, 0), cur = C.num((doc.other || {})[k]); if (cur > sum) L.push({ k, r: '', m: cur - sum }); });   // 예전 입력 (사유 없이 들어간 분)
     return L;
   }
@@ -10515,22 +10538,128 @@ async function addCharts(buf, jobs) {
         const keep = L.filter(x => x.m > 0);
         const bad = keep.filter(x => String(x.r).trim().length < 2);
         if (bad.length) { draw(); return toast('사유를 적어야 저장됩니다 (' + bad.map(x => OTH_L[x.k]).join(', ') + ')', true); }
-        doc.otherR = keep.map(x => ({ k: x.k, r: String(x.r).trim(), m: x.m }));
+        doc.otherR = keep.map(x => ({ k: x.k, r: String(x.r).trim(), m: x.m, ...(x.mr ? { mr: x.mr } : {}) }));
         doc.other = {}; doc.otherR.forEach(x => (doc.other[x.k] = (doc.other[x.k] || 0) + x.m));
         if (!doc.otherR.length) delete doc.otherR;
         close(); opt.onSave && opt.onSave(doc);
       };
     }, 'otm');
   }
-  // 매니저 · 관리자 : 다른 사람 그날 기타시간 보고 바로 고치기
+  // v28.87: 주문 메모 → 기존 기타시간 한 줄. SQL/계산식은 변경하지 않는다.
+  function othMemoItems(doc) {
+    const seen = {};
+    return (doc.rows || []).flatMap((row, i) => {
+      const memo = String(row.memo || '').trim(); if (!memo) return [];
+      const order = String(row.o || '').trim(), stem = JSON.stringify([order, row.k || '', memo]);
+      const occurrence = seen[stem] || 0; seen[stem] = occurrence + 1;
+      return [{ ref: JSON.stringify([order, row.k || '', memo, occurrence]), order, memo, row: i + 1 }];
+    });
+  }
+  function othMemoApply(doc, item, category, minutes) {
+    if (!Object.prototype.hasOwnProperty.call(OTH_L, category) || !Number.isInteger(minutes) || minutes < 1 || minutes > 720) throw new Error('항목과 시간(1~720분)을 확인하세요');
+    if (!othMemoItems(doc).some(x => x.ref === item.ref)) throw new Error('주문 메모가 변경됐습니다. 다시 불러오세요');
+    const next = JSON.parse(JSON.stringify(doc)), lines = othLines(next);
+    const matches = lines.map((x, i) => x.mr === item.ref ? i : -1).filter(i => i >= 0);
+    if (matches.length > 1) throw new Error('이 메모의 반영 내역이 여러 건입니다. 왼쪽 내역을 확인하세요');
+    const entry = { k: category, r: ('[주문 ' + (item.order || '없음 · ' + item.row + '번 줄') + '] ' + item.memo).slice(0, 60), m: minutes, mr: item.ref };
+    if (matches.length) lines[matches[0]] = entry; else lines.push(entry);
+    next.otherR = lines; next.other = {};
+    lines.forEach(x => { next.other[x.k] = (next.other[x.k] || 0) + x.m; });
+    return next;
+  }
+  // 다른 사람의 기록은 서버 canEdit와 실제 직급을 함께 확인한다. 사원/보기전용/직급 미리보기는 저장 불가.
   async function othRemote(u, date, after) {
     let r; try { r = await api('getDay', { userId: u.id, date }); } catch (e) { return toast(e.message, true); }
     if (!r.doc) return toast(dLabel(date) + ' 입력이 없습니다', true);
-    const doc = r.doc; doc.other = doc.other || {};
-    othEditor(doc, null, { ro: !r.canEdit || isRO(), title: u.name + ' ' + dLabel(date) + ' 기타시간', onSave: async d2 => {
-      try { await api('saveDay', { userId: u.id, date, doc: d2, sum: C.daySummary(d2, minsOf(date)), base: r.ver }); S.pc = {}; toast(u.name + ' ' + dLabel(date) + ' 기타시간을 고쳤습니다'); after && after(); }
-      catch (e) { toast(e.message, true); }
-    } });
+    const token = S.token, clone = x => JSON.parse(JSON.stringify(x));
+    const editable = !!(r.canEdit && S.me && ['관리자', '매니저'].includes(S.me.role) && !isRO() && !S.pv);
+    let doc = clone(r.doc), draft = othLines(doc), baseline = JSON.stringify(draft), busy = false, changed = false;
+    const dirty = () => JSON.stringify(draft) !== baseline;
+    modal(`<h3>⏱ ${esc(u.name)} ${esc(dLabel(date))} 기타시간</h3>
+      <div class="muted omhint">${editable ? '오른쪽 메모는 필요한 건만 항목·시간을 입력하고 개별 저장하세요.' : '보기만 가능'}</div>
+      <div class="omlayout"><section class="omleft"><h4>기타시간 내역</h4><div id="omlines" class="otl"></div>
+      ${editable ? '<button id="omadd" class="sm">+ 한 줄 더</button>' : ''}<div id="omtotal" class="ots"></div>
+      ${editable ? '<div class="acts"><button id="omleftsave" class="primary">기타시간 저장</button></div>' : ''}</section>
+      <section class="omright"><h4>주문별 특이사항 메모</h4><div id="ommemos"></div></section></div>
+      <div class="acts"><button id="omreload" hidden>다시 불러오기</button><button data-c>닫기</button></div>`, (bg, close) => {
+      const sameAccount = () => token === S.token && !!S.me;
+      const exit = async () => {
+        if (busy) return;
+        if (dirty() && !(await confirmBox('왼쪽 기타시간에 저장하지 않은 변경이 있습니다. 닫을까요?', '변경 버리고 닫기'))) return;
+        close(); if (changed && sameAccount()) after && after();
+      };
+      bg._guard = async () => { if (busy) return false; await exit(); return false; };
+      $('[data-c]', bg).onclick = exit;
+      $('#omreload', bg).onclick = async () => { if (busy) return; if (dirty() && !(await confirmBox('저장하지 않은 변경을 버리고 다시 불러올까요?', '다시 불러오기'))) return; close(); if (sameAccount()) othRemote(u, date, after); };
+      const lock = on => { busy = on; bg._lock = on; $$('input, select, button', bg).forEach(e => { e.disabled = on || !editable && !e.matches('[data-c],#omreload'); }); };
+      const totals = () => {
+        const by = {}; draft.forEach(x => { by[x.k] = (by[x.k] || 0) + x.m; });
+        $('#omtotal', bg).innerHTML = Object.keys(by).filter(k => by[k]).map(k => `${OTH_L[k]} <b>${by[k]}분</b>`).join(' · ');
+      };
+      const persist = async next => {
+        if (busy || !editable || !sameAccount()) return false;
+        if (r.ver == null) { toast('저장 버전이 없습니다. 다시 불러오세요', true); return false; }
+        lock(true);
+        try {
+          const saved = await api('saveDay', { userId: u.id, date, doc: next, sum: C.daySummary(next, minsOf(date)), base: r.ver });
+          if (!sameAccount()) return false;
+          r.ver = saved.ver; doc = clone(next); draft = othLines(doc); baseline = JSON.stringify(draft); changed = true;
+          dropPc(u.id); S._mcache = {}; S._adj = {}; S._gm = {}; S.stCache = {};
+          if (S.stv) { S.stv.key = ''; S.stv.data = null; }
+          toast('기타시간을 저장했습니다'); return true;
+        } catch (e) {
+          if (sameAccount()) { toast(e.message, true); $('#omreload', bg).hidden = false; }
+          return false;
+        } finally { lock(false); }
+      };
+      const drawLeft = () => {
+        $('#omlines', bg).innerHTML = draft.map((x, i) => `<div class="otr" data-omi="${i}">
+          <select data-f="k" ${editable ? '' : 'disabled'}>${C.OTHER.map(([k,l]) => `<option value="${k}" ${x.k === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+          <input data-f="r" value="${esc(x.r)}" maxlength="60" placeholder="사유" title="${esc(x.r)}" ${editable ? '' : 'readonly'}>
+          <input data-f="m" value="${x.m}" inputmode="numeric" aria-label="기타시간 분" ${editable ? '' : 'readonly'}><span class="muted">분</span>
+          ${editable ? '<button data-remove title="이 줄 빼기">✕</button>' : ''}</div>`).join('') || '<div class="muted">기타시간이 없습니다</div>';
+        $$('[data-omi]', bg).forEach(row => {
+          const i = +row.dataset.omi;
+          $$('[data-f]', row).forEach(el => { el.oninput = el.onchange = () => { if (!editable || busy) return; const f = el.dataset.f; draft[i][f] = f === 'm' ? Math.min(720, parseInt(el.value.replace(/\D/g, ''), 10) || 0) : el.value; if (f === 'm') el.value = draft[i].m || ''; totals(); }; });
+          const remove = $('[data-remove]', row); if (remove) remove.onclick = () => { if (busy) return; draft.splice(i,1); drawLeft(); };
+        }); totals();
+      };
+      const drawMemos = () => {
+        const items = othMemoItems(doc);
+        $('#ommemos', bg).innerHTML = items.map((x, i) => {
+          const found = othLines(doc).find(y => y.mr === x.ref);
+          return `<div class="omitem" data-om="${i}"><div class="omrow"><b>${esc(x.order || x.row + '번 줄')}</b>
+            ${editable ? `<select data-cat aria-label="${esc(x.order || x.row)} 항목">${C.OTHER.map(([k,l]) => `<option value="${k}" ${(found ? found.k : 'U7') === k ? 'selected' : ''}>${l}</option>`).join('')}</select><input data-min type="number" min="1" max="720" step="1" value="${found ? found.m : ''}" placeholder="분" aria-label="${esc(x.order || x.row)} 시간"><span class="muted">분</span><button data-save class="primary sm">저장</button>` : ''}</div>
+            <div class="omtext">${esc(x.memo)}</div><div class="omstate muted" aria-live="polite">${found ? esc(OTH_L[found.k]) + ' ' + found.m + '분 저장됨' : ''}</div></div>`;
+        }).join('') || '<div class="muted">이날 작성한 주문 메모가 없습니다.</div>';
+        if (!editable) return;
+        $$('[data-om]', bg).forEach(row => {
+          const item = items[+row.dataset.om], button = $('[data-save]', row), sel = $('[data-cat]', row), min = $('[data-min]', row);
+          const sync = () => { const old = othLines(doc).find(y => y.mr === item.ref); button.disabled = busy || !!(old && old.k === sel.value && old.m === +min.value); };
+          sel.onchange = min.oninput = sync; sync();
+          button.onclick = async () => {
+            if (busy) return;
+            if (dirty()) return toast('왼쪽 기타시간 변경을 먼저 저장하세요. 메모 시간은 개별로 저장됩니다', true);
+            try {
+              const next = othMemoApply(doc, item, sel.value, Number(min.value));
+              if (await persist(next)) { drawLeft(); drawMemos(); }
+            } catch (e) { toast(e.message, true); }
+          };
+        });
+      };
+      drawLeft(); drawMemos();
+      if (editable) {
+        $('#omadd', bg).onclick = () => { if (busy) return; draft.push({ k:'U7', r:'', m:0 }); drawLeft(); };
+        $('#omleftsave', bg).onclick = async () => {
+          if (busy) return;
+          const keep = draft.filter(x => x.m > 0);
+          if (keep.some(x => !OTH_L[x.k] || !Number.isInteger(x.m) || x.m > 720 || String(x.r).trim().length < 2)) return toast('항목·시간(1~720분)·사유(2자 이상)를 확인하세요', true);
+          const next = clone(doc); next.otherR = keep.map(x => Object.assign({}, x, { r:String(x.r).trim() })); next.other = {};
+          next.otherR.forEach(x => { next.other[x.k] = (next.other[x.k] || 0) + x.m; });
+          if (await persist(next)) { drawLeft(); drawMemos(); }
+        };
+      }
+    }, 'otm omremote');
   }
   // ---- v28.18 : 지난 날짜 수정 요청 — 매니저 목록 (열기 = 그날 입력 화면 · 처리 완료)
   function editReqModal(L) {
