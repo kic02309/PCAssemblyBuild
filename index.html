@@ -8111,7 +8111,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.01';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.02';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8602,6 +8602,25 @@ async function addCharts(buf, jobs) {
       });
     });
   }
+  // v29.02: manager/admin sidebar labels and order; routes and visibility unchanged.
+  function sideMenuEntries(m) {
+    const ordered = ['관리자', '매니저'].includes(m.role);
+    const items = [
+      ['work', 'dash', ordered ? '업무현황' : '업무', IC.dash],
+      canWtMenu() && ['video', 'wt', ordered ? '영상 편집' : '영상업무', IC.video],
+      canMgr() && ['mgr', 'mgr', ordered ? '매니저관리' : '매니저 관리', IC.clip, '<i class="bd hide" id="mgbd"></i>'],
+      ['leave', 'leave', ordered ? '연차&토요' : '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>'],
+      canProd() && ['prod', 'prod', ordered ? '라인 생산' : '라인생산', IC.box],
+      ['education', 'education', ordered ? '교육 일정' : '교육일정', IC.cal, '<i class="bd hide" id="edubd"></i>'],
+      ['org', 'org', '조직도', IC.org],
+      m.acc && ['acc', 'acc', ordered ? '사고 현황' : m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>'],
+      m.hr && ['hr', 'hr', '인사평가', IC.hr],
+      canSettings() && ['adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear]
+    ].filter(Boolean);
+    if (!ordered) return items;
+    const order = ['work', 'mgr', 'acc', 'leave', 'prod', 'video', 'education', 'org', 'hr', 'adm'];
+    return order.map(cat => items.find(item => item[0] === cat)).filter(Boolean);
+  }
   function shell(layout) {
     const m = S.me; layout = layout || S.layout || 'top'; S.layout = layout;
     document.body.classList.toggle('lay-top', layout === 'top');       // v28.2 : 입력 화면에선 응답시간 글자 숨김 (안내 문구와 겹침)
@@ -8643,7 +8662,7 @@ async function addCharts(buf, jobs) {
         </header>
         <div class="czb">
           <aside class="czr">
-            ${rb('work', 'dash', '업무', IC.dash)}${canWtMenu() ? rb('video', 'wt', '영상업무', IC.video) : ''}${canMgr() ? rb('mgr', 'mgr', '매니저 관리', IC.clip, '<i class="bd hide" id="mgbd"></i>') : ''}${rb('leave', 'leave', '연차 · 토요', IC.cal, '<i class="bd hide" id="lvbd"></i>')}${canProd() ? rb('prod', 'prod', '라인생산', IC.box) : ''}${rb('education', 'education', '교육일정', IC.cal, '<i class="bd hide" id="edubd"></i>')}${rb('org', 'org', '조직도', IC.org)}${m.acc ? rb('acc', 'acc', m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>') : ''}${m.hr ? rb('hr', 'hr', '인사평가', IC.hr) : ''}${canSettings() ? rb('adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear) : ''}
+            ${sideMenuEntries(m).map(item => rb(...item)).join('')}
             <div class="grow"></div>${thmBtn('rb')}<button id="lo" class="rb" title="로그아웃"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg><span>로그아웃</span></button>
           </aside>
           <div class="content"><div id="proxy"></div><main id="main" class="pg"></main></div>
