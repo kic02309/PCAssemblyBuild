@@ -2947,6 +2947,14 @@ html[data-theme=dark] .login2 .login{border-color:#647b98}html[data-theme=dark] 
 .login2 .lhero-ai::before{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(88%,84vh,860px);aspect-ratio:1;background:var(--login-pc-art) center/contain no-repeat;pointer-events:none;z-index:0;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 91%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 29%,#000 90%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 91%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 29%,#000 90%,transparent 100%);mask-composite:intersect}
 .lhero-ai .lbr,.lhero-ai .lcopy{position:relative;z-index:1}
 @media(max-width:800px){.login2 .lhero-ai::before{width:min(88%,390px)}}
+
+/* v29.03: read-only phone source and person share one bounded cell. */
+#main .prpg .pr-items table.prt .pr-source-cell{vertical-align:middle}
+.pr-mobile-source{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;min-width:0;line-height:1.35}
+.pr-mobile-source-kind{display:flex;align-items:center;justify-content:center;gap:4px;max-width:100%;white-space:nowrap}
+#main .prpg .pr-items .pr-mobile-source-kind .pmt{display:inline-flex;flex:0 0 auto;margin:0;padding:2px 4px;font-size:10px;line-height:1.2}
+.pr-source-label{font-size:11px;font-weight:600;color:var(--sub,#64748b)}
+.pr-mobile-person{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:600;color:var(--ink,#1e293b);line-height:1.4}
 </style></head>
 <body>
 <div id="app"></div>
@@ -8111,7 +8119,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.02';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.03';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -14453,7 +14461,7 @@ async function addCharts(buf, jobs) {
       ${R.iss.length ? `<div class="warn" style="margin-bottom:10px"><b>확정 전에 고칠 것 ${R.iss.length}건</b> · ${R.iss.map(esc).join(' · ')}</div>` : '<div class="note" style="margin-bottom:10px">✓ 확정할 수 있습니다</div>'}
       <div class="card prc pr-items"><div class="mgch"><b>① 생산 목록</b><span class="muted">공동생산 + 개별 조립 · 사양표는 한 번에 여러 건 붙여넣기 가능</span><span style="flex:1"></span>${ed ? '<button id="prpaste" class="primary sm">📋 사양표 붙여넣기</button><button id="pradd" class="sm">＋ 직접 추가</button>' : ''}</div>
         <div style="overflow:auto"><table class="list prt"><colgroup><col style="width:6%"><col style="width:10%"><col style="width:20%"><col style="width:15%"><col style="width:5%"><col style="width:15%"><col style="width:5%"><col style="width:11%"><col style="width:5%"><col style="width:5%"><col style="width:3%"></colgroup><thead><tr><th>구분</th><th>제조번호</th><th>모델명</th><th>케이스</th><th>난이도</th><th>CPU쿨러</th><th>난이도</th><th>파워</th><th>수량</th><th>환산</th><th></th></tr></thead><tbody>
-        ${R.items.map(x => { const mob = !!x.mob; return `<tr data-it="${x.id}" class="${x.conv == null ? 'prbad' : ''}"><td>${mob ? '<span class="rtag pmt">폰</span>' : ''}<select class="i-src" ${dis || (mob ? 'disabled' : '')}>${opt(['공동', '개별'], x.src)}</select>${x.src === '개별' ? (mob ? `<div class="muted">${esc(x.whoName || uname(x.who))}</div>` : who(x.who, 'i-who')) : ''}</td>
+        ${R.items.map(x => { const mob = !!x.mob; return `<tr data-it="${x.id}" class="${x.conv == null ? 'prbad' : ''}"><td class="pr-source-cell">${mob ? `<div class="pr-mobile-source" title="폰 입력 · ${esc(x.src)}${x.src === '개별' ? ' · ' + esc(x.whoName || uname(x.who)) : ''}"><div class="pr-mobile-source-kind"><span class="rtag pmt">폰</span><span class="pr-source-label">${esc(x.src)}</span></div>${x.src === '개별' ? `<span class="pr-mobile-person">${esc(x.whoName || uname(x.who))}</span>` : ''}</div>` : `<select class="i-src" ${dis}>${opt(['공동', '개별'], x.src)}</select>${x.src === '개별' ? who(x.who, 'i-who') : ''}`}</td>
           <td><input class="i-no" value="${esc(x.no || '')}" ${dis || (mob ? 'disabled' : '')} style="width:110px"></td><td><input class="i-model" value="${esc(x.model || '')}" placeholder="확인 필요" ${dis} style="width:170px"></td>
           <td><input class="i-case" value="${esc(x.case || '')}" placeholder="확인 필요" ${dis} style="width:130px"></td><td><select class="i-cs ${x.cs ? '' : 'need'}" ${dis}><option value="">-</option>${opt(PR_CS, x.cs)}</select></td>
           <td><input class="i-cooler" value="${esc(x.cooler || '')}" placeholder="확인 필요" ${dis} style="width:130px"></td><td><select class="i-cl ${x.cl ? '' : 'need'}" ${dis}><option value="">-</option>${opt(PR_CL, x.cl)}</select></td>
