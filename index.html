@@ -3074,6 +3074,97 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 <style id="evaluation-alignment-v2916">.report-save-pending{box-shadow:0 0 0 3px #fbbf2460}.hrw .pv.pv-aligned{display:grid;grid-template-columns:minmax(0,1.32fr) minmax(0,1fr);grid-template-rows:auto auto auto;gap:10px 18px;align-items:stretch}.hrw .pv.pv-aligned>.pv-left,.hrw .pv.pv-aligned>.pv-right{display:contents!important}.hrw .pv-aligned .pv-left>table{grid-column:1;margin:0!important}.hrw .pv-aligned .pv-left>table:nth-child(1){grid-row:1}.hrw .pv-aligned .pv-left>table:nth-child(2){grid-row:2}.hrw .pv-aligned .pv-left>table:nth-child(3){grid-row:3}.hrw .pv-aligned .pv-chart{grid-column:2;min-width:0;min-height:0;position:relative;border:1px solid #d9d9d9}.hrw .pv-aligned .pv-chart:nth-child(1){grid-row:1}.hrw .pv-aligned .pv-chart:nth-child(2){grid-row:2}.hrw .pv-aligned .pv-chart svg{position:absolute;inset:0;width:100%;height:100%;border:0}.hrw .pv-aligned .pv-right>table{grid-column:2;grid-row:3;height:100%;margin:0}@media screen and (max-width:1100px){.hrw .pv.pv-aligned{grid-template-columns:1fr}.hrw .pv-aligned .pv-left>table,.hrw .pv-aligned .pv-chart,.hrw .pv-aligned .pv-right>table{grid-column:1}.hrw .pv-aligned .pv-left>table:nth-child(2){grid-row:3}.hrw .pv-aligned .pv-left>table:nth-child(3){grid-row:5}.hrw .pv-aligned .pv-chart:nth-child(1){grid-row:2;min-height:220px}.hrw .pv-aligned .pv-chart:nth-child(2){grid-row:4;min-height:220px}.hrw .pv-aligned .pv-right>table{grid-row:6}}</style>
 <style id="criteria-row-edit-v2918">.cfg-row-actions{white-space:nowrap}.cfg-row-actions button+button{margin-left:5px}.cfg-edit-help{font-size:12px;color:var(--sub);line-height:1.5;margin:8px 0}.edit tr[data-row-editing="0"] [data-h]:disabled{opacity:1;color:var(--text);-webkit-text-fill-color:var(--text);background:transparent;cursor:default}.edit tr.cfg-row-editing td{background:#fff8df}.edit tr.cfg-row-editing input,.edit tr.cfg-row-editing select{background:var(--panel);box-shadow:inset 0 0 0 1px #e6b950;border-radius:4px}</style>
 <style id="incentive-status-v2919">.hreval-score-main>strong.hreval-score-status{font-size:clamp(18px,2vw,26px);line-height:1.4;word-break:keep-all}</style>
+
+<style id="evaluation-layout-v2921">
+/* Scope all layout overrides to the evaluation page. Avoid shared toolbar z-index 100. */
+#main:has(#hrb)>.ph{position:static;min-height:42px;height:auto;padding:7px 22px;gap:8px;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+#main:has(#hrb)>.ph h1{font-size:22px;line-height:1.25}
+#hrFilterHost{padding:0 22px 7px;position:relative;z-index:10}
+#hrFilterHost .czf-v4{z-index:auto;isolation:auto;margin:0;padding:5px 9px}
+#hrFilterHost .czf-line{min-height:29px}
+#hrFilterHost .czf-line+.czf-line{margin-top:3px;padding-top:3px}
+#hrb.pgb{padding:0 22px 12px}
+#hrb .grid-eval{grid-template-columns:300px minmax(0,1fr);gap:10px;align-items:stretch}
+#hrb .plist{padding:9px;position:static;max-height:none;overflow:visible;min-width:0}
+#hrb .plh{gap:5px;margin-bottom:6px;font-size:11px}
+#hrb .plh .muted{font-size:10px}
+#hrb .ed{padding:9px 10px;min-width:0}
+#hrb .edh{min-height:30px;margin:0 0 6px;gap:7px;flex-wrap:wrap}
+#hrb .edh h2{font-size:18px;line-height:1.3;margin:0}
+#hrb .edh button{padding:5px 9px;font-size:11px}
+#hrb .eval-summary{grid-template-columns:minmax(0,2.4fr) minmax(200px,1fr);gap:8px}
+#hrb .eval-facts{padding:3px 7px;border-color:#dbe5ef;background:var(--panel,#fff)}
+#hrb .eval-fact-row{min-height:39px;padding:3px 0;gap:9px;align-items:stretch}
+#hrb .eval-fact-row>strong{display:flex;align-items:center;justify-content:center;align-self:center;min-width:37px;height:28px;border-radius:5px;font-size:12px}
+#hrb .eval-production>strong{color:#226bdb;background:#e9f2ff}
+#hrb .eval-accident>strong{color:#d84c4c;background:#fff0f0}
+#hrb .eval-attendance>strong{color:#d08016;background:#fff5e6}
+#hrb .eval-fact-row>div{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;align-items:center}
+#hrb .eval-accident>div{grid-template-columns:repeat(5,minmax(0,1fr))}
+#hrb .eval-attendance>div{grid-template-columns:repeat(4,minmax(0,1fr))}
+#hrb .eval-fact-row span{display:flex;flex-direction:column;gap:3px;align-items:flex-start;min-width:0}
+#hrb .eval-fact-row small{font-size:10px;line-height:1.15;white-space:nowrap;color:var(--sub,#66758c)}
+#hrb .eval-fact-row b{font-size:13px;line-height:1.2;color:var(--ink,#1b2c48);font-variant-numeric:tabular-nums}
+#hrb .eval-rank-note{font-size:10px;color:var(--sub,#66758c);padding:4px 0 1px;line-height:1.25;overflow-wrap:anywhere}
+#hrb .eval-rank-note span{color:#b0bdcb;margin:0 3px}
+#hrb .eval-part{padding:7px 9px;background:var(--panel,#fff);border-color:#dbe5ef}
+#hrb .eval-part>strong{display:block;font-size:12px;line-height:1.3}
+#hrb .eval-part>small{font-size:9px;line-height:1.2;margin:3px 0 5px}
+#hrb .eval-part>div:not(.eval-part-progress){grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 10px}
+#hrb .eval-part span{gap:2px}
+#hrb .eval-part span:nth-child(3){grid-column:1/-1;display:flex;flex-direction:row;align-items:baseline;gap:8px}
+#hrb .eval-part span:nth-child(3) b{color:#2369d9;font-size:16px}
+#hrb .eval-part b{font-size:14px;line-height:1.1}
+#hrb .eval-part-progress{display:block;height:4px;border-radius:3px;background:#e8eef7;overflow:hidden;margin:5px 0}
+#hrb .eval-part-progress i{display:block;height:100%;background:#3479ed;border-radius:3px}
+#hrb .eval-formula{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,.45fr);gap:10px;margin:7px 0;padding:7px 10px;border-radius:7px;text-align:left;min-height:66px}
+#hrb .eval-equation{display:grid;grid-template-columns:1fr 14px 1.2fr 14px 1.2fr 14px 1.2fr;gap:4px;align-items:center;min-width:0}
+#hrb .eval-equation>i{font-size:21px;font-style:normal;color:#526782;text-align:center}
+#hrb .eval-metric{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+#hrb .eval-metric small{font-size:10px;line-height:1.1;color:var(--sub,#66758c)}
+#hrb .eval-metric b{font-size:18px;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
+#hrb .eval-metric em{font-size:9px;line-height:1.1;font-style:normal;text-align:center;overflow-wrap:anywhere}
+#hrb .eval-metric.accident b,#hrb .eval-metric.accident small{color:#dc5151}
+#hrb .eval-metric.attendance b,#hrb .eval-metric.attendance small{color:#d88917}
+#hrb .eval-metric.net b,#hrb .eval-metric.net small{color:#286ce0}
+#hrb .eval-formula .hreval-score-main{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;padding-left:11px;border-left:1px solid #d7e3f5;min-width:0}
+#hrb .eval-formula .hreval-score-main>span{font-size:10px;font-weight:600;line-height:1.1}
+#hrb .eval-formula .hreval-score-main>strong{font-size:14px;line-height:1.3;word-break:keep-all}
+#hrb .eval-formula .hreval-score-main>small,#hrb .eval-formula .hreval-score-main>em{font-size:9px;line-height:1.2;color:var(--sub,#66758c);font-style:normal}
+#hrb .eval-formula .hreval-score-main strong small{font-size:12px;margin-left:2px}
+#hrb .gt{margin:5px 0 4px;font-size:12px}
+#hrb table.score{table-layout:fixed;width:100%}
+#hrb table.score th,#hrb table.score td{padding:4px 6px;line-height:1.3}
+#hrb table.score th{font-size:10px}
+#hrb table.score td{font-size:11px}
+#hrb table.score th:first-child{width:68px!important}
+#hrb table.score th:nth-child(2){width:25%}
+#hrb table.score th:nth-child(3){width:46px!important}
+#hrb table.score th:nth-child(4){width:77px!important}
+#hrb table.score th:nth-child(5){width:auto!important}
+#hrb table.score input{width:100%;min-width:0;font-size:11px;padding:4px;line-height:1.2}
+#hrb table.score .ref b{font-size:12px}
+#hrb table.score .ref span{font-size:10px;line-height:1.2;margin-left:4px}
+#hrb table.score button.sm{padding:3px 6px;font-size:10px;min-height:0}
+#hrb table.ctb .ln input{padding:4px 6px;font-size:11px;line-height:1.3}
+#hrb table.ctb th{font-size:11px;padding:4px;width:71px}
+#hrb table.ctb td{padding:3px 5px}
+#hrb table.ctb td.v{width:110px;font-size:11px}
+#hrb table.ctb select{padding:3px 5px;font-size:11px}
+#hrb table.ctb .ln em{font-size:9px;width:32px}
+#hrb .svbar{position:static;padding:6px 0 0;margin-top:6px;gap:7px;flex-wrap:wrap;background:transparent}
+#hrb .svbar>.muted{font-size:10px}
+#hrb .savest{font-size:10px;padding:3px 6px}
+#hrb .eval-footer-total{display:flex;gap:9px;align-items:baseline}
+#hrb .eval-footer-total>span{font-size:11px;font-weight:700}
+#hrb .eval-footer-total>b{font-size:19px;color:#286ce0;min-width:38px;text-align:right;line-height:1.2}
+#hrb .eval-footer-total>small{font-size:9px;color:var(--sub,#66758c)}
+@media(min-width:1600px){#hrb .grid-eval{grid-template-columns:330px minmax(0,1fr)}#hrb .eval-summary{grid-template-columns:minmax(0,2.7fr) minmax(250px,1fr)}#hrb .eval-fact-row b{font-size:14px}#hrb .eval-fact-row small{font-size:11px}#hrb table.score td{font-size:12px}#hrb .eval-metric b{font-size:20px}}
+@media(max-width:1100px){#hrb .grid-eval{grid-template-columns:265px minmax(0,1fr)}#hrb .eval-summary{grid-template-columns:1fr}#hrb .eval-part>div:not(.eval-part-progress){grid-template-columns:repeat(5,minmax(0,1fr))}#hrb .eval-part span:nth-child(3){grid-column:auto;flex-direction:column;gap:2px}#hrb .eval-formula{grid-template-columns:1fr}#hrb .eval-formula .hreval-score-main{border-left:0;border-top:1px solid #d7e3f5;padding:6px 0 0;flex-direction:row;flex-wrap:wrap;align-items:baseline}#hrb .eval-footer-total>small{display:none}}
+@media(max-width:850px){#hrb .grid-eval{grid-template-columns:1fr}#hrb .plist{max-height:300px;overflow:auto}#hrb.pgb{padding:0 12px 12px}#hrFilterHost{padding:0 12px 7px}#main:has(#hrb)>.ph{padding:7px 12px}#hrb table.score{min-width:600px}#hrb .ed{overflow-x:auto}#hrb .eval-fact-row small{white-space:normal}#hrb .eval-equation{min-width:360px}}
+html[data-theme=dark] #hrb .eval-production>strong{background:#1b3455;color:#8cbeff}html[data-theme=dark] #hrb .eval-accident>strong{background:#4b262d;color:#ffabab}html[data-theme=dark] #hrb .eval-attendance>strong{background:#47351c;color:#f6c176}html[data-theme=dark] #hrb .eval-facts,html[data-theme=dark] #hrb .eval-part{border-color:var(--line)}
+</style>
+
 </head>
 <body>
 <div id="app"></div>
@@ -6651,13 +6742,12 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       <div id="side"></div>
       <div class="gt">평가 점수<span style="flex:1"></span><button class="sm primary" id="applyAll" ${locked || x.incentive.manual ? 'disabled' : ''}>참고 점수 전체 적용</button></div>
       <table class="score"><thead><tr><th style="width:74px">구분</th><th title="ⓘ 에 마우스를 올리면 평가 기준이 보입니다">평가 요소</th><th class="c" style="width:56px">배점</th><th class="c" style="width:96px">입력</th><th style="width:320px">참고 점수</th></tr></thead><tbody id="scoreBody">${rows}</tbody></table>
-      <div class="total"><span class="muted">가점은 엑셀에서 입력</span><span>합계</span><b id="totalVal">-</b></div>
       <div class="gt">월간 총평 <span class="muted" style="font-weight:500">엑셀 한 칸 = 한 줄 (최대 ${MAXC}자)</span></div>
       <table class="ctb"><tr><th>관 리 자</th><td class="v"><select id="fMgr" ${locked ? 'disabled' : ''}><option value=""></option>${mgrs.map(m => `<option ${m === mgrVal ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></td><th rowspan="2">업무평가</th><td>${ln('fW1', '업무평가1', '여기에 입력')}</td></tr>
         <tr><th>평가 목표</th><td class="v">${dt.개인목표 === null ? '-' : fixedAvg(dt.개인목표)}</td><td>${ln('fW2', '업무평가2')}</td></tr>
         <tr><th>결&nbsp;&nbsp;&nbsp;&nbsp;과</th><td class="v">${dt.일평균 === null ? '-' : fixedAvg(dt.일평균)}</td><th>건강관리</th><td>${ln('fH', '건강관리')}</td></tr>
         <tr><th>달 성 률</th><td class="v">${pct(dt.달성률)}</td><th>특이사항</th><td>${ln('fS', '특이사항')}</td></tr></table>
-      <div class="svbar"><span id="saveState" class="savest"></span><span class="muted">30초 후 자동 저장</span><span style="flex:1"></span>
+      <div class="svbar"><span id="saveState" class="savest"></span><span class="muted">30초 후 자동 저장</span><span style="flex:1"></span><div class="eval-footer-total"><span>총점</span><b id="totalVal">-</b><small>가점은 엑셀에서 입력</small></div>
         <button class="primary big" id="saveDone" ${locked ? 'disabled' : ''}>작성 완료</button></div></section>`;
     renderSide(x);
     const bd = $('#scoreBody');
@@ -6770,15 +6860,15 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
   function renderSide(x) {
     const d=x.data, a=d.근태기록||{}, pt=partPerformance(x);
     const cells=arr=>arr.map(([k,v])=>`<span><small>${k}</small><b>${v}</b></span>`).join('');
-    const row=(kind,arr)=>`<div class="eval-fact-row"><strong>${kind}</strong><div>${cells(arr)}</div></div>`;
+    const row=(kind,arr)=>`<div class="eval-fact-row eval-${kind==='실적'?'production':kind==='사고'?'accident':'attendance'}"><strong>${kind}</strong><div>${cells(arr)}</div></div>`;
     const val=v=>v==null?'-':fixedAvg(v);
     $('#side').innerHTML=`${x.incentive.manual?'<div class="hrinc-manual">별도 업무 평가 대상입니다. 점수를 개별 입력하세요.</div>':d.hasData?'':'<div class="banner warn">업무데이터 없음 · 원본 이름과 실적 반영 상태를 확인하세요.</div>'}
       ${x.productionRecheck?`<div class="banner warn">제조 환산 수정 후 재반영이 필요합니다. 웹 계산 ${val(x.productionRecheck.average)} · 제조 ${x.productionRecheck.manufacturing}. 아래는 기존 평가 실적이며 점수는 자동 변경하지 않습니다.</div>`:''}
       <div class="eval-summary"><div class="eval-facts">
-      ${row('실적',[['총수량',val(d.총수량)],['총량 순위',dash(d.총수량순위)],['일평균',val(d.일평균)],['평균 순위',dash(d.평균순위)],['달성률',pct(d.달성률)],['파트 내',d.파트순위?d.파트순위+'/'+d.파트인원:'-'],['근무일',dash(d.근무일수)],['평가기준목표',val(d.개인목표)],['전월평균',val(d.전월평균)]])}
+      ${row('실적',[['총수량',val(d.총수량)],['일평균',val(d.일평균)],['달성률',pct(d.달성률)],['근무일',dash(d.근무일수)],['평가기준목표',val(d.개인목표)],['전월평균',val(d.전월평균)]])}
       ${row('사고',[['품질지적',dash(d.품질지적)],['미/오발송',dash(d.미오발송)],['오조립',dash(d.오조립)],['파손',dash(d.파손)],['지시불이행',dash(d.지시불이행)]])}
-      ${row('근태',[['지각',dash(d.지각)],['조퇴',dash(d.조퇴)],['결근',dash(d.결근)],['당일연차',dash(d.당일연차)]])}<div class="eval-att-note">${esc(Object.keys(a).map(k=>k+' '+a[k]).join(' · ')||'근태 기록 없음')} · <a href="#" id="attGo">근태 탭</a></div></div>
-      <aside class="eval-part"><strong>파트 성과 · ${esc(x.person.part)}</strong><small>실적·목표 반영 ${pt.valid}/${pt.count}명 · 반영 인원 합계 기준</small><div>${cells([['목표 합계',val(pt.goal)],['일평균 합계',val(pt.actual)],['달성률',pct(pt.ratio)],['사고 건수',pt.accidents==null?'-':pt.accidents],['인당 사고',val(pt.perPerson)]])}</div></aside></div>${incentiveBox(x)}`;
+      ${row('근태',[['지각',dash(d.지각)],['조퇴',dash(d.조퇴)],['결근',dash(d.결근)],['당일연차',dash(d.당일연차)]])}<div class="eval-rank-note">총량 ${dash(d.총수량순위)}위 · 평균 ${dash(d.평균순위)}위 · 파트 ${d.파트순위?d.파트순위+'/'+d.파트인원:'-'} <span>｜</span> ${esc(Object.keys(a).map(k=>k+' '+a[k]).join(' · ')||'근태 기록 없음')} · <a href="#" id="attGo">근태 탭</a></div></div>
+      <aside class="eval-part"><strong>파트 성과 · ${esc(x.person.part)}</strong><small>실적·목표 반영 ${pt.valid}/${pt.count}명</small><div>${cells([['목표',val(pt.goal)],['실적',val(pt.actual)],['달성률',pct(pt.ratio)],['사고 건수',pt.accidents==null?'-':pt.accidents],['인당 사고',val(pt.perPerson)]])}</div><div class="eval-part-progress" role="img" aria-label="달성률 ${pct(pt.ratio)}"><i style="width:${pt.ratio==null?0:Math.max(0,Math.min(100,pt.ratio*100))}%"></i></div><small>목표·실적은 반영 인원의 일평균 합계</small></aside></div>${incentiveBox(x)}`;
     $('#attGo').onclick=e=>{e.preventDefault();go('att');};
   }
 
@@ -7334,7 +7424,10 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const note=rows=>rows.length?rows.map(r=>r.item+' '+r.count+'회').join(' · '):'없음';
     const accident=cuts(false), att=cuts(true), val=v=>v==null?'-':fixedAvg(v);
     const goals=[];if(c.teamOn)goals.push('팀목표 '+val(z.teamGoal));if(c.personalOn)goals.push('개인목표 '+val(z.personal));
-    return `<section class="hrinc-box hreval-score eval-formula" aria-label="인사평가 예상점수"><div class="eval-equation">평균 <b>${val(z.avg)}</b> − 사고 <b>${val(amount(accident))}</b> <small>(${esc(note(accident))})</small> − 근태 <b>${val(amount(att))}</b> <small>(${esc(note(att))})</small> = 차감 후 기준 <b>${val(z.net)}</b></div><div class="hreval-score-main"><span>인사평가 예상점수</span><strong class="${display.kind==='score'?'':'hreval-score-status'}">${esc(goals.join(' · ')||'목표 미설정')} · ${z.score==null?esc(display.label):f1(z.score)+'<small>점</small>'}</strong></div><div class="hreval-score-meta">${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')} · ${c.confirmed?'적용 기준':'미확정 초안'}${z.manual?' · 별도 업무 평가 대상':''}</div>${display.note?`<p class="hreval-score-note">${esc(display.note)}</p>`:''}</section>`;
+    const metric=(label,value,kind,detail='')=>`<div class="eval-metric ${kind}"><small>${label}</small><b>${value}</b>${detail?`<em>${esc(detail)}</em>`:''}</div>`;
+    return `<section class="hrinc-box hreval-score eval-formula" aria-label="인사평가 예상점수"><div class="eval-equation">
+      ${metric('평균',val(z.avg),'average')}<i>−</i>${metric('사고',val(amount(accident)),'accident',note(accident))}<i>−</i>${metric('근태',val(amount(att)),'attendance',note(att))}<i>=</i>${metric('차감 후 기준',val(z.net),'net')}
+      </div><div class="hreval-score-main"><span>인사평가 예상점수</span><strong class="${display.kind==='score'?'':'hreval-score-status'}">${esc(goals.join(' · ')||'목표 미설정')} · ${z.score==null?esc(display.label):f1(z.score)+'<small>점</small>'}</strong><small>${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')} · ${c.confirmed?'적용 기준':'미확정 초안'}${z.manual?' · 별도 업무 평가 대상':''}</small>${display.note?`<em>${esc(display.note)}</em>`:''}</div></section>`;
   }
 
   function cfgInc() {
@@ -8570,7 +8663,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.20';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.21';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
