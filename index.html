@@ -3240,41 +3240,65 @@ html[data-theme=dark] #hrb .order-block h3{background:#293d31;color:#daebde}
 html[data-theme=dark] .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(190,204,225,.36) 4px 6px)}
 </style>
 
-<style id="daily-group-conversion-v2928">
-.ddcombo-v28 .ddcombo-row{grid-template-columns:76px minmax(140px,1fr) 282px 132px;gap:5px 12px;padding:10px 2px}
-.ddcombo-v28 .ddcombo-name{grid-column:1;grid-row:1}
-.ddcombo-v28 .ddcombo-graph{grid-column:2;grid-row:1}
-.ddcombo-v28 .ddconv{height:20px;border-radius:10px}
-.ddcombo-v28 .ddconv small{font-size:10px}
+<style id="daily-group-conversion-v2929">
+/* A compact 28px metric row + 18px check row. Graph/name/quantity span both.
+   Explicit tracks prevent secondary check badges from adding a full row. */
+.ddcombo-v28 .ddcombo-title{font-size:18px;gap:14px;margin-bottom:8px}
+.ddcombo-v28 .ddcombo-title small{font-size:12px}
+.ddcombo-v28 .ddcombo-row{grid-template-columns:82px minmax(160px,1fr) 308px 150px;grid-template-rows:28px minmax(18px,auto);gap:2px 10px;padding:7px 2px;min-height:0;align-items:center}
+.ddcombo-v28 .ddcombo-name{grid-column:1;grid-row:1/3;font-size:16px;font-weight:800}
+.ddcombo-v28 .ddcombo-name .gdot{width:10px;height:10px;margin-right:7px}
+.ddcombo-v28 .ddcombo-graph{grid-column:2;grid-row:1/3;position:relative;min-width:0}
+.ddcombo-v28 .ddconv,.ddcombo-v28 .ddcombo-graph .ddtr{height:24px;border-radius:12px}
+.ddcombo-v28 .ddconv-fill{border-radius:12px}
+.ddcombo-v28 .ddconv small{font-size:11px}
 .ddcombo-v28 .ddconv-goal{width:2px;opacity:.85}
 .ddcombo-v28 .ddcombo-graph .ddtr>i{background:var(--cv-asm)!important}
-.ddcombo-v28 .ddcombo-value{grid-column:3;grid-row:1;display:grid;grid-template-columns:1fr 1fr 66px;gap:6px;align-items:center;font-size:12px}
-.ddcombo-v28 .ddcombo-value>span{padding:5px 6px;border-radius:6px;background:var(--line2);text-align:center;white-space:nowrap}
-.ddcombo-v28 .ddcombo-value b{font-size:14px}
-.ddcombo-v28 .ddcombo-value .ddcombo-target{background:color-mix(in srgb,var(--cv-asm) 16%,var(--panel));color:var(--ink)}
-.ddcombo-v28 .ddcombo-rate{font-size:14px;font-weight:750;color:var(--ink);font-variant-numeric:tabular-nums}
-.ddcombo-v28 .ddcombo-qty{grid-column:4;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-.ddcombo-v28 .ddcombo-qty>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:5px 2px;background:var(--cv-asm);color:#13233c;border-radius:5px;min-width:0}
+.ddcombo-v28 .ddcombo-value{grid-column:3;grid-row:1;display:grid;grid-template-columns:1fr 1fr 76px;gap:7px;align-items:center;font-size:12px;line-height:20px}
+.ddcombo-v28 .ddcombo-value>span{padding:3px 6px;border-radius:6px;background:var(--line2);text-align:center;white-space:nowrap}
+.ddcombo-v28 .ddcombo-value b{font-size:15px}
+.ddcombo-v28 .ddcombo-value .ddcombo-target,.ddcombo-v28 .ddcombo-value .ddcombo-rate{background:#eef5ff;color:#1764c9}
+.ddcombo-v28 .ddcombo-value .ddcombo-target b{color:inherit}
+.ddcombo-v28 .ddcombo-rate{font-size:15px;font-weight:750;font-variant-numeric:tabular-nums}
+.ddcombo-v28 .ddcombo-qty{grid-column:4;grid-row:1/3;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;align-self:center}
+.ddcombo-v28 .ddcombo-qty>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:5px 2px;min-height:44px;box-sizing:border-box;background:var(--cv-asm);color:#13233c;border-radius:5px;min-width:0}
 .ddcombo-v28 .ddcombo-qty>.s{background:var(--cv-ship)}.ddcombo-v28 .ddcombo-qty>.m{background:var(--cv-mfg)}
-.ddcombo-v28 .ddcombo-qty b{font-size:14px;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.ddcombo-v28 .ddcombo-qty small{font-size:10px;font-weight:650}
-.ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:3/-1;grid-row:2;justify-content:flex-start}
-.ddcombo-v28 .ddcombo-tail .ddcombo-checks{gap:5px}
-.ddcombo-v28 .dd-cstat{font-size:11px;padding:3px 5px}
-.ddcombo-v28 .ddline-integrated{grid-column:2;grid-row:2;font-size:11px;gap:4px 10px;min-width:0}
-.ddcombo-v28 .ddline-integrated small{font-size:10px}
-.ddcombo-v28 .ddcombo-missing{display:block;font-size:10px;color:var(--sub);padding-top:2px}
-@media(max-width:1000px){
- .ddcombo-v28 .ddcombo-row{grid-template-columns:70px minmax(100px,1fr) 282px;gap:6px 10px}
- .ddcombo-v28 .ddcombo-qty{grid-column:2;grid-row:2;max-width:144px}
- .ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:3;grid-row:2}
+.ddcombo-v28 .ddcombo-qty b{font-size:16px;line-height:18px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ddcombo-v28 .ddcombo-qty small{font-size:11px;line-height:13px;font-weight:650}
+.ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:3;grid-row:2;justify-content:flex-start;align-items:center;gap:4px;line-height:18px}
+.ddcombo-v28 .ddcombo-tail .ddcombo-checks{gap:5px;min-height:0;flex-wrap:wrap;line-height:18px}
+.ddcombo-v28 .ddcombo-checks .dd-cstat{height:auto;min-height:0;padding:0;border:0;background:transparent;border-radius:3px;font-size:11px;line-height:18px;gap:3px;color:var(--sub)}
+.ddcombo-v28 .ddcombo-checks .dd-cstat b{font-size:11px}
+.ddcombo-v28 .ddcombo-checks .dd-cstat+.dd-cstat:before{content:'·';margin-right:2px;color:var(--sub)}
+.ddcombo-v28 .ddcombo-checks .dd-cstat.warn{color:#c83229;background:#fff2ed;padding:0 3px}
+.ddcombo-v28 .ddcombo-tail>.ddline-state{font-size:10px;line-height:16px;padding:0 3px;margin-left:0}
+.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-name,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-graph{grid-row:1}
+.ddcombo-v28 .ddline-integrated{grid-column:2;grid-row:2;font-size:11px;line-height:18px;gap:0 9px;padding:0;min-width:0}
+.ddcombo-v28 .ddcombo-missing{position:absolute;left:8px;top:50%;transform:translateY(-50%);max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;line-height:16px;font-weight:600;color:#243a53;background:rgba(255,255,255,.85);border-radius:3px;padding:0 4px;pointer-events:none}
+html[data-theme=dark] .ddcombo-v28 .ddcombo-value .ddcombo-target,html[data-theme=dark] .ddcombo-v28 .ddcombo-value .ddcombo-rate{background:#213550;color:#9fc5ff}
+html[data-theme=dark] .ddcombo-v28 .ddcombo-missing{background:#263b50;color:#e0eaff}
+@media(max-width:1050px){
+ .ddcombo-v28 .ddcombo-row{grid-template-columns:74px minmax(120px,1fr) 284px 132px;gap:2px 8px}
+ .ddcombo-v28 .ddcombo-value{grid-template-columns:1fr 1fr 68px;gap:5px}
+ .ddcombo-v28 .ddcombo-value b,.ddcombo-v28 .ddcombo-rate{font-size:14px}
  .ddcombo-v28 .ddline-integrated{grid-column:2/-1;grid-row:3}
+ .ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-name,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-graph{grid-row:1/3}
 }
-@media(max-width:650px){
- .ddcombo-v28 .ddcombo-row{grid-template-columns:64px minmax(0,1fr);gap:7px 9px}
- .ddcombo-v28 .ddcombo-value{grid-column:2;grid-row:2;grid-template-columns:1fr 1fr 60px;gap:4px;font-size:11px}
- .ddcombo-v28 .ddcombo-value b,.ddcombo-v28 .ddcombo-rate{font-size:12px}
- .ddcombo-v28 .ddcombo-qty{grid-column:2;grid-row:3}
+@media(max-width:800px){
+ .ddcombo-v28 .ddcombo-row{grid-template-columns:70px minmax(0,1fr) 138px;grid-template-rows:auto;gap:5px 8px;padding:8px 2px}
+ .ddcombo-v28 .ddcombo-name{grid-column:1;grid-row:1;font-size:15px}
+ .ddcombo-v28 .ddcombo-graph,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-graph{grid-column:2/-1;grid-row:1}
+ .ddcombo-v28 .ddcombo-value{grid-column:2;grid-row:2;grid-template-columns:1fr 1fr 64px;gap:4px;font-size:11px}
+ .ddcombo-v28 .ddcombo-value b,.ddcombo-v28 .ddcombo-rate{font-size:13px}
+ .ddcombo-v28 .ddcombo-qty{grid-column:3;grid-row:2/4}
+ .ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:1/3;grid-row:3}
+ .ddcombo-v28 .ddline-integrated{grid-column:1/-1;grid-row:4}
+ .ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-name{grid-row:1}
+}
+@media(max-width:550px){
+ .ddcombo-v28 .ddcombo-row{grid-template-columns:64px minmax(0,1fr);gap:6px 8px}
+ .ddcombo-v28 .ddcombo-value{grid-column:1/-1;grid-row:2}
+ .ddcombo-v28 .ddcombo-qty{grid-column:2;grid-row:3;max-width:150px;justify-self:end;width:100%}
  .ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:1/-1;grid-row:4}
  .ddcombo-v28 .ddline-integrated{grid-column:1/-1;grid-row:5}
 }
@@ -8874,7 +8898,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.28';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.29';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10790,7 +10814,7 @@ async function addCharts(buf, jobs) {
     const rate=hasAvg&&hasTarget?pctR(x.avg,x.tg):null;
     const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
     const context=`근무 실적 ${x.w}명 · 목표 설정 ${x.tn}명${x.sup?' · 지원 '+x.sup+'명':''}`;
-    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv},scale):'<div class="ddconv"></div>'}${hasAvg&&!cv?'<small class="ddcombo-missing">구성 미확인 · 합계 표시</small>':''}</div>
+    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv},scale):'<div class="ddconv"></div>'}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}</div>
       <div class="ddcombo-value" title="${esc(context)}"><span class="ddcombo-target" title="기존 목표 설정 인원의 평균 목표">목표 <b>${hasTarget?fmt(x.tg):'—'}</b></span><span class="ddcombo-current" title="기존 근무 실적 인원의 평균 환산">환산 <b>${fmt(x.avg)}</b></span><span class="ddcombo-rate" title="평균 환산 ÷ 평균 목표 × 100">${rate==null?'—':rate+'%'}</span></div>
       <div class="ddcombo-qty" aria-label="그룹 수량"><span><b>${x.q??0}</b><small>조립</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span><span class="m"><b>${x.mq||0}</b><small>제조</small></span></div>`;
   }
@@ -10989,13 +11013,13 @@ async function addCharts(buf, jobs) {
     // V7: 체크사항(그룹별)과 평균환산은 카드 하나에서 같은 행으로 확인. 특이사항 열 없음.
     const activeGroups = D.G.filter(x => x.w || (x.g === '라인' && r._prod));
     const groupScale=Math.max(20,...activeGroups.map(x=>x.avg||0),...activeGroups.map(x=>x.tg||0));
-    h += `<div class="card ddcombo-v7 ddcombo-v28"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>검은 선 = 목표 · 체크사항은 전 근무일 기준</small></h3>
+    h += `<div class="card ddcombo-v7 ddcombo-v28"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>검은 선 = 목표</small></h3>
       <div class="ddcombo-list">
         ${activeGroups.map(x => `<div class="ddcombo-row">
           <div class="ddcombo-name">${gdot(x.g)}</div>
           ${ddGroupDisplay(x,groupScale)}
-          ${x.g === '라인' && r._prod ? `<div class="ddline-integrated"><span>생산수량 <b>${r._prod.qty}대</b></span><span>기타시간 <b>${r._prod.H}분</b></span><span>총환산 <b>${f2(r._prod.T)}</b></span><span>생산 참여 <b>${r._prod.n}명</b></span>${r._prod.incomplete ? '<span class="t-lo">미완성 항목 있음 · 환산 가능한 입력만 계산</span>' : ''}<small>임시저장 완료 기준 · 월 통계·엑셀은 확정 실적 기준</small></div>` : ''}
-          <div class="ddcombo-tail"><div class="ddcombo-checks" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>${x.g === '라인' && r._prod ? `<span class="ddline-state">${esc(r._prod.status)}</span>` : ''}</div>
+          ${x.g === '라인' && r._prod ? `<div class="ddline-integrated" title="임시저장 완료 기준 · 월 통계·엑셀은 확정 실적 기준"><span>생산 <b>${r._prod.qty}</b></span><span>기타 <b>${r._prod.H}분</b></span><span>총환산 <b>${f2(r._prod.T)}</b></span><span>참여 <b>${r._prod.n}명</b></span>${r._prod.incomplete ? '<span class="t-lo" title="환산 가능한 입력만 계산">미완성 항목 있음</span>' : ''}</div>` : ''}
+          <div class="ddcombo-tail"><div class="ddcombo-checks" title="체크사항은 전 근무일 기준" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>${x.g === '라인' && r._prod ? `<span class="ddline-state">${esc(r._prod.status)}</span>` : ''}</div>
         </div>`).join('')}
       </div>
       ${(() => { const E = D.G.filter(x => !x.w && !(x.g === '라인' && r._prod)); if (!E.length || !D.G.length) return '';
