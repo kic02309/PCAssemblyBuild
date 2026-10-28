@@ -3058,6 +3058,9 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 
 .hrinc-editor .hrinc-tablewrap{max-height:380px;overflow:auto}.hrinc-editor .edit{width:100%;min-width:520px}.hrinc-editor .edit input,.hrinc-editor .edit select{width:100%;box-sizing:border-box}.hrinc-editor .edit thead{position:sticky;top:0;background:var(--panel);z-index:1}.hrinc-settings .fields2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.hrinc-settings .fields2 select{width:100%}.hrinc-settings .row{flex-wrap:wrap}@media(max-width:650px){.hrinc-settings .fields2{grid-template-columns:1fr}.hrinc-settings .row>h2{width:100%}}
 </style>
+<style id="hrinc-matrix-v2913">
+.hrinc-matrix .scroll{overflow:auto}.hrinc-matrix table{min-width:620px;table-layout:fixed;width:100%}.hrinc-matrix th{position:sticky;top:0;z-index:1;background:#eef2f7;font-size:12px}.hrinc-matrix th:first-child{width:150px}.hrinc-matrix th:last-child{width:66px}.hrinc-matrix td{padding:5px 8px}.hrinc-matrix input{width:100%;min-width:0;text-align:right;font-size:13px;font-variant-numeric:tabular-nums}.hrinc-matrix th:nth-child(2){color:#245b9b}.hrinc-matrix th:nth-child(3){color:#167257}.hrinc-matrix th:nth-child(4){color:#7257a4}.hrinc-matrix th:nth-child(5){color:#99651e}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -6274,7 +6277,12 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
   };
   async function getMonth(month, part) {
     const r = await api('hrMonth', { month, part: part || '' });
+    const checks=new Map();
+    if(month==='2026-10' && r.rawSrc && r.rawSrc.src==='web' && A.C){
+      try{const live=await api('listUsers',{ym:month,hr:1});for(const u of live.users||[]){if(!(u.items||[]).some(it=>it.sum&&it.sum.mfgCalc===1&&it.sum.mf>0))continue;const m=A.C.calcMonth(u.items,u.target,A.minsYm(month));checks.set(String(u.name).replace(/\s/g,''),{average:m.f7,manufacturing:m.mq});}}catch(e){toast('제조 환산 재확인을 하지 못했습니다. SQL 적용 상태를 확인하세요.',1);}
+    }
     const b = H.build(r);
+    b.list.forEach(x=>{const z=checks.get(String(x.person.name).replace(/\s/g,''));if(z&&x.data.일평균!=null&&Math.abs(z.average-x.data.일평균)>0.0001)x.productionRecheck=z;});
     b.list.forEach((x,i)=>{x.data.설정개인목표=r.list[i].personalTarget??null;x.incentive=HRINC.calculate(x,r.incentive,r.teamGoal);if(x.incentive.manual){x.refs=x.refs.map(()=>null);x.notes=x.notes.map(()=>'별도 업무 · 개별 점수 입력');}});
     META = r.meta;
     return { month: r.month, part: r.part, locked: r.locked, items: b.items, list: b.list, order: H.orderRows(r.order, r.list.map(e => e.person)), rawSrc: r.rawSrc, incentive: r.incentive, teamGoal: r.teamGoal };
@@ -6667,6 +6675,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     const g = arr => arr.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     const attNote = Object.keys(a).length ? '근태 기록 ' + Object.keys(a).map(k => k + ' ' + a[k]).join(' · ') : '근태 기록 없음';
     $('#side').innerHTML = `${x.incentive.manual ? '<div class="hrinc-manual">별도 업무 평가 대상입니다. 점수를 개별 입력하세요.</div>' : d.hasData ? '' : '<div class="banner warn" style="margin-bottom:8px">업무데이터 없음 (이름이 다르면 기준 · 명단 → 원본이름 확인)</div>'}
+      ${x.productionRecheck?`<div class="banner warn" style="margin-bottom:10px">제조 환산 수정 후 실적 재반영이 필요합니다. 현재 웹 계산은 <b>${f1(x.productionRecheck.average,2)}</b> · 제조 <b>${x.productionRecheck.manufacturing}대</b>입니다. 아래는 인사평가에 저장된 기존 실적입니다. 관리자 [데이터 → 업무데이터로 지금 반영]에서 검토 후 반영하세요. 인사평가 마감 상태라면 마감 정책을 먼저 확인하세요. 저장된 평가점수는 자동 변경하지 않습니다.</div>`:''}
       <div class="dstrip"><div class="dbox p"><div class="h">실적 <span>${ST.data.rawSrc && ST.data.rawSrc.src === 'web' ? '업무데이터 자동' : '업무통계 엑셀'}</span></div><div class="g">${g([
         ['총수량', d.총수량 === null ? '-' : f1(d.총수량)], ['일평균', d.일평균 === null ? '-' : f1(d.일평균, 2)], ['달성률', pct(d.달성률)],
         ['총량 순위', d.총수량순위 ? d.총수량순위 + '위' : '-'], ['평균 순위', d.평균순위 ? d.평균순위 + '위' : '-'], ['파트 내', d.파트순위 ? d.파트순위 + ' / ' + d.파트인원 : '-'],
@@ -7214,10 +7223,23 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const groups=['*',...META.parts.map(p=>p.name)],grades=['A','B','C','D'],dedItems=HRINC_SEED.deductions.map(x=>x.item);
     const opts=(list,val)=>[...new Set([...list,val])].map(v=>`<option value="${esc(v)}" ${String(v)===String(val)?'selected':''}>${v==='*'?'전체':esc(v)}</option>`).join('');
     const row=(kind,r)=>`<tr>${schemas[kind].map(([key])=>`<td>${key==='group'||key==='grade'||key==='item'?`<select data-key="${key}">${opts(key==='group'?groups:key==='grade'?grades:dedItems,r[key]??(key==='grade'?'A':'*'))}</select>`:`<input data-key="${key}" type="number" min="0" step="${key==='amount'?'1':'0.01'}" value="${esc(r[key]??'')}">`}</td>`).join('')}<td><button class="sm" data-incdel>삭제</button></td></tr>`;
-    const table=(kind,title,note)=>`<section class="card hrinc-editor"><h3>${title}</h3><p class="muted">${note}</p><div class="scroll hrinc-tablewrap"><table class="edit" data-inctable="${kind}"><thead><tr>${schemas[kind].map(x=>`<th>${x[1]}</th>`).join('')}<th></th></tr></thead><tbody>${(draft[kind]||[]).map(r=>row(kind,r)).join('')}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`;
+    const matrixRow=(kind,threshold,values={})=>`<tr><td><input data-key="threshold" aria-label="${kind==='team'?'기준대수 이상':'달성률(%) 이상'}" type="number" min="0" step="0.01" value="${esc(threshold??'')}"></td>${grades.map(g=>`<td><input data-grade="${g}" aria-label="${g}등급 금액(원)" type="number" min="0" step="1" placeholder="미설정" value="${esc(values[g]??'')}"></td>`).join('')}<td><button class="sm" data-incdel aria-label="구간 삭제">삭제</button></td></tr>`;
+    const matrixRows=kind=>{
+      const buckets=new Map();for(const r of draft[kind]||[]){const key=String(r.threshold);if(!buckets.has(key))buckets.set(key,{});buckets.get(key)[r.grade]=r.amount;}
+      return [...buckets].sort((a,b)=>Number(a[0])-Number(b[0])).map(([t,v])=>matrixRow(kind,t,v)).join('');
+    };
+    const table=(kind,title,note)=>['team','personal'].includes(kind)?`<section class="card hrinc-editor hrinc-matrix"><h3>${title}</h3><p class="muted">${note} · 금액 단위: 원. 빈칸은 미설정, 0은 지급액 0원입니다.</p><div class="scroll"><table class="edit" data-inctable="${kind}"><thead><tr><th>${kind==='team'?'기준대수 이상':'달성률(%) 이상'}</th>${grades.map(g=>`<th>${g}등급</th>`).join('')}<th></th></tr></thead><tbody>${matrixRows(kind)}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`:`<section class="card hrinc-editor"><h3>${title}</h3><p class="muted">${note}</p><div class="scroll hrinc-tablewrap"><table class="edit" data-inctable="${kind}"><thead><tr>${schemas[kind].map(x=>`<th>${x[1]}</th>`).join('')}<th></th></tr></thead><tbody>${(draft[kind]||[]).map(r=>row(kind,r)).join('')}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`;
     const read=()=>{
       const v={month,basisVersion:2,teamOn:$('#incTeam').checked,personalOn:$('#incPersonal').checked,confirmed:$('#incConfirmed').checked,showPersonal:$('#incShow').checked,scoreSource:$('#incScoreSource').value,personalBasis:$('#incBasis').value,manual:$('#incManual').value.split(/[\n,]+/).map(v=>v.trim()).filter(Boolean)};
-      for(const kind of Object.keys(schemas)){v[kind]=[...root.querySelectorAll(`[data-inctable="${kind}"] tbody tr`)].map(tr=>{const r={};tr.querySelectorAll('[data-key]').forEach(el=>r[el.dataset.key]=['group','grade','item'].includes(el.dataset.key)?el.value:el.value.trim()===''?null:Number(el.value));return r;});}
+      for(const kind of Object.keys(schemas)){
+        const trs=[...root.querySelectorAll(`[data-inctable="${kind}"] tbody tr`)];
+        if(['team','personal'].includes(kind)){
+          v[kind]=[];const seen=new Set();for(const tr of trs){const input=tr.querySelector('[data-key="threshold"]'),raw=input.value.trim(),threshold=raw===''?null:Number(raw);if(threshold===null||!Number.isFinite(threshold)||threshold<0)throw Error('구간 기준을 입력하세요');if(seen.has(threshold))throw Error('같은 구간 기준이 중복됩니다');seen.add(threshold);let count=0;
+            for(const el of tr.querySelectorAll('[data-grade]')){if(el.value.trim()==='')continue;const amount=Number(el.value);if(!Number.isInteger(amount)||amount<0)throw Error('금액은 0 이상의 정수로 입력하세요');v[kind].push({grade:el.dataset.grade,threshold,amount});count++;}
+            if(!count)throw Error('각 구간에 한 등급 이상의 금액을 입력하세요. 지급액이 없으면 0을 입력하세요');
+          }
+        }else v[kind]=trs.map(tr=>{const r={};tr.querySelectorAll('[data-key]').forEach(el=>r[el.dataset.key]=['group','grade','item'].includes(el.dataset.key)?el.value:el.value.trim()===''?null:Number(el.value));return r;});
+      }
       return v;
     };
     const draw=()=>{
@@ -7234,11 +7256,11 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       <div class="card hrinc-save"><span id="incSaveState">${original?'저장된 기준':'저장 전 초안'}</span><button class="primary" id="incSave">${esc(month)} 기준 저장</button></div>`;
       root.oninput=e=>{if(e.target.id!=='incMonth'){dirty=true;$('#incSaveState').textContent='변경 내용 저장 필요';}};
       const bindDel=()=>root.querySelectorAll('[data-incdel]').forEach(b=>b.onclick=()=>{b.closest('tr').remove();dirty=true;$('#incSaveState').textContent='변경 내용 저장 필요';});bindDel();
-      root.querySelectorAll('[data-incadd]').forEach(b=>b.onclick=()=>{const k=b.dataset.incadd;root.querySelector(`[data-inctable="${k}"] tbody`).insertAdjacentHTML('beforeend',row(k,{}));bindDel();dirty=true;$('#incSaveState').textContent='변경 내용 저장 필요';});
+      root.querySelectorAll('[data-incadd]').forEach(b=>b.onclick=()=>{const k=b.dataset.incadd;root.querySelector(`[data-inctable="${k}"] tbody`).insertAdjacentHTML('beforeend',(['team','personal'].includes(k)?matrixRow(k,''):row(k,{})));bindDel();dirty=true;$('#incSaveState').textContent='변경 내용 저장 필요';});
       $('#incLoad').onclick=async()=>{if(dirty&&!(await A.confirmBox('저장하지 않은 기준 변경을 버리고 불러올까요?','불러오기')))return;ST.incMonth=$('#incMonth').value;if(!/^\d{4}-\d{2}$/.test(ST.incMonth))return toast('귀속월을 고르세요',1);await loadCfg();cfgInc();};
       $('#incCopy').onclick=async()=>{const p=configs.filter(c=>c.month<month).sort((a,b)=>b.month.localeCompare(a.month))[0];if(!p)return toast('복사할 이전 귀속월 기준이 없습니다',1);if(dirty&&!(await A.confirmBox('저장하지 않은 변경을 버리고 이전 기준을 복사할까요?','복사')))return;draft=JSON.parse(JSON.stringify(p));draft.month=month;draft.confirmed=false;if(draft.basisVersion!==2){draft.team=JSON.parse(JSON.stringify(HRINC_SEED.team));draft.personal=(draft.personal||[]).filter(r=>['A','B','C','D'].includes(r.grade));draft.basisVersion=2;}draw();dirty=true;$('#incSaveState').textContent=p.month+' 기준을 복사한 초안 · 저장 필요';};
       $('#incSave').onclick=async()=>{
-        const c=read();for(const k of ['team','personal','scores','deductions'])for(const r of c[k])for(const v of Object.values(r))if(v===null||typeof v==='number'&&(!Number.isFinite(v)||v<0))return toast('비어 있거나 잘못된 숫자를 확인하세요',1);
+        let c;try{c=read();}catch(e){return toast(e.message,1);}for(const k of ['team','personal','scores','deductions'])for(const r of c[k])for(const v of Object.values(r))if(v===null||typeof v==='number'&&(!Number.isFinite(v)||v<0))return toast('비어 있거나 잘못된 숫자를 확인하세요',1);
         const b=$('#incSave');b.disabled=true;
         try{const r=await api('hrSaveCfg',{table:'인센티브기준',rows:[c],base:CFG._incVersion||''});META=r.meta;await loadCfg();ST.incMonth=month;cfgInc();ST.data=null;toast('인센티브 기준을 저장했습니다');}
         catch(e){toast(e.message,1);b.disabled=false;}
@@ -8344,7 +8366,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.12';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.13';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
