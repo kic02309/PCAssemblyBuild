@@ -5709,18 +5709,30 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }));
     A.$$('[data-clr]').forEach(b => (b.onclick = async () => { const fx = fixedOf(b.dataset.clr); if (!(await A.confirmBox(mdw(b.dataset.clr) + ' 명단을 모두 지울까요?' + (fx.length ? '<br><span class="muted">↺ 토요 대체 ' + fx.length + '명은 남습니다.</span>' : ''), '비우기'))) return; setList(b.dataset.clr, fx, false); await save([b.dataset.clr]); }));
     A.$$('[data-fill]').forEach(b => (b.onclick = async () => { const w = b.dataset.fill; try { const r = await fillWeek(w, (L.ix.duty[w] || []).map(u => u.s)); A.toast(md(w) + ' 빈자리 ' + r.added.length + '명 채움' + (r.short.length ? ' · 후보 부족 ' + r.short.join(',') : ''), !!r.short.length); } catch (e) { A.toast(e.message, true); await load(L.year, true); } drawSat(); }));
-    A.$$('.lvsr .x').forEach(x => (x.onclick = async () => { const w = x.dataset.w;
-      if (fixedOf(w).includes(x.dataset.s)) {
-        const lv = (d.leaves || []).find(l => l.st === '대체' && l.as === w && l.s === x.dataset.s);
-        if (!lv) return A.toast('연결된 연차를 다시 불러오세요', true);
-        const person = staffById(lv.s) || {};
-        if (!(await A.confirmBox(`<b>${A.esc(person.name || '')}</b> ${mdw(w)} 토요근무를 삭제하고, 연결된 ${mdw(lv.d1)} 대체휴무를 원래 연차로 되돌립니다.<br>원래 연차 날짜·사유·신청 상태를 유지하고 연차 사용일수에 다시 반영합니다.${w < A.S.today ? '<br><b>지난 토요일입니다. 실제 근무 여부를 확인하세요.</b>' : ''}`, '토요근무 삭제 · 연차 복원'))) return;
-        x.style.pointerEvents = 'none';
-        try { await A.api('lvSatUndo', { id: lv.id, removeDuty: true }); await load(L.year, true); drawSat(); A.toast('토요근무 삭제 · 원래 연차 복원 완료'); }
-        catch (e) { A.toast(e.message, true); await load(L.year, true); drawSat(); }
-        return;
-      }   /* v28.34 : 고정 인원 = 되돌리기로만 */
-      setList(w, (L.ix.duty[w] || []).map(u => u.s).filter(id => id !== x.dataset.s), true); await save([w]); }));
+    A.$$('.lvsr .x').forEach(x => (x.onclick = async () => {
+      const w=x.dataset.w,sid=x.dataset.s,u=(L.ix.duty[w]||[]).find(u=>u.s===sid);
+      if(!u)return;
+      const linked=(d.leaves||[]).filter(l=>l.st==='대체'&&l.as===w&&l.s===sid);
+      if(linked.length>1)return A.toast('연결된 연차가 여러 건입니다. 원본 확인이 필요합니다',true);
+      const lv=linked[0],person=staffById(sid)||{};
+      const msg=`<b>${A.esc(person.name||'')}</b> ${mdw(w)} 토요근무를 삭제합니다.<br>`+
+        (lv?`${mdw(lv.d1)} 대체휴무를 원래 연차로 복원합니다. 날짜·사유·전환 전 상태를 유지하고 연차 사용일수에 반영합니다.`:
+         u.a?`${mdw(u.a)} 대체휴무 연결도 해제합니다.<br><b>연결된 원래 연차 기록이 없어 연차는 자동으로 만들지 않습니다.</b>`:'다른 인원의 배정은 유지합니다.')+
+        (w<A.S.today?'<br><b>지난 토요일입니다. 실제 근무 여부를 확인하세요.</b>':'');
+      if(!(await A.confirmBox(msg,lv?'토요근무 삭제 · 연차 복원':'토요근무 삭제')))return;
+      x.style.pointerEvents='none';
+      try{
+        const result=await A.api('lvSatUndo',{dutyDate:w,staffId:sid,baseAlt:u.a||'',baseLeave:lv?.id||''});
+        if(result.revision!==17)throw Error('v29.17 SQL을 먼저 적용한 뒤 새로고침하세요');
+        await load(L.year,true);drawSat();
+        if((D().duty||[]).some(r=>r.d===w&&r.s===sid))throw Error('삭제 후 재조회에 근무가 남아 있습니다. 다시 확인하세요');
+        if(lv&&!(D().leaves||[]).some(l=>l.id===lv.id&&l.st!=='대체'))throw Error('원래 연차 복원 결과를 다시 확인하세요');
+        A.toast(result.restored?'토요근무 삭제 · 원래 연차 복원 확인 완료':'토요근무 삭제 확인 완료 · 기존 연차 기록 유지');
+      }catch(e){
+        A.toast(e.message,true);
+        try{await load(L.year,true);drawSat();}catch(refreshError){x.style.pointerEvents='';A.toast('재조회하지 못했습니다. 새로고침 후 확인하세요',true);}
+      }
+    }));
     A.$$('select.alt').forEach(sel => (sel.onchange = async () => {
       const u = d.duty.find(x => x.d === sel.dataset.w && x.s === sel.dataset.s); if (!u) return;
       u.a = sel.value || null;
@@ -8496,7 +8508,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.16';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.17';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
