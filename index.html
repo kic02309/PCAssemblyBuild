@@ -3184,6 +3184,30 @@ html[data-theme=dark] #hrb .eval-production>strong{background:#1b3455;color:#8cb
 @media(max-width:850px){#hrb .eval-equation{min-width:0}#hrb .eval-summary{grid-template-columns:1fr}#hrb .eval-part>div:not(.eval-part-progress){grid-template-columns:repeat(2,minmax(0,1fr))}#hrb .eval-part span:nth-child(3){grid-column:1/-1;flex-direction:row}#hrb table.score{min-width:680px}}
 </style>
 
+<style id="report-board-v2923">
+#hrb .order-board-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+#hrb .order-board-actions .muted{font-size:12px;line-height:1.5}
+#hrb .order-board-layout{grid-template-columns:minmax(0,1fr) 220px;gap:14px}
+#hrb .order-board-layout>div{min-width:0}
+#hrb .order-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+#hrb .order-column-title{font-size:13px;font-weight:700;color:var(--sub);padding:5px 2px}
+#hrb .order-block{margin:0 0 12px;border:1px solid var(--line,#cad4df);border-radius:6px;overflow:hidden;background:var(--panel,#fff)}
+#hrb .order-block h3{display:flex;justify-content:space-between;gap:8px;margin:0;padding:8px 10px;font-size:14px;background:#e7efdf;color:#253a28}
+#hrb .order-block h3 span{font-size:12px}
+#hrb .order-block table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
+#hrb .order-block th,#hrb .order-block td{border:1px solid var(--line,#d4dce6);padding:6px 4px;text-align:center;overflow-wrap:anywhere}
+#hrb .order-block th{font-size:12px;background:var(--bg,#f4f6fa)}
+#hrb .order-block th:last-child{width:44px}#hrb .order-block th:first-child{width:28px}#hrb .order-block th:nth-child(2){width:54px}#hrb .order-block th:nth-child(3){width:26%}
+#hrb .order-block tr[draggable=true]{cursor:grab}#hrb .order-block tr[draggable=true]:hover{background:var(--bluebg,#eef4ff)}
+#hrb .order-grip{font-size:20px;color:var(--sub)}
+#hrb .order-move{display:block;max-width:100%;width:100%;padding:3px;margin:4px 0 0;font-size:12px;border:1px solid var(--line);border-radius:4px;background:var(--panel,#fff);color:var(--ink)}
+#hrb .order-block.order-drop{outline:3px solid #3479ed;outline-offset:1px}#hrb .order-dragging{opacity:.45}
+#hrb .order-empty{height:60px;color:var(--sub);font-size:12px;background:var(--bg,#f5f7fa)}
+#hrb .order-details{margin:12px 0;border-top:1px solid var(--line);padding-top:10px}#hrb .order-details summary{cursor:pointer;font-size:13px;font-weight:700;margin-bottom:10px}
+html[data-theme=dark] #hrb .order-block h3{background:#293d31;color:#daebde}
+@media(max-width:1450px){#hrb .order-board-layout{grid-template-columns:1fr}#hrb .order-board-layout .report-counts{position:static}#hrb .order-board-layout .report-counts table{max-width:440px}}
+@media(max-width:950px){#hrb .order-board{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -7532,18 +7556,83 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     COL_OPTS['위치@보고순서']=['왼쪽','오른쪽'];COL_OPTS['직급@보고순서']=['팀장','매니저','사원','계약직',''];
     const supported=CFG._orderRevision===1,locked=!!CFG._orderLocked;
     cfgb().innerHTML=`<div class="card"><h2>보고 순서표</h2><div class="actions"><label>귀속월 <input type="month" id="orderMonth" value="${esc(month)}"></label><button id="orderLoad">불러오기</button><button id="orderPreview">기준 양식 미리보기</button><button class="primary" id="svOrder" ${!supported||locked?'disabled':''}>이 귀속월 저장 (자동 정렬)</button></div>
-      <div class="banner info">선택 귀속월의 보고 배치입니다. 기존 인원은 [퇴사인원으로 이동]으로 정리하며 이름·사번·계약월·평가기록을 유지합니다. 조직도·계정의 퇴사 처리와는 별개입니다. 엑셀은 기존 [이 달 엑셀 받기]를 이용하세요.</div>
+      <div class="banner info">선택 귀속월의 보고 배치입니다. 직원 행을 원하는 블록으로 끌어서 이동하고 [이 귀속월 저장]으로 확정하세요. 퇴사는 [퇴사인원] 블록으로 이동하며 이름·사번·계약월·평가기록을 유지합니다. 조직도·계정의 퇴사 처리와는 별개입니다. 엑셀은 기존 [이 달 엑셀 받기]를 이용하세요.</div>
       ${!supported?'<div class="banner warn">v29.14 SQL을 먼저 적용해야 귀속월별로 저장할 수 있습니다.</div>':''}${locked?'<div class="banner warn">인사평가가 마감된 귀속월입니다. 미리보기만 가능합니다.</div>':''}
-      <div class="report-editor-layout"><div id="orderEditor">${editTable('보고순서',rows,{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}})}</div><aside class="report-counts" id="orderCounts"></aside></div><p id="orderState" class="muted">저장된 기준</p></div><datalist id="blkList">${blocks.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>`;
+      <div class="order-board-actions"><button id="orderUndo" disabled>되돌리기</button><button id="orderSort">전체 입사순 정렬</button><button id="orderScores">저장 총점 조회</button><span class="muted">행을 다른 블록에 놓으면 관리자 우선·사원 입사순으로 정렬됩니다. 이름 아래 선택 메뉴로도 이동할 수 있습니다.</span></div><div class="report-editor-layout order-board-layout"><div><div id="orderBoard" class="order-board"></div><details class="order-details"><summary>상세 편집 · 블록/좌우 위치/직급/사번/계약월</summary><div id="orderEditor">${editTable('보고순서',rows,{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}})}</div></details></div><aside class="report-counts" id="orderCounts"></aside></div><p id="orderState" class="muted">저장된 기준</p></div><datalist id="blkList">${blocks.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>`;
     let dirty=false;ST.orderDirty=false;
     const current=()=>readTable('보고순서');
+    // The editable detail table remains the single source for the existing save/preview contract.
+    const baseline=JSON.stringify(current()),undo=[];
+    let lastSnapshot=current();
+    let saving=false,dragged=null,revision=0,boardTotals=null,totalLoading=false;
+    const boardHost=$('#orderBoard');
+    const blockDefs=new Map();
+    const canEdit=()=>supported&&!locked&&!saving;
+    const rememberBlocks=arr=>{for(const r of arr){const name=String(r['블록']||'').trim();if(name)blockDefs.set(name,{name,side:r['위치']==='왼쪽'?'왼쪽':'오른쪽',order:Number(r['블록순서'])||99});}
+      if(!blockDefs.has('퇴사인원'))blockDefs.set('퇴사인원',{name:'퇴사인원',side:'오른쪽',order:999});};
+    rememberBlocks(rows);
+    const sortedOrder=arr=>H.orderRows(arr.map(r=>({...r})).sort((a,b)=>String(a['사번']||'').localeCompare(String(b['사번']||''),'ko',{numeric:true})||String(a['이름']||'').localeCompare(String(b['이름']||''),'ko')).map((r,i)=>({...r,'순서':String(i+1)})),roster);
+    const checkpoint=arr=>{undo.push(arr.map(r=>({...r})));if(undo.length>30)undo.shift();};
+    function replaceOrder(arr,remember=true){
+      if(!canEdit())return;
+      if(remember)checkpoint(current());
+      $('#orderEditor').innerHTML=editTable('보고순서',remember?sortedOrder(arr):arr,{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}});
+      revision++;dragged=null;wireEditor();dirty=JSON.stringify(current())!==baseline;update();
+    }
+    async function movePerson(index,target,version=revision){
+      if(!canEdit()||version!==revision)return;
+      const all=current(),row=all[index],dest=blockDefs.get(target);
+      if(!row||!row['이름']||!dest||row['블록']===target)return;
+      if(ReportCore.summary(all,roster).duplicates.length)return toast('중복 이름을 상세 편집에서 먼저 정리하세요',1);
+      const name=row['이름'];
+      if(target==='퇴사인원'&&!(await A.confirmBox(`<b>${esc(name)}</b> 사원을 ${esc(month)} 보고서의 퇴사인원 블록으로 이동합니다.<br>이름·사번·계약월·평가기록은 보존되며 저장 전에는 되돌릴 수 있습니다.`,'퇴사인원으로 이동'))){renderBoard();return;}
+      if(!canEdit()||version!==revision)return;
+      const changed=all.map((r,i)=>i===index?{...r,'블록':dest.name,'위치':dest.side,'블록순서':String(dest.order)}:r);
+      replaceOrder(changed);toast(name+' → '+target+' · 입사순으로 정렬했습니다. 저장 후 적용됩니다');
+    }
+    function renderBoard(){
+      const all=current();rememberBlocks(all);
+      const definitions=[...blockDefs.values()].sort((a,b)=>a.order-b.order||a.name.localeCompare(b.name,'ko'));
+      const block=b=>{
+        const members=all.map((r,index)=>({r,index})).filter(x=>x.r['블록']===b.name&&x.r['이름']);
+        const options=r=>definitions.map(d=>`<option value="${esc(d.name)}" ${d.name===r['블록']?'selected':''}>${esc(d.name)}</option>`).join('');
+        return `<section class="order-block ${b.name==='퇴사인원'?'report-retired':''}" data-order-block="${esc(b.name)}" aria-label="${esc(b.name)} ${members.length}명"><h3>${esc(b.name)} <span>${members.length}명</span></h3><table><thead><tr><th>이동</th><th>직급</th><th>이름</th><th>사번</th><th>계약월</th><th>총점</th></tr></thead><tbody>${members.map(({r,index})=>`<tr draggable="${canEdit()}" data-order-index="${index}" tabindex="0" aria-label="${esc(r['이름'])} · ${esc(b.name)}"><td><span class="order-grip" title="행을 다른 블록으로 끌어서 이동">⠿</span></td><td>${esc(r['직급'])}</td><td><b>${esc(r['이름'])}</b><select class="order-move" data-order-move="${index}" aria-label="${esc(r['이름'])} 이동할 블록" ${canEdit()?'':'disabled'}>${options(r)}</select></td><td>${esc(r['사번'])}</td><td>${esc(r['계약월'])}</td><td>${boardTotals===null?'—':esc(boardTotals[ReportCore.key(r['이름'])]??'')}</td></tr>`).join('')||'<tr><td colspan="6" class="order-empty">직원 행을 여기에 놓으세요</td></tr>'}</tbody></table></section>`;
+      };
+      $('#orderBoard').innerHTML=['왼쪽','오른쪽'].map(side=>`<div class="order-column"><div class="order-column-title">${side} 보고서</div>${definitions.filter(b=>b.side===side).map(block).join('')||'<p class="muted">상세 편집에서 블록을 추가할 수 있습니다.</p>'}</div>`).join('');
+      $('#orderUndo').disabled=!canEdit()||!undo.length;
+      $('#orderSort').disabled=!canEdit();$('#orderScores').disabled=saving||totalLoading;
+      $('#orderBoard').querySelectorAll('[data-order-move]').forEach(el=>el.onchange=()=>movePerson(Number(el.dataset.orderMove),el.value));
+      $('#orderBoard').querySelectorAll('[data-order-index]').forEach(tr=>{
+        tr.ondragstart=e=>{if(!canEdit()||e.target.closest('select,input,button')){e.preventDefault();return;}dragged={index:Number(tr.dataset.orderIndex),revision};if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','보고 순서표 직원 이동');}tr.classList.add('order-dragging');};
+        tr.ondragend=()=>{dragged=null;tr.classList.remove('order-dragging');$('#orderBoard').querySelectorAll('.order-drop').forEach(x=>x.classList.remove('order-drop'));};
+      });
+      $('#orderBoard').querySelectorAll('[data-order-block]').forEach(el=>{
+        el.ondragover=e=>{if(!canEdit()||!dragged)return;e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';el.classList.add('order-drop');};
+        el.ondragleave=e=>{if(!el.contains(e.relatedTarget))el.classList.remove('order-drop');};
+        el.ondrop=e=>{e.preventDefault();el.classList.remove('order-drop');const d=dragged;dragged=null;if(d)movePerson(d.index,el.dataset.orderBlock,d.revision);};
+      });
+    }
+    $('#orderUndo').onclick=()=>{if(!canEdit()||!undo.length)return;replaceOrder(undo.pop(),false);toast('직전 보고 배치로 되돌렸습니다');};
+    $('#orderSort').onclick=()=>{if(canEdit())replaceOrder(current());};
+    $('#orderScores').onclick=async()=>{
+      if(saving||totalLoading)return;totalLoading=true;renderBoard();
+      try{
+        const data=await api('hrMonth',{month,part:''});
+        if($('#orderBoard')!==boardHost)return;
+        boardTotals={};for(const x of data.list||[])if(x.rec)boardTotals[ReportCore.key(x.person['이름']||x.person.name)]=x.rec['합계']??'';
+        for(const [name,total]of Object.entries(data.orderTotals||{}))boardTotals[ReportCore.key(name)]=total;
+        toast('저장된 평가 총점을 조회했습니다. 미작성은 빈칸입니다');
+      }catch(e){if($('#orderBoard')===boardHost)toast(e.message,1);}
+      finally{totalLoading=false;if($('#orderBoard')===boardHost)renderBoard();}
+    };
+
     const update=()=>{
       ST.orderDirty=dirty;
       const v=ReportCore.summary(current(),roster);
       const warnings=[v.duplicates.length?'중복: '+v.duplicates.join(', '):'',v.missing.length?'명단에는 있으나 순서표 누락: '+v.missing.join(', '):'',v.unknown.length?'귀속월 명단에 없음: '+v.unknown.join(', '):'',v.inactive.length?'명단 사용 N · 재직 블록에 남음: '+v.inactive.join(', '):''].filter(Boolean);
       $('#orderCounts').innerHTML=`<h3>${esc(month)} 인원 확인</h3><p>귀속월 소속 그룹 기준 · 이름별 중복 제외</p><table>${Object.entries(v.groups).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([g,n])=>`<tr><td>${esc(g)}</td><td>${n}명</td></tr>`).join('')}<tr><td><b>재직 블록 인원</b></td><td>${v.active}명</td></tr><tr><td>해당 귀속월 퇴사인원</td><td>${v.retired}명</td></tr><tr><td><b>보고서 전체 인원</b></td><td>${v.total}명</td></tr><tr><td>입력 행 수</td><td>${v.rowCount}행</td></tr></table>${warnings.map(t=>`<p class="banner warn">${esc(t)}</p>`).join('')}`;
       $('#orderState').textContent=dirty?'변경 내용 저장 필요 · 위쪽 [이 귀속월 저장]으로 확정하세요':'저장된 기준 · 미리보기에서 총점 확인';
-      $('#svOrder').classList.toggle('report-save-pending',dirty);
+      $('#svOrder').classList.toggle('report-save-pending',dirty);renderBoard();lastSnapshot=current();
     };
     const bind=()=>{
       $('#ed_보고순서').querySelectorAll('input[data-h="블록"]').forEach(i=>i.setAttribute('list','blkList'));
@@ -7560,8 +7649,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
           const row={};tr.querySelectorAll('[data-h]').forEach(el=>row[el.dataset.h]=el.value);
           const moved=ReportCore.retire(row,current());
           const staged=current().map(r=>ReportCore.key(r['이름'])===ReportCore.key(name)?moved:r);
-          $('#orderEditor').innerHTML=editTable('보고순서',H.orderRows(staged,roster),{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}});
-          wireEditor();dirty=true;update();
+          replaceOrder(staged);
           const target=[...$('#ed_보고순서').querySelectorAll('tr')].find(r=>ReportCore.key(r.querySelector('[data-h="이름"]')?.value)===ReportCore.key(name));
           target?.scrollIntoView?.({block:'nearest'});
           toast(name+' · 퇴사인원 블록으로 이동했습니다. [이 귀속월 저장]을 눌러 확정하세요');
@@ -7571,10 +7659,10 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const wireEditor=()=>{
       wireTable('보고순서',{readonly:['순서'],blank:{위치:'왼쪽',직급:'사원'}});
       const add=document.querySelector('[data-add="보고순서"]'),oldAdd=add.onclick;
-      add.onclick=()=>{oldAdd();dirty=true;bind();update();};bind();
+      add.onclick=()=>{if(!canEdit())return;checkpoint(current());oldAdd();revision++;dirty=true;bind();update();};bind();
     };
     wireEditor();
-    $('#orderEditor').oninput=()=>{dirty=true;bind();update();};
+    $('#orderEditor').oninput=()=>{if(!canEdit())return;checkpoint(lastSnapshot);revision++;dragged=null;dirty=true;bind();update();};
     if(locked||!supported)$('#orderEditor').querySelectorAll('input,select,button').forEach(el=>el.disabled=true);
     $('#orderLoad').onclick=async()=>{
       const next=$('#orderMonth').value;if(!/^\d{4}-\d{2}$/.test(next))return toast('귀속월을 고르세요',1);
@@ -7582,17 +7670,18 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       ST.orderMonth=next;await loadCfg();cfgOrder();
     };
     $('#svOrder').onclick=async()=>{
+      if(!canEdit())return;
       const order=H.orderRows(current(),roster),summary=ReportCore.summary(order,roster);
       if(summary.duplicates.length)return toast('중복 인원을 먼저 정리하세요: '+summary.duplicates.join(', '),1);
-      const button=$('#svOrder');button.disabled=true;
-      const frozen=[...$('#orderEditor').querySelectorAll('input,select,button'),$('#orderLoad'),$('#orderMonth'),$('#orderPreview')].map(el=>({el,disabled:el.disabled}));frozen.forEach(x=>x.el.disabled=true);
+      saving=true;renderBoard();const button=$('#svOrder');button.disabled=true;
+      const frozen=[...$('#orderEditor').querySelectorAll('input,select,button'),$('#orderLoad'),$('#orderMonth'),$('#orderPreview'),$('#orderScores')].map(el=>({el,disabled:el.disabled}));frozen.forEach(x=>x.el.disabled=true);
       try{
         const r=await api('hrSaveCfg',{table:'보고순서',month,rows:order,base:CFG._orderVersion||''});META=r.meta;ST.data=null;await loadCfg();
         const saved=new Map((CFG['보고순서']||[]).filter(r=>r['이름']).map(r=>[ReportCore.key(r['이름']),r]));
         const people=order.filter(r=>r['이름']);
         if(CFG._orderMonth!==month||saved.size!==people.length||people.some(r=>{const v=saved.get(ReportCore.key(r['이름']));return !v||['블록','위치','사번','계약월'].some(k=>String(v[k]??'').trim()!==String(r[k]??'').trim());}))throw Error('저장 후 재조회 결과가 다릅니다. 변경 화면은 유지됩니다. 귀속월과 SQL 적용 상태를 확인하세요');
         cfgOrder();toast(month+' 보고 순서 저장·재조회 확인 완료');
-      }catch(e){toast(e.message,1);button.disabled=false;frozen.forEach(x=>{if(x.el.isConnected)x.el.disabled=x.disabled;});} 
+      }catch(e){toast(e.message,1);saving=false;renderBoard();button.disabled=false;frozen.forEach(x=>{if(x.el.isConnected)x.el.disabled=x.disabled;});} 
     };
     $('#orderPreview').onclick=async()=>{
       try{
@@ -8682,7 +8771,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.22';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.23';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
