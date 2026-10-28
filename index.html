@@ -3197,10 +3197,16 @@ html[data-theme=dark] #hrb .eval-production>strong{background:#1b3455;color:#8cb
 #hrb .order-block table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
 #hrb .order-block th,#hrb .order-block td{border:1px solid var(--line,#d4dce6);padding:6px 4px;text-align:center;overflow-wrap:anywhere}
 #hrb .order-block th{font-size:12px;background:var(--bg,#f4f6fa)}
-#hrb .order-block th:last-child{width:44px}#hrb .order-block th:first-child{width:28px}#hrb .order-block th:nth-child(2){width:54px}#hrb .order-block th:nth-child(3){width:26%}
+#hrb .order-block th:last-child{width:44px}#hrb .order-block th:first-child{width:82px}#hrb .order-block th:nth-child(2){width:54px}#hrb .order-block th:nth-child(3){width:21%}
 #hrb .order-block tr[draggable=true]{cursor:grab}#hrb .order-block tr[draggable=true]:hover{background:var(--bluebg,#eef4ff)}
-#hrb .order-grip{font-size:20px;color:var(--sub)}
-#hrb .order-move{display:block;max-width:100%;width:100%;padding:3px;margin:4px 0 0;font-size:12px;border:1px solid var(--line);border-radius:4px;background:var(--panel,#fff);color:var(--ink)}
+#hrb .order-grip{font-size:15px;line-height:1;color:var(--sub);margin-right:5px;vertical-align:middle}
+#hrb .order-block tbody td{height:32px;padding:4px}
+#hrb .order-group-cell{background:#e7efdf;color:#253a28;vertical-align:middle;cursor:default;font-weight:700}
+#hrb .order-group-cell strong{display:block;font-size:13px;line-height:1.4}
+#hrb .order-group-cell small{display:block;font-size:12px;line-height:1.4;margin-top:3px}
+#hrb .order-block .order-person-cell{white-space:nowrap}
+html[data-theme=dark] #hrb .order-group-cell{background:#293d31;color:#daebde}
+
 #hrb .order-block.order-drop{outline:3px solid #3479ed;outline-offset:1px}#hrb .order-dragging{opacity:.45}
 #hrb .order-empty{height:60px;color:var(--sub);font-size:12px;background:var(--bg,#f5f7fa)}
 #hrb .order-details{margin:12px 0;border-top:1px solid var(--line);padding-top:10px}#hrb .order-details summary{cursor:pointer;font-size:13px;font-weight:700;margin-bottom:10px}
@@ -7583,7 +7589,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     cfgb().innerHTML=`<div class="card"><h2>보고 순서표</h2><div class="actions"><label>귀속월 <input type="month" id="orderMonth" value="${esc(month)}"></label><button id="orderLoad">불러오기</button><button id="orderPreview">기준 양식 미리보기</button><button class="primary" id="svOrder" ${!supported||locked?'disabled':''}>이 귀속월 저장 (자동 정렬)</button></div>
       <div class="banner info">선택 귀속월의 보고 배치입니다. 직원 행을 원하는 블록으로 끌어서 이동하고 [이 귀속월 저장]으로 확정하세요. 퇴사는 [퇴사인원] 블록으로 이동하며 이름·사번·계약월·평가기록을 유지합니다. 조직도·계정의 퇴사 처리와는 별개입니다. 엑셀은 기존 [이 달 엑셀 받기]를 이용하세요.</div>
       ${!supported?'<div class="banner warn">v29.14 SQL을 먼저 적용해야 귀속월별로 저장할 수 있습니다.</div>':''}${locked?'<div class="banner warn">인사평가가 마감된 귀속월입니다. 미리보기만 가능합니다.</div>':''}
-      <div class="order-board-actions"><button id="orderUndo" disabled>되돌리기</button><button id="orderSort">전체 입사순 정렬</button><button id="orderScores">저장 총점 조회</button><span class="muted">행을 다른 블록에 놓으면 관리자 우선·사원 입사순으로 정렬됩니다. 이름 아래 선택 메뉴로도 이동할 수 있습니다.</span></div><div class="report-editor-layout order-board-layout"><div><div id="orderBoard" class="order-board"></div><details class="order-details"><summary>상세 편집 · 블록/좌우 위치/직급/사번/계약월</summary><div id="orderEditor">${editTable('보고순서',rows,{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}})}</div></details></div><aside class="report-counts" id="orderCounts"></aside></div><p id="orderState" class="muted">저장된 기준</p></div><datalist id="blkList">${blocks.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>`;
+      <div class="order-board-actions"><button id="orderUndo" disabled>되돌리기</button><button id="orderSort">전체 입사순 정렬</button><button id="orderScores">저장 총점 조회</button><span class="muted">행을 다른 블록에 놓으면 관리자 우선·사원 입사순으로 정렬됩니다. 왼쪽 그룹명은 고정 표시되며 직원 행을 끌어서 이동합니다.</span></div><div class="report-editor-layout order-board-layout"><div><div id="orderBoard" class="order-board"></div><details class="order-details"><summary>상세 편집 · 블록/좌우 위치/직급/사번/계약월</summary><div id="orderEditor">${editTable('보고순서',rows,{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}})}</div></details></div><aside class="report-counts" id="orderCounts"></aside></div><p id="orderState" class="muted">저장된 기준</p></div><datalist id="blkList">${blocks.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>`;
     let dirty=false;ST.orderDirty=false;
     const current=()=>readTable('보고순서');
     // The editable detail table remains the single source for the existing save/preview contract.
@@ -7620,21 +7626,20 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       const definitions=[...blockDefs.values()].sort((a,b)=>a.order-b.order||a.name.localeCompare(b.name,'ko'));
       const block=b=>{
         const members=all.map((r,index)=>({r,index})).filter(x=>x.r['블록']===b.name&&x.r['이름']);
-        const options=r=>definitions.map(d=>`<option value="${esc(d.name)}" ${d.name===r['블록']?'selected':''}>${esc(d.name)}</option>`).join('');
-        return `<section class="order-block ${b.name==='퇴사인원'?'report-retired':''}" data-order-block="${esc(b.name)}" aria-label="${esc(b.name)} ${members.length}명"><h3>${esc(b.name)} <span>${members.length}명</span></h3><table><thead><tr><th>이동</th><th>직급</th><th>이름</th><th>사번</th><th>계약월</th><th>총점</th></tr></thead><tbody>${members.map(({r,index})=>`<tr draggable="${canEdit()}" data-order-index="${index}" tabindex="0" aria-label="${esc(r['이름'])} · ${esc(b.name)}"><td><span class="order-grip" title="행을 다른 블록으로 끌어서 이동">⠿</span></td><td>${esc(r['직급'])}</td><td><b>${esc(r['이름'])}</b><select class="order-move" data-order-move="${index}" aria-label="${esc(r['이름'])} 이동할 블록" ${canEdit()?'':'disabled'}>${options(r)}</select></td><td>${esc(r['사번'])}</td><td>${esc(r['계약월'])}</td><td>${boardTotals===null?'—':esc(boardTotals[ReportCore.key(r['이름'])]??'')}</td></tr>`).join('')||'<tr><td colspan="6" class="order-empty">직원 행을 여기에 놓으세요</td></tr>'}</tbody></table></section>`;
+        const group=`<td class="order-group-cell" rowspan="${Math.max(1,members.length)}" draggable="false"><strong>${esc(b.name)}</strong><small>(${members.length}명)</small></td>`;
+        return `<section class="order-block ${b.name==='퇴사인원'?'report-retired':''}" data-order-block="${esc(b.name)}" aria-label="${esc(b.name)} ${members.length}명"><table><thead><tr><th>그룹</th><th>직급</th><th>이름</th><th>사번</th><th>계약월</th><th>총점</th></tr></thead><tbody>${members.map(({r,index},i)=>`<tr draggable="${canEdit()}" data-order-index="${index}" tabindex="0" aria-label="${esc(r['이름'])} · ${esc(b.name)}">${i===0?group:''}<td>${esc(r['직급'])}</td><td class="order-person-cell"><span class="order-grip" aria-hidden="true" title="행을 다른 그룹으로 끌어서 이동">⠿</span><b>${esc(r['이름'])}</b></td><td>${esc(r['사번'])}</td><td>${esc(r['계약월'])}</td><td>${boardTotals===null?'—':esc(boardTotals[ReportCore.key(r['이름'])]??'')}</td></tr>`).join('')||`<tr>${group}<td colspan="5" class="order-empty">직원 행을 여기에 놓으세요</td></tr>`}</tbody></table></section>`;
       };
       $('#orderBoard').innerHTML=['왼쪽','오른쪽'].map(side=>`<div class="order-column"><div class="order-column-title">${side} 보고서</div>${definitions.filter(b=>b.side===side).map(block).join('')||'<p class="muted">상세 편집에서 블록을 추가할 수 있습니다.</p>'}</div>`).join('');
       $('#orderUndo').disabled=!canEdit()||!undo.length;
       $('#orderSort').disabled=!canEdit();$('#orderScores').disabled=saving||totalLoading;
-      $('#orderBoard').querySelectorAll('[data-order-move]').forEach(el=>el.onchange=()=>movePerson(Number(el.dataset.orderMove),el.value));
       $('#orderBoard').querySelectorAll('[data-order-index]').forEach(tr=>{
-        tr.ondragstart=e=>{if(!canEdit()||e.target.closest('select,input,button')){e.preventDefault();return;}dragged={index:Number(tr.dataset.orderIndex),revision};if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','보고 순서표 직원 이동');}tr.classList.add('order-dragging');};
+        tr.ondragstart=e=>{if(!canEdit()||e.target.closest('select,input,button,.order-group-cell')){e.preventDefault();return;}dragged={index:Number(tr.dataset.orderIndex),revision};if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','보고 순서표 직원 이동');}tr.classList.add('order-dragging');};
         tr.ondragend=()=>{dragged=null;tr.classList.remove('order-dragging');$('#orderBoard').querySelectorAll('.order-drop').forEach(x=>x.classList.remove('order-drop'));};
       });
       $('#orderBoard').querySelectorAll('[data-order-block]').forEach(el=>{
         el.ondragover=e=>{if(!canEdit()||!dragged)return;e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';el.classList.add('order-drop');};
         el.ondragleave=e=>{if(!el.contains(e.relatedTarget))el.classList.remove('order-drop');};
-        el.ondrop=e=>{e.preventDefault();el.classList.remove('order-drop');const d=dragged;dragged=null;if(d)movePerson(d.index,el.dataset.orderBlock,d.revision);};
+        el.ondrop=e=>{e.preventDefault();el.classList.remove('order-drop');const d=dragged;dragged=null;if(d)return movePerson(d.index,el.dataset.orderBlock,d.revision);};
       });
     }
     $('#orderUndo').onclick=()=>{if(!canEdit()||!undo.length)return;replaceOrder(undo.pop(),false);toast('직전 보고 배치로 되돌렸습니다');};
@@ -8796,7 +8801,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.24';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.25';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
