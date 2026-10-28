@@ -3175,7 +3175,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     EXCLUSIVE.type.forEach(c => (r9[c] = 0));
     (doc.rows || []).forEach(row => {
       // 엑셀 매크로와 동일 : 주문번호와 수량이 모두 있어야 계산
-      if (!row || String(row.o || '').trim() === '' || row.q === '' || row.q == null) return;
+      if (!row || (row.k !== '제조' && String(row.o || '').trim() === '') || row.q === '' || row.q == null) return;
       const q = num(row.q), m = row.m || {};
       let typeCol = null, score = 0;
       for (const c of EXCLUSIVE.type) if (m[c]) { typeCol = c; r10[c] += q; break; }
@@ -3213,8 +3213,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const d = calcDay(doc, 0, mins);
     const r10 = {}; COLS.forEach(x => { if (d.r10[x.c]) r10[x.c] = d.r10[x.c]; });
     const o = {}; OTHER.forEach(([k]) => { if (num((doc.other || {})[k])) o[k] = num(doc.other[k]); });
-    const mf = (doc.rows || []).filter(r => r && r.k === '제조' && String(r.o || '').trim());          // v28.7 : 제조 건수 · 대수 (주문과 나눠 보기용)
-    return { r10, ta: typeCounts(doc), t: d.t, gq: d.gq, d: num(doc.days), e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, mf: mf.length, mq: mf.reduce((a, r) => a + num(r.q), 0), kind: doc.kind, ...(d.pv ? { prod: d.pv } : {}) };
+    const mf = (doc.rows || []).filter(r => r && r.k === '제조' && r.q !== '' && r.q != null);          // v28.7 : 제조 건수 · 대수 (주문과 나눠 보기용)
+    return { mfgCalc: 1, r10, ta: typeCounts(doc), t: d.t, gq: d.gq, d: num(doc.days), e2: d.e2, e4: d.e4, h7: num(doc.asmOt), f7: d.f7, o, n: d.orders, mf: mf.length, mq: mf.reduce((a, r) => a + num(r.q), 0), kind: doc.kind, ...(d.pv ? { prod: d.pv } : {}) };
   }
   // 저장된 요약으로 그날 기본환산·평가평균을 그 달 점수로 다시 계산 (예전 요약은 저장값 사용)
   function sumDay(s, mins) {
@@ -3349,7 +3349,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const rows = (doc.rows || []).filter(r => r && (String(r.o || '').trim() || r.memo));
       rows.slice(0, MAX_ROWS).forEach((r, i) => {
         const rr = 14 + i;
-        if (String(r.o || '').trim()) v['A' + rr] = (r.k === '제조' ? '제조 ' : '') + String(r.o);
+        if (r.k === '제조' || String(r.o || '').trim()) v['A' + rr] = (r.k === '제조' ? '제조 ' : '') + String(r.o);
         if (r.q !== '' && r.q != null) v['B' + rr] = num(r.q);
         COLS.forEach(x => { const mv = (r.m || {})[x.c]; if (mv && !x.ext) v[x.xl + rr] = x.kind === 'num' ? num(mv) : 1; });   // 프리 → D(특수프리) · 웍스 → E(추천웍스)
         const mm2 = [r.k === '제조' && (r.sn || []).length ? snRange(r.sn) : '', r.memo || ''].filter(Boolean).join(' · ');
@@ -6188,8 +6188,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 (function(root){
  const num=v=>v==null||v===''||!Number.isFinite(Number(v))?null:Number(v);
  const moneyRows=(rows,group,grade,personal)=>{
-  const keys=personal?[['*',grade],['*','*']]:[[group,grade],[group,'*'],['*',grade],['*','*']];
-  for(const [g,k] of keys){const a=(rows||[]).filter(r=>(personal||r.group===g)&&r.grade===k);if(a.length)return a;}
+  const keys=[['*',grade]];
+  for(const [g,k] of keys){const a=(rows||[]).filter(r=>r.grade===k);if(a.length)return a;}
   return [];
  };
  const lookup=(rows,value,key)=>{if(value==null)return null;const row=(rows||[]).filter(r=>num(r.threshold)!=null&&num(r.threshold)<=value+1e-9).sort((a,b)=>a.threshold-b.threshold).pop();return row?num(row[key]):null;};
@@ -6201,6 +6201,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const basis=c.personalBasis==='gross'?avg:net,ratio=personal>0&&basis!=null?basis/personal*100:null;
   let team=null,person=null,total=null,score=null,reason='';
   if(!cfg)reason='인센티브 기준 미설정';
+  else if(c.basisVersion!==2)reason='등급별 기준 재설정 필요';
   else if(!c.confirmed)reason='적용방식 미확정';
   else if(!c.teamOn&&!c.personalOn)reason='인센티브 산정 미적용';
   else if(avg==null||!d.hasData)reason='업무실적 없음';
@@ -6216,7 +6217,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  root.HRINC={num,lookup,calculate};
 })(typeof window!=='undefined'?window:globalThis);
 
-window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "confirmed": false, "showPersonal": false, "scoreSource": "team", "personalBasis": "net", "manual": ["김태훈", "장일두", "조찬영", "도희승", "김진수"], "team": [{"group": "1그룹", "grade": "*", "threshold": 15.0, "amount": 0}, {"group": "1그룹", "grade": "*", "threshold": 15.5, "amount": 0}, {"group": "1그룹", "grade": "*", "threshold": 16.0, "amount": 300000.0}, {"group": "1그룹", "grade": "*", "threshold": 16.5, "amount": 400000.0}, {"group": "1그룹", "grade": "*", "threshold": 17.0, "amount": 500000.0}, {"group": "1그룹", "grade": "*", "threshold": 17.5, "amount": 600000.0}, {"group": "1그룹", "grade": "*", "threshold": 18.0, "amount": 700000.0}, {"group": "1그룹", "grade": "*", "threshold": 18.5, "amount": 800000.0}, {"group": "1그룹", "grade": "*", "threshold": 19.0, "amount": 900000.0}, {"group": "1그룹", "grade": "*", "threshold": 19.5, "amount": 1000000.0}, {"group": "1그룹", "grade": "*", "threshold": 20.0, "amount": 1500000.0}, {"group": "2그룹", "grade": "*", "threshold": 15.0, "amount": 0}, {"group": "2그룹", "grade": "*", "threshold": 15.5, "amount": 0}, {"group": "2그룹", "grade": "*", "threshold": 16.0, "amount": 300000.0}, {"group": "2그룹", "grade": "*", "threshold": 16.5, "amount": 300000.0}, {"group": "2그룹", "grade": "*", "threshold": 17.0, "amount": 400000.0}, {"group": "2그룹", "grade": "*", "threshold": 17.5, "amount": 400000.0}, {"group": "2그룹", "grade": "*", "threshold": 18.0, "amount": 500000.0}, {"group": "2그룹", "grade": "*", "threshold": 18.5, "amount": 500000.0}, {"group": "2그룹", "grade": "*", "threshold": 19.0, "amount": 600000.0}, {"group": "2그룹", "grade": "*", "threshold": 19.5, "amount": 600000.0}, {"group": "2그룹", "grade": "*", "threshold": 20.0, "amount": 700000.0}, {"group": "3그룹", "grade": "*", "threshold": 15.0, "amount": 0}, {"group": "3그룹", "grade": "*", "threshold": 15.5, "amount": 0}, {"group": "3그룹", "grade": "*", "threshold": 16.0, "amount": 100000.0}, {"group": "3그룹", "grade": "*", "threshold": 16.5, "amount": 200000.0}, {"group": "3그룹", "grade": "*", "threshold": 17.0, "amount": 200000.0}, {"group": "3그룹", "grade": "*", "threshold": 17.5, "amount": 200000.0}, {"group": "3그룹", "grade": "*", "threshold": 18.0, "amount": 300000.0}, {"group": "3그룹", "grade": "*", "threshold": 18.5, "amount": 300000.0}, {"group": "3그룹", "grade": "*", "threshold": 19.0, "amount": 400000.0}, {"group": "3그룹", "grade": "*", "threshold": 19.5, "amount": 400000.0}, {"group": "3그룹", "grade": "*", "threshold": 20.0, "amount": 500000.0}, {"group": "4그룹", "grade": "*", "threshold": 15.0, "amount": 0}, {"group": "4그룹", "grade": "*", "threshold": 15.5, "amount": 100000.0}, {"group": "4그룹", "grade": "*", "threshold": 16.0, "amount": 100000.0}, {"group": "4그룹", "grade": "*", "threshold": 16.5, "amount": 200000.0}, {"group": "4그룹", "grade": "*", "threshold": 17.0, "amount": 200000.0}, {"group": "4그룹", "grade": "*", "threshold": 17.5, "amount": 200000.0}, {"group": "4그룹", "grade": "*", "threshold": 18.0, "amount": 200000.0}, {"group": "4그룹", "grade": "*", "threshold": 18.5, "amount": 200000.0}, {"group": "4그룹", "grade": "*", "threshold": 19.0, "amount": 300000.0}, {"group": "4그룹", "grade": "*", "threshold": 19.5, "amount": 300000.0}, {"group": "4그룹", "grade": "*", "threshold": 20.0, "amount": 300000.0}], "personal": [], "scores": [{"threshold": 100000.0, "points": 81.0}, {"threshold": 200000.0, "points": 82.0}, {"threshold": 300000.0, "points": 83.0}, {"threshold": 400000.0, "points": 84.0}, {"threshold": 500000.0, "points": 85.0}, {"threshold": 600000.0, "points": 86.0}, {"threshold": 700000.0, "points": 87.0}, {"threshold": 800000.0, "points": 88.0}, {"threshold": 900000.0, "points": 89.0}, {"threshold": 1000000.0, "points": 90.0}, {"threshold": 1100000.0, "points": 91.0}, {"threshold": 1200000.0, "points": 92.0}, {"threshold": 1300000.0, "points": 93.0}, {"threshold": 1400000.0, "points": 94.0}, {"threshold": 1500000.0, "points": 95.0}], "deductions": [{"item": "품질지적", "qty": 0.5}, {"item": "지시불이행", "qty": 2}, {"item": "미발송", "qty": 0.5}, {"item": "오발송", "qty": 0.5}, {"item": "오조립", "qty": 1}, {"item": "파손", "qty": 1}, {"item": "조퇴", "qty": 0.5}, {"item": "지각", "qty": 0.5}, {"item": "당일연차", "qty": 1}, {"item": "결근", "qty": 5}]};
+window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "confirmed": false, "showPersonal": false, "scoreSource": "team", "personalBasis": "net", "manual": ["김태훈", "장일두", "조찬영", "도희승", "김진수"], "team": [{"grade": "A", "threshold": 15.0, "amount": 0}, {"grade": "A", "threshold": 15.5, "amount": 0}, {"grade": "A", "threshold": 16.0, "amount": 300000.0}, {"grade": "A", "threshold": 16.5, "amount": 400000.0}, {"grade": "A", "threshold": 17.0, "amount": 500000.0}, {"grade": "A", "threshold": 17.5, "amount": 600000.0}, {"grade": "A", "threshold": 18.0, "amount": 700000.0}, {"grade": "A", "threshold": 18.5, "amount": 800000.0}, {"grade": "A", "threshold": 19.0, "amount": 900000.0}, {"grade": "A", "threshold": 19.5, "amount": 1000000.0}, {"grade": "A", "threshold": 20.0, "amount": 1500000.0}, {"grade": "B", "threshold": 15.0, "amount": 0}, {"grade": "B", "threshold": 15.5, "amount": 0}, {"grade": "B", "threshold": 16.0, "amount": 300000.0}, {"grade": "B", "threshold": 16.5, "amount": 300000.0}, {"grade": "B", "threshold": 17.0, "amount": 400000.0}, {"grade": "B", "threshold": 17.5, "amount": 400000.0}, {"grade": "B", "threshold": 18.0, "amount": 500000.0}, {"grade": "B", "threshold": 18.5, "amount": 500000.0}, {"grade": "B", "threshold": 19.0, "amount": 600000.0}, {"grade": "B", "threshold": 19.5, "amount": 600000.0}, {"grade": "B", "threshold": 20.0, "amount": 700000.0}, {"grade": "C", "threshold": 15.0, "amount": 0}, {"grade": "C", "threshold": 15.5, "amount": 0}, {"grade": "C", "threshold": 16.0, "amount": 100000.0}, {"grade": "C", "threshold": 16.5, "amount": 200000.0}, {"grade": "C", "threshold": 17.0, "amount": 200000.0}, {"grade": "C", "threshold": 17.5, "amount": 200000.0}, {"grade": "C", "threshold": 18.0, "amount": 300000.0}, {"grade": "C", "threshold": 18.5, "amount": 300000.0}, {"grade": "C", "threshold": 19.0, "amount": 400000.0}, {"grade": "C", "threshold": 19.5, "amount": 400000.0}, {"grade": "C", "threshold": 20.0, "amount": 500000.0}, {"grade": "D", "threshold": 15.0, "amount": 0}, {"grade": "D", "threshold": 15.5, "amount": 100000.0}, {"grade": "D", "threshold": 16.0, "amount": 100000.0}, {"grade": "D", "threshold": 16.5, "amount": 200000.0}, {"grade": "D", "threshold": 17.0, "amount": 200000.0}, {"grade": "D", "threshold": 17.5, "amount": 200000.0}, {"grade": "D", "threshold": 18.0, "amount": 200000.0}, {"grade": "D", "threshold": 18.5, "amount": 200000.0}, {"grade": "D", "threshold": 19.0, "amount": 300000.0}, {"grade": "D", "threshold": 19.5, "amount": 300000.0}, {"grade": "D", "threshold": 20.0, "amount": 300000.0}], "personal": [], "scores": [{"threshold": 100000.0, "points": 81.0}, {"threshold": 200000.0, "points": 82.0}, {"threshold": 300000.0, "points": 83.0}, {"threshold": 400000.0, "points": 84.0}, {"threshold": 500000.0, "points": 85.0}, {"threshold": 600000.0, "points": 86.0}, {"threshold": 700000.0, "points": 87.0}, {"threshold": 800000.0, "points": 88.0}, {"threshold": 900000.0, "points": 89.0}, {"threshold": 1000000.0, "points": 90.0}, {"threshold": 1100000.0, "points": 91.0}, {"threshold": 1200000.0, "points": 92.0}, {"threshold": 1300000.0, "points": 93.0}, {"threshold": 1400000.0, "points": 94.0}, {"threshold": 1500000.0, "points": 95.0}], "deductions": [{"item": "품질지적", "qty": 0.5}, {"item": "지시불이행", "qty": 2}, {"item": "미발송", "qty": 0.5}, {"item": "오발송", "qty": 0.5}, {"item": "오조립", "qty": 1}, {"item": "파손", "qty": 1}, {"item": "조퇴", "qty": 0.5}, {"item": "지각", "qty": 0.5}, {"item": "당일연차", "qty": 1}, {"item": "결근", "qty": 5}], "basisVersion": 2};
 </script>
 <script>/* 인사평가 — 업무데이터 사이트 안의 메뉴 (관리자 · 담당 매니저) */
 (function () {
@@ -7207,14 +7208,15 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const configs=CFG['인센티브기준']||[], month=ST.incMonth||ST.month||META.current;
     const original=configs.find(c=>c.month===month);
     let draft=JSON.parse(JSON.stringify(original||Object.assign({},HRINC_SEED,{month,confirmed:false,teamOn:false,personalOn:false,showPersonal:month>='2026-11'})));
+    if(draft.basisVersion!==2){draft.team=JSON.parse(JSON.stringify(HRINC_SEED.team));draft.personal=(draft.personal||[]).filter(r=>['A','B','C','D'].includes(r.grade));draft.confirmed=false;draft.basisVersion=2;}
     let dirty=false;
-    const schemas={team:[['group','그룹'],['grade','등급'],['threshold','기준대수 이상'],['amount','금액(원)']],personal:[['grade','등급'],['threshold','달성률(%) 이상'],['amount','금액(원)']],scores:[['threshold','금액(원) 이상'],['points','예상점수']],deductions:[['item','차감 항목'],['qty','건당 차감대수']]};
-    const groups=['*',...META.parts.map(p=>p.name)],grades=['*','A','B','C','D'],dedItems=HRINC_SEED.deductions.map(x=>x.item);
+    const schemas={team:[['grade','등급'],['threshold','기준대수 이상'],['amount','금액(원)']],personal:[['grade','등급'],['threshold','달성률(%) 이상'],['amount','금액(원)']],scores:[['threshold','금액(원) 이상'],['points','예상점수']],deductions:[['item','차감 항목'],['qty','건당 차감대수']]};
+    const groups=['*',...META.parts.map(p=>p.name)],grades=['A','B','C','D'],dedItems=HRINC_SEED.deductions.map(x=>x.item);
     const opts=(list,val)=>[...new Set([...list,val])].map(v=>`<option value="${esc(v)}" ${String(v)===String(val)?'selected':''}>${v==='*'?'전체':esc(v)}</option>`).join('');
-    const row=(kind,r)=>`<tr>${schemas[kind].map(([key])=>`<td>${key==='group'||key==='grade'||key==='item'?`<select data-key="${key}">${opts(key==='group'?groups:key==='grade'?grades:dedItems,r[key]??'*')}</select>`:`<input data-key="${key}" type="number" min="0" step="${key==='amount'?'1':'0.01'}" value="${esc(r[key]??'')}">`}</td>`).join('')}<td><button class="sm" data-incdel>삭제</button></td></tr>`;
+    const row=(kind,r)=>`<tr>${schemas[kind].map(([key])=>`<td>${key==='group'||key==='grade'||key==='item'?`<select data-key="${key}">${opts(key==='group'?groups:key==='grade'?grades:dedItems,r[key]??(key==='grade'?'A':'*'))}</select>`:`<input data-key="${key}" type="number" min="0" step="${key==='amount'?'1':'0.01'}" value="${esc(r[key]??'')}">`}</td>`).join('')}<td><button class="sm" data-incdel>삭제</button></td></tr>`;
     const table=(kind,title,note)=>`<section class="card hrinc-editor"><h3>${title}</h3><p class="muted">${note}</p><div class="scroll hrinc-tablewrap"><table class="edit" data-inctable="${kind}"><thead><tr>${schemas[kind].map(x=>`<th>${x[1]}</th>`).join('')}<th></th></tr></thead><tbody>${(draft[kind]||[]).map(r=>row(kind,r)).join('')}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`;
     const read=()=>{
-      const v={month,teamOn:$('#incTeam').checked,personalOn:$('#incPersonal').checked,confirmed:$('#incConfirmed').checked,showPersonal:$('#incShow').checked,scoreSource:$('#incScoreSource').value,personalBasis:$('#incBasis').value,manual:$('#incManual').value.split(/[\n,]+/).map(v=>v.trim()).filter(Boolean)};
+      const v={month,basisVersion:2,teamOn:$('#incTeam').checked,personalOn:$('#incPersonal').checked,confirmed:$('#incConfirmed').checked,showPersonal:$('#incShow').checked,scoreSource:$('#incScoreSource').value,personalBasis:$('#incBasis').value,manual:$('#incManual').value.split(/[\n,]+/).map(v=>v.trim()).filter(Boolean)};
       for(const kind of Object.keys(schemas)){v[kind]=[...root.querySelectorAll(`[data-inctable="${kind}"] tbody tr`)].map(tr=>{const r={};tr.querySelectorAll('[data-key]').forEach(el=>r[el.dataset.key]=['group','grade','item'].includes(el.dataset.key)?el.value:el.value.trim()===''?null:Number(el.value));return r;});}
       return v;
     };
@@ -7224,8 +7226,8 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       <p class="hrinc-status">둘 다 선택하면 각각 계산하여 합산합니다. 기준이 미정이면 ‘계산에 적용’을 해제해 초안으로 저장하세요.</p>
       <div class="fields2"><div class="fld"><label>개인목표 달성률 산정</label><select id="incBasis"><option value="net" ${draft.personalBasis==='net'?'selected':''}>차감 후 기준대수 ÷ 개인목표</option><option value="gross" ${draft.personalBasis==='gross'?'selected':''}>차감 전 평가평균 ÷ 개인목표</option></select></div><div class="fld"><label>인사평가 예상점수 환산 금액</label><select id="incScoreSource"><option value="team" ${draft.scoreSource==='team'?'selected':''}>팀목표 인센티브 금액</option><option value="total" ${draft.scoreSource==='total'?'selected':''}>팀·개인 합산 인센티브 금액</option></select></div></div>
       <div class="fld"><label>별도 업무 평가 대상 (이름을 쉼표 또는 줄바꿈으로 구분)</label><textarea id="incManual" rows="2">${esc(draft.manual.join(', '))}</textarea><small class="muted">별도 업무 인원은 항목별 점수를 직접 입력합니다. 이 분류는 인센티브 지급 제외 조건이 아닙니다. 모든 인원은 점수를 직접 입력할 수 있습니다.</small></div>
-      ${!original?'<p class="hrinc-status">이 귀속월의 저장된 기준이 없습니다. 아래는 초기 초안입니다.</p>':''}<p class="muted">초기 금액표는 첨부한 9월 엑셀의 그룹별 기준입니다. 등급 ‘전체’는 원본 기준이며 특정 등급 행을 추가하면 해당 그룹·등급 표를 우선합니다. 해당 등급 표에는 필요한 모든 대수 구간을 입력하세요. 개인목표 금액표는 미정이므로 비워 둡니다.</p></section>
-      ${table('team','팀목표 · 대수/등급별 금액','차감 후 기준대수에 적용. 우선순위: 그룹+등급 → 그룹+전체등급 → 전체그룹+등급 → 전체. 그룹의 팀 전체 평균 달성 여부를 추가 지급 조건으로 가정하지 않습니다.')}
+      ${!original?'<p class="hrinc-status">이 귀속월의 저장된 기준이 없습니다. 아래는 초기 초안입니다.</p>':''}<p class="muted">초기 금액표는 9월 프로모션의 네 지급표를 A·B·C·D 등급 기준으로 구성했습니다. 기존 그룹 기준은 자동 적용하지 않습니다. 금액표를 검토한 뒤 저장·적용하세요. 개인목표 금액표는 미정이므로 비워 둡니다.</p></section>
+      ${table('team','팀목표 · 대수/등급별 금액','소속 그룹과 관계없이 해당 귀속월 인원의 평가등급 A·B·C·D를 자동 적용합니다. 사고·근태 차감 후 기준대수로 계산합니다.')}
       ${table('personal','개인목표 · 달성률/등급별 금액','100=100% 달성, 110=10% 초과, 115=15% 초과. 구간별 금액을 누적하지 않고 해당 구간의 금액 하나를 적용합니다. 미달 구간을 0원으로 정하려면 예: 0% 이상=0원 행을 등록하세요.')}
       ${table('scores','인센티브 금액 → 인사평가 예상점수','9월 엑셀의 LOOKUP 결과대로 10만원=81점, 20만원=82점 등으로 초기화했습니다. 10만원 미만은 미표시이며 96~99점은 금액 기준이 없어 추가하지 않았습니다. 수정·추가할 수 있습니다.')}
       ${table('deductions','인센티브 차감 대수','첨부 표의 인센기준. 건수 × 차감대수만 평가평균에서 차감합니다. 인사평가 감점(점)은 [평가 기준]에서 별도로 관리합니다.')}
@@ -7234,7 +7236,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       const bindDel=()=>root.querySelectorAll('[data-incdel]').forEach(b=>b.onclick=()=>{b.closest('tr').remove();dirty=true;$('#incSaveState').textContent='변경 내용 저장 필요';});bindDel();
       root.querySelectorAll('[data-incadd]').forEach(b=>b.onclick=()=>{const k=b.dataset.incadd;root.querySelector(`[data-inctable="${k}"] tbody`).insertAdjacentHTML('beforeend',row(k,{}));bindDel();dirty=true;$('#incSaveState').textContent='변경 내용 저장 필요';});
       $('#incLoad').onclick=async()=>{if(dirty&&!(await A.confirmBox('저장하지 않은 기준 변경을 버리고 불러올까요?','불러오기')))return;ST.incMonth=$('#incMonth').value;if(!/^\d{4}-\d{2}$/.test(ST.incMonth))return toast('귀속월을 고르세요',1);await loadCfg();cfgInc();};
-      $('#incCopy').onclick=async()=>{const p=configs.filter(c=>c.month<month).sort((a,b)=>b.month.localeCompare(a.month))[0];if(!p)return toast('복사할 이전 귀속월 기준이 없습니다',1);if(dirty&&!(await A.confirmBox('저장하지 않은 변경을 버리고 이전 기준을 복사할까요?','복사')))return;draft=JSON.parse(JSON.stringify(p));draft.month=month;draft.confirmed=false;draw();dirty=true;$('#incSaveState').textContent=p.month+' 기준을 복사한 초안 · 저장 필요';};
+      $('#incCopy').onclick=async()=>{const p=configs.filter(c=>c.month<month).sort((a,b)=>b.month.localeCompare(a.month))[0];if(!p)return toast('복사할 이전 귀속월 기준이 없습니다',1);if(dirty&&!(await A.confirmBox('저장하지 않은 변경을 버리고 이전 기준을 복사할까요?','복사')))return;draft=JSON.parse(JSON.stringify(p));draft.month=month;draft.confirmed=false;if(draft.basisVersion!==2){draft.team=JSON.parse(JSON.stringify(HRINC_SEED.team));draft.personal=(draft.personal||[]).filter(r=>['A','B','C','D'].includes(r.grade));draft.basisVersion=2;}draw();dirty=true;$('#incSaveState').textContent=p.month+' 기준을 복사한 초안 · 저장 필요';};
       $('#incSave').onclick=async()=>{
         const c=read();for(const k of ['team','personal','scores','deductions'])for(const r of c[k])for(const v of Object.values(r))if(v===null||typeof v==='number'&&(!Number.isFinite(v)||v<0))return toast('비어 있거나 잘못된 숫자를 확인하세요',1);
         const b=$('#incSave');b.disabled=true;
@@ -8342,7 +8344,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.11';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.12';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9291,7 +9293,7 @@ async function addCharts(buf, jobs) {
     g.classList.toggle('pad', !ro);
     g.innerHTML = '<thead>' + h1 + h2 + h3 + f1 + f2r + '</thead><tbody>' + body + '</tbody>';     // v28.18 : 합계 · 환산 줄을 위로 (스크롤해도 보임)
     $('#rowinfo').textContent = doc.rows.length + ' / ' + C.MAX_ROWS + '줄';
-    { const n = $('#mfgn'), mf = doc.rows.filter(r => r.k === '제조' && String(r.o).trim()); if (n) n.innerHTML = mf.length ? `오늘 제조 <b>${mf.length}</b>건 · <b>${mf.reduce((a, r) => a + C.num(r.q), 0)}</b>대` : ''; }
+    { const n = $('#mfgn'), mf = doc.rows.filter(r => r.k === '제조' && r.q !== '' && r.q != null); if (n) n.innerHTML = mf.length ? `오늘 제조 <b>${mf.length}</b>건 · <b>${mf.reduce((a, r) => a + C.num(r.q), 0)}</b>대` : ''; }
     if (ro) { g.onclick = e => { const sl = e.target.closest('td.snl1'); if (sl) mfgList(+sl.closest('tr').dataset.i); }; return; }
     g.onclick = e => {
       const td = e.target.closest('td.mk'); if (td) return toggle(td);
@@ -9712,7 +9714,7 @@ async function addCharts(buf, jobs) {
     else if (t.dataset.f === 'memo') { r.memo = t.value; }
     else if (t.dataset.f === 'o') { r.o = t.value; }
     else if (t.dataset.n) {
-      if (!String(r.o).trim() && t.value) { toast('주문번호부터 입력하세요', true); t.value = ''; return; }
+      if (r.k !== '제조' && !String(r.o).trim() && t.value) { toast('주문번호부터 입력하세요', true); t.value = ''; return; }
       const v = clampIn(t, 999); if (v) r.m[t.dataset.n] = v; else delete r.m[t.dataset.n];
       t.parentNode.classList.toggle('on', !!v);
     }
@@ -9786,7 +9788,7 @@ async function addCharts(buf, jobs) {
         return `<div class="stat"><div class="k">평가 · <span class="real">실제</span> 평균</div><div class="v">${f2(c.f7)}<small class="real"> · ${f2(i7)}</small></div></div>`; })()}
       <div class="stat${aj && aj.meta.kind ? ' adjs' : ''}" ${aj ? `title="${esc(aj.meta.reason + (aj.meta.base != null ? ' · 기준 평균 ' + f2(aj.meta.base) + ' (' + aj.meta.source + ')' : ''))}"` : ''}><div class="k">기본 환산${aj ? ' ' + adjTag(aj.meta) : ''}</div><div class="v">${f2(c.e2)}</div>${aj && aj.meta.kind ? `<div class="adjl">실제 ${f2(aj.meta.actual)} + 지원 ${f2(aj.meta.support)}</div>` : ''}</div>
       ${D.doc.prod ? `<div class="stat prs" title="생산업무 확정 배분 · ${esc(D.doc.prod.by || '')} ${esc((D.doc.prod.at || '').slice(5, 16))} · 담당자가 재확정하면 이 값만 바뀝니다"><div class="k">생산업무 배분</div><div class="v">${f2(D.doc.prod.v)}</div><div class="adjl">라인 ${f2(D.doc.prod.T)} 중 ${D.doc.prod.m}분</div></div>` : ''}
-      ${(() => { const mq = D.doc.rows.filter(r => r.k === '제조' && String(r.o).trim()).reduce((a, r) => a + C.num(r.q), 0), P = C.qtyParts({ ta: C.typeCounts(D.doc), mq });      // v28.24 : 조립 / 반조 / 출고 / 제조 나눠서
+      ${(() => { const mq = D.doc.rows.filter(r => r.k === '제조' && r.q !== '' && r.q != null).reduce((a, r) => a + C.num(r.q), 0), P = C.qtyParts({ ta: C.typeCounts(D.doc), mq });      // v28.24 : 조립 / 반조 / 출고 / 제조 나눠서
         return `<div class="stat sq"><div class="k">조립수량</div><div class="v">${P.asm}</div><div class="qchips">${qtyChips(P, !lay2(D.doc))}</div></div>${P.ban ? `<div class="stat"><div class="k">반조</div><div class="v">${P.ban}</div></div>` : ''}<div class="stat"><div class="k">제조사용(출고)</div><div class="v shipv">${P.ship}</div></div>${P.mfg ? `<div class="stat"><div class="k">제조수량</div><div class="v mfgv">${P.mfg}</div></div>` : ''}`; })()}
       <div class="stat"><div class="k">평가 · <span class="real">실제</span> 일수</div><div class="v">${f2(c.f6)}<small class="real"> · ${f2(c.f6 - C.num(D.doc.asmOt) / 60 / 8.5 + c.e4 / 60 / 8.5)}</small></div></div>
       ${(() => { const R = D.doc.rows.filter(r => String(r.o).trim()), mf = R.filter(r => r.k === '제조'), mq = mf.reduce((a, r) => a + C.num(r.q), 0);
@@ -9845,7 +9847,7 @@ async function addCharts(buf, jobs) {
     if (S.saving) { await new Promise(r => setTimeout(r, 300)); return saveNow(manual, force); }
     keepDraft(); S.saving = true; showSaveState();
     const day = S.day, date = S.date, uid = who().id, doc = day.doc;
-    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
+    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo || (r.k === '제조' && r.q !== '' && r.q != null)).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
     const snapshotDirty = JSON.stringify(doc);
     try {
       const q = { userId: uid, date, asmBase: day.asmBase, doc: clean, sum: C.daySummary(clean, minsOf(date)) };
@@ -9891,7 +9893,7 @@ async function addCharts(buf, jobs) {
     keepDraft();
     if (S.day.conflict || S.saving) return;
     const doc = S.day.doc;
-    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
+    const clean = Object.assign({}, doc, { rows: doc.rows.filter(r => String(r.o).trim() || r.memo || (r.k === '제조' && r.q !== '' && r.q != null)).map(r => ({ o: r.o, q: r.q, m: r.m, memo: r.memo || undefined, k: r.k || undefined, sn: r.k && r.sn && r.sn.length ? r.sn : undefined, sh: r.k && r.sh && r.sh.length ? r.sh : undefined })) });
     try { fetch(SB_URL + '/rest/v1/rpc/beacon?apikey=' + encodeURIComponent(SB_KEY), { method: 'POST', keepalive: true, body: JSON.stringify(Object.assign({ action: 'saveDay', token: S.token, userId: who().id, date: S.date, asmBase: S.day.asmBase, doc: clean, sum: C.daySummary(clean, minsOf(S.date)) }, S.day.ver != null ? { base: S.day.ver } : {})) }).catch(() => { /* 초안과 미저장 상태를 유지한다. */ }); } catch (e) { }
   }
   window.addEventListener('pagehide', flushOnClose);
@@ -10078,7 +10080,7 @@ async function addCharts(buf, jobs) {
           r2(a ? (a.virtual ? 0 : a.actual) : v.e2 - om / 30), om, r2(a && a.kind ? a.support : om / 30), r2(v.e2), r2(v.f7), a ? a.reason : '', a && a.base != null ? r2(a.base) : null,
           target || null, target && Math.abs(v.e2) > 1e-9 ? lvT(v.f7, target) : '', C.num(dc.asmOt), C.num(dc.ot)]; })), [11, 5, 9, 8, 8, 8, 6, 6, 11, 10, 9, 9, 11, 22, 9, 6, 8, 10, 10]);
     const det = [['날짜', '주문번호', '구분', '수량'].concat(C.COLS.map(x => x.c + ' ' + String(x.label || '').replace(/\n/g, ' ')), ['메모'])];
-    raw.forEach(x => (x.doc.rows || []).forEach(r => { if (!r || !String(r.o || '').trim()) return; det.push([x.date, r.o, r.k || '', r.q === '' ? null : C.num(r.q)].concat(C.COLS.map(c => (r.m || {})[c.c] ? (C.num(r.m[c.c]) || 1) : null), [r.memo || ''])); }));
+    raw.forEach(x => (x.doc.rows || []).forEach(r => { if (!r || (r.k !== '제조' && !String(r.o || '').trim())) return; det.push([x.date, r.o, r.k || '', r.q === '' ? null : C.num(r.q)].concat(C.COLS.map(c => (r.m || {})[c.c] ? (C.num(r.m[c.c]) || 1) : null), [r.memo || ''])); }));
     sheet('업무 입력 상세', det);
     const oth = [['날짜', '항목', '사유', '분']], OL = Object.fromEntries(C.OTHER);
     raw.forEach(x => { const L = Array.isArray(x.doc.otherR) ? x.doc.otherR : []; if (L.length) L.forEach(o => oth.push([x.date, OL[o.k] || o.k, o.r || '', C.num(o.m)])); else C.OTHER.forEach(([k, t]) => { if (C.num((x.doc.other || {})[k])) oth.push([x.date, t, '', C.num(x.doc.other[k])]); }); });
