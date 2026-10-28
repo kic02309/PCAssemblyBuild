@@ -8898,7 +8898,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.29';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.30';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10727,6 +10727,34 @@ async function addCharts(buf, jobs) {
     const old = Object.fromEntries((P.days || []).filter(d => d.prod).map(d => [d.userId, +d.prod.v || 0]));
     return { current, old, status, qty: R.qty, H: R.H, T: R.T, n: R.ppl.length, incomplete: R.iss.length > 0 };
   }
+  // v29.30: display-only decomposition of the already corrected summary.
+  // Preserve source categories; only replace corrected other-time conversion.
+  function ddAdjustedConversion(raw, corrected, source, adjustment, mins){
+    const original=source&&source.v===1?{...source}:null;
+    if(!adjustment||!adjustment.kind)return original;
+    if(!raw&&adjustment.virtual&&['support','training'].includes(adjustment.kind))raw={d:1,h7:0,t:{},o:{}};
+    if(!['adjusted','support','training'].includes(adjustment.kind)||!raw||!corrected||!raw.t||!corrected.t)return null;
+    const den=s=>(+s.d||0)+(+s.h7||0)/510,from=den(raw),to=den(corrected);
+    if(!(to>0))return null;
+    const other=C.otherMinOf(corrected)/30/to,rawValue=C.sumDay(raw,mins).f7,value=C.sumDay(corrected,mins).f7;
+    const rawWork=C.sumDay({...raw,o:{}},mins).e2,work=C.sumDay({...corrected,o:{}},mins).e2;
+    if(![other,rawValue,value,rawWork,work].every(Number.isFinite)||other<0)return null;
+    // Pure support/education has no assembly/shipment/manufacturing conversion.
+    if(Math.abs(rawWork)<1e-8&&Math.abs(work)<1e-8&&!(+corrected.prod)){
+      const cv={v:1,asm:0,ship:0,mfg:0,other,production:0};
+      return ddConversionReady({v:value,cv})?cv:null;
+    }
+    // Average substitution may clear work counters; do not reuse old categories.
+    if(adjustment.kind!=='adjusted'||!(from>0)||Math.abs(rawWork-work)>1e-6||!original)return null;
+    const keys=['asm','ship','mfg','other'],values=keys.map(k=>original[k]);
+    if(!values.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)
+      ||Math.abs(values.reduce((a,b)=>a+b,0)-rawValue)>1e-6)return null;
+    const production=original.production==null?0:original.production;
+    if(typeof production!=='number'||!Number.isFinite(production)||production<0)return null;
+    const cv={...original,asm:original.asm*from/to,ship:original.ship*from/to,mfg:original.mfg*from/to,other,production:production*from/to};
+    // Pending production is checked again after the existing live overlay.
+    return ddConversionReady({v:value,cv:{...cv,production:0}})?cv:null;
+  }
   function ddProdPerson(o, s, live, M) {
     const p = live.current[o.uid], old = live.old[o.uid] || 0;
     if (!p && !old) return;
@@ -10756,11 +10784,12 @@ async function addCharts(buf, jobs) {
       o.off = off[p.name] || (st === '육아' ? '육아' : st === '병가' ? '병가' : '');
       o.half = half[p.name] || ''; o.task = asg[p.name] || ''; o.note = notes[p.name] || null;
       let s = p.sum && Object.keys(p.sum).length ? p.sum : null;
+      const rawSum=s;
       { const A = !r.staff && S._adj && S._adj[GY], x = A && A.by[nmKey(p.name)], y = x && x.items.find(z => z.date === r.date);   // v28.52 : 지원 보정 (매니저 이상 화면)
         if (y && y._adj) { s = y.sum; o.adj = y._adj; } }
       if (s) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
-        o.cv = !o.adj && p.conversion && p.conversion.v===1 ? {...p.conversion} : null;
+        o.cv = ddAdjustedConversion(rawSum,s,p.conversion,o.adj,M);
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
         { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; }   // v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
