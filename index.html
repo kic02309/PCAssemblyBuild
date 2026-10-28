@@ -3215,18 +3215,18 @@ html[data-theme=dark] #hrb .order-block h3{background:#293d31;color:#daebde}
 @media(max-width:950px){#hrb .order-board{grid-template-columns:1fr}}
 </style>
 <style id="daily-conversion-v2924">
-/* Same 70% tint on each category; group header colors remain unchanged. */
-.ddgroups{--cv-asm:#719acb;--cv-ship:#cb966e;--cv-mfg:#a389d9}
+/* v29.28: soften category fills by mixing the approved palette with 20% white. Text stays opaque. */
+.ddgroups,.ddcombo-v28{--cv-asm:#8daed5;--cv-ship:#d5ab8b;--cv-mfg:#b5a1e1}
 .ddgc-v5 .ddpr.ddpr-v5.ddpr-work{grid-template-columns:minmax(0,1fr) 118px!important;gap:5px 6px}
 .ddgc-v5 .ddpr-work>.ddrowhead{flex-wrap:wrap;row-gap:2px}
 .ddgc-v5 .ddpr-work .ddachieved{font-size:10px;white-space:nowrap;line-height:16px;padding:1px 4px;border-radius:4px;background:var(--line2,#eef2f8);color:var(--ink);font-variant-numeric:tabular-nums}
 .ddgc-v5 .ddpr-work .ddachieved b{font-weight:700}
-.ddgc-v5 .ddpr-work .ddconv{position:relative;height:16px;border-radius:8px;overflow:hidden;background:var(--line2,#eef1f5);min-width:0}
+.ddconv{position:relative;height:16px;border-radius:8px;overflow:hidden;background:var(--line2,#eef1f5);min-width:0}
 .ddconv .ddconv-fill{display:flex;gap:0;height:100%;overflow:hidden;border-radius:8px}
 .ddconv .ddconv-seg{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden;border:0;border-radius:0;container-type:inline-size}
 .ddconv .ddconv-seg small{font:700 9px/1 Arial,sans-serif;white-space:nowrap;color:#13233c;font-variant-numeric:tabular-nums}
 .ddconv .ddconv-asm{background:var(--cv-asm)}.ddconv .ddconv-ship{background:var(--cv-ship)}.ddconv .ddconv-mfg{background:var(--cv-mfg)}
-.ddconv .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(105,121,145,.35) 4px 6px);box-shadow:inset 0 0 0 1px rgba(105,121,145,.2)}
+.ddconv .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(105,121,145,.28) 4px 6px);box-shadow:inset 0 0 0 1px rgba(105,121,145,.16)}
 .ddconv .ddconv-other small{color:var(--ink,#263b5a)}
 .ddconv .ddconv-goal{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#263b5a);opacity:.65;pointer-events:none}
 @container (max-width:30px){.ddconv-seg small{visibility:hidden}}
@@ -3237,7 +3237,47 @@ html[data-theme=dark] #hrb .order-block h3{background:#293d31;color:#daebde}
 .ddgc-v5 .ddpr-work .ddcounts>span:not(.hm) small{font-size:9px;color:#13233c;font-weight:650}
 .ddgc-v5 .ddpr-work .ddcounts:where(:not(:has(.hm))){grid-template-columns:repeat(3,minmax(0,1fr))}
 .ddgc-v5 .ddpr-work .ddcounts .hm{background:transparent;padding:0;color:var(--ink)}
-html[data-theme=dark] .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(190,204,225,.45) 4px 6px)}
+html[data-theme=dark] .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(190,204,225,.36) 4px 6px)}
+</style>
+
+<style id="daily-group-conversion-v2928">
+.ddcombo-v28 .ddcombo-row{grid-template-columns:76px minmax(140px,1fr) 282px 132px;gap:5px 12px;padding:10px 2px}
+.ddcombo-v28 .ddcombo-name{grid-column:1;grid-row:1}
+.ddcombo-v28 .ddcombo-graph{grid-column:2;grid-row:1}
+.ddcombo-v28 .ddconv{height:20px;border-radius:10px}
+.ddcombo-v28 .ddconv small{font-size:10px}
+.ddcombo-v28 .ddconv-goal{width:2px;opacity:.85}
+.ddcombo-v28 .ddcombo-graph .ddtr>i{background:var(--cv-asm)!important}
+.ddcombo-v28 .ddcombo-value{grid-column:3;grid-row:1;display:grid;grid-template-columns:1fr 1fr 66px;gap:6px;align-items:center;font-size:12px}
+.ddcombo-v28 .ddcombo-value>span{padding:5px 6px;border-radius:6px;background:var(--line2);text-align:center;white-space:nowrap}
+.ddcombo-v28 .ddcombo-value b{font-size:14px}
+.ddcombo-v28 .ddcombo-value .ddcombo-target{background:color-mix(in srgb,var(--cv-asm) 16%,var(--panel));color:var(--ink)}
+.ddcombo-v28 .ddcombo-rate{font-size:14px;font-weight:750;color:var(--ink);font-variant-numeric:tabular-nums}
+.ddcombo-v28 .ddcombo-qty{grid-column:4;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.ddcombo-v28 .ddcombo-qty>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:5px 2px;background:var(--cv-asm);color:#13233c;border-radius:5px;min-width:0}
+.ddcombo-v28 .ddcombo-qty>.s{background:var(--cv-ship)}.ddcombo-v28 .ddcombo-qty>.m{background:var(--cv-mfg)}
+.ddcombo-v28 .ddcombo-qty b{font-size:14px;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ddcombo-v28 .ddcombo-qty small{font-size:10px;font-weight:650}
+.ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:3/-1;grid-row:2;justify-content:flex-start}
+.ddcombo-v28 .ddcombo-tail .ddcombo-checks{gap:5px}
+.ddcombo-v28 .dd-cstat{font-size:11px;padding:3px 5px}
+.ddcombo-v28 .ddline-integrated{grid-column:2;grid-row:2;font-size:11px;gap:4px 10px;min-width:0}
+.ddcombo-v28 .ddline-integrated small{font-size:10px}
+.ddcombo-v28 .ddcombo-missing{display:block;font-size:10px;color:var(--sub);padding-top:2px}
+@media(max-width:1000px){
+ .ddcombo-v28 .ddcombo-row{grid-template-columns:70px minmax(100px,1fr) 282px;gap:6px 10px}
+ .ddcombo-v28 .ddcombo-qty{grid-column:2;grid-row:2;max-width:144px}
+ .ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:3;grid-row:2}
+ .ddcombo-v28 .ddline-integrated{grid-column:2/-1;grid-row:3}
+}
+@media(max-width:650px){
+ .ddcombo-v28 .ddcombo-row{grid-template-columns:64px minmax(0,1fr);gap:7px 9px}
+ .ddcombo-v28 .ddcombo-value{grid-column:2;grid-row:2;grid-template-columns:1fr 1fr 60px;gap:4px;font-size:11px}
+ .ddcombo-v28 .ddcombo-value b,.ddcombo-v28 .ddcombo-rate{font-size:12px}
+ .ddcombo-v28 .ddcombo-qty{grid-column:2;grid-row:3}
+ .ddcombo-v28 .ddcombo-tail,.ddcombo-v28 .ddcombo-row:has(.ddline-integrated)>.ddcombo-tail{grid-column:1/-1;grid-row:4}
+ .ddcombo-v28 .ddline-integrated{grid-column:1/-1;grid-row:5}
+}
 </style>
 <style id="hr-log-layout-v2926">
 #hrb .hrlog-scroll{max-width:100%;overflow-x:auto}
@@ -8834,7 +8874,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.27';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.28';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10727,17 +10767,39 @@ async function addCharts(buf, jobs) {
       asgOff: P.filter(p => p.off && p.task) };
   }
   const f1d = v => v == null || !isFinite(v) ? '-' : (Math.round(v * 10) / 10).toFixed(1);
-  const ddBar = (v, t, oth, col) => {
-    const mx = 20, w = Math.min(100, v / mx * 100), wo = Math.min(w, oth / mx * 100), c = col || (t && lvOf(v, t, S._gym) === 'ok' ? '#1f5fbf' : '#e39a3b');   // v28.51 : 달성 기준
+  const ddBar = (v, t, oth, col, sharedScale=0) => {
+    const mx = Math.max(20,sharedScale), w = Math.min(100, v / mx * 100), wo = Math.min(w, oth / mx * 100), c = col || (t && lvOf(v, t, S._gym) === 'ok' ? '#1f5fbf' : '#e39a3b');   // v28.51 : 달성 기준
     return `<div class="ddtr"><i style="width:${Math.max(0,w-wo)}%;background:color-mix(in srgb,${c} 70%,var(--panel))"></i>${oth > 0.05 ? `<i class="o" style="left:${w - wo}%;width:${wo}%;background:color-mix(in srgb,${c} 20%,var(--panel))"></i>` : ''}${t ? `<b style="left:calc(${Math.min(100, t / mx * 100)}% - 1px)"></b>` : ''}</div>`;
   };
 
-  function ddConversionBar(p){
+  // Display-only validation. Never infer missing categories from quantity ratios.
+  function ddConversionReady(p){
+    const cv=p.cv,vals=['asm','ship','mfg','other'].map(k=>cv&&cv[k]);
+    return !!cv && vals.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)
+      && Number.isFinite(p.v) && Math.abs(vals.reduce((a,b)=>a+b,0)-p.v)<1e-6 && !(cv.production>1e-8);
+  }
+  function ddGroupConversion(x){
+    const workers=x.L.filter(p=>p.kind==='work');
+    if(!workers.length||!workers.every(ddConversionReady))return null;
+    const cv={production:0};
+    for(const k of ['asm','ship','mfg','other'])cv[k]=workers.reduce((n,p)=>n+p.cv[k],0)/workers.length;
+    return ddConversionReady({v:x.avg,cv})?cv:null;
+  }
+  function ddGroupDisplay(x,scale){
+    const cv=ddGroupConversion(x),hasAvg=Number.isFinite(x.avg),hasTarget=x.tg>0;
+    const rate=hasAvg&&hasTarget?pctR(x.avg,x.tg):null;
+    const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
+    const context=`근무 실적 ${x.w}명 · 목표 설정 ${x.tn}명${x.sup?' · 지원 '+x.sup+'명':''}`;
+    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv},scale):'<div class="ddconv"></div>'}${hasAvg&&!cv?'<small class="ddcombo-missing">구성 미확인 · 합계 표시</small>':''}</div>
+      <div class="ddcombo-value" title="${esc(context)}"><span class="ddcombo-target" title="기존 목표 설정 인원의 평균 목표">목표 <b>${hasTarget?fmt(x.tg):'—'}</b></span><span class="ddcombo-current" title="기존 근무 실적 인원의 평균 환산">환산 <b>${fmt(x.avg)}</b></span><span class="ddcombo-rate" title="평균 환산 ÷ 평균 목표 × 100">${rate==null?'—':rate+'%'}</span></div>
+      <div class="ddcombo-qty" aria-label="그룹 수량"><span><b>${x.q??0}</b><small>조립</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span><span class="m"><b>${x.mq||0}</b><small>제조</small></span></div>`;
+  }
+  function ddConversionBar(p, sharedScale=0){
     const cv=p.cv,keys=['asm','ship','mfg','other'],names=['조립환산','출고환산','제조환산','기타시간 환산'];
     const vals=keys.map(k=>Number(cv&&cv[k]));
-    const ready=cv&&vals.every(n=>Number.isFinite(n)&&n>=0)&&Math.abs(vals.reduce((a,b)=>a+b,0)-p.v)<1e-6&&!(cv.production>1e-8);
-    if(!ready)return ddBar(p.v,p.target,p.oth,'#7999c9').replace('<div class="ddtr">','<div class="ddtr ddconv-unavailable" title="항목별 구성 자료 없음 · 기존 합계 표시">');
-    const scale=Math.max(20,p.v,p.target||0),filled=Math.max(0,Math.min(100,p.v/scale*100));
+    const ready=ddConversionReady(p);
+    if(!ready)return ddBar(p.v,p.target,p.oth,'#8daed5',sharedScale).replace('<div class="ddtr">','<div class="ddtr ddconv-unavailable" title="항목별 구성 자료 없음 · 기존 합계 표시">');
+    const scale=Math.max(20,sharedScale,p.v,p.target||0),filled=Math.max(0,Math.min(100,p.v/scale*100));
     const detail=vals.map((v,i)=>names[i]+' '+v.toFixed(2)).join(' · ');
     return `<div class="ddconv" role="img" tabindex="0" aria-label="${esc(detail)} · 합계 ${Number(p.v).toFixed(2)}" title="${esc(detail)}"><div class="ddconv-fill" style="width:${filled}%">${vals.map((v,i)=>v>0?`<span class="ddconv-seg ddconv-${keys[i]}" style="flex:${v}" title="${names[i]} ${v.toFixed(2)}"><small>${v.toFixed(2)}</small></span>`:'').join('')}</div>${p.target>0?`<i class="ddconv-goal" style="left:${Math.min(100,p.target/scale*100)}%" aria-hidden="true"></i>`:''}</div>`;
   }
@@ -10926,12 +10988,12 @@ async function addCharts(buf, jobs) {
     if (r._prodError) h += '<div class="warn">라인생산 진행 현황을 불러오지 못했습니다. 현재 화면은 확정 실적 기준입니다. 새로고침 후 확인하세요.</div>';
     // V7: 체크사항(그룹별)과 평균환산은 카드 하나에서 같은 행으로 확인. 특이사항 열 없음.
     const activeGroups = D.G.filter(x => x.w || (x.g === '라인' && r._prod));
-    h += `<div class="card ddcombo-v7"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>막대 = 평균 · 검은 선 = 그룹 목표 · 체크사항은 전 근무일 기준</small></h3>
+    const groupScale=Math.max(20,...activeGroups.map(x=>x.avg||0),...activeGroups.map(x=>x.tg||0));
+    h += `<div class="card ddcombo-v7 ddcombo-v28"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>검은 선 = 목표 · 체크사항은 전 근무일 기준</small></h3>
       <div class="ddcombo-list">
         ${activeGroups.map(x => `<div class="ddcombo-row">
           <div class="ddcombo-name">${gdot(x.g)}</div>
-          <div class="ddcombo-graph" style="--soft-group:${gcol(x.g)}">${ddBar(x.avg, x.tg, 0, gcol(x.g))}</div>
-          <div class="ddcombo-value"><b>${f1d(x.avg)}</b>${x.tg ? ' / ' + f1d(x.tg) : ' / 목표 -'} <small>· 수량 ${x.q} · ${x.w}명${x.sup ? ' · 지원 ' + x.sup : ''}</small></div>
+          ${ddGroupDisplay(x,groupScale)}
           ${x.g === '라인' && r._prod ? `<div class="ddline-integrated"><span>생산수량 <b>${r._prod.qty}대</b></span><span>기타시간 <b>${r._prod.H}분</b></span><span>총환산 <b>${f2(r._prod.T)}</b></span><span>생산 참여 <b>${r._prod.n}명</b></span>${r._prod.incomplete ? '<span class="t-lo">미완성 항목 있음 · 환산 가능한 입력만 계산</span>' : ''}<small>임시저장 완료 기준 · 월 통계·엑셀은 확정 실적 기준</small></div>` : ''}
           <div class="ddcombo-tail"><div class="ddcombo-checks" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>${x.g === '라인' && r._prod ? `<span class="ddline-state">${esc(r._prod.status)}</span>` : ''}</div>
         </div>`).join('')}
