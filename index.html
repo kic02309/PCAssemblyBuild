@@ -3064,6 +3064,7 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 <style id="report-v2914">.report-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) 255px;gap:16px;align-items:start}.report-counts{position:sticky;top:12px}.report-counts table{width:100%;border-collapse:collapse}.report-counts td{padding:7px;border-bottom:1px solid var(--line)}.report-preview{background:white;color:#111;padding:24px;overflow:auto}.report-paper{min-width:850px;font:12px Arial,sans-serif}.report-preview-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}.report-preview table{width:100%;border-collapse:collapse;margin:12px 0}.report-preview th,.report-preview td{border:1px solid #555;padding:5px;text-align:center}.report-preview th{background:#e2efda}.report-preview td:first-child{font-weight:bold}.report-preview tr.report-gap td{border:0;height:10px}.report-retired{color:#a33}.report-counts p{font-size:12px;overflow-wrap:anywhere}@media(max-width:1000px){.report-editor-layout{grid-template-columns:1fr}.report-counts{position:static}}@media print{.report-preview{padding:0}.report-paper{min-width:0}}</style>
 <style id="evaluation-score-v2915">.hreval-score{padding:20px 24px;text-align:center}.hreval-score-main{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}.hreval-score-main>span{font-size:16px;font-weight:800}.hreval-score-main>strong{font-size:36px;line-height:1.2;color:#2461cf;font-variant-numeric:tabular-nums}.hreval-score-main small{font-size:18px;margin-left:5px}.hreval-score-meta{font-size:12px;color:var(--sub);margin-top:10px}.hreval-score-note{font-size:12px;color:var(--sub);margin:8px 0 0}</style>
 <style id="evaluation-list-v2915">.hrw table.eval-person-table{table-layout:fixed}.hrw table.eval-person-table th,.hrw table.eval-person-table td{padding-left:4px;padding-right:4px}.hrw table.eval-person-table th:first-child,.hrw table.eval-person-table td:first-child{text-align:left;padding-left:6px}.hrw table.eval-person-table td.nm{overflow:hidden;text-overflow:ellipsis}.hrw table.eval-person-table td.nm .badge{margin-left:3px}.hrw table.eval-person-table td:nth-child(4){font-variant-numeric:tabular-nums;white-space:nowrap}</style>
+<style id="evaluation-alignment-v2916">.report-save-pending{box-shadow:0 0 0 3px #fbbf2460}.hrw .pv.pv-aligned{display:grid;grid-template-columns:minmax(0,1.32fr) minmax(0,1fr);grid-template-rows:auto auto auto;gap:10px 18px;align-items:stretch}.hrw .pv.pv-aligned>.pv-left,.hrw .pv.pv-aligned>.pv-right{display:contents!important}.hrw .pv-aligned .pv-left>table{grid-column:1;margin:0!important}.hrw .pv-aligned .pv-left>table:nth-child(1){grid-row:1}.hrw .pv-aligned .pv-left>table:nth-child(2){grid-row:2}.hrw .pv-aligned .pv-left>table:nth-child(3){grid-row:3}.hrw .pv-aligned .pv-chart{grid-column:2;min-width:0;min-height:0;position:relative;border:1px solid #d9d9d9}.hrw .pv-aligned .pv-chart:nth-child(1){grid-row:1}.hrw .pv-aligned .pv-chart:nth-child(2){grid-row:2}.hrw .pv-aligned .pv-chart svg{position:absolute;inset:0;width:100%;height:100%;border:0}.hrw .pv-aligned .pv-right>table{grid-column:2;grid-row:3;height:100%;margin:0}@media screen and (max-width:1100px){.hrw .pv.pv-aligned{grid-template-columns:1fr}.hrw .pv-aligned .pv-left>table,.hrw .pv-aligned .pv-chart,.hrw .pv-aligned .pv-right>table{grid-column:1}.hrw .pv-aligned .pv-left>table:nth-child(2){grid-row:3}.hrw .pv-aligned .pv-left>table:nth-child(3){grid-row:5}.hrw .pv-aligned .pv-chart:nth-child(1){grid-row:2;min-height:220px}.hrw .pv-aligned .pv-chart:nth-child(2){grid-row:4;min-height:220px}.hrw .pv-aligned .pv-right>table{grid-row:6}}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -6752,8 +6753,8 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     const [y, m] = month.split('-').map(Number);
     return Array.from({ length: 12 }, (_, i) => { const mm = i + 1, yy = mm > m ? y - 1 : y; return { mm, key: `${yy}-${String(mm).padStart(2, '0')}`, last: yy < y }; });
   }
-  function lineSvg(vals, color, fmt, min, max) {
-    const W = 560, Hh = 245, L = 46, R = 14, T = 34, B = 26, iw = W - L - R, ih = Hh - T - B;
+  function lineSvg(vals, color, fmt, min, max, size) {
+    const W = size?.width || 560, Hh = size?.height || 245, L = 46, R = 14, T = 34, B = 26, iw = W - L - R, ih = Hh - T - B;
     const nums = vals.filter(v => v !== null);
     if (min === undefined) { const lo = nums.length ? Math.min(...nums) : 0, hi = nums.length ? Math.max(...nums) : 1; min = Math.floor(lo - 1); max = Math.ceil(hi + 1); }
     else { if (nums.length) { min = Math.min(min, Math.floor(Math.min(...nums) / 10) * 10); max = Math.max(max, Math.ceil(Math.max(...nums) / 10) * 10); } }
@@ -6784,11 +6785,11 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
         <td class="left dsc ${cls}" colspan="8">${esc(it.desc)}</td><td class="sc ${cls}">${v === null ? '' : (it.sign < 0 && v ? '-' + v : v)}</td></tr>`;
     }).join('')).join('');
     const d = x.data;
-    const c1 = lineSvg(sVals, '#1F6FB2', v => Math.round(v) + '점', 50, 100), c2 = lineSvg(qVals, '#D1662B', v => (+v).toFixed(1) + '대');
+    const c1 = lineSvg(sVals, '#1F6FB2', v => Math.round(v) + '점', 50, 100), c2 = lineSvg(qVals, '#D1662B', v => (+v).toFixed(2) + '대');
     const svg = (c, title, color) => `<svg viewBox="0 0 ${c.W} ${c.H}" preserveAspectRatio="xMidYMid meet"><text x="${c.W / 2}" y="20" font-size="14" font-weight="700" text-anchor="middle">${title}</text>${c.g}<path d="${c.path}" fill="none" stroke="${color}" stroke-width="2"/>${c.dots}</svg>`;
     const td = v => `<td>${dash(v)}</td>`;
-    bigModal(`<div class="row no-print" style="margin-bottom:10px;gap:10px"><h2 style="margin:0">미리보기 · ${esc(p.name)} (${month})</h2><span class="muted">저장 전 내용 기준 · 사진·가점 등은 엑셀에 표시</span><button class="sm" id="pvPrint">인쇄</button></div>
-    <div class="pv"><div>
+    const preview=bigModal(`<div class="row no-print" style="margin-bottom:10px;gap:10px"><h2 style="margin:0">미리보기 · ${esc(p.name)} (${month})</h2><span class="muted">저장 전 내용 기준 · 사진·가점 등은 엑셀에 표시</span><button class="sm" id="pvPrint">인쇄</button></div>
+    <div class="pv pv-aligned"><div class="pv-left">
       <table><colgroup><col style="width:9%"><col style="width:15%"><col style="width:8%"><col span="8" style="width:7%"><col style="width:12%"></colgroup>
         <tr><td class="hd" colspan="12">인사평가표</td></tr><tr><th>구분</th><th>평가 요소</th><th>총 점</th><th colspan="8">평가 기준</th><th>평가 점수</th></tr>
         ${itemRows}
@@ -6798,17 +6799,32 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
         <tr><td class="lb" rowspan="2">평가점수</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
         <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${sVals[i] === null ? '' : Math.round(sVals[i]) + ' 점'}</td>`).join('')}</tr>
         <tr><td class="lb" rowspan="2">평균수량</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
-        <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${qVals[i] === null ? '' : qVals[i].toFixed(1) + ' 대'}</td>`).join('')}</tr></table>
+        <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${qVals[i] === null ? '' : qVals[i].toFixed(2) + ' 대'}</td>`).join('')}</tr></table>
       <table style="margin-top:10px"><colgroup><col style="width:12%"><col style="width:15%"><col style="width:12%"><col></colgroup><tr><td class="hd" colspan="4">월 간 총 평</td></tr>
         <tr><td class="gr">관 리 자</td><td>${esc(fl.관리자)}</td><td class="gr" rowspan="2">업무평가</td><td class="left">${esc(fl.업무평가1)}</td></tr>
         <tr><td class="gr">평가 목표</td><td>${d.개인목표 === null ? '' : f1(d.개인목표)}</td><td class="left">${esc(fl.업무평가2)}</td></tr>
         <tr><td class="gr">결 과</td><td>${d.일평균 === null ? '' : fixedAvg(d.일평균)}</td><td class="gr">건강관리</td><td class="left">${esc(fl.건강관리)}</td></tr>
         <tr><td class="gr">달 성 률</td><td>${pct(d.달성률)}</td><td class="gr">특이사항</td><td class="left">${esc(fl.특이사항)}</td></tr></table>
-    </div><div>${svg(c1, '월별 평가점수', '#1F6FB2')}${svg(c2, '월별 평균수량', '#D1662B')}
+    </div><div class="pv-right"><div class="pv-chart" data-pv-chart="score">${svg(c1, '월별 평가점수', '#1F6FB2')}</div><div class="pv-chart" data-pv-chart="quantity">${svg(c2, '월별 평균수량', '#D1662B')}</div>
       <table><tr><td class="gr">총수량</td>${td(d.총수량 === null ? null : f1(d.총수량, 2))}<td class="gr">순위</td>${td(d.총수량순위)}<td class="gr">일평균</td>${td(d.일평균 === null ? null : fixedAvg(d.일평균))}<td class="gr">평가기준목표</td>${td(d.개인목표)}<td class="gr">달성율</td><td>${pct(d.달성률)}</td></tr>
         <tr><td class="gr">근무일수</td>${td(d.근무일수)}<td class="gr">당일연차</td>${td(d.당일연차)}<td class="gr">지각</td>${td(d.지각)}<td class="gr">조퇴</td>${td(d.조퇴)}<td class="gr">결근</td>${td(d.결근)}</tr>
         <tr><td class="gr">품질지적</td>${td(d.품질지적)}<td class="gr">지시불이행</td>${td(d.지시불이행)}<td class="gr">미/오발송</td>${td(d.미오발송)}<td class="gr">오조립</td>${td(d.오조립)}<td class="gr">파손</td>${td(d.파손)}</tr></table>
-    </div></div>`).querySelector('#pvPrint').onclick = () => window.print();
+    </div></div>`);
+    preview.querySelector('#pvPrint').onclick = () => window.print();
+    const fitCharts=()=>{
+      preview.querySelectorAll('[data-pv-chart]').forEach(host=>{
+        const bounds=host.getBoundingClientRect();if(bounds.width<1||bounds.height<1)return;
+        const size={width:bounds.width,height:Math.max(100,bounds.height)},score=host.dataset.pvChart==='score';
+        const chart=score?lineSvg(sVals,'#1F6FB2',v=>Math.round(v)+'점',50,100,size):lineSvg(qVals,'#D1662B',v=>(+v).toFixed(2)+'대',undefined,undefined,size);
+        host.innerHTML=svg(chart,score?'월별 평가점수':'월별 평균수량',score?'#1F6FB2':'#D1662B');
+      });
+    };
+    fitCharts();
+    if(typeof ResizeObserver!=='undefined'){
+      const observer=new ResizeObserver(()=>{if(!preview.isConnected){observer.disconnect();return;}fitCharts();});
+      preview.querySelectorAll('[data-pv-chart]').forEach(host=>observer.observe(host));
+      const close=preview.querySelector('.x'),close0=close.onclick;close.onclick=()=>{observer.disconnect();close0();};
+    }
   }
 
   // ============================================================ 관리자 — 현황
@@ -7340,27 +7356,38 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       const v=ReportCore.summary(current(),roster);
       const warnings=[v.duplicates.length?'중복: '+v.duplicates.join(', '):'',v.missing.length?'명단에는 있으나 순서표 누락: '+v.missing.join(', '):'',v.unknown.length?'귀속월 명단에 없음: '+v.unknown.join(', '):'',v.inactive.length?'명단 사용 N · 재직 블록에 남음: '+v.inactive.join(', '):''].filter(Boolean);
       $('#orderCounts').innerHTML=`<h3>${esc(month)} 인원 확인</h3><p>귀속월 소속 그룹 기준 · 이름별 중복 제외</p><table>${Object.entries(v.groups).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([g,n])=>`<tr><td>${esc(g)}</td><td>${n}명</td></tr>`).join('')}<tr><td><b>재직 블록 인원</b></td><td>${v.active}명</td></tr><tr><td>해당 귀속월 퇴사인원</td><td>${v.retired}명</td></tr><tr><td><b>보고서 전체 인원</b></td><td>${v.total}명</td></tr><tr><td>입력 행 수</td><td>${v.rowCount}행</td></tr></table>${warnings.map(t=>`<p class="banner warn">${esc(t)}</p>`).join('')}`;
-      $('#orderState').textContent=dirty?'변경 내용 저장 필요':'저장된 기준 · 미리보기에서 총점 확인';
+      $('#orderState').textContent=dirty?'변경 내용 저장 필요 · 위쪽 [이 귀속월 저장]으로 확정하세요':'저장된 기준 · 미리보기에서 총점 확인';
+      $('#svOrder').classList.toggle('report-save-pending',dirty);
     };
     const bind=()=>{
       $('#ed_보고순서').querySelectorAll('input[data-h="블록"]').forEach(i=>i.setAttribute('list','blkList'));
       $('#ed_보고순서').querySelectorAll('[data-del]').forEach(b=>{
         const tr=b.closest('tr'),n=tr.querySelector('[data-h="이름"]').value;
-        b.textContent=n?'퇴사인원으로 이동':'빈 줄 삭제';
-        b.disabled=locked||!supported;
+        const retired=tr.querySelector('[data-h="블록"]').value.trim()==='퇴사인원';
+        tr.classList.toggle('report-retired',retired);
+        b.textContent=n?(retired?'퇴사인원':'퇴사인원으로 이동'):'빈 줄 삭제';
+        b.disabled=locked||!supported||!!(n&&retired);
         b.onclick=async()=>{
           const name=tr.querySelector('[data-h="이름"]').value.trim();
           if(!name){tr.remove();dirty=true;update();return;}
           if(!(await A.confirmBox(`<b>${esc(name)}</b> 사원을 ${esc(month)} 보고서의 퇴사인원 블록으로 이동합니다.<br>이름·사번·계약월과 평가기록은 보존됩니다. 저장 후 적용됩니다.`,'퇴사인원으로 이동')))return;
           const row={};tr.querySelectorAll('[data-h]').forEach(el=>row[el.dataset.h]=el.value);
           const moved=ReportCore.retire(row,current());
-          tr.querySelectorAll('[data-h]').forEach(el=>el.value=moved[el.dataset.h]??'');dirty=true;update();
+          const staged=current().map(r=>ReportCore.key(r['이름'])===ReportCore.key(name)?moved:r);
+          $('#orderEditor').innerHTML=editTable('보고순서',H.orderRows(staged,roster),{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}});
+          wireEditor();dirty=true;update();
+          const target=[...$('#ed_보고순서').querySelectorAll('tr')].find(r=>ReportCore.key(r.querySelector('[data-h="이름"]')?.value)===ReportCore.key(name));
+          target?.scrollIntoView?.({block:'nearest'});
+          toast(name+' · 퇴사인원 블록으로 이동했습니다. [이 귀속월 저장]을 눌러 확정하세요');
         };
       });
     };
-    wireTable('보고순서',{readonly:['순서'],blank:{위치:'왼쪽',직급:'사원'}});
-    const add=document.querySelector('[data-add="보고순서"]'),oldAdd=add.onclick;
-    add.onclick=()=>{oldAdd();dirty=true;bind();update();};
+    const wireEditor=()=>{
+      wireTable('보고순서',{readonly:['순서'],blank:{위치:'왼쪽',직급:'사원'}});
+      const add=document.querySelector('[data-add="보고순서"]'),oldAdd=add.onclick;
+      add.onclick=()=>{oldAdd();dirty=true;bind();update();};bind();
+    };
+    wireEditor();
     $('#orderEditor').oninput=()=>{dirty=true;bind();update();};
     if(locked||!supported)$('#orderEditor').querySelectorAll('input,select,button').forEach(el=>el.disabled=true);
     $('#orderLoad').onclick=async()=>{
@@ -7372,8 +7399,14 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       const order=H.orderRows(current(),roster),summary=ReportCore.summary(order,roster);
       if(summary.duplicates.length)return toast('중복 인원을 먼저 정리하세요: '+summary.duplicates.join(', '),1);
       const button=$('#svOrder');button.disabled=true;
-      try{const r=await api('hrSaveCfg',{table:'보고순서',month,rows:order,base:CFG._orderVersion||''});META=r.meta;ST.data=null;await loadCfg();cfgOrder();toast(month+' 보고 순서 저장 완료');}
-      catch(e){toast(e.message,1);button.disabled=false;}
+      const frozen=[...$('#orderEditor').querySelectorAll('input,select,button'),$('#orderLoad'),$('#orderMonth'),$('#orderPreview')].map(el=>({el,disabled:el.disabled}));frozen.forEach(x=>x.el.disabled=true);
+      try{
+        const r=await api('hrSaveCfg',{table:'보고순서',month,rows:order,base:CFG._orderVersion||''});META=r.meta;ST.data=null;await loadCfg();
+        const saved=new Map((CFG['보고순서']||[]).filter(r=>r['이름']).map(r=>[ReportCore.key(r['이름']),r]));
+        const people=order.filter(r=>r['이름']);
+        if(CFG._orderMonth!==month||saved.size!==people.length||people.some(r=>{const v=saved.get(ReportCore.key(r['이름']));return !v||['블록','위치','사번','계약월'].some(k=>String(v[k]??'').trim()!==String(r[k]??'').trim());}))throw Error('저장 후 재조회 결과가 다릅니다. 변경 화면은 유지됩니다. 귀속월과 SQL 적용 상태를 확인하세요');
+        cfgOrder();toast(month+' 보고 순서 저장·재조회 확인 완료');
+      }catch(e){toast(e.message,1);button.disabled=false;frozen.forEach(x=>{if(x.el.isConnected)x.el.disabled=x.disabled;});} 
     };
     $('#orderPreview').onclick=async()=>{
       try{
@@ -7722,7 +7755,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts, orderT
       let s = h[mc.key] ? numOr(h[mc.key][0]) : null, q = h[mc.key] ? numOr(h[mc.key][1]) : null;
       if (mc.key === month) { s = tot; q = numOr(x.data.일평균); }
       const cs = ws.getCell(19 + d, 3 + i), cq = ws.getCell(21 + d, 3 + i);
-      cs.value = s === null ? null : Math.round(s); cq.value = q === null ? null : Math.round(q * 10) / 10;
+      cs.value = s === null ? null : Math.round(s); cq.value = q === null ? null : Math.round(q * 100) / 100;cq.numFmt='0.00';
       [cs, cq].forEach(c => { c.fill = mc.last ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } } : { type: 'pattern', pattern: 'none' }; });
     });
 
@@ -7730,7 +7763,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts, orderT
     const rr = 23 + d;
     ws.getCell(rr, 3).value = r['관리자'] || null;
     ws.getCell(rr + 1, 3).value = o.월목표 === '' ? null : Number(o.월목표);
-    ws.getCell(rr + 2, 3).value = o.결과 === '' ? null : Number(o.결과);
+    ws.getCell(rr + 2, 3).value = o.결과 === '' ? null : Number(o.결과);ws.getCell(rr + 2, 3).numFmt='0.00';
     ws.getCell(rr + 3, 3).value = o.달성률 === '' ? null : Number(o.달성률);
     ws.getCell(rr + 3, 3).numFmt = '0.0%';
     ws.getCell(rr, 5).value = r['업무평가1'] || null;
@@ -7740,11 +7773,19 @@ async function buildWorkbook(month, items, list, order, hist, info, opts, orderT
 
     // 오른쪽 업무 데이터 (P~Y)
     const blk = [[o.총수량, o.총수량순위, o.일평균, o.개인목표, o.달성률], [o.근무일수, o.당일연차, o.지각, o.조퇴, o.결근], [o.품질지적, o.지시불이행, o.미오발송, o.오조립, o.파손]];
-    if (side) blk.forEach((vals, i) => vals.forEach((v, j) => {
-      const c = ws.getCell(rr + i, 17 + 2 * j);
-      c.value = v === '' || v === null || v === undefined ? null : Number(v);
-      c.numFmt = (i === 0 && j === 4) ? '0.0%' : (i === 0 && (j === 0 || j === 2)) ? '0.00' : '0;-0;"-"';
-    }));
+    if (side) {
+      const labels=[['총수량','순위','일평균','평가기준목표','달성률'],['근무일수','당일연차','지각','조퇴','결근'],['품질지적','지시불이행','미/오발송','오조립','파손']];
+      const top=22+d, starts=[top,top+2,top+4], spans=[2,2,1];
+      for(let rr0=top;rr0<=top+4;rr0++)for(let cc=16;cc<=25;cc++){const c=ws.getCell(rr0,cc);c.value=null;c.style={font:cp(font),alignment:cp(center),border:cp(border)};}
+      blk.forEach((vals,i)=>vals.forEach((v,j)=>{
+        const row0=starts[i],col0=16+2*j;
+        if(spans[i]>1){ws.mergeCellsWithoutStyle(row0,col0,row0+spans[i]-1,col0);ws.mergeCellsWithoutStyle(row0,col0+1,row0+spans[i]-1,col0+1);}
+        const label=ws.getCell(row0,col0),c=ws.getCell(row0,col0+1);
+        label.value=labels[i][j];label.font=cp(bold);label.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF4F6FA'}};
+        c.value=v===''||v===null||v===undefined?null:Number(v);
+        c.numFmt=(i===0&&j===4)?'0.0%':(i===0&&(j===0||j===2))?'0.00':'0;-0;"-"';
+      }));
+    }
 
     // 바깥 테두리 굵게 통일 (인적사항 1~5행, 평가표 7행~총평 끝)
     const setB = (r, c, k) => { const cell = ws.getCell(r, c); cell.border = Object.assign({}, cell.border, { [k]: med }); };
@@ -7752,7 +7793,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts, orderT
       for (let r = a; r <= b; r++) { setB(r, 2, 'left'); setB(r, 14, 'right'); }
       for (let c = 2; c <= 14; c++) { setB(a, c, 'top'); setB(b, c, 'bottom'); }
     });
-    if (side) chartJobs.push({ name, r18: 18 + d, r19: 19 + d, r21: 21 + d });
+    if (side) chartJobs.push({ name, r18: 18 + d, r19: 19 + d, r21: 21 + d, splitRow:16+d, endRow:21+d });
   });
   wb.removeWorksheet(tpl.id);
 
@@ -7768,9 +7809,9 @@ function chartXml(title, sheet, catRow, valRow, color, lblFmt, axFmt, scale) {
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace ${CHART_NS}><c:roundedCorners val="0"/><c:chart><c:title><c:tx><c:rich><a:bodyPr/><a:p><a:pPr><a:defRPr sz="1200" b="1"/></a:pPr><a:r><a:rPr lang="ko-KR" sz="1200" b="1"/><a:t>${esc(title)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/><c:plotArea><c:layout/><c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:spPr><a:ln w="19080"><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr><c:marker><c:symbol val="circle"/><c:size val="5"/><c:spPr><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr></c:marker><c:dLbls><c:numFmt formatCode="${esc(lblFmt)}" sourceLinked="0"/><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr><c:dLblPos val="t"/><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls><c:cat><c:numRef><c:f>${esc(q)}!$C$${catRow}:$N$${catRow}</c:f></c:numRef></c:cat><c:val><c:numRef><c:f>${esc(q)}!$C$${valRow}:$N$${valRow}</c:f></c:numRef></c:val><c:smooth val="0"/></c:ser><c:marker val="1"/><c:axId val="10"/><c:axId val="100"/></c:lineChart><c:catAx><c:axId val="10"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:numFmt formatCode="0&quot;월&quot;" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="100"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx><c:valAx><c:axId val="100"/><c:scaling><c:orientation val="minMax"/>${scale}</c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines><c:spPr><a:ln><a:solidFill><a:srgbClr val="DFE3E6"/></a:solidFill></a:ln></c:spPr></c:majorGridlines><c:numFmt formatCode="${esc(axFmt)}" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="10"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx></c:plotArea><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>`;
 }
-function drawingXml() {
+function drawingXml(job) {
   const anc = (r0, r1, id) => `<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>15</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r0}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>25</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${id + 1}" name="Chart ${id}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rIdCh${id}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`;
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${anc(0, 11, 1)}${anc(11, 22, 2)}</xdr:wsDr>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${anc(0, job.splitRow, 1)}${anc(job.splitRow, job.endRow, 2)}</xdr:wsDr>`;
 }
 async function addCharts(buf, jobs) {
   const zip = await JSZip.loadAsync(buf);
@@ -7792,7 +7833,7 @@ async function addCharts(buf, jobs) {
     n++;
     const c1 = 2 * n - 1, c2 = 2 * n;
     zip.file(`xl/charts/chart${c1}.xml`, chartXml('월별 평가점수', j.name, j.r18, j.r19, '1F6FB2', '0" 점"', '0"점"', '<c:max val="105"/><c:min val="50"/>'));
-    zip.file(`xl/charts/chart${c2}.xml`, chartXml('월별 평균수량', j.name, j.r18, j.r21, 'D1662B', '0.0" 대"', '0.0"대"', ''));
+    zip.file(`xl/charts/chart${c2}.xml`, chartXml('월별 평균수량', j.name, j.r18, j.r21, 'D1662B', '0.00" 대"', '0.00"대"', ''));
     add += `<Override PartName="/xl/charts/chart${c1}.xml" ContentType="${CHART_CT}"/><Override PartName="/xl/charts/chart${c2}.xml" ContentType="${CHART_CT}"/>`;
     const chartRels = `<Relationship Id="rIdCh1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart${c1}.xml"/><Relationship Id="rIdCh2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart${c2}.xml"/>`;
     const relPath = sf.replace(/worksheets\/([^/]+)$/, 'worksheets/_rels/$1.rels');
@@ -7806,7 +7847,7 @@ async function addCharts(buf, jobs) {
       const drp = dp.replace(/([^/]+)$/, '_rels/$1.rels');
       let dx = await zip.file(dp).async('string');
       const pre = (/<(\w+):wsDr\b/.exec(dx) || [0, 'xdr'])[1];
-      let anchors = /<xdr:wsDr[^>]*>([\s\S]*)<\/xdr:wsDr>/.exec(drawingXml())[1].replace(/cNvPr id="(\d)"/g, 'cNvPr id="100$1"');
+      let anchors = /<xdr:wsDr[^>]*>([\s\S]*)<\/xdr:wsDr>/.exec(drawingXml(j))[1].replace(/cNvPr id="(\d)"/g, 'cNvPr id="100$1"');
       if (pre !== 'xdr') anchors = anchors.replace(/<(\/?)xdr:/g, `<$1${pre}:`);
             if (!/xmlns:a=/.test((/<\w+:wsDr\b[^>]*>/.exec(dx) || [''])[0])) dx = dx.replace(new RegExp(`<${pre}:wsDr\\b`), `<${pre}:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"`);
       dx = dx.replace(`</${pre}:wsDr>`, anchors + `</${pre}:wsDr>`);
@@ -7816,7 +7857,7 @@ async function addCharts(buf, jobs) {
       continue;
     }
     const dn = `xl/drawings/chartdrw${n}.xml`;
-    zip.file(dn, drawingXml());
+    zip.file(dn, drawingXml(j));
     zip.file(`xl/drawings/_rels/chartdrw${n}.xml.rels`, EMPTY_RELS.replace('</Relationships>', chartRels + '</Relationships>'));
     zip.file(relPath, rels.replace('</Relationships>', `<Relationship Id="rIdChartDrw" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/chartdrw${n}.xml"/></Relationships>`));
     if (!/xmlns:r=/.test(sx.slice(0, 600))) sx = sx.replace('<worksheet ', '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ');
@@ -8455,7 +8496,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.15';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.16';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
