@@ -3239,6 +3239,16 @@ html[data-theme=dark] #hrb .order-block h3{background:#293d31;color:#daebde}
 .ddgc-v5 .ddpr-work .ddcounts .hm{background:transparent;padding:0;color:var(--ink)}
 html[data-theme=dark] .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(190,204,225,.45) 4px 6px)}
 </style>
+<style id="hr-log-layout-v2926">
+#hrb .hrlog-scroll{max-width:100%;overflow-x:auto}
+#hrb table.hrlog-table{width:100%;min-width:1100px;table-layout:fixed}
+#hrb .hrlog-table th,#hrb .hrlog-table td{font-size:12px;line-height:1.5;padding:8px 10px;vertical-align:top}
+#hrb .hrlog-table th{white-space:nowrap}
+#hrb .hrlog-table td:nth-child(-n+4):not([colspan]){white-space:nowrap;word-break:normal;overflow-wrap:normal}
+#hrb .hrlog-table td:first-child:not([colspan]){font-variant-numeric:tabular-nums}
+#hrb .hrlog-table td.hrlog-value{text-align:left!important;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere}
+#hrb .hrlog-table td[colspan]{text-align:center!important}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -8212,9 +8222,9 @@ async function addCharts(buf, jobs) {
   // ============================================================ 관리자 — 수정기록
   async function viewLog() {
     let l; try { l = (await api('hrLog', { month: ST.month })).list; } catch (e) { toast(e.message, 1); return; }
-    body().innerHTML = `<section class="card dsec"><div class="dst"><b>수정기록 · ${ymLab(ST.month)}</b><span class="muted">최근 500건</span></div><div class="scroll"><table class="tbl">
-      <thead><tr><th>시각</th><th>작성자</th><th>이름</th><th>칸</th><th>이전값</th><th>새값</th></tr></thead><tbody>
-      ${l.map(r => `<tr><td class="muted">${esc(r['시각'])}</td><td>${esc(r['작성자'])}</td><td>${esc(r['이름'])}</td><td>${esc(r['칸'])}</td><td>${esc(r['이전값'])}</td><td>${esc(r['새값'])}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기록이 없습니다</td></tr>'}
+    body().innerHTML = `<section class="card dsec"><div class="dst"><b>수정기록 · ${ymLab(ST.month)}</b><span class="muted">최근 500건</span></div><div class="scroll hrlog-scroll" role="region" aria-label="인사평가 수정기록" tabindex="0"><table class="tbl hrlog-table"><colgroup><col style="width:164px"><col style="width:88px"><col style="width:100px"><col style="width:128px"><col><col></colgroup>
+      <thead><tr><th>시각</th><th>작성자</th><th>이름</th><th>변경 항목</th><th>이전값</th><th>새값</th></tr></thead><tbody>
+      ${l.map(r => `<tr><td class="muted">${esc(r['시각'])}</td><td>${esc(r['작성자'])}</td><td>${esc(r['이름'])}</td><td>${esc(r['칸'])}</td><td class="hrlog-value">${esc(r['이전값'])}</td><td class="hrlog-value">${esc(r['새값'])}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기록이 없습니다</td></tr>'}
       </tbody></table></div></section>`;
   }
 
@@ -8801,7 +8811,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.25';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.26';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
