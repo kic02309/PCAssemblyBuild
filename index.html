@@ -3249,6 +3249,15 @@ html[data-theme=dark] .ddconv-other{background-color:transparent;background-imag
 #hrb .hrlog-table td.hrlog-value{text-align:left!important;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere}
 #hrb .hrlog-table td[colspan]{text-align:center!important}
 </style>
+<style id="hr-log-detail-v2927">
+#hrb .hrlog-detail{margin:0;min-width:0;white-space:normal}
+#hrb .hrlog-detail>summary{cursor:pointer;font-size:12px;font-weight:600;line-height:1.6;color:var(--ink);overflow-wrap:anywhere}
+#hrb .hrlog-detail-body{max-height:260px;overflow:auto;margin-top:7px;padding:8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);white-space:pre-wrap}
+#hrb .hrlog-detail-body pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 monospace}
+#hrb .hrlog-order{width:100%;min-width:560px;border-collapse:collapse;table-layout:auto;font-size:11px}
+#hrb .hrlog-order th,#hrb .hrlog-order td{padding:5px;border:1px solid var(--line);height:auto;white-space:nowrap!important;overflow-wrap:normal!important;line-height:1.4}
+#hrb .hrlog-original{margin-top:8px}#hrb .hrlog-original>summary{cursor:pointer;color:var(--sub);font-size:11px}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -8220,11 +8229,25 @@ async function addCharts(buf, jobs) {
   }
 
   // ============================================================ 관리자 — 수정기록
+  function logValue(value,field) {
+    const text=String(value??'');let obj;
+    try{obj=JSON.parse(text);}catch(e){}
+    if(obj&&typeof obj==='object'){
+      const arr=Array.isArray(obj)?obj:null;
+      if(arr&&field==='보고순서'&&arr.every(x=>x&&typeof x==='object'&&!Array.isArray(x))){
+        const cols=['블록','직급','이름','사번','계약월','비고'];
+        return `<details class="hrlog-detail"><summary>보고 순서 ${arr.filter(x=>x['이름']).length}명 · 상세 보기</summary><div class="hrlog-detail-body"><table class="hrlog-order"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${arr.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c]??'')}</td>`).join('')}</tr>`).join('')}</tbody></table><details class="hrlog-original"><summary>원본 보기</summary><pre>${esc(text)}</pre></details></div></details>`;
+      }
+      return `<details class="hrlog-detail"><summary>${arr?'목록 '+arr.length+'건':'설정 내용'} · 상세 보기</summary><div class="hrlog-detail-body"><pre>${esc(JSON.stringify(obj,null,2))}</pre></div></details>`;
+    }
+    if(text.length>180)return `<details class="hrlog-detail"><summary>${esc(text.slice(0,100).replace(/\s+/g,' '))}… · 전체 보기</summary><div class="hrlog-detail-body hrlog-fulltext">${esc(text)}</div></details>`;
+    return esc(text);
+  }
   async function viewLog() {
     let l; try { l = (await api('hrLog', { month: ST.month })).list; } catch (e) { toast(e.message, 1); return; }
     body().innerHTML = `<section class="card dsec"><div class="dst"><b>수정기록 · ${ymLab(ST.month)}</b><span class="muted">최근 500건</span></div><div class="scroll hrlog-scroll" role="region" aria-label="인사평가 수정기록" tabindex="0"><table class="tbl hrlog-table"><colgroup><col style="width:164px"><col style="width:88px"><col style="width:100px"><col style="width:128px"><col><col></colgroup>
       <thead><tr><th>시각</th><th>작성자</th><th>이름</th><th>변경 항목</th><th>이전값</th><th>새값</th></tr></thead><tbody>
-      ${l.map(r => `<tr><td class="muted">${esc(r['시각'])}</td><td>${esc(r['작성자'])}</td><td>${esc(r['이름'])}</td><td>${esc(r['칸'])}</td><td class="hrlog-value">${esc(r['이전값'])}</td><td class="hrlog-value">${esc(r['새값'])}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기록이 없습니다</td></tr>'}
+      ${l.map(r => `<tr><td class="muted">${esc(r['시각'])}</td><td>${esc(r['작성자'])}</td><td>${esc(r['이름'])}</td><td>${esc(r['칸'])}</td><td class="hrlog-value">${logValue(r['이전값'],r['칸'])}</td><td class="hrlog-value">${logValue(r['새값'],r['칸'])}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기록이 없습니다</td></tr>'}
       </tbody></table></div></section>`;
   }
 
@@ -8811,7 +8834,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.26';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.27';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
