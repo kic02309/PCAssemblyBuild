@@ -3061,6 +3061,7 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 <style id="hrinc-matrix-v2913">
 .hrinc-matrix .scroll{overflow:auto}.hrinc-matrix table{min-width:620px;table-layout:fixed;width:100%}.hrinc-matrix th{position:sticky;top:0;z-index:1;background:#eef2f7;font-size:12px}.hrinc-matrix th:first-child{width:150px}.hrinc-matrix th:last-child{width:66px}.hrinc-matrix td{padding:5px 8px}.hrinc-matrix input{width:100%;min-width:0;text-align:right;font-size:13px;font-variant-numeric:tabular-nums}.hrinc-matrix th:nth-child(2){color:#245b9b}.hrinc-matrix th:nth-child(3){color:#167257}.hrinc-matrix th:nth-child(4){color:#7257a4}.hrinc-matrix th:nth-child(5){color:#99651e}
 </style>
+<style id="report-v2914">.report-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) 255px;gap:16px;align-items:start}.report-counts{position:sticky;top:12px}.report-counts table{width:100%;border-collapse:collapse}.report-counts td{padding:7px;border-bottom:1px solid var(--line)}.report-preview{background:white;color:#111;padding:24px;overflow:auto}.report-paper{min-width:850px;font:12px Arial,sans-serif}.report-preview-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}.report-preview table{width:100%;border-collapse:collapse;margin:12px 0}.report-preview th,.report-preview td{border:1px solid #555;padding:5px;text-align:center}.report-preview th{background:#e2efda}.report-preview td:first-child{font-weight:bold}.report-preview tr.report-gap td{border:0;height:10px}.report-retired{color:#a33}.report-counts p{font-size:12px;overflow-wrap:anywhere}@media(max-width:1000px){.report-editor-layout{grid-template-columns:1fr}.report-counts{position:static}}@media print{.report-preview{padding:0}.report-paper{min-width:0}}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -5706,7 +5707,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     A.$$('[data-clr]').forEach(b => (b.onclick = async () => { const fx = fixedOf(b.dataset.clr); if (!(await A.confirmBox(mdw(b.dataset.clr) + ' 명단을 모두 지울까요?' + (fx.length ? '<br><span class="muted">↺ 토요 대체 ' + fx.length + '명은 남습니다.</span>' : ''), '비우기'))) return; setList(b.dataset.clr, fx, false); await save([b.dataset.clr]); }));
     A.$$('[data-fill]').forEach(b => (b.onclick = async () => { const w = b.dataset.fill; try { const r = await fillWeek(w, (L.ix.duty[w] || []).map(u => u.s)); A.toast(md(w) + ' 빈자리 ' + r.added.length + '명 채움' + (r.short.length ? ' · 후보 부족 ' + r.short.join(',') : ''), !!r.short.length); } catch (e) { A.toast(e.message, true); await load(L.year, true); } drawSat(); }));
     A.$$('.lvsr .x').forEach(x => (x.onclick = async () => { const w = x.dataset.w;
-      if (fixedOf(w).includes(x.dataset.s)) { const lv = (d.leaves || []).find(l => l.st === '대체' && l.as === w && l.s === x.dataset.s); if (lv) altInfo(lv); return; }   /* v28.34 : 고정 인원 = 되돌리기로만 */
+      if (fixedOf(w).includes(x.dataset.s)) {
+        const lv = (d.leaves || []).find(l => l.st === '대체' && l.as === w && l.s === x.dataset.s);
+        if (!lv) return A.toast('연결된 연차를 다시 불러오세요', true);
+        const person = staffById(lv.s) || {};
+        if (!(await A.confirmBox(`<b>${A.esc(person.name || '')}</b> ${mdw(w)} 토요근무를 삭제하고, 연결된 ${mdw(lv.d1)} 대체휴무를 원래 연차로 되돌립니다.<br>원래 연차 날짜·사유·신청 상태를 유지하고 연차 사용일수에 다시 반영합니다.${w < A.S.today ? '<br><b>지난 토요일입니다. 실제 근무 여부를 확인하세요.</b>' : ''}`, '토요근무 삭제 · 연차 복원'))) return;
+        x.style.pointerEvents = 'none';
+        try { await A.api('lvSatUndo', { id: lv.id, removeDuty: true }); await load(L.year, true); drawSat(); A.toast('토요근무 삭제 · 원래 연차 복원 완료'); }
+        catch (e) { A.toast(e.message, true); await load(L.year, true); drawSat(); }
+        return;
+      }   /* v28.34 : 고정 인원 = 되돌리기로만 */
       setList(w, (L.ix.duty[w] || []).map(u => u.s).filter(id => id !== x.dataset.s), true); await save([w]); }));
     A.$$('select.alt').forEach(sel => (sel.onchange = async () => {
       const u = d.duty.find(x => x.d === sel.dataset.w && x.s === sel.dataset.s); if (!u) return;
@@ -6190,9 +6200,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 <script>/* v29.11 incentive estimate — quantity deductions and evaluation points are separate. */
 (function(root){
  const num=v=>v==null||v===''||!Number.isFinite(Number(v))?null:Number(v);
- const moneyRows=(rows,group,grade,personal)=>{
+ const moneyRows=(rows,group,grade,personal,targetQty)=>{
   const keys=[['*',grade]];
-  for(const [g,k] of keys){const a=(rows||[]).filter(r=>r.grade===k);if(a.length)return a;}
+  for(const [g,k] of keys){let a=(rows||[]).filter(r=>r.grade===k);if(personal){const specific=a.filter(r=>r.targetQty!=null&&Number(r.targetQty)===targetQty);a=specific.length?specific:a.filter(r=>r.targetQty==null);}if(a.length)return a;}
   return [];
  };
  const lookup=(rows,value,key)=>{if(value==null)return null;const row=(rows||[]).filter(r=>num(r.threshold)!=null&&num(r.threshold)<=value+1e-9).sort((a,b)=>a.threshold-b.threshold).pop();return row?num(row[key]):null;};
@@ -6210,7 +6220,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   else if(avg==null||!d.hasData)reason='업무실적 없음';
   else{
    team=c.teamOn?lookup(moneyRows(c.team,p.part,p.grade,false),net,'amount'):0;
-   person=c.personalOn?(personal>0?lookup(moneyRows(c.personal,p.part,p.grade,true),ratio,'amount'):null):0;
+   person=c.personalOn?(personal>0?lookup(moneyRows(c.personal,p.part,p.grade,true,personal),ratio,'amount'):null):0;
    if(c.teamOn&&team==null)reason='팀목표 금액 기준 미설정';
    else if(c.personalOn&&person==null)reason=personal>0?'개인목표 금액 기준 미설정':'개인목표 미설정';
    else{total=team+person;score=lookup(c.scores,c.scoreSource==='total'?total:team,'points');}
@@ -6221,6 +6231,32 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 })(typeof window!=='undefined'?window:globalThis);
 
 window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "confirmed": false, "showPersonal": false, "scoreSource": "team", "personalBasis": "net", "manual": ["김태훈", "장일두", "조찬영", "도희승", "김진수"], "team": [{"grade": "A", "threshold": 15.0, "amount": 0}, {"grade": "A", "threshold": 15.5, "amount": 0}, {"grade": "A", "threshold": 16.0, "amount": 300000.0}, {"grade": "A", "threshold": 16.5, "amount": 400000.0}, {"grade": "A", "threshold": 17.0, "amount": 500000.0}, {"grade": "A", "threshold": 17.5, "amount": 600000.0}, {"grade": "A", "threshold": 18.0, "amount": 700000.0}, {"grade": "A", "threshold": 18.5, "amount": 800000.0}, {"grade": "A", "threshold": 19.0, "amount": 900000.0}, {"grade": "A", "threshold": 19.5, "amount": 1000000.0}, {"grade": "A", "threshold": 20.0, "amount": 1500000.0}, {"grade": "B", "threshold": 15.0, "amount": 0}, {"grade": "B", "threshold": 15.5, "amount": 0}, {"grade": "B", "threshold": 16.0, "amount": 300000.0}, {"grade": "B", "threshold": 16.5, "amount": 300000.0}, {"grade": "B", "threshold": 17.0, "amount": 400000.0}, {"grade": "B", "threshold": 17.5, "amount": 400000.0}, {"grade": "B", "threshold": 18.0, "amount": 500000.0}, {"grade": "B", "threshold": 18.5, "amount": 500000.0}, {"grade": "B", "threshold": 19.0, "amount": 600000.0}, {"grade": "B", "threshold": 19.5, "amount": 600000.0}, {"grade": "B", "threshold": 20.0, "amount": 700000.0}, {"grade": "C", "threshold": 15.0, "amount": 0}, {"grade": "C", "threshold": 15.5, "amount": 0}, {"grade": "C", "threshold": 16.0, "amount": 100000.0}, {"grade": "C", "threshold": 16.5, "amount": 200000.0}, {"grade": "C", "threshold": 17.0, "amount": 200000.0}, {"grade": "C", "threshold": 17.5, "amount": 200000.0}, {"grade": "C", "threshold": 18.0, "amount": 300000.0}, {"grade": "C", "threshold": 18.5, "amount": 300000.0}, {"grade": "C", "threshold": 19.0, "amount": 400000.0}, {"grade": "C", "threshold": 19.5, "amount": 400000.0}, {"grade": "C", "threshold": 20.0, "amount": 500000.0}, {"grade": "D", "threshold": 15.0, "amount": 0}, {"grade": "D", "threshold": 15.5, "amount": 100000.0}, {"grade": "D", "threshold": 16.0, "amount": 100000.0}, {"grade": "D", "threshold": 16.5, "amount": 200000.0}, {"grade": "D", "threshold": 17.0, "amount": 200000.0}, {"grade": "D", "threshold": 17.5, "amount": 200000.0}, {"grade": "D", "threshold": 18.0, "amount": 200000.0}, {"grade": "D", "threshold": 18.5, "amount": 200000.0}, {"grade": "D", "threshold": 19.0, "amount": 300000.0}, {"grade": "D", "threshold": 19.5, "amount": 300000.0}, {"grade": "D", "threshold": 20.0, "amount": 300000.0}], "personal": [], "scores": [{"threshold": 100000.0, "points": 81.0}, {"threshold": 200000.0, "points": 82.0}, {"threshold": 300000.0, "points": 83.0}, {"threshold": 400000.0, "points": 84.0}, {"threshold": 500000.0, "points": 85.0}, {"threshold": 600000.0, "points": 86.0}, {"threshold": 700000.0, "points": 87.0}, {"threshold": 800000.0, "points": 88.0}, {"threshold": 900000.0, "points": 89.0}, {"threshold": 1000000.0, "points": 90.0}, {"threshold": 1100000.0, "points": 91.0}, {"threshold": 1200000.0, "points": 92.0}, {"threshold": 1300000.0, "points": 93.0}, {"threshold": 1400000.0, "points": 94.0}, {"threshold": 1500000.0, "points": 95.0}], "deductions": [{"item": "품질지적", "qty": 0.5}, {"item": "지시불이행", "qty": 2}, {"item": "미발송", "qty": 0.5}, {"item": "오발송", "qty": 0.5}, {"item": "오조립", "qty": 1}, {"item": "파손", "qty": 1}, {"item": "조퇴", "qty": 0.5}, {"item": "지각", "qty": 0.5}, {"item": "당일연차", "qty": 1}, {"item": "결근", "qty": 5}], "basisVersion": 2};
+</script>
+<script>
+(function(root){
+  'use strict';
+  const key=s=>String(s||'').replace(/\s+/g,'');
+  const retired=r=>String(r['블록']||'').trim()==='퇴사인원';
+  function retire(row,rows){
+    const existing=(rows||[]).find(r=>retired(r));
+    return {...row,'블록':'퇴사인원','위치':existing?.['위치']||'오른쪽','블록순서':existing?.['블록순서']||99};
+  }
+  function layout(order){
+    const sides={'왼쪽':[],'오른쪽':[]};
+    for(const r of order||[]){const side=sides[r['위치']]||sides['왼쪽'];let b=side.find(b=>b.name===r['블록']);if(!b){b={name:r['블록'],rows:[]};side.push(b);}if(key(r['이름']))b.rows.push(r);}
+    return sides;
+  }
+  function summary(order,roster){
+    const source=new Map((roster||[]).filter(r=>key(r['이름'])).map(r=>[key(r['이름']),r]));
+    const groups=Object.fromEntries((roster||[]).filter(r=>r['파트']).map(r=>[r['파트'],0])),counts=new Map(),active=new Set(),left=new Set(),unknown=[],inactive=[];
+    for(const r of order||[]){const n=key(r['이름']);if(!n)continue;counts.set(n,(counts.get(n)||0)+1);if(retired(r)){left.add(n);continue;}if(active.has(n))continue;active.add(n);const p=source.get(n);const g=p?.['파트']||'미분류';groups[g]=(groups[g]||0)+1;if(!p)unknown.push(r['이름']);else if(p['사용']==='N')inactive.push(r['이름']);}
+    const all=new Set([...active,...left]);
+    const missing=[...source].filter(([n,p])=>p['사용']!=='N'&&!all.has(n)).map(([,p])=>p['이름']);
+    return {groups,active:active.size,retired:left.size,total:all.size,rowCount:[...counts.values()].reduce((a,b)=>a+b,0),duplicates:[...counts].filter(([,v])=>v>1).map(([n])=>n),missing,unknown,inactive};
+  }
+  root.ReportCore={key,retired,retire,layout,summary};
+})(typeof window!=='undefined'?window:globalThis);
+
 </script>
 <script>/* 인사평가 — 업무데이터 사이트 안의 메뉴 (관리자 · 담당 매니저) */
 (function () {
@@ -6240,7 +6276,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
   const ro = () => !!(META && META.ro);                                 // v28 : 보기 전용 관리자 (팀장님)
   const superA = () => !!(META && META.superAdmin && !META.ro);
 
-  function init(app) { A = app; window.addEventListener('beforeunload', e => { if (ST.dirty) { e.preventDefault(); e.returnValue = ''; } }); }
+  function init(app) { A = app; window.addEventListener('beforeunload', e => { if (ST.dirty || ST.orderDirty) { e.preventDefault(); e.returnValue = ''; } }); }
 
   // 엑셀 라이브러리는 인사평가에서 쓸 때만 불러옴
   const LIBS = { XLSX: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', ExcelJS: 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js' };
@@ -6285,7 +6321,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     b.list.forEach(x=>{const z=checks.get(String(x.person.name).replace(/\s/g,''));if(z&&x.data.일평균!=null&&Math.abs(z.average-x.data.일평균)>0.0001)x.productionRecheck=z;});
     b.list.forEach((x,i)=>{x.data.설정개인목표=r.list[i].personalTarget??null;x.incentive=HRINC.calculate(x,r.incentive,r.teamGoal);if(x.incentive.manual){x.refs=x.refs.map(()=>null);x.notes=x.notes.map(()=>'별도 업무 · 개별 점수 입력');}});
     META = r.meta;
-    return { month: r.month, part: r.part, locked: r.locked, items: b.items, list: b.list, order: H.orderRows(r.order, r.list.map(e => e.person)), rawSrc: r.rawSrc, incentive: r.incentive, teamGoal: r.teamGoal };
+    return { month: r.month, part: r.part, locked: r.locked, items: b.items, list: b.list, order: H.orderRows(r.order, r.list.map(e => e.person)), orderTotals:r.orderTotals||{}, rawSrc: r.rawSrc, incentive: r.incentive, teamGoal: r.teamGoal };
   }
 
   // 관리자 : 업무데이터(웹) → 그 달 원본으로 반영 (엑셀로 올린 달은 그대로 둠)
@@ -6463,6 +6499,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     });
   }
   async function guard() {
+    if (ST.orderDirty) { if (!(await A.confirmBox('보고 순서표에 저장하지 않은 변경이 있습니다. 버리고 이동할까요?', '이동'))) return false; ST.orderDirty=false; }
     if (!ST.dirty) return true;
     const a = await askSave();
     if (a === 'cancel') return false;
@@ -6843,7 +6880,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     MF.bind();
     if ($('#mpPart')) $('#mpPart').onchange = e => { ST.part = e.target.value; viewMyPart(); attachHrFilter(); };
     $('#myDl').onclick = async () => {
-      try { busy(true, '엑셀 만드는 중…'); await libs('ExcelJS'); const hist = (await api('hrHist12', { month: d.month })).map; const blob = await buildWorkbook(d.month, d.items, d.list, d.order, hist); const [y, m] = d.month.split('-'); A.saveBlob(blob, `인사평가_${d.part}_${y.slice(2)}년${+m}월.xlsx`); }
+      try { busy(true, '엑셀 만드는 중…'); await libs('ExcelJS'); const hist = (await api('hrHist12', { month: d.month })).map; const blob = await buildWorkbook(d.month, d.items, d.list, d.order, hist, undefined, undefined, d.orderTotals); const [y, m] = d.month.split('-'); A.saveBlob(blob, `인사평가_${d.part}_${y.slice(2)}년${+m}월.xlsx`); }
       catch (e) { toast(e.message, 1); } finally { busy(false); }
     };
     };
@@ -7105,7 +7142,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   }
 
   // ============================================================ 관리자 — 기준 · 명단 (편집 표)
-  async function loadCfg() { CFG = await api('hrCfg'); CFG.headers = {}; ['설정', '파트', '명단', '항목', '등급목표', '점유율표', '감점기준', '보고순서'].forEach(t => (CFG.headers[t] = H.HEADERS[t])); return CFG; }
+  async function loadCfg() { CFG = await api('hrCfg', {month:ST.orderMonth||ST.month||META.current}); CFG.headers = {}; ['설정', '파트', '명단', '항목', '등급목표', '점유율표', '감점기준', '보고순서'].forEach(t => (CFG.headers[t] = H.HEADERS[t])); return CFG; }
   const COL_OPTS = { '사용': ['Y', 'N'], '계산방식': ['목표수량', '성장', '순위표', '품질감점', '근태감점', '수동'], '합산': ['더하기', '빼기'], '대상': ['전체', '사원', '파트장'],
     '직책': ['사원', '파트장'], '등급': ['', 'A', 'B', 'C', 'D'], '구분@감점기준': ['품질', '근태'] };
   function rowHtml(table, r, opts = {}) {
@@ -7159,7 +7196,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     ST.cfgSub = ST.cfgSub || 'crit';
     if (['import','incentive'].includes(ST.cfgSub) && !superA()) ST.cfgSub = 'crit';
     body().innerHTML = `<div class="subt">${CFG_SUBS.filter(([k]) => !['import','incentive'].includes(k) || superA()).map(([k, t]) => `<button data-cs="${k}" class="pill ${k === ST.cfgSub ? 'on' : ''}">${t}</button>`).join('')}</div><div id="cfgb"><div class="muted">불러오는 중…</div></div>`;
-    body().querySelectorAll('[data-cs]').forEach(b => (b.onclick = () => { ST.cfgSub = b.dataset.cs; ST.tseq = (ST.tseq || 0) + 1; viewCfg(); }));
+    body().querySelectorAll('[data-cs]').forEach(b => (b.onclick = async () => { if (!(await guard())) return; ST.cfgSub = b.dataset.cs; ST.tseq = (ST.tseq || 0) + 1; viewCfg(); }));
     if (ST.cfgSub === 'import') return viewImport();
     try { await loadCfg(); } catch (e) { toast(e.message, 1); return; }
     ({ crit: cfgCrit, incentive: cfgInc, roster: cfgRoster, order: cfgOrder })[ST.cfgSub]();
@@ -7213,7 +7250,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       ${z.reason?`<div class="hrinc-status">${esc(z.reason)}</div>`:''}<details><summary>계산 근거</summary><div class="hrinc-explain">${z.cuts.length?z.cuts.map(r=>esc(r.item)+' '+r.count+'건 × '+r.qty+'대').join(' · '):'차감 내역 없음'}<br>개인 달성률은 ${c.personalBasis==='gross'?'차감 전 평가평균':'차감 후 기준대수'} ÷ 개인목표 × 100입니다.<br>예상점수는 ${c.scoreSource==='total'?'합산 예상액':'팀목표 예상액'}을 금액→점수표로 환산합니다. 금액표 구간은 하한 이상 중 가장 높은 구간 하나만 적용합니다. 기준 미설정은 0원과 구분합니다.<br>인사평가의 점수 감점은 별도 기준입니다. 예상점수에서 사고·근태를 다시 차감하지 않습니다. 실제 지급 확정액과 최종 평가점수는 별도입니다.</div></details>`}</section>`;
   }
   function cfgInc() {
-    const root=cfgb(); if(!('인센티브기준' in CFG)){root.innerHTML='<div class="banner warn">인센티브 SQL 업데이트 후 설정할 수 있습니다.</div>';return;}
+    const root=cfgb(); if(CFG._orderRevision!==1){root.innerHTML='<div class="banner warn">v29.14 SQL을 먼저 적용한 뒤 개인목표 수량별 기준을 편집하세요.</div>';return;} if(!('인센티브기준' in CFG)){root.innerHTML='<div class="banner warn">인센티브 SQL 업데이트 후 설정할 수 있습니다.</div>';return;}
     const configs=CFG['인센티브기준']||[], month=ST.incMonth||ST.month||META.current;
     const original=configs.find(c=>c.month===month);
     let draft=JSON.parse(JSON.stringify(original||Object.assign({},HRINC_SEED,{month,confirmed:false,teamOn:false,personalOn:false,showPersonal:month>='2026-11'})));
@@ -7223,19 +7260,20 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const groups=['*',...META.parts.map(p=>p.name)],grades=['A','B','C','D'],dedItems=HRINC_SEED.deductions.map(x=>x.item);
     const opts=(list,val)=>[...new Set([...list,val])].map(v=>`<option value="${esc(v)}" ${String(v)===String(val)?'selected':''}>${v==='*'?'전체':esc(v)}</option>`).join('');
     const row=(kind,r)=>`<tr>${schemas[kind].map(([key])=>`<td>${key==='group'||key==='grade'||key==='item'?`<select data-key="${key}">${opts(key==='group'?groups:key==='grade'?grades:dedItems,r[key]??(key==='grade'?'A':'*'))}</select>`:`<input data-key="${key}" type="number" min="0" step="${key==='amount'?'1':'0.01'}" value="${esc(r[key]??'')}">`}</td>`).join('')}<td><button class="sm" data-incdel>삭제</button></td></tr>`;
-    const matrixRow=(kind,threshold,values={})=>`<tr><td><input data-key="threshold" aria-label="${kind==='team'?'기준대수 이상':'달성률(%) 이상'}" type="number" min="0" step="0.01" value="${esc(threshold??'')}"></td>${grades.map(g=>`<td><input data-grade="${g}" aria-label="${g}등급 금액(원)" type="number" min="0" step="1" placeholder="미설정" value="${esc(values[g]??'')}"></td>`).join('')}<td><button class="sm" data-incdel aria-label="구간 삭제">삭제</button></td></tr>`;
+    const targetOptions=v=>`<option value="" ${v==null?'selected':''}>공통</option>`+Array.from({length:23},(_,i)=>8+i*.5).map(q=>`<option value="${q}" ${Number(v)===q?'selected':''}>${q}대</option>`).join('');
+    const matrixRow=(kind,threshold,values={},targetQty=null)=>`<tr>${kind==='personal'?`<td><select data-targetqty aria-label="개인목표 수량">${targetOptions(targetQty)}</select></td>`:''}<td><input data-key="threshold" aria-label="${kind==='team'?'기준대수 이상':'달성률(%) 이상'}" type="number" min="0" step="0.01" value="${esc(threshold??'')}"></td>${grades.map(g=>`<td><input data-grade="${g}" aria-label="${g}등급 금액(원)" type="number" min="0" step="1" placeholder="미설정" value="${esc(values[g]??'')}"></td>`).join('')}<td><button class="sm" data-incdel aria-label="구간 삭제">삭제</button></td></tr>`;
     const matrixRows=kind=>{
-      const buckets=new Map();for(const r of draft[kind]||[]){const key=String(r.threshold);if(!buckets.has(key))buckets.set(key,{});buckets.get(key)[r.grade]=r.amount;}
-      return [...buckets].sort((a,b)=>Number(a[0])-Number(b[0])).map(([t,v])=>matrixRow(kind,t,v)).join('');
+      const buckets=new Map();for(const r of draft[kind]||[]){const key=JSON.stringify([r.targetQty??null,Number(r.threshold)]);if(!buckets.has(key))buckets.set(key,{});buckets.get(key)[r.grade]=r.amount;}
+      return [...buckets].sort((a,b)=>{const x=JSON.parse(a[0]),y=JSON.parse(b[0]);return (x[0]??0)-(y[0]??0)||x[1]-y[1];}).map(([k,v])=>{const [q,t]=JSON.parse(k);return matrixRow(kind,t,v,q);}).join('');
     };
-    const table=(kind,title,note)=>['team','personal'].includes(kind)?`<section class="card hrinc-editor hrinc-matrix"><h3>${title}</h3><p class="muted">${note} · 금액 단위: 원. 빈칸은 미설정, 0은 지급액 0원입니다.</p><div class="scroll"><table class="edit" data-inctable="${kind}"><thead><tr><th>${kind==='team'?'기준대수 이상':'달성률(%) 이상'}</th>${grades.map(g=>`<th>${g}등급</th>`).join('')}<th></th></tr></thead><tbody>${matrixRows(kind)}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`:`<section class="card hrinc-editor"><h3>${title}</h3><p class="muted">${note}</p><div class="scroll hrinc-tablewrap"><table class="edit" data-inctable="${kind}"><thead><tr>${schemas[kind].map(x=>`<th>${x[1]}</th>`).join('')}<th></th></tr></thead><tbody>${(draft[kind]||[]).map(r=>row(kind,r)).join('')}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`;
+    const table=(kind,title,note)=>['team','personal'].includes(kind)?`<section class="card hrinc-editor hrinc-matrix"><h3>${title}</h3><p class="muted">${note} · 금액 단위: 원. 빈칸은 미설정, 0은 지급액 0원입니다.</p><div class="scroll"><table class="edit" data-inctable="${kind}"><thead><tr>${kind==='personal'?'<th>개인목표 수량</th>':''}<th>${kind==='team'?'기준대수 이상':'달성률(%) 이상'}</th>${grades.map(g=>`<th>${g}등급</th>`).join('')}<th></th></tr></thead><tbody>${matrixRows(kind)}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`:`<section class="card hrinc-editor"><h3>${title}</h3><p class="muted">${note}</p><div class="scroll hrinc-tablewrap"><table class="edit" data-inctable="${kind}"><thead><tr>${schemas[kind].map(x=>`<th>${x[1]}</th>`).join('')}<th></th></tr></thead><tbody>${(draft[kind]||[]).map(r=>row(kind,r)).join('')}</tbody></table></div><button class="sm" data-incadd="${kind}">＋ 구간 추가</button></section>`;
     const read=()=>{
       const v={month,basisVersion:2,teamOn:$('#incTeam').checked,personalOn:$('#incPersonal').checked,confirmed:$('#incConfirmed').checked,showPersonal:$('#incShow').checked,scoreSource:$('#incScoreSource').value,personalBasis:$('#incBasis').value,manual:$('#incManual').value.split(/[\n,]+/).map(v=>v.trim()).filter(Boolean)};
       for(const kind of Object.keys(schemas)){
         const trs=[...root.querySelectorAll(`[data-inctable="${kind}"] tbody tr`)];
         if(['team','personal'].includes(kind)){
-          v[kind]=[];const seen=new Set();for(const tr of trs){const input=tr.querySelector('[data-key="threshold"]'),raw=input.value.trim(),threshold=raw===''?null:Number(raw);if(threshold===null||!Number.isFinite(threshold)||threshold<0)throw Error('구간 기준을 입력하세요');if(seen.has(threshold))throw Error('같은 구간 기준이 중복됩니다');seen.add(threshold);let count=0;
-            for(const el of tr.querySelectorAll('[data-grade]')){if(el.value.trim()==='')continue;const amount=Number(el.value);if(!Number.isInteger(amount)||amount<0)throw Error('금액은 0 이상의 정수로 입력하세요');v[kind].push({grade:el.dataset.grade,threshold,amount});count++;}
+          v[kind]=[];const seen=new Set();for(const tr of trs){const input=tr.querySelector('[data-key="threshold"]'),raw=input.value.trim(),threshold=raw===''?null:Number(raw);if(threshold===null||!Number.isFinite(threshold)||threshold<0)throw Error('구간 기준을 입력하세요');const qraw=tr.querySelector('[data-targetqty]')?.value,targetQty=qraw?Number(qraw):null;const key=JSON.stringify([targetQty,threshold]);if(seen.has(key))throw Error('같은 목표수량·달성률 구간이 중복됩니다');seen.add(key);let count=0;
+            for(const el of tr.querySelectorAll('[data-grade]')){if(el.value.trim()==='')continue;const amount=Number(el.value);if(!Number.isInteger(amount)||amount<0)throw Error('금액은 0 이상의 정수로 입력하세요');v[kind].push({grade:el.dataset.grade,threshold,amount,...(targetQty==null?{}:{targetQty})});count++;}
             if(!count)throw Error('각 구간에 한 등급 이상의 금액을 입력하세요. 지급액이 없으면 0을 입력하세요');
           }
         }else v[kind]=trs.map(tr=>{const r={};tr.querySelectorAll('[data-key]').forEach(el=>r[el.dataset.key]=['group','grade','item'].includes(el.dataset.key)?el.value:el.value.trim()===''?null:Number(el.value));return r;});
@@ -7248,9 +7286,9 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       <p class="hrinc-status">둘 다 선택하면 각각 계산하여 합산합니다. 기준이 미정이면 ‘계산에 적용’을 해제해 초안으로 저장하세요.</p>
       <div class="fields2"><div class="fld"><label>개인목표 달성률 산정</label><select id="incBasis"><option value="net" ${draft.personalBasis==='net'?'selected':''}>차감 후 기준대수 ÷ 개인목표</option><option value="gross" ${draft.personalBasis==='gross'?'selected':''}>차감 전 평가평균 ÷ 개인목표</option></select></div><div class="fld"><label>인사평가 예상점수 환산 금액</label><select id="incScoreSource"><option value="team" ${draft.scoreSource==='team'?'selected':''}>팀목표 인센티브 금액</option><option value="total" ${draft.scoreSource==='total'?'selected':''}>팀·개인 합산 인센티브 금액</option></select></div></div>
       <div class="fld"><label>별도 업무 평가 대상 (이름을 쉼표 또는 줄바꿈으로 구분)</label><textarea id="incManual" rows="2">${esc(draft.manual.join(', '))}</textarea><small class="muted">별도 업무 인원은 항목별 점수를 직접 입력합니다. 이 분류는 인센티브 지급 제외 조건이 아닙니다. 모든 인원은 점수를 직접 입력할 수 있습니다.</small></div>
-      ${!original?'<p class="hrinc-status">이 귀속월의 저장된 기준이 없습니다. 아래는 초기 초안입니다.</p>':''}<p class="muted">초기 금액표는 9월 프로모션의 네 지급표를 A·B·C·D 등급 기준으로 구성했습니다. 기존 그룹 기준은 자동 적용하지 않습니다. 금액표를 검토한 뒤 저장·적용하세요. 개인목표 금액표는 미정이므로 비워 둡니다.</p></section>
+      ${!original?'<p class="hrinc-status">이 귀속월의 저장된 기준이 없습니다. 아래는 초기 초안입니다.</p>':''}<p class="muted">초기 금액표는 9월 프로모션의 네 지급표를 A·B·C·D 등급 기준으로 구성했습니다. 기존 그룹 기준은 자동 적용하지 않습니다. 금액표를 검토한 뒤 저장·적용하세요. 개인목표 수량은 8~19대(0.5대 간격)로 지정하며, 수량별 달성률 구간과 등급 금액을 입력합니다. 공통 행은 해당 수량·등급 전용표가 없을 때만 적용합니다. 금액을 임의로 채우지 않습니다.</p></section>
       ${table('team','팀목표 · 대수/등급별 금액','소속 그룹과 관계없이 해당 귀속월 인원의 평가등급 A·B·C·D를 자동 적용합니다. 사고·근태 차감 후 기준대수로 계산합니다.')}
-      ${table('personal','개인목표 · 달성률/등급별 금액','100=100% 달성, 110=10% 초과, 115=15% 초과. 구간별 금액을 누적하지 않고 해당 구간의 금액 하나를 적용합니다. 미달 구간을 0원으로 정하려면 예: 0% 이상=0원 행을 등록하세요.')}
+      ${table('personal','개인목표 · 달성률/등급별 금액','개인목표 8~19대·0.5대 간격 선택. 100=100% 달성, 110=10% 초과, 115=15% 초과. 구간별 금액을 누적하지 않고 해당 구간의 금액 하나를 적용합니다. 미달 구간을 0원으로 정하려면 예: 0% 이상=0원 행을 등록하세요.')}
       ${table('scores','인센티브 금액 → 인사평가 예상점수','9월 엑셀의 LOOKUP 결과대로 10만원=81점, 20만원=82점 등으로 초기화했습니다. 10만원 미만은 미표시이며 96~99점은 금액 기준이 없어 추가하지 않았습니다. 수정·추가할 수 있습니다.')}
       ${table('deductions','인센티브 차감 대수','첨부 표의 인센기준. 건수 × 차감대수만 평가평균에서 차감합니다. 인사평가 감점(점)은 [평가 기준]에서 별도로 관리합니다.')}
       <div class="card hrinc-save"><span id="incSaveState">${original?'저장된 기준':'저장 전 초안'}</span><button class="primary" id="incSave">${esc(month)} 기준 저장</button></div>`;
@@ -7287,19 +7325,71 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     $('#svPart').onclick = () => saveTable('파트', readTable('파트'));
   }
   function cfgOrder() {
-    const rows = H.orderRows(CFG['보고순서'], CFG['명단']);
-    const inOrder = new Set(rows.filter(r => r['이름']).map(r => r['이름'].replace(/\s+/g, '')));
-    const missing = CFG['명단'].filter(r => r['사용'] !== 'N' && r['이름'] && !inOrder.has(String(r['이름']).replace(/\s+/g, ''))).map(r => r['이름']);
-    const blocks = [...new Set(rows.map(r => r['블록']).filter(Boolean))];
-    COL_OPTS['위치@보고순서'] = ['왼쪽', '오른쪽']; COL_OPTS['직급@보고순서'] = ['팀장', '매니저', '사원', '계약직', ''];
-    cfgb().innerHTML = `<div class="card"><h2>보고 순서표 <span class="muted">— 엑셀 "인사평가현황" 시트의 파트별 인원 순서</span></h2>
-      <div class="banner info">엑셀 다운로드용 순서입니다. <b>저장하면 블록마다 직책·입사 순으로 자동 정렬</b>됩니다.<br>인원 이동 : "블록"을 바꾸고 저장 · 신규 입사 : [+ 줄 추가] · 퇴사 : [삭제] 또는 블록을 "퇴사인원"으로.</div>
-      ${missing.length ? `<div class="banner warn">명단에는 있는데 순서표에 없는 인원 : ${missing.map(esc).join(', ')}</div>` : ''}
-      ${editTable('보고순서', rows, { readonly: ['순서'], w: { 블록: 110, 위치: 60, 블록순서: 50, 순서: 40, 이름: 80, 사번: 90, 계약월: 95, 비고: 120 }, blank: { 위치: '왼쪽', 직급: '사원' } })}
-      <div class="actions"><button class="primary" id="svOrder">저장 (자동 정렬)</button></div></div><datalist id="blkList">${blocks.map(b => `<option value="${esc(b)}">`).join('')}</datalist>`;
-    $('#ed_보고순서').querySelectorAll('input[data-h="블록"]').forEach(inp => inp.setAttribute('list', 'blkList'));
-    wireTable('보고순서', { readonly: ['순서'], blank: { 위치: '왼쪽', 직급: '사원' } });
-    $('#svOrder').onclick = async () => { if (await saveTable('보고순서', H.orderRows(readTable('보고순서'), CFG['명단']))) cfgOrder(); };
+    const month=CFG._orderMonth||ST.orderMonth||ST.month||META.current;
+    const roster=CFG._orderRoster||CFG['명단'];
+    const rows=H.orderRows(CFG['보고순서'],roster);
+    const blocks=[...new Set([...rows.map(r=>r['블록']).filter(Boolean),'퇴사인원'])];
+    COL_OPTS['위치@보고순서']=['왼쪽','오른쪽'];COL_OPTS['직급@보고순서']=['팀장','매니저','사원','계약직',''];
+    const supported=CFG._orderRevision===1,locked=!!CFG._orderLocked;
+    cfgb().innerHTML=`<div class="card"><h2>보고 순서표</h2><div class="actions"><label>귀속월 <input type="month" id="orderMonth" value="${esc(month)}"></label><button id="orderLoad">불러오기</button><button id="orderPreview">기준 양식 미리보기</button><button class="primary" id="svOrder" ${!supported||locked?'disabled':''}>이 귀속월 저장 (자동 정렬)</button></div>
+      <div class="banner info">선택 귀속월의 보고 배치입니다. 기존 인원은 [퇴사인원으로 이동]으로 정리하며 이름·사번·계약월·평가기록을 유지합니다. 조직도·계정의 퇴사 처리와는 별개입니다. 엑셀은 기존 [이 달 엑셀 받기]를 이용하세요.</div>
+      ${!supported?'<div class="banner warn">v29.14 SQL을 먼저 적용해야 귀속월별로 저장할 수 있습니다.</div>':''}${locked?'<div class="banner warn">인사평가가 마감된 귀속월입니다. 미리보기만 가능합니다.</div>':''}
+      <div class="report-editor-layout"><div id="orderEditor">${editTable('보고순서',rows,{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}})}</div><aside class="report-counts" id="orderCounts"></aside></div><p id="orderState" class="muted">저장된 기준</p></div><datalist id="blkList">${blocks.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>`;
+    let dirty=false;ST.orderDirty=false;
+    const current=()=>readTable('보고순서');
+    const update=()=>{
+      ST.orderDirty=dirty;
+      const v=ReportCore.summary(current(),roster);
+      const warnings=[v.duplicates.length?'중복: '+v.duplicates.join(', '):'',v.missing.length?'명단에는 있으나 순서표 누락: '+v.missing.join(', '):'',v.unknown.length?'귀속월 명단에 없음: '+v.unknown.join(', '):'',v.inactive.length?'명단 사용 N · 재직 블록에 남음: '+v.inactive.join(', '):''].filter(Boolean);
+      $('#orderCounts').innerHTML=`<h3>${esc(month)} 인원 확인</h3><p>귀속월 소속 그룹 기준 · 이름별 중복 제외</p><table>${Object.entries(v.groups).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([g,n])=>`<tr><td>${esc(g)}</td><td>${n}명</td></tr>`).join('')}<tr><td><b>재직 블록 인원</b></td><td>${v.active}명</td></tr><tr><td>해당 귀속월 퇴사인원</td><td>${v.retired}명</td></tr><tr><td><b>보고서 전체 인원</b></td><td>${v.total}명</td></tr><tr><td>입력 행 수</td><td>${v.rowCount}행</td></tr></table>${warnings.map(t=>`<p class="banner warn">${esc(t)}</p>`).join('')}`;
+      $('#orderState').textContent=dirty?'변경 내용 저장 필요':'저장된 기준 · 미리보기에서 총점 확인';
+    };
+    const bind=()=>{
+      $('#ed_보고순서').querySelectorAll('input[data-h="블록"]').forEach(i=>i.setAttribute('list','blkList'));
+      $('#ed_보고순서').querySelectorAll('[data-del]').forEach(b=>{
+        const tr=b.closest('tr'),n=tr.querySelector('[data-h="이름"]').value;
+        b.textContent=n?'퇴사인원으로 이동':'빈 줄 삭제';
+        b.disabled=locked||!supported;
+        b.onclick=async()=>{
+          const name=tr.querySelector('[data-h="이름"]').value.trim();
+          if(!name){tr.remove();dirty=true;update();return;}
+          if(!(await A.confirmBox(`<b>${esc(name)}</b> 사원을 ${esc(month)} 보고서의 퇴사인원 블록으로 이동합니다.<br>이름·사번·계약월과 평가기록은 보존됩니다. 저장 후 적용됩니다.`,'퇴사인원으로 이동')))return;
+          const row={};tr.querySelectorAll('[data-h]').forEach(el=>row[el.dataset.h]=el.value);
+          const moved=ReportCore.retire(row,current());
+          tr.querySelectorAll('[data-h]').forEach(el=>el.value=moved[el.dataset.h]??'');dirty=true;update();
+        };
+      });
+    };
+    wireTable('보고순서',{readonly:['순서'],blank:{위치:'왼쪽',직급:'사원'}});
+    const add=document.querySelector('[data-add="보고순서"]'),oldAdd=add.onclick;
+    add.onclick=()=>{oldAdd();dirty=true;bind();update();};
+    $('#orderEditor').oninput=()=>{dirty=true;bind();update();};
+    if(locked||!supported)$('#orderEditor').querySelectorAll('input,select,button').forEach(el=>el.disabled=true);
+    $('#orderLoad').onclick=async()=>{
+      const next=$('#orderMonth').value;if(!/^\d{4}-\d{2}$/.test(next))return toast('귀속월을 고르세요',1);
+      if(dirty&&!(await A.confirmBox('저장하지 않은 변경을 버리고 다른 귀속월을 불러올까요?','불러오기')))return;
+      ST.orderMonth=next;await loadCfg();cfgOrder();
+    };
+    $('#svOrder').onclick=async()=>{
+      const order=H.orderRows(current(),roster),summary=ReportCore.summary(order,roster);
+      if(summary.duplicates.length)return toast('중복 인원을 먼저 정리하세요: '+summary.duplicates.join(', '),1);
+      const button=$('#svOrder');button.disabled=true;
+      try{const r=await api('hrSaveCfg',{table:'보고순서',month,rows:order,base:CFG._orderVersion||''});META=r.meta;ST.data=null;await loadCfg();cfgOrder();toast(month+' 보고 순서 저장 완료');}
+      catch(e){toast(e.message,1);button.disabled=false;}
+    };
+    $('#orderPreview').onclick=async()=>{
+      try{
+        const data=await api('hrMonth',{month,part:''}),built=H.build(data),order=H.orderRows(current(),roster),sides=ReportCore.layout(order);
+        if(month!==CFG._orderMonth)return;
+        const records=new Map(built.list.map(x=>[ReportCore.key(x.person.name),x.rec||{}]));
+        for(const [name,total] of Object.entries(data.orderTotals||{}))records.set(ReportCore.key(name),{'합계':total});
+        const heads='<tr><th>파트</th><th>직급</th><th>이름</th><th>사번</th><th>계약월</th><th>총점</th></tr>';
+        const side=bs=>`<table>${heads}${bs.map(b=>{const rs=b.rows.length?b.rows:[{}];return rs.map((r,i)=>{const rec=records.get(ReportCore.key(r['이름']))||{},total=rec['합계'];return `<tr ${b.name==='퇴사인원'?'class="report-retired"':''}>${i===0?`<td rowspan="${rs.length}">${esc(b.name)}<br>(${b.rows.length}명)</td>`:''}<td>${esc(r['직급']||'')}</td><td>${esc(r['이름']||'')}</td><td>${esc(r['사번']||'')}</td><td>${esc(r['계약월']||'')}</td><td>${esc(total==null||total===''?'':total)}</td></tr>`;}).join('')+'<tr class="report-gap"><td colspan="6"></td></tr>';}).join('')}</table>`;
+        const sum=ReportCore.summary(order,roster);
+        bigModal(`<div class="report-preview"><div class="report-paper"><h2>● 조립팀 인사평가현황(${esc(month)})</h2><p>${dirty?'저장 전 배치 미리보기 · 저장해야 기존 엑셀에 적용됩니다.':'저장된 배치'} · 총점은 현재 저장된 평가기록입니다.</p><div class="report-preview-cols"><div>${side(sides['왼쪽'])}</div><div>${side(sides['오른쪽'])}<b>조립팀 총원 ${sum.total}명</b> · 퇴사인원 ${sum.retired}명</div></div></div></div>`);
+      }catch(e){toast(e.message,1);}
+    };
+    bind();update();
   }
   function viewImport() {
     cfgb().innerHTML = `<div class="card"><h2>구글 시트 가져오기</h2>
@@ -7470,7 +7560,7 @@ async function readInfoFile(file) {
 }
 
 // 엑셀 받기: 1) 인사평가현황(보고 순서표 모양, 총점)  2) 사람별 인사평가표(개선 양식, 값으로 채움 + 그래프 2개)
-async function buildWorkbook(month, items, list, order, hist, info, opts) {
+async function buildWorkbook(month, items, list, order, hist, info, opts, orderTotals={}) {
   const side = !opts || opts.side !== false;   // 오른쪽 그래프·업무데이터(P~Y) 포함 여부
   const maxCol = side ? 25 : 14;
   if (!window.ExcelJS || !window.JSZip) throw new Error('엑셀 기능을 불러오지 못했습니다. 새로고침(Ctrl+F5) 후 다시 시도하세요.');
@@ -7483,6 +7573,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts) {
   const [y, m] = month.split('-');
   const nk = s => String(s || '').replace(/\s+/g, '');
   const recBy = {}; list.forEach(x => recBy[nk(x.person.name)] = x);
+  const reportTotals=Object.fromEntries(Object.entries(orderTotals||{}).map(([n,v])=>[nk(n),v]));
   const ordBy = {}; (order || []).forEach(r => { if (r['이름']) ordBy[nk(r['이름'])] = r; });
 
   // ---------- 1) 인사평가현황 ----------
@@ -7493,8 +7584,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts) {
     ws.getCell('A1').value = `● 조립팀 인사평가현황(${y}년${m}월)`; ws.getCell('A1').font = { name: '굴림', size: 12, bold: true };
     const heads = ['파트', '직급', '이름', '사번', '계약월', '총점'];
     [1, 8].forEach(c0 => heads.forEach((h, i) => { const c = ws.getCell(3, c0 + i); c.value = h; c.font = bold; c.border = border; c.alignment = center; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2EFDA' } }; }));
-    const sides = { '왼쪽': [], '오른쪽': [] };
-    order.forEach(r => { const s = sides[r['위치']] || sides['왼쪽']; let b = s.find(q => q.name === r['블록']); if (!b) { b = { name: r['블록'], rows: [] }; s.push(b); } if (r['이름']) b.rows.push(r); });
+    const sides = ReportCore.layout(order);
     let total = 0;
     const draw = (blocks, c0) => {
       let row = 4;
@@ -7505,7 +7595,8 @@ async function buildWorkbook(month, items, list, order, hist, info, opts) {
         for (let i = 0; i < n; i++) {
           const r = b.rows[i] || {};
           const x = r['이름'] ? recBy[nk(r['이름'])] : null;
-          const tot = x && x.rec && x.rec['합계'] !== '' && x.rec['합계'] !== undefined ? Number(x.rec['합계']) : '';
+          const savedTotal=reportTotals[nk(r['이름'])];
+          const tot = savedTotal!=null&&savedTotal!=='' ? Number(savedTotal) : x && x.rec && x.rec['합계'] !== '' && x.rec['합계'] !== undefined ? Number(x.rec['합계']) : '';
           const vals = [null, r['직급'] || '', r['이름'] || '', r['사번'] ? (isFinite(r['사번']) ? Number(r['사번']) : r['사번']) : '', r['계약월'] ? xlDate(r['계약월']) : '', tot];
           for (let k = 0; k < 6; k++) {
             const c = ws.getCell(row + i, c0 + k);
@@ -7525,7 +7616,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts) {
     const end = draw(sides['오른쪽'], 8);
     const tl = ws.getCell(end, 8), tv = ws.getCell(end, 10);
     ws.mergeCells(end, 8, end + 1, 9); ws.mergeCells(end, 10, end + 1, 11);
-    tl.value = '조립팀 총원'; tv.value = total;
+    tl.value = '조립팀 총원'; tv.value = new Set(order.filter(r=>r['이름']).map(r=>ReportCore.key(r['이름']))).size;
     [tl, tv].forEach(c => { c.font = bold; c.alignment = center; });
     for (let rr = end; rr <= end + 1; rr++) for (let cc = 8; cc <= 11; cc++) ws.getCell(rr, cc).border = border;
     ws.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
@@ -7758,7 +7849,7 @@ async function addCharts(buf, jobs) {
       let info = null;
       if (f) { try { info = await readInfoFile(f); } catch (e) { throw new Error('인적사항 파일을 읽지 못했습니다: ' + e.message); } }
       const side = !$('#dlSide') || $('#dlSide').checked;
-      const blob = await buildWorkbook(month, d.items, d.list, d.order, hist, info, { side });
+      const blob = await buildWorkbook(month, d.items, d.list, d.order, hist, info, { side }, d.orderTotals);
       if (info) { const hit = d.list.filter(x => info[x.person.name.replace(/\s+/g, '')]).length; toast(`인적사항 ${hit}/${d.list.length}명 채움`); }
       const [y, m] = month.split('-');
       A.saveBlob(blob, `인사평가_${y.slice(2)}년${+m}월.xlsx`);
@@ -7791,7 +7882,7 @@ async function addCharts(buf, jobs) {
   }
 
   document.addEventListener('click', e => { const t = e.target; if (t && t.matches && t.matches('.hrw input[type=month]') && t.showPicker) { try { t.showPicker(); } catch (er) { } } });
-  function reset() { clearTimeout(ST.timer); Object.assign(ST, { tab: null, month: null, part: null, data: null, sel: null, dirty: false, timer: null, meta: null, synced: {}, overviewPart: '', attPart: undefined, filterReadSeq: (ST.filterReadSeq||0)+1, cfgSub: undefined, rseq: (ST.rseq || 0) + 1 }); META = null; CFG = null; }
+  function reset() { clearTimeout(ST.timer); Object.assign(ST, { tab: null, month: null, part: null, data: null, sel: null, dirty: false, timer: null, meta: null, synced: {}, overviewPart: '', orderMonth: null, orderDirty: false, incMonth: null, attPart: undefined, filterReadSeq: (ST.filterReadSeq||0)+1, cfgSub: undefined, rseq: (ST.rseq || 0) + 1 }); META = null; CFG = null; }
   // 왼쪽 메뉴 [근태 입력] : 인사평가 화면을 열지 않고 바로 입력 창
   async function quickAtt(nm) {       // v28.18 : 사람 카드에서 부르면 그 사람이 골라진 채로
     try {
@@ -7805,7 +7896,7 @@ async function addCharts(buf, jobs) {
   }
   // v28.2 : 체크사항용 — 그 달 평가 목록 (파트 · 상태만)
   async function monthStatus(month, part) { const r = await api('hrMonth', { month, part: part || '' }); return H.build(r).list.map(x => ({ part: x.person.part, done: !!(x.rec && x.rec['상태'] === '완료') })); }
-  window.HR = { init, render, guard, reset, myAttLine, quickAtt, monthStatus, get dirty() { return ST.dirty; } };
+  window.HR = { init, render, guard, reset, myAttLine, quickAtt, monthStatus, get dirty() { return ST.dirty||ST.orderDirty; } };
 })();
 </script>
 <script>const ACC_TPL_B64 = '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';</script>
@@ -8366,7 +8457,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.13';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.14';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
