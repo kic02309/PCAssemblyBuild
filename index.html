@@ -3065,6 +3065,8 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 <style id="evaluation-score-v2915">.hreval-score{padding:20px 24px;text-align:center}.hreval-score-main{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}.hreval-score-main>span{font-size:16px;font-weight:800}.hreval-score-main>strong{font-size:36px;line-height:1.2;color:#2461cf;font-variant-numeric:tabular-nums}.hreval-score-main small{font-size:18px;margin-left:5px}.hreval-score-meta{font-size:12px;color:var(--sub);margin-top:10px}.hreval-score-note{font-size:12px;color:var(--sub);margin:8px 0 0}</style>
 <style id="evaluation-list-v2915">.hrw table.eval-person-table{table-layout:fixed}.hrw table.eval-person-table th,.hrw table.eval-person-table td{padding-left:4px;padding-right:4px}.hrw table.eval-person-table th:first-child,.hrw table.eval-person-table td:first-child{text-align:left;padding-left:6px}.hrw table.eval-person-table td.nm{overflow:hidden;text-overflow:ellipsis}.hrw table.eval-person-table td.nm .badge{margin-left:3px}.hrw table.eval-person-table td:nth-child(4){font-variant-numeric:tabular-nums;white-space:nowrap}</style>
 <style id="evaluation-alignment-v2916">.report-save-pending{box-shadow:0 0 0 3px #fbbf2460}.hrw .pv.pv-aligned{display:grid;grid-template-columns:minmax(0,1.32fr) minmax(0,1fr);grid-template-rows:auto auto auto;gap:10px 18px;align-items:stretch}.hrw .pv.pv-aligned>.pv-left,.hrw .pv.pv-aligned>.pv-right{display:contents!important}.hrw .pv-aligned .pv-left>table{grid-column:1;margin:0!important}.hrw .pv-aligned .pv-left>table:nth-child(1){grid-row:1}.hrw .pv-aligned .pv-left>table:nth-child(2){grid-row:2}.hrw .pv-aligned .pv-left>table:nth-child(3){grid-row:3}.hrw .pv-aligned .pv-chart{grid-column:2;min-width:0;min-height:0;position:relative;border:1px solid #d9d9d9}.hrw .pv-aligned .pv-chart:nth-child(1){grid-row:1}.hrw .pv-aligned .pv-chart:nth-child(2){grid-row:2}.hrw .pv-aligned .pv-chart svg{position:absolute;inset:0;width:100%;height:100%;border:0}.hrw .pv-aligned .pv-right>table{grid-column:2;grid-row:3;height:100%;margin:0}@media screen and (max-width:1100px){.hrw .pv.pv-aligned{grid-template-columns:1fr}.hrw .pv-aligned .pv-left>table,.hrw .pv-aligned .pv-chart,.hrw .pv-aligned .pv-right>table{grid-column:1}.hrw .pv-aligned .pv-left>table:nth-child(2){grid-row:3}.hrw .pv-aligned .pv-left>table:nth-child(3){grid-row:5}.hrw .pv-aligned .pv-chart:nth-child(1){grid-row:2;min-height:220px}.hrw .pv-aligned .pv-chart:nth-child(2){grid-row:4;min-height:220px}.hrw .pv-aligned .pv-right>table{grid-row:6}}</style>
+<style id="criteria-row-edit-v2918">.cfg-row-actions{white-space:nowrap}.cfg-row-actions button+button{margin-left:5px}.cfg-edit-help{font-size:12px;color:var(--sub);line-height:1.5;margin:8px 0}.edit tr[data-row-editing="0"] [data-h]:disabled{opacity:1;color:var(--text);-webkit-text-fill-color:var(--text);background:transparent;cursor:default}.edit tr.cfg-row-editing td{background:#fff8df}.edit tr.cfg-row-editing input,.edit tr.cfg-row-editing select{background:var(--panel);box-shadow:inset 0 0 0 1px #e6b950;border-radius:4px}</style>
+<style id="incentive-status-v2919">.hreval-score-main>strong.hreval-score-status{font-size:clamp(18px,2vw,26px);line-height:1.4;word-break:keep-all}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -6240,9 +6242,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
    else if(c.personalOn&&person==null)reason=personal>0?'개인목표 금액 기준 미설정':'개인목표 미설정';
    else{total=team+person;score=lookup(c.scores,c.scoreSource==='total'?total:team,'points');}
   }
-  return {manual,avg,net,cut,cuts,personal,ratio,basis,teamGoal:num(teamGoal),team,person,total,score,reason,config:c,scoreSource:c.scoreSource||'team'};
+  let state=score==null?'missing':'score';
+  if(score==null&&cfg&&c.basisVersion===2&&c.confirmed&&(c.teamOn||c.personalOn)&&avg!=null&&d.hasData){
+   const valid=(rows,key)=>(rows||[]).filter(r=>num(r.threshold)!=null&&num(r[key])!=null);
+   const tr=valid(moneyRows(c.team,p.part,p.grade,false),'amount'),pr=valid(moneyRows(c.personal,p.part,p.grade,true,personal),'amount'),sr=valid(c.scores,'points');
+   const min=rows=>Math.min(...rows.map(r=>num(r.threshold)));
+   const ready=sr.length>0&&(!c.teamOn||tr.length>0)&&(!c.personalOn||(personal>0&&ratio!=null&&pr.length>0));
+   if(ready&&((c.teamOn&&team==null&&net<min(tr))||(c.personalOn&&person==null&&ratio<min(pr))||(!reason&&(c.scoreSource==='total'?total:team)<min(sr))))state='below';
+  }
+  return {manual,avg,net,cut,cuts,personal,ratio,basis,teamGoal:num(teamGoal),team,person,total,score,reason,state,config:c,scoreSource:c.scoreSource||'team'};
  }
- root.HRINC={num,lookup,calculate};
+ function presentation(z){
+  if(z.score!=null)return {label:String(z.score)+'점',note:'',kind:'score'};
+  return z.state==='below'?{label:'인센티브 기준 미달',note:'현재 실적이 인센티브 산정 기준에 미달합니다.',kind:'below'}:{label:'산정 자료 없음',note:'평가 기준과 실적 반영 상태를 확인하세요.',kind:'missing'};
+ }
+ root.HRINC={num,lookup,calculate,presentation};
 })(typeof window!=='undefined'?window:globalThis);
 
 window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "confirmed": false, "showPersonal": false, "scoreSource": "team", "personalBasis": "net", "manual": ["김태훈", "장일두", "조찬영", "도희승", "김진수"], "team": [{"grade": "A", "threshold": 15.0, "amount": 0}, {"grade": "A", "threshold": 15.5, "amount": 0}, {"grade": "A", "threshold": 16.0, "amount": 300000.0}, {"grade": "A", "threshold": 16.5, "amount": 400000.0}, {"grade": "A", "threshold": 17.0, "amount": 500000.0}, {"grade": "A", "threshold": 17.5, "amount": 600000.0}, {"grade": "A", "threshold": 18.0, "amount": 700000.0}, {"grade": "A", "threshold": 18.5, "amount": 800000.0}, {"grade": "A", "threshold": 19.0, "amount": 900000.0}, {"grade": "A", "threshold": 19.5, "amount": 1000000.0}, {"grade": "A", "threshold": 20.0, "amount": 1500000.0}, {"grade": "B", "threshold": 15.0, "amount": 0}, {"grade": "B", "threshold": 15.5, "amount": 0}, {"grade": "B", "threshold": 16.0, "amount": 300000.0}, {"grade": "B", "threshold": 16.5, "amount": 300000.0}, {"grade": "B", "threshold": 17.0, "amount": 400000.0}, {"grade": "B", "threshold": 17.5, "amount": 400000.0}, {"grade": "B", "threshold": 18.0, "amount": 500000.0}, {"grade": "B", "threshold": 18.5, "amount": 500000.0}, {"grade": "B", "threshold": 19.0, "amount": 600000.0}, {"grade": "B", "threshold": 19.5, "amount": 600000.0}, {"grade": "B", "threshold": 20.0, "amount": 700000.0}, {"grade": "C", "threshold": 15.0, "amount": 0}, {"grade": "C", "threshold": 15.5, "amount": 0}, {"grade": "C", "threshold": 16.0, "amount": 100000.0}, {"grade": "C", "threshold": 16.5, "amount": 200000.0}, {"grade": "C", "threshold": 17.0, "amount": 200000.0}, {"grade": "C", "threshold": 17.5, "amount": 200000.0}, {"grade": "C", "threshold": 18.0, "amount": 300000.0}, {"grade": "C", "threshold": 18.5, "amount": 300000.0}, {"grade": "C", "threshold": 19.0, "amount": 400000.0}, {"grade": "C", "threshold": 19.5, "amount": 400000.0}, {"grade": "C", "threshold": 20.0, "amount": 500000.0}, {"grade": "D", "threshold": 15.0, "amount": 0}, {"grade": "D", "threshold": 15.5, "amount": 100000.0}, {"grade": "D", "threshold": 16.0, "amount": 100000.0}, {"grade": "D", "threshold": 16.5, "amount": 200000.0}, {"grade": "D", "threshold": 17.0, "amount": 200000.0}, {"grade": "D", "threshold": 17.5, "amount": 200000.0}, {"grade": "D", "threshold": 18.0, "amount": 200000.0}, {"grade": "D", "threshold": 18.5, "amount": 200000.0}, {"grade": "D", "threshold": 19.0, "amount": 300000.0}, {"grade": "D", "threshold": 19.5, "amount": 300000.0}, {"grade": "D", "threshold": 20.0, "amount": 300000.0}], "personal": [], "scores": [{"threshold": 100000.0, "points": 81.0}, {"threshold": 200000.0, "points": 82.0}, {"threshold": 300000.0, "points": 83.0}, {"threshold": 400000.0, "points": 84.0}, {"threshold": 500000.0, "points": 85.0}, {"threshold": 600000.0, "points": 86.0}, {"threshold": 700000.0, "points": 87.0}, {"threshold": 800000.0, "points": 88.0}, {"threshold": 900000.0, "points": 89.0}, {"threshold": 1000000.0, "points": 90.0}, {"threshold": 1100000.0, "points": 91.0}, {"threshold": 1200000.0, "points": 92.0}, {"threshold": 1300000.0, "points": 93.0}, {"threshold": 1400000.0, "points": 94.0}, {"threshold": 1500000.0, "points": 95.0}], "deductions": [{"item": "품질지적", "qty": 0.5}, {"item": "지시불이행", "qty": 2}, {"item": "미발송", "qty": 0.5}, {"item": "오발송", "qty": 0.5}, {"item": "오조립", "qty": 1}, {"item": "파손", "qty": 1}, {"item": "조퇴", "qty": 0.5}, {"item": "지각", "qty": 0.5}, {"item": "당일연차", "qty": 1}, {"item": "결근", "qty": 5}], "basisVersion": 2};
@@ -7176,6 +7190,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   async function loadCfg() { CFG = await api('hrCfg', {month:ST.orderMonth||ST.month||META.current}); CFG.headers = {}; ['설정', '파트', '명단', '항목', '등급목표', '점유율표', '감점기준', '보고순서'].forEach(t => (CFG.headers[t] = H.HEADERS[t])); return CFG; }
   const COL_OPTS = { '사용': ['Y', 'N'], '계산방식': ['목표수량', '성장', '순위표', '품질감점', '근태감점', '수동'], '합산': ['더하기', '빼기'], '대상': ['전체', '사원', '파트장'],
     '직책': ['사원', '파트장'], '등급': ['', 'A', 'B', 'C', 'D'], '구분@감점기준': ['품질', '근태'] };
+  const rowEditTables = ['등급목표','점유율표','감점기준'];
   function rowHtml(table, r, opts = {}) {
     const cols = opts.cols || CFG.headers[table];
     const cell = h => {
@@ -7186,19 +7201,30 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       if (o) return `<td><select data-h="${h}">${[...new Set([...o, v])].map(x => `<option ${String(x) === String(v) ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></td>`;
       return `<td><input type="text" data-h="${h}" value="${esc(v)}" style="width:${w}px"></td>`;
     };
-    return `<tr>${cols.map(cell).join('')}${opts.fixed ? '' : '<td><button class="sm danger" data-del>삭제</button></td>'}</tr>`;
+    const explicitEdit=rowEditTables.includes(table)&&!opts.fixed;
+    const editing=!cols.some(h=>String(r[h]??'').trim());
+    return `<tr ${explicitEdit?`data-row-editing="${editing?'1':'0'}"`:''}>${cols.map(cell).join('')}${opts.fixed?'':`<td class="cfg-row-actions">${explicitEdit?`<button class="sm" data-row-edit>${editing?'입력 완료':'수정'}</button>`:''}<button class="sm danger" data-del>삭제</button></td>`}</tr>`;
   }
   function editTable(table, rows, opts = {}) {
     const cols = opts.cols || CFG.headers[table];
-    return `<div class="scroll"><table class="edit" id="ed_${table}"><tr>${cols.map(h => `<th>${esc(h)}</th>`).join('')}${opts.fixed ? '' : '<th></th>'}</tr>
+    return `${rowEditTables.includes(table)?'<p class="cfg-edit-help">[수정] → 값 변경 → 하단 [저장]으로 반영합니다. [입력 완료]는 행 편집만 종료합니다.</p>':''}<div class="scroll"><table class="edit" id="ed_${table}"><tr>${cols.map(h => `<th>${esc(h)}</th>`).join('')}${opts.fixed ? '' : '<th></th>'}</tr>
       ${rows.map(r => rowHtml(table, r, opts)).join('')}</table></div>${opts.fixed ? '' : `<button class="sm" data-add="${table}" style="margin-top:6px">+ 줄 추가</button>`}`;
   }
   function wireTable(table, opts = {}) {
     const t = $('#ed_' + table);
     const bindDel = root => root.querySelectorAll('[data-del]').forEach(b => (b.onclick = () => b.closest('tr').remove()));
-    bindDel(t);
+    const bindEdit=root=>{
+      if(!rowEditTables.includes(table))return;
+      const rows=root.matches('tr')?[root]:[...root.querySelectorAll('tr[data-row-editing]')];
+      rows.forEach(tr=>{
+        const button=tr.querySelector('[data-row-edit]');if(!button)return;
+        const update=()=>{const active=tr.dataset.rowEditing==='1';tr.classList.toggle('cfg-row-editing',active);tr.querySelectorAll('[data-h]').forEach(el=>el.disabled=!active);button.textContent=active?'입력 완료':'수정';button.setAttribute('aria-expanded',String(active));};
+        button.onclick=()=>{tr.dataset.rowEditing=tr.dataset.rowEditing==='1'?'0':'1';update();if(tr.dataset.rowEditing==='1')tr.querySelector('input[data-h]:not([readonly]),select[data-h]')?.focus();};update();
+      });
+    };
+    bindDel(t);bindEdit(t);
     const add = document.querySelector(`[data-add="${table}"]`);
-    if (add) add.onclick = () => { const tb = t.tBodies[0] || t; tb.insertAdjacentHTML('beforeend', rowHtml(table, opts.blank || {}, opts)); bindDel(tb.lastElementChild); const f = tb.lastElementChild.querySelector('input'); if (f) f.focus(); };
+    if (add) add.onclick = () => { const tb = t.tBodies[0] || t; tb.insertAdjacentHTML('beforeend', rowHtml(table, opts.blank || {}, opts)); bindDel(tb.lastElementChild);bindEdit(tb.lastElementChild); const f = tb.lastElementChild.querySelector('input'); if (f) f.focus(); };
   }
   function readTable(table, opts = {}) {
     const Hd = CFG.headers[table], orig = opts.keep ? CFG[table] : [];
@@ -7209,7 +7235,9 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     });
   }
   async function saveTable(table, rows) {
-    try { const r = await api('hrSaveCfg', { table, rows }); META = r.meta; toast(table + ' 저장 완료'); await loadCfg(); return true; }
+    try { const r = await api('hrSaveCfg', { table, rows }); META = r.meta; toast(table + ' 저장 완료'); await loadCfg();
+      if(rowEditTables.includes(table))document.querySelectorAll('#ed_'+table+' tr[data-row-editing]').forEach(tr=>{tr.dataset.rowEditing='0';tr.classList.remove('cfg-row-editing');tr.querySelectorAll('[data-h]').forEach(el=>el.disabled=true);const b=tr.querySelector('[data-row-edit]');if(b){b.textContent='수정';b.setAttribute('aria-expanded','false');}});
+      return true; }
     catch (e) { toast(e.message, 1); return false; }
   }
   function calcGuide() {
@@ -7272,8 +7300,8 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   }
   // v29.11: display estimates without writing evaluation scores.
   function incentiveBox(x) {
-    const z=x.incentive;
-    return `<section class="hrinc-box hreval-score" aria-label="인사평가 예상점수"><div class="hreval-score-main"><span>인사평가 예상점수</span><strong>${z.score==null?'산정 대기':f1(z.score)+'<small>점</small>'}</strong></div><div class="hreval-score-meta">${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')}등급 · ${z.config.confirmed?'적용 기준':'미확정 초안'}</div>${z.score==null?'<p class="hreval-score-note">평가 기준과 실적 반영 상태를 확인하세요.</p>':''}${z.manual?'<p class="hreval-score-note">별도 업무 평가 대상 · 항목별 점수는 직접 입력합니다.</p>':''}</section>`;
+    const z=x.incentive,display=HRINC.presentation(z);
+    return `<section class="hrinc-box hreval-score" aria-label="인사평가 예상점수"><div class="hreval-score-main"><span>인사평가 예상점수</span><strong class="${display.kind==='score'?'':'hreval-score-status'}">${z.score==null?esc(display.label):f1(z.score)+'<small>점</small>'}</strong></div><div class="hreval-score-meta">${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')}등급 · ${z.config.confirmed?'적용 기준':'미확정 초안'}</div>${display.note?`<p class="hreval-score-note">${esc(display.note)}</p>`:''}${z.manual?'<p class="hreval-score-note">별도 업무 평가 대상 · 항목별 점수는 직접 입력합니다.</p>':''}</section>`;
   }
   function cfgInc() {
     const root=cfgb(); if(CFG._orderRevision!==1){root.innerHTML='<div class="banner warn">v29.14 SQL을 먼저 적용한 뒤 개인목표 수량별 기준을 편집하세요.</div>';return;} if(!('인센티브기준' in CFG)){root.innerHTML='<div class="banner warn">인센티브 SQL 업데이트 후 설정할 수 있습니다.</div>';return;}
@@ -7887,7 +7915,7 @@ async function addCharts(buf, jobs) {
   function addIncSheet(wb,list) {
     const ws=wb.addWorksheet('평가예상점수');
     ws.columns=[{header:'이름',key:'name',width:16},{header:'그룹',key:'part',width:14},{header:'등급',key:'grade',width:10},{header:'인사평가 예상점수',key:'score',width:22},{header:'상태',key:'status',width:34}];
-    list.forEach(x=>{const z=x.incentive;if(!z)return;ws.addRow({name:x.person.name,part:x.person.part,grade:x.person.grade,score:z.score,status:z.score==null?'산정 대기 · 기준 및 실적 확인':'참고 예상점수 · 최종 평가 별도'});});
+    list.forEach(x=>{const z=x.incentive;if(!z)return;ws.addRow({name:x.person.name,part:x.person.part,grade:x.person.grade,score:z.score,status:z.score==null?HRINC.presentation(z).label:'참고 예상점수 · 최종 평가 별도'});});
     ws.getRow(1).font={bold:true};ws.views=[{state:'frozen',ySplit:1}];
   }
   async function downloadMonth(month) {
@@ -8508,7 +8536,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.17';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.19';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
