@@ -3062,6 +3062,8 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 .hrinc-matrix .scroll{overflow:auto}.hrinc-matrix table{min-width:620px;table-layout:fixed;width:100%}.hrinc-matrix th{position:sticky;top:0;z-index:1;background:#eef2f7;font-size:12px}.hrinc-matrix th:first-child{width:150px}.hrinc-matrix th:last-child{width:66px}.hrinc-matrix td{padding:5px 8px}.hrinc-matrix input{width:100%;min-width:0;text-align:right;font-size:13px;font-variant-numeric:tabular-nums}.hrinc-matrix th:nth-child(2){color:#245b9b}.hrinc-matrix th:nth-child(3){color:#167257}.hrinc-matrix th:nth-child(4){color:#7257a4}.hrinc-matrix th:nth-child(5){color:#99651e}
 </style>
 <style id="report-v2914">.report-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) 255px;gap:16px;align-items:start}.report-counts{position:sticky;top:12px}.report-counts table{width:100%;border-collapse:collapse}.report-counts td{padding:7px;border-bottom:1px solid var(--line)}.report-preview{background:white;color:#111;padding:24px;overflow:auto}.report-paper{min-width:850px;font:12px Arial,sans-serif}.report-preview-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}.report-preview table{width:100%;border-collapse:collapse;margin:12px 0}.report-preview th,.report-preview td{border:1px solid #555;padding:5px;text-align:center}.report-preview th{background:#e2efda}.report-preview td:first-child{font-weight:bold}.report-preview tr.report-gap td{border:0;height:10px}.report-retired{color:#a33}.report-counts p{font-size:12px;overflow-wrap:anywhere}@media(max-width:1000px){.report-editor-layout{grid-template-columns:1fr}.report-counts{position:static}}@media print{.report-preview{padding:0}.report-paper{min-width:0}}</style>
+<style id="evaluation-score-v2915">.hreval-score{padding:20px 24px;text-align:center}.hreval-score-main{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}.hreval-score-main>span{font-size:16px;font-weight:800}.hreval-score-main>strong{font-size:36px;line-height:1.2;color:#2461cf;font-variant-numeric:tabular-nums}.hreval-score-main small{font-size:18px;margin-left:5px}.hreval-score-meta{font-size:12px;color:var(--sub);margin-top:10px}.hreval-score-note{font-size:12px;color:var(--sub);margin:8px 0 0}</style>
+<style id="evaluation-list-v2915">.hrw table.eval-person-table{table-layout:fixed}.hrw table.eval-person-table th,.hrw table.eval-person-table td{padding-left:4px;padding-right:4px}.hrw table.eval-person-table th:first-child,.hrw table.eval-person-table td:first-child{text-align:left;padding-left:6px}.hrw table.eval-person-table td.nm{overflow:hidden;text-overflow:ellipsis}.hrw table.eval-person-table td.nm .badge{margin-left:3px}.hrw table.eval-person-table td:nth-child(4){font-variant-numeric:tabular-nums;white-space:nowrap}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -6265,6 +6267,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
   const $ = s => document.querySelector(s);
   const esc = v => String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const f1 = (v, d = 1) => { const n = num(v); return n === null ? '-' : (Math.round(n * 10 ** d) / 10 ** d).toString(); };
+  const fixedAvg = v => { const n=num(v); return n===null?'-':n.toFixed(2); };
   const pct = v => { const n = num(v); return n === null ? '-' : (n * 100).toFixed(1) + '%'; };
   const dash = v => (v === null || v === undefined || v === '') ? '-' : esc(v);
   const ymLab = m => m ? m.slice(0, 4) + '년 ' + (+m.slice(5)) + '월' : '';
@@ -6548,7 +6551,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       return `<tr class="${x.person.name === ST.sel ? 'on' : ''}" data-n="${esc(x.person.name)}">
         <td class="nm">${esc(x.person.name)}${x.person.role === '파트장' ? ' <span class="badge lead">파트장</span>' : ''}</td>
         <td class="c">${esc(x.person.grade || '-')}</td><td class="c sc">${t !== null ? esc(t) : '-'}</td>
-        <td class="c">${dt.일평균 === null ? '-' : f1(dt.일평균)}</td><td class="c ${low ? 'low' : ''}">${dt.달성률 === null ? '-' : Math.round(dt.달성률 * 100) + '%'}</td>
+        <td class="c">${dt.일평균 === null ? '-' : fixedAvg(dt.일평균)}</td><td class="c ${low ? 'low' : ''}">${dt.달성률 === null ? '-' : Math.round(dt.달성률 * 100) + '%'}</td>
         <td class="c">${stBadge(x.rec ? x.rec['상태'] : '')}</td></tr>`;
     }).join('');
     const sc = d.list.map(recTotal).filter(v => v !== null).map(Number), av = d.list.map(x => x.data.일평균).filter(v => v !== null);
@@ -6556,9 +6559,9 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     const sm = getSortMode();
     $('#plist').innerHTML = `<div class="plh">${ST.partSelHtml}<span class="muted">${d.list.length}명 · 완료 ${done} · 작성중 ${draft}</span><span style="flex:1"></span>
         <span class="sortsw"><button class="sm ${sm === 'name' ? 'on' : ''}" data-sort="name">가나다</button><button class="sm ${sm === 'join' ? 'on' : ''}" data-sort="join">입사순</button></span></div>
-      ${EF.n() ? `<div class="pfrow">${EF.bar()}</div>` : ''}<table class="sum"><thead><tr><th>이름</th>${EF.th('grade')}<th>점수</th><th>일평균</th><th>달성</th>${EF.th('st')}</tr></thead>
+      ${EF.n() ? `<div class="pfrow">${EF.bar()}</div>` : ''}<table class="sum eval-person-table"><colgroup><col style="width:28%"><col style="width:10%"><col style="width:11%"><col style="width:18%"><col style="width:14%"><col style="width:19%"></colgroup><thead><tr><th>이름</th>${EF.th('grade')}<th>점수</th><th>일평균</th><th>달성</th>${EF.th('st')}</tr></thead>
       <tbody>${rows || `<tr><td colspan="6" class="muted">${EF.n() ? '고른 조건에 맞는 인원이 없습니다.' : '인원이 없습니다.'}</td></tr>`}</tbody>
-      <tfoot><tr><td>파트 평균</td><td></td><td class="c">${sc.length ? f1(avg(sc)) : '-'}</td><td class="c">${av.length ? f1(avg(av)) : '-'}</td><td></td><td class="c">${done}/${d.list.length}</td></tr></tfoot></table>`;
+      <tfoot><tr><td>파트 평균</td><td></td><td class="c">${sc.length ? f1(avg(sc)) : '-'}</td><td class="c">${av.length ? fixedAvg(avg(av)) : '-'}</td><td></td><td class="c">${done}/${d.list.length}</td></tr></tfoot></table>`;
     EF.bind();
     $('#plist').querySelectorAll('tbody tr[data-n]').forEach(el => (el.onclick = () => selectPerson(el.dataset.n)));
     $('#plist').querySelectorAll('[data-sort]').forEach(b => (b.onclick = () => { setSortMode(b.dataset.sort); d.list.sort((p, q) => cmpPeople(p, q)); renderPList(); }));
@@ -6603,7 +6606,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       <div class="gt">월간 총평 <span class="muted" style="font-weight:500">엑셀 한 칸 = 한 줄 (최대 ${MAXC}자)</span></div>
       <table class="ctb"><tr><th>관 리 자</th><td class="v"><select id="fMgr" ${locked ? 'disabled' : ''}><option value=""></option>${mgrs.map(m => `<option ${m === mgrVal ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></td><th rowspan="2">업무평가</th><td>${ln('fW1', '업무평가1', '여기에 입력')}</td></tr>
         <tr><th>평가 목표</th><td class="v">${dt.개인목표 === null ? '-' : f1(dt.개인목표) + '대'}</td><td>${ln('fW2', '업무평가2')}</td></tr>
-        <tr><th>결&nbsp;&nbsp;&nbsp;&nbsp;과</th><td class="v">${dt.일평균 === null ? '-' : f1(dt.일평균, 2) + '대'}</td><th>건강관리</th><td>${ln('fH', '건강관리')}</td></tr>
+        <tr><th>결&nbsp;&nbsp;&nbsp;&nbsp;과</th><td class="v">${dt.일평균 === null ? '-' : fixedAvg(dt.일평균) + '대'}</td><th>건강관리</th><td>${ln('fH', '건강관리')}</td></tr>
         <tr><th>달 성 률</th><td class="v">${pct(dt.달성률)}</td><th>특이사항</th><td>${ln('fS', '특이사항')}</td></tr></table>
       <div class="svbar"><span id="saveState" class="savest"></span><span class="muted">30초 후 자동 저장</span><span style="flex:1"></span>
         <button class="primary big" id="saveDone" ${locked ? 'disabled' : ''}>작성 완료</button></div></section>`;
@@ -6714,7 +6717,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     $('#side').innerHTML = `${x.incentive.manual ? '<div class="hrinc-manual">별도 업무 평가 대상입니다. 점수를 개별 입력하세요.</div>' : d.hasData ? '' : '<div class="banner warn" style="margin-bottom:8px">업무데이터 없음 (이름이 다르면 기준 · 명단 → 원본이름 확인)</div>'}
       ${x.productionRecheck?`<div class="banner warn" style="margin-bottom:10px">제조 환산 수정 후 실적 재반영이 필요합니다. 현재 웹 계산은 <b>${f1(x.productionRecheck.average,2)}</b> · 제조 <b>${x.productionRecheck.manufacturing}대</b>입니다. 아래는 인사평가에 저장된 기존 실적입니다. 관리자 [데이터 → 업무데이터로 지금 반영]에서 검토 후 반영하세요. 인사평가 마감 상태라면 마감 정책을 먼저 확인하세요. 저장된 평가점수는 자동 변경하지 않습니다.</div>`:''}
       <div class="dstrip"><div class="dbox p"><div class="h">실적 <span>${ST.data.rawSrc && ST.data.rawSrc.src === 'web' ? '업무데이터 자동' : '업무통계 엑셀'}</span></div><div class="g">${g([
-        ['총수량', d.총수량 === null ? '-' : f1(d.총수량)], ['일평균', d.일평균 === null ? '-' : f1(d.일평균, 2)], ['달성률', pct(d.달성률)],
+        ['총수량', d.총수량 === null ? '-' : f1(d.총수량)], ['일평균', d.일평균 === null ? '-' : fixedAvg(d.일평균)], ['달성률', pct(d.달성률)],
         ['총량 순위', d.총수량순위 ? d.총수량순위 + '위' : '-'], ['평균 순위', d.평균순위 ? d.평균순위 + '위' : '-'], ['파트 내', d.파트순위 ? d.파트순위 + ' / ' + d.파트인원 : '-'],
         ['근무일', dash(d.근무일수)], ['평가기준목표', d.개인목표 === null ? '-' : f1(d.개인목표)], ['전월평균', d.전월평균 === null ? '-' : f1(d.전월평균, 2)]])}</div></div>
       <div class="dbox a"><div class="h">근태 <span>매니저 기록</span></div><div class="g g4">${g([['지각', dash(d.지각)], ['조퇴', dash(d.조퇴)], ['결근', dash(d.결근)], ['당일연차', dash(d.당일연차)]])}</div>
@@ -6732,7 +6735,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     try { list = (await api('hrHistory', { name })).list; } catch (e) { toast(e.message, 1); return; }
     const html = list.slice().reverse().map(r => {
       const its = parseItems(r);
-      return `<details><summary><b>${esc(r['평가월'])}</b><span>합계 <b>${dash(r['합계'])}</b>점</span><span>일평균 ${r['일평균'] === '' || r['일평균'] === undefined ? '-' : f1(r['일평균'], 2) + '대'}</span>
+      return `<details><summary><b>${esc(r['평가월'])}</b><span>합계 <b>${dash(r['합계'])}</b>점</span><span>일평균 ${r['일평균'] === '' || r['일평균'] === undefined ? '-' : fixedAvg(r['일평균']) + '대'}</span>
         <span class="tag">${r['기준구분'] === '구' ? '구 기준' : '신 기준'}</span>${stBadge(r['상태'])}<span class="muted">${esc(r['작성자'])}</span></summary>
         <div class="body"><table><tr>${its.map(i => `<th>${esc(i.name)}<div class="muted">${i.sign < 0 ? '감점' : esc(i.max) + '점'}</div></th>`).join('')}<th>합계</th></tr>
           <tr>${its.map(i => `<td class="c">${dash(r['점수' + i.no])}</td>`).join('')}<td class="c"><b>${dash(r['합계'])}</b></td></tr></table>
@@ -6799,10 +6802,10 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       <table style="margin-top:10px"><colgroup><col style="width:12%"><col style="width:15%"><col style="width:12%"><col></colgroup><tr><td class="hd" colspan="4">월 간 총 평</td></tr>
         <tr><td class="gr">관 리 자</td><td>${esc(fl.관리자)}</td><td class="gr" rowspan="2">업무평가</td><td class="left">${esc(fl.업무평가1)}</td></tr>
         <tr><td class="gr">평가 목표</td><td>${d.개인목표 === null ? '' : f1(d.개인목표)}</td><td class="left">${esc(fl.업무평가2)}</td></tr>
-        <tr><td class="gr">결 과</td><td>${d.일평균 === null ? '' : f1(d.일평균)}</td><td class="gr">건강관리</td><td class="left">${esc(fl.건강관리)}</td></tr>
+        <tr><td class="gr">결 과</td><td>${d.일평균 === null ? '' : fixedAvg(d.일평균)}</td><td class="gr">건강관리</td><td class="left">${esc(fl.건강관리)}</td></tr>
         <tr><td class="gr">달 성 률</td><td>${pct(d.달성률)}</td><td class="gr">특이사항</td><td class="left">${esc(fl.특이사항)}</td></tr></table>
     </div><div>${svg(c1, '월별 평가점수', '#1F6FB2')}${svg(c2, '월별 평균수량', '#D1662B')}
-      <table><tr><td class="gr">총수량</td>${td(d.총수량 === null ? null : f1(d.총수량, 2))}<td class="gr">순위</td>${td(d.총수량순위)}<td class="gr">일평균</td>${td(d.일평균 === null ? null : f1(d.일평균, 2))}<td class="gr">평가기준목표</td>${td(d.개인목표)}<td class="gr">달성율</td><td>${pct(d.달성률)}</td></tr>
+      <table><tr><td class="gr">총수량</td>${td(d.총수량 === null ? null : f1(d.총수량, 2))}<td class="gr">순위</td>${td(d.총수량순위)}<td class="gr">일평균</td>${td(d.일평균 === null ? null : fixedAvg(d.일평균))}<td class="gr">평가기준목표</td>${td(d.개인목표)}<td class="gr">달성율</td><td>${pct(d.달성률)}</td></tr>
         <tr><td class="gr">근무일수</td>${td(d.근무일수)}<td class="gr">당일연차</td>${td(d.당일연차)}<td class="gr">지각</td>${td(d.지각)}<td class="gr">조퇴</td>${td(d.조퇴)}<td class="gr">결근</td>${td(d.결근)}</tr>
         <tr><td class="gr">품질지적</td>${td(d.품질지적)}<td class="gr">지시불이행</td>${td(d.지시불이행)}<td class="gr">미/오발송</td>${td(d.미오발송)}<td class="gr">오조립</td>${td(d.오조립)}<td class="gr">파손</td>${td(d.파손)}</tr></table>
     </div></div>`).querySelector('#pvPrint').onclick = () => window.print();
@@ -6850,7 +6853,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       $('#ovTbl').innerHTML = `<thead><tr>${OF.th('part')}<th>이름</th>${OF.th('role')}${OF.th('grade', 'c')}${OF.th('st', 'c')}<th class="r">합계</th>${OF.th('diff', 'c')}<th class="r">일평균</th><th class="r">달성률</th>${OF.th('by')}<th>저장 시각</th><th></th></tr></thead><tbody>` +
         rows.map(x => { const dc = diffCount(x); return `<tr class="gc" style="--gc:${A.gcol(x.person.part)}"><td>${A.gdot(x.person.part)}</td><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td class="c">${esc(x.person.grade || '-')}</td>
           <td class="c">${stBadge(st(x))}</td><td class="r"><b>${x.rec ? dash(x.rec['합계']) : '-'}</b></td><td class="c ${dc ? 'dif' : ''}">${dc ? dc + '칸' : ''}</td>
-          <td class="r">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td class="r">${pct(x.data.달성률)}</td><td>${x.rec ? esc(x.rec['작성자']) : ''}</td><td class="muted">${x.rec ? esc(String(x.rec['저장시각'] || '').slice(5, 16)) : ''}</td>
+          <td class="r">${x.data.일평균 === null ? '-' : fixedAvg(x.data.일평균)}</td><td class="r">${pct(x.data.달성률)}</td><td>${x.rec ? esc(x.rec['작성자']) : ''}</td><td class="muted">${x.rec ? esc(String(x.rec['저장시각'] || '').slice(5, 16)) : ''}</td>
           <td class="r"><button class="sm" data-open="${esc(x.person.name)}" data-part="${esc(x.person.part)}">열기</button></td></tr>`; }).join('') + '</tbody>';
       OF.bind();
       $('#ovTbl').querySelectorAll('[data-open]').forEach(b => (b.onclick = () => { ST.part = b.dataset.part; ST.sel = b.dataset.open; ST.tab = 'eval'; document.querySelectorAll('#hrTabs [data-hrt]').forEach(t => t.classList.toggle('on', t.dataset.hrt === 'eval')); viewEval(true); attachHrFilter(); }));
@@ -6875,7 +6878,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       ${MF.filter(d.list).map(x => { const r = x.rec || {}, its = usedItems(d.items, x.person);
         return `<tr><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td class="c">${esc(x.person.grade || '-')}</td><td class="c">${stBadge(r['상태'])}</td>
           ${all.map(it => `<td class="c">${its.find(q => q.no === it.no) ? dash(r['점수' + it.no]) : ''}</td>`).join('')}
-          <td class="c"><b>${dash(r['합계'])}</b></td><td class="r">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td class="r">${pct(x.data.달성률)}</td></tr>`; }).join('')}
+          <td class="c"><b>${dash(r['합계'])}</b></td><td class="r">${x.data.일평균 === null ? '-' : fixedAvg(x.data.일평균)}</td><td class="r">${pct(x.data.달성률)}</td></tr>`; }).join('')}
       </tbody></table></div></section>`;
     MF.bind();
     if ($('#mpPart')) $('#mpPart').onchange = e => { ST.part = e.target.value; viewMyPart(); attachHrFilter(); };
@@ -7241,13 +7244,8 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   }
   // v29.11: display estimates without writing evaluation scores.
   function incentiveBox(x) {
-    const z=x.incentive, c=z.config, money=v=>v==null?'미설정':Math.round(v).toLocaleString('ko-KR')+'원';
-    const rate=z.ratio==null?'-':z.ratio.toFixed(1)+'%'+(z.ratio>=100?' (+'+(z.ratio-100).toFixed(1)+'%)':'');
-    return `<section class="hrinc-box"><div class="hrinc-title"><b>인센티브 예상</b><span>${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')}등급 · ${c.confirmed?'적용 기준':'미확정 초안'}</span></div>
-      <div class="hrinc-goals"><span>팀 공통목표 <b>${z.teamGoal==null?'-':f1(z.teamGoal)+'대'}</b></span><span>평가 기준목표 <b>${x.data.개인목표==null?'-':f1(x.data.개인목표)+'대'}</b></span><span>개인목표 <b>${c.showPersonal||c.personalOn?(z.personal>0?f1(z.personal)+'대':'미설정'):'적용 대기'}</b></span><span>개인 달성률 <b>${c.showPersonal||c.personalOn?rate:'적용 대기'}</b></span></div>
-      ${z.manual?'<div class="hrinc-status">별도 업무 평가 · 점수 직접 입력. 인센티브는 귀속월 기준에 따라 계산합니다.</div>':''}${`<div class="hrinc-calc">평가평균 <b>${z.avg==null?'-':f1(z.avg,2)}대</b> − 사고·근태 차감 <b>${f1(z.cut,2)}대</b> = 인센티브 기준 <b>${z.net==null?'-':f1(z.net,2)}대</b></div>
-      <div class="hrinc-values"><div><small>팀목표 ${c.teamOn?'선택':'미선택'}</small><b>${c.teamOn?money(z.team):'미적용'}</b></div><div><small>개인목표 ${c.personalOn?'선택':'미선택'}</small><b>${c.personalOn?money(z.person):'미적용'}</b></div><div><small>합산 예상액</small><b>${z.total==null?'산정 대기':money(z.total)}</b></div><div class="accent"><small>인사평가 예상점수</small><b>${z.score==null?'미표시':f1(z.score)+'점'}</b></div></div>
-      ${z.reason?`<div class="hrinc-status">${esc(z.reason)}</div>`:''}<details><summary>계산 근거</summary><div class="hrinc-explain">${z.cuts.length?z.cuts.map(r=>esc(r.item)+' '+r.count+'건 × '+r.qty+'대').join(' · '):'차감 내역 없음'}<br>개인 달성률은 ${c.personalBasis==='gross'?'차감 전 평가평균':'차감 후 기준대수'} ÷ 개인목표 × 100입니다.<br>예상점수는 ${c.scoreSource==='total'?'합산 예상액':'팀목표 예상액'}을 금액→점수표로 환산합니다. 금액표 구간은 하한 이상 중 가장 높은 구간 하나만 적용합니다. 기준 미설정은 0원과 구분합니다.<br>인사평가의 점수 감점은 별도 기준입니다. 예상점수에서 사고·근태를 다시 차감하지 않습니다. 실제 지급 확정액과 최종 평가점수는 별도입니다.</div></details>`}</section>`;
+    const z=x.incentive;
+    return `<section class="hrinc-box hreval-score" aria-label="인사평가 예상점수"><div class="hreval-score-main"><span>인사평가 예상점수</span><strong>${z.score==null?'산정 대기':f1(z.score)+'<small>점</small>'}</strong></div><div class="hreval-score-meta">${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')}등급 · ${z.config.confirmed?'적용 기준':'미확정 초안'}</div>${z.score==null?'<p class="hreval-score-note">평가 기준과 실적 반영 상태를 확인하세요.</p>':''}${z.manual?'<p class="hreval-score-note">별도 업무 평가 대상 · 항목별 점수는 직접 입력합니다.</p>':''}</section>`;
   }
   function cfgInc() {
     const root=cfgb(); if(CFG._orderRevision!==1){root.innerHTML='<div class="banner warn">v29.14 SQL을 먼저 적용한 뒤 개인목표 수량별 기준을 편집하세요.</div>';return;} if(!('인센티브기준' in CFG)){root.innerHTML='<div class="banner warn">인센티브 SQL 업데이트 후 설정할 수 있습니다.</div>';return;}
@@ -7834,9 +7832,9 @@ async function addCharts(buf, jobs) {
 
 
   function addIncSheet(wb,list) {
-    const ws=wb.addWorksheet('인센티브예상');
-    ws.columns=[{header:'이름',key:'name',width:16},{header:'그룹',key:'part',width:14},{header:'등급',key:'grade',width:10},...['팀공통목표','평가기준목표','개인목표','개인달성률(%)','차감대수','차감후대수','팀금액','개인금액','합계예상액','예상점수','상태'].map(k=>({header:k,key:k,width:k==='상태'?34:18}))];
-    list.forEach(x=>{const z=x.incentive;if(!z)return;const show=z.config.showPersonal||z.config.personalOn;ws.addRow({name:x.person.name,part:x.person.part,grade:x.person.grade,'팀공통목표':z.teamGoal,'평가기준목표':x.data.개인목표,'개인목표':show?z.personal:null,'개인달성률(%)':show&&z.ratio!=null?Math.round(z.ratio*100)/100:null,'차감대수':z.cut,'차감후대수':z.net,'팀금액':z.team,'개인금액':z.person,'합계예상액':z.total,'예상점수':z.score,'상태':z.reason||'참고 예상 · 지급 미확정'});});
+    const ws=wb.addWorksheet('평가예상점수');
+    ws.columns=[{header:'이름',key:'name',width:16},{header:'그룹',key:'part',width:14},{header:'등급',key:'grade',width:10},{header:'인사평가 예상점수',key:'score',width:22},{header:'상태',key:'status',width:34}];
+    list.forEach(x=>{const z=x.incentive;if(!z)return;ws.addRow({name:x.person.name,part:x.person.part,grade:x.person.grade,score:z.score,status:z.score==null?'산정 대기 · 기준 및 실적 확인':'참고 예상점수 · 최종 평가 별도'});});
     ws.getRow(1).font={bold:true};ws.views=[{state:'frozen',ySplit:1}];
   }
   async function downloadMonth(month) {
@@ -8457,7 +8455,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.14';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.15';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
