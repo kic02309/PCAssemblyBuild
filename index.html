@@ -3208,6 +3208,31 @@ html[data-theme=dark] #hrb .order-block h3{background:#293d31;color:#daebde}
 @media(max-width:1450px){#hrb .order-board-layout{grid-template-columns:1fr}#hrb .order-board-layout .report-counts{position:static}#hrb .order-board-layout .report-counts table{max-width:440px}}
 @media(max-width:950px){#hrb .order-board{grid-template-columns:1fr}}
 </style>
+<style id="daily-conversion-v2924">
+/* Same 70% tint on each category; group header colors remain unchanged. */
+.ddgroups{--cv-asm:#719acb;--cv-ship:#cb966e;--cv-mfg:#a389d9}
+.ddgc-v5 .ddpr.ddpr-v5.ddpr-work{grid-template-columns:minmax(0,1fr) 118px!important;gap:5px 6px}
+.ddgc-v5 .ddpr-work>.ddrowhead{flex-wrap:wrap;row-gap:2px}
+.ddgc-v5 .ddpr-work .ddachieved{font-size:10px;white-space:nowrap;line-height:16px;padding:1px 4px;border-radius:4px;background:var(--line2,#eef2f8);color:var(--ink);font-variant-numeric:tabular-nums}
+.ddgc-v5 .ddpr-work .ddachieved b{font-weight:700}
+.ddgc-v5 .ddpr-work .ddconv{position:relative;height:16px;border-radius:8px;overflow:hidden;background:var(--line2,#eef1f5);min-width:0}
+.ddconv .ddconv-fill{display:flex;gap:0;height:100%;overflow:hidden;border-radius:8px}
+.ddconv .ddconv-seg{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden;border:0;border-radius:0;container-type:inline-size}
+.ddconv .ddconv-seg small{font:700 9px/1 Arial,sans-serif;white-space:nowrap;color:#13233c;font-variant-numeric:tabular-nums}
+.ddconv .ddconv-asm{background:var(--cv-asm)}.ddconv .ddconv-ship{background:var(--cv-ship)}.ddconv .ddconv-mfg{background:var(--cv-mfg)}
+.ddconv .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(105,121,145,.35) 4px 6px);box-shadow:inset 0 0 0 1px rgba(105,121,145,.2)}
+.ddconv .ddconv-other small{color:var(--ink,#263b5a)}
+.ddconv .ddconv-goal{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#263b5a);opacity:.65;pointer-events:none}
+@container (max-width:30px){.ddconv-seg small{visibility:hidden}}
+.ddgc-v5 .ddpr-work .ddcounts{grid-template-columns:repeat(3,minmax(0,1fr)) 34px;gap:3px}
+.ddgc-v5 .ddpr-work .ddcounts>span:not(.hm){border-radius:4px;padding:4px 1px;gap:2px;background:var(--cv-asm);color:#13233c}
+.ddgc-v5 .ddpr-work .ddcounts>span.s{background:var(--cv-ship)}.ddgc-v5 .ddpr-work .ddcounts>span.m{background:var(--cv-mfg)}
+.ddgc-v5 .ddpr-work .ddcounts>span:not(.hm) b{font-size:12px;color:#13233c}
+.ddgc-v5 .ddpr-work .ddcounts>span:not(.hm) small{font-size:9px;color:#13233c;font-weight:650}
+.ddgc-v5 .ddpr-work .ddcounts:where(:not(:has(.hm))){grid-template-columns:repeat(3,minmax(0,1fr))}
+.ddgc-v5 .ddpr-work .ddcounts .hm{background:transparent;padding:0;color:var(--ink)}
+html[data-theme=dark] .ddconv-other{background-color:transparent;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(190,204,225,.45) 4px 6px)}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -8771,7 +8796,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.23';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.24';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10609,6 +10634,8 @@ async function addCharts(buf, jobs) {
     o.v = f6 > 0 ? (base + (p ? p.p : 0)) / f6 : 0;
     o.oth = (o.oth || 0) + (f6 > 0 && p ? p.o / f6 : 0);
     o.q = o.q || 0;
+    if(!s&&p&&f6>0)o.cv={asm:0,ship:0,mfg:0,other:0,production:0};
+    if(o.cv&&f6>0){o.cv.asm+=((p?p.p-p.o:0)-old)/f6;o.cv.other+=(p?p.o:0)/f6;o.cv.production=0;}
     o.lineState = p ? live.status : '재확정 필요';
     o.lineValue = p ? p.p : 0;
     if (!o.off && (!['매니저','팀장'].includes(o.title) || p)) o.kind = 'work';
@@ -10631,6 +10658,7 @@ async function addCharts(buf, jobs) {
         if (y && y._adj) { s = y.sum; o.adj = y._adj; } }
       if (s) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
+        o.cv = !o.adj && p.conversion && p.conversion.v===1 ? {...p.conversion} : null;
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
         { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; }   // v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
@@ -10641,7 +10669,7 @@ async function addCharts(buf, jobs) {
     // 라인 총량 : 출근한 라인 인원(휴무 · 업무지원 · 매니저 제외)에게 똑같이 나눔
     if (!(liveView && r._prod) && r.line && (r.line.conv != null || r.line.qty != null)) {
       const L = P.filter(p => p.grp === '라인' && !p.off && !p.task && !['매니저', '팀장'].includes(p.title));
-      L.forEach(p => { p.kind = 'work'; p.v = L.length ? num(r.line.conv) / L.length : 0; p.oth = 0; p.q = L.length ? Math.round(num(r.line.qty) / L.length * 10) / 10 : 0; p.lineSplit = true; });
+      L.forEach(p => { p.kind = 'work'; p.v = L.length ? num(r.line.conv) / L.length : 0; p.oth = 0; p.q = L.length ? Math.round(num(r.line.qty) / L.length * 10) / 10 : 0; p.lineSplit = true;p.cv=null; });
     }
     const body = P.filter(p => p.grp !== '팀장');
     const work = body.filter(p => p.kind === 'work'), tw = work.filter(p => p.target);
@@ -10665,6 +10693,17 @@ async function addCharts(buf, jobs) {
     const mx = 20, w = Math.min(100, v / mx * 100), wo = Math.min(w, oth / mx * 100), c = col || (t && lvOf(v, t, S._gym) === 'ok' ? '#1f5fbf' : '#e39a3b');   // v28.51 : 달성 기준
     return `<div class="ddtr"><i style="width:${Math.max(0,w-wo)}%;background:color-mix(in srgb,${c} 70%,var(--panel))"></i>${oth > 0.05 ? `<i class="o" style="left:${w - wo}%;width:${wo}%;background:color-mix(in srgb,${c} 20%,var(--panel))"></i>` : ''}${t ? `<b style="left:calc(${Math.min(100, t / mx * 100)}% - 1px)"></b>` : ''}</div>`;
   };
+
+  function ddConversionBar(p){
+    const cv=p.cv,keys=['asm','ship','mfg','other'],names=['조립환산','출고환산','제조환산','기타시간 환산'];
+    const vals=keys.map(k=>Number(cv&&cv[k]));
+    const ready=cv&&vals.every(n=>Number.isFinite(n)&&n>=0)&&Math.abs(vals.reduce((a,b)=>a+b,0)-p.v)<1e-6&&!(cv.production>1e-8);
+    if(!ready)return ddBar(p.v,p.target,p.oth,'#7999c9').replace('<div class="ddtr">','<div class="ddtr ddconv-unavailable" title="항목별 구성 자료 없음 · 기존 합계 표시">');
+    const scale=Math.max(20,p.v,p.target||0),filled=Math.max(0,Math.min(100,p.v/scale*100));
+    const detail=vals.map((v,i)=>names[i]+' '+v.toFixed(2)).join(' · ');
+    return `<div class="ddconv" role="img" tabindex="0" aria-label="${esc(detail)} · 합계 ${Number(p.v).toFixed(2)}" title="${esc(detail)}"><div class="ddconv-fill" style="width:${filled}%">${vals.map((v,i)=>v>0?`<span class="ddconv-seg ddconv-${keys[i]}" style="flex:${v}" title="${names[i]} ${v.toFixed(2)}"><small>${v.toFixed(2)}</small></span>`:'').join('')}</div>${p.target>0?`<i class="ddconv-goal" style="left:${Math.min(100,p.target/scale*100)}%" aria-hidden="true"></i>`:''}</div>`;
+  }
+
   function ddFeedbackSection(r, D) {
     const row=(n,legacy=false)=>{
       const p=D.P.find(p=>p.uid===n.userId||normName(p.name)===normName(n.name));
@@ -10865,7 +10904,7 @@ async function addCharts(buf, jobs) {
           : `<div class="ddnone ddcombo-noresult"><b>실적 없음</b><div>${nm}</div></div>`; })()}
       <div id="ddchk" class="ddcombo-shared-v7">${staff ? '<span class="muted">그룹별 체크사항은 관리자·매니저에게 표시됩니다</span>' : '<span class="muted">공통 체크사항 확인 중…</span>'}</div>
     </div>`;
-    h += `<div class="card ddleg"><b>그룹별 인원</b><span class="ddlg"><span style="--c:color-mix(in srgb,#2563eb 70%,var(--panel))">기본 실적 (그룹색 70%)</span><span class="other" style="--c:color-mix(in srgb,#2563eb 20%,var(--panel))">기타시간 환산 (20%)</span><span style="--c:#1d2430">목표</span><span class="muted" style="font-size:inherit">수량 = 조립 · <b class="shipv">출고</b> · <b class="mfgv">제조</b> · 카드에 개인 목표/달성률 표시</span></span><span style="flex:1"></span>${staff ? '' : '<span class="muted" style="font-size:12px">이름 = 사람 카드 (월 통계 · 연차) · [일일] = 그날 입력 화면</span>'}</div>`;
+    h += `<div class="card ddleg"><b>그룹별 인원</b><span style="flex:1"></span>${staff?'':'<span class="muted" style="font-size:12px">이름 = 사람 카드 · [일일] = 그날 입력 화면</span>'}</div>`;
     h += '<div class="ddgroups">' + D.G.map(x => {
       // 평균/목표는 기존 일일모델의 값 재사용. 개인 목표 미설정 또는 근무 실적 없음이면 달성률을 임의로 0% 처리하지 않음.
       const groupRate = x.avg != null && x.tg > 0 ? pctR(x.avg, x.tg) : null;
@@ -10877,11 +10916,10 @@ async function addCharts(buf, jobs) {
         const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${canNote(p) && p.uid ? `<button class="oth1" data-oth="1" title="기타시간 · 주문 메모 보기 · 고치기">⏱</button>` : ''}</div>`;
         if (p.kind === 'work') {
           const rate = p.target > 0 ? pctR(p.v, p.target) : null, pl = lvOf(p.v, p.target, D.GY), at = p.adj ? adjTag(p.adj) : '';
-          const label = f1d(p.v) + (p.target > 0 ? ' / ' + f1d(p.target) : '');
-          const bar = ddBar(p.v, p.target, p.oth, gcol(p.grp)).replace('</div>', `<span class="ddpv">${label}</span></div>`);
-          return `<div class="ddpr ddpr-v5 ddpr-work"><div class="ddrowhead">${nm}${p.lineState ? `<span class="ddline-state">${esc(p.lineState)}</span>` : ''}<span class="ddtarget">${tMode() === 't' ? '팀 ' : ''}목표 <b>${p.target > 0 ? f1d(p.target) : '-'}</b></span>${at}<span class="ddrate ${pl ? LVC[pl] + 't' : ''}">${rate == null ? '-' : rate + '%'}</span></div>
+          const bar=ddConversionBar(p);
+          return `<div class="ddpr ddpr-v5 ddpr-work"><div class="ddrowhead">${nm}${p.lineState ? `<span class="ddline-state">${esc(p.lineState)}</span>` : ''}<span class="ddtarget">${tMode() === 't' ? '팀 ' : ''}목표 <b>${p.target > 0 ? f1d(p.target) : '-'}</b></span>${at}<span class="ddrate ${pl ? LVC[pl] + 't' : ''}">${rate == null ? '-' : rate + '%'}</span><span class="ddachieved">환산 <b>${Number(p.v).toFixed(2)}</b></span></div>
             <div class="ddperf" title="환산 ${f1d(p.v)}${p.target ? (tMode() === 't' ? ' · 팀 목표 ' : ' · 개인 목표 ') + f1d(p.target) : ' · 목표 미설정'}${p.oth > 0.05 ? ' · 기타시간 환산 ' + f1d(p.oth) : ''}">${bar}</div>
-            <div class="ddcounts" title="조립 ${p.q}대${p.ban ? ' · 반조 ' + p.ban : ''} · 출고 ${p.ship || 0}대 · 제조 ${p.mq || 0}대"><span><b>${p.q ?? 0}</b><small>수량</small></span><span class="s"><b>${p.ship || 0}</b><small>출고</small></span><span class="m"><b>${p.mq || 0}</b><small>제조</small></span>${p.uid ? `<span class="hm" data-hm="${esc(p.uid)}" data-hmc="1" title="이번 달 달성일 · 미달일"><b>-</b><small>달성·미달</small></span>` : ''}</div></div>`;
+            <div class="ddcounts" title="조립 ${p.q}대${p.ban ? ' · 반조 ' + p.ban : ''} · 출고 ${p.ship || 0}대 · 제조 ${p.mq || 0}대"><span class="ddqty-asm"><b>${p.q ?? 0}</b><small>조립</small></span><span class="s"><b>${p.ship || 0}</b><small>출고</small></span><span class="m"><b>${p.mq || 0}</b><small>제조</small></span>${p.uid ? `<span class="hm" data-hm="${esc(p.uid)}" data-hmc="1" title="이번 달 달성일 · 미달일"><b>-</b><small>달성·미달</small></span>` : ''}</div></div>`;
         }
         const [t, c] = p.kind === 'off' ? [p.off, DD_OFFCLS[p.off] || 'lv'] : p.kind === 'sup' ? [sh(p.task), 'up'] : p.kind === 'mgr' ? [p.title, 'ch'] : p.kind === 'zero' ? ['실적 없음', 'ch'] : ['미입력', 'no'];
         return `<div class="ddpr ddpr-v5 ddpr-status"><div class="ddrowhead">${nm}${hmSpan(p)}</div><span class="ddst ${c}">${esc(t)}</span></div>`;
