@@ -2095,6 +2095,13 @@ table.m2t td.m2who,table.m2t th.m2who{min-width:320px;max-width:520px;text-align
 .people-target-reference{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;background:var(--bg,#f6f8fb);border:1px solid var(--line,#e3e8ee);border-radius:8px;font-size:12px}
 .people-target-reference small{color:var(--muted,#64748b)}
 .people-goal{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* v29.20 compact evaluation; no hidden inputs or fixed page clipping. */
+.duty-add-form{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.duty-add-form label{display:flex;gap:6px;align-items:center;flex:1;min-width:140px}.duty-add-form input{min-width:80px;width:100%}.duty-add-form button{flex:none}.duty-add-form [role=status]{flex-basis:100%;font-size:12px;color:var(--muted)}
+.hrw .grid-eval{grid-template-columns:340px minmax(0,1fr);gap:12px}.hrw .ed{padding:11px 13px}.hrw .edh{gap:7px;margin-bottom:6px;flex-wrap:wrap}.hrw .edh h2{font-size:18px}.hrw .gt{margin:7px 0 4px;font-size:12px}.hrw table.score td{padding:4px 7px;font-size:12px}.hrw table.score th{padding:5px 7px;font-size:11px}.hrw table.score input{padding:4px;font-size:12px}.hrw table.score td.ref b{font-size:13px}.hrw table.score td.ref span{font-size:11px}.hrw table.score td.ref{white-space:normal}.hrw table.ctb{font-size:12px}.hrw table.ctb th{padding:4px;width:75px}.hrw table.ctb td{padding:3px 5px}.hrw table.ctb td.v{width:115px}.hrw table.ctb .ln input{min-width:0;padding:4px 6px;font-size:12px}.hrw .total{padding:5px 0;margin:3px 0}.hrw .svbar{padding:6px 0 1px;margin-top:6px}.hrw .svbar .big{padding:7px 14px;font-size:12px}.hrw table.sum td{padding:6px 4px;font-size:12px}.hrw table.sum th{font-size:11px}.hrw .eval-summary{display:grid;grid-template-columns:minmax(0,2.6fr) minmax(210px,1fr);gap:9px}.hrw .eval-facts,.hrw .eval-part{border:1px solid var(--line,#dde3ea);border-radius:7px;padding:7px 9px}.hrw .eval-fact-row{display:flex;gap:9px;align-items:center;min-height:32px;border-bottom:1px solid var(--line,#e5e9ef)}.hrw .eval-fact-row>strong{font-size:12px;min-width:25px}.hrw .eval-fact-row>div{display:flex;gap:10px;flex:1;flex-wrap:wrap}.hrw .eval-fact-row span{display:flex;gap:4px;align-items:baseline}.hrw .eval-fact-row small,.hrw .eval-part small{font-size:10px;color:var(--muted,#6b7280)}.hrw .eval-fact-row b{font-size:12px}.hrw .eval-part>strong{font-size:12px}.hrw .eval-part>small{display:block;margin:4px 0}.hrw .eval-part>div{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.hrw .eval-part span{display:flex;flex-direction:column;gap:3px}.hrw .eval-part b{font-size:13px}.hrw .eval-att-note{font-size:10px;margin-top:4px;color:var(--muted,#6b7280)}.hrw .eval-formula{margin:7px 0;padding:7px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:5px 13px}.hrw .eval-equation{font-size:12px;flex:1}.hrw .eval-equation small{font-size:10px}.hrw .eval-formula .hreval-score-main{display:flex;gap:8px;align-items:center}.hrw .eval-formula .hreval-score-main span{font-size:10px}.hrw .eval-formula .hreval-score-main strong{font-size:14px}.hrw .eval-formula .hreval-score-meta,.hrw .eval-formula .hreval-score-note{font-size:10px;margin:0}.hrw .eval-formula .hreval-score-meta{flex-basis:100%}
+@media(max-width:1300px){.hrw .grid-eval{grid-template-columns:285px minmax(0,1fr)}.hrw .eval-summary{grid-template-columns:1fr}.hrw .eval-part>div{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:1000px){.hrw .grid-eval{grid-template-columns:1fr}.hrw .plist{position:static;max-height:330px}.hrw .eval-fact-row>div{gap:6px}.hrw table.score td.ref{min-width:140px}.hrw .ed{overflow-x:auto}}
+
 </style>
 <style>
 /* Unified compact search — 2026-10-21; visual only, zero effect on existing grid widths. */
@@ -5657,7 +5664,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="lvsl">${list.map(u => { const s = staffById(u.s) || {}, n = cnt[u.s] || 0, ps = pendSw.find(x => x.s === u.s && x.d === w); return `<div class="lvsr" data-s="${u.s}"><span class="gb g-${A.esc(s.grade || '')}">${A.esc(s.grade || '-')}</span>
           <b class="${n >= 3 ? 'c3' : n === 2 ? 'c2' : ''}${isMgr(s.name) ? ' mgrt' : ''}" title="이 묶음 ${n}회 · 올해 누적 ${sc[u.s] || 0}회">${A.esc(s.name || '?')}</b>${fx.includes(u.s) ? '<span class="lst alt" title="연차 → 토요 대체 (고정)">↺ 대체</span>' : ''}<small class="muted">${A.esc(s.grp || '')}</small>${ps ? `<span class="lst mgr" title="${A.esc(swapText(ps))}">바꾸기 요청</span>` : ''}
           ${can ? `<select class="alt" data-w="${w}" data-s="${u.s}" ${fx.includes(u.s) ? 'disabled title="대체휴무 = 원래 연차일 (바꾸려면 달력에서 되돌리기)"' : ''}>${altOpts(w, u.a)}</select><b class="x" data-w="${w}" data-s="${u.s}">✕</b>` : (u.a ? `<span class="muted">→ ${mdw(u.a)}</span>` : '')}</div>`; }).join('') || '<div class="muted" style="padding:10px">비어 있음</div>'}</div>
-        ${can ? `<div class="lvsa"><input list="lvsn" data-add="${w}" placeholder="+ 이름 추가 (매니저·번외 등)"></div>` : ''}</div>`;
+        ${can ? `<div class="lvsa duty-add-form"><label>이름 <input list="lvsn" data-duty-name="${w}" placeholder="이름 입력 또는 선택" autocomplete="off"></label><button type="button" class="primary" data-duty-add="${w}">추가</button><span role="status" data-duty-feedback="${w}"></span></div>` : ''}</div>`;
     };
     const around = []; for (let k = -1; k <= LC.monthSaturdays(L.ym).length; k++) { const base = LC.monthSaturdays(L.ym)[0] || LC.monthFirst(L.ym); around.push(LC.addDays(base, 7 * k)); }
     body().innerHTML = `
@@ -5742,15 +5749,30 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (lv) A.toast('같은 날 연차가 이미 있습니다 (' + md(lv.d1) + ')', true);
       reindex(); await save([sel.dataset.w]);
     }));
-    A.$$('[data-add]').forEach(inp => {
-      const add = async () => {
-        const w = inp.dataset.add, s = d.staff.find(x => x.name === inp.value.trim()); if (!s) return;
-        const ids = (L.ix.duty[w] || []).map(u => u.s);
-        if (ids.includes(s.id)) { A.toast('이미 있습니다', true); inp.value = ''; return; }
-        if (weeks.some(x => x !== w && (L.ix.duty[x] || []).some(u => u.s === s.id))) A.toast(s.name + ' : 이 묶음에 이미 다른 주가 있습니다 (2회)', true);
-        setList(w, ids.concat(s.id), true); await save([w]);
+    A.$$('[data-duty-name]').forEach(inp => {
+      const w=inp.dataset.dutyName, btn=document.querySelector(`[data-duty-add="${w}"]`), feedback=document.querySelector(`[data-duty-feedback="${w}"]`);
+      let busy=false;
+      const say=(msg,bad=false)=>{feedback.textContent=msg;A.toast(msg,bad);};
+      const add=async()=>{
+        if(busy)return;
+        const name=inp.value.trim(), matches=curList().filter(x=>x.name===name);
+        if(!name){say('이름을 입력하거나 목록에서 선택하세요.',true);inp.focus();return;}
+        if(matches.length!==1){say(matches.length?'같은 이름이 여러 명입니다. 명단의 이름을 확인하세요.':'명단에 없는 이름입니다. 목록에서 정확한 이름을 선택하세요.',true);inp.focus();return;}
+        const staff=matches[0];
+        if((L.ix.duty[w]||[]).some(u=>u.s===staff.id)){say('이미 이 날짜에 추가된 인원입니다.',true);return;}
+        busy=true;btn.disabled=true;inp.disabled=true;feedback.textContent='추가 중…';
+        try{
+          if(weeks.some(day=>day!==w&&(L.ix.duty[day]||[]).some(u=>u.s===staff.id)) && !(await A.confirmBox(A.esc(staff.name)+' 님은 이 묶음의 다른 토요일에도 배정되어 있습니다. 추가할까요?','추가')))return;
+          const result=await A.api('lvSetDuty',{addOne:{d:w,s:staff.id}});
+          if(result.revision!==20)throw Error('v29.20 SQL을 먼저 적용한 뒤 다시 추가하세요.');
+          await load(L.year,true);
+          if(!D().duty.some(u=>u.d===w&&u.s===staff.id))throw Error('저장 결과를 확인하지 못했습니다. 새로고침 후 명단을 확인하세요.');
+          drawSat();A.toast(staff.name+' 님을 추가했습니다.');
+        }catch(e){say(e.message||'추가에 실패했습니다. 이름을 확인한 뒤 다시 시도하세요.',true);}
+        finally{busy=false;btn.disabled=false;inp.disabled=false;if(feedback.textContent==='추가 중…')feedback.textContent='';}
       };
-      inp.addEventListener('keydown', e => { if (e.key === 'Enter') add(); }); inp.addEventListener('change', add);
+      btn.onclick=add;
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();add();}});
     });
   }
 
@@ -6091,7 +6113,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           else {
             const steps = Math.trunc(((d.일평균 - tg) / (it.unit || 0.5)) + (d.일평균 >= tg ? 1e-9 : -1e-9));
             v = (it.base || 0) + steps * (it.unitPts === null ? 1 : it.unitPts);
-            note = '일평균 ' + fmt(d.일평균, 2) + '대 / 목표 ' + tg + '대';
+            note = '일평균 ' + fmt(d.일평균, 2) + ' / 목표 ' + tg;
           }
         } else if (it.calc === '성장') {
           if (d.일평균 === null) note = '업무데이터 없음';
@@ -6099,7 +6121,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           else {
             const st = Math.trunc(((d.일평균 - d.전월평균) / (it.unit || 0.5)) + (d.일평균 >= d.전월평균 ? 1e-9 : -1e-9));
             v = (it.base || 0) + st * (it.unitPts === null ? 1 : it.unitPts);
-            note = '전월 ' + fmt(d.전월평균, 2) + '대 → ' + fmt(d.일평균, 2) + '대';
+            note = '전월 ' + fmt(d.전월평균, 2) + ' → ' + fmt(d.일평균, 2);
           }
         } else if (it.calc === '순위표') {
           if (!d.파트순위) note = '업무데이터 없음';
@@ -6254,7 +6276,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  }
  function presentation(z){
   if(z.score!=null)return {label:String(z.score)+'점',note:'',kind:'score'};
-  return z.state==='below'?{label:'인센티브 기준 미달',note:'현재 실적이 인센티브 산정 기준에 미달합니다.',kind:'below'}:{label:'산정 자료 없음',note:'평가 기준과 실적 반영 상태를 확인하세요.',kind:'missing'};
+  return z.state==='below'?{label:'기준 미달',note:'현재 실적이 적용 기준에 미달합니다.',kind:'below'}:{label:'산정 자료 없음',note:'평가 기준과 실적 반영 상태를 확인하세요.',kind:'missing'};
  }
  root.HRINC={num,lookup,calculate,presentation};
 })(typeof window!=='undefined'?window:globalThis);
@@ -6632,8 +6654,8 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       <div class="total"><span class="muted">가점은 엑셀에서 입력</span><span>합계</span><b id="totalVal">-</b></div>
       <div class="gt">월간 총평 <span class="muted" style="font-weight:500">엑셀 한 칸 = 한 줄 (최대 ${MAXC}자)</span></div>
       <table class="ctb"><tr><th>관 리 자</th><td class="v"><select id="fMgr" ${locked ? 'disabled' : ''}><option value=""></option>${mgrs.map(m => `<option ${m === mgrVal ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></td><th rowspan="2">업무평가</th><td>${ln('fW1', '업무평가1', '여기에 입력')}</td></tr>
-        <tr><th>평가 목표</th><td class="v">${dt.개인목표 === null ? '-' : f1(dt.개인목표) + '대'}</td><td>${ln('fW2', '업무평가2')}</td></tr>
-        <tr><th>결&nbsp;&nbsp;&nbsp;&nbsp;과</th><td class="v">${dt.일평균 === null ? '-' : fixedAvg(dt.일평균) + '대'}</td><th>건강관리</th><td>${ln('fH', '건강관리')}</td></tr>
+        <tr><th>평가 목표</th><td class="v">${dt.개인목표 === null ? '-' : fixedAvg(dt.개인목표)}</td><td>${ln('fW2', '업무평가2')}</td></tr>
+        <tr><th>결&nbsp;&nbsp;&nbsp;&nbsp;과</th><td class="v">${dt.일평균 === null ? '-' : fixedAvg(dt.일평균)}</td><th>건강관리</th><td>${ln('fH', '건강관리')}</td></tr>
         <tr><th>달 성 률</th><td class="v">${pct(dt.달성률)}</td><th>특이사항</th><td>${ln('fS', '특이사항')}</td></tr></table>
       <div class="svbar"><span id="saveState" class="savest"></span><span class="muted">30초 후 자동 저장</span><span style="flex:1"></span>
         <button class="primary big" id="saveDone" ${locked ? 'disabled' : ''}>작성 완료</button></div></section>`;
@@ -6737,22 +6759,27 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     } catch (e) { toast(e.message, 1); setSaveState('저장 실패 · ' + e.message, 'err'); return false; }
   }
 
+  function partPerformance(x) {
+    const members=ST.data.list.filter(y=>y.person.part===x.person.part);
+    const valid=members.filter(y=>y.data.hasData&&num(y.data.일평균)!==null&&num(y.data.개인목표)>0);
+    const sum=k=>valid.reduce((v,y)=>v+Number(y.data[k]||0),0);
+    const goal=sum('개인목표'), actual=sum('일평균');
+    const accidents=valid.reduce((n,y)=>n+['품질지적','미오발송','오조립','파손'].reduce((v,k)=>v+Number(y.data[k]||0),0),0);
+    return {count:members.length,valid:valid.length,goal:valid.length?goal:null,actual:valid.length?actual:null,ratio:goal>0?actual/goal:null,accidents:valid.length?accidents:null,perPerson:valid.length?accidents/valid.length:null};
+  }
   function renderSide(x) {
-    const d = x.data, a = d.근태기록 || {};
-    const g = arr => arr.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
-    const attNote = Object.keys(a).length ? '근태 기록 ' + Object.keys(a).map(k => k + ' ' + a[k]).join(' · ') : '근태 기록 없음';
-    $('#side').innerHTML = `${x.incentive.manual ? '<div class="hrinc-manual">별도 업무 평가 대상입니다. 점수를 개별 입력하세요.</div>' : d.hasData ? '' : '<div class="banner warn" style="margin-bottom:8px">업무데이터 없음 (이름이 다르면 기준 · 명단 → 원본이름 확인)</div>'}
-      ${x.productionRecheck?`<div class="banner warn" style="margin-bottom:10px">제조 환산 수정 후 실적 재반영이 필요합니다. 현재 웹 계산은 <b>${f1(x.productionRecheck.average,2)}</b> · 제조 <b>${x.productionRecheck.manufacturing}대</b>입니다. 아래는 인사평가에 저장된 기존 실적입니다. 관리자 [데이터 → 업무데이터로 지금 반영]에서 검토 후 반영하세요. 인사평가 마감 상태라면 마감 정책을 먼저 확인하세요. 저장된 평가점수는 자동 변경하지 않습니다.</div>`:''}
-      <div class="dstrip"><div class="dbox p"><div class="h">실적 <span>${ST.data.rawSrc && ST.data.rawSrc.src === 'web' ? '업무데이터 자동' : '업무통계 엑셀'}</span></div><div class="g">${g([
-        ['총수량', d.총수량 === null ? '-' : f1(d.총수량)], ['일평균', d.일평균 === null ? '-' : fixedAvg(d.일평균)], ['달성률', pct(d.달성률)],
-        ['총량 순위', d.총수량순위 ? d.총수량순위 + '위' : '-'], ['평균 순위', d.평균순위 ? d.평균순위 + '위' : '-'], ['파트 내', d.파트순위 ? d.파트순위 + ' / ' + d.파트인원 : '-'],
-        ['근무일', dash(d.근무일수)], ['평가기준목표', d.개인목표 === null ? '-' : f1(d.개인목표)], ['전월평균', d.전월평균 === null ? '-' : f1(d.전월평균, 2)]])}</div></div>
-      <div class="dbox a"><div class="h">근태 <span>매니저 기록</span></div><div class="g g4">${g([['지각', dash(d.지각)], ['조퇴', dash(d.조퇴)], ['결근', dash(d.결근)], ['당일연차', dash(d.당일연차)]])}</div>
-        <div class="dn">${esc(attNote)} · <a href="#" id="attGo">근태 탭</a></div></div>
-      <div class="dbox x"><div class="h">사고 <span>사고 파일</span></div><div class="g">${g([['품질지적', dash(d.품질지적)], ['미/오발송', dash(d.미오발송)], ['오조립', dash(d.오조립)],
-        ['파손', dash(d.파손)], ['지시불이행', dash(d.지시불이행)]])}</div></div></div>`;
-    $('#side').insertAdjacentHTML('beforeend', incentiveBox(x));
-    $('#attGo').onclick = e => { e.preventDefault(); go('att'); };
+    const d=x.data, a=d.근태기록||{}, pt=partPerformance(x);
+    const cells=arr=>arr.map(([k,v])=>`<span><small>${k}</small><b>${v}</b></span>`).join('');
+    const row=(kind,arr)=>`<div class="eval-fact-row"><strong>${kind}</strong><div>${cells(arr)}</div></div>`;
+    const val=v=>v==null?'-':fixedAvg(v);
+    $('#side').innerHTML=`${x.incentive.manual?'<div class="hrinc-manual">별도 업무 평가 대상입니다. 점수를 개별 입력하세요.</div>':d.hasData?'':'<div class="banner warn">업무데이터 없음 · 원본 이름과 실적 반영 상태를 확인하세요.</div>'}
+      ${x.productionRecheck?`<div class="banner warn">제조 환산 수정 후 재반영이 필요합니다. 웹 계산 ${val(x.productionRecheck.average)} · 제조 ${x.productionRecheck.manufacturing}. 아래는 기존 평가 실적이며 점수는 자동 변경하지 않습니다.</div>`:''}
+      <div class="eval-summary"><div class="eval-facts">
+      ${row('실적',[['총수량',val(d.총수량)],['총량 순위',dash(d.총수량순위)],['일평균',val(d.일평균)],['평균 순위',dash(d.평균순위)],['달성률',pct(d.달성률)],['파트 내',d.파트순위?d.파트순위+'/'+d.파트인원:'-'],['근무일',dash(d.근무일수)],['평가기준목표',val(d.개인목표)],['전월평균',val(d.전월평균)]])}
+      ${row('사고',[['품질지적',dash(d.품질지적)],['미/오발송',dash(d.미오발송)],['오조립',dash(d.오조립)],['파손',dash(d.파손)],['지시불이행',dash(d.지시불이행)]])}
+      ${row('근태',[['지각',dash(d.지각)],['조퇴',dash(d.조퇴)],['결근',dash(d.결근)],['당일연차',dash(d.당일연차)]])}<div class="eval-att-note">${esc(Object.keys(a).map(k=>k+' '+a[k]).join(' · ')||'근태 기록 없음')} · <a href="#" id="attGo">근태 탭</a></div></div>
+      <aside class="eval-part"><strong>파트 성과 · ${esc(x.person.part)}</strong><small>실적·목표 반영 ${pt.valid}/${pt.count}명 · 반영 인원 합계 기준</small><div>${cells([['목표 합계',val(pt.goal)],['일평균 합계',val(pt.actual)],['달성률',pct(pt.ratio)],['사고 건수',pt.accidents==null?'-':pt.accidents],['인당 사고',val(pt.perPerson)]])}</div></aside></div>${incentiveBox(x)}`;
+    $('#attGo').onclick=e=>{e.preventDefault();go('att');};
   }
 
   // ---------- 지난 기록
@@ -6762,7 +6789,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     try { list = (await api('hrHistory', { name })).list; } catch (e) { toast(e.message, 1); return; }
     const html = list.slice().reverse().map(r => {
       const its = parseItems(r);
-      return `<details><summary><b>${esc(r['평가월'])}</b><span>합계 <b>${dash(r['합계'])}</b>점</span><span>일평균 ${r['일평균'] === '' || r['일평균'] === undefined ? '-' : fixedAvg(r['일평균']) + '대'}</span>
+      return `<details><summary><b>${esc(r['평가월'])}</b><span>합계 <b>${dash(r['합계'])}</b>점</span><span>일평균 ${r['일평균'] === '' || r['일평균'] === undefined ? '-' : fixedAvg(r['일평균'])}</span>
         <span class="tag">${r['기준구분'] === '구' ? '구 기준' : '신 기준'}</span>${stBadge(r['상태'])}<span class="muted">${esc(r['작성자'])}</span></summary>
         <div class="body"><table><tr>${its.map(i => `<th>${esc(i.name)}<div class="muted">${i.sign < 0 ? '감점' : esc(i.max) + '점'}</div></th>`).join('')}<th>합계</th></tr>
           <tr>${its.map(i => `<td class="c">${dash(r['점수' + i.no])}</td>`).join('')}<td class="c"><b>${dash(r['합계'])}</b></td></tr></table>
@@ -6811,7 +6838,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
         <td class="left dsc ${cls}" colspan="8">${esc(it.desc)}</td><td class="sc ${cls}">${v === null ? '' : (it.sign < 0 && v ? '-' + v : v)}</td></tr>`;
     }).join('')).join('');
     const d = x.data;
-    const c1 = lineSvg(sVals, '#1F6FB2', v => Math.round(v) + '점', 50, 100), c2 = lineSvg(qVals, '#D1662B', v => (+v).toFixed(2) + '대');
+    const c1 = lineSvg(sVals, '#1F6FB2', v => Math.round(v) + '점', 50, 100), c2 = lineSvg(qVals, '#D1662B', v => (+v).toFixed(2));
     const svg = (c, title, color) => `<svg viewBox="0 0 ${c.W} ${c.H}" preserveAspectRatio="xMidYMid meet"><text x="${c.W / 2}" y="20" font-size="14" font-weight="700" text-anchor="middle">${title}</text>${c.g}<path d="${c.path}" fill="none" stroke="${color}" stroke-width="2"/>${c.dots}</svg>`;
     const td = v => `<td>${dash(v)}</td>`;
     const preview=bigModal(`<div class="row no-print" style="margin-bottom:10px;gap:10px"><h2 style="margin:0">미리보기 · ${esc(p.name)} (${month})</h2><span class="muted">저장 전 내용 기준 · 사진·가점 등은 엑셀에 표시</span><button class="sm" id="pvPrint">인쇄</button></div>
@@ -6825,7 +6852,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
         <tr><td class="lb" rowspan="2">평가점수</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
         <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${sVals[i] === null ? '' : Math.round(sVals[i]) + ' 점'}</td>`).join('')}</tr>
         <tr><td class="lb" rowspan="2">평균수량</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
-        <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${qVals[i] === null ? '' : qVals[i].toFixed(2) + ' 대'}</td>`).join('')}</tr></table>
+        <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${qVals[i] === null ? '' : qVals[i].toFixed(2)}</td>`).join('')}</tr></table>
       <table style="margin-top:10px"><colgroup><col style="width:12%"><col style="width:15%"><col style="width:12%"><col></colgroup><tr><td class="hd" colspan="4">월 간 총 평</td></tr>
         <tr><td class="gr">관 리 자</td><td>${esc(fl.관리자)}</td><td class="gr" rowspan="2">업무평가</td><td class="left">${esc(fl.업무평가1)}</td></tr>
         <tr><td class="gr">평가 목표</td><td>${d.개인목표 === null ? '' : f1(d.개인목표)}</td><td class="left">${esc(fl.업무평가2)}</td></tr>
@@ -6841,7 +6868,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       preview.querySelectorAll('[data-pv-chart]').forEach(host=>{
         const bounds=host.getBoundingClientRect();if(bounds.width<1||bounds.height<1)return;
         const size={width:bounds.width,height:Math.max(100,bounds.height)},score=host.dataset.pvChart==='score';
-        const chart=score?lineSvg(sVals,'#1F6FB2',v=>Math.round(v)+'점',50,100,size):lineSvg(qVals,'#D1662B',v=>(+v).toFixed(2)+'대',undefined,undefined,size);
+        const chart=score?lineSvg(sVals,'#1F6FB2',v=>Math.round(v)+'점',50,100,size):lineSvg(qVals,'#D1662B',v=>(+v).toFixed(2),undefined,undefined,size);
         host.innerHTML=svg(chart,score?'월별 평가점수':'월별 평균수량',score?'#1F6FB2':'#D1662B');
       });
     };
@@ -7242,7 +7269,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   }
   function calcGuide() {
     return `<div class="guide"><h3>계산방식 설명서</h3>
-      <div class="m" data-m="목표수량"><b>목표수량</b> — 등급 목표 대비 일평균<br>기본점 + (일평균 − 등급목표) ÷ 단위 × 단위점수 (소수 버림)<div class="ex">예) A등급 목표 16대, 일평균 18.18대 → 초과 2.18÷0.5=4 → 32+4 = <b>36점</b></div></div>
+      <div class="m" data-m="목표수량"><b>목표수량</b> — 등급 목표 대비 일평균<br>기본점 + (일평균 − 등급목표) ÷ 단위 × 단위점수 (소수 버림)<div class="ex">예) A등급 목표 16, 일평균 18.18 → 초과 2.18÷0.5=4 → 32+4 = <b>36점</b></div></div>
       <div class="m" data-m="성장"><b>성장</b> — 전월 대비 일평균 변화<br>기본점 + (이번달 − 전월) ÷ 단위 × 단위점수<div class="ex">예) 전월 17.0 → 이번달 18.2대: +1.2÷0.5=2 → 5+2 = <b>7점</b><br>전월 기록이 없으면 기본점</div></div>
       <div class="m" data-m="순위표"><b>순위표</b> — 파트 안 총수량 순위 → "점유율표"에서 점수<div class="ex">예) 1그룹에서 3위 → 3~4위 = <b>9점</b></div></div>
       <div class="m" data-m="품질감점"><b>품질감점</b> — 기본점(없으면 배점) − 사고건수 × 감점<div class="ex">예) 오조립 1건, 품질지적 1건 → 30 − 3 − 2 = <b>25점</b></div></div>
@@ -7300,9 +7327,16 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   }
   // v29.11: display estimates without writing evaluation scores.
   function incentiveBox(x) {
-    const z=x.incentive,display=HRINC.presentation(z);
-    return `<section class="hrinc-box hreval-score" aria-label="인사평가 예상점수"><div class="hreval-score-main"><span>인사평가 예상점수</span><strong class="${display.kind==='score'?'':'hreval-score-status'}">${z.score==null?esc(display.label):f1(z.score)+'<small>점</small>'}</strong></div><div class="hreval-score-meta">${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')}등급 · ${z.config.confirmed?'적용 기준':'미확정 초안'}</div>${display.note?`<p class="hreval-score-note">${esc(display.note)}</p>`:''}${z.manual?'<p class="hreval-score-note">별도 업무 평가 대상 · 항목별 점수는 직접 입력합니다.</p>':''}</section>`;
+    const z=x.incentive, display=HRINC.presentation(z), c=z.config||{};
+    const attendance=new Set(['지각','조퇴','결근','당일연차']);
+    const cuts=items=>(z.cuts||[]).filter(r=>attendance.has(r.item)===items);
+    const amount=rows=>rows.reduce((n,r)=>n+r.count*r.qty,0);
+    const note=rows=>rows.length?rows.map(r=>r.item+' '+r.count+'회').join(' · '):'없음';
+    const accident=cuts(false), att=cuts(true), val=v=>v==null?'-':fixedAvg(v);
+    const goals=[];if(c.teamOn)goals.push('팀목표 '+val(z.teamGoal));if(c.personalOn)goals.push('개인목표 '+val(z.personal));
+    return `<section class="hrinc-box hreval-score eval-formula" aria-label="인사평가 예상점수"><div class="eval-equation">평균 <b>${val(z.avg)}</b> − 사고 <b>${val(amount(accident))}</b> <small>(${esc(note(accident))})</small> − 근태 <b>${val(amount(att))}</b> <small>(${esc(note(att))})</small> = 차감 후 기준 <b>${val(z.net)}</b></div><div class="hreval-score-main"><span>인사평가 예상점수</span><strong class="${display.kind==='score'?'':'hreval-score-status'}">${esc(goals.join(' · ')||'목표 미설정')} · ${z.score==null?esc(display.label):f1(z.score)+'<small>점</small>'}</strong></div><div class="hreval-score-meta">${esc(ST.data.month)} 귀속 · ${esc(x.person.grade||'등급 없음')} · ${c.confirmed?'적용 기준':'미확정 초안'}${z.manual?' · 별도 업무 평가 대상':''}</div>${display.note?`<p class="hreval-score-note">${esc(display.note)}</p>`:''}</section>`;
   }
+
   function cfgInc() {
     const root=cfgb(); if(CFG._orderRevision!==1){root.innerHTML='<div class="banner warn">v29.14 SQL을 먼저 적용한 뒤 개인목표 수량별 기준을 편집하세요.</div>';return;} if(!('인센티브기준' in CFG)){root.innerHTML='<div class="banner warn">인센티브 SQL 업데이트 후 설정할 수 있습니다.</div>';return;}
     const configs=CFG['인센티브기준']||[], month=ST.incMonth||ST.month||META.current;
@@ -7314,7 +7348,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const groups=['*',...META.parts.map(p=>p.name)],grades=['A','B','C','D'],dedItems=HRINC_SEED.deductions.map(x=>x.item);
     const opts=(list,val)=>[...new Set([...list,val])].map(v=>`<option value="${esc(v)}" ${String(v)===String(val)?'selected':''}>${v==='*'?'전체':esc(v)}</option>`).join('');
     const row=(kind,r)=>`<tr>${schemas[kind].map(([key])=>`<td>${key==='group'||key==='grade'||key==='item'?`<select data-key="${key}">${opts(key==='group'?groups:key==='grade'?grades:dedItems,r[key]??(key==='grade'?'A':'*'))}</select>`:`<input data-key="${key}" type="number" min="0" step="${key==='amount'?'1':'0.01'}" value="${esc(r[key]??'')}">`}</td>`).join('')}<td><button class="sm" data-incdel>삭제</button></td></tr>`;
-    const targetOptions=v=>`<option value="" ${v==null?'selected':''}>공통</option>`+Array.from({length:23},(_,i)=>8+i*.5).map(q=>`<option value="${q}" ${Number(v)===q?'selected':''}>${q}대</option>`).join('');
+    const targetOptions=v=>`<option value="" ${v==null?'selected':''}>공통</option>`+Array.from({length:23},(_,i)=>8+i*.5).map(q=>`<option value="${q}" ${Number(v)===q?'selected':''}>${q}</option>`).join('');
     const matrixRow=(kind,threshold,values={},targetQty=null)=>`<tr>${kind==='personal'?`<td><select data-targetqty aria-label="개인목표 수량">${targetOptions(targetQty)}</select></td>`:''}<td><input data-key="threshold" aria-label="${kind==='team'?'기준대수 이상':'달성률(%) 이상'}" type="number" min="0" step="0.01" value="${esc(threshold??'')}"></td>${grades.map(g=>`<td><input data-grade="${g}" aria-label="${g}등급 금액(원)" type="number" min="0" step="1" placeholder="미설정" value="${esc(values[g]??'')}"></td>`).join('')}<td><button class="sm" data-incdel aria-label="구간 삭제">삭제</button></td></tr>`;
     const matrixRows=kind=>{
       const buckets=new Map();for(const r of draft[kind]||[]){const key=JSON.stringify([r.targetQty??null,Number(r.threshold)]);if(!buckets.has(key))buckets.set(key,{});buckets.get(key)[r.grade]=r.amount;}
@@ -8536,7 +8570,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.19';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.20';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
