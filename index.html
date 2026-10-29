@@ -3488,6 +3488,29 @@ html[data-theme=dark] .pa-pvw{background:#3a3115;color:#f5df7a}
 .pa-hand button{padding:0 6px;min-height:0;border:0;background:transparent;color:inherit;box-shadow:none}
 @media (max-width:1100px){.pa-hd{flex-wrap:wrap}.pa-tiles{flex-wrap:wrap;flex-basis:100%;order:3}.pa-t{flex:1 1 96px}.pa-body{flex-direction:column;align-items:stretch}.pa-left{width:auto;position:static}.pa-list{max-height:none}.pa-cfg{flex-direction:column}.pa-pm{flex-direction:column}.pa-pm textarea{width:auto;min-height:160px}}
 </style>
+<style id="premium-panel-v2950">
+/* v29.50 : 사전안내 오른쪽 패널 디자인 (옅은 푸른 상자 · 푸른 선택 버튼 · 3칸 같은 크기 가운데 정렬) */
+#main .pa{--pa-box:#f4f8ff;--pa-boxline:#d3e2fb;--pa-track:#e3ebf8;--pa-taline:#a9c2ec}
+html[data-theme=dark] #main .pa{--pa-box:#1c2433;--pa-boxline:#2f4060;--pa-track:#2a3446;--pa-taline:#4a6290}
+#main .pa .pa-sel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0;margin:4px 0 0;border:0}
+#main .pa .pa-sel>div,#main .pa .pa-compose-field{background:var(--pa-box);border:1px solid var(--pa-boxline);border-radius:12px;padding:12px 14px;box-shadow:0 2px 8px rgba(29,107,243,.07)}
+#main .pa .pa-sel>div{text-align:center;min-width:0}
+#main .pa .pa-sel label{display:block;text-align:center;font-size:14px;font-weight:800;color:var(--ink);margin:0 0 9px;letter-spacing:-.01em}
+#main .pa .pa-compose-field .pa-fl{font-size:14px;font-weight:800;color:var(--ink);justify-content:flex-start;margin:0 0 9px}
+#main .pa .pa-compose-field .pa-fl button{margin-left:auto;border:1px solid #c5d8fa;background:#e8f0ff;color:#1d4ed8;font-weight:700}
+#main .pa .pa-compose-field .pa-fl button:hover{background:#dbe7ff}
+html[data-theme=dark] #main .pa .pa-compose-field .pa-fl button{border-color:#36507e;background:#22324f;color:#9cc0ff}
+#main .pa .pa-sel .pa-seg{display:inline-flex;flex-wrap:wrap;justify-content:center;gap:2px;background:var(--pa-track);border-radius:10px;padding:3px}
+#main .pa .pa-sel .pa-seg button{background:transparent;color:#5b6475;font-size:13.5px;font-weight:700;padding:7px 16px;border-radius:8px;min-width:52px;box-shadow:none}
+#main .pa .pa-sel .pa-seg button:hover:not(:disabled){color:var(--ink)}
+#main .pa .pa-sel .pa-seg button.on,#main .pa .pa-sel .pa-seg button.on.pur{background:#1d6bf3;color:#fff;box-shadow:0 2px 6px rgba(29,107,243,.35)}
+html[data-theme=dark] #main .pa .pa-sel .pa-seg button{color:#9aa4b4}
+html[data-theme=dark] #main .pa .pa-sel .pa-seg button.on{color:#fff}
+#main .pa .pa-compose-grid{gap:12px}
+#main .pa .pa-compose-field textarea{border:1.5px solid var(--pa-taline);border-radius:10px;background:var(--panel)}
+#main .pa .pa-compose-field textarea:focus{outline:none;border-color:#1d6bf3;box-shadow:0 0 0 3px rgba(29,107,243,.15)}
+@media(max-width:900px){#main .pa .pa-sel{grid-template-columns:1fr}}
+</style>
 <style id="premium-fit-v2948">
 /* v29.48 : 화면 전체 활용 · 글자 잘림 방지 · 검색창 · 완료 주문 색 */
 .pa-t .l{white-space:normal;word-break:keep-all;line-height:1.25}
@@ -9426,7 +9449,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.48';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.50';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13817,14 +13840,14 @@ async function addCharts(buf, jobs) {
     return `<div class="pa-ph"><b class="no">${esc(o.no)}</b><i class="g g-${esc(o.grp)}">${esc(o.grp === '안정화' ? '안정화 테스트' : o.grp === '미처리' ? '미처리 · 전날 안내된 안정화' : o.grp === '7시' ? '7시 · 전날 미처리' : (o.grp || ''))}</i>${I.prevOk ? `<i class="g pv">전날 안내됨 ${esc(I.prev[I.prev.length - 1].d.slice(5).replace('-', '/'))}</i>` : ''}${paDoem(o) ? '<i class="g doem">DOEM · 윈도우 설치</i>' : ''}${I.carry ? '<i class="g cl">어제 통화불 → 오늘 연락</i>' : ''}
         <span class="sp"></span><span class="sv" id="pa-sv">${P.dirty ? '저장 안 됨' : ''}</span></div>
       <div class="pa-sel">
-        <div><label>그래픽카드</label>${seg('gpu', gp.map(g => [g, g]))}</div>
-        <div><label>분리배송</label>${seg('split', [['O', 'O'], ['X', 'X']])}</div>
-        <div><label>출고 전 재안내 요청</label>${seg('recall', [['O', 'O 요청', 'pur'], ['X', 'X']])}</div>
+        <div><label>그래픽카드 종류</label>${seg('gpu', gp.map(g => [g, g]))}</div>
+        <div><label>그래픽카드 별도 발송여부</label>${seg('split', [['O', 'O'], ['X', 'X']])}</div>
+        <div><label>출고전 고객안내 요청</label>${seg('recall', [['O', 'O'], ['X', 'X']])}</div>
       </div>
       <div class="pa-compose-grid">
-        <section class="pa-compose-field"><div class="pa-fl">고객 안내내용 ${ed?'<button type="button" class="sm" data-pa-macro="text">매크로 선택</button>':''}</div>
+        <section class="pa-compose-field"><div class="pa-fl">고객 안내 내용 ${ed?'<button type="button" class="sm" data-pa-macro="text">매크로 선택</button>':''}</div>
           <textarea id="pa-text" class="pa-text" maxlength="2000" placeholder="오늘 고객에게 안내한 내용을 적으세요" ${ed?'':'readonly'}>${esc(F.text)}</textarea></section>
-        <section class="pa-compose-field"><div class="pa-fl">출고 전 추가안내 ${ed?'<button type="button" class="sm" data-pa-macro="extra">매크로 선택</button>':''}</div>
+        <section class="pa-compose-field"><div class="pa-fl">출고전 추가 안내 내용 ${ed?'<button type="button" class="sm" data-pa-macro="extra">매크로 선택</button>':''}</div>
           <textarea id="pa-extra" class="pa-extra" maxlength="500" placeholder="출고 전에 추가로 안내할 내용을 적으세요" ${ed?'':'readonly'}>${esc(F.extra)}</textarea></section>
       </div>
       <div class="pa-two">
@@ -13895,6 +13918,24 @@ async function addCharts(buf, jobs) {
     if ($('#pa-undo')) $('#pa-undo').onclick = () => paFinish(true);
     paBindPanel(V, ed);
   }
+  // v29.50 : 안내 칸 번호 자동 붙이기 (Enter 칠 때만). 번호 줄 → 다음 번호, 첫 줄 → "1." 붙이고 "2." 시작,
+  //          번호만 있는 빈 줄 → 번호 끝내기, Shift+Enter = 번호 없이 줄바꿈. 길어서 저절로 넘어간 줄에는 번호 없음.
+  function paAutoNum(ta, e) {
+    if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isComposing || e.keyCode === 229 || ta.readOnly) return;
+    const v = ta.value, s = ta.selectionStart, en = ta.selectionEnd;
+    const ls = v.lastIndexOf('\n', s - 1) + 1, line = v.slice(ls, s), m = /^(\d+)\.\s?/.exec(line);
+    const done = () => ta.dispatchEvent(new Event('input', { bubbles: true }));
+    if (m && line.trim() === m[0].trim()) { e.preventDefault(); ta.setRangeText('', ls, s, 'end'); done(); return; }
+    let n = null;
+    if (m) n = +m[1] + 1;
+    else {
+      const last = v.slice(0, ls).split('\n').filter(x => x !== '').reverse().find(x => /^\d+\.\s/.test(x));
+      if (last) n = +(/^(\d+)/.exec(last)[1]) + 1;
+      else if (ls === 0 && line.trim() && !v.slice(en).trim()) { e.preventDefault(); ta.setRangeText('1. ' + line + '\n2. ', ls, en, 'end'); done(); return; }
+    }
+    if (n === null) return;
+    e.preventDefault(); ta.setRangeText('\n' + n + '. ', s, en, 'end'); done();
+  }
   function paBindPanel(V, ed) {
     const P = S.pav, F = P.form;
     $$('[data-paseg]').forEach(g => $$('button', g).forEach(b => (b.onclick = () => { const k = g.dataset.paseg; F[k] = F[k] === b.dataset.v ? '' : b.dataset.v; if (k === 'recall' && F.recall !== 'O') F.recallDone = false; paMark(); $('#pa-panel').innerHTML = paPanel(V.all.find(o => o.no === P.sel), ed); paBindPanel(V, ed); })));
@@ -13902,6 +13943,7 @@ async function addCharts(buf, jobs) {
     if (!tx) return;
     tx.oninput = () => { F.text = tx.value; paMark(); };
     xt.oninput = () => { F.extra = xt.value; paMark(); };
+    if (ed) [tx, xt].forEach(t => t.addEventListener('keydown', e => paAutoNum(t, e)));
     $$('[data-pa-macro]').forEach(b=>b.onclick=()=>paMacroDialog(b.dataset.paMacro));
     $$('[data-pack]').forEach(c => (c.onchange = () => { if (c.checked) F.checks[c.dataset.pack] = true; else delete F.checks[c.dataset.pack]; paMark(); }));
     const call = $('#pa-call'); if (call) call.onchange = () => { F.call = call.checked; paMark(); };
