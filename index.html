@@ -725,8 +725,8 @@ html[data-theme=dark] .hrw table.score .dq{background:#2d3a55;color:#9dbbff}
 .hrw .infof{margin-top:12px;padding:10px;border:1px dashed #b9c3d1;border-radius:8px}
 /* 큰 창 (지난 기록 · 미리보기) */
 .hr-ov{position:fixed;inset:0;background:rgba(15,30,61,.4);z-index:60;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
-.hrk-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.hrk-h h2{margin:0 8px 0 0;font-size:19px}.hrk-g{display:flex;gap:18px;align-items:flex-start;overflow-x:auto;padding-bottom:8px}.hrk-t{flex:none}.hrk-t h3{margin:0 0 6px;font-size:14px;text-align:center;background:#f8d3b4;color:#222;padding:8px 10px;border-radius:6px 6px 0 0}.hrk-t table{border-collapse:collapse;font-size:13.5px}.hrk-t th{background:#dfe8f5;color:#222;font-weight:700;padding:6px 10px;border:1px solid #c9d3e3;white-space:nowrap}.hrk-t td{padding:5px 10px;border:1px solid #e3e8f0;white-space:nowrap}.hrk-t td.num{text-align:right;font-variant-numeric:tabular-nums}.hrk-t td:first-child{text-align:center;color:#6b7280}.hrk-t tr.t td{background:#fff7e0}.hrk-n{cursor:pointer;border-bottom:1px dashed #94a3b8}.hrk-n:hover{color:#2f6bff}
-html[data-theme=dark] .hrk-t h3{background:#5a3f28;color:#f5e6d6}html[data-theme=dark] .hrk-t th{background:#223049;color:#e6edf7;border-color:#33425e}html[data-theme=dark] .hrk-t td{border-color:#2c3a52}html[data-theme=dark] .hrk-t tr.t td{background:#3b3320}
+.hrk-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.hrk-h h2{margin:0 8px 0 0;font-size:19px}.hrk-g{display:flex;gap:44px;align-items:flex-start;overflow-x:auto;padding-bottom:8px}.hrk-t{flex:none}.hrk-t h3{margin:0 0 6px;font-size:14px;text-align:center;background:#f8d3b4;color:#222;padding:8px 10px;border-radius:6px 6px 0 0}.hrk-t table{border-collapse:collapse;font-size:13.5px}.hrk-t th{background:#dfe8f5;color:#222;font-weight:700;padding:6px 10px;border:1px solid #c9d3e3;white-space:nowrap}.hrk-t td{padding:6px 12px;border:1px solid #e3e8f0;white-space:nowrap}.hrk-t td.num{text-align:right;font-variant-numeric:tabular-nums}.hrk-t td:first-child{text-align:center;color:#6b7280}.hrk-t td.g{text-align:center;font-size:12.5px}.hrk-gc{display:inline-block;min-width:44px;padding:1px 8px;border-radius:999px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,#fff);border:1px solid color-mix(in srgb,var(--c) 45%,#fff)}.hrk-t tr.b0 td{background:#fff6d6}.hrk-t tr.b1 td{background:#e8f6e6}.hrk-t tr.b2 td{background:#e6f0fb}.hrk-t tr.b3 td{background:#f1e9fa}.hrk-t tr.b4 td{background:#fdeadd}.hrk-t tr.b5 td{background:#eef0f3}.hrk-t tr.e td{border-bottom:2px solid #94a3b8}.hrk-n{cursor:pointer;border-bottom:1px dashed #94a3b8}.hrk-n:hover{color:#2f6bff}
+html[data-theme=dark] .hrk-t h3{background:#5a3f28;color:#f5e6d6}html[data-theme=dark] .hrk-t th{background:#223049;color:#e6edf7;border-color:#33425e}html[data-theme=dark] .hrk-t td{border-color:#2c3a52}html[data-theme=dark] .hrk-gc{background:color-mix(in srgb,var(--c) 28%,#111827);border-color:color-mix(in srgb,var(--c) 60%,#111827);color:#fff}html[data-theme=dark] .hrk-t tr.b0 td{background:#3b3320}html[data-theme=dark] .hrk-t tr.b1 td{background:#1f3326}html[data-theme=dark] .hrk-t tr.b2 td{background:#1d2e45}html[data-theme=dark] .hrk-t tr.b3 td{background:#322846}html[data-theme=dark] .hrk-t tr.b4 td{background:#41301f}html[data-theme=dark] .hrk-t tr.b5 td{background:#262d3a}html[data-theme=dark] .hrk-t tr.e td{border-bottom-color:#64748b}
 .hr-modal{background:#fff;border-radius:12px;max-width:1400px;width:100%;padding:18px;position:relative}
 .hr-modal .x{position:absolute;right:14px;top:12px}
 .hr-busy{position:fixed;inset:0;background:rgba(255,255,255,.6);z-index:90;display:flex;align-items:center;justify-content:center;font-weight:800;color:#1f63e6;font-size:15px}
@@ -8630,15 +8630,15 @@ async function addCharts(buf, jobs) {
       const itAvg = (d.items || []).find(i => i.use && i.calc === '목표수량'), itShare = (d.items || []).find(i => i.use && i.calc === '순위표');
       const base = (d.list || []).filter(x => /^\d그룹$/.test(String(x.person.part || '').trim()) && x.data.hasData && x.data.일평균 > 0 && (x.data.근무일수 || 0) > 0);
       const tot = base.reduce((a, x) => a + (x.data.총수량 || 0), 0);
-      const row = x => ({ name: x.person.name, avg: x.data.일평균, real: x.data.실제평균, qty: x.data.총수량, days: x.data.근무일수, ach: x.data.달성률,
+      const row = x => ({ name: x.person.name, grp: String(x.person.part || '').trim(), avg: x.data.일평균, real: x.data.실제평균, qty: x.data.총수량, days: x.data.근무일수, ach: x.data.달성률,
         sAvg: itAvg ? x.refs[itAvg.no - 1] : null, sShare: itShare ? x.refs[itShare.no - 1] : null, share: tot ? (x.data.총수량 || 0) / tot : null });
       const R = base.map(row);
       const rank = (arr, k) => arr.filter(x => x[k] !== null && x[k] !== undefined && isFinite(x[k])).sort((a, b) => b[k] - a[k]);
-      const tbl = (title, cols, arr) => `<section class="hrk-t"><h3>${title}</h3><table><thead><tr><th>순위</th><th>이름</th>${cols.map(c => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${arr.map((x, i) => `<tr class="${i < 3 ? 't' : ''}"><td>${i + 1}</td><td><b class="hrk-n" data-n="${esc(x.name)}">${esc(x.name)}</b></td>${cols.map(c => `<td class="num">${c[1](x)}</td>`).join('')}</tr>`).join('') || '<tr><td colspan="9" class="muted">자료 없음</td></tr>'}</tbody></table></section>`;
+      const tbl = (title, cols, arr) => `<section class="hrk-t"><h3>${title}</h3><table><thead><tr><th>순위</th><th>이름</th><th>그룹</th>${cols.map(c => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${arr.map((x, i) => `<tr class="b${Math.floor(i / 10) % 6}${i % 10 === 9 ? ' e' : ''}"><td>${i + 1}</td><td><b class="hrk-n" data-n="${esc(x.name)}">${esc(x.name)}</b></td><td class="g"><span class="hrk-gc" style="--c:${({ '1그룹': '#2563eb', '2그룹': '#059669', '3그룹': '#7c3aed', '4그룹': '#db2777' })[x.grp] || '#64748b'}">${esc(x.grp)}</span></td>${cols.map(c => `<td class="num">${c[1](x)}</td>`).join('')}</tr>`).join('') || '<tr><td colspan="10" class="muted">자료 없음</td></tr>'}</tbody></table></section>`;
       body().innerHTML = `<button class="x no-print">닫기</button>
         <div class="hrk-h"><h2>${esc(ymLab(month))} 인사평가 순위표</h2>
           <button class="sm" id="hrkP" title="앞 달">◀</button><select id="hrkM">${months.map(m => `<option value="${m}" ${m === month ? 'selected' : ''}>${ymLab(m)}</option>`).join('')}</select><button class="sm" id="hrkN" title="다음 달">▶</button>
-          <span class="muted">조립 그룹(1~4그룹) · 업무데이터가 있는 ${R.length}명 · 이름을 누르면 지난 기록</span></div>
+          <span class="muted">조립 그룹(1~4그룹) · 업무데이터가 있는 ${R.length}명 · 10위마다 색이 바뀝니다 · 이름을 누르면 지난 기록</span></div>
         <div class="hrk-g">
           ${tbl('평균(평가기준) 순위', [['평 균', x => f2(x.avg)], ['점 수', x => f1(x.sAvg)], ['달성율', x => pc(x.ach)]], rank(R, 'avg'))}
           ${tbl('점유율 순위', [['점 유 율', x => pc(x.share)], ['총수량', x => f2(x.qty)], ['점 수', x => f1(x.sShare)], ['근무일', x => (x.days === null || x.days === undefined ? '-' : f1(x.days)) + '일']], rank(R, 'qty'))}
@@ -9214,7 +9214,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.41';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.43';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
