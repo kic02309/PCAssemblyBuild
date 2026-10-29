@@ -3353,6 +3353,139 @@ html[data-theme=dark] .ddcombo-v28 .ddcombo-missing{background:#263b50;color:#e0
 html[data-theme=dark] .cd09-info .due{color:color-mix(in srgb,var(--c) 70%,#fff)}
 @media(max-width:750px){.cd09-pcard{padding:14px 14px 10px}.cd09-pcard h5{font-size:18px}.cd09-info{font-size:14px}}
 </style>
+<style>
+/* v29.37 : 위 막대 메뉴 구분선 (점 → 가는 세로선) · 프리미엄 사전안내 탭 */
+.czn button+button::before{left:-1px;width:1px;height:16px;margin-top:-8px;border-radius:0;background:#d3d9e2}
+html[data-theme=dark] .czn button+button::before{background:#3a3f49}
+.czn button.pa-tab{margin-left:12px}
+.czn button.pa-tab::before{left:-8px!important;width:2px!important;height:24px!important;margin-top:-12px!important;border-radius:2px!important;background:linear-gradient(#cfd5df,#1d6bf3)!important}
+.pa-new{font-style:normal;font-size:10px;font-weight:900;color:#fff;background:linear-gradient(135deg,#1d6bf3,#5b4cf0);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:2px;letter-spacing:.03em}
+/* v29.37 : 프리미엄 사전안내 화면 */
+.pa-hd{display:flex;align-items:stretch;gap:12px;background:linear-gradient(135deg,#0f1b33 0%,#17284a 100%);border-radius:18px;padding:14px 16px;margin:4px 0 12px;box-shadow:0 12px 30px rgba(15,27,51,.2);color:#fff}
+.pa-ttl{width:190px;flex:none;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.pa-ttl .e{font-size:10.5px;font-weight:800;color:#7fb0ff;letter-spacing:.14em}
+.pa-ttl h2{margin:0;font-size:21px;font-weight:900;letter-spacing:-.02em;color:#fff}
+.pa-dn{display:flex;align-items:center;gap:6px;font-size:13px;margin-top:2px}
+.pa-dn button{background:rgba(255,255,255,.1);color:#cfd9ee;border:0;border-radius:7px;padding:2px 8px;font-size:11px;min-height:0;box-shadow:none}
+.pa-dn button:disabled{opacity:.35}.pa-dn button.td{padding:2px 9px;font-size:11.5px}
+.pa-dn b{color:#fff;font-size:14px}
+.pa-who{font-size:12px;color:#8fa0c4}.pa-who b{color:#fff}
+.pa-who select{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:1px 6px;font-size:12px;height:auto}
+.pa-who select option{color:#1d2430}
+.pa-tiles{flex:1;min-width:0;display:flex;gap:8px}
+.pa-t{flex:1 1 0;min-width:0;max-width:170px;text-align:left;border-radius:12px;padding:9px 13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);color:#fff;display:flex;flex-direction:column;justify-content:center;gap:4px;box-shadow:none;cursor:pointer;min-height:0;font-weight:400}
+.pa-t:hover{background:rgba(255,255,255,.12)}
+.pa-t.on{background:#fff;color:#14213d;border-color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.pa-t .l{font-size:12px;font-weight:700;color:#cfd9ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa-t .l i{display:block;font-style:normal;font-weight:500;font-size:10.5px;color:#7be0a8;margin-top:1px;overflow:hidden;text-overflow:ellipsis}
+.pa-t.on .l{color:#5b6475}.pa-t.on .l i{color:#17663a}
+.pa-t .v{font-size:23px;font-weight:900;letter-spacing:-.02em;line-height:1;white-space:nowrap}.pa-t .v small{font-size:12px;font-weight:500;color:#8fa0c4;margin-left:2px}
+.pa-t .v em{font-style:normal;font-size:10.5px;font-weight:600;color:#8fa0c4;margin-left:4px}
+.pa-t.on .v small,.pa-t.on .v em{color:#8b93a1}
+.pa-t.red{border-color:rgba(255,184,173,.5);background:rgba(255,138,122,.12)}.pa-t.red .l,.pa-t.red .v,.pa-t.red .l i{color:#ffb8ad}
+.pa-t.yel{border-color:rgba(255,211,122,.5);background:rgba(255,211,122,.1)}.pa-t.yel .l,.pa-t.yel .v{color:#ffd37a}
+.pa-t.pur .l,.pa-t.pur .v{color:#d3c2ff}
+.pa-t.on.red .l,.pa-t.on.red .v{color:#b42318}.pa-t.on.yel .l,.pa-t.on.yel .v{color:#8a6d00}.pa-t.on.pur .l,.pa-t.on.pur .v{color:#5b2ec4}
+.pa-all{flex:1.5 1 0;max-width:220px;background:linear-gradient(135deg,#1d6bf3,#4c5bf0);border-color:transparent}
+.pa-all .l{color:#d6e3ff}.pa-all .v small{color:#c3d4ff}
+.pa-all .bar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.28)}.pa-all .bar i{display:block;height:5px;border-radius:3px;background:#fff}
+.pa-all.on{background:#fff}.pa-all.on .bar{background:#e4e7ee}.pa-all.on .bar i{background:#1d6bf3}
+.pa-act{display:flex;flex-direction:column;gap:7px;justify-content:center;margin-left:auto;flex:none}
+.pa-paste{background:#1d6bf3;color:#fff;border:0;border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:none;white-space:nowrap}
+.pa-paste svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pa-act2{display:flex;gap:6px}.pa-act2 button{flex:1;background:rgba(255,255,255,.1);color:#cfd9ee;border:0;border-radius:9px;padding:6px 10px;font-size:12.5px;box-shadow:none;white-space:nowrap}
+.pa-body{display:flex;gap:14px;align-items:flex-start}
+.pa-left{width:min(640px,46%);flex:none;display:flex;flex-direction:column;gap:10px;position:sticky;top:8px}
+.pa-lh{display:grid;grid-template-columns:minmax(0,1fr) 92px 52px 62px;gap:10px;padding:9px 14px;font-size:12px;font-weight:700;color:var(--sub);background:var(--head);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;margin-bottom:-10px}
+.pa-list{background:var(--panel);border:1px solid var(--line);border-radius:0 0 16px 16px;max-height:calc(100vh - 330px);min-height:240px;overflow:auto;box-shadow:var(--sh)}
+.pa-sec{display:flex;align-items:center;gap:8px;padding:7px 14px;background:var(--head);border-bottom:1px solid var(--line);font-size:12.5px;position:sticky;top:0;z-index:1}
+.pa-sec b{font-size:13px}.pa-sec span{color:var(--sub)}
+.pa-sec.call{background:#fff8e6;color:#8a6d00}.pa-sec.old{color:var(--sub)}
+html[data-theme=dark] .pa-sec.call{background:#3a3115;color:#f5df7a}
+.pa-r{display:grid;grid-template-columns:minmax(0,1fr) 92px 52px 62px;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 14px;border:0;border-bottom:1px solid var(--line2);border-radius:0;background:transparent;color:var(--ink);box-shadow:none;font-weight:400;min-height:0;cursor:pointer}
+.pa-r:hover{background:var(--blue-soft)}
+.pa-r.prev{background:rgba(29,107,243,.045)}
+.pa-r.on{background:var(--blue-soft);box-shadow:inset 4px 0 0 var(--blue)}.pa-r.on .c1>b{color:var(--blue)}
+.pa-r .c1{min-width:0}.pa-r .c1>b{font-size:14px;margin-right:5px}
+.pa-r small{display:block;font-size:12px;color:var(--sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pa-r .c2 b{font-size:13px}.pa-r .c2 small{display:inline;margin-left:5px}
+.pa-r .c3{text-align:center;font-size:12.5px;font-weight:700}
+.pa-r .bar,.pa-ph .bar{display:block;height:5px;border-radius:3px;background:var(--line);width:44px;margin:4px auto 0}.pa-r .bar i{display:block;height:5px;border-radius:3px;background:var(--blue)}.pa-r .bar i.ok{background:#17a34a}
+.pa-r .c4{text-align:center}
+.pa .g,.pa-body .g,.pa-r .g,.pa-ph .g,.pa-bun .g{display:inline-block;font-style:normal;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:700;margin-right:3px;white-space:nowrap;background:var(--chip);color:var(--sub);vertical-align:1px}
+.g.g-안정화{background:#e4eeff;color:#1d4ed8}.g.g-미처리{background:#fff1ee;color:#b42318}.g.g-7시{background:#f0e8ff;color:#5b2ec4}
+.g.pv{background:#dcecff;color:#0b5cad}.g.doem{background:#ffe9e6;color:#c0362b}.g.cl{background:#fff4d6;color:#8a6d00}.g.bun{background:#fff4d6;color:#8a6d00}
+html[data-theme=dark] .g.g-안정화,html[data-theme=dark] .g.pv{background:#1d2a44;color:#9cc0ff}html[data-theme=dark] .g.g-미처리,html[data-theme=dark] .g.doem{background:#3a1f1e;color:#ff9b93}
+html[data-theme=dark] .g.g-7시{background:#2b2142;color:#c9b3ff}html[data-theme=dark] .g.cl,html[data-theme=dark] .g.bun{background:#3a3115;color:#f5df7a}
+.st{display:inline-block;font-style:normal;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--chip);color:var(--sub)}
+.st-prog{background:#e4eeff;color:#1d4ed8}.st-done{background:#e1f6e9;color:#17663a}.st-call{background:#fff1ee;color:#b42318}.st-recall{background:#f1ecff;color:#5b2ec4}.st-bundle{background:#fff4d6;color:#8a6d00}
+html[data-theme=dark] .st-prog{background:#1d2a44;color:#9cc0ff}html[data-theme=dark] .st-done{background:#17301f;color:#5fd08d}html[data-theme=dark] .st-call{background:#3a1f1e;color:#ff9b93}html[data-theme=dark] .st-recall{background:#2b2142;color:#c9b3ff}
+.pa-empty{padding:40px 20px;text-align:center;color:var(--sub);line-height:1.7}
+.pa-bun{background:#fffdf3;border:1.5px solid #f0d58a;border-radius:14px;padding:10px 14px;font-size:13px}
+html[data-theme=dark] .pa-bun{background:#2a2614;border-color:#6b5a1f}
+.pa-bun .h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}.pa-bun .h span{color:#8a6d00;font-size:12px}
+.pa-bun .r{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed #ecd9a0}.pa-bun .r span{flex:1;color:var(--sub);font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pa-bun .r button{padding:5px 11px;font-size:12px;border-radius:8px;background:#e1f6e9;color:#17663a;border:0;box-shadow:none;min-height:0}.pa-bun .r button.del{background:#fff1ee;color:#b42318}
+.pa-right{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);padding:18px 22px;display:flex;flex-direction:column;gap:12px}
+.pa-ph{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.pa-ph .no{font-size:24px;font-weight:900;color:var(--blue);margin-right:6px;letter-spacing:-.01em}
+.pa-ph .g{font-size:12px;padding:3px 9px}.pa-ph .sp,.pa-pb .sp{flex:1}.pa-ph .sv{font-size:12px;font-weight:700;color:#c2410c}
+.pa-sel{display:flex;gap:22px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.pa-sel label,.pa-fl{display:block;font-size:12px;font-weight:700;color:var(--sub);margin-bottom:6px}.pa-fl small{font-weight:500;opacity:.8;margin-left:4px}
+.pa-seg{display:flex;gap:6px;flex-wrap:wrap}
+.pa-seg button{padding:6px 12px;border-radius:9px;background:var(--field);border:0;font-size:13px;font-weight:700;color:var(--sub);box-shadow:none;min-height:0}
+.pa-seg button.on{background:var(--blue);color:#fff}.pa-seg button.on.pur{background:#7c4ddb}
+.pa-text{width:100%;box-sizing:border-box;min-height:150px;border:1.5px solid var(--blue);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.7;resize:vertical;background:var(--panel);color:var(--ink);font-family:inherit}
+.pa-text[readonly],.pa-extra[readonly]{border-color:var(--line);background:var(--head)}
+.pa-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pa-chips button{padding:5px 11px;border-radius:999px;background:var(--field);border:1px solid var(--line);font-size:12.5px;font-weight:500;color:var(--ink);box-shadow:none;min-height:0}
+.pa-chips button:hover{border-color:var(--blue);color:var(--blue)}.pa-chips.sm button{font-size:12px;padding:4px 10px}
+.pa-two{display:flex;gap:16px;flex-wrap:wrap}
+.pa-ck{flex:0 0 272px;background:var(--head);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.pa-ck .ck{display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 0;cursor:pointer;font-weight:500;color:var(--ink);margin:0}
+.pa-ck .ck input{width:17px;height:17px;margin:0;accent-color:#1d6bf3}
+.pa-ck .ck.call{margin-top:6px;padding:7px 9px;background:#fff1ee;border-radius:9px;color:#b42318;font-weight:700}.pa-ck .ck.call input{accent-color:#d92d20}
+.pa-ck .ck.rec{margin-top:6px;padding:7px 9px;background:#f1ecff;border-radius:9px;color:#5b2ec4;font-weight:700}.pa-ck .ck.rec input{accent-color:#7c4ddb}
+html[data-theme=dark] .pa-ck .ck.call{background:#3a1f1e;color:#ff9b93}html[data-theme=dark] .pa-ck .ck.rec{background:#2b2142;color:#c9b3ff}
+.pa-ex{flex:1;min-width:240px}
+.pa-extra{width:100%;box-sizing:border-box;min-height:64px;border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-size:13.5px;line-height:1.6;resize:vertical;background:var(--panel);color:var(--ink);font-family:inherit;margin-bottom:6px}
+.pa-hist{border-left:2px solid #cfdcf5;padding-left:12px;display:flex;flex-direction:column;gap:7px;font-size:13px;max-height:180px;overflow:auto}
+.pa-hist>div{display:flex;gap:8px}.pa-hist .d{color:var(--sub);flex:none;width:40px}.pa-hist .t{flex:1;white-space:pre-line;line-height:1.5}.pa-hist .b{color:var(--sub);font-size:11.5px;flex:none}
+.pa-hist .cl .t b{color:#b42318}
+.pa-pb{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line2);padding-top:12px}
+.pa-pb button{padding:10px 18px;border-radius:11px;font-weight:700}.pa-pb button.ok{background:#17a34a;color:#fff;border-color:#17a34a}
+.pa-ft{position:sticky;bottom:0;z-index:3;margin-top:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 18px;box-shadow:0 -4px 18px rgba(30,45,80,.08)}
+.pa-ft .l{font-size:13px;color:var(--sub);font-weight:700}
+.pa-ft .calc{font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.pa-ft .calc b{font-size:19px}.pa-ft .calc small{color:var(--sub)}.pa-ft .calc .tot{font-size:23px;color:var(--blue)}
+.pa-ft input{width:56px;text-align:center;font-weight:700;font-size:15px;background:#fff8dc;border:1.5px solid #3b3b3b;border-radius:8px;padding:3px 6px;height:auto}
+.pa-ft input#pa-rs{width:130px;text-align:left;font-weight:500;font-size:13px;background:var(--field);border:1px solid var(--line)}
+html[data-theme=dark] .pa-ft input{background:#4a4216;color:#fff;border-color:#8a7a3a}
+.pa-ft .note{flex:1;min-width:220px;font-size:12.5px;color:var(--sub);line-height:1.5;border-left:1px solid var(--line);padding-left:14px}.pa-ft .okb{color:#17a34a}.pa-ft .chg{color:#c2410c}
+.pa-ft button{padding:11px 20px;border-radius:12px;font-weight:700}
+.pa-ft button.primary{background:linear-gradient(135deg,#1d6bf3,#4c5bf0);border-color:transparent;color:#fff}
+.pa-pmm{width:min(980px,96vw)}
+.pa-pm{display:flex;gap:14px;min-height:380px}
+.pa-pm textarea{width:300px;flex:none;min-height:380px;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.55;border-radius:12px;padding:10px;background:#101b33;color:#cfd9ee;border:1px solid #23345a;resize:vertical}
+.pa-pv{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.pa-pvs{display:flex;gap:8px}.pa-pvs>div{flex:1;background:var(--head);border-radius:11px;padding:9px 12px}.pa-pvs small{display:block;color:var(--sub);font-size:11.5px}.pa-pvs b{font-size:20px;font-weight:900}.pa-pvs .b{background:#fff4d6}.pa-pvs em{font-style:normal;font-size:11.5px;color:var(--sub)}
+html[data-theme=dark] .pa-pvs .b{background:#3a3115}
+.pa-pvg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pa-pvg small{width:100%;color:var(--sub)}
+.pa-pvg span{padding:4px 10px;border-radius:9px;font-size:12.5px;font-weight:700}.pa-pvg .ok{background:#e1f6e9;color:#17663a}.pa-pvg .bad,.pa-pvs .bad{background:#fff1ee;color:#b42318}
+.pa-pvw{background:#fff8e6;border:1px solid #f0d58a;color:#8a6d00;border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.6}
+html[data-theme=dark] .pa-pvw{background:#3a3115;color:#f5df7a}
+.pa-pvl{border:1px solid var(--line);border-radius:11px;max-height:250px;overflow:auto}
+.pa-pvl>div{display:grid;grid-template-columns:86px 58px minmax(0,1fr) 92px 120px;gap:6px;padding:5px 10px;border-bottom:1px solid var(--line2);font-size:12px}
+.pa-pvl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sub)}
+.pa-cfgm{width:min(1180px,96vw)}
+.pa-cfg{display:flex;gap:14px;max-height:68vh;overflow:auto;padding:2px}
+.pa-cg{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.pa-ce{border:1px solid var(--line);border-radius:12px;padding:12px}
+.pa-ce .h{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}.pa-ce .h b{flex:1}
+.pa-ce label{display:block;font-size:12px;font-weight:700;color:var(--sub);margin-bottom:4px}
+.pa-ce select,.pa-ce>input{width:100%}
+.pa-ce .L{display:flex;flex-direction:column;gap:5px}.pa-ce .it{display:flex;gap:4px}.pa-ce .it input{flex:1;min-width:0}.pa-ce .it button{padding:4px 8px;min-height:0}
+.pa-hand{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.pa-hand>span{display:inline-flex;align-items:center;gap:4px;background:var(--blue-soft);color:var(--blue);border-radius:999px;padding:3px 4px 3px 10px;font-size:12.5px;font-weight:700}
+.pa-hand button{padding:0 6px;min-height:0;border:0;background:transparent;color:inherit;box-shadow:none}
+@media (max-width:1100px){.pa-hd{flex-wrap:wrap}.pa-tiles{flex-wrap:wrap;flex-basis:100%;order:3}.pa-t{flex:1 1 96px}.pa-body{flex-direction:column;align-items:stretch}.pa-left{width:auto;position:static}.pa-list{max-height:none}.pa-cfg{flex-direction:column}.pa-pm{flex-direction:column}.pa-pm textarea{width:auto;min-height:160px}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -8963,7 +9096,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.35';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.37';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9494,7 +9627,7 @@ async function addCharts(buf, jobs) {
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canProd() ? [['prod', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(canProd() ? [['prod', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -9560,12 +9693,13 @@ async function addCharts(buf, jobs) {
     if ($('.czn')) {                                                      // v28.17 : 분류 켜짐 + 위 막대 세부 메뉴
       const v = S.view, cat = v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'goal'].includes(v) ? 'adm' : 'work';
       $$('.czr [data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
-      const it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
+      let it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
         : cat === 'mgr' ? [] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '인사평가']];
-      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}">${t}</button>`).join('');
+      if (cat === 'work' && canPa()) it = it.concat([['pa', '프리미엄 사전안내']]);   // v29.37
+      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
@@ -9623,13 +9757,14 @@ async function addCharts(buf, jobs) {
     if (view === 'att') { if (window.HR && window.HR.quickAtt) window.HR.quickAtt(); return; }   // 근태 입력 = 창만 열림
     if (S.view === 'education' && view !== 'education' && window.EDU && !(await window.EDU.guard())) { setNav(); return; }
     if (S.view === 'hr' && view !== 'hr' && window.HR && !(await window.HR.guard())) { setNav(); return; }   // 인사평가 저장 안 한 점수
+    if (S.view === 'pa' && view !== 'pa' && !(await paGuard())) { setNav(); return; }   // v29.37 : 사전안내 저장 안 한 주문
     if (!(await saveFirst())) { setNav(); return; }
     if (view !== 'input' && document.body.classList.contains('input-focus')) setInputFocus(false);
     if (isRO()) {                                                        // v28.10 : 보기 전용은 박스 5개 화면만
       opt = opt || {};
       if (view === 'people' && !opt.tab && !opt._pop) opt.tab = 'list';
       if (view === 'people' && opt.tab) S.pTab = opt.tab;                  // 위쪽 막대 [인원 현황] / [조직도] 켜짐이 바로 맞게
-      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org'].includes(view) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
+      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'pa'].includes(view) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
     }
     if (view === 'admin' && canHub()) {                                    // v28.8 : 고르기 화면 없이 바로 (마지막에 본 탭 → 인원 → 설정 → 통계)
       const ok = k => k === 'people' ? can('people') : k === 'settings' ? canSetPage() : k === 'stats' ? can('stats') : k === 'goal' ? isAdm0() && !isRO() : false;
@@ -9644,6 +9779,7 @@ async function addCharts(buf, jobs) {
     try { sessionStorage.setItem('lastView', view); if (!(opt && opt._pop) && (history.state || {}).v !== view) history.pushState({ v: view }, ''); } catch (e) { }
     if (view === 'input' && !S.target && wtSelf() && !isManager()) view = 'wt';                // v28.55 : 업무표 사용자는 수량 입력 대신 업무표
     if (view === 'wt') { $('#proxy').innerHTML = ''; return canWtMenu() ? renderWt(opt) : go('dash'); }
+    if (view === 'pa') { $('#proxy').innerHTML = ''; return canPa() ? renderPa(opt) : go('dash'); }   // v29.37 : 프리미엄 사전안내
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
     document.body.classList.toggle('pmobm', view === 'pmob');
     if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
@@ -13187,6 +13323,357 @@ async function addCharts(buf, jobs) {
   const PLAN_CAT = { id: 'plan', name: '계획 마감', color: '#e8902a' };
   const calPlanEv = () => ((S.mgD || {}).tasks || []).filter(t => t.status !== '완료').map(t => { const d = plEnd(t); return { id: 'p' + t.id, plan: t.id, d, e: d, tm: '', title: mgName(t.owner) + ' · ' + t.title, cat: 'plan', grp: '전체', memo: '', owner: t.owner, by: mgName(t.owner), at: '' }; });
   function planGo(tid) { const t = ((S.mgD || {}).tasks || []).find(x => String(x.id) === String(tid)); if (!t) return; const p = S.mgv.pl = S.mgv.pl || { mode: 'm', open: {} }; p.mode = 'm'; p.ym = plEnd(t).slice(0, 7); p.wk = plMon(plEnd(t)); p.own = t.owner; p.open = p.open || {}; S.mgv.tab = 'plan'; drawMgr(); }
+  // ================================================================ v29.37 : 프리미엄 사전안내 (상황판 붙여넣기 · 주문별 안내 · 기타시간 반영)
+  const PA_NEW_UNTIL = '2026-12-31';
+  const canPa = () => !!(S.me && S.pa && S.pa.who && !S.pv);
+  const paNew = () => (S.today || '') <= PA_NEW_UNTIL;
+  async function paLoad() { try { const r = await api('pa', { op: 'can' }); S.pa = { who: r.who || '' }; } catch (e) { S.pa = { who: '', err: e.message }; } }
+  const PA_CAP = { '안정화': '당일 테스트', '미처리': '전날 안내', '7시': '전날 미처리' };
+  const PA_STL = { none: '안내 전', prog: '진행', call: '통화불', done: '완료', recall: '재안내', bundle: '묶음' };
+  const paDoem = o => /(^|\/)\s*DO\s*($|\/)/.test(o.tags || '');
+  const paTags = o => String(o.tags || '').split('/').map(x => x.trim()).filter(x => x && x !== 'DO').join('/');
+  const paNum = v => { const n = Math.round((+v || 0) * 100) / 100; return String(n); };
+  function paInfo(o, ds, cfg) {                                            // 한 주문의 그날 상태
+    const H = (o.hist || []).slice().sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0));
+    const today = H.find(h => h.d === ds) || null, prev = H.filter(h => h.d < ds), last = prev[prev.length - 1];
+    const carry = !o.done && !!(last && last.call) && !today;                // 어제 통화불 → 오늘 다시 연락
+    const ck = (cfg.checks || []), nck = ck.filter(c => (o.checks || {})[c.id]).length;
+    const st = o.bundle ? 'bundle' : o.done ? (o.recall === 'O' && !o.recallDone ? 'recall' : 'done') : today && today.call ? 'call' : (today || nck) ? 'prog' : 'none';
+    return { H, today, prev, carry, prevOk: prev.length > 0, calls: H.filter(h => h.call).length, nck, tck: ck.length, st, onBoard: o.seen === ds };
+  }
+  function paView() {                                                      // 목록 · 상황판 숫자
+    const P = S.pav, D = P.D, ds = D.date, cfg = D.cfg || {};
+    const all = D.orders.map(o => Object.assign({}, o, { _: paInfo(o, ds, cfg) }));
+    const main = all.filter(o => !o.bundle), bundles = all.filter(o => o.bundle);
+    const G = []; main.filter(o => o._.onBoard).forEach(o => { let g = G.find(x => x.name === o.grp); if (!g) G.push(g = { name: o.grp || '기타', gord: o.gord, list: [], qty: 0 }); g.list.push(o); g.qty += +o.qty || 0; });
+    G.sort((a, b) => a.gord - b.gord);
+    const carryOff = main.filter(o => !o._.onBoard && o._.carry), other = main.filter(o => !o._.onBoard && !o._.carry);
+    const callL = main.filter(o => o._.carry || o._.st === 'call'), recallL = main.filter(o => o.recall === 'O' && !o.recallDone);
+    const done = main.filter(o => o.done).length, todayN = main.filter(o => o._.today).length;
+    if (P.f.startsWith('g:') && !G.some(g => 'g:' + g.name === P.f)) P.f = 'all';
+    let list, sections;
+    if (P.f === 'call') list = callL;
+    else if (P.f === 'recall') list = recallL;
+    else if (P.f.startsWith('g:')) list = (G.find(g => 'g:' + g.name === P.f) || { list: [] }).list;
+    else list = null;
+    if (list) sections = [{ name: '', list }];
+    else sections = (carryOff.length ? [{ name: '통화불 이관 (어제)', list: carryOff, cls: 'call' }] : []).concat(G.map(g => ({ name: g.name, list: g.list, qty: g.qty }))).concat(other.length ? [{ name: '오늘 상황판에 없는 기록', list: other, cls: 'old' }] : []);
+    return { all, main, bundles, G, callL, recallL, done, todayN, sections, flat: sections.flatMap(s => s.list) };
+  }
+  const paEditable = () => { const D = S.pav.D; return D.who !== 'view' && D.date <= D.today && !(D.period.status === '마감' && D.who !== 'admin'); };
+  async function renderPa(opt) {
+    const main = $('#main'); if (!S.pa) await paLoad();
+    S.pav = S.pav || { date: S.today, f: 'all', sel: '', D: null, dirty: false };
+    if (opt && opt.date) S.pav.date = opt.date;
+    if (!S.pav.D) main.innerHTML = pageHead('프리미엄 사전안내') + '<div class="pgb"><div class="muted" style="padding:20px">불러오는 중…</div></div>';
+    await paFetch();
+  }
+  async function paFetch(keepSel) {
+    const P = S.pav, seq = P.seq = (P.seq || 0) + 1; let D;
+    try { D = await api('pa', { op: 'get', date: P.date }); }
+    catch (e) { if (seq === P.seq && S.view === 'pa') $('#main').innerHTML = pageHead('프리미엄 사전안내') + '<div class="pgb"><div class="warn">' + esc(e.message) + '</div></div>'; return; }
+    if (seq !== P.seq || S.view !== 'pa') return;
+    P.D = D; P.dirty = false; if (!keepSel) P.form = null;
+    paDraw();
+  }
+  function paForm(o, ds) {
+    const t = (o.hist || []).find(h => h.d === ds);
+    return { gpu: o.gpu || '', split: o.split || '', recall: o.recall || '', recallDone: !!o.recallDone, extra: o.extra || '', checks: Object.assign({}, o.checks || {}), text: t ? t.t || '' : '', call: !!(t && t.call), done: !!o.done };
+  }
+  function paDraw() {
+    const P = S.pav, D = P.D, main = $('#main'), cfg = D.cfg || {}, V = paView(), ed = paEditable(), ds = D.date;
+    const listEl = $('#pa-list'), keepTop = listEl ? listEl.scrollTop : 0, winY = window.scrollY;
+    if (!V.flat.some(o => o.no === P.sel)) { P.sel = (V.flat.find(o => !o.done) || V.flat[0] || {}).no || ''; P.form = null; P.dirty = false; }
+    const cur = V.all.find(o => o.no === P.sel) || null;
+    if (cur && !P.form) { P.form = paForm(cur, ds); P.base = JSON.stringify(P.form); }
+    const tile = (f, label, cap, val, unit, extra, cls) => `<button class="pa-t${P.f === f ? ' on' : ''}${cls ? ' ' + cls : ''}" data-paf="${esc(f)}"><span class="l">${esc(label)}${cap ? `<i>${esc(cap)}</i>` : ''}</span><span class="v">${val}<small>${unit}</small>${extra || ''}</span></button>`;
+    const pct = V.main.length ? Math.round(V.done / V.main.length * 100) : 0;
+    const day = D.day || {}, team = D.team || [];
+    const canPaste = ed && (ds === D.today || D.who === 'admin');
+    const head = `<section class="pa-hd">
+      <div class="pa-ttl"><div class="e">PREMIUM PC</div><h2>프리미엄 사전안내</h2>
+        <div class="pa-dn"><button data-pad="-1" aria-label="이전 날">◀</button><b>${esc(dLabel(ds))}</b><button data-pad="1" aria-label="다음 날" ${ds >= D.today ? 'disabled' : ''}>▶</button>${ds !== D.today ? '<button data-pad="0" class="td">오늘</button>' : ''}</div>
+        <div class="pa-who">담당 ${team.length > 1 && ed && !day.done ? `<select id="pa-uid" aria-label="오늘 담당">${team.map(([id, n]) => `<option value="${esc(id)}" ${id === day.uid ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>` : `<b>${esc(day.uname || '미지정')}</b>`}${D.lastPaste ? ` · ${esc(D.lastPaste.slice(11, 16))} 붙여넣음` : ''}</div></div>
+      <div class="pa-tiles"><button class="pa-t pa-all${P.f === 'all' ? ' on' : ''}" data-paf="all"><span class="l">전체 · 안내 완료</span><span class="v">${V.done}<small> / ${V.main.length}건</small></span><span class="bar"><i style="width:${pct}%"></i></span></button>
+      ${V.G.map(g => tile('g:' + g.name, g.name, PA_CAP[g.name], g.list.length, '건', `<em>${g.qty}대</em>`, g.name === '미처리' ? 'red' : '')).join('')}
+      ${tile('call', '통화불 · 이관', '', V.callL.length, '건', '', 'yel')}
+      ${tile('recall', '재안내 대기', '', V.recallL.length, '건', '', 'pur')}</div>
+      <div class="pa-act">${canPaste ? '<button class="pa-paste" id="pa-paste"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>상황판 붙여넣기</button>' : ''}
+        <div class="pa-act2"><button id="pa-xl">엑셀</button>${D.who === 'admin' ? '<button id="pa-cfg">⚙ 설정</button>' : ''}</div></div>
+    </section>`;
+    const row = o => { const I = o._; return `<button class="pa-r${o.no === P.sel ? ' on' : ''}${I.prevOk ? ' prev' : ''}" data-pano="${esc(o.no)}">
+        <span class="c1"><b>${esc(o.no)}</b>${P.f !== 'all' || !I.onBoard ? `<i class="g g-${esc(o.grp)}">${esc(o.grp)}</i>` : ''}${I.prevOk ? '<i class="g pv">전날 안내됨</i>' : ''}${paDoem(o) ? '<i class="g doem">DOEM</i>' : ''}${I.calls ? `<i class="g cl">통화불 ${I.calls}회</i>` : ''}
+          <small>${esc([o.ship, paTags(o), paNum(o.conv) + '대', (+o.qty > 1 ? o.qty + '대 주문' : '')].filter(Boolean).join(' · '))}</small></span>
+        <span class="c2"><b>${esc(o.asm || '-')}</b><small>${esc(o.st || '')}</small></span>
+        <span class="c3">${I.nck}/${I.tck}<span class="bar"><i style="width:${I.tck ? Math.round(I.nck / I.tck * 100) : 0}%" class="${I.nck && I.nck === I.tck ? 'ok' : ''}"></i></span></span>
+        <span class="c4"><i class="st st-${I.st}">${PA_STL[I.st]}</i></span></button>`; };
+    const listHtml = V.flat.length ? V.sections.map(s => (s.name ? `<div class="pa-sec${s.cls ? ' ' + s.cls : ''}"><b>${esc(s.name)}</b><span>${s.list.length}건${s.qty != null ? ' · ' + s.qty + '대' : ''}</span></div>` : '') + s.list.map(row).join('')).join('')
+      : `<div class="pa-empty">${V.main.length ? '이 조건에 맞는 주문이 없습니다' : canPaste ? '오른쪽 위 <b>[상황판 붙여넣기]</b>로 오늘 주문을 불러오세요' : '이날 기록이 없습니다'}</div>`;
+    const bund = V.bundles.length ? `<div class="pa-bun"><div class="h"><i class="g bun">묶음 0대</i><b>묶음 주문서일 가능성이 높은 주문</b><span>원주문 확인 후 삭제하세요 · 안내 건수에 넣지 않음</span></div>
+      ${V.bundles.map(o => `<div class="r"><b>${esc(o.no)}</b><span>${esc([o.grp, o.ship, paTags(o), o.asm, o.st].filter(Boolean).join(' · '))}</span>${o.done ? '<i class="st st-done">확인 완료</i>' : ''}
+        ${ed ? `${o.done ? '' : `<button data-paok="${esc(o.no)}">확인 완료</button>`}<button class="del" data-padel="${esc(o.no)}">삭제</button>` : ''}</div>`).join('')}</div>` : '';
+    main.innerHTML = '<div class="pgb pa">' + head + `<div class="pa-body">
+      <div class="pa-left"><div class="pa-lh"><span>주문번호</span><span>조립</span><span>체크</span><span>안내</span></div><div class="pa-list" id="pa-list">${listHtml}</div>${bund}</div>
+      <div class="pa-right" id="pa-panel">${cur ? paPanel(cur, ed) : '<div class="pa-empty">왼쪽에서 주문을 고르세요</div>'}</div>
+    </div>${paFoot(V, ed)}</div>`;
+    $('#pa-list').scrollTop = keepTop; try { window.scrollTo(0, winY); } catch (e) { }
+    paBind(V, ed);
+  }
+  function paPanel(o, ed) {
+    const P = S.pav, D = P.D, cfg = D.cfg || {}, F = P.form, I = o._, dis = ed ? '' : 'disabled';
+    const seg = (k, opts) => `<div class="pa-seg" data-paseg="${k}">${opts.map(([v, l, c]) => `<button data-v="${esc(v)}" class="${F[k] === v ? 'on' + (c ? ' ' + c : '') : ''}" ${dis}>${esc(l)}</button>`).join('')}</div>`;
+    const gp = (cfg.gpus || []).slice(); if (F.gpu && !gp.includes(F.gpu)) gp.push(F.gpu);
+    const hist = I.H.filter(h => h.d !== D.date);
+    return `<div class="pa-ph"><b class="no">${esc(o.no)}</b><i class="g g-${esc(o.grp)}">${esc(o.grp === '안정화' ? '안정화 테스트' : o.grp === '미처리' ? '미처리 · 전날 안내된 안정화' : o.grp === '7시' ? '7시 · 전날 미처리' : (o.grp || ''))}</i>${I.prevOk ? `<i class="g pv">전날 안내됨 ${esc(I.prev[I.prev.length - 1].d.slice(5).replace('-', '/'))}</i>` : ''}${paDoem(o) ? '<i class="g doem">DOEM · 윈도우 설치</i>' : ''}${I.carry ? '<i class="g cl">어제 통화불 → 오늘 연락</i>' : ''}
+        <span class="sp"></span><span class="sv" id="pa-sv">${P.dirty ? '저장 안 됨' : ''}</span></div>
+      <div class="pa-sel">
+        <div><label>그래픽카드</label>${seg('gpu', gp.map(g => [g, g]))}</div>
+        <div><label>분리배송</label>${seg('split', [['O', 'O'], ['X', 'X']])}</div>
+        <div><label>출고 전 재안내 요청</label>${seg('recall', [['O', 'O 요청', 'pur'], ['X', 'X']])}</div>
+      </div>
+      <div class="pa-fl">고객 안내내용 <small>${esc(dLabel(D.date))} · 여러 줄로 길게</small></div>
+      <textarea id="pa-text" class="pa-text" maxlength="2000" placeholder="${ed ? '오늘 안내한 내용을 적으세요 (아래 문구를 누르면 들어갑니다)' : ''}" ${ed ? '' : 'readonly'}>${esc(F.text)}</textarea>
+      ${ed && (cfg.phrases || []).length ? `<div class="pa-chips" data-pachip="text">${cfg.phrases.map(x => `<button data-t="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
+      <div class="pa-two">
+        <div class="pa-ck"><div class="pa-fl">안내 체크리스트 <small>${I.nck}/${I.tck}</small></div>
+          ${(cfg.checks || []).map(c => `<label class="ck"><input type="checkbox" data-pack="${esc(c.id)}" ${F.checks[c.id] ? 'checked' : ''} ${dis}><span>${esc(c.t)}</span></label>`).join('')}
+          <label class="ck call"><input type="checkbox" id="pa-call" ${F.call ? 'checked' : ''} ${dis}><span>${esc(cfg.callT || '고객 통화불 (다음날 이관)')}</span></label>
+          ${F.recall === 'O' ? `<label class="ck rec"><input type="checkbox" id="pa-recd" ${F.recallDone ? 'checked' : ''} ${dis}><span>출고 전 재안내 완료</span></label>` : ''}
+        </div>
+        <div class="pa-ex"><div class="pa-fl">출고전 추가안내</div>
+          <textarea id="pa-extra" class="pa-extra" maxlength="500" ${ed ? '' : 'readonly'}>${esc(F.extra)}</textarea>
+          ${ed && (cfg.pre || []).length ? `<div class="pa-chips sm" data-pachip="extra">${cfg.pre.map(x => `<button data-t="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
+          <div class="pa-fl" style="margin-top:12px">안내 이력</div>
+          <div class="pa-hist">${hist.length ? hist.map(h => `<div class="${h.call ? 'cl' : ''}"><span class="d">${esc(h.d.slice(5).replace('-', '/'))}</span><span class="t">${h.call ? '<b>통화불</b> ' : ''}${esc(h.t || '')}</span><span class="b">${esc(h.by || '')}</span></div>`).join('') : '<div class="muted">지난 기록이 없습니다</div>'}</div>
+        </div>
+      </div>
+      ${ed ? `<div class="pa-pb"><span class="muted">${o.by ? '마지막 저장 ' + esc(o.by) + ' ' + esc((o.at || '').slice(5, 16)) : ''}</span><span class="sp"></span>
+        <button id="pa-save" class="${P.dirty ? 'primary' : ''}">저장</button>
+        <button id="pa-done" class="${F.done ? '' : 'ok'}">${F.done ? '안내 완료 취소' : '이 주문 안내 완료'}</button></div>` : ''}`;
+  }
+  function paFoot(V, ed) {
+    const D = S.pav.D, day = D.day || {}, base = +(D.cfg || {}).min || 0, n = V.todayN;
+    const ex = S.pav.ex != null ? S.pav.ex : day.done ? day.extra : 0, rs = S.pav.rs != null ? S.pav.rs : day.done ? day.reason : '';
+    const tot = n * base + (+ex || 0), changed = day.done && (day.cnt !== n || day.extra !== (+ex || 0) || day.reason !== rs);
+    return `<div class="pa-ft"><span class="l">${esc(dLabel(D.date))} 소요시간</span>
+      <span class="calc"><b>${n}</b><small>건</small> × <b>${base}</b><small>분 (기준)</small> + <input id="pa-ex" inputmode="numeric" value="${ex || ''}" placeholder="0" ${ed ? '' : 'disabled'} aria-label="추가시간 분"><small>분 추가</small>
+        <input id="pa-rs" maxlength="30" value="${esc(rs || '')}" placeholder="추가 사유" ${ed ? '' : 'disabled'}> = <b class="tot" id="pa-tot">${tot}</b><small>분</small></span>
+      <span class="note">${day.done ? `<b class="okb">✓ 반영됨</b> ${esc(day.uname)} 기타시간 "프리미엄 사전안내 · ${day.cnt}건 ${day.mins}분"${changed ? ' · <b class="chg">바뀐 내용 있음 → 다시 반영</b>' : ''}` : `완료하면 <b>${esc(day.uname || '담당자')}</b> 님 업무데이터 기타시간에 들어갑니다 · 묶음 0대 제외`}</span>
+      ${ed ? `${day.done ? '<button id="pa-undo">완료 취소</button>' : ''}<button class="primary" id="pa-fin">${day.done ? '다시 반영' : '오늘 사전안내 완료'}</button>` : ''}</div>`;
+  }
+  function paMark() { const P = S.pav; P.dirty = JSON.stringify(P.form) !== P.base; const sv = $('#pa-sv'); if (sv) sv.textContent = P.dirty ? '저장 안 됨' : ''; const b = $('#pa-save'); if (b) b.classList.toggle('primary', P.dirty); }
+  function paBind(V, ed) {
+    const P = S.pav, D = P.D;
+    $$('[data-paf]').forEach(b => (b.onclick = async () => { if (!(await paGuard())) return; P.f = b.dataset.paf; P.form = null; paDraw(); }));
+    $$('[data-pad]').forEach(b => (b.onclick = async () => { if (!(await paGuard())) return; const k = +b.dataset.pad; P.date = k ? C.addDays(D.date, k) : D.today; if (P.date > D.today) P.date = D.today; P.sel = ''; P.form = null; P.ex = P.rs = null; paFetch(); }));
+    $$('[data-pano]').forEach(b => (b.onclick = async () => { if (b.dataset.pano === P.sel) return; if (!(await paGuard())) return; P.sel = b.dataset.pano; P.form = null; paDraw(); }));
+    if ($('#pa-paste')) $('#pa-paste').onclick = async () => { if (await paGuard()) paPaste(); };
+    $('#pa-xl').onclick = () => paXlsx(V).catch(e => toast('엑셀 오류: ' + e.message, true));
+    if ($('#pa-cfg')) $('#pa-cfg').onclick = async () => { if (await paGuard()) paCfg(); };
+    if ($('#pa-uid')) $('#pa-uid').onchange = async e => { try { await api('pa', { op: 'day', date: D.date, uid: e.target.value }); toast('담당을 바꿨습니다'); } catch (x) { toast(x.message, true); } paFetch(true); };
+    $$('[data-paok]').forEach(b => (b.onclick = async () => { const o = D.orders.find(x => x.no === b.dataset.paok); if (!o) return; try { const F = paForm(o, D.date); F.done = true; const r = await api('pa', Object.assign({ op: 'save', date: D.date, no: o.no }, F)); paPut(r.order); toast('확인 완료'); paDraw(); } catch (e) { toast(e.message, true); } }));
+    $$('[data-padel]').forEach(b => (b.onclick = async () => { const no = b.dataset.padel; if (!(await confirmBox(`<b>${esc(no)}</b> 묶음 주문서를 지웁니다.<br>휴지통에 보관되고, 다시 붙여넣어도 나오지 않습니다.`, '삭제'))) return; try { await api('pa', { op: 'del', date: D.date, no }); D.orders = D.orders.filter(x => x.no !== no); toast('삭제했습니다'); paDraw(); } catch (e) { toast(e.message, true); } }));
+    const ex = $('#pa-ex'), rs = $('#pa-rs'), base = +(D.cfg || {}).min || 0;
+    if (ex) ex.oninput = () => { ex.value = ex.value.replace(/\D/g, '').slice(0, 3); P.ex = +ex.value || 0; $('#pa-tot').textContent = V.todayN * base + P.ex; };
+    if (rs) rs.oninput = () => { P.rs = rs.value; };
+    if ($('#pa-fin')) $('#pa-fin').onclick = () => paFinish(false);
+    if ($('#pa-undo')) $('#pa-undo').onclick = () => paFinish(true);
+    paBindPanel(V, ed);
+  }
+  function paBindPanel(V, ed) {
+    const P = S.pav, F = P.form;
+    $$('[data-paseg]').forEach(g => $$('button', g).forEach(b => (b.onclick = () => { const k = g.dataset.paseg; F[k] = F[k] === b.dataset.v ? '' : b.dataset.v; if (k === 'recall' && F.recall !== 'O') F.recallDone = false; paMark(); $('#pa-panel').innerHTML = paPanel(V.all.find(o => o.no === P.sel), ed); paBindPanel(V, ed); })));
+    const tx = $('#pa-text'), xt = $('#pa-extra');
+    if (!tx) return;
+    tx.oninput = () => { F.text = tx.value; paMark(); };
+    xt.oninput = () => { F.extra = xt.value; paMark(); };
+    $$('[data-pachip]').forEach(box => $$('button', box).forEach(b => (b.onclick = () => {
+      const el = box.dataset.pachip === 'text' ? tx : xt, v = el.value.replace(/\s+$/, ''), add = b.dataset.t;
+      el.value = v ? v + '\n' + add : add; el.dispatchEvent(new Event('input')); el.focus(); el.selectionStart = el.selectionEnd = el.value.length;
+    })));
+    $$('[data-pack]').forEach(c => (c.onchange = () => { if (c.checked) F.checks[c.dataset.pack] = true; else delete F.checks[c.dataset.pack]; paMark(); }));
+    const call = $('#pa-call'); if (call) call.onchange = () => { F.call = call.checked; paMark(); };
+    const rd = $('#pa-recd'); if (rd) rd.onchange = () => { F.recallDone = rd.checked; paMark(); };
+    if ($('#pa-save')) $('#pa-save').onclick = () => paSaveCur(true);
+    if ($('#pa-done')) $('#pa-done').onclick = async () => { F.done = !F.done; if (await paSaveCur(true, F.done ? '안내 완료로 저장했습니다' : '안내 완료를 취소했습니다')) { const V2 = paView(), nx = F.done && P.f !== 'recall' ? V2.flat.find(o => !o.done && o.no !== P.sel) : null; if (nx) { P.sel = nx.no; P.form = null; } paDraw(); } else F.done = !F.done; };
+    const panel = $('#pa-panel');
+    panel.onkeydown = e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); paSaveCur(true); } };
+  }
+  function paPut(o) { const D = S.pav.D, i = D.orders.findIndex(x => x.no === o.no); if (i >= 0) D.orders[i] = o; else D.orders.push(o); }
+  async function paSaveCur(redraw, msg) {
+    const P = S.pav; if (!P || !P.D || !P.sel || !P.form) return true;
+    if (P.busy) return false; P.busy = true;
+    try {
+      const F = P.form, r = await api('pa', Object.assign({ op: 'save', date: P.D.date, no: P.sel }, F, { text: F.text }));
+      paPut(r.order); P.form = paForm(r.order, P.D.date); P.base = JSON.stringify(P.form); P.dirty = false;
+      if (redraw) { toast(msg || '저장했습니다'); if (!msg) paDraw(); }
+      return true;
+    } catch (e) { toast(e.message, true); return false; }
+    finally { P.busy = false; }
+  }
+  async function paGuard() {                                                // 저장 안 한 주문 → 먼저 저장
+    const P = S.pav; if (!P || !P.dirty) return true;
+    if (await paSaveCur(false)) { toast(P.sel + ' 저장했습니다'); return true; }
+    return confirmBox('저장하지 못한 내용이 있습니다. 버리고 넘어갈까요?', '버리고 이동');
+  }
+  window.addEventListener('beforeunload', e => { if (S.view === 'pa' && S.pav && S.pav.dirty) { e.preventDefault(); e.returnValue = ''; } });
+  // 기타시간 한 줄 (업무데이터 그날 기록) — 다른 기타시간 줄은 그대로 · 같은 날 다시 반영하면 바꿔 넣음
+  async function paApplyOther(uid, date, cnt, ex, mins) {
+    const r = await api('getDay', { userId: uid, date }), mr = 'pa:' + date;
+    if (!r.doc && !mins) return;
+    const doc = r.doc ? JSON.parse(JSON.stringify(r.doc)) : C.emptyDay(date);
+    const lines = othLines(doc).filter(x => x.mr !== mr);
+    if (mins > 0) lines.push({ k: 'U7', r: ('프리미엄 사전안내 · ' + cnt + '건' + (ex ? ' · 추가 ' + ex + '분' : '')).slice(0, 60), m: mins, mr });
+    doc.otherR = lines; doc.other = {}; lines.forEach(x => (doc.other[x.k] = (doc.other[x.k] || 0) + x.m));
+    if (!lines.length) delete doc.otherR;
+    const q = { userId: uid, date, doc, sum: C.daySummary(doc, minsOf(date)) }; if (r.ver != null) q.base = r.ver;
+    await api('saveDay', q);
+    try { dropPc(uid); } catch (e) { } S._mcache = {}; S._adj = {}; S._gm = {}; S.stCache = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; }
+  }
+  async function paFinish(undo) {
+    const P = S.pav, D = P.D; if (P.busy) return;
+    if (!(await paGuard())) return;
+    const ex = +(P.ex != null ? P.ex : D.day.done ? D.day.extra : 0) || 0, rs = String(P.rs != null ? P.rs : D.day.done ? D.day.reason : '').trim();
+    let pv;
+    try {
+      if (undo) {
+        if (!(await confirmBox(`${esc(dLabel(D.date))} 사전안내 완료를 취소합니다.<br><b>${esc(D.day.uname)}</b> 님 업무데이터 기타시간에서 "프리미엄 사전안내" 줄을 뺍니다.`, '완료 취소'))) return;
+        P.busy = true; await paApplyOther(D.day.uid, D.date, 0, 0, 0); await api('pa', { op: 'done', date: D.date, undo: true }); toast('완료를 취소했습니다');
+      } else {
+        P.busy = true; pv = await api('pa', { op: 'done', date: D.date, extra: ex, reason: rs, preview: true }); P.busy = false;
+        if (!(await confirmBox(`<b>${esc(pv.uname)}</b> 님 ${esc(dLabel(D.date))} 업무데이터 <b>기타시간</b>에 넣습니다.<br><br>프리미엄 사전안내 · ${pv.cnt}건 × ${pv.base}분${pv.extra ? ' + 추가 ' + pv.extra + '분 (' + esc(pv.reason) + ')' : ''} = <b>${pv.mins}분</b>`, '반영하기'))) return;
+        P.busy = true;
+        try { await paApplyOther(pv.uid, D.date, pv.cnt, pv.extra, pv.mins); }
+        catch (e) { throw new Error('기타시간 반영 실패 — ' + e.message + (/권한/.test(e.message) ? ' (담당자 본인 또는 담당 매니저가 완료하세요)' : '')); }
+        await api('pa', { op: 'done', date: D.date, extra: ex, reason: rs });
+        toast('기타시간에 ' + pv.mins + '분 반영했습니다');
+      }
+      P.ex = P.rs = null;
+    } catch (e) { toast(e.message, true); }
+    finally { P.busy = false; }
+    paFetch(true);
+  }
+  // ---- 상황판 붙여넣기 : 그룹 머리글 '이름 / ( 숫자 ) / 이동' + 카드 5줄 (시간 - 번호 / 운송 / 환산대 / 프리 / 제조 / DO / 주문번호 / 수량대 / 조립 / 상태)
+  function paParse(text) {
+    const L = String(text || '').replace(/ /g, ' ').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const reSlot = /^(\d{1,2})\s*:\s*(\d{2})\s*-\s*(\d+)$/, reCnt = /^\(\s*(\d+)\s*\)$/, reNo = /^(\d{6,12})\s*\/\s*(\d+)\s*대$/, reShip = /^(.+?)\s*\/\s*(\d+(?:\.\d+)?)\s*대$/;
+    const groups = [], cards = [], warn = [], seen = new Set(); let g = null, skip = 0;
+    const isHead = i => i + 1 < L.length && reCnt.test(L[i + 1]) && !reSlot.test(L[i]);
+    for (let i = 0; i < L.length;) {
+      const s = L[i];
+      if (isHead(i)) { let name = s.replace(/\s+/g, ''); if (name === '화' || name === '정화' || name === '안정') name = '안정화'; g = { name, sum: +L[i + 1].match(reCnt)[1], qty: 0, n: 0, ord: groups.length }; groups.push(g); i += 2; continue; }
+      if (/^(이동|메세지전송|메시지전송)$/.test(s)) { i++; continue; }
+      const m = s.match(reSlot);
+      if (!m) { skip++; i++; continue; }
+      const c = { grp: g ? g.name : '', gord: g ? g.ord : 0, pos: g ? g.n : 0, slot: m[1].padStart(2, '0') + ':' + m[2] + '-' + m[3], ship: '', conv: 0, tags: '', no: '', qty: 0, asm: '', st: '' };
+      let j = i + 1;
+      for (; j < L.length && j <= i + 6 && !reSlot.test(L[j]) && !isHead(j); j++) {
+        const t = L[j]; let x;
+        if (!c.no && (x = t.match(reNo))) { c.no = x[1]; c.qty = +x[2]; }
+        else if (!c.no && !c.ship && (x = t.match(reShip))) { c.ship = x[1].trim(); c.conv = +x[2]; }
+        else if (!c.no && !c.tags) c.tags = t.split('/').map(y => y.trim()).filter(Boolean).join('/');
+        else if (c.no && !c.asm) { const k = t.indexOf('/'); if (k >= 0) { c.asm = t.slice(0, k).trim(); c.st = t.slice(k + 1).trim(); } else c.asm = t; }
+        else if (!/^(이동|메세지전송|메시지전송)$/.test(t)) skip++;
+      }
+      i = j;
+      if (!c.no) { warn.push(c.slot + ' 카드에서 주문번호를 못 읽었습니다'); continue; }
+      if (seen.has(c.no)) { warn.push(c.no + ' 가 두 번 있어 첫 카드만 씁니다'); continue; }
+      seen.add(c.no); cards.push(c); if (g) { g.qty += c.qty; g.n++; }
+    }
+    groups.forEach(x => { x.ok = x.qty === x.sum; if (!x.ok) warn.push(`${x.name} 머리글 (${x.sum}) 과 카드 수량 합계 (${x.qty}대) 가 다릅니다 — 덜 복사됐는지 확인하세요`); });
+    return { groups, cards, warn, skip, bundles: cards.filter(c => !c.qty).length };
+  }
+  function paPaste() {
+    const D = S.pav.D;
+    modal(`<h3>상황판 붙여넣기</h3><div class="muted" style="margin:-4px 0 10px">상황판을 드래그해 복사(Ctrl+C)한 뒤 아래 칸을 누르고 <b>Ctrl+V</b> · 몇 번을 붙여넣어도 같은 주문은 한 번만 (상태 · 시간대만 새로)</div>
+      <div class="pa-pm"><textarea id="pa-raw" placeholder="여기를 누르고 Ctrl+V"></textarea><div id="pa-pv" class="pa-pv"><div class="muted">붙여넣으면 바로 읽어 보여 줍니다</div></div></div>
+      <div class="acts"><button data-c>취소</button><button class="primary" data-y disabled>등록</button></div>`, (bg, close) => {
+      const raw = $('#pa-raw', bg), pvEl = $('#pa-pv', bg), yes = $('[data-y]', bg); let R = null, seq = 0, tm = null;
+      $('[data-c]', bg).onclick = close; setTimeout(() => raw.focus(), 30);
+      const show = async () => {
+        R = paParse(raw.value); const my = ++seq; yes.disabled = !R.cards.length;
+        if (!raw.value.trim()) { pvEl.innerHTML = '<div class="muted">붙여넣으면 바로 읽어 보여 줍니다</div>'; return; }
+        const gr = R.groups.map(x => `<span class="${x.ok ? 'ok' : 'bad'}">${esc(x.name)} ${x.qty}/${x.sum}대 ${x.ok ? '✓' : '✕'}</span>`).join('');
+        pvEl.innerHTML = `<div class="pa-pvs"><div><small>읽은 주문</small><b>${R.cards.length}</b>건 · ${R.cards.reduce((a, c) => a + c.qty, 0)}대</div><div class="b"><small>묶음 0대</small><b>${R.bundles}</b>건</div><div id="pa-pvn"><small>새 주문 · 갱신</small><b>…</b></div></div>
+          <div class="pa-pvg"><small>그룹 머리글 숫자 = 카드 수량 합계</small>${gr || '<span class="bad">그룹 머리글을 못 찾았습니다</span>'}</div>
+          ${R.warn.length ? `<div class="pa-pvw">${R.warn.slice(0, 8).map(esc).join('<br>')}${R.warn.length > 8 ? '<br>… 외 ' + (R.warn.length - 8) + '건' : ''}</div>` : ''}
+          <div class="pa-pvl">${R.cards.slice(0, 80).map(c => `<div><b>${esc(c.no)}</b><span>${esc(c.grp)}</span><span>${esc(c.ship)} · ${esc(c.tags)}</span><span>${paNum(c.conv)}대 · ${c.qty}대</span><span>${esc(c.asm)} · ${esc(c.st)}</span></div>`).join('')}${R.cards.length > 80 ? '<div class="muted">…</div>' : ''}</div>`;
+        if (!R.cards.length) return;
+        try { const x = await api('pa', { op: 'paste', date: D.date, cards: R.cards, preview: true }); if (my !== seq) return; const el = $('#pa-pvn', bg); if (el) el.innerHTML = `<small>새 주문 · 갱신 · 그대로</small><b>${x.new}</b> · ${x.upd} · ${x.same}${x.skipDel ? ` <em>(삭제한 묶음 ${x.skipDel}건 무시)</em>` : ''}`; }
+        catch (e) { if (my === seq) { const el = $('#pa-pvn', bg); if (el) el.innerHTML = '<small>확인 오류</small><b class="bad">' + esc(e.message) + '</b>'; yes.disabled = true; } }
+      };
+      raw.oninput = () => { clearTimeout(tm); tm = setTimeout(show, 200); };
+      yes.onclick = async () => {
+        if (!R || !R.cards.length) return;
+        if (R.groups.some(x => !x.ok) && !(await confirmBox('그룹 숫자가 맞지 않는 곳이 있습니다 (덜 복사됐을 수 있음).<br>읽은 주문만 등록할까요?', '그래도 등록'))) return;
+        yes.disabled = true;
+        try { const x = await api('pa', { op: 'paste', date: D.date, cards: R.cards }); close(); toast(`등록 : 새 주문 ${x.new} · 갱신 ${x.upd} · 그대로 ${x.same}`); S.pav.f = 'all'; paFetch(true); }
+        catch (e) { yes.disabled = false; toast(e.message, true); }
+      };
+    }, 'wide pa-pmm');
+  }
+  // ---- 설정 (관리자) : 담당자 · 건당 기준분 · 그래픽카드 · 안내 문구 · 체크리스트 · 출고전 안내 문구
+  function paCfg() {
+    const D = S.pav.D, c0 = D.cfg || {}, users = D.users || [];
+    const st = { base: c0.base || '', hand: (c0.hand || []).slice(), min: +c0.min || 0, gpus: (c0.gpus || []).slice(), phrases: (c0.phrases || []).slice(), pre: (c0.pre || []).slice(), checks: (c0.checks || []).map(x => ({ id: x.id, t: x.t })), callT: c0.callT || '고객 통화불 (다음날 이관)' };
+    const uName = id => (users.find(u => u[0] === id) || [id, id])[1];
+    const opts = sel => users.map(([id, n, g]) => `<option value="${esc(id)}" ${id === sel ? 'selected' : ''}>${esc(n)} · ${esc(g)}</option>`).join('');
+    const listEd = (k, lab, ph, obj) => `<div class="pa-ce"><div class="h"><b>${lab}</b><button data-add="${k}" class="sm">+ 추가</button></div><div class="L">${st[k].map((x, i) => `<div class="it"><input data-k="${k}" data-i="${i}" value="${esc(obj ? x.t : x)}" maxlength="${k === 'gpus' ? 20 : k === 'checks' ? 40 : 60}" placeholder="${ph}"><button data-up="${k}" data-i="${i}" title="위로" ${i ? '' : 'disabled'}>↑</button><button data-rm="${k}" data-i="${i}" title="빼기">✕</button></div>`).join('') || '<div class="muted">항목이 없습니다</div>'}</div></div>`;
+    modal(`<h3>⚙ 프리미엄 사전안내 설정</h3><div class="pa-cfg" id="pa-cfgb"></div><div class="acts"><button data-c>취소</button><button class="primary" data-y>저장</button></div>`, (bg, close) => {
+      const draw = () => {
+        $('#pa-cfgb', bg).innerHTML = `<div class="pa-cg">
+          <div class="pa-ce"><div class="h"><b>담당자</b></div>
+            <label>기본 담당자</label><select id="pc-base"><option value="">(없음)</option>${opts(st.base)}</select>
+            <label style="margin-top:10px">인계 담당자 <small class="muted">날짜별로 바꿔 쓸 수 있는 사람</small></label>
+            <div class="pa-hand">${st.hand.map((id, i) => `<span>${esc(uName(id))}<button data-hrm="${i}" aria-label="빼기">✕</button></span>`).join('') || '<span class="muted">없음</span>'}</div>
+            <select id="pc-hand"><option value="">+ 인계 담당자 추가</option>${opts('')}</select>
+            <label style="margin-top:12px">건당 기준 시간</label><div class="row"><input id="pc-min" inputmode="numeric" value="${st.min}" style="width:80px"> <span class="muted">분 × 그날 안내한 주문 수 + 추가시간 = 기타시간</span></div></div>
+          ${listEd('gpus', '그래픽카드 종류', '예: 5080')}
+        </div><div class="pa-cg">
+          ${listEd('phrases', '안내 문구 (고객 안내내용에 넣는 문구)', '예: 더운반 출고 일정 안내')}
+          ${listEd('pre', '출고전 안내 문구', '예: 내부 포장재 제거')}
+        </div><div class="pa-cg">
+          ${listEd('checks', '안내 체크리스트', '예: 운송방법 안내', true)}
+          <div class="pa-ce"><div class="h"><b>통화불 항목</b><small class="muted">체크하면 다음 날 맨 위 '통화불 · 이관'에 나옵니다 (지울 수 없음)</small></div><input id="pc-call" value="${esc(st.callT)}" maxlength="40"></div>
+        </div>`;
+        $$('[data-k]', bg).forEach(el => (el.oninput = () => { const k = el.dataset.k, i = +el.dataset.i; if (k === 'checks') st.checks[i].t = el.value; else st[k][i] = el.value; }));
+        $$('[data-add]', bg).forEach(b => (b.onclick = () => { const k = b.dataset.add; if (k === 'checks') { let id; do { id = 'c' + Math.random().toString(36).slice(2, 8); } while (st.checks.some(x => x.id === id)); st.checks.push({ id, t: '' }); } else st[k].push(''); draw(); const L = $$(`[data-k="${k}"]`, bg); if (L.length) L[L.length - 1].focus(); }));
+        $$('[data-rm]', bg).forEach(b => (b.onclick = () => { st[b.dataset.rm].splice(+b.dataset.i, 1); draw(); }));
+        $$('[data-up]', bg).forEach(b => (b.onclick = () => { const a = st[b.dataset.up], i = +b.dataset.i; [a[i - 1], a[i]] = [a[i], a[i - 1]]; draw(); }));
+        $$('[data-hrm]', bg).forEach(b => (b.onclick = () => { st.hand.splice(+b.dataset.hrm, 1); draw(); }));
+        $('#pc-base', bg).onchange = e => { st.base = e.target.value; st.hand = st.hand.filter(x => x !== st.base); draw(); };
+        $('#pc-hand', bg).onchange = e => { const v = e.target.value; if (v && v !== st.base && !st.hand.includes(v)) st.hand.push(v); draw(); };
+        $('#pc-min', bg).oninput = e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 2); st.min = +e.target.value || 0; };
+        $('#pc-call', bg).oninput = e => { st.callT = e.target.value; };
+      };
+      draw();
+      $('[data-c]', bg).onclick = close;
+      $('[data-y]', bg).onclick = async () => {
+        const clean = a => a.map(x => String(x).trim()).filter(Boolean);
+        const cfg = { base: st.base, hand: st.hand, min: st.min, gpus: clean(st.gpus), phrases: clean(st.phrases), pre: clean(st.pre), checks: st.checks.map(x => ({ id: x.id, t: String(x.t).trim() })).filter(x => x.t), callT: String(st.callT).trim() };
+        try { const r = await api('pa', { op: 'cfg', cfg }); D.cfg = r.cfg; close(); toast('설정을 저장했습니다'); paFetch(true); } catch (e) { toast(e.message, true); }
+      };
+    }, 'wide pa-cfgm');
+  }
+  // ---- 엑셀 (보이는 날짜 · 묶음 포함)
+  async function paXlsx(V) {
+    const D = S.pav.D, cfg = D.cfg || {}, ds = D.date;
+    const EJ = await loadLib('ExcelJS', 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js');
+    const wb = new EJ.Workbook(), ws = wb.addWorksheet('사전안내', { views: [{ state: 'frozen', ySplit: 3 }] });
+    const H = ['시간대', '주문번호', '운송', '구분', '환산', '수량', '조립', '상태', '그래픽카드', '분리배송', '안정화', '출고전 재안내', '고객 안내내용', '출고전 추가안내', '체크리스트', '통화불', '안내', '안내 이력'];
+    ws.columns = [10, 12, 11, 14, 7, 6, 9, 9, 11, 8, 8, 10, 60, 30, 10, 8, 8, 50].map(w => ({ width: w }));
+    ws.mergeCells(1, 1, 1, H.length); const t = ws.getCell(1, 1); t.value = ds + ' 프리미엄 사전안내 · 담당 ' + ((D.day || {}).uname || ''); t.font = { bold: true, size: 14 }; ws.getRow(1).height = 26;
+    const hr = ws.getRow(3); H.forEach((h, i) => { const c = hr.getCell(i + 1); c.value = h; c.font = { bold: true }; c.alignment = { horizontal: 'center', vertical: 'middle' }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9F1FF' } }; });
+    let r = 4;
+    V.main.concat(V.bundles).forEach(o => {
+      const I = o._, today = I.today, ck = (cfg.checks || []).map(c => (o.checks || {})[c.id] ? '■' : '□').join('');
+      const vals = [o.grp, o.no, o.ship, o.tags, +o.conv || 0, +o.qty || 0, o.asm, o.st, o.gpu, o.split, o.grp === '안정화' || o.grp === '미처리' ? 'O' : '', o.recall + (o.recall === 'O' ? (o.recallDone ? ' (완료)' : ' (대기)') : ''),
+        today ? today.t : '', o.extra, ck + ' ' + I.nck + '/' + I.tck, today && today.call ? 'O' : '', PA_STL[I.st], I.H.filter(h => h.d !== ds).map(h => h.d.slice(5) + (h.call ? ' 통화불' : '') + ' ' + (h.t || '')).join('\n')];
+      const row = ws.getRow(r++); vals.forEach((v, i) => { const c = row.getCell(i + 1); c.value = v; c.alignment = { vertical: 'top', wrapText: true, horizontal: [12, 13, 17].includes(i) ? 'left' : 'center' }; });
+    });
+    saveBlob(new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), ds + '_프리미엄_사전안내.xlsx');
+    toast('엑셀을 내려받았습니다');
+  }
   // ================================================================ v28.55 : 영상업무 월간 업무표
   const WT_ST = ['대기', '진행중', '완료', '보류'], WT_OTH = ['포장지원', '정리지원', '청소', '담당/교육', '불량처리', '기타시간'];
   const wtUsers = () => (S.wt && S.wt.users) || [];
@@ -15622,7 +16109,7 @@ async function addCharts(buf, jobs) {
       try { const gc = await api('goalCfg'); S.goals = gc.goals || []; S.hw = gc.hw || []; } catch (e) { S.goals = []; S.hw = []; }   // v28.51 : SQL 전이면 기본 기준(90/80) · v28.72 휴일근무일
       hwApply();
       S.prEd = false; S.prP = null; await prWho();                                        // v28.63 : 생산업무 담당자
-      S.wt = null; S.wtv = null; await wtLoad();                                          // v28.55 : 업무표 사용자
+      S.wt = null; S.wtv = null; await wtLoad(); S.pa = null; S.pav = null; await paLoad();                                          // v28.55 : 업무표 사용자
       S.mgD = null; S.mgv = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); });   // v28.59 : 매니저 관리
       S.pc = {};
       if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {}, asm: r.day.asm || {} };
