@@ -2102,6 +2102,15 @@ table.m2t td.m2who,table.m2t th.m2who{min-width:320px;max-width:520px;text-align
 @media(max-width:1300px){.hrw .grid-eval{grid-template-columns:285px minmax(0,1fr)}.hrw .eval-summary{grid-template-columns:1fr}.hrw .eval-part>div{grid-template-columns:repeat(5,1fr)}}
 @media(max-width:1000px){.hrw .grid-eval{grid-template-columns:1fr}.hrw .plist{position:static;max-height:330px}.hrw .eval-fact-row>div{gap:6px}.hrw table.score td.ref{min-width:140px}.hrw .ed{overflow-x:auto}}
 
+
+/* v29.33: group achievement numbers keep their semantic color without a second shaded rectangle. */
+#main .ddgc-v5 .ddsum .ddsum-rate b[class]{background:transparent;box-shadow:none}
+
+/* v29.34: date-only navigation in group work and member interview queries. */
+.mg-query-date-nav{display:flex;align-items:center;gap:4px;min-width:0}
+.mg-query-date-nav>button{min-width:30px;min-height:32px;padding:3px 8px;font-size:20px;line-height:1}
+.mg-query-date-nav>button:disabled{opacity:.35;cursor:default}
+.mg-query-date-nav>label{margin:0}
 </style>
 <style>
 /* Unified compact search — 2026-10-21; visual only, zero effect on existing grid widths. */
@@ -8922,7 +8931,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.32';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.34';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9079,7 +9088,7 @@ async function addCharts(buf, jobs) {
     S._att = S._att || {}; if (S._att[ym] && Date.now()-S._att[ym].loadedAt<20000) return S._att[ym];
     const rg = periodRange(ym); if (!rg) return null; const tk = S.token;
     let r; try { r = await api('attList', { from: rg.from, to: rg.to }); } catch (e) { r = { conf: [], asg: [], off: [], roster: [], err: e.message }; }   // v28.53 : 실패는 기억하지 않음 (다음에 다시 조회)
-    const A = { conf: {}, asg: {}, off: {}, offk: {}, roster: {}, by: {}, rg, loadedAt: Date.now(), err: r.err || '' };
+    const A = { conf: {}, asg: {}, off: {}, offk: {}, roster: {}, by: {}, rg, rosterKnown: Array.isArray(r.roster) && !r.err, loadedAt: Date.now(), err: r.err || '' };
     (r.conf || []).forEach(([n, d, k, by, at]) => { n = nmKey(n); (A.conf[n] = A.conf[n] || {})[d] = k; (A.by[n] = A.by[n] || {})[d] = by + ' · ' + String(at || '').slice(5, 16); });
     (r.asg || []).forEach(([n, d, t]) => { n = nmKey(n); (A.asg[n] = A.asg[n] || {})[d] = t; });
     (r.off || []).forEach(([n, a, b, k]) => { n = nmKey(n); for (let d = a; d <= b; d = C.addDays(d, 1)) { (A.off[n] = A.off[n] || {})[d] = true; (A.offk[n] = A.offk[n] || {})[d] = k; } });
@@ -9139,19 +9148,25 @@ async function addCharts(buf, jobs) {
   //  휴무 = 빼기 / 입력 있음 = 그날 점수(보정 포함) / 출근 확인 = 0점 / 지원·교육 확인·업무배정 = 평균 대체(보정 결과) / 휴무 답 = 빼기
   //  매니저(직책) 미입력 = 자동 0점 / 미입력·확인 없음 = 확인 필요(분모에서 뺌) / 실적 0 + 확인 없음 = 0점 넣고 확인 필요 표시 / 미가입 명단 = 빼기
   const isWorkdayA = (d, A) => { const w = new Date(d + 'T00:00:00').getDay(); return w !== 0 && w !== 6 && !(A && A.hol && A.hol.has(d)); };
+  // v29.33: account retention is independent of current roster membership.
+  // Preserve real day records and explicit confirmation history; do not invent attendance for removed staff.
+  const attRosterCurrent = (A, n) => !A || !A.rosterKnown ||
+    (Object.prototype.hasOwnProperty.call(A.roster, n) && A.roster[n].status !== '퇴사');
   function teamDays(ym, from, to) {
     const X = S._adj && S._adj[ym]; if (!X) return null;
     const A = X.A, rg = A.rg, lo = from > rg.from ? from : rg.from, hi0 = to < rg.to ? to : rg.to, hi = hi0 < S.today ? hi0 : S.today, rows = [];
     X.src.users.forEach(u => {
       if (u.group === '팀장' || wtOnU(u, ym)) return;                                   // v28.55 : 업무표 사용자 = 팀 효율 · 확인 필요에서 뺌
       const n = nmKey(u.name), res = X.by[n], byD = {}, ro = A.roster[n] || {}, title = u.title || ro.title || '', st = ro.status || '';
+      const attendanceRequired = attRosterCurrent(A, n);
       (res ? res.items : u.items).forEach(it => (byD[it.date] = it));
       for (let d = lo; d <= hi; d = C.addDays(d, 1)) {
         const it = byD[d], c = (A.conf[n] || {})[d] || '', off = (A.off[n] || {})[d] || st === '육아' || st === '병가', wk = isWorkdayA(d, A);
         const row = { uid: u.id, name: u.name, grp: u.group, title, date: d, conf: c, by: (A.by[n] || {})[d] || '' };
         if (it) { const v = C.sumDay(it.sum, minsYm(ym)), z = !(Math.abs(v.e2) > 1e-9), aj = it._adj;
           if (off && z) continue;                                                          // v28.53 : 휴무일 0점 기록 = 휴무 (실적이 있으면 실제로 일한 것으로 출근)
-          rows.push(Object.assign(row, { st: aj && aj.kind ? aj.reason : z ? '실적 0' : '입력', inc: true, score: z ? 0 : v.f7, pend: z && !(aj && aj.kind) && c !== 'present' && d < S.today, zero: z, adj: aj || null })); continue; }
+          rows.push(Object.assign(row, { st: aj && aj.kind ? aj.reason : z ? '실적 0' : '입력', inc: true, score: z ? 0 : v.f7, pend: attendanceRequired && z && !(aj && aj.kind) && c !== 'present' && d < S.today, zero: z, adj: aj || null })); continue; }
+        if (!attendanceRequired && !c) continue;
         if (off) continue;
         if (c === 'present') { rows.push(Object.assign(row, { st: '출근 확인', inc: true, score: 0 })); continue; }
         if (c === 'leave') { rows.push(Object.assign(row, { st: '휴무 등록 대기', inc: false, score: null, lvwait: true })); continue; }
@@ -12220,7 +12235,7 @@ async function addCharts(buf, jobs) {
   const mgRangeHas=(r,d)=>!!d&&d>=r.from&&d<=r.to&&(r.mode!=='week'||(mgDow(d)>0&&mgDow(d)<6));
   function mgQueryBar(v,key,groups,selected){
     const r=mgQueryRange(v,key),q=v[key],mon=wkMon(q.date),P=mgFbPeriod(q.date),fb=key==='fbQuery';
-    return `<div class="card mg-query mg-query-compact"><div class="mg-query-period"><div class="seg">${[['day','일간'],['week','주간'],['month','월간'],['period','귀속월']].map(([k,t])=>`<button data-mq-mode="${k}" class="${q.mode===k?'on':''}" aria-pressed="${q.mode===k}">${t}</button>`).join('')}</div><label>조회일 <input data-mq-date type="date" value="${q.date}" ${fb?`max="${S.today}"`:''}></label>${q.mode==='period'?`<label>귀속월 <select data-mq-ym>${(S.periods||[]).filter(p=>p.start<=S.today).slice().sort((a,b)=>b.ym.localeCompare(a.ym)).map(p=>`<option value="${p.ym}" ${q.ym===p.ym?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label>`:''}<button class="sm" data-mq-today>오늘</button><div class="mg-query-inline-groups" role="group" aria-label="그룹 선택"><b>그룹</b>${[['','전체 그룹'],...groups.map(g=>[g,g])].map(([g,t])=>`<button type="button" class="sm mg-query-chip ${selected===g?'mg-selected':''}" data-mq-group="${esc(g)}" aria-pressed="${selected===g}" style="--mg-group:${g?gcol(g):'#2563eb'}">${g?`<i class="mg-query-dot" style="background:${gcol(g)}"></i>`:''}${esc(t)}</button>`).join('')}</div><button class="sm" data-mq-refresh>새로고침</button><span class="muted mg-query-caption">${esc(r.label)} · ${r.from}${r.to!==r.from?' ~ '+r.to:''} · ${P?esc(ymLabel(P.ym))+' 귀속월':'귀속월 미설정'}</span></div></div>`;
+    return `<div class="card mg-query mg-query-compact"><div class="mg-query-period"><div class="seg">${[['day','일간'],['week','주간'],['month','월간'],['period','귀속월']].map(([k,t])=>`<button data-mq-mode="${k}" class="${q.mode===k?'on':''}" aria-pressed="${q.mode===k}">${t}</button>`).join('')}</div><div class="mg-query-date-nav" role="group" aria-label="조회 날짜 이동"><button type="button" class="sm" data-mq-date-step="-1" aria-label="이전 날짜" title="하루 전 조회">‹</button><label>조회일 <input data-mq-date type="date" value="${q.date}" ${fb?`max="${S.today}"`:''}></label><button type="button" class="sm" data-mq-date-step="1" aria-label="다음 날짜" title="하루 뒤 조회" ${fb&&q.date>=S.today?'disabled':''}>›</button></div>${q.mode==='period'?`<label>귀속월 <select data-mq-ym>${(S.periods||[]).filter(p=>p.start<=S.today).slice().sort((a,b)=>b.ym.localeCompare(a.ym)).map(p=>`<option value="${p.ym}" ${q.ym===p.ym?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label>`:''}<button class="sm" data-mq-today>오늘</button><div class="mg-query-inline-groups" role="group" aria-label="그룹 선택"><b>그룹</b>${[['','전체 그룹'],...groups.map(g=>[g,g])].map(([g,t])=>`<button type="button" class="sm mg-query-chip ${selected===g?'mg-selected':''}" data-mq-group="${esc(g)}" aria-pressed="${selected===g}" style="--mg-group:${g?gcol(g):'#2563eb'}">${g?`<i class="mg-query-dot" style="background:${gcol(g)}"></i>`:''}${esc(t)}</button>`).join('')}</div><button class="sm" data-mq-refresh>새로고침</button><span class="muted mg-query-caption">${esc(r.label)} · ${r.from}${r.to!==r.from?' ~ '+r.to:''} · ${P?esc(ymLabel(P.ym))+' 귀속월':'귀속월 미설정'}</span></div></div>`;
   }
   function mgQueryRefresh(range){
     for(const p of S.periods||[])if(p.start<=range.to&&(!p.end||p.end>=range.from)){if(S._mcache)delete S._mcache['M|'+p.ym];}
@@ -12229,6 +12244,7 @@ async function addCharts(buf, jobs) {
     const setDate=date=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(date||'')||(key==='fbQuery'&&date>S.today))return false;v[key].date=date;delete v[key].ym;return true;};
     $$('[data-mq-mode]',box).forEach(b=>b.onclick=()=>{v[key].mode=b.dataset.mqMode;drawMgr();});
     const gs=$('[data-mq-group-select]',box);if(gs)gs.onchange=()=>{v[groupKey]=gs.value;drawMgr();};
+    $$('[data-mq-date-step]',box).forEach(b=>b.onclick=()=>{if(setDate(C.addDays(v[key].date,Number(b.dataset.mqDateStep))))drawMgr();});
     const d=$('[data-mq-date]',box);if(d)d.onchange=()=>{if(setDate(d.value))drawMgr();else d.value=v[key].date;};
     const ym=$('[data-mq-ym]',box);if(ym)ym.onchange=()=>{const p=(S.periods||[]).find(p=>p.ym===ym.value&&p.start<=S.today);if(!p)return;v[key].ym=p.ym;v[key].date=p.start;drawMgr();};
     $$('[data-mq-group]',box).forEach(b=>b.onclick=()=>{v[groupKey]=b.dataset.mqGroup;drawMgr();});
