@@ -3488,6 +3488,17 @@ html[data-theme=dark] .pa-pvw{background:#3a3115;color:#f5df7a}
 .pa-hand button{padding:0 6px;min-height:0;border:0;background:transparent;color:inherit;box-shadow:none}
 @media (max-width:1100px){.pa-hd{flex-wrap:wrap}.pa-tiles{flex-wrap:wrap;flex-basis:100%;order:3}.pa-t{flex:1 1 96px}.pa-body{flex-direction:column;align-items:stretch}.pa-left{width:auto;position:static}.pa-list{max-height:none}.pa-cfg{flex-direction:column}.pa-pm{flex-direction:column}.pa-pm textarea{width:auto;min-height:160px}}
 </style>
+<style id="premium-fit-v2947">
+/* v29.47: 24인치 등 넓은 화면에서 프리미엄 사전안내를 한 화면에 맞춤 (페이지 스크롤 없음) */
+#main .pa.pa-fit{display:flex;flex-direction:column;height:var(--pa-avail);box-sizing:border-box;padding-bottom:10px;overflow:hidden}
+#main .pa.pa-fit>.pa-hd{position:relative;top:auto;flex:none}
+#main .pa.pa-fit>.pa-body{flex:1 1 auto;min-height:0;align-items:stretch}
+#main .pa.pa-fit .pa-left{position:static;min-height:0}
+#main .pa.pa-fit .pa-list{flex:1 1 auto;max-height:none;min-height:120px}
+#main .pa.pa-fit .pa-bun{flex:none;max-height:28%;overflow:auto}
+#main .pa.pa-fit .pa-right{min-height:0;overflow:auto}
+#main .pa.pa-fit>.pa-ft{flex:none;position:static;margin-top:10px}
+</style>
 <style id="premium-dashboard-v2938">
 /* v29.38: keep the premium dashboard visible without covering its order list. */
 #main .pa{--pa-nav-top:60px;--pa-dashboard-height:130px}
@@ -9390,7 +9401,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.47';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13639,21 +13650,40 @@ async function addCharts(buf, jobs) {
   // ================================================================ v29.37 : 프리미엄 사전안내 (상황판 붙여넣기 · 주문별 안내 · 기타시간 반영)
   // v29.38: pin the premium dashboard below the app navigation, measuring wrapped heights.
   let paStickyCleanup=null;
+  // v29.47: (1) 넓은 화면(>1100px)이고 높이가 충분하면 화면 한 장에 맞춤 — 페이지 스크롤 없음, 주문 목록·오른쪽 패널만 안에서 스크롤.
+  //         (2) 그 밖(작은 화면)에서는 기존 고정 막대 유지, 고정 위치 = 메뉴 높이 + 처음 간격 (스크롤해도 막대가 위로 올라가지 않음).
   function paStickyMount(root){
     if(paStickyCleanup)paStickyCleanup();
     const head=root&&root.querySelector('.pa-hd');if(!head)return;
     const nav=document.querySelector('.czt')||document.querySelector('header');
-    let observer=null;
-    const cleanup=()=>{if(observer)observer.disconnect();if(paStickyCleanup===cleanup)paStickyCleanup=null;};
+    let observer=null,busy=false;
+    const onResize=()=>measure();
+    const cleanup=()=>{if(observer)observer.disconnect();window.removeEventListener('resize',onResize);if(paStickyCleanup===cleanup)paStickyCleanup=null;};
     const measure=()=>{
       if(!root.isConnected){cleanup();return;}
-      const position=nav&&getComputedStyle(nav).position;
-      const navHeight=nav&&['sticky','fixed'].includes(position)?nav.getBoundingClientRect().height:0;
-      root.style.setProperty('--pa-nav-top',Math.max(0,Math.ceil(navHeight))+'px');
-      root.style.setProperty('--pa-dashboard-height',Math.max(0,Math.ceil(head.getBoundingClientRect().height))+'px');
+      if(busy)return;busy=true;
+      try{
+        const position=nav&&getComputedStyle(nav).position;
+        const navHeight=nav&&['sticky','fixed'].includes(position)?nav.getBoundingClientRect().height:0;
+        const docTop=root.getBoundingClientRect().top+window.scrollY;                  // 스크롤과 무관한 원래 위치
+        const mt=parseFloat(getComputedStyle(head).marginTop)||0;
+        const gap=Math.max(0,docTop+(parseFloat(getComputedStyle(root).paddingTop)||0)+mt-navHeight);
+        root.style.setProperty('--pa-nav-top',Math.max(0,Math.ceil(navHeight+gap))+'px');
+        root.style.setProperty('--pa-dashboard-height',Math.max(0,Math.ceil(head.getBoundingClientRect().height))+'px');
+        let avail=Math.floor(window.innerHeight-docTop);
+        const fit=window.innerWidth>1100&&avail>=600;
+        root.classList.toggle('pa-fit',fit);
+        if(fit){
+          root.style.setProperty('--pa-avail',avail+'px');
+          const over=document.documentElement.scrollHeight-window.innerHeight;          // 아래 여백 때문에 넘치면 그만큼 줄임
+          if(over>0){avail-=over;root.style.setProperty('--pa-avail',avail+'px');}
+          if(window.scrollY)window.scrollTo(0,0);
+        }else root.style.removeProperty('--pa-avail');
+      }finally{busy=false;}
     };
     paStickyCleanup=cleanup;measure();
-    if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(measure);observer.observe(head);if(nav)observer.observe(nav);}
+    window.addEventListener('resize',onResize);
+    if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(()=>measure());observer.observe(head);if(nav)observer.observe(nav);}
   }
   const PA_NEW_UNTIL = '2026-12-31';
   const canPa = () => !!(S.me && S.pa && S.pa.who && !S.pv);
