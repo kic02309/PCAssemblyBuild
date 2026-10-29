@@ -1761,7 +1761,7 @@ html[data-theme=dark] .manage-monthnav button,html[data-theme=dark] .manage-mont
 .actual-import table.actual-table td:first-child{width:64px;min-width:64px;white-space:nowrap}
 .actual-import table.actual-table input[type=checkbox]{width:auto}
 .actual-import table.actual-table td:nth-child(2){white-space:nowrap}
-/* 업무데이터 입력 집중 전체화면: 상단·좌측 메뉴만 숨기고 표의 글씨·열 너비는 유지 */
+/* 업무데이터 입력 집중 전체화면: 상단·좌측 메뉴 숨김. 표가 화면보다 넓으면 fitGrid()가 표만 자동 축소 */
 body.input-focus .czt, body.input-focus .czr,
 body.input-focus .roh, body.input-focus.lay-top #app > header{display:none!important}
 body.input-focus .czb{min-height:100vh}
@@ -9390,7 +9390,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.45';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9417,6 +9417,7 @@ async function addCharts(buf, jobs) {
       b.setAttribute('aria-pressed', String(on));
       b.title = on ? '일반 화면으로 돌아가기 (Esc)' : '상단·왼쪽 메뉴를 숨기고 입력 영역 확장';
     }
+    fitSoon();
     if (on) {
       // 브라우저가 허용하면 진짜 전체화면, 허용하지 않으면 메뉴 숨김 모드로 동작.
       try {
@@ -9432,6 +9433,23 @@ async function addCharts(buf, jobs) {
   document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement && document.body.classList.contains('input-focus')) setInputFocus(false);
   });
+  // v29.46 : 전체화면일 때 표가 화면 너비보다 넓으면 표만 자동 축소 (24인치 등). 최소 70%, 넓은 화면은 100% 그대로.
+  function fitGrid() {
+    const t = document.querySelector('#main .gridwrap > #grid'), w = t && t.parentElement, bt = $('#inputFocus');
+    if (!t) return;
+    const on = document.body.classList.contains('input-focus');
+    t.style.zoom = '';
+    let z = 1;
+    if (on) {
+      const need = t.scrollWidth, have = w.clientWidth - 2;
+      if (need > have && need > 0) z = Math.max(0.7, Math.floor(have / need * 1000) / 1000);
+      if (z < 1) t.style.zoom = String(z);
+    }
+    if (bt) bt.textContent = on ? (z < 1 ? `⤢ 전체화면 해제 · ${Math.round(z * 100)}%` : '⤢ 전체화면 해제') : '⛶ 전체화면';
+  }
+  let fitRaf = 0;
+  const fitSoon = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(() => requestAnimationFrame(fitGrid)); };
+  window.addEventListener('resize', fitSoon);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !document.fullscreenElement && document.body.classList.contains('input-focus') && !document.querySelector('.modal-bg, .hr-ov')) setInputFocus(false);
   });
@@ -10279,7 +10297,7 @@ async function addCharts(buf, jobs) {
       try { await api('setTarget', { userId: who().id, ym: D.period.ym, target: v }); D.target = v; if (D.pc) D.pc.target = v; refreshCalc(); toast(ymLabel(D.period.ym) + (v ? ' 목표를 ' + v + '(으)로 저장했습니다' : ' 목표를 지웠습니다')); }
       catch (err) { toast(err.message, true); e.target.value = D.target || ''; }
     };
-    buildTops(); buildGrid(); refreshCalc(); showSaveState();
+    buildTops(); buildGrid(); refreshCalc(); showSaveState(); fitSoon();
   }
   function lastFilled(doc) { let k = -1; doc.rows.forEach((r, i) => { if (r && (String(r.o || '').trim() || r.memo)) k = i; }); return k; }
 
