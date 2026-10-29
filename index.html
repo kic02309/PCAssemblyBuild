@@ -7933,7 +7933,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     COL_OPTS['위치@보고순서']=['왼쪽','오른쪽'];COL_OPTS['직급@보고순서']=['팀장','매니저','사원','계약직',''];
     const supported=CFG._orderRevision===1,locked=!!CFG._orderLocked;
     cfgb().innerHTML=`<div class="card"><h2>보고 순서표</h2><div class="actions"><label>귀속월 <input type="month" id="orderMonth" value="${esc(month)}"></label><button id="orderLoad">불러오기</button><button id="orderPreview">기준 양식 미리보기</button><button class="primary" id="svOrder" ${!supported||locked?'disabled':''}>이 귀속월 저장 (자동 정렬)</button></div>
-      <div class="banner info">선택 귀속월의 보고 배치입니다. 직원 행을 원하는 블록으로 끌어서 이동하고 [이 귀속월 저장]으로 확정하세요. 퇴사는 [퇴사인원] 블록으로 이동하며 이름·사번·계약월·평가기록을 유지합니다. 조직도·계정의 퇴사 처리와는 별개입니다. 엑셀은 기존 [이 달 엑셀 받기]를 이용하세요.</div>
+      <div class="banner info">선택 귀속월의 보고 배치입니다. 직원 행을 원하는 블록으로 끌어서 이동하고 [이 귀속월 저장]으로 확정하세요. 퇴사는 [퇴사인원] 블록으로 이동하며 이름·사번·계약월·평가기록을 유지합니다. 조직도·계정의 퇴사 처리와는 별개입니다. 엑셀은 [인사평가]·[인사보고] 버튼을 이용하세요.</div>
       ${!supported?'<div class="banner warn">v29.14 SQL을 먼저 적용해야 귀속월별로 저장할 수 있습니다.</div>':''}${locked?'<div class="banner warn">인사평가가 마감된 귀속월입니다. 미리보기만 가능합니다.</div>':''}
       <div class="order-board-actions"><button id="orderUndo" disabled>되돌리기</button><button id="orderSort">전체 입사순 정렬</button><button id="orderScores">저장 총점 조회</button><span class="muted">행을 다른 블록에 놓으면 관리자 우선·사원 입사순으로 정렬됩니다. 왼쪽 그룹명은 고정 표시되며 직원 행을 끌어서 이동합니다.</span></div><div class="report-editor-layout order-board-layout"><div><div id="orderBoard" class="order-board"></div><details class="order-details"><summary>상세 편집 · 블록/좌우 위치/직급/사번/계약월</summary><div id="orderEditor">${editTable('보고순서',rows,{readonly:['순서'],w:{블록:110,위치:60,블록순서:50,순서:40,이름:80,사번:90,계약월:95,비고:120},blank:{위치:'왼쪽',직급:'사원'}})}</div></details></div><aside class="report-counts" id="orderCounts"></aside></div><p id="orderState" class="muted">저장된 기준</p></div><datalist id="blkList">${blocks.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>`;
     let dirty=false;ST.orderDirty=false;
@@ -8150,9 +8150,9 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
           const tb = L => `<table class="tbl"><thead><tr><th>평가월</th><th>상태</th><th></th></tr></thead><tbody>${L.map(tr).join('')}</tbody></table>`;
           return tb(top) + (rest.length ? `<details class="hrold"><summary>이전 달 ${rest.length}개 보기 <span class="muted">(열림 ${rest.filter(m => !lk[m]).length})</span></summary>${tb(rest)}</details>` : ''); })()}</section>
       <section class="card dsec"><div class="dst"><b>엑셀 받기</b></div>
-        <div class="banner info">표지 · "조립팀_평가 개정안" · "조립팀(파트)" (8월 정식 양식) + 인원별 "인사평가표" 시트 · 가점은 받은 엑셀의 "미래성과평가" 칸에 적으세요.</div>
+        <div class="banner info"><b>인사평가</b> : 표지 · 조립팀_평가 개정안 (8월 정식 양식) &nbsp;·&nbsp; <b>인사보고</b> : 인원별 인사평가표 시트 · 가점은 받은 엑셀의 "미래성과평가" 칸에 적으세요.</div>
         <div class="row"><select id="dlMonth" style="width:auto">${(META.months || []).map(m => `<option value="${m}" ${m === ST.month ? 'selected' : ''}>${ymLab(m)}</option>`).join('')}</select>
-          <button class="primary" id="dlBtn">⬇ 이 달 엑셀 받기</button><button id="dlAll">⬇ 전체 기록 받기</button>
+          <button class="primary" id="dlEval">⬇ 인사평가</button><button class="primary" id="dlBtn">⬇ 인사보고</button>
           <label class="lvchk"><input type="checkbox" id="dlSide" checked> 오른쪽 그래프·업무데이터 포함</label></div>
         <div class="infof"><b>인적사항 파일 (선택)</b> <input type="file" id="dlInfo" accept=".xlsx,.xlsm" style="width:auto">
           <div class="muted" style="margin-top:4px">9월 최종 파일 또는 지난달 엑셀을 넣으면 사진·인적사항을 채웁니다.<br>파일은 서버에 올라가지 않습니다.</div></div></section></div>`;
@@ -8165,7 +8165,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       } catch (e) { toast(e.message, 1); }
     }));
     $('#dlBtn').onclick = () => downloadMonth($('#dlMonth').value);
-    $('#dlAll').onclick = downloadAll;
+    $('#dlEval').onclick = () => downloadEval($('#dlMonth').value);
   }
 function exportRows(month, list) {
   const rd = (v, n) => v === null || v === undefined ? '' : Math.round(v * 10 ** n) / 10 ** n;
@@ -8246,6 +8246,9 @@ async function readInfoFile(file) {
 // 엑셀 받기: 1) 인사평가현황(보고 순서표 모양, 총점)  2) 사람별 인사평가표(개선 양식, 값으로 채움 + 그래프 2개)
 // 8월 정식 양식(표지 / 조립팀_평가 개정안 / 조립팀(파트))에 맞춘 요약 시트 3장.
 // 글꼴 '맑은 고딕'(띄어쓰기 있음), 본문 10pt, 제목 12pt, 표지 제목 32pt.
+const HR_AUG_SPEC = {"cover":[["A1",24.0,0,"","center",0,"","----"],["B1",24.0,0,"","center",0,"","----"],["C1",24.0,0,"","center",0,"","----"],["D1",24.0,0,"","center",0,"","----"],["E1",24.0,0,"","center",0,"","----"],["F1",24.0,0,"","center",0,"","----"],["G1",20.0,0,"","center",0,"","----"],["H1",20.0,0,"","center",0,"","----"],["I1",20.0,0,"","center",0,"","----"],["A2",24.0,0,"","center",0,"","----"],["B2",24.0,0,"","center",0,"","----"],["C2",24.0,0,"","center",0,"","----"],["D2",24.0,0,"","center",0,"","----"],["E2",24.0,0,"","center",0,"","----"],["F2",24.0,0,"","center",0,"","----"],["G2",20.0,0,"","center",0,"","----"],["H2",20.0,0,"","center",0,"","----"],["I2",20.0,0,"","center",0,"","----"],["A3",24.0,0,"","center",0,"","----"],["C3",32.0,0,"center","center",0,"","mmmm"],["D3",null,0,"","",0,"","--m-"],["E3",null,0,"","",0,"","--m-"],["F3",null,0,"","",0,"","--m-"],["G3",null,0,"","",0,"","--m-"],["H3",null,0,"","",0,"","--m-"],["I3",null,0,"","",0,"","--m-"],["J3",null,0,"","",0,"","-mm-"],["A4",24.0,0,"","center",0,"","----"],["C4",null,0,"","",0,"","m--m"],["D4",null,0,"","",0,"","---m"],["E4",null,0,"","",0,"","---m"],["F4",null,0,"","",0,"","---m"],["G4",null,0,"","",0,"","---m"],["H4",null,0,"","",0,"","---m"],["I4",null,0,"","",0,"","---m"],["J4",null,0,"","",0,"","-m-m"],["A5",24.0,0,"center","center",0,"","----"],["B5",24.0,0,"center","center",0,"","----"],["C5",24.0,0,"center","center",0,"","----"],["D5",24.0,0,"center","center",0,"","----"],["E5",24.0,0,"center","center",0,"","----"],["F5",24.0,0,"center","center",0,"","----"],["G5",20.0,0,"center","center",0,"","----"],["H5",20.0,0,"center","center",0,"","----"],["I5",20.0,0,"center","center",0,"","----"],["A6",20.0,0,"center","center",0,"","----"],["B6",20.0,0,"center","center",0,"","----"],["C6",20.0,0,"center","center",0,"","----"],["D6",20.0,0,"center","center",0,"","----"],["E6",20.0,0,"center","center",0,"","----"],["F6",20.0,0,"center","center",0,"","----"],["G6",20.0,0,"center","center",0,"","----"],["H6",20.0,0,"center","center",0,"","----"],["I6",20.0,0,"center","center",0,"","----"],["A7",20.0,0,"center","center",0,"","----"],["B7",20.0,0,"center","center",0,"","----"],["C7",null,0,"center","center",0,"","mtmm"],["D7",null,0,"","",0,"","-tmm"],["E7",null,0,"center","center",0,"","-tmm"],["F7",null,0,"","",0,"","--mm"],["G7",null,0,"","",0,"","-tmm"],["H7",null,0,"center","center",0,"","mtmm"],["I7",null,0,"","",0,"","--mm"],["J7",null,0,"","",0,"","-tmm"],["C8",null,1,"center","center",0,"","mmmm"],["D8",null,0,"","",0,"","-mm-"],["E8",null,0,"center","center",0,"","-t-t"],["F8",null,0,"","",0,"","---t"],["G8",null,0,"","",0,"","-t-t"],["H8",null,0,"right","center",0,"#,##0_$\"원\"","mt-t"],["I8",null,0,"","",0,"","---t"],["J8",null,0,"","",0,"","-t-t"],["C9",null,0,"","",0,"","m---"],["D9",null,0,"","",0,"","-m--"],["E9",null,0,"center","center",0,"","-tt-"],["F9",null,0,"","",0,"","--t-"],["G9",null,0,"","",0,"","-tt-"],["H9",null,0,"right","center",0,"#,##0_$\"원\"","mtt-"],["I9",null,0,"","",0,"","--t-"],["J9",null,0,"","",0,"","-tt-"],["K9",null,0,"center","center",1,"","----"],["C10",null,0,"","",0,"","m---"],["D10",null,0,"","",0,"","-m--"],["E10",null,0,"center","center",0,"","mtmm"],["F10",null,0,"","",0,"","--mm"],["G10",null,0,"","",0,"","-tmm"],["H10",null,0,"right","center",0,"#,##0_$\"원\"","mtmm"],["I10",null,0,"","",0,"","--mm"],["J10",null,0,"","",0,"","-tmm"],["K10",null,0,"center","center",0,"","----"],["C11",null,0,"","",0,"","m---"],["D11",null,0,"","",0,"","-m--"],["E11",null,0,"center","center",0,"","mmmm"],["F11",null,0,"","",0,"","--mm"],["G11",null,0,"","",0,"","-mmm"],["H11",null,0,"right","center",0,"#,##0_$\"원\"","mt--"],["J11",null,0,"","",0,"","-t--"],["K11",null,0,"center","center",0,"","----"],["C12",null,0,"","",0,"","m--m"],["D12",null,0,"","",0,"","-m-m"],["E12",null,0,"center","center",0,"","mtmm"],["F12",null,0,"","",0,"","--mm"],["G12",null,0,"","",0,"","-tmm"],["H12",null,1,"right","center",0,"#,##0_$\"원\"","mtmm"],["I12",null,0,"","",0,"","--mm"],["J12",null,0,"","",0,"","-tmm"],["K12",null,0,"center","center",0,"","----"],["J13",null,1,"center","center",0,"","----"],["K13",null,1,"center","center",0,"","----"]],"head":[["A3",10.0,1,"center","center",0,"","mmmm"],["B3",10.0,1,"center","center",0,"","-tm-"],["C3",10.0,1,"center","center",0,"","ttm-"],["D3",10.0,1,"center","center",0,"","ttm-"],["E3",10.0,1,"center","center",0,"","ttm-"],["F3",10.0,1,"center","center",0,"0\" 점\"","ttm-"],["G3",10.0,1,"center","center",0,"","ttm-"],["H3",10.0,1,"center","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","tmm-"],["I3",10.0,1,"left","center",0,"","----"],["J3",10.0,1,"center","center",0,"","mmm-"],["K3",10.0,1,"center","center",0,"","mtm-"],["L3",10.0,1,"center","center",0,"","ttm-"],["M3",10.0,1,"center","center",0,"","ttm-"],["N3",10.0,1,"center","center",0,"","ttm-"],["O3",10.0,1,"center","center",0,"0\" 점\"","ttm-"],["P3",10.0,1,"center","center",0,"","ttm-"],["Q3",10.0,1,"center","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","tmm-"]],"total":[["J74",null,1,"center","center",0,"","mtmt"],["K74",null,0,"","",0,"","-tm-"],["L74",10.0,1,"center","center",0,"","tmmt"],["M74",null,0,"","",0,"","-mm-"],["N74",10.0,1,"","center",0,"","----"],["O74",10.0,1,"","center",0,"","----"],["P74",null,1,"","center",0,"","----"],["Q74",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"],["J75",null,0,"","",0,"","m--t"],["K75",null,0,"","",0,"","-t-t"],["L75",null,0,"","",0,"","t--t"],["M75",null,0,"","",0,"","-m-t"],["N75",10.0,1,"","center",0,"","----"],["O75",10.0,1,"","center",0,"","----"],["P75",null,1,"","center",0,"","----"],["Q75",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"],["J76",null,1,"center","center",0,"0\\ \"명\"","mttm"],["K76",null,0,"","",0,"","-tt-"],["L76",null,1,"center","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","tmtm"],["M76",null,0,"","",0,"","-mt-"],["N76",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"],["O76",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"],["P76",null,1,"","center",0,"","----"],["Q76",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"],["J77",null,0,"","",0,"","m--m"],["K77",null,0,"","",0,"","-t-m"],["L77",null,0,"","",0,"","t--m"],["M77",null,0,"","",0,"","-m-m"],["N77",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"],["O77",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"],["P77",null,1,"","center",0,"","----"],["Q77",null,1,"","center",0,"_-\"₩\"* #,##0_-;\\-\"₩\"* #,##0_-;_-\"₩\"* \"-\"_-;_-@_-","----"]],"grade":[["A115",null,1,"","center",0,"","----"],["B115",10.0,0,"center","center",0,"","----"],["C115",10.0,0,"center","center",0,"","----"],["A116",null,1,"","center",0,"","----"],["C116",null,1,"center","center",0,"","----"],["A117",null,1,"center","center",0,"","mttt"],["B117",null,1,"center","center",0,"","tmtt"],["C117",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A118",null,1,"center","center",0,"","mttt"],["B118",null,1,"center","center",0,"","tmtt"],["C118",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A119",null,1,"center","center",0,"","mttt"],["B119",null,1,"center","center",0,"","tmtt"],["C119",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A120",null,1,"center","center",0,"","mttt"],["B120",null,1,"center","center",0,"","tmtt"],["C120",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A121",null,1,"center","center",0,"","mttt"],["B121",null,1,"center","center",0,"","tmtt"],["C121",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A122",null,1,"center","center",0,"","mttt"],["B122",null,1,"center","center",0,"","tmtt"],["C122",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A123",null,1,"center","center",0,"","mttt"],["B123",null,1,"center","center",0,"","tmtt"],["C123",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A124",null,1,"center","center",0,"","mttt"],["B124",null,1,"center","center",0,"","tmtt"],["C124",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A125",null,1,"center","center",0,"","mttt"],["B125",null,1,"center","center",0,"","tmtt"],["C125",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A126",null,1,"center","center",0,"","mttt"],["B126",null,1,"center","center",0,"","tmtt"],["C126",null,0,"","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A127",null,1,"center","center",0,"","mttt"],["B127",null,1,"center","center",0,"","tmtt"],["C127",null,0,"","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A128",null,1,"center","center",0,"","mttt"],["B128",null,1,"center","center",0,"","tmtt"],["C128",null,0,"","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A129",null,1,"center","center",0,"","mttt"],["B129",null,1,"center","center",0,"","tmtt"],["C129",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A130",null,1,"center","center",0,"","mttt"],["B130",null,1,"center","center",0,"","tmtt"],["C130",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A131",null,1,"center","center",0,"","mttt"],["B131",null,1,"center","center",0,"","tmtt"],["C131",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A132",null,1,"center","center",0,"","mttt"],["B132",null,1,"center","center",0,"","tmtt"],["C132",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A133",null,1,"center","center",0,"","mttt"],["B133",null,1,"center","center",0,"","tmtt"],["C133",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A134",null,1,"center","center",0,"","mttt"],["B134",null,1,"center","center",0,"","tmtt"],["C134",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A135",null,1,"center","center",0,"","mttt"],["B135",null,1,"center","center",0,"","tmtt"],["C135",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A136",null,1,"center","center",0,"","mttt"],["B136",null,1,"center","center",0,"","tmtt"],["C136",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"],["A137",null,1,"center","center",0,"","mttt"],["B137",null,1,"center","center",0,"","tmtt"],["C137",null,0,"center","center",0,"_-* #,##0_-;\\-* #,##0_-;_-* \"-\"_-;_-@_-","----"]]};
+// ===== [인사평가] 엑셀 : 8월 정식 양식과 같은 3시트 (고객지원부_조립팀 · 조립팀_평가 개정안 · 조립팀(파트)=숨김)
+// 서식 규칙은 8월 파일(2026년 08월 조립팀 인사평가)에서 셀 단위로 뽑아 고정했다.
 const HR_AUG_GRADES = [
   [55, 'F', '-'], [60, 'D+', '-'], [70, 'C-', '-'], [74, 'C', '-'], [77, 'C+', '-'],
   [80, 'B-  하', 100000], [81, 'B-  하', 100000], [82, 'B-  중', 200000], [83, 'B-  상', 300000],
@@ -8254,194 +8257,202 @@ const HR_AUG_GRADES = [
   [90, 'A', 1000000], [91, 'A', 1000000], [92, 'A', 1000000],
   [93, 'A+', 1500000], [94, 'A+', 1500000], [95, 'A+', 1500000]
 ];
-function hrAugSheets(wb, o) {
-  const { y, m, order, recBy, reportTotals, nk, xlDate, layout } = o;
+async function hrEvalWorkbook(month, list, order, orderTotals = {}) {
+  if (!window.ExcelJS || !window.JSZip) throw new Error('엑셀 기능을 불러오지 못했습니다. 새로고침(Ctrl+F5) 후 다시 시도하세요.');
+  if (!order || !order.length) throw new Error('이 달 보고 순서가 없습니다. [보고 배치]를 먼저 저장하세요.');
+  const [y, m] = month.split('-');
+  const mm = String(m).padStart(2, '0'), nextM = String((+m % 12) + 1);   // 8월 양식: '소계(9월 운영비)' (앞자리 0 없음)
+  const nk = s => String(s || '').replace(/\s+/g, '');
+  const recBy = {}; (list || []).forEach(x => recBy[nk(x.person.name)] = x);
+  const reportTotals = Object.fromEntries(Object.entries(orderTotals || {}).map(([n, v]) => [nk(n), v]));
+  const wb = new ExcelJS.Workbook();
   const AF = '맑은 고딕';
-  const fN = { name: AF, size: 10 }, fB = { name: AF, size: 10, bold: true }, f11 = { name: AF, size: 11 }, f11B = { name: AF, size: 11, bold: true };
-  const med = { style: 'medium' }, thn = { style: 'thin' };
+  const BSTY = { m: { style: 'medium' }, t: { style: 'thin' } };
   const NF_DATE = 'yyyy"년"\\ m"월";@', NF_PT = '0" 점"', NF_GR = '0\\ " 등급"';
   const NF_WON = '_-"₩"* #,##0_-;\\-"₩"* #,##0_-;_-"₩"* "-"_-;_-@_-';
-  const NF_TBL = '_-* #,##0_-;\\-* #,##0_-;_-* "-"_-;_-@_-';
   const NAME_EV = '조립팀_평가 개정안', NAME_PT = '조립팀(파트)', NAME_CV = '고객지원부_조립팀';
   const Q = `'${NAME_EV}'`;
-  const fv = (formula, result) => (result === '' || result === undefined || result === null) ? { formula } : { formula, result };
   const colL = n => { let s = ''; while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; };
   const serial = d => Math.round(d.getTime() / 864e5) + 25569;
-  const bd = (l, r, t, b) => ({ left: l, right: r, top: t, bottom: b });
-  const cen = (wrap) => ({ horizontal: 'center', vertical: 'middle', wrapText: !!wrap });
-
-  // ---- 블록 위치 계산 (블록 사이 1줄 비움)
-  const sides = layout(order);
-  const geo = blocks => { let row = 4; const list = blocks.map(b => { const n = Math.max(b.rows.length, 1); const g = { b, row, n }; row += n + 1; return g; }); return { list, end: row }; };
-  const GL = geo(sides['왼쪽']), GR = geo(sides['오른쪽']);
-  const tblTop = Math.max(117, GL.end + 3, GR.end + 7);       // 등급표 첫 행 (8월 양식은 117)
-  const tblBot = tblTop + HR_AUG_GRADES.length - 1;
-  const lastL = GL.end - 2, lastR = GR.end - 2;
-
-  // ---- 점수·등급·인센티브 계산 (엑셀 수식과 같은 규칙, 저장된 결과값으로 미리 넣어 둠)
-  const scoreOf = r => {
-    const nm = nk(r['이름']); const x = recBy[nm]; const sv = reportTotals[nm];
-    return sv != null && sv !== '' ? Number(sv) : x && x.rec && x.rec['합계'] !== '' && x.rec['합계'] !== undefined ? Number(x.rec['합계']) : null;
+  const fv = (formula, result) => (result === '' || result === undefined || result === null) ? { formula } : { formula, result };
+  const NA = { error: '#N/A' };
+  // 셀 서식 한 번에: [글꼴크기|null, 굵게, 가로, 세로, 줄바꿈, 숫자형식, 테두리 'LRTB'(m/t/-)]
+  const paint = (cell, sz, b, h, v, wrap, nf, bd) => {
+    cell.font = { name: AF, size: sz || 11, bold: !!b };
+    const al = {}; if (h) al.horizontal = h; if (v) al.vertical = v === 'center' ? 'middle' : v; if (wrap) al.wrapText = true; cell.alignment = al;
+    if (nf) cell.numFmt = nf;
+    const bo = {}; ['left', 'right', 'top', 'bottom'].forEach((k, i) => { const s = BSTY[bd[i]]; if (s) bo[k] = s; }); cell.border = bo;
   };
-  const gradeOf = s => { if (s === null || s === undefined || isNaN(s)) return ''; let g = ''; for (const t of HR_AUG_GRADES) if (t[0] <= s) g = t[1]; return g; };
-  const incOf = s => { if (s === null || s === undefined || isNaN(s) || s < 80) return ''; const t = HR_AUG_GRADES.find(q => q[0] === s); return t ? t[2] : ''; };
+  const applySpec = (ws, spec) => spec.forEach(([a, sz, b, h, v, wrap, nf, bd]) => paint(ws.getCell(a), sz, b, h, v, wrap, nf, bd));
+  const num0 = v => v ? (isFinite(v) ? Number(v) : v) : '';
+  const scoreOf = r => {
+    const k = nk(r['이름']), x = recBy[k], sv = reportTotals[k];
+    return sv != null && sv !== '' ? Number(sv) : x && x.rec && x.rec['합계'] !== '' && x.rec['합계'] !== undefined && x.rec['합계'] !== null ? Number(x.rec['합계']) : null;
+  };
+  const gradeOf = s => { if (s === null || isNaN(s)) return null; let g = null; for (const t of HR_AUG_GRADES) if (t[0] <= s) g = t[1]; return g; };
+  const incOf = s => { if (s === null || isNaN(s) || s < 80) return ''; const t = HR_AUG_GRADES.find(q => q[0] === s); return t ? t[2] : ''; };
+  const LEAD = new Set(['팀장', '매니저']), OFF = new Set(['휴직', '퇴사인원']);
+
+  // ---- 블록 위치 (블록 사이 1줄 비움, 0명 블록은 2줄, 1줄 블록은 이름만 표기)
+  const sides = ReportCore.layout(order);
+  const geo = blocks => { let row = 4; const out = blocks.map(b => { const n = Math.max(b.rows.length, b.rows.length ? 1 : 2); const g = { b, row, n }; row += n + 1; return g; }); return { list: out, end: row }; };
+  const GL = geo(sides['왼쪽']), GR = geo(sides['오른쪽']);
+  const lastL = Math.max(GL.end - 2, 4), lastR = Math.max(GR.end - 2, 4);
+  const tot0 = GR.end;                                        // 총원 블록 첫 행 (오른쪽 마지막 블록 + 1줄)
+  const tblTop = Math.max(117, GL.end + 4, tot0 + 8);         // 등급표 첫 행 (8월 = 117)
+  const tblBot = tblTop + HR_AUG_GRADES.length - 1;
+  const gAbs = `$A$${tblTop}:$B$${tblBot}`, iAbs = `$A$${tblTop}:$C$${tblBot}`;
+  const totalPeople = new Set(order.filter(r => r['이름']).map(r => nk(r['이름']))).size;
+  let incTotal = 0;
+  [GL, GR].forEach(G => G.list.forEach(({ b }) => b.rows.forEach(r => { if (r['비고'] || OFF.has(String(b.name).trim())) return; const v = incOf(scoreOf(r)); if (v !== '') incTotal += v; })));
 
   // ======================================================== 1) 표지
-  const cv = wb.addWorksheet(NAME_CV, { views: [{ showGridLines: true }] });
-  cv.properties.defaultColWidth = 9.6;
-  for (let c = 1; c <= 13; c++) cv.getColumn(c).width = 9.6;
-  [31.5, 31.5, 31.5, 31.5, 36, 30.6, 30.6, 30, 30, 30, 30, 30, 30].forEach((h, i) => { cv.getRow(i + 1).height = h; });
-  const box = (r1, c1, r2, c2, w) => {
-    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
-      const cell = cv.getCell(r, c); const b = Object.assign({}, cell.border || {});
-      if (r === r1) b.top = w; if (r === r2) b.bottom = w; if (c === c1) b.left = w; if (c === c2) b.right = w;
-      cell.border = b;
-    }
-  };
-  const put = (addr, v, font, nf, al) => { const c = cv.getCell(addr); c.value = v; c.font = font; c.alignment = al || cen(); if (nf) c.numFmt = nf; return c; };
-  const totalPeople = new Set(order.filter(r => r['이름']).map(r => nk(r['이름']))).size;
-  const mm = String(m).padStart(2, '0'), nextM = String((+m % 12) + 1).padStart(2, '0');
-  cv.mergeCells('C3:J4'); put('C3', `조립팀 ${mm}월 평가보고`, { name: AF, size: 32 }); box(3, 3, 4, 10, med);
-  cv.mergeCells('C7:D7'); put('C7', '총     원', f11); box(7, 3, 7, 4, med);
-  cv.mergeCells('C8:D12'); put('C8', totalPeople, f11B); box(8, 3, 12, 4, med);
-  [['E', 'H', 7], ['E', 'H', 8], ['E', 'H', 9], ['E', 'H', 10], ['E', 'H', 11], ['E', 'H', 12]].forEach(([a, b, r]) => { cv.mergeCells(`E${r}:G${r}`); cv.mergeCells(`H${r}:J${r}`); });
-  put('E7', '운영비 지출내역', f11); put('H7', '금        액', f11);
-  put('E8', '운영비 잔금', f11); put('E9', `${mm}월 운영비 지급(수령)액`, f11);
-  put('E10', '합       계', f11); put('E11', `${mm}월 상여 지급(-)`, f11); put('E12', `소계(${nextM}월 운영비)`, f11);
-  const R = { horizontal: 'right', vertical: 'middle' }, NF_WN = '#,##0_$"원"';
-  put('H8', 0, f11, NF_WN, R); put('H9', 0, f11, NF_WN, R);
-  put('H10', fv('SUM(H8:J9)', 0), f11, NF_WN, R);
-  const incTotal = (() => { let t = 0; [GL, GR].forEach(G => G.list.forEach(({ b }) => b.rows.forEach(r => { const v = incOf(scoreOf(r)); if (v !== '') t += v; }))); return t; })();
-  put('H11', fv(`${Q}!L${GR.end + 2}`, incTotal), f11, NF_WN, R);
-  put('H12', fv('SUM(H10)-H11', -incTotal), f11B, NF_WN, R);
-  for (let r = 7; r <= 12; r++) { const w = (r === 7 || r === 10 || r === 12) ? med : thn; box(r, 5, r, 7, w); box(r, 8, r, 10, w); }
-  box(7, 5, 12, 10, med);
-  for (let r = 7; r <= 12; r++) { const b = cv.getCell(r, 8).border || {}; cv.getCell(r, 8).border = Object.assign({}, b, { left: med }); }
-  cv.pageSetup = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+  const cv = wb.addWorksheet(NAME_CV, { views: [{ zoomScale: 115 }] });
+  cv.properties.defaultRowHeight = 17.4;
+  for (let c = 1; c <= 13; c++) cv.getColumn(c).width = 9.59765625;
+  [31.5, 31.5, 31.5, 31.5, 36, 30.6, 30.6, 30, 30, 30, 30, 30, 30, 30].forEach((h, i) => { cv.getRow(i + 1).height = h; });
+  ['C3:J4', 'C7:D7', 'C8:D12', 'E7:G7', 'E8:G8', 'E9:G9', 'E10:G10', 'E11:G11', 'E12:G12', 'H7:J7', 'H8:J8', 'H9:J9', 'H10:J10', 'H11:J11', 'H12:J12'].forEach(a => cv.mergeCellsWithoutStyle(a));
+  applySpec(cv, HR_AUG_SPEC.cover);
+  const set = (ws, a, v) => { ws.getCell(a).value = v; };
+  set(cv, 'C3', `조립팀 ${mm}월 평가보고`);
+  cv.getCell('C3').font = { name: AF, size: 32, color: { theme: 3 } };
+  set(cv, 'C7', '총     원'); set(cv, 'E7', '운영비 지출내역'); set(cv, 'H7', '금        액');
+  set(cv, 'C8', totalPeople);
+  set(cv, 'E8', '운영비 잔금'); set(cv, 'H8', 0);
+  set(cv, 'E9', `${mm}월 운영비 지급(수령)액`); set(cv, 'H9', 0);
+  set(cv, 'E10', '합       계'); set(cv, 'H10', fv('SUM(H8:J9)', 0));
+  set(cv, 'E11', `${mm}월 상여 지급(-)`); set(cv, 'H11', fv(`${Q}!L${tot0 + 2}`, incTotal));
+  set(cv, 'E12', `소계(${nextM}월 운영비)`); set(cv, 'H12', fv('SUM(H10)-H11', -incTotal));
+  cv.pageSetup = { orientation: 'landscape', paperSize: 9, horizontalCentered: true, printArea: 'A1:L14',
+    margins: { left: 0.7, right: 0.7, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } };
 
   // ======================================================== 2) 조립팀_평가 개정안
   const ws = wb.addWorksheet(NAME_EV, { views: [{ zoomScale: 80 }] });
-  [12.6, 12.6, 12.6, 12.6, 12.6, 8.6, 12.6, 12.6, 3.6, 12.6, 12.6, 12.6, 12.6, 12.6, 8.6, 12.6, 12.6].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
-  ws.getRow(1).height = 21.9; ws.getRow(2).height = 9;
-  const t1 = ws.getCell('A1'); t1.value = `● 조립팀 인사평가현황(${y}년${m}월)`; t1.font = { name: AF, size: 12, bold: true }; t1.alignment = { vertical: 'middle' };
-  const HEAD = ['파트', '직급', '이름', '사번', '계약월', '평가점수', '평가등급', '인센티브'];
-  const headNF = [null, null, null, null, null, NF_PT, null, NF_WON];
-  [1, 10].forEach(c0 => HEAD.forEach((h, i) => {
-    const c = ws.getCell(3, c0 + i); c.value = h; c.font = i === 0 ? { name: AF, size: 10, bold: true } : fB; c.alignment = cen();
-    if (headNF[i]) c.numFmt = headNF[i];
-    c.border = bd(i === 0 ? med : (i === 1 ? undefined : thn), (i === 0 || i === 7) ? med : thn, med, i === 0 ? med : undefined);
-  }));
-  ws.getRow(3).height = 18;
-  const gAbs = `$A$${tblTop}:$B$${tblBot}`, iAbs = `$A$${tblTop}:$C$${tblBot}`;
-  const peopleEv = [];     // 파트 시트용 (이름 위치 기록)
+  ws.properties.defaultRowHeight = 17.4;
+  [12.59765625, 12.59765625, 12.59765625, 12.59765625, 12.59765625, 8.59765625, 12.59765625, 12.59765625, 3.59765625,
+   12.59765625, 12.59765625, 12.59765625, 12.59765625, 12.59765625, 8.59765625, 12.59765625, 12.59765625, null, 9, 9]
+    .forEach((w, i) => { if (w) ws.getColumn(i + 1).width = w; });
+  ws.getRow(1).height = 21.9; ws.getRow(2).height = 9; ws.getRow(3).height = 15;
+  const t1 = ws.getCell('A1'); t1.value = `● 조립팀 인사평가현황(${y}년${mm}월)`; t1.font = { name: AF, size: 12, bold: true }; t1.alignment = { vertical: 'middle' };
+  ['파트', '직급', '이름', '사번', '계약월', '평가점수', '평가등급', '인센티브'].forEach((h, i) => { ws.getCell(3, 1 + i).value = h; ws.getCell(3, 10 + i).value = h; });
+  applySpec(ws, HR_AUG_SPEC.head);
+  const NFS = ['', '', '', '', NF_DATE, NF_PT, NF_GR, NF_WON];
   const drawEv = (G, c0) => {
+    const cF = colL(c0 + 5);
     G.list.forEach(({ b, row, n }) => {
-      const cF = colL(c0 + 5);
+      if (n > 1) ws.mergeCellsWithoutStyle(row, c0, row + n - 1, c0);
       for (let i = 0; i < n; i++) {
         const r = b.rows[i] || {}, rr = row + i, has = !!r['이름'];
         const first = i === 0, last = i === n - 1;
-        const tp = first ? med : thn, bt = last ? med : thn;
-        const sc = has ? scoreOf(r) : null;
-        const vals = [null, r['직급'] || '', r['이름'] || '', r['사번'] ? (isFinite(r['사번']) ? Number(r['사번']) : r['사번']) : '', r['계약월'] ? xlDate(r['계약월']) : '', sc === null ? null : sc];
-        for (let k = 0; k < 8; k++) {
+        const lead = first && has && LEAD.has(String(r['직급'] || '').trim()) && n > 1;
+        const T = first ? 'm' : '-', B = last || lead ? 'm' : 't';
+        ws.getRow(rr).height = 15;
+        // 파트 칸 (세로 병합)
+        const pc = ws.getCell(rr, c0);
+        paint(pc, first ? 10 : 11, first, first ? 'center' : '', first ? 'center' : '', first, '', 'mm' + T + (last ? 'm' : '-'));
+        for (let k = 1; k < 8; k++) {
           const c = ws.getCell(rr, c0 + k);
-          c.font = k === 0 ? { name: AF, size: 10, bold: true } : fN; c.alignment = cen(k === 0);
-          c.border = bd(k === 0 || k === 1 ? med : thn, k === 0 || k === 7 ? med : thn, tp, bt);
-          if (k >= 1 && k <= 5 && vals[k] !== '' && vals[k] !== null) c.value = vals[k];
-          if (k === 4) c.numFmt = NF_DATE; if (k === 5) c.numFmt = NF_PT; if (k === 6) c.numFmt = NF_GR; if (k === 7) c.numFmt = NF_WON;
-          if (k === 6 && has) c.value = fv(`IFERROR(VLOOKUP(${cF}${rr},${gAbs},2,TRUE),"")`, gradeOf(sc));
-          if (k === 7 && has) c.value = fv(`IFERROR(IF(${cF}${rr}>=80,(VLOOKUP(${cF}${rr},${iAbs},3,FALSE)),""),"")`, incOf(sc));
+          const L = k === 1 ? '-' : 't', R = k === 7 ? 'm' : 't';
+          paint(c, 10, 0, 'center', 'center', 0, NFS[k], L + R + T + B);
         }
-        ws.getRow(rr).height = n === 1 ? 27 : 18;
-        if (has) peopleEv.push({ name: r['이름'], sc });
+        if (!has) continue;
+        const sc = scoreOf(r);
+        ws.getCell(rr, c0 + 1).value = r['직급'] || null;
+        ws.getCell(rr, c0 + 2).value = r['이름'];
+        if (r['사번']) ws.getCell(rr, c0 + 3).value = num0(r['사번']);
+        if (r['계약월']) ws.getCell(rr, c0 + 4).value = xlDate(r['계약월']);
+        const off = OFF.has(String(b.name).trim());          // 휴직·퇴사인원: 8월처럼 등급·인센티브 수식 없음
+        if (sc !== null && !(off && sc === 0)) ws.getCell(rr, c0 + 5).value = sc;
+        const g = gradeOf(sc);
+        if (!off) ws.getCell(rr, c0 + 6).value = { formula: `VLOOKUP(${cF}${rr},${gAbs},2,TRUE)`, result: g === null ? NA : g };
+        if (r['비고']) ws.getCell(rr, c0 + 7).value = String(r['비고']);
+        else if (!off) ws.getCell(rr, c0 + 7).value = fv(`IFERROR(IF(${cF}${rr}>=80,(VLOOKUP(${cF}${rr},${iAbs},3,FALSE)),""),"")`, incOf(sc));
       }
-      const pc = ws.getCell(row, c0); pc.value = `${b.name}\n(${b.rows.length}명)`;
-      if (n > 1) ws.mergeCells(row, c0, row + n - 1, c0);
+      pc0(ws, row, c0, b, n);
     });
   };
+  function pc0(sh, row, c0, b, n) { sh.getCell(row, c0).value = n === 1 && b.rows.length === 1 ? b.name : `${b.name}\n(${b.rows.length}명)`; }
   drawEv(GL, 1); drawEv(GR, 10);
-  // 총원 / 인센티브 합계 (오른쪽 마지막 블록 아래)
-  const e0 = GR.end;
-  const tot = (r1, c1, r2, c2, v, f, nf) => { ws.mergeCells(r1, c1, r2, c2); const c = ws.getCell(r1, c1); c.value = v; c.font = f; c.alignment = cen(); if (nf) c.numFmt = nf; };
-  tot(e0, 10, e0 + 1, 11, '조립팀 총원', f11B); tot(e0, 12, e0 + 1, 13, '인센티브', fB);
-  tot(e0 + 2, 10, e0 + 3, 11, totalPeople, f11B, '0\\ "명"');
-  tot(e0 + 2, 12, e0 + 3, 13, fv(`SUM(H4:H${lastL},Q4:Q${lastR})`, incTotal), f11B, NF_WON);
-  for (let r = e0; r <= e0 + 3; r++) for (let c = 10; c <= 13; c++) {
-    const top = r === e0 || r === e0 + 2, bot = r === e0 + 1 || r === e0 + 3;
-    ws.getCell(r, c).border = bd(c === 10 || c === 12 ? (c === 10 ? med : thn) : undefined, c === 11 ? thn : (c === 13 ? med : undefined), top ? med : undefined, bot ? (r === e0 + 3 ? med : thn) : undefined);
-  }
-  // 등급표 (점수 → 등급 → 인센티브 금액)
-  const hc = ws.getCell(tblTop - 1, 3); hc.value = '금액입력'; hc.font = f11B; hc.alignment = cen();
-  HR_AUG_GRADES.forEach((g, i) => {
-    const r = tblTop + i, last = i === HR_AUG_GRADES.length - 1;
-    for (let k = 0; k < 3; k++) {
-      const c = ws.getCell(r, 1 + k); c.value = g[k]; c.font = f11; c.alignment = cen();
-      c.border = bd(k === 0 ? med : thn, k === 2 ? med : thn, i === 0 ? med : thn, last ? med : thn);
-      if (k === 2) c.numFmt = NF_TBL;
-    }
+  for (let r = 4; r <= Math.max(GL.end, tot0 + 3); r++) if (!ws.getRow(r).height) ws.getRow(r).height = 15;
+  // 총원 / 인센티브 (8월 J74:M77 과 같은 모양)
+  ws.mergeCellsWithoutStyle(tot0, 10, tot0 + 1, 11); ws.mergeCellsWithoutStyle(tot0, 12, tot0 + 1, 13);
+  ws.mergeCellsWithoutStyle(tot0 + 2, 10, tot0 + 3, 11); ws.mergeCellsWithoutStyle(tot0 + 2, 12, tot0 + 3, 13);
+  HR_AUG_SPEC.total.forEach(([a, sz, bo, h, v, wrap, nf, bd]) => {
+    const mt = /^([A-Z]+)(\d+)$/.exec(a); const rr = tot0 + (+mt[2] - 74);
+    paint(ws.getCell(`${mt[1]}${rr}`), sz, bo, h, v, wrap, nf, bd);
   });
-  ws.pageSetup = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printArea: `A1:Q${e0 + 3}` };
+  ws.getCell(tot0, 10).value = '조립팀 총원'; ws.getCell(tot0, 12).value = '인센티브';
+  ws.getCell(tot0 + 2, 10).value = totalPeople;
+  ws.getCell(tot0 + 2, 12).value = fv(`SUM(H4:H${lastL},Q4:Q${lastR})`, incTotal);
+  // 등급표 (점수 → 등급 → 인센티브)
+  HR_AUG_SPEC.grade.forEach(([a, sz, bo, h, v, wrap, nf, bd]) => {
+    const mt = /^([A-Z]+)(\d+)$/.exec(a); const rr = tblTop + (+mt[2] - 117);
+    paint(ws.getCell(`${mt[1]}${rr}`), sz, bo, h, v, wrap, nf, bd);
+  });
+  ws.getCell(tblTop - 1, 3).value = '금액입력';
+  HR_AUG_GRADES.forEach((g, i) => g.forEach((v, k) => { ws.getCell(tblTop + i, 1 + k).value = v; }));
+  ws.pageSetup = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printArea: `A1:Q${Math.max(GL.end, tot0 + 4)}`,
+    margins: { left: 0.5118110236220472, right: 0.5118110236220472, top: 0.11811023622047245, bottom: 0, header: 0, footer: 0 } };
 
-  // ======================================================== 3) 조립팀(파트)
-  const wp = wb.addWorksheet(NAME_PT, { views: [{ zoomScale: 80 }] });
-  [12.6, 12.6, 12.6, 12.6, 9.9, 12.6, 12.6, 12.6, 2.2, 12.6, 12.6, 12.6, 12.6, 9.9, 12.6, 12.6, 12.6].forEach((w, i) => { wp.getColumn(i + 1).width = w; });
-  wp.getRow(1).height = 21.9; wp.getRow(2).height = 9;
-  const p1 = wp.getCell('A1'); p1.value = `● 조립팀 파트별 인사평가(${y}년${m}월)`; p1.font = { name: AF, size: 12, bold: true }; p1.alignment = { vertical: 'middle' };
-  const HEADP = ['파트', '이름', '사번', '계약월', '등급', '평가점수', '평가등급', '인센티브'];
-  const headPNF = [null, null, null, null, null, NF_PT, null, NF_WON];
-  [1, 10].forEach(c0 => HEADP.forEach((h, i) => {
-    const c = wp.getCell(3, c0 + i); c.value = h; c.font = i === 0 ? f11B : fB; c.alignment = cen();
-    if (headPNF[i]) c.numFmt = headPNF[i];
-    c.border = bd(i === 0 ? med : thn, (i === 0 || i === 7) ? med : thn, med, i === 0 ? med : thn);
+  // ======================================================== 3) 조립팀(파트)  — 8월처럼 숨김 시트
+  const wp = wb.addWorksheet(NAME_PT, { state: 'hidden' });
+  wp.properties.defaultRowHeight = 17.4;
+  [12.59765625, 12.59765625, 12.59765625, 12.59765625, 9.8984375, 12.59765625, 12.59765625, 12.59765625, 2.19921875,
+   12.59765625, 12.59765625, 12.59765625, 12.59765625, 9.8984375, 12.59765625, 12.59765625, 12.59765625].forEach((w, i) => { wp.getColumn(i + 1).width = w; });
+  wp.getRow(1).height = 20.1; wp.getRow(2).height = 19.8; wp.getRow(3).height = 21.9;
+  const p1 = wp.getCell('A1'); p1.value = `● 조립팀 파트별 인사평가(${y}년${mm}월)`; p1.font = { name: AF, size: 12, bold: true };
+  ['파트', '이름', '사번', '계약월', '등급', '평가점수', '평가등급', '인센티브'].forEach((h, i) => [1, 10].forEach(c0 => {
+    const c = wp.getCell(3, c0 + i); c.value = h; paint(c, i === 0 ? 11 : 10, 1, 'center', 'center', 0, i === 5 ? NF_PT : i === 7 ? NF_WON : '', (i === 0 ? 'm' : 't') + (i === 0 || i === 7 ? 'm' : 't') + 'mm');
   }));
-  wp.getRow(3).height = 18;
-  // 이름 목록(마스터): 이름 / 직급 / 사번 / 계약월
   const master = []; const seen = new Set();
   order.forEach(r => { const k = nk(r['이름']); if (!k || seen.has(k)) return; seen.add(k); master.push(r); });
-  const mTop = Math.max(150, GL.end + 3, GR.end + 3);
-  const mEnd = mTop + Math.max(master.length, 1) - 1;
-  const mRng = col => `$A$${mTop}:$${col}$${mEnd + 40}`;
+  const mTop = Math.max(150, GL.end + 3, GR.end + 3), mEnd = mTop + Math.max(master.length, 1) + 39;
+  const mRng = col => `$A$${mTop}:$${col}$${mEnd}`;
   const evL = `${Q}!$C$4:$F$${lastL}`, evR = `${Q}!$L$4:$O$${lastR}`;
   const drawPt = (G, c0) => {
+    const cN = colL(c0 + 1), cF = colL(c0 + 5);
     G.list.forEach(({ b, row, n }) => {
-      const cN = colL(c0 + 1), cF = colL(c0 + 5);
+      if (n > 1) wp.mergeCellsWithoutStyle(row, c0, row + n - 1, c0);
       for (let i = 0; i < n; i++) {
-        const r = b.rows[i] || {}, rr = row + i, has = !!r['이름'];
-        const first = i === 0, last = i === n - 1; const tp = first ? med : thn, bt = last ? med : thn;
-        const sc = has ? scoreOf(r) : null;
-        for (let k = 0; k < 8; k++) {
-          const c = wp.getCell(rr, c0 + k);
-          c.font = k === 0 ? f11B : fN; c.alignment = cen(k === 0);
-          c.border = bd(k === 0 || k === 1 ? med : thn, k === 0 || k === 7 ? med : thn, tp, bt);
-          if (k === 3) c.numFmt = NF_DATE; if (k === 5) c.numFmt = NF_PT; if (k === 6) c.numFmt = NF_GR; if (k === 7) c.numFmt = NF_WON;
-          if (!has) continue;
-          const nm = `${cN}${rr}`;
-          if (k === 1) c.value = r['이름'];
-          if (k === 2) c.value = fv(`IFERROR(IF(VLOOKUP(${nm},${mRng('C')},3,FALSE)=0,"",VLOOKUP(${nm},${mRng('C')},3,FALSE)),"")`, r['사번'] ? (isFinite(r['사번']) ? Number(r['사번']) : r['사번']) : 0);
-          if (k === 3) c.value = fv(`IFERROR(IF(VLOOKUP(${nm},${mRng('D')},4,FALSE)=0,"",VLOOKUP(${nm},${mRng('D')},4,FALSE)),"")`, r['계약월'] ? serial(xlDate(r['계약월'])) : 0);
-          if (k === 4) c.value = fv(`VLOOKUP(${nm},${mRng('D')},2,FALSE)`, r['직급'] || '');
-          if (k === 5) { const look = `IFERROR(VLOOKUP(${nm},${evL},4,FALSE),VLOOKUP(${nm},${evR},4,FALSE))`; c.value = fv(`IFERROR(IF(${look}=0,"",${look}),"")`, sc === null ? '' : sc); }
-          if (k === 6) c.value = fv(`IFERROR(VLOOKUP(${cF}${rr},${Q}!${gAbs},2,TRUE),"")`, gradeOf(sc));
-          if (k === 7) c.value = fv(`IFERROR(IF(${cF}${rr}>=80,(VLOOKUP(${cF}${rr},${Q}!${iAbs},3,FALSE)),""),"")`, incOf(sc));
-        }
-        wp.getRow(rr).height = n === 1 ? 27 : 18;
+        const r = b.rows[i] || {}, rr = row + i, has = !!r['이름'], first = i === 0, last = i === n - 1;
+        const T = first ? 'm' : '-', B = last ? 'm' : 't';
+        wp.getRow(rr).height = 21.9;
+        paint(wp.getCell(rr, c0), first ? 11 : 11, first, first ? 'center' : '', first ? 'center' : '', first, '', 'mm' + T + (last ? 'm' : '-'));
+        for (let k = 1; k < 8; k++) paint(wp.getCell(rr, c0 + k), 10, 0, 'center', 'center', 0, ['', '', '', NF_DATE, '', NF_PT, NF_GR, NF_WON][k], (k === 1 ? 'm' : 't') + (k === 7 ? 'm' : 't') + T + B);
+        if (!has) continue;
+        const sc = scoreOf(r), nm = `${cN}${rr}`;
+        wp.getCell(rr, c0 + 1).value = r['이름'];
+        wp.getCell(rr, c0 + 2).value = fv(`VLOOKUP(${nm},${mRng('C')},3,FALSE)`, num0(r['사번']) || 0);
+        wp.getCell(rr, c0 + 3).value = fv(`VLOOKUP(${nm},${mRng('D')},4,FALSE)`, r['계약월'] ? serial(xlDate(r['계약월'])) : 0);
+        wp.getCell(rr, c0 + 4).value = fv(`VLOOKUP(${nm},${mRng('D')},2,FALSE)`, r['직급'] || '');
+        const look = `IFERROR(VLOOKUP(${nm},${evL},4,FALSE),VLOOKUP(${nm},${evR},4,FALSE))`;
+        wp.getCell(rr, c0 + 5).value = fv(`IFERROR(IF(${look}=0,"",${look}),"")`, sc === null ? '' : sc);
+        const g = gradeOf(sc);
+        wp.getCell(rr, c0 + 6).value = fv(`IFERROR(VLOOKUP(${cF}${rr},${Q}!${gAbs},2,TRUE),"")`, g === null ? '' : g);
+        wp.getCell(rr, c0 + 7).value = fv(`IFERROR(IF(${cF}${rr}>=80,(VLOOKUP(${cF}${rr},${Q}!${iAbs},3,FALSE)),""),"")`, incOf(sc));
       }
-      const pc = wp.getCell(row, c0); pc.value = `${b.name}\n(${b.rows.length}명)`;
-      if (n > 1) wp.mergeCells(row, c0, row + n - 1, c0);
+      pc0(wp, row, c0, b, n);
     });
   };
   drawPt(GL, 1); drawPt(GR, 10);
   master.forEach((r, i) => {
     const rr = mTop + i, first = i === 0, last = i === master.length - 1;
-    const vals = [r['이름'], r['직급'] || '', r['사번'] ? (isFinite(r['사번']) ? Number(r['사번']) : r['사번']) : '', r['계약월'] ? xlDate(r['계약월']) : ''];
-    vals.forEach((v, k) => {
-      const c = wp.getCell(rr, 1 + k); if (v !== '') c.value = v; c.font = fN; c.alignment = cen();
-      c.border = bd(k === 0 ? med : thn, k === 3 ? med : thn, first ? med : thn, last ? med : thn);
-      if (k === 3) c.numFmt = NF_DATE;
+    [r['이름'], r['직급'] || '', num0(r['사번']), r['계약월'] ? xlDate(r['계약월']) : ''].forEach((v, k) => {
+      const c = wp.getCell(rr, 1 + k); if (v !== '') c.value = v;
+      paint(c, 10, 0, 'center', 'center', 0, k === 3 ? NF_DATE : '', (k === 0 ? 'm' : 't') + (k === 3 ? 'm' : 't') + (first ? 'm' : 't') + (last ? 'm' : 't'));
     });
   });
-  wp.pageSetup = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printArea: `A1:Q${Math.max(lastL, lastR) + 1}` };
-  return { totalPeople };
+  wp.pageSetup = { orientation: 'landscape', paperSize: 9, printArea: `A1:Q${Math.max(lastL, lastR) + 1}` };
+  wb.views = [{ activeTab: 1, firstSheet: 0 }];
+  wb.calcProperties = { fullCalcOnLoad: true };
+
+  // ExcelJS 기본 글꼴(Calibri 11)을 8월 파일과 같은 맑은 고딕 11로 교체 → 열 너비 픽셀이 8월과 같아짐
+  const buf = await wb.xlsx.writeBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  let st = await zip.file('xl/styles.xml').async('string');
+  st = st.replace(/(<fonts[^>]*>)<font>[\s\S]*?<\/font>/, '$1<font><sz val="11"/><color theme="1"/><name val="맑은 고딕"/><family val="2"/><charset val="129"/></font>');
+  zip.file('xl/styles.xml', st);
+  return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', compression: 'DEFLATE' });
 }
 
 async function buildWorkbook(month, items, list, order, hist, info, opts, orderTotals={}) {
@@ -8460,9 +8471,7 @@ async function buildWorkbook(month, items, list, order, hist, info, opts, orderT
   const reportTotals=Object.fromEntries(Object.entries(orderTotals||{}).map(([n,v])=>[nk(n),v]));
   const ordBy = {}; (order || []).forEach(r => { if (r['이름']) ordBy[nk(r['이름'])] = r; });
 
-  // ---------- 1) 표지 · 조립팀_평가 개정안 · 조립팀(파트)  (8월 정식 양식) ----------
-  if (order && order.length) hrAugSheets(wb, { y, m, order, recBy, reportTotals, nk, xlDate, layout: ReportCore.layout });
-  wb.calcProperties = Object.assign({}, wb.calcProperties, { fullCalcOnLoad: true });
+  // 인사보고 = 사람별 인사평가표만 (요약 시트는 [인사평가] 파일로 분리)
 
   // ---------- 2) 사람별 인사평가표 ----------
   const cp = o => o === undefined ? undefined : JSON.parse(JSON.stringify(o));
@@ -8485,7 +8494,6 @@ async function buildWorkbook(month, items, list, order, hist, info, opts, orderT
   const numOr = v => { const n = num(v); return n === null ? null : n; };
   const chartJobs = [];
 
-  addIncSheet(wb,list);
   sortByOrder(list, order || []).forEach(x => {
     const p = x.person, r = x.rec || {}, o = exportRows(month, [x])[0], ord = ordBy[nk(p.name)] || {};
     const its = usedItems(items, p);
@@ -8711,7 +8719,17 @@ async function addCharts(buf, jobs) {
       const blob = await buildWorkbook(month, d.items, d.list, d.order, hist, info, { side }, d.orderTotals);
       if (info) { const hit = d.list.filter(x => info[x.person.name.replace(/\s+/g, '')]).length; toast(`인적사항 ${hit}/${d.list.length}명 채움`); }
       const [y, m] = month.split('-');
-      A.saveBlob(blob, `인사평가_${y.slice(2)}년${+m}월.xlsx`);
+      A.saveBlob(blob, `${y}년 ${String(m).padStart(2, '0')}월 조립팀 인사보고.xlsx`);
+    } catch (e) { toast(e.message, 1); } finally { busy(false); }
+  }
+  async function downloadEval(month) {
+    let d; try { d = await getMonth(month, ''); } catch (e) { toast(e.message, 1); return; }
+    try {
+      busy(true, '엑셀 만드는 중…');
+      await libs('XLSX', 'ExcelJS');
+      const blob = await hrEvalWorkbook(month, d.list, d.order, d.orderTotals);
+      const [y, m] = month.split('-');
+      A.saveBlob(blob, `${y}년 ${String(m).padStart(2, '0')}월 조립팀 인사평가.xlsx`);
     } catch (e) { toast(e.message, 1); } finally { busy(false); }
   }
   async function downloadAll() {
@@ -9372,7 +9390,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.44';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.45';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
