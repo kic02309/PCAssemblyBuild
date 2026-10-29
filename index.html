@@ -3330,6 +3330,28 @@ html[data-theme=dark] .ddcombo-v28 .ddcombo-missing{background:#263b50;color:#e0
 #hrb .hrlog-order{width:100%;min-width:560px;border-collapse:collapse;table-layout:auto;font-size:11px}
 #hrb .hrlog-order th,#hrb .hrlog-order td{padding:5px;border:1px solid var(--line);height:auto;white-space:nowrap!important;overflow-wrap:normal!important;line-height:1.4}
 #hrb .hrlog-original{margin-top:8px}#hrb .hrlog-original>summary{cursor:pointer;color:var(--sub);font-size:11px}
+
+/* v29.35 : 일정관리 다이어리 가독성 (기간 일정 카드 · 글씨 확대) */
+.cd09-head h3{font-size:26px}.cd09-head small{font-size:13px}
+.cd09-body h4{font-size:17px}.cd09-head em,.cd09-body h4>em{font-size:14px;padding:3px 9px}
+.cd09-entry h4{font-size:19px}.cd09-meta{font-size:14px}.cd09-memo{font-size:15px}.cd09-category{font-size:13px}.cd09-category span{font-size:12px}.cd09-time{font-size:13.5px}
+.cd09-emptyday{font-size:14px;padding:6px 0 16px}.cd09-empty{font-size:13px}
+.cd09-periods{background:none;border:0;padding:0;border-top:1px solid var(--line);border-radius:0;padding-top:20px}
+.cd09-periods h4>small{font-size:12px}
+.cd09-pcard{position:relative;background:var(--panel,#fff);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:16px 20px 12px;margin-bottom:12px;min-width:0}
+.cd09-pcard.picked{box-shadow:0 0 0 2px #dceaff}
+.cd09-chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:999px;padding:3px 11px}
+.cd09-chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.cd09-pcard h5{font-size:20px;font-weight:800;margin:10px 0 8px;overflow-wrap:anywhere;line-height:1.35}
+.cd09-info{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;font-size:14.5px;color:var(--sub)}
+.cd09-info>span{display:inline-flex;align-items:center;gap:6px}
+.cd09-info svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.cd09-info .rg{color:var(--text)}
+.cd09-info .due{font-weight:700;color:color-mix(in srgb,var(--c) 80%,#000);background:color-mix(in srgb,var(--c) 13%,transparent);border-radius:8px;padding:4px 10px}
+.cd09-pmemo{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15.5px;line-height:1.7;color:var(--text);background:var(--chip);border-radius:8px;padding:12px 16px;margin:12px 0 0}
+.cd09-pact{display:flex;gap:7px;justify-content:flex-end;margin-top:10px}
+html[data-theme=dark] .cd09-info .due{color:color-mix(in srgb,var(--c) 70%,#fff)}
+@media(max-width:750px){.cd09-pcard{padding:14px 14px 10px}.cd09-pcard h5{font-size:18px}.cd09-info{font-size:14px}}
 </style>
 </head>
 <body>
@@ -6004,7 +6026,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       u.a = sel.value || null;
       const lv = sel.value && d.leaves.find(l => l.s === u.s && l.d1 <= sel.value && l.d2 >= sel.value);
       if (lv) A.toast('같은 날 연차가 이미 있습니다 (' + md(lv.d1) + ')', true);
-      reindex(); await save([sel.dataset.w]);
+      // v29.35 : 이 사람의 대체휴무만 저장 (같은 토요일 다른 인원의 연결 상태가 막지 않음)
+      sel.disabled = true;
+      try {
+        const res = await A.api('lvSetDuty', { setAlt: { d: sel.dataset.w, s: sel.dataset.s, a: sel.value || '' } });
+        if (!res || res.revision !== 35) throw Error('v29.35 SQL을 먼저 적용한 뒤 다시 지정하세요');
+        await load(L.year, true);
+        const v = (D().duty || []).find(x => x.d === sel.dataset.w && x.s === sel.dataset.s);
+        if (!v || (v.a || '') !== (sel.value || '')) throw Error('저장 결과를 확인하지 못했습니다. 새로고침 후 확인하세요');
+        A.toast(sel.value ? '대체휴무 ' + mdw(sel.value) + ' 지정' : '대체휴무 지정 해제');
+      } catch (e) { A.toast(e.message, true); try { await load(L.year, true); } catch (e2) { } }
+      reindex(); drawSat();
     }));
     A.$$('[data-duty-name]').forEach(inp => {
       const w=inp.dataset.dutyName, btn=document.querySelector(`[data-duty-add="${w}"]`), feedback=document.querySelector(`[data-duty-feedback="${w}"]`);
@@ -8931,7 +8963,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.34';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.35';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10802,6 +10834,11 @@ async function addCharts(buf, jobs) {
     // Pending production is checked again after the existing live overlay.
     return ddConversionReady({v:value,cv:{...cv,production:0}})?cv:null;
   }
+  // v29.35 : 확정된 라인 생산 환산(production)은 조립이 아니라 제조 구간으로 보여 줌 (합계는 그대로)
+  function ddProdMfg(cv){
+    if(!cv||!(cv.production>1e-8)||!(cv.asm>=cv.production-1e-9))return cv;
+    return {...cv,asm:Math.max(0,cv.asm-cv.production),mfg:(cv.mfg||0)+cv.production};
+  }
   function ddProdPerson(o, s, live, M) {
     const p = live.current[o.uid], old = live.old[o.uid] || 0;
     if (!p && !old) return;
@@ -10812,7 +10849,7 @@ async function addCharts(buf, jobs) {
     o.oth = (o.oth || 0) + (f6 > 0 && p ? p.o / f6 : 0);
     o.q = o.q || 0;
     if(!s&&p&&f6>0)o.cv={asm:0,ship:0,mfg:0,other:0,production:0};
-    if(o.cv&&f6>0){o.cv.asm+=((p?p.p-p.o:0)-old)/f6;o.cv.other+=(p?p.o:0)/f6;o.cv.production=0;}
+    if(o.cv&&f6>0){o.cv.mfg+=((p?p.p-p.o:0)-old)/f6;   /* v29.35 : 라인 생산 = 제조 */o.cv.other+=(p?p.o:0)/f6;o.cv.production=0;}
     o.lineState = p ? live.status : '재확정 필요';
     o.lineValue = p ? p.p : 0;
     if (!o.off && (!['매니저','팀장'].includes(o.title) || p)) o.kind = 'work';
@@ -10836,7 +10873,7 @@ async function addCharts(buf, jobs) {
         if (y && y._adj) { s = y.sum; o.adj = y._adj; } }
       if (s) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
-        o.cv = ddAdjustedConversion(rawSum,s,p.conversion,o.adj,M);
+        o.cv = ddProdMfg(ddAdjustedConversion(rawSum,s,p.conversion,o.adj,M));   // v29.35 : 라인 생산분 = 제조
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
         { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; }   // v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
@@ -10847,7 +10884,7 @@ async function addCharts(buf, jobs) {
     // 라인 총량 : 출근한 라인 인원(휴무 · 업무지원 · 매니저 제외)에게 똑같이 나눔
     if (!(liveView && r._prod) && r.line && (r.line.conv != null || r.line.qty != null)) {
       const L = P.filter(p => p.grp === '라인' && !p.off && !p.task && !['매니저', '팀장'].includes(p.title));
-      L.forEach(p => { p.kind = 'work'; p.v = L.length ? num(r.line.conv) / L.length : 0; p.oth = 0; p.q = L.length ? Math.round(num(r.line.qty) / L.length * 10) / 10 : 0; p.lineSplit = true;p.cv=null; });
+      L.forEach(p => { p.kind = 'work'; p.v = L.length ? num(r.line.conv) / L.length : 0; p.oth = 0; p.q = 0; p.mq = L.length ? Math.round(num(r.line.qty) / L.length * 10) / 10 : 0; p.lineSplit = true;   /* v29.35 : 라인 총량 = 제조 */p.cv=null; });
     }
     const body = P.filter(p => p.grp !== '팀장');
     const work = body.filter(p => p.kind === 'work'), tw = work.filter(p => p.target);
@@ -11027,7 +11064,7 @@ async function addCharts(buf, jobs) {
   }
   function drawDaily(r, lv) {
     const staff = !!r.staff, D = ddModel(r, true), me = S.me, mine = r.myGroups || [];
-    if (r._prod) { D.sumQ += r._prod.qty; const line = D.G.find(x => x.g === '라인'); if (line) line.q += r._prod.qty; }
+    if (r._prod) { D.sumMQ += r._prod.qty; const line = D.G.find(x => x.g === '라인'); if (line) line.mq = (line.mq || 0) + r._prod.qty; }   // v29.35 : 라인 생산 수량 = 제조
     const canNote = p => !staff && !isRO() && (isAdm() || mine.includes(p.grp));
     const canLine = !staff && !isRO() && (isAdm() || mine.includes('라인'));
     const dl = r.date, isPrev = dl === r.prevWork;
@@ -12819,13 +12856,25 @@ async function addCharts(buf, jobs) {
   function calViewPref(value) {
     try { const key = 'assembly.calendar.view.' + S.me.id; if (value) localStorage.setItem(key, value); return localStorage.getItem(key); } catch (_) { return null; }
   }
+  const CD09_IC = {   // v29.35 : 기간 일정 카드 아이콘 (선 그림)
+    cal: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+    ppl: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M15.5 14.6c2.6-.3 4.5 1.2 5 4.1"/></svg>',
+    clk: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>' };
   function calDiary09(L, HOL, m0, dim) {
     const c = S.mgv.c, day = c.sel, covers = e => e.d <= day && e.e >= day;
     const active = L.filter(covers), long = active.filter(e => e.e > e.d).sort((a,b) => a.e.localeCompare(b.e) || String(a.title).localeCompare(String(b.title)));
     const daily = active.filter(e => e.d === e.e || e.e === day).sort((a,b) => String(a.tm || '').localeCompare(String(b.tm || '')) || String(a.title).localeCompare(String(b.title)));
     const entry = (e, period) => { const k = calCat(e.cat), selected = String(c.ev) === String(e.id);
       const content = `<div class="cd09-meta">${esc(e.plan ? '담당 ' + mgName(e.owner) : '작성 ' + (e.by || mgName(e.owner)))} · ${esc(e.grp)} · ${esc(e.tm || '종일')}${period ? ' · ' + esc(calRg(e)) : ''}</div>${e.memo ? `<div class="cd09-memo">${esc(e.memo)}</div>` : '<div class="cd09-empty">등록된 상세 내용이 없습니다.</div>'}<div class="cd09-actions">${e.plan ? `<button class="sm" data-cpl="${e.plan}">월간·주간계획에서 보기 ›</button>` : calCanE(e) ? `<button class="sm" data-ce="${e.id}">수정</button><button class="sm" data-cx="${e.id}">삭제</button>` : '<span class="muted">조회 전용</span>'}</div>`;
-      return period ? `<details class="cd09-period" ${selected ? 'open' : ''} style="--c:${k.color}"><summary><span><i></i><b>${esc(e.title)}</b><small>${esc(calRg(e))} · ${esc(k.name)} · ${esc(e.by || mgName(e.owner))}</small></span><em>${e.e === day ? (day === S.today ? '오늘 마감' : '당일 마감') : dLabel(e.e) + ' 마감'} ▾</em></summary>${content}</details>` : `<div class="cd09-slot"><div class="cd09-time">${esc(e.tm || '종일')}</div><article class="cd09-entry${selected ? ' picked' : ''}" style="--c:${k.color}"><div class="cd09-category">${esc(k.name)}${e.e > e.d ? '<strong>' + (day === S.today ? '오늘 마감' : '당일 마감') + '</strong>' : ''}${k.private ? '<span>본인만 보는 개인일정</span>' : '<span>공유 일정</span>'}</div><h4>${esc(e.title)}</h4>${content}</article></div>`;
+      if (period) {   // v29.35 : 기간 일정 = 카드 (글씨 확대 · 기간/담당/마감 한 줄 · 버튼 아래 오른쪽)
+        const due = e.e === day ? (day === S.today ? '오늘 마감' : '당일 마감') : dLabel(e.e) + ' 마감';
+        const who = esc(e.grp) + ' · ' + esc(e.plan ? '담당 ' + mgName(e.owner) : '작성 ' + (e.by || mgName(e.owner)));
+        const acts = e.plan ? `<button class="sm" data-cpl="${e.plan}">월간·주간계획에서 보기 ›</button>` : calCanE(e) ? `<button class="sm" data-ce="${e.id}">수정</button><button class="sm" data-cx="${e.id}">삭제</button>` : '<span class="muted">조회 전용</span>';
+        return `<article class="cd09-pcard${selected ? ' picked' : ''}" style="--c:${k.color}"><span class="cd09-chip"><i></i>${esc(k.name)}</span><h5>${esc(e.title)}</h5>`
+          + `<div class="cd09-info"><span class="rg">${CD09_IC.cal}${esc(calRg(e))}${e.tm ? ' · ' + esc(e.tm) : ''}</span><span class="who">${CD09_IC.ppl}${who}</span><span class="due">${CD09_IC.clk}${esc(due)}</span></div>`
+          + `${e.memo ? `<div class="cd09-pmemo">${esc(e.memo)}</div>` : ''}<div class="cd09-pact">${acts}</div></article>`;
+      }
+      return `<div class="cd09-slot"><div class="cd09-time">${esc(e.tm || '종일')}</div><article class="cd09-entry${selected ? ' picked' : ''}" style="--c:${k.color}"><div class="cd09-category">${esc(k.name)}${e.e > e.d ? '<strong>' + (day === S.today ? '오늘 마감' : '당일 마감') + '</strong>' : ''}${k.private ? '<span>본인만 보는 개인일정</span>' : '<span>공유 일정</span>'}</div><h4>${esc(e.title)}</h4>${content}</article></div>`;
     };
     const start = cSun(m0), rows = Math.ceil((cDow(m0) + dim) / 7);
     let mini = `<div class="cd09-minihead"><b>${ymLabel(m0.slice(0,7))}</b><small>날짜 선택</small></div><div class="cd09-week">${CAL_W.map(w => `<span>${w}</span>`).join('')}</div><div class="cd09-days">`;
