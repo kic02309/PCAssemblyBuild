@@ -3518,6 +3518,9 @@ html[data-theme=dark] .pa-pvw{background:#3a3115;color:#f5df7a}
 .pa-macro-modal .acts{flex-wrap:wrap}.pa-macro-modal .acts>span{margin-right:auto;font-size:12px}
 @media(max-width:800px){.pa-compose-grid,.pa .pa-two,.pa-macro-layout{grid-template-columns:1fr}.pa-macro-list{max-height:180px}#main .pa-compose-field textarea{height:160px}.pa-macro-modal .acts button{flex:1 1 auto}}
 </style>
+<style id="hr-excel-preview-v2940">
+.hrw .hr-xl-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-right:60px;margin-bottom:10px}.hrw .hr-xl-tools h2{margin:0}.hrw .hr-xl-status{padding:10px 12px;background:#f3f6fa;border-radius:8px;margin-bottom:10px;line-height:1.6}.hrw .hr-xl-status.warn{background:#fff4e5;color:#854d0e}.hrw .hr-xl-scroll{overflow:auto;max-height:73vh;background:#e9edf2;padding:16px}.hrw .hr-xl-page{position:relative;background:white;color:#000;box-shadow:0 2px 10px #0002;isolation:isolate}.hrw .hr-xl-cell{position:absolute;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;margin:0;padding:1px 2px;min-width:0;min-height:0}.hrw .hr-xl-text{display:block;width:100%;min-width:0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:clip}.hrw .hr-xl-cell.hr-xl-over{box-shadow:inset 0 0 0 2px #d97706;background:#fff7ed!important}.hrw .hr-xl-cell.hr-xl-small{box-shadow:inset 0 0 0 2px #dc2626}.hrw .hr-xl-cell.hr-xl-edge{box-shadow:inset 0 0 0 2px #2563eb}.hrw .hr-xl-chart{position:absolute;background:#fff;border:1px solid #d9d9d9;box-sizing:border-box;z-index:1}.hrw .hr-xl-chart svg{display:block;width:100%;height:100%}.hrw .hr-xl-review{margin-top:12px;line-height:1.6}.hrw .hr-xl-review li{margin:6px 0;overflow-wrap:anywhere}.hrw .hr-xl-review summary{cursor:pointer;font-weight:700}@media print{.hrw .hr-xl-scroll{overflow:visible;max-height:none;background:white;padding:0}.hrw .hr-xl-page{zoom:1!important;box-shadow:none}.hrw .hr-xl-over,.hrw .hr-xl-small,.hrw .hr-xl-edge{box-shadow:none!important;background:white!important}.hrw .hr-xl-review,.hrw .hr-xl-tools,.hrw .hr-xl-status{display:none!important}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -7273,64 +7276,93 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     vals.forEach((v, i) => { if (v === null) return; path += (path ? 'L' : 'M') + x(i) + ' ' + y(v) + ' '; dots += `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${color}"/><text x="${x(i)}" y="${y(v) - 7}" font-size="10.5" font-weight="700" text-anchor="middle">${fmt(v)}</text>`; });
     return { g, path, dots, W, H: Hh };
   }
-  async function openPreview(x) {
-    let hist = [];
-    try { hist = (await api('hrHistory', { name: x.person.name })).list; } catch (e) { toast(e.message, 1); }
-    const month = ST.data.month, p = x.person, items = usedItems(ST.data.items, p), sc = readScores(), fl = fields();
-    let tot = 0; items.forEach(it => { const v = num(sc[it.no - 1]); if (v !== null) tot += it.sign * v; });
-    tot = Math.round(tot * 10) / 10;
-    const hm = {}; hist.forEach(r => (hm[r['평가월']] = r));
-    hm[month] = Object.assign({}, hm[month] || {}, { 합계: tot, 일평균: x.data.일평균 === null ? '' : x.data.일평균 });
-    const cols = monthCols(month);
-    const sVals = cols.map(c => hm[c.key] ? num(hm[c.key]['합계']) : null), qVals = cols.map(c => hm[c.key] ? num(hm[c.key]['일평균']) : null);
-    const groups = []; items.forEach(it => { const g = groups.find(q => q.name === it.group); g ? g.items.push(it) : groups.push({ name: it.group, items: [it] }); });
-    const itemRows = groups.map(g => g.items.map((it, i) => {
-      const cls = it.sign < 0 ? 'bl' : '', v = num(sc[it.no - 1]);
-      return `<tr>${i === 0 ? `<td rowspan="${g.items.length}" class="${cls}" style="font-weight:700">${esc(g.name)}</td>` : ''}
-        <td class="${cls}">${esc(it.name)}</td><td class="${cls}">${it.sign < 0 ? '감점' : esc(it.max) + ' 점'}</td>
-        <td class="left dsc ${cls}" colspan="8">${esc(it.desc)}</td><td class="sc ${cls}">${v === null ? '' : (it.sign < 0 && v ? '-' + v : v)}</td></tr>`;
-    }).join('')).join('');
-    const d = x.data;
-    const c1 = lineSvg(sVals, '#1F6FB2', v => Math.round(v) + '점', 50, 100), c2 = lineSvg(qVals, '#D1662B', v => (+v).toFixed(2));
-    const svg = (c, title, color) => `<svg viewBox="0 0 ${c.W} ${c.H}" preserveAspectRatio="xMidYMid meet"><text x="${c.W / 2}" y="20" font-size="14" font-weight="700" text-anchor="middle">${title}</text>${c.g}<path d="${c.path}" fill="none" stroke="${color}" stroke-width="2"/>${c.dots}</svg>`;
-    const td = v => `<td>${dash(v)}</td>`;
-    const preview=bigModal(`<div class="row no-print" style="margin-bottom:10px;gap:10px"><h2 style="margin:0">미리보기 · ${esc(p.name)} (${month})</h2><span class="muted">저장 전 내용 기준 · 사진·가점 등은 엑셀에 표시</span><button class="sm" id="pvPrint">인쇄</button></div>
-    <div class="pv pv-aligned"><div class="pv-left">
-      <table><colgroup><col style="width:9%"><col style="width:15%"><col style="width:8%"><col span="8" style="width:7%"><col style="width:12%"></colgroup>
-        <tr><td class="hd" colspan="12">인사평가표</td></tr><tr><th>구분</th><th>평가 요소</th><th>총 점</th><th colspan="8">평가 기준</th><th>평가 점수</th></tr>
-        ${itemRows}
-        <tr><td class="or" style="font-weight:700">추가평가</td><td class="or">미래성과평가</td><td class="or">가점</td><td class="or left dsc" colspan="8">엑셀에서 입력</td><td class="or"></td></tr>
-        <tr><td colspan="10" style="border-right:none"></td><td style="font-weight:700">총점</td><td class="sc" style="color:#d1662b">${tot}</td></tr></table>
-      <table style="margin-top:10px"><colgroup><col style="width:10%"><col span="12"></colgroup><tr><td class="hd" colspan="13">인사평가표</td></tr>
-        <tr><td class="lb" rowspan="2">평가점수</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
-        <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${sVals[i] === null ? '' : Math.round(sVals[i]) + ' 점'}</td>`).join('')}</tr>
-        <tr><td class="lb" rowspan="2">평균수량</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
-        <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${qVals[i] === null ? '' : qVals[i].toFixed(2)}</td>`).join('')}</tr></table>
-      <table style="margin-top:10px"><colgroup><col style="width:12%"><col style="width:15%"><col style="width:12%"><col></colgroup><tr><td class="hd" colspan="4">월 간 총 평</td></tr>
-        <tr><td class="gr">관 리 자</td><td>${esc(fl.관리자)}</td><td class="gr" rowspan="2">업무평가</td><td class="left">${esc(fl.업무평가1)}</td></tr>
-        <tr><td class="gr">평가 목표</td><td>${d.개인목표 === null ? '' : f1(d.개인목표)}</td><td class="left">${esc(fl.업무평가2)}</td></tr>
-        <tr><td class="gr">결 과</td><td>${d.일평균 === null ? '' : fixedAvg(d.일평균)}</td><td class="gr">건강관리</td><td class="left">${esc(fl.건강관리)}</td></tr>
-        <tr><td class="gr">달 성 률</td><td>${pct(d.달성률)}</td><td class="gr">특이사항</td><td class="left">${esc(fl.특이사항)}</td></tr></table>
-    </div><div class="pv-right"><div class="pv-chart" data-pv-chart="score">${svg(c1, '월별 평가점수', '#1F6FB2')}</div><div class="pv-chart" data-pv-chart="quantity">${svg(c2, '월별 평균수량', '#D1662B')}</div>
-      <table><tr><td class="gr">총수량</td>${td(d.총수량 === null ? null : f1(d.총수량, 2))}<td class="gr">순위</td>${td(d.총수량순위)}<td class="gr">일평균</td>${td(d.일평균 === null ? null : fixedAvg(d.일평균))}<td class="gr">평가기준목표</td>${td(d.개인목표)}<td class="gr">달성율</td><td>${pct(d.달성률)}</td></tr>
-        <tr><td class="gr">근무일수</td>${td(d.근무일수)}<td class="gr">당일연차</td>${td(d.당일연차)}<td class="gr">지각</td>${td(d.지각)}<td class="gr">조퇴</td>${td(d.조퇴)}<td class="gr">결근</td>${td(d.결근)}</tr>
-        <tr><td class="gr">품질지적</td>${td(d.품질지적)}<td class="gr">지시불이행</td>${td(d.지시불이행)}<td class="gr">미/오발송</td>${td(d.미오발송)}<td class="gr">오조립</td>${td(d.오조립)}<td class="gr">파손</td>${td(d.파손)}</tr></table>
-    </div></div>`);
-    preview.querySelector('#pvPrint').onclick = () => window.print();
-    const fitCharts=()=>{
-      preview.querySelectorAll('[data-pv-chart]').forEach(host=>{
-        const bounds=host.getBoundingClientRect();if(bounds.width<1||bounds.height<1)return;
-        const size={width:bounds.width,height:Math.max(100,bounds.height)},score=host.dataset.pvChart==='score';
-        const chart=score?lineSvg(sVals,'#1F6FB2',v=>Math.round(v)+'점',50,100,size):lineSvg(qVals,'#D1662B',v=>(+v).toFixed(2),undefined,undefined,size);
-        host.innerHTML=svg(chart,score?'월별 평가점수':'월별 평균수량',score?'#1F6FB2':'#D1662B');
-      });
-    };
-    fitCharts();
-    if(typeof ResizeObserver!=='undefined'){
-      const observer=new ResizeObserver(()=>{if(!preview.isConnected){observer.disconnect();return;}fitCharts();});
-      preview.querySelectorAll('[data-pv-chart]').forEach(host=>observer.observe(host));
-      const close=preview.querySelector('.x'),close0=close.onclick;close.onclick=()=>{observer.disconnect();close0();};
+  const hrCommentLine=v=>String(v??'').replace(/[\r\n\t]+/g,' ').trim();
+  // v29.40: 파일에 저장된 열 너비를 Excel 100% 화면 픽셀로 환산 (기본 글꼴 Calibri 11, 숫자 폭 7px).
+  const hrColumnPixels=w=>Math.trunc(((256*(Number(w)||8.43)+Math.trunc(128/7))/256)*7);
+  const HR_INDENT_PX=9; // Excel 들여쓰기 1단계 ≈ 9px (환경에 따라 ±2px)
+  // 굴림이 없는 기기(맥·모바일 등)는 대체 글꼴로 재서 오차가 커진다.
+  function hrHasGulim(){try{const c=document.createElement('canvas').getContext('2d'),t='가나다라마바사 ABC 123',w=f=>{c.font=f;return c.measureText(t).width;};return w("12px '굴림',monospace")!==w('12px monospace')||w("12px '굴림',serif")!==w('12px serif');}catch(e){return true;}}
+  // 굴림 글자 폭 규칙(한글·한자·전각 1em, 그 밖의 영문·숫자·공백·기호 0.5em). 굴림이 없는 기기에서 쓰는 보수적 추정.
+  const hrGulimEm=t=>[...String(t||'')].reduce((n,ch)=>n+(/[\u1100-\u11ff\u2e80-\ua4cf\uac00-\ud7af\uf900-\ufaff\uff00-\uffef\u3000-\u303f]/.test(ch)?1:.5),0);
+  // 시트에서 '월 간 총 평' 머리줄 행을 찾는다. 항목 수가 달라도 총평·그래프 위치를 정확히 잡기 위함.
+  function hrSummaryRow(ws){for(let r=1;r<=ws.rowCount;r++){const v=ws.getCell(r,2).value;if(typeof v==='string'&&v.replace(/\s+/g,'')==='월간총평')return r;}return ws.rowCount-4;}
+  function hrExcelPreview(ws){
+    const maxRow=ws.rowCount,maxCol=25,x=[0],y=[0],sumRow=hrSummaryRow(ws);
+    for(let c=1;c<=maxCol;c++)x[c]=x[c-1]+(c===1?0:hrColumnPixels(ws.getColumn(c).width));
+    for(let r=1;r<=maxRow;r++)y[r]=y[r-1]+(ws.getRow(r).height||15)*4/3;
+    const merges=(ws.model.merges||[]).map(a=>{const q=/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/.exec(a);const col=t=>[...t].reduce((n,c)=>n*26+c.charCodeAt(0)-64,0);return q?{c1:col(q[1]),r1:+q[2],c2:col(q[3]),r2:+q[4]}:null;}).filter(Boolean);
+    const color=(o,fallback)=>o?.argb?'#'+o.argb.slice(-6):fallback;
+    const border=b=>b&&b.style?(b.style==='medium'?2:1)+'px '+(b.style==='dashed'?'dashed':'solid')+' '+color(b.color,'#000'):'none';
+    let html='';
+    for(let r=1;r<=maxRow;r++)for(let c=2;c<=maxCol;c++){
+      const m=merges.find(q=>r>=q.r1&&r<=q.r2&&c>=q.c1&&c<=q.c2);if(m&&(r!==m.r1||c!==m.c1))continue;
+      const cell=ws.getCell(r,c),a=cell.alignment||{},f=cell.font||{},r2=m?m.r2:r,c2=m?m.c2:c;
+      let v=cell.value;if(v&&typeof v==='object'){if('formula'in v||'sharedFormula'in v)v=v.result;else if(v.richText)v=v.richText.map(t=>t.text).join('');else if(v.text!==undefined)v=v.text;}
+      let text=v===null||v===undefined?'':String(v);
+      if(typeof v==='number'&&cell.numFmt&&cell.numFmt!=='General'){try{text=XLSX.SSF.format(cell.numFmt,v);}catch(e){text=String(v);}}
+      if(v instanceof Date)text=v.toISOString().slice(0,10);
+      const b=cell.border||{},align=a.horizontal||((typeof v==='number')?'right':'left'),size=f.size||9;
+      const comment=c===5&&r>sumRow&&r<=sumRow+4, pad=a.indent?Math.round(a.indent*HR_INDENT_PX):0;
+      const bg=cell.fill?.pattern==='solid'?color(cell.fill.fgColor,'#fff'):'#fff';
+      const style=`left:${x[c-1]}px;top:${y[r-1]}px;width:${x[c2]-x[c-1]}px;height:${y[r2]-y[r-1]}px;font-family:'${String(f.name||'굴림').replace(/[^\w가-힣 -]/g,'')}',Gulim,'Malgun Gothic',sans-serif;font-size:${size}pt;font-weight:${f.bold?700:400};font-style:${f.italic?'italic':'normal'};text-align:${align};color:${color(f.color,'#000')};background:${bg};border-top:${border(b.top)};border-bottom:${border(ws.getCell(r2,c).border?.bottom||b.bottom)};border-left:${border(b.left)};border-right:${border(ws.getCell(r,c2).border?.right||b.right)};padding-left:${2+pad}px;align-items:${a.vertical==='top'?'flex-start':a.vertical==='bottom'?'flex-end':'center'}`;
+      html+=`<div class="hr-xl-cell" style="${style}" data-xl-cell="${cell.address}" data-base-size="${size}"${comment?' data-xl-comment="'+esc(['업무평가 1','업무평가 2','건강관리','특이사항'][r-sumRow-1])+'"':''}${a.shrinkToFit?' data-xl-shrink="1"':''} title="${esc(text)}"><span class="hr-xl-text" style="${a.wrapText?'white-space:pre-wrap;overflow-wrap:break-word;':''}">${esc(text)}</span></div>`;
     }
+    return {html,width:x[maxCol],height:y[maxRow],x,y,sumRow};
+  }
+  function hrPreviewFit(preview){
+    const issues=[],fit=preview.querySelector('#pvFit').checked,gulim=hrHasGulim();
+    preview.querySelectorAll('[data-xl-shrink]').forEach(cell=>{
+      const text=cell.querySelector('.hr-xl-text'),base=+cell.dataset.baseSize;
+      text.style.fontSize=base+'pt';cell.classList.remove('hr-xl-over','hr-xl-small','hr-xl-edge');
+      const width=text.clientWidth;if(!width||!text.textContent.trim())return;
+      // 같은 배율 기준으로 비교: 글자 실제 폭(range) ÷ 칸 안쪽 폭. 굴림이 없으면 굴림 폭 규칙으로 계산.
+      let natural;
+      if(gulim){const rg=document.createRange();rg.selectNodeContents(text);const z=text.getBoundingClientRect().width/width||1;natural=rg.getBoundingClientRect().width/z;}
+      else natural=hrGulimEm(text.textContent)*base*4/3;
+      const ratio=Math.min(1,width/Math.max(1,natural));
+      if(ratio>=.995&&cell.hasAttribute('data-xl-comment')&&natural>width*.95){cell.classList.add('hr-xl-edge');issues.push({label:cell.dataset.xlComment,text:text.textContent,size:base,cell:cell.dataset.xlCell,edge:true});}
+      if(ratio<.995){
+        const fitted=base*ratio;
+        if(fit){text.style.fontSize=fitted.toFixed(2)+'pt';}
+        if(cell.hasAttribute('data-xl-comment')){cell.classList.add(fitted<8?'hr-xl-small':'hr-xl-over');issues.push({label:cell.dataset.xlComment,text:text.textContent,size:fitted,cell:cell.dataset.xlCell});}
+      }
+    });
+    const over=issues.filter(x=>!x.edge),edge=issues.filter(x=>x.edge),small=over.filter(x=>x.size<8);
+    const status=preview.querySelector('#pvFitStatus');status.classList.toggle('warn',issues.length>0||!gulim);
+    status.textContent=(over.length?`총평 ${over.length}칸 폭 초과 · 9pt로는 한 줄에 안 들어가 Excel에서 자동 축소됩니다${small.length?` · 빨간 테두리 ${small.length}칸은 8pt 미만 예상 → 요약 필요`:''}`:'총평 4칸 · 기본 9pt로 한 줄 안에 들어갑니다')
+      +(edge.length?` · 경계 ${edge.length}칸(여유 5% 미만, Excel에서 넘칠 수 있음)`:'')
+      +(gulim?'':' · ⚠ 이 기기에 굴림 글꼴이 없어 굴림 글자 폭 규칙(한글 1칸, 영문·숫자·공백 반 칸)으로 계산했습니다. 굴림이 있는 Windows PC에서 다시 확인하세요')
+      +' · 브라우저와 Excel의 글꼴 그리기 차이로 몇 글자 정도 오차가 있을 수 있습니다.';
+    const tag=i=>i.edge?'경계 · 9pt 유지, 여유 부족':i.size<8?`요약 필요 · ${i.size.toFixed(1)}pt까지 축소 예상`:`자동 축소 · ${i.size.toFixed(1)}pt 예상`;
+    const list=preview.querySelector('#pvFitList');list.innerHTML=issues.map(i=>`<li><b>${esc(i.label)} (${esc(i.cell)})</b> · ${tag(i)} · ${i.text.length}자<br>${esc(i.text)}</li>`).join('');
+    preview.querySelector('#pvReview').hidden=!issues.length;
+    return issues;
+  }
+  async function openPreview(x) {
+    let preview;
+    try{
+      busy(true,'엑셀과 같은 미리보기 만드는 중…');
+      await libs('ExcelJS','JSZip','XLSX');
+      // 이력 조회 실패를 빈 그래프로 감추지 않는다. 저장 API는 호출하지 않는다.
+      const history=await api('hrHistory',{name:x.person.name}),month=ST.data.month,sc=readScores(),fl=fields();
+      const rec={...(x.rec||{}),...fl};let total=0,any=false;
+      usedItems(ST.data.items,x.person).forEach(it=>{const v=num(sc[it.no-1]);rec['점수'+it.no]=v;if(v!==null){total+=it.sign*v;any=true;}});
+      rec['합계']=any?Math.round(total*10)/10:null;
+      const hist={},hm={};(history.list||[]).forEach(r=>{hm[r['평가월']]=[num(r['합계']),num(r['일평균'])];});hist[String(x.person.name).replace(/\s+/g,'')]=hm;
+      const blob=await buildWorkbook(month,ST.data.items,[{...x,rec}],ST.data.order||[],hist,null,{side:true},ST.data.orderTotals||{});
+      const wb=new ExcelJS.Workbook();await wb.xlsx.load(await blob.arrayBuffer());
+      const ws=wb.worksheets.find(w=>w.getCell('F1').value===x.person.name);if(!ws)throw Error('미리보기 평가 시트를 찾을 수 없습니다.');
+      const layout=hrExcelPreview(ws),hs=layout.sumRow;
+      const cols=monthCols(month),sVals=cols.map(c=>c.key===month?rec['합계']:hm[c.key]?.[0]??null),qVals=cols.map(c=>c.key===month?num(x.data.일평균):hm[c.key]?.[1]??null);
+      const chart=(vals,score,r0,r1)=>{const width=layout.x[25]-layout.x[15],height=layout.y[r1]-layout.y[r0],c=lineSvg(vals,score?'#1F6FB2':'#D1662B',score?v=>Math.round(v)+'점':v=>(+v).toFixed(2),score?50:undefined,score?100:undefined,{width,height});return `<div class="hr-xl-chart" style="left:${layout.x[15]}px;top:${layout.y[r0]}px;width:${width}px;height:${height}px"><svg viewBox="0 0 ${c.W} ${c.H}"><text x="${c.W/2}" y="20" font-size="14" font-weight="700" text-anchor="middle">${score?'월별 평가점수':'월별 평균수량'}</text>${c.g}<path d="${c.path}" fill="none" stroke="${score?'#1F6FB2':'#D1662B'}" stroke-width="2"/>${c.dots}</svg></div>`;};
+      preview=bigModal(`<div class="hr-xl-tools no-print"><h2>엑셀 기준 미리보기 · ${esc(x.person.name)} (${esc(month)})</h2><label>배율 <select id="pvZoom"><option value=".5">50%</option><option value=".75" selected>75%</option><option value="1">100%</option></select></label><label><input type="checkbox" id="pvFit" checked>엑셀 자동 축소 예상</label><button id="pvPrint">인쇄</button></div><div class="hr-xl-status no-print" id="pvFitStatus">총평 폭 확인 중…</div><div class="hr-xl-scroll"><div class="hr-xl-page" style="width:${layout.width}px;height:${layout.height}px">${layout.html}${chart(sVals,true,0,hs-6)}${chart(qVals,false,hs-6,hs-1)}</div></div><details id="pvReview" class="hr-xl-review no-print" open><summary>폭을 넘거나 경계인 총평 원문</summary><ul id="pvFitList"></ul></details><p class="muted no-print">현재 입력 내용 기준 · 개인정보·사진·가점 등 엑셀에서 따로 입력하는 내용은 제외 · 그래프는 웹 표현이며 Excel 그래프와 모양은 다를 수 있습니다. 원문과 운영 데이터는 변경하지 않습니다.</p>`);
+      const fit=()=>{if(preview.isConnected)hrPreviewFit(preview);};
+      const zoom=()=>{preview.querySelector('.hr-xl-page').style.zoom=preview.querySelector('#pvZoom').value;fit();};
+      preview.querySelector('#pvZoom').onchange=zoom;preview.querySelector('#pvFit').onchange=fit;
+      preview.querySelector('#pvPrint').onclick=()=>window.print();zoom();
+      if(document.fonts?.ready)document.fonts.ready.then(fit);
+    }catch(e){if(preview)preview.remove();toast('미리보기를 만들지 못했습니다: '+e.message,1);}
+    finally{busy(false);}
   }
 
   // ============================================================ 관리자 — 현황
@@ -8384,20 +8416,29 @@ async function buildWorkbook(month, items, list, order, hist, info, opts, orderT
     ws.getCell(rr + 2, 3).value = o.결과 === '' ? null : Number(o.결과);ws.getCell(rr + 2, 3).numFmt='0.00';
     ws.getCell(rr + 3, 3).value = o.달성률 === '' ? null : Number(o.달성률);
     ws.getCell(rr + 3, 3).numFmt = '0.0%';
-    ws.getCell(rr, 5).value = r['업무평가1'] || null;
-    ws.getCell(rr + 1, 5).value = r['업무평가2'] || null;
-    ws.getCell(rr + 2, 5).value = r['건강관리'] || null;
-    ws.getCell(rr + 3, 5).value = r['특이사항'] || null;
+    // 출력만 한 줄로 정리. 저장된 평가 문장은 변경하지 않는다.
+    ['업무평가1','업무평가2','건강관리','특이사항'].forEach((key,i)=>{
+      const cell=ws.getCell(rr+i,5);
+      cell.value=hrCommentLine(r[key])||null;
+      cell.font={...cp(cell.font),name:'굴림',size:9};
+      cell.alignment={horizontal:'left',vertical:'middle',wrapText:false,shrinkToFit:true,indent:1};
+      ws.getRow(rr+i).height=19.5;
+    });
 
     // 오른쪽 업무 데이터 (P~Y)
     const blk = [[o.총수량, o.총수량순위, o.일평균, o.개인목표, o.달성률], [o.근무일수, o.당일연차, o.지각, o.조퇴, o.결근], [o.품질지적, o.지시불이행, o.미오발송, o.오조립, o.파손]];
     if (side) {
       const labels=[['총수량','순위','일평균','평가기준목표','달성률'],['근무일수','당일연차','지각','조퇴','결근'],['품질지적','지시불이행','미/오발송','오조립','파손']];
-      const top=22+d, starts=[top,top+2,top+4], spans=[2,2,1];
-      for(let rr0=top;rr0<=top+4;rr0++)for(let cc=16;cc<=25;cc++){const c=ws.getCell(rr0,cc);c.value=null;c.style={font:cp(font),alignment:cp(center),border:cp(border)};}
+      // 항목명 12.5(≈87px, '평가기준목표' 굵게 한 줄) + 수치 7.5(≈52px). 기존 P~Y 8.5×10=85 → 100
+      for(let j=0;j<5;j++){ws.getColumn(16+2*j).width=12.5;ws.getColumn(17+2*j).width=7.5;}
+      const top=22+d, starts=[top+1,top+2,top+3];
+      // 원본의 2행/2행/1행 병합을 제거하고 같은 높이의 단일 행 3개로 출력.
+      for(let cc=16;cc<=25;cc++){ws.unMergeCells(top,cc,top+1,cc);ws.unMergeCells(top+2,cc,top+3,cc);} 
+      for(let rr0=top;rr0<=top+4;rr0++)for(let cc=16;cc<=25;cc++){const c=ws.getCell(rr0,cc);c.value=null;c.style={font:cp(font),alignment:{horizontal:'center',vertical:'middle',wrapText:false,shrinkToFit:false}};}
       blk.forEach((vals,i)=>vals.forEach((v,j)=>{
         const row0=starts[i],col0=16+2*j;
-        if(spans[i]>1){ws.mergeCellsWithoutStyle(row0,col0,row0+spans[i]-1,col0);ws.mergeCellsWithoutStyle(row0,col0+1,row0+spans[i]-1,col0+1);}
+        ws.getRow(row0).height=19.5;
+        for(const cc of [col0,col0+1])ws.getCell(row0,cc).border=cp(border);
         const label=ws.getCell(row0,col0),c=ws.getCell(row0,col0+1);
         label.value=labels[i][j];label.font=cp(bold);label.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF4F6FA'}};
         c.value=v===''||v===null||v===undefined?null:Number(v);
@@ -9128,7 +9169,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.39';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.40';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
