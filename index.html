@@ -692,8 +692,8 @@ html[data-theme=dark] .hrw table.score .dq{background:#2d3a55;color:#9dbbff}
 .hrw table.ctb th{background:#f4f6fa;color:#4a5670;font-weight:700;width:86px;text-align:center;border:1px solid #dde3ea;padding:6px;white-space:nowrap}
 .hrw table.ctb td{border:1px solid #dde3ea;padding:4px 6px}.hrw table.ctb td.v{width:150px;text-align:center;font-weight:700}
 .hrw table.ctb td.v select{width:100%;border:1px solid #e3c766;background:#fffbe8;border-radius:5px;padding:5px}
-.hrw table.ctb .ln{display:flex;align-items:center;gap:6px}.hrw table.ctb .ln input{flex:1;border:1px solid #e3c766;background:#fffbe8;border-radius:5px;padding:6px 8px;font-size:13px}
-.hrw table.ctb .ln em{font-style:normal;font-size:11px;color:#a3acb9;width:44px;text-align:right}.hrw table.ctb .ln em.full{color:#b42318;font-weight:800}
+.hrw table.ctb .ln{display:flex;align-items:center;gap:6px}.hrw table.ctb .ln input{flex:1;max-width:700px;border:1px solid #e3c766;background:#fffbe8;border-radius:5px;padding:6px 8px;font-size:13px}
+.hrw table.ctb .ln em{font-style:normal;font-size:11px;color:#a3acb9;min-width:44px;text-align:right;white-space:nowrap;flex:none}.hrw table.ctb .ln em.full{color:#b42318;font-weight:800}
 .hrw .svbar{position:sticky;bottom:0;display:flex;align-items:center;gap:10px;padding:12px 0 2px;margin-top:12px;border-top:1px solid #e1e6ec;background:#fff;z-index:3}
 .hrw .savest{font-weight:700;font-size:12.5px;padding:3px 10px;border-radius:9px;background:#eef1f5;color:#4a5670}
 .hrw .savest.ok{background:#e3f5e9;color:#1d7a3a}.hrw .savest.wait{background:#fff1d6;color:#9a5b00}.hrw .savest.err{background:#fdecec;color:#b42318}
@@ -3161,7 +3161,7 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 #hrb table.ctb td{padding:3px 5px}
 #hrb table.ctb td.v{width:110px;font-size:13px}
 #hrb table.ctb select{padding:3px 5px;font-size:13px}
-#hrb table.ctb .ln em{font-size:12px;width:32px}
+#hrb table.ctb .ln em{font-size:12px;width:auto;min-width:46px;white-space:nowrap;flex:none}
 #hrb .svbar{position:static;padding:6px 0 0;margin-top:6px;gap:7px;flex-wrap:wrap;background:transparent}
 #hrb .svbar>.muted{font-size:12px}
 #hrb .savest{font-size:12px;padding:3px 6px}
@@ -7075,7 +7075,7 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
   }
   const curPerson = () => ST.data.list.find(x => x.person.name === ST.sel);
 
-  const MAXC = 80;   // 총평 한 칸 = 엑셀 한 줄
+  const MAXC = 68;   // 총평 한 칸 = 엑셀 한 줄 (굴림 9pt, 글자 폭 기준은 아래 cnt 에서 같이 확인)
   async function selectPerson(name, force) {
     if (!force && name !== ST.sel && !(await guard())) return;
     ST.dirty = false; clearTimeout(ST.timer); ST.sel = name;
@@ -7127,7 +7127,8 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     bd.querySelectorAll('input').forEach(inp => { chk(inp); inp.oninput = () => { chk(inp); touch(); updTotals(); }; });
     bd.querySelectorAll('[data-apply]').forEach(b => (b.onclick = () => { const no = +b.dataset.apply; bd.querySelector(`input[data-no="${no}"]`).value = x.refs[no - 1]; touch(); updTotals(); }));
     $('#applyAll').onclick = () => { items.forEach(it => { const r = x.refs[it.no - 1]; if (r !== null) bd.querySelector(`input[data-no="${it.no}"]`).value = r; }); touch(); updTotals(); toast('참고 점수를 넣었습니다. 확인 후 [작성 완료]를 누르세요'); };
-    const cnt = id => { const el = $('#' + id), c = $('#' + id + 'c'); if (el && c) { c.textContent = el.value.length + '/' + MAXC; c.classList.toggle('full', el.value.length >= MAXC); } };
+    const pxw = t => [...String(t || '')].reduce((n, ch) => n + (/[\u1100-\u11ff\u2e80-\ua4cf\uac00-\ud7af\uf900-\ufaff\uff00-\uffef\u3000-\u303f\u00b7\u2018-\u201d\u2025\u2026]/.test(ch) ? 12 : " ,.:;'!|il".includes(ch) ? 4 : 6), 0);   // 굴림 9pt 글자 폭(엑셀 실측)
+    const cnt = id => { const el = $('#' + id), c = $('#' + id + 'c'); if (el && c) { const w = pxw(el.value), over = w > 648; c.textContent = el.value.length + '/' + MAXC; c.classList.toggle('full', el.value.length >= MAXC || over); c.title = over ? '엑셀 칸 폭을 넘습니다. 9pt로 한 줄에 안 들어가 글자가 작아집니다.' : '엑셀 칸 사용 ' + Math.round(w / 648 * 100) + '%'; el.style.borderColor = over ? '#d9534f' : ''; } };
     ['fW1', 'fW2', 'fH', 'fS'].forEach(id => { cnt(id); $('#' + id).addEventListener('input', () => { cnt(id); touch(); }); });
     $('#fMgr').addEventListener('input', touch);
     $('#saveDone').onclick = () => save('완료');
