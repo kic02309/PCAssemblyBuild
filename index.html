@@ -7278,12 +7278,13 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
   }
   const hrCommentLine=v=>String(v??'').replace(/[\r\n\t]+/g,' ').trim();
   // v29.40: 파일에 저장된 열 너비를 Excel 100% 화면 픽셀로 환산 (기본 글꼴 Calibri 11, 숫자 폭 7px).
-  const hrColumnPixels=w=>Math.trunc(((256*(Number(w)||8.43)+Math.trunc(128/7))/256)*7);
-  const HR_INDENT_PX=9; // Excel 들여쓰기 1단계 ≈ 9px (환경에 따라 ±2px)
+  const hrColumnPixels=w=>Math.trunc(((256*(Number(w)||8.43)+Math.trunc(128/7))/256)*8); // 실제 PC 화면 대조: 숫자 폭 8px(열 너비 1 ≈ 8px)
+  const HR_INDENT_PX=17,HR_CELL_RIGHT_PX=21; // 실제 화면 대조: 글자 시작 ≈ 왼쪽 19px, 칸 안쪽 폭 = 칸 폭 − 21px
   // 굴림이 없는 기기(맥·모바일 등)는 대체 글꼴로 재서 오차가 커진다.
   function hrHasGulim(){try{const c=document.createElement('canvas').getContext('2d'),t='가나다라마바사 ABC 123',w=f=>{c.font=f;return c.measureText(t).width;};return w("12px '굴림',monospace")!==w('12px monospace')||w("12px '굴림',serif")!==w('12px serif');}catch(e){return true;}}
   // 굴림 글자 폭 규칙(한글·한자·전각 1em, 그 밖의 영문·숫자·공백·기호 0.5em). 굴림이 없는 기기에서 쓰는 보수적 추정.
-  const hrGulimEm=t=>[...String(t||'')].reduce((n,ch)=>n+(/[\u1100-\u11ff\u2e80-\ua4cf\uac00-\ud7af\uf900-\ufaff\uff00-\uffef\u3000-\u303f]/.test(ch)?1:.5),0);
+  // 굴림 9pt 글자 폭(실제 Excel 화면 대조): 한글·한자·전각·가운뎃점 12px, 공백·쉼표·마침표·작은따옴표·느낌표·|·i·l·:·; 4px, 그 밖의 영문·숫자 6px. 글자 크기에 비례.
+  const hrTextPx=(t,pt)=>[...String(t||'')].reduce((n,ch)=>n+(/[\u1100-\u11ff\u2e80-\ua4cf\uac00-\ud7af\uf900-\ufaff\uff00-\uffef\u3000-\u303f\u00b7\u2018\u2019\u201c\u201d\u2025\u2026]/.test(ch)?12:' ,.:;\'!|il'.includes(ch)?4:6),0)*(pt||9)/9;
   // 시트에서 '월 간 총 평' 머리줄 행을 찾는다. 항목 수가 달라도 총평·그래프 위치를 정확히 잡기 위함.
   function hrSummaryRow(ws){for(let r=1;r<=ws.rowCount;r++){const v=ws.getCell(r,2).value;if(typeof v==='string'&&v.replace(/\s+/g,'')==='월간총평')return r;}return ws.rowCount-4;}
   function hrExcelPreview(ws){
@@ -7305,22 +7306,20 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
       const comment=c===5&&r>sumRow&&r<=sumRow+4, pad=a.indent?Math.round(a.indent*HR_INDENT_PX):0;
       const bg=cell.fill?.pattern==='solid'?color(cell.fill.fgColor,'#fff'):'#fff';
       const style=`left:${x[c-1]}px;top:${y[r-1]}px;width:${x[c2]-x[c-1]}px;height:${y[r2]-y[r-1]}px;font-family:'${String(f.name||'굴림').replace(/[^\w가-힣 -]/g,'')}',Gulim,'Malgun Gothic',sans-serif;font-size:${size}pt;font-weight:${f.bold?700:400};font-style:${f.italic?'italic':'normal'};text-align:${align};color:${color(f.color,'#000')};background:${bg};border-top:${border(b.top)};border-bottom:${border(ws.getCell(r2,c).border?.bottom||b.bottom)};border-left:${border(b.left)};border-right:${border(ws.getCell(r,c2).border?.right||b.right)};padding-left:${2+pad}px;align-items:${a.vertical==='top'?'flex-start':a.vertical==='bottom'?'flex-end':'center'}`;
-      html+=`<div class="hr-xl-cell" style="${style}" data-xl-cell="${cell.address}" data-base-size="${size}"${comment?' data-xl-comment="'+esc(['업무평가 1','업무평가 2','건강관리','특이사항'][r-sumRow-1])+'"':''}${a.shrinkToFit?' data-xl-shrink="1"':''} title="${esc(text)}"><span class="hr-xl-text" style="${a.wrapText?'white-space:pre-wrap;overflow-wrap:break-word;':''}">${esc(text)}</span></div>`;
+      html+=`<div class="hr-xl-cell" style="${style}" data-xl-cell="${cell.address}" data-base-size="${size}" data-xl-w="${x[c2]-x[c-1]}"${comment?' data-xl-comment="'+esc(['업무평가 1','업무평가 2','건강관리','특이사항'][r-sumRow-1])+'"':''}${a.shrinkToFit?' data-xl-shrink="1"':''} title="${esc(text)}"><span class="hr-xl-text" style="${a.wrapText?'white-space:pre-wrap;overflow-wrap:break-word;':''}">${esc(text)}</span></div>`;
     }
     return {html,width:x[maxCol],height:y[maxRow],x,y,sumRow};
   }
   function hrPreviewFit(preview){
-    const issues=[],fit=preview.querySelector('#pvFit').checked,gulim=hrHasGulim();
+    const issues=[],fit=preview.querySelector('#pvFit').checked,gulim=true;
     preview.querySelectorAll('[data-xl-shrink]').forEach(cell=>{
       const text=cell.querySelector('.hr-xl-text'),base=+cell.dataset.baseSize;
       text.style.fontSize=base+'pt';cell.classList.remove('hr-xl-over','hr-xl-small','hr-xl-edge');
-      const width=text.clientWidth;if(!width||!text.textContent.trim())return;
-      // 같은 배율 기준으로 비교: 글자 실제 폭(range) ÷ 칸 안쪽 폭. 굴림이 없으면 굴림 폭 규칙으로 계산.
-      let natural;
-      if(gulim){const rg=document.createRange();rg.selectNodeContents(text);const z=text.getBoundingClientRect().width/width||1;natural=rg.getBoundingClientRect().width/z;}
-      else natural=hrGulimEm(text.textContent)*base*4/3;
+      const width=(+cell.dataset.xlW||0)-HR_CELL_RIGHT_PX;if(width<=0||!text.textContent.trim())return;
+      // 실제 Excel 화면에서 맞춘 글자 폭 표로 계산(브라우저 글꼴과 무관).
+      const natural=hrTextPx(text.textContent,base);
       const ratio=Math.min(1,width/Math.max(1,natural));
-      if(ratio>=.995&&cell.hasAttribute('data-xl-comment')&&natural>width*.95){cell.classList.add('hr-xl-edge');issues.push({label:cell.dataset.xlComment,text:text.textContent,size:base,cell:cell.dataset.xlCell,edge:true});}
+      if(ratio>=.995&&cell.hasAttribute('data-xl-comment')&&natural>width*.97){cell.classList.add('hr-xl-edge');issues.push({label:cell.dataset.xlComment,text:text.textContent,size:base,cell:cell.dataset.xlCell,edge:true});}
       if(ratio<.995){
         const fitted=base*ratio;
         if(fit){text.style.fontSize=fitted.toFixed(2)+'pt';}
@@ -7330,9 +7329,9 @@ window.HRINC_SEED = {"month": "2026-10", "teamOn": false, "personalOn": false, "
     const over=issues.filter(x=>!x.edge),edge=issues.filter(x=>x.edge),small=over.filter(x=>x.size<8);
     const status=preview.querySelector('#pvFitStatus');status.classList.toggle('warn',issues.length>0||!gulim);
     status.textContent=(over.length?`총평 ${over.length}칸 폭 초과 · 9pt로는 한 줄에 안 들어가 Excel에서 자동 축소됩니다${small.length?` · 빨간 테두리 ${small.length}칸은 8pt 미만 예상 → 요약 필요`:''}`:'총평 4칸 · 기본 9pt로 한 줄 안에 들어갑니다')
-      +(edge.length?` · 경계 ${edge.length}칸(여유 5% 미만, Excel에서 넘칠 수 있음)`:'')
+      +(edge.length?` · 경계 ${edge.length}칸(여유 3% 미만, PC마다 넘칠 수 있음)`:'')
       +(gulim?'':' · ⚠ 이 기기에 굴림 글꼴이 없어 굴림 글자 폭 규칙(한글 1칸, 영문·숫자·공백 반 칸)으로 계산했습니다. 굴림이 있는 Windows PC에서 다시 확인하세요')
-      +' · 브라우저와 Excel의 글꼴 그리기 차이로 몇 글자 정도 오차가 있을 수 있습니다.';
+      +' · 글자 폭은 실제 Excel 화면(100%)을 대조한 계산값이며, PC·글꼴 설정에 따라 몇 px 오차가 있을 수 있습니다.';
     const tag=i=>i.edge?'경계 · 9pt 유지, 여유 부족':i.size<8?`요약 필요 · ${i.size.toFixed(1)}pt까지 축소 예상`:`자동 축소 · ${i.size.toFixed(1)}pt 예상`;
     const list=preview.querySelector('#pvFitList');list.innerHTML=issues.map(i=>`<li><b>${esc(i.label)} (${esc(i.cell)})</b> · ${tag(i)} · ${i.text.length}자<br>${esc(i.text)}</li>`).join('');
     preview.querySelector('#pvReview').hidden=!issues.length;
