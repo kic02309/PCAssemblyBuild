@@ -3488,6 +3488,31 @@ html[data-theme=dark] .pa-pvw{background:#3a3115;color:#f5df7a}
 .pa-hand button{padding:0 6px;min-height:0;border:0;background:transparent;color:inherit;box-shadow:none}
 @media (max-width:1100px){.pa-hd{flex-wrap:wrap}.pa-tiles{flex-wrap:wrap;flex-basis:100%;order:3}.pa-t{flex:1 1 96px}.pa-body{flex-direction:column;align-items:stretch}.pa-left{width:auto;position:static}.pa-list{max-height:none}.pa-cfg{flex-direction:column}.pa-pm{flex-direction:column}.pa-pm textarea{width:auto;min-height:160px}}
 </style>
+<style id="premium-fit-v2948">
+/* v29.48 : 화면 전체 활용 · 글자 잘림 방지 · 검색창 · 완료 주문 색 */
+.pa-t .l{white-space:normal;word-break:keep-all;line-height:1.25}
+.pa-t .v{white-space:nowrap}
+.pa-q{display:flex;align-items:center;gap:8px}
+.pa-q input{flex:1;min-width:0;height:38px;border:1.5px solid var(--line);border-radius:11px;padding:0 12px;font-size:14px;background:var(--panel);color:var(--ink)}
+.pa-q input:focus{border-color:var(--blue);outline:none}
+.pa-q span{flex:none;font-size:12px;color:var(--sub);font-weight:700}
+.pa-r.done{background:rgba(23,163,74,.07)}
+.pa-r.done .c1>b{color:#15803d}
+.pa-r.done.on{background:rgba(23,163,74,.14);box-shadow:inset 4px 0 0 #17a34a}
+.pa-r.done.on .c1>b{color:#15803d}
+html[data-theme=dark] .pa-r.done{background:rgba(95,208,141,.08)}html[data-theme=dark] .pa-r.done .c1>b{color:#5fd08d}
+.pa-r[hidden],.pa-sec[hidden]{display:none!important}
+.pa-r .c1>b{white-space:nowrap}
+/* 한 화면 맞춤일 때 오른쪽 패널도 아래까지 채움: 안내내용 칸·안내 이력이 남는 높이를 나눠 씀 */
+#main .pa.pa-fit .pa-right{display:flex;flex-direction:column;overflow:auto}
+#main .pa.pa-fit .pa-compose-grid{flex:1 1 0;min-height:170px;margin:8px 0}
+#main .pa.pa-fit .pa-compose-field{display:flex;flex-direction:column;min-height:0}
+#main .pa.pa-fit .pa-compose-field textarea{flex:1 1 auto;height:auto;min-height:130px;resize:none}
+#main .pa.pa-fit .pa-two{flex:1 1 0;min-height:220px}
+#main .pa.pa-fit .pa-ex{display:flex;flex-direction:column;min-height:0}
+#main .pa.pa-fit .pa-hist{flex:1 1 auto;max-height:none;min-height:100px}
+#main .pa.pa-fit .pa-pb{flex:none}
+</style>
 <style id="premium-fit-v2947">
 /* v29.47: 24인치 등 넓은 화면에서 프리미엄 사전안내를 한 화면에 맞춤 (페이지 스크롤 없음) */
 #main .pa.pa-fit{display:flex;flex-direction:column;height:var(--pa-avail);box-sizing:border-box;padding-bottom:10px;overflow:hidden}
@@ -9401,7 +9426,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.47';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.48';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13675,8 +13700,10 @@ async function addCharts(buf, jobs) {
         root.classList.toggle('pa-fit',fit);
         if(fit){
           root.style.setProperty('--pa-avail',avail+'px');
-          const over=document.documentElement.scrollHeight-window.innerHeight;          // 아래 여백 때문에 넘치면 그만큼 줄임
-          if(over>0){avail-=over;root.style.setProperty('--pa-avail',avail+'px');}
+          for(let k=0;k<3;k++){                                                          // 아래 여백 때문에 넘치면 그만큼 줄임
+            const over=document.documentElement.scrollHeight-window.innerHeight;
+            if(over<=0)break;avail-=over;root.style.setProperty('--pa-avail',avail+'px');
+          }
           if(window.scrollY)window.scrollTo(0,0);
         }else root.style.removeProperty('--pa-avail');
       }finally{busy=false;}
@@ -13747,7 +13774,7 @@ async function addCharts(buf, jobs) {
     if (!V.flat.some(o => o.no === P.sel)) { P.sel = (V.flat.find(o => !o.done) || V.flat[0] || {}).no || ''; P.form = null; P.dirty = false; }
     const cur = V.all.find(o => o.no === P.sel) || null;
     if (cur && !P.form) { P.form = paForm(cur, ds); P.base = JSON.stringify(P.form); }
-    const tile = (f, label, cap, val, unit, extra, cls) => `<button class="pa-t${P.f === f ? ' on' : ''}${cls ? ' ' + cls : ''}" data-paf="${esc(f)}"><span class="l">${esc(label)}${cap ? `<i>${esc(cap)}</i>` : ''}</span><span class="v">${val}<small>${unit}</small>${extra || ''}</span></button>`;
+    const tile = (f, label, cap, val, unit, extra, cls, tip) => `<button class="pa-t${P.f === f ? ' on' : ''}${cls ? ' ' + cls : ''}" data-paf="${esc(f)}" title="${esc(tip || label)}"><span class="l">${esc(label)}${cap ? `<i>${esc(cap)}</i>` : ''}</span><span class="v">${val}<small>${unit}</small>${extra || ''}</span></button>`;
     const pct = V.main.length ? Math.round(V.done / V.main.length * 100) : 0;
     const day = D.day || {}, team = D.team || [];
     const canPaste = ed && (ds === D.today || D.who === 'admin');
@@ -13756,13 +13783,13 @@ async function addCharts(buf, jobs) {
         <div class="pa-dn"><button data-pad="-1" aria-label="이전 날">◀</button><b>${esc(dLabel(ds))}</b><button data-pad="1" aria-label="다음 날" ${ds >= D.today ? 'disabled' : ''}>▶</button>${ds !== D.today ? '<button data-pad="0" class="td">오늘</button>' : ''}</div>
         <div class="pa-who">담당 ${team.length > 1 && ed && !day.done ? `<select id="pa-uid" aria-label="오늘 담당">${team.map(([id, n]) => `<option value="${esc(id)}" ${id === day.uid ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>` : `<b>${esc(day.uname || '미지정')}</b>`}${D.lastPaste ? ` · ${esc(D.lastPaste.slice(11, 16))} 붙여넣음` : ''}</div></div>
       <div class="pa-tiles"><button class="pa-t pa-all${P.f === 'all' ? ' on' : ''}" data-paf="all"><span class="l">전체 · 안내 완료</span><span class="v">${V.done}<small> / ${V.main.length}건</small></span><span class="bar"><i style="width:${pct}%"></i></span></button>
-      ${V.G.map(g => tile('g:' + g.name, g.name, PA_CAP[g.name], g.list.length, '건', `<em>${g.qty}대</em>`, g.name === '미처리' ? 'red' : '')).join('')}
+      ${V.G.map(g => tile('g:' + g.name, g.name, PA_CAP[g.name], g.list.length, '건', `<em>PC ${g.qty}대</em>`, g.name === '미처리' ? 'red' : '', `${g.name} : 주문 ${g.list.length}건 · PC ${g.qty}대 (여러 대 주문은 대수로 셈)`)).join('')}
       ${tile('call', '통화불 · 이관', '', V.callL.length, '건', '', 'yel')}
       ${tile('recall', '재안내 대기', '', V.recallL.length, '건', '', 'pur')}</div>
       <div class="pa-act">${canPaste ? '<button class="pa-paste" id="pa-paste"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>상황판 붙여넣기</button>' : ''}
         <div class="pa-act2"><button id="pa-xl">엑셀</button>${(D.canConfig === true || (D.canConfig == null && D.who === 'admin')) ? '<button id="pa-cfg">⚙ 설정</button>' : ''}</div></div>
     </section>`;
-    const row = o => { const I = o._; return `<button class="pa-r${o.no === P.sel ? ' on' : ''}${I.prevOk ? ' prev' : ''}" data-pano="${esc(o.no)}">
+    const row = o => { const I = o._; return `<button class="pa-r${o.no === P.sel ? ' on' : ''}${I.prevOk ? ' prev' : ''}${I.st === 'done' ? ' done' : ''}" data-pano="${esc(o.no)}">
         <span class="c1"><b>${esc(o.no)}</b>${P.f !== 'all' || !I.onBoard ? `<i class="g g-${esc(o.grp)}">${esc(o.grp)}</i>` : ''}${I.prevOk ? '<i class="g pv">전날 안내됨</i>' : ''}${paDoem(o) ? '<i class="g doem">DOEM</i>' : ''}${I.calls ? `<i class="g cl">통화불 ${I.calls}회</i>` : ''}
           <small>${esc([o.ship, paTags(o), paNum(o.conv) + '대', (+o.qty > 1 ? o.qty + '대 주문' : '')].filter(Boolean).join(' · '))}</small></span>
         <span class="c2"><b>${esc(o.asm || '-')}</b><small>${esc(o.st || '')}</small></span>
@@ -13774,11 +13801,12 @@ async function addCharts(buf, jobs) {
       ${V.bundles.map(o => `<div class="r"><b>${esc(o.no)}</b><span>${esc([o.grp, o.ship, paTags(o), o.asm, o.st].filter(Boolean).join(' · '))}</span>${o.done ? '<i class="st st-done">확인 완료</i>' : ''}
         ${ed ? `${o.done ? '' : `<button data-paok="${esc(o.no)}">확인 완료</button>`}<button class="del" data-padel="${esc(o.no)}">삭제</button>` : ''}</div>`).join('')}</div>` : '';
     main.innerHTML = '<div class="pgb pa">' + head + `<div class="pa-body">
-      <div class="pa-left"><div class="pa-lh"><span>주문번호</span><span>조립</span><span>체크</span><span>안내</span></div><div class="pa-list" id="pa-list">${listHtml}</div>${bund}</div>
+      <div class="pa-left"><div class="pa-q"><input id="pa-q" type="search" inputmode="numeric" autocomplete="off" placeholder="주문번호 검색 (일부만 입력해도 됨 · Enter = 열기)" value="${esc(P.q || '')}"><span id="pa-qn"></span></div><div class="pa-lh"><span>주문번호</span><span>조립</span><span>체크</span><span>안내</span></div><div class="pa-list" id="pa-list">${listHtml}</div>${bund}</div>
       <div class="pa-right" id="pa-panel">${cur ? paPanel(cur, ed) : '<div class="pa-empty">왼쪽에서 주문을 고르세요</div>'}</div>
     </div>${paFoot(V, ed)}</div>`;
     $('#pa-list').scrollTop = keepTop; try { window.scrollTo(0, winY); } catch (e) { }
     paBind(V, ed);
+    paSearchBind(V);
     paStickyMount(main.querySelector('.pa'));
   }
   function paPanel(o, ed) {
@@ -13825,6 +13853,30 @@ async function addCharts(buf, jobs) {
       ${ed ? `${day.done ? '<button id="pa-undo">완료 취소</button>' : ''}<button class="primary" id="pa-fin">${day.done ? '다시 반영' : '오늘 사전안내 완료'}</button>` : ''}</div>`;
   }
   function paMark() { const P = S.pav; P.dirty = JSON.stringify(P.form) !== P.base; const sv = $('#pa-sv'); if (sv) sv.textContent = P.dirty ? '저장 안 됨' : ''; const b = $('#pa-save'); if (b) b.classList.toggle('primary', P.dirty); }
+  // v29.48 : 주문번호 검색 (목록 안에서 바로 걸러 보기, Enter = 첫 결과 열기, 다른 칸 필터에 있으면 전체로 바꿔서 열기)
+  function paSearchBind(V) {
+    const P = S.pav, q = $('#pa-q'); if (!q) return;
+    const apply = () => {
+      const k = String(q.value || '').replace(/\s+/g, ''); P.q = q.value;
+      const list = $('#pa-list'); if (!list) return; let n = 0, first = null;
+      $$('#pa-list .pa-r').forEach(r => { const hit = !k || String(r.dataset.pano || '').includes(k); r.hidden = !hit; if (hit) { n++; if (!first) first = r; } });
+      $$('#pa-list .pa-sec').forEach(sec => { let el = sec.nextElementSibling, any = false; while (el && !el.classList.contains('pa-sec')) { if (el.classList.contains('pa-r') && !el.hidden) any = true; el = el.nextElementSibling; } sec.hidden = !!k && !any; });
+      const qn = $('#pa-qn'); if (qn) qn.textContent = k ? (n ? n + '건' : (V.all.some(o => String(o.no).includes(k)) ? 'Enter = 전체에서 찾기' : '없음')) : '';
+      return first;
+    };
+    q.oninput = apply;
+    q.onkeydown = async e => {
+      if (e.key === 'Escape') { q.value = ''; apply(); return; }
+      if (e.key !== 'Enter') return; e.preventDefault();
+      const k = String(q.value || '').replace(/\s+/g, ''); if (!k) return;
+      const first = apply();
+      if (first) { first.click(); first.scrollIntoView({ block: 'nearest' }); return; }
+      const o = V.all.find(x => String(x.no).includes(k)); if (!o) return toast('그 주문번호가 없습니다', true);
+      if (!(await paGuard())) return; P.f = 'all'; P.sel = o.no; P.form = null; paDraw();
+      const r = $(`#pa-list .pa-r[data-pano="${CSS.escape(o.no)}"]`); if (r) r.scrollIntoView({ block: 'nearest' });
+    };
+    if (P.q) apply();
+  }
   function paBind(V, ed) {
     const P = S.pav, D = P.D;
     $$('[data-paf]').forEach(b => (b.onclick = async () => { if (!(await paGuard())) return; P.f = b.dataset.paf; P.form = null; paDraw(); }));
