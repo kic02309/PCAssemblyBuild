@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.54';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9538,8 +9538,9 @@ async function addCharts(buf, jobs) {
   const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
     'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList', 'previewPeople', 'previewCheck', 'previewAccounts']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
-  const pvRead = (a, d) => PV_READ.has(a) || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
+  const pvRead = (a, d) => PV_READ.has(a) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
   async function api(action, data) {
+    if (S.mpv && !pvRead(action, data)) throw new Error('모바일 미리보기에서는 저장되지 않습니다');
     if (S.pv && !pvRead(action, data)) throw new Error('미리보기 중에는 저장·수정되지 않습니다 (아래 [내 화면으로 돌아가기])');
     if (!SB_URL || SB_URL.indexOf('__') === 0) throw new Error('설치가 끝나지 않았습니다: index.html 의 SB_URL / SB_KEY 를 설정하세요');
     const tk0 = S.token;
@@ -9877,7 +9878,7 @@ async function addCharts(buf, jobs) {
     setInputFocus(false);
     clearTimeout(S.timer);
     if (!silent) { try { sessionStorage.removeItem(DRAFT_KEY); sessionStorage.removeItem('pending'); } catch (e) { } }
-    S.pv = null; S.realMe = null; S.mgD = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); }); document.body.classList.remove('pvmode'); { const b = document.getElementById('pvbar'); if (b) b.remove(); }   // v28.54
+    S.pv = null; S.mpv = null; { const b = document.getElementById('mpvbar'); if (b) b.remove(); } S.realMe = null; S.mgD = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); }); document.body.classList.remove('pvmode'); { const b = document.getElementById('pvbar'); if (b) b.remove(); }   // v28.54
     S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S._gm = {}; S._pmRes = null; S._bi = null; S._pbi = {}; S._wtd = null; S._mgBI = null; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
     attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;   // v28.53 : 공용 PC — 앞사람 자료 남기지 않기
     // 공용 PC : 다음 사람에게 앞사람이 보던 날짜·달·필터·창이 남지 않게
@@ -9963,15 +9964,24 @@ async function addCharts(buf, jobs) {
   // v28.95: full-group staff picker; permission is checked again by staff_preview.
   const pvGroups = (A, role) => [...new Set(A.filter(a => a.role === role).map(a => a.group || '미지정'))].sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
   const pvMembers = (A, role, group) => A.filter(a => a.role === role && (a.group || '미지정') === group).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  // v29.56 : 직급 보기 → 모바일 보기 (안정화 업무 / 라인생산 업무 폰 화면 · 저장은 막음)
+  function mpvBar() {
+    let b = document.getElementById('mpvbar'); if (!S.mpv) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('div'); b.id = 'mpvbar'; document.body.appendChild(b); }
+    b.innerHTML = `<b>📱 모바일 미리보기</b><span>${S.mpv === 'smob' ? '안정화 업무' : '라인생산 업무'} · 저장 안 됨</span><button id="mpvx" class="primary sm">닫기</button>`;
+    $('#mpvx', b).onclick = () => { S.mpv = null; mpvBar(); go('dash'); };
+  }
+  function mpvOpen(kind) { S.mpv = kind; mpvBar(); go(kind); }
   async function pvPick() {
     if (!canPv()) return toast('미리보기 권한이 없습니다', true);
     const admin = realMe().role === '관리자';
     let P; try { P = await api(admin ? 'previewAccounts' : 'previewPeople'); } catch(e) { return toast(e.message, true); }
     const A = admin ? (P.rows || []).filter(x=>x.acct && x.acct.id).map(x=>Object.assign({name:x.name},x.acct)) : (P.users || []);
     const row = (role,id,label) => `<div class="pvr pv-select-row"><b>${label}</b><label>그룹<select id="${id}g" aria-label="${label} 그룹">${pvGroups(A,role).map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('') || '<option value="">그룹 없음</option>'}</select></label><label>이름<select id="${id}" aria-label="${label} 이름"></select></label><button data-pm="${role === '일반' ? 'staff' : 'mgr'}" class="primary sm">보기</button></div>`;
-    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}</div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
+    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
       const panel = $('.modal',bg); if(panel) panel.classList.add('pv-picker');
       $('[data-c]',bg).onclick=close;
+      $$('[data-mp]',bg).forEach(b=>b.onclick=()=>{ close(); mpvOpen(b.dataset.mp); });
       for(const [role,id] of [['매니저','pvm'],['일반','pvs']]) {
         const g=$('#'+id+'g',bg), n=$('#'+id,bg); if(!g || !n) continue;
         const fill=()=>{n.innerHTML=pvMembers(A,role,g.value).map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('') || '<option value="">사원 없음</option>'; const b=$(`[data-pm="${role==='일반'?'staff':'mgr'}"]`,bg); b.disabled=!n.value;};
@@ -16316,7 +16326,7 @@ async function addCharts(buf, jobs) {
   // 매니저·관리자 : 관리 목록을 뒤에서 미리 받아 둠 → [관리] 누르면 바로 보임
   // ================================================================ v28.62 : 생산업무 (라인 공동실적 → 개인 배분) + 모바일 입력
   const PR_CS = ['A', 'B', 'C', 'D', 'E', 'F'], PR_CL = ['A', 'B', 'C', 'D', 'E', 'F', '없음'], PR_OTH = ['포장지원', '정리지원', '청소', '담당/교육', '불량처리', '기타시간'];
-  const canPmob = () => !!(S.me && !isRO() && (S.me.group === '라인' || S.prEd));
+  const canPmob = () => !!(S.me && !isRO() && (S.me.group === '라인' || S.prEd || S.mpv === 'pmob'));
   const canProd = () => !!(S.me && (S.me.role === '관리자' || S.me.role === '매니저' || S.prEd || S.me.group === '라인' || isRO()));   // 보기 = 라인 · 매니저 · 관리자 · 팀장 / 입력 · 확정은 서버가 정함
   const prUid = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   // 사양표 붙여넣기 → 제조번호 · 모델 · 수량 · 케이스 · 쿨러 · 파워 (여러 건 한 번에) — 못 읽으면 빈칸 + '확인 필요' (추측 금지)
@@ -16620,7 +16630,7 @@ async function addCharts(buf, jobs) {
     };
   }
   // ================================================================ v29.53 : 안정화 업무 (폰 입력) — 주문번호 + 업무 체크 → 본인 오늘 입력표에 한 줄 추가
-  const canSmob = () => !!(S.me && !isRO() && S.me.group === '안정화');
+  const canSmob = () => !!(S.me && !isRO() && (S.me.group === '안정화' || S.mpv === 'smob'));
   const SM_A = [['AG', '검수'], ['AH', '완충1'], ['AI', '완충2'], ['AT', '개인포장']];
   const SM_OS = [['AD', '안정화'], ['AA', 'O/S'], ['AB', 'DOEM + M'], ['AC', 'OS 재인증'], ['AE', '안정화 설치<br>+ OS삭제'], ['AF', 'Bios+Up']];
   const SM_OP = [['AJ', '옵1'], ['AK', '옵2'], ['AL', '옵3']];
@@ -16633,7 +16643,7 @@ async function addCharts(buf, jobs) {
     const r = await fetch(SB_URL + '/rest/v1/rpc/order_dup', { method: 'POST', headers: API_HEADERS(), body: JSON.stringify({ req: { token: S.token, date: S.today, order } }) });
     if (!r.ok) throw new Error('off');
     const j = await r.json(); if (!j || j.ok !== true) throw new Error('off');
-    return (j.dups || []).map(x => x.by);
+    return (j.dups || []).map(x => x.by).filter(n => !(S.pv && n === S.me.name));   // 미리보기 중: 보고 있는 사원 본인은 제외
   }
   const smClean = () => { S._adj = {}; S._gm = {}; S.stCache = {}; S._mcache = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } try { dropPc(S.me.id); } catch (e) { } };
   async function smDay() { const r = await api('getDay', { userId: S.me.id, date: S.today }); return { r, doc: r.doc ? JSON.parse(JSON.stringify(r.doc)) : C.emptyDay(S.today) }; }
@@ -16940,5 +16950,7 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .pxbar{display:block!important}
 .pxsv{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;height:60px}
 .pxsv small{font-size:13px;font-weight:600;opacity:.88}.pxsv b{font-size:20px}
-</style></body>
+</style><style id="phone-v2955">
+@media(min-width:701px){.pmx{max-width:430px;margin:8px auto 24px;border-radius:26px;box-shadow:0 8px 30px rgba(20,40,90,.22),0 0 0 8px #1c2b4a;overflow:visible}.pmx .pxhd{border-radius:26px 26px 40px 40px}}
+</style><style id="mpv-css">#mpvbar{position:fixed;bottom:16px;right:16px;z-index:9000;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#1c2b4a;color:#fff;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.25)}#mpvbar span{opacity:.85}#mpvbar button{height:30px;padding:0 12px}.pvl button small{display:block;color:#6b7893;font-weight:400}</style></body>
 </html>
