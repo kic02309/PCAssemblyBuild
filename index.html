@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.51';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.52';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16724,5 +16724,35 @@ async function addCharts(buf, jobs) {
 })();
 
 </script>
+<style id="premium-fit-v2951">
+/* v29.51 : 24인치 칸 맞춤 · 검색창 강조 */
+#main .pa .pa-tiles{flex:1 1 auto}
+#main .pa .pa-t{flex:1 1 0;min-width:96px;max-width:none}
+#main .pa .pa-t.pa-all{flex:1.5 1 0;min-width:150px;max-width:none}
+#main .pa .pa-sel .pa-seg{display:flex;width:100%;box-sizing:border-box}
+#main .pa .pa-sel .pa-seg button{flex:1 1 0;min-width:0;padding:8px 6px}
+#main .pa .pa-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+#main .pa .pa-two>.pa-ck,#main .pa .pa-two>.pa-ex{box-sizing:border-box;min-width:0;background:var(--pa-box);border:1px solid var(--pa-boxline);border-radius:12px;padding:12px 14px;box-shadow:0 2px 8px rgba(29,107,243,.07)}
+#main .pa .pa-two>.pa-ex{display:flex;flex-direction:column;min-height:0}
+#main .pa .pa-two .pa-fl{font-size:14px;font-weight:800;color:var(--ink);margin:0 0 9px!important}
+#main .pa .pa-two .pa-fl small{font-weight:600;color:var(--sub);margin-left:4px}
+#main .pa .pa-two .pa-hist{flex:1 1 auto;min-height:60px;border-left:2px solid var(--pa-taline)}
+#main .pa:not(.pa-fit) .pa-two .pa-hist{max-height:220px}
+#main .pa.pa-fit .pa-compose-grid{min-height:180px}
+#main .pa.pa-fit .pa-compose-field textarea{flex:1 1 0;height:0;min-height:90px}
+#main .pa .pa-compose-field textarea{margin:0}
+#main .pa.pa-fit .pa-two{min-height:0;flex:0 1 auto}
+#main .pa.pa-fit .pa-two .pa-ck .ck{padding:3px 0}
+#main .pa.pa-fit .pa-two .pa-ck .ck.call,#main .pa.pa-fit .pa-two .pa-ck .ck.rec{padding:6px 9px;margin-top:5px}
+#main .pa .pa-q{position:relative;margin-bottom:10px}
+#main .pa .pa-q input{height:46px;border:2px solid #8fb3f2;border-radius:12px;padding:0 14px 0 42px;font-size:15.5px;font-weight:700;letter-spacing:.02em;background:#f4f8ff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d6bf3' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat 14px center/19px 19px;box-shadow:0 2px 8px rgba(29,107,243,.10)}
+#main .pa .pa-q input::placeholder{color:#5f7398;font-weight:600;font-size:14px}
+#main .pa .pa-q input:focus{border-color:#1d6bf3;background-color:#fff;box-shadow:0 0 0 4px rgba(29,107,243,.18);outline:none}
+#main .pa .pa-q span{color:#1d4ed8}
+html[data-theme=dark] #main .pa .pa-q input{background-color:#1b2638;border-color:#36507e;color:#e7ebf2}
+html[data-theme=dark] #main .pa .pa-q input::placeholder{color:#8ea4c8}
+html[data-theme=dark] #main .pa .pa-q input:focus{background-color:#1f2b40;border-color:#5b8ff5}
+html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
+</style>
 </body>
 </html>
