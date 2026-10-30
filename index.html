@@ -3582,6 +3582,16 @@ html[data-theme=dark] .pa-r.done{background:rgba(95,208,141,.08)}html[data-theme
 <style id="hr-excel-preview-v2940">
 .hrw .hr-xl-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-right:60px;margin-bottom:10px}.hrw .hr-xl-tools h2{margin:0}.hrw .hr-xl-status{padding:10px 12px;background:#f3f6fa;border-radius:8px;margin-bottom:10px;line-height:1.6}.hrw .hr-xl-status.warn{background:#fff4e5;color:#854d0e}.hrw .hr-xl-scroll{overflow:auto;max-height:73vh;background:#e9edf2;padding:16px}.hrw .hr-xl-page{position:relative;background:white;color:#000;box-shadow:0 2px 10px #0002;isolation:isolate}.hrw .hr-xl-cell{position:absolute;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;margin:0;padding:1px 2px;min-width:0;min-height:0}.hrw .hr-xl-text{display:block;width:100%;min-width:0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:clip}.hrw .hr-xl-cell.hr-xl-over{box-shadow:inset 0 0 0 2px #d97706;background:#fff7ed!important}.hrw .hr-xl-cell.hr-xl-small{box-shadow:inset 0 0 0 2px #dc2626}.hrw .hr-xl-cell.hr-xl-edge{box-shadow:inset 0 0 0 2px #2563eb}.hrw .hr-xl-chart{position:absolute;background:#fff;border:1px solid #d9d9d9;box-sizing:border-box;z-index:1}.hrw .hr-xl-chart svg{display:block;width:100%;height:100%}.hrw .hr-xl-review{margin-top:12px;line-height:1.6}.hrw .hr-xl-review li{margin:6px 0;overflow-wrap:anywhere}.hrw .hr-xl-review summary{cursor:pointer;font-weight:700}@media print{.hrw .hr-xl-scroll{overflow:visible;max-height:none;background:white;padding:0}.hrw .hr-xl-page{zoom:1!important;box-shadow:none}.hrw .hr-xl-over,.hrw .hr-xl-small,.hrw .hr-xl-edge{box-shadow:none!important;background:white!important}.hrw .hr-xl-review,.hrw .hr-xl-tools,.hrw .hr-xl-status{display:none!important}}
 </style>
+<style id="ddwork-v2951">
+.ddwork{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-size:12px;color:var(--sub)}
+.ddwork span{display:inline-flex;gap:4px;align-items:center;padding:3px 9px;border-radius:999px;background:#eef6f4}
+.ddwork b{font-weight:800;color:#0f766e}
+.ddvol2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:5px}
+.ddvol2>span{display:flex;justify-content:center;align-items:center;gap:6px;padding:4px 1px;border-radius:6px;background:#eef6f4;font-size:11px;color:var(--sub);white-space:nowrap}
+.ddvol2 b{font-weight:850;font-size:12.5px;color:#0f766e;font-variant-numeric:tabular-nums}
+html[data-theme=dark] .ddwork span,html[data-theme=dark] .ddvol2>span{background:rgba(45,212,191,.10)}
+html[data-theme=dark] .ddwork b,html[data-theme=dark] .ddvol2 b{color:#5eead4}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -3641,6 +3651,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     Q: 'AG 400 기준 싱글 공랭 기본형 + 쌍팬 일체형 (오쓰 CV620)', R: '(팬2개 장착) 쌍팬 기본형 (어쎄신 120 SE)', S: '(팬2개 장착) + 5V 선정리 (쌍철봉)',
     T: '기본수냉(라디에이터+팬 일체형)', U: '수냉 팬 별도 장착/수냉 5V', V: '수냉쿨러중 컨트롤러가 포함',
     W: '기본형 케이스 쿨러/팬2개 일체형일 경우', Y: '5V 선정리 필요한 경우', Z: '케이스 기본 쿨러 제거할 경우',
+    F: '제조사용 완제품 출고 — 검수까지 체크해야 출고 수량에 들어감 (검수 없으면 OS·안정화 등 작업 환산만 인정)',
     AA: 'COEM+일반DOEM 설치건', AB: 'DOEM+마에스트로', AC: 'O/S 재인증건', AD: '안정화 테스트건', AE: 'O/S미구매 안정화 테스트건', AF: '바이오스 업데이트',
     AG: '부팅후 사진촬영/완충없이 케이스 박스에 담아 송장 붙이는 시간까지/제조완포 포함', AH: 'A,B,C,D,E 급(완충)', AI: '케이스 F급 이상(완충)',
     AJ: 'SSD, 메모리 간단변경', AK: '쌍팬 쿨러 제거후 메모리 변경 / 박스 제외건', AL: '그래픽 탈거후 SSD 변경',
@@ -3683,8 +3694,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
   const ASM = ['C', 'D', 'D2', 'E', 'E2'];
   const asmQty = r10 => ASM.reduce((a, c) => a + num((r10 || {})[c]), 0);
   // src = 하루 요약(sum) 또는 월 계산 결과 : ta(제조 줄 뺀 조립 구분 수량)가 있으면 그걸, 없으면(예전 기록) r10
-  function qtyParts(src) { src = src || {}; const T = src.ta || src.r10 || {}; return { asm: asmQty(T), ban: num(T.G), ship: num(T.F), mfg: num(src.mq), by: ASM.map(c => [c, num(T[c])]) }; }
-  function typeCounts(doc) { const ta = {}; (doc.rows || []).forEach(r => { if (!r || r.k === '제조' || String(r.o || '').trim() === '' || r.q === '' || r.q == null) return; const m = r.m || {}; for (const c of EXCLUSIVE.type) if (m[c]) { ta[c] = (ta[c] || 0) + num(r.q); break; } }); return ta; }
+  function qtyParts(src) { src = src || {}; const T = src.ta || src.r10 || {}, R = src.r10 || {}; return { asm: asmQty(T), ban: num(T.G), ship: num(T.F), mfg: num(src.mq), by: ASM.map(c => [c, num(T[c])]), os: 'OS' in T ? num(T.OS) : num(R.AA) + num(R.AB), st: 'ST' in T ? num(T.ST) : num(R.AD) + num(R.AE) }; }   // v29.51 : os · st (예전 기록은 r10 근사)
+  // v29.51 : 출고(F)는 검수(AG)까지 체크된 줄만 = 제조사용 출고 / 검수 없는 출고 체크는 중간 작업(환산만) · OS · ST = 그날 OS(O/S·D+M) · 안정화(안정화·안+삭제) 작업 대수 (줄당 한 번)
+  function typeCounts(doc) { const ta = { OS: 0, ST: 0 }; (doc.rows || []).forEach(r => { if (!r || r.k === '제조' || String(r.o || '').trim() === '' || r.q === '' || r.q == null) return; const m = r.m || {}, q = num(r.q); for (const c of EXCLUSIVE.type) if (m[c]) { if (c !== 'F' || m.AG) ta[c] = (ta[c] || 0) + q; break; } if (m.AA || m.AB) ta.OS += q; if (m.AD || m.AE) ta.ST += q; }); return ta; }
   const QLAB = { C: '일반', D: '특수', D2: '프리', E: '추천', E2: '웍스' };
   function emptyDay(dateStr) {
     const dow = new Date(dateStr + 'T00:00:00').getDay();
@@ -9449,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.50';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.51';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -11383,7 +11395,7 @@ async function addCharts(buf, jobs) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
         o.cv = ddProdMfg(ddAdjustedConversion(rawSum,s,p.conversion,o.adj,M));   // v29.35 : 라인 생산분 = 제조
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
-        { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; }   // v28.24 : 조립 / 반조 / 출고 / 제조 따로
+        { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; o.os = P.os; o.st = P.st; }   // v29.51 os · st / v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
       o.kind = o.off ? 'off' : o.task ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
       if (liveView && r._prod) ddProdPerson(o, s, r._prod, M);
@@ -11402,11 +11414,11 @@ async function addCharts(buf, jobs) {
       const mg = (r.mgrs || {})[g] || L.filter(p => p.title === '매니저').map(p => p.disp).join('/');
       return { g, L, n: L.length, th, tn: t.length, att: L.filter(p => p.kind !== 'off').length, w: w.length, sup: L.filter(p => p.kind === 'sup').length, mg,
         avg: w.length ? w.reduce((a, p) => a + p.v, 0) / w.length : null, tg: t.length ? t.reduce((a, p) => a + p.target, 0) / t.length : null,
-        q: Math.round(w.reduce((a, p) => a + p.q, 0) * 10) / 10, mq: w.reduce((a, p) => a + (p.mq || 0), 0), ship: w.reduce((a, p) => a + (p.ship || 0), 0), ban: w.reduce((a, p) => a + (p.ban || 0), 0) };
+        q: Math.round(w.reduce((a, p) => a + p.q, 0) * 10) / 10, mq: w.reduce((a, p) => a + (p.mq || 0), 0), ship: w.reduce((a, p) => a + (p.ship || 0), 0), ban: w.reduce((a, p) => a + (p.ban || 0), 0), os: w.reduce((a, p) => a + (p.os || 0), 0), st: w.reduce((a, p) => a + (p.st || 0), 0) };
     });
     return { r, P, body, work, tw, G, total: P.length, off: P.filter(p => p.kind === 'off'), sup: P.filter(p => p.kind === 'sup'), none: body.filter(p => p.kind === 'none'),
       mgr: P.filter(p => p.kind === 'mgr'), zero: body.filter(p => p.kind === 'zero'),
-      sumV: work.reduce((a, p) => a + p.v, 0), sumO: work.reduce((a, p) => a + p.oth, 0), sumQ: Math.round(work.reduce((a, p) => a + p.q, 0)), sumMQ: work.reduce((a, p) => a + (p.mq || 0), 0), sumShip: work.reduce((a, p) => a + (p.ship || 0), 0), sumBan: work.reduce((a, p) => a + (p.ban || 0), 0),
+      sumV: work.reduce((a, p) => a + p.v, 0), sumO: work.reduce((a, p) => a + p.oth, 0), sumQ: Math.round(work.reduce((a, p) => a + p.q, 0)), sumMQ: work.reduce((a, p) => a + (p.mq || 0), 0), sumShip: work.reduce((a, p) => a + (p.ship || 0), 0), sumBan: work.reduce((a, p) => a + (p.ban || 0), 0), sumOS: work.reduce((a, p) => a + (p.os || 0), 0), sumST: work.reduce((a, p) => a + (p.st || 0), 0),
       sumBy: C.ASM.map(c => [c, work.reduce((a, p) => a + (p.qp ? (p.qp.by.find(x => x[0] === c) || [0, 0])[1] : 0), 0)]),
       hit: tw.filter(p => lvOf(p.v, p.target, GY) === 'ok').length, GY, tgAvg: tw.length ? tw.reduce((a, p) => a + p.target, 0) / tw.length : null,
       asgOff: P.filter(p => p.off && p.task) };
@@ -11611,7 +11623,8 @@ async function addCharts(buf, jobs) {
       <div class="card ddquick-v7"><h3 class="ddh">실적 요약</h3>
         ${(() => { const mx = Math.max(1, D.sumQ, D.sumBan, D.sumShip, D.sumMQ);
           const rows = [['조립수량', D.sumQ, '#1f5fbf'], ['반조', D.sumBan, '#64748b'], ['제조사용(출고)', D.sumShip, '#b45309'], ['제조수량(제조)', D.sumMQ, '#6d3fc9']];
-          return `<div class="ddquick-bars">${rows.map(([label, n, col]) => `<div class="ddquick-bar"><span>${label}</span><div class="ddquick-track"><i style="width:${n / mx * 100}%;background:${col}"></i></div><b>${n}대</b></div>`).join('')}</div>`;
+          return `<div class="ddquick-bars">${rows.map(([label, n, col]) => `<div class="ddquick-bar"><span>${label}</span><div class="ddquick-track"><i style="width:${n / mx * 100}%;background:${col}"></i></div><b>${n}대</b></div>`).join('')}</div>`
+            + `<div class="ddwork" title="그날 OS(O/S · D+M) · 안정화(안정화 · 안+삭제) 체크한 대수 · 줄당 한 번"><span>OS 설치 <b>${D.sumOS || 0}</b>대</span><span>안정화 <b>${D.sumST || 0}</b>대</span></div>`;
         })()}</div>
       <div class="card dd-support-v7"><h3 class="ddh">업무지원 <small>총 ${D.sup.length}명</small></h3>
         <div class="ddasg dd-support-grid">${tasks.concat(Object.values(D.sup.reduce((a, p) => (tasks.includes(p.task) || (a[p.task] = p.task), a), {}))).map(t => {
@@ -11646,6 +11659,7 @@ async function addCharts(buf, jobs) {
       return `<div class="card ddgc ddgc-v5" style="--gc:${gcol(x.g)}"><div class="ddgh"><div class="t">${staff ? gdot(x.g) : `<span class="glink" data-gm="${esc(x.g)}" title="${esc(x.g)} 월 업무현황">${gdot(x.g)} ›</span>`}<span>${esc(x.mg || '')}</span></div>
         <div class="ddsum"><span><small>출근</small><b>${x.att}/${x.n}</b></span><span><small>평균</small><b>${f1d(x.avg)}</b></span><span class="ddsum-goal"><small>${tMode() === 't' ? '팀 목표' : '목표 평균'}</small><b>${x.tg > 0 ? f1d(x.tg) : '-'}</b></span><span class="ddsum-hit"><small>목표 달성</small><b>${x.tn ? x.th + '/' + x.tn + '명' : '-'}</b></span><span class="ddsum-rate"><small>달성률</small><b class="${groupRate == null ? '' : rateCls(x.avg / x.tg, D.GY) + 't'}">${groupRate == null ? '-' : groupRate + '%'}</b></span></div>
         <div class="ddvol"><span class="ddvol-asm">조립 <b>${x.q}</b></span><span class="ddvol-ship">출고 <b>${x.ship || 0}</b></span><span class="ddvol-mfg${staff ? '' : ' glink'}" ${staff ? '' : `data-gmf="${esc(x.g)}" title="제조 내역"`}>제조 <b>${x.mq || 0}</b></span></div>
+        ${x.os || x.st ? `<div class="ddvol2"><span>OS <b>${x.os || 0}</b></span><span>안정화 <b>${x.st || 0}</b></span></div>` : ''}
         ${x.sup || (x.g === '라인' && r.line) ? `<div class="ddextra">${x.sup ? '지원 ' + x.sup + '명' : ''}${x.sup && x.g === '라인' && r.line ? ' · ' : ''}${x.g === '라인' && r.line ? '총량 배분' : ''}</div>` : ''}</div>
       ${x.L.map(p => {
         const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${canNote(p) && p.uid ? `<button class="oth1" data-oth="1" title="기타시간 · 주문 메모 보기 · 고치기">⏱</button>` : ''}</div>`;
