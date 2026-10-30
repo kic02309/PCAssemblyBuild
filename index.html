@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.52';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.54';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10082,6 +10082,7 @@ async function addCharts(buf, jobs) {
         : cat === 'mgr' ? [] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '인사평가']];
       if (cat === 'work' && canPa()) it = it.concat([['pa', '프리미엄 사전안내']]);   // v29.37
+      if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
       $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
     const p = $('#proxy'); if (!p) return;
@@ -10165,10 +10166,11 @@ async function addCharts(buf, jobs) {
     if (view === 'wt') { $('#proxy').innerHTML = ''; return canWtMenu() ? renderWt(opt) : go('dash'); }
     if (view === 'pa') { $('#proxy').innerHTML = ''; return canPa() ? renderPa(opt) : go('dash'); }   // v29.37 : 프리미엄 사전안내
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
-    document.body.classList.toggle('pmobm', view === 'pmob');
+    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob');
     if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
     if (view === 'prod') { $('#proxy').innerHTML = ''; return canProd() ? renderProd(opt) : go('dash'); }   // v28.63 : 생산업무
     if (view === 'pmob') { $('#proxy').innerHTML = ''; return canPmob() ? renderPmob() : go('dash'); }
+    if (view === 'smob') { $('#proxy').innerHTML = ''; return canSmob() ? renderSmob() : go('dash'); }   // v29.53
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
     if (view === 'manage') return renderManage();
@@ -16584,34 +16586,150 @@ async function addCharts(buf, jobs) {
     let R; try { R = await api('prMob', { op: 'list' }); } catch (e) { main.innerHTML = `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
     if (S.view !== 'pmob') return;
     const k = S.pmv.k, cf = R.conf, mine = cf && cf.mine;
-    main.innerHTML = `<div class="pmob"><div class="pmh"><b>생산업무 · 폰 입력</b><span>${dLabel(R.today)} · ${esc(S.me.name)}</span><span style="flex:1"></span><button class="sm" id="pmpc">PC 화면</button><button class="sm" id="pmlo">로그아웃</button></div>
-      ${mine ? `<div class="pmcf">오늘 확정된 내 생산업무 배분 <b>${f2(mine.p)}</b> <small>(${mine.m}분 참여)</small></div>` : cf ? `<div class="pmcf wait">${cf.status === 'confirmed' ? '오늘 실적 확정됨' : '담당자가 아직 확정 전입니다'}</div>` : ''}
-      <div class="pmtab"><button data-pk="asm" class="${k === 'asm' ? 'on' : ''}">🔧 개별 조립</button><button data-pk="oth" class="${k === 'oth' ? 'on' : ''}">🧹 기타업무</button></div>
-      <div class="pmf">${k === 'asm' ? `<label>제조번호</label><input id="pmno" inputmode="text" enterkeyhint="next" maxlength="40" placeholder="예: 151886306" autocomplete="off" spellcheck="false">
-        <label>모델명</label><input id="pmmodel" inputmode="text" enterkeyhint="next" maxlength="60" placeholder="예: R-5193 (웍스는 X-0291)" autocomplete="off" autocapitalize="characters" spellcheck="false">
-        <label>수량</label><div class="pmq"><button data-q="-1">－</button><input id="pmq" type="number" value="1" min="1"><button data-q="1">＋</button></div>
-        <label>케이스 난이도</label><div class="pmch" id="pmcs">${PR_CS.map(x => `<button data-v="${x}">${x}</button>`).join('')}</div>
-        <label>CPU쿨러 난이도</label><div class="pmch" id="pmcl">${PR_CL.map(x => `<button data-v="${x}">${x}</button>`).join('')}</div>
-`
-        : `<label>항목</label><div class="pmch" id="pmcat">${PR_OTH.map(x => `<button data-v="${x}">${x}</button>`).join('')}</div>
-        <label>시간 (분)</label><div class="pmch" id="pmmin">${[10, 20, 30, 40, 60, 90, 120].map(x => `<button data-v="${x}">${x}</button>`).join('')}</div><input id="pmmins" type="number" min="1" max="720" placeholder="직접 입력 (분)">
-        <label>사유</label><input id="pmrs" maxlength="200" placeholder="예: 2층 앵글 정리">`}
-        <button class="primary pmsave" id="pmsave">저장</button></div>
-      <div class="pml"><b>오늘 내가 넣은 것 ${R.rows.length}건</b>${R.rows.map(r => `<div class="pmr"><span>${r.kind === 'asm' ? `🔧 ${esc(r.data.no)}${r.data.model ? ' · ' + esc(r.data.model) : ''} · ${r.data.q}대 · 케이스 ${esc(r.data.cs)} / 쿨러 ${esc(r.data.cl)}` : `🧹 ${esc(r.data.cat)} ${r.data.mins}분 · ${esc(r.data.reason)}`}</span><button data-del="${r.id}">✕</button></div>`).join('') || '<div class="muted">아직 없음</div>'}
-        <div class="muted" style="margin-top:6px">폰 입력은 담당자(박동건 · 양주성)가 확인하고 [실적 확정]하면 반영됩니다.</div></div></div>`;
+    const rowTxt = r => r.kind === 'asm' ? `${esc(r.data.no)}${r.data.model ? ' · ' + esc(r.data.model) : ''} · ${r.data.q}대 · 케이스 ${esc(r.data.cs)} / 쿨러 ${esc(r.data.cl)}` : `${esc(r.data.cat)} ${r.data.mins}분 · ${esc(r.data.reason)}`;
+    const btns = (arr, id, cls) => `<div class="px${cls}" id="${id}">${arr.map(x => `<button type="button" class="pxc" data-v="${x}">${x}</button>`).join('')}</div>`;
+    main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="pmpc">PC 화면</button><button id="pmlo">로그아웃</button></span></div>
+      <div class="pxr"><div><h1>라인생산 업무</h1><div class="pxmeta">${dLabel(R.today)} · ${esc(S.me.name)}</div></div><div class="pxcn"><b>${R.rows.length}</b><small>오늘 입력</small></div></div></div>
+      <div class="pxbd">
+      ${mine ? `<div class="pxcf">오늘 확정된 내 생산업무 배분 <b>${f2(mine.p)}</b> <small>(${mine.m}분 참여)</small></div>` : cf ? `<div class="pxcf wait">${cf.status === 'confirmed' ? '오늘 실적 확정됨' : '담당자가 아직 확정 전입니다'}</div>` : ''}
+      <div class="pxseg"><button type="button" data-pk="asm" class="${k === 'asm' ? 'on' : ''}">개별 조립</button><button type="button" data-pk="oth" class="${k === 'oth' ? 'on' : ''}">기타업무</button></div>
+      ${k === 'asm' ? `<div class="pxcard"><div class="pxlb">제조번호 · 수량</div><div class="pxord"><input class="pxin" id="pmno" inputmode="text" enterkeyhint="next" maxlength="40" placeholder="151886306" autocomplete="off" spellcheck="false"><div class="pxqty"><button type="button" data-q="-1">−</button><input id="pmq" type="number" value="1" min="1"><button type="button" data-q="1">+</button></div></div>
+        <div class="pxgap"></div><div class="pxlb">모델명</div><input class="pxtxt" id="pmmodel" inputmode="text" enterkeyhint="next" maxlength="60" placeholder="예: R-5193 (웍스는 X-0291)" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+        <div class="pxcard"><div class="pxlb">케이스 난이도</div>${btns(PR_CS, 'pmcs', 'g6')}<div class="pxgap"></div><div class="pxlb">CPU쿨러 난이도</div>${btns(PR_CL, 'pmcl', 'g7').replace('data-v="없음">', 'data-v="없음" style="font-size:11.5px">')}</div>`
+        : `<div class="pxcard"><div class="pxlb">항목</div>${btns(PR_OTH, 'pmcat', 'g3')}</div>
+        <div class="pxcard"><div class="pxlb">시간 (분)</div>${btns([10, 20, 30, 40, 60, 90, 120], 'pmmin', 'g7')}<div class="pxgap" style="height:10px"></div><input class="pxtxt" id="pmmins" type="number" inputmode="numeric" min="1" max="720" placeholder="직접 입력 (분)"></div>
+        <div class="pxcard"><div class="pxlb">사유</div><input class="pxtxt" id="pmrs" maxlength="200" placeholder="예: 2층 앵글 정리"></div>`}
+      <div class="pxcard" style="padding:10px 12px"><div class="pxlast"><span>오늘 입력 <b>${R.rows.length}</b>건</span><button type="button" id="pmall">전체 보기 ›</button></div></div>
+      <div class="muted" style="font-size:12px;text-align:center;color:#64748b">폰 입력은 담당자(박동건 · 양주성)가 확인하고 [실적 확정]하면 반영됩니다.</div>
+      </div><div class="pxbar"><button type="button" class="pxs" id="pmsave">저장</button></div></div>`;
     $$('[data-pk]').forEach(b => (b.onclick = () => { S.pmv.k = b.dataset.pk; renderPmob(); }));
     $('#pmpc').onclick = () => go('input'); $('#pmlo').onclick = () => logout();
     const pick = id => $$('#' + id + ' button').forEach(b => (b.onclick = () => { $$('#' + id + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); if (id === 'pmmin') $('#pmmins').value = b.dataset.v; }));
     ['pmcs', 'pmcl', 'pmcat', 'pmmin'].forEach(id => $('#' + id) && pick(id));
     $$('[data-q]').forEach(b => (b.onclick = () => { const i = $('#pmq'); i.value = Math.max(1, (+i.value || 1) + +b.dataset.q); }));
     const val = id => { const b = $('#' + id + ' button.on'); return b ? b.dataset.v : ''; };
+    $('#pmall').onclick = () => modal(`<h3>오늘 입력 ${R.rows.length}건</h3><div class="pmlist">${R.rows.map(r => `<div class="pxrow"><span>${rowTxt(r)}</span><button class="sm" data-del="${r.id}">✕</button></div>`).join('') || '<div class="muted">아직 없음</div>'}</div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      $$('[data-del]', bg).forEach(b => (b.onclick = async () => { if (!(await confirmBox('지울까요?', '지우기'))) return; try { await api('prMob', { op: 'del', id: b.dataset.del }); close(); renderPmob(); } catch (e) { toast(e.message, true); } }));
+    });
     $('#pmsave').onclick = async () => {
       const data = k === 'asm' ? { no: $('#pmno').value.trim(), model: $('#pmmodel').value.trim(), q: +$('#pmq').value, cs: val('pmcs'), cl: val('pmcl') } : { cat: val('pmcat') || '기타시간', mins: +$('#pmmins').value, reason: $('#pmrs').value.trim() };
       if (k === 'asm' && (!data.no || !data.model || !data.cs || !data.cl)) return toast('제조번호 · 모델명 · 케이스 · 쿨러 난이도를 모두 넣으세요', true);
       if (k === 'oth' && (!(data.mins > 0) || data.reason.length < 2)) return toast('시간 · 사유를 넣으세요', true);
       $('#pmsave').disabled = true; try { await api('prMob', { op: 'add', kind: k, data }); toast('저장했습니다'); renderPmob(); } catch (e) { toast(e.message, true); $('#pmsave').disabled = false; }
     };
-    $$('[data-del]').forEach(b => (b.onclick = async () => { if (!(await confirmBox('지울까요?', '지우기'))) return; try { await api('prMob', { op: 'del', id: b.dataset.del }); renderPmob(); } catch (e) { toast(e.message, true); } }));
+  }
+  // ================================================================ v29.53 : 안정화 업무 (폰 입력) — 주문번호 + 업무 체크 → 본인 오늘 입력표에 한 줄 추가
+  const canSmob = () => !!(S.me && !isRO() && S.me.group === '안정화');
+  const SM_A = [['AG', '검수'], ['AH', '완충1'], ['AI', '완충2'], ['AT', '개인포장']];
+  const SM_OS = [['AD', '안정화'], ['AA', 'O/S'], ['AB', 'DOEM + M'], ['AC', 'OS 재인증'], ['AE', '안정화 설치<br>+ OS삭제'], ['AF', 'Bios+Up']];
+  const SM_OP = [['AJ', '옵1'], ['AK', '옵2'], ['AL', '옵3']];
+  const SM_TAG = { F: '출고', AG: '검수', AH: '완충1', AI: '완충2', AA: 'OS', AB: 'D+M', AC: '재인증', AD: '안정화', AE: '안정화+삭제', AF: 'Bios', AJ: '옵1', AK: '옵2', AL: '옵3', AT: '개인포장', C: '일반', D: '특수', D2: '프리', E: '추천', E2: '웍스', G: '반조' };
+  const smSpecial = () => {                                          // '안정화(특수)' = 항목 설정에서 이름 붙인 추가 칸 → 이름으로 찾음
+    const set = rateSet(ymOfDate(S.today)) || (S.rates || []).slice(-1)[0] || {}, NM = set.names || {};
+    return Object.keys(NM).find(c => C.COL[c] && C.COL[c].ext && String(NM[c]).replace(/[\s\n]/g, '') === '안정화(특수)') || null;
+  };
+  async function smDup(order) {                                      // 같은 날 다른 안정화 담당자가 같은 주문번호를 넣었는지 (서버 함수 order_dup · SQL 적용 전이면 건너뜀)
+    const r = await fetch(SB_URL + '/rest/v1/rpc/order_dup', { method: 'POST', headers: API_HEADERS(), body: JSON.stringify({ req: { token: S.token, date: S.today, order } }) });
+    if (!r.ok) throw new Error('off');
+    const j = await r.json(); if (!j || j.ok !== true) throw new Error('off');
+    return (j.dups || []).map(x => x.by);
+  }
+  const smClean = () => { S._adj = {}; S._gm = {}; S.stCache = {}; S._mcache = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } try { dropPc(S.me.id); } catch (e) { } };
+  async function smDay() { const r = await api('getDay', { userId: S.me.id, date: S.today }); return { r, doc: r.doc ? JSON.parse(JSON.stringify(r.doc)) : C.emptyDay(S.today) }; }
+  async function renderSmob() {
+    const main = $('#main'), V = S.smv = { sel: {}, q: 1, tip: '', dups: [], own: false, off: false };
+    let D; try { D = await smDay(); } catch (e) { main.innerHTML = `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
+    if (S.view !== 'smob') return;
+    V.doc = D.doc; V.can = !!D.r.canEdit;
+    const SP = smSpecial(), SPL = SP ? [[SP, '안정화<br>(특수)']] : [];
+    const tp = tipsYm(ymOfDate(S.today));
+    const rows = () => (V.doc.rows || []).filter(x => x && String(x.o || '').trim());
+    const chip = ([c, t], cls) => `<button type="button" class="pxc${cls || ''}" data-k="${c}">${t}</button>`;
+    const grid = (arr, cls) => `<div class="pxw4 ${cls || ''}">${arr.map(a => chip(a, a[1].indexOf('<br>') > 0 ? ' sm' : '')).join('')}</div>`;
+    main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="smpc">PC 화면</button><button id="smlo">로그아웃</button></span></div>
+      <div class="pxr"><div><h1>안정화 업무</h1><div class="pxmeta">${dLabel(S.today)} · ${esc(S.me.name)}</div></div><div class="pxcn"><b id="smn">0</b><small>오늘 입력</small></div></div></div>
+      <div class="pxbd">
+      <div class="pxcard"><div class="pxlb">주문번호 · 수량</div><div class="pxord pxvo"><input class="pxin" id="smo" inputmode="numeric" enterkeyhint="done" maxlength="30" placeholder="28972341" autocomplete="off" spellcheck="false"><span class="pxfix">출고 ✓</span></div><div class="pxvq"><div class="pxqty"><button type="button" data-q="-1">−</button><input id="smq" type="number" value="1" min="1"><button type="button" data-q="1">+</button></div></div><div id="smdup"></div></div>
+      <div class="pxcard">${grid(SM_A)}${grid(SM_OS.concat(SPL))}${grid(SM_OP)}<div class="pxtip" id="smtip">항목을 누르면 설명이 나옵니다</div><div id="smhint"></div></div>
+      <div class="pxcard" style="padding:10px 12px"><div class="pxlast"><span id="smlast"></span><button type="button" id="small">전체 보기 ›</button></div></div>
+      ${V.can ? '' : '<div class="pxmsg bad">오늘 입력표를 수정할 수 없습니다 (담당 매니저에게 문의)</div>'}
+      </div><div class="pxbar"><button type="button" class="pxs pxsv" id="smsave"><small id="smsum"></small><b>저장</b></button></div></div>`;
+    const lab = c => (SM_OS.concat(SM_A, SM_OP, SPL).find(x => x[0] === c) || [c, c])[1].replace('<br>', ' ');
+    const tagOf = c => SM_TAG[c] || ((C.COL[c] && C.COL[c].ext) ? lab(c) : c);
+    const sync = () => {
+      $$('.pmx [data-k]').forEach(b => { const c = b.dataset.k, v = V.sel[c]; b.classList.toggle('on', !!v); const old = b.querySelector('sup'); if (old) old.remove(); if (v > 1 || (v && C.COL[c].kind === 'num')) b.insertAdjacentHTML('beforeend', `<sup>${v}</sup>`); });
+      const nm = c => { const v = V.sel[c]; return lab(c) + (C.COL[c].kind === 'num' && V.q > 1 && v ? ' ×' + v : (C.COL[c].kind === 'num' && v > 1 ? ' ×' + v : '')); };
+      const ks = Object.keys(V.sel); $('#smsum').textContent = ks.length ? ks.map(nm).join(' + ') : '항목을 선택하세요';
+      $('#smtip').innerHTML = V.tip || '항목을 누르면 설명이 나옵니다';
+      $('#smhint').innerHTML = Object.keys(V.sel).length && !V.sel.AG ? '<div class="pxmsg warn">검수가 없으면 제조사용 출고에 들어가지 않습니다 (중간작업으로만 인정)</div>' : '';
+      const rs = rows(); $('#smn').textContent = rs.length;
+      const L = rs[rs.length - 1]; $('#smlast').innerHTML = L ? `최근 <b>${esc(L.o)}</b> · ${L.q}대 · ${esc(Object.keys(L.m || {}).filter(c => L.m[c]).map(tagOf).join('+') || '-')}` : '아직 입력 없음';
+      const m = [];
+      if (V.dups.length) m.push(`<div class="pxmsg bad">중복입력 · ${esc(V.dups.join(', '))}님이 이미 입력한 주문번호입니다</div>`);
+      else if (V.own) m.push('<div class="pxmsg warn">이미 내가 입력한 주문번호입니다</div>');
+      if (V.off && !V.offShown) m.push('<div class="pxmsg info">다른 담당자 중복 확인이 꺼져 있습니다 (관리자 설정 필요)</div>');
+      $('#smdup').innerHTML = m.join('');
+      $('#smsave').disabled = !V.can || V.dups.length > 0 || !Object.keys(V.sel).length;
+    };
+    const norm = () => C.normOrder($('#smo').value);
+    let tm = 0, seq = 0;
+    const check = async () => {
+      const o = norm(), my = ++seq; V.dups = []; V.own = false;
+      if (/^\d{8,9}$/.test(o)) {
+        V.own = rows().some(x => String(x.o).trim() === o);
+        try { const d = await smDup(o); if (my === seq) { V.dups = d; V.off = false; } } catch (e) { if (my === seq) V.off = true; }
+      }
+      if (my === seq) sync();
+    };
+    $('#smo').oninput = () => { clearTimeout(tm); V.dups = []; V.own = false; sync(); tm = setTimeout(check, 350); };
+    $$('[data-q]').forEach(b => (b.onclick = () => { const i = $('#smq'); i.value = V.q = Math.max(1, (+i.value || 1) + +b.dataset.q); Object.keys(V.sel).forEach(c => { if (C.COL[c].kind === 'num' && V.sel[c] > V.q) V.sel[c] = V.q; }); sync(); }));
+    $('#smq').oninput = () => { V.q = Math.max(1, Math.floor(+$('#smq').value || 1)); };
+    $$('.pmx [data-k]').forEach(b => (b.onclick = () => {
+      const c = b.dataset.k, num = C.COL[c].kind === 'num';
+      V.tip = `<b>${esc(lab(c))}</b> ${esc(tp[c] || '')}`;
+      if (num) { const n = (V.sel[c] || 0) >= V.q ? 0 : (V.sel[c] || 0) + 1; if (n) V.sel[c] = n; else delete V.sel[c]; }
+      else if (V.sel[c]) delete V.sel[c]; else V.sel[c] = 1;
+      sync();
+    }));
+    $('#smpc').onclick = () => go('input'); $('#smlo').onclick = () => logout();
+    $('#small').onclick = () => {
+      const draw = () => rows().map(x => `<div class="pxrow"><span><b>${esc(x.o)}</b> · ${x.q}대 ${Object.keys(x.m || {}).filter(c => x.m[c]).map(c => `<em>${esc(tagOf(c))}${C.COL[c] && C.COL[c].kind === 'num' && x.m[c] > 1 ? x.m[c] : ''}</em>`).join('')}</span><button class="sm" data-d="${esc(x.o)}|${esc(JSON.stringify(x.m || {}))}">✕</button></div>`).join('') || '<div class="muted">아직 없음</div>';
+      modal(`<h3>오늘 입력 ${rows().length}건</h3><div class="pmlist" id="smlist">${draw()}</div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
+        $('[data-c]', bg).onclick = close;
+        $('#smlist', bg).onclick = async e => {
+          const b = e.target.closest('[data-d]'); if (!b || !(await confirmBox('지울까요?', '지우기'))) return;
+          const [o, ms] = b.dataset.d.split(/\|(.+)/);
+          try {
+            const g = await smDay(), i = g.doc.rows.findIndex(x => String(x.o || '').trim() === o && JSON.stringify(x.m || {}) === ms);
+            if (i < 0) { toast('이미 지워졌습니다', true); } else {
+              g.doc.rows.splice(i, 1); const q = { userId: S.me.id, date: S.today, doc: g.doc, sum: C.daySummary(g.doc, minsOf(S.today)) }; if (g.r.ver != null) q.base = g.r.ver;
+              await api('saveDay', q); smClean(); toast('지웠습니다');
+            }
+            V.doc = (await smDay()).doc; $('#smlist', bg).innerHTML = draw(); sync();
+          } catch (er) { toast(er.message, true); }
+        };
+      });
+    };
+    $('#smsave').onclick = async () => {
+      const o = norm(), keys = Object.keys(V.sel);
+      if (!/^\d{8,9}$/.test(o)) return toast('주문번호를 확인하세요 (숫자 8~9자리)', true);
+      if (!keys.length) return toast('업무 항목을 선택하세요', true);
+      V.q = Math.max(1, Math.floor(+$('#smq').value || 1));
+      const m = { F: 1 }; keys.forEach(c => { m[c] = C.COL[c].kind === 'num' ? Math.min(V.sel[c], V.q) : 1; });   // 안정화 입력 = 항상 출고
+      $('#smsave').disabled = true;
+      try {
+        try { const d = await smDup(o); if (d.length) { V.dups = d; sync(); return toast('중복입력 · ' + d.join(', ') + '님이 이미 입력했습니다', true); } } catch (e) { V.off = true; }
+        const g = await smDay();
+        if (g.doc.rows.some(x => String(x.o || '').trim() === o && JSON.stringify(x.m || {}) === JSON.stringify(m))) { sync(); return toast('같은 내용을 이미 입력했습니다', true); }
+        g.doc.rows.push({ o, q: V.q, m });
+        const q = { userId: S.me.id, date: S.today, doc: g.doc, sum: C.daySummary(g.doc, minsOf(S.today)) }; if (g.r.ver != null) q.base = g.r.ver;
+        await api('saveDay', q); smClean();
+        V.doc = g.doc; V.sel = {}; V.q = 1; V.tip = ''; V.dups = []; V.own = false; $('#smo').value = ''; $('#smq').value = 1;
+        toast('저장했습니다'); sync(); $('#smo').focus();
+      } catch (e) { toast(e.message, true); sync(); }
+    };
+    sync();
   }
   function prefetchManage() {
     const ym = (curPeriod() || {}).ym; if (!ym || !isManager()) return;
@@ -16637,10 +16755,10 @@ async function addCharts(buf, jobs) {
       let d0 = S.today;
       try { const pend = Object.values(draftMap()).filter(x => x.owner === S.me.id && x.uid === S.me.id).sort((a, b) => b.at - a.at)[0]; if (pend) d0 = pend.date; } catch (e) { }
       const pend0 = Object.values(draftMap()).some(x => x.owner === S.me.id && x.uid === S.me.id);
-      let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
+      let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org'] : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'org'].concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org'] : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'smob', 'org'].concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -16754,5 +16872,73 @@ html[data-theme=dark] #main .pa .pa-q input::placeholder{color:#8ea4c8}
 html[data-theme=dark] #main .pa .pa-q input:focus{background-color:#1f2b40;border-color:#5b8ff5}
 html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 </style>
-</body>
+<style id="phone-v2953">
+/* v29.53 : 안정화 업무 · 라인생산 업무 폰 입력 (네이비) */
+.pmx{--nv:#2c4a86;--nv2:#223c70;--ln:#c3cde3;--bg2:#eef1f7;max-width:520px;margin:0 auto;min-height:calc(100dvh - 54px);display:flex;flex-direction:column;background:var(--bg2);color:#0f172a;font-family:inherit;position:relative}
+.pmx *{box-sizing:border-box}
+.pmx button{font-family:inherit;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0;margin:0}
+.pmx .pxhd{background:linear-gradient(135deg,#17284f 0%,#2f4c88 100%);color:#fff;padding:14px 18px 30px;border-radius:0 0 26px 26px}
+.pmx .pxhd .pxkr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pmx .pxhd .pxk{font-size:10.5px;font-weight:700;letter-spacing:.16em;opacity:.6}
+.pmx .pxhd .pxlk{display:flex;gap:12px}.pmx .pxhd .pxlk button{background:none;color:#fff;opacity:.75;font-size:12px;font-weight:600}
+.pmx .pxhd .pxr{display:flex;justify-content:space-between;align-items:flex-end}
+.pmx .pxhd h1{font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1.1;margin:0;color:#fff}
+.pmx .pxhd .pxmeta{margin-top:8px;font-size:13px;font-weight:500;opacity:.92}
+.pmx .pxhd .pxcn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:7px 14px;text-align:center}
+.pmx .pxhd .pxcn b{display:block;font-size:22px;font-weight:800;line-height:1}.pmx .pxhd .pxcn small{font-size:10.5px;opacity:.85;font-weight:600}
+.pmx .pxbd{flex:1;padding:0 12px 12px;margin-top:-14px;display:flex;flex-direction:column;gap:8px}
+.pmx .pxcard{background:#fff;border-radius:16px;padding:12px;box-shadow:0 1px 4px rgba(70,110,200,.10)}
+.pmx .pxlb{font-size:12px;font-weight:700;color:#6b7a99;margin:0 0 7px}.pmx .pxgap{height:12px}
+.pmx .pxord{display:flex;gap:10px;align-items:center}
+.pmx .pxin{flex:1;min-width:0;height:62px;border:2px solid var(--nv);border-radius:12px;font-size:28px;font-weight:800;letter-spacing:.04em;padding:0 14px;background:#fff;color:#0f172a;font-family:inherit}
+.pmx .pxin:focus{outline:none;box-shadow:0 0 0 3px rgba(44,74,134,.18)}
+.pmx .pxtxt{width:100%;height:50px;border:1.5px solid var(--ln);border-radius:12px;background:#f6f8fc;font-size:17px;padding:0 14px;color:#0f172a;font-weight:600;font-family:inherit}
+.pmx .pxtxt:focus{outline:none;border-color:var(--nv);background:#fff}
+.pmx .pxqty{display:flex;align-items:center;background:#f1f5fb;border-radius:12px;height:62px;flex:0 0 auto}
+.pmx .pxqty button{width:40px;height:62px;background:none;font-size:22px;color:#334155;font-weight:600}
+.pmx .pxqty input{width:34px;border:0;background:none;text-align:center;font-size:20px;font-weight:800;color:#0f172a;padding:0;font-family:inherit;-moz-appearance:textfield}
+.pmx .pxqty input::-webkit-outer-spin-button,.pmx .pxqty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pmx .pxw4,.pmx .pxg3,.pmx .pxg6,.pmx .pxg7{display:grid;gap:8px}
+.pmx .pxw4{grid-template-columns:repeat(4,1fr)}.pmx .pxg3{grid-template-columns:repeat(3,1fr)}.pmx .pxg6{grid-template-columns:repeat(6,1fr);gap:6px}.pmx .pxg7{grid-template-columns:repeat(7,1fr);gap:5px}
+.pmx .pxw4+.pxw4,.pmx .pxsp{margin-top:10px;padding-top:10px;border-top:1px solid #edf1f7}
+.pmx .pxc{position:relative;min-width:0;height:54px;padding:0 4px;border-radius:10px;border:1.5px solid #c3cde3;background:#f6f8fc;font-size:13.5px;font-weight:600;color:#3b4d6b;line-height:1.2;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;word-break:keep-all}
+.pmx .pxc.on{background:var(--nv);border-color:#223c70;color:#fff;box-shadow:0 2px 6px rgba(30,55,110,.35)}
+.pmx .pxc sup{font-size:10px;background:#fff;color:#223c70;border-radius:9px;padding:0 6px;font-weight:800}
+.pmx .pxc.sm{font-size:12px;letter-spacing:-.02em}
+.pmx .pxg6 .pxc,.pmx .pxg7 .pxc{height:50px;padding:0;font-size:15px}.pmx .pxg7 .pxc.t{font-size:11.5px}
+.pmx .pxg3 .pxc{height:54px;font-size:14px}
+.pmx .pxtip{font-size:12.5px;color:#64748b;background:#f4f7fc;border-radius:9px;padding:9px 12px;margin-top:10px;line-height:1.4}.pmx .pxtip b{color:#0f172a}
+.pmx .pxmsg{font-size:13px;font-weight:700;border-radius:10px;padding:9px 12px;margin-top:10px;line-height:1.4}
+.pmx .pxmsg.bad{background:#fdecec;color:#b42318}.pmx .pxmsg.warn{background:#fff6e0;color:#8a5a00}.pmx .pxmsg.info{background:#f4f7fc;color:#64748b;font-weight:600}
+.pmx .pxlast{font-size:12.5px;color:#64748b;display:flex;justify-content:space-between;align-items:center;padding:1px 2px}.pmx .pxlast b{color:#0f172a}.pmx .pxlast button{background:none;color:var(--nv);font-weight:700;font-size:13px}
+.pmx .pxseg{display:grid;grid-template-columns:1fr 1fr;background:#e3e8f2;border-radius:14px;padding:4px}
+.pmx .pxseg button{height:42px;border-radius:11px;background:none;font-weight:800;font-size:15px;color:#6b7a99}.pmx .pxseg button.on{background:#fff;color:var(--nv2);box-shadow:0 1px 4px rgba(30,55,110,.15)}
+.pmx .pxcf{background:#e3f4e8;color:#1e7a3c;border-radius:12px;padding:9px 12px;text-align:center;font-size:13.5px}.pmx .pxcf.wait{background:#f2f4f8;color:#475569}
+.pmx .pxbar{position:sticky;bottom:0;padding:8px 12px calc(14px + env(safe-area-inset-bottom));background:#fff;box-shadow:0 -2px 10px rgba(15,40,90,.06);display:grid;grid-template-columns:1fr;gap:8px}
+.pmx .pxbar.two{grid-template-columns:1fr 1.2fr}
+.pmx .pxbar button{height:50px;border-radius:12px;font-size:15.5px;font-weight:800}
+.pmx .pxbar .pxs{background:var(--nv);color:#fff}.pmx .pxbar .pxs:disabled{background:#b9c3d9}
+.pmx .pxbar .pxq1{background:#f6f8fc;border:2px solid var(--nv);color:var(--nv2)}.pmx .pxbar .pxq1.on{background:var(--nv);color:#fff}
+.pmlist .pxrow{display:flex;gap:8px;align-items:center;padding:9px 2px;border-bottom:1px solid #eef1f6;font-size:14px}.pmlist .pxrow span{flex:1}.pmlist .pxrow em{font-style:normal;font-size:11.5px;font-weight:700;color:#223c70;background:#e8edf8;border-radius:6px;padding:2px 6px;margin-left:4px}
+</style>
+<style id="phone-v2954">
+.pmx .pxhd{padding-top:12px!important;padding-bottom:30px!important}
+.pmx .pxr h1{font-size:25px!important}
+.pxvo{position:relative;display:block!important}
+.pxvo .pxin{width:100%!important;box-sizing:border-box;height:52px!important;font-size:24px!important;padding-right:96px!important}
+.pxfix{position:absolute;right:10px;top:50%;transform:translateY(-50%);height:34px;display:flex;align-items:center;padding:0 12px;border-radius:17px;background:#2a4a85;color:#fff;font-size:14px;font-weight:800;white-space:nowrap}
+.pxvq{margin-top:8px}
+.pxvq .pxqty{width:100%!important;box-sizing:border-box;height:52px!important;display:flex;align-items:center;justify-content:space-between;border:2px solid #c3cde3;background:#fff;border-radius:14px;padding:0 6px}
+.pxvq .pxqty input{flex:1;min-width:0;text-align:center;font-size:22px;font-weight:800;color:#0f1b33;background:transparent;border:0}
+.pxvq .pxqty button{width:64px;height:40px;font-size:28px}
+.pmx .pxcard{padding:10px 12px!important;margin-bottom:8px!important}
+.pmx .pxw4 .pxc{height:46px!important;font-size:13.5px!important}
+.pmx .pxw4{gap:6px!important;margin-bottom:6px!important}
+.pmx .pxcard .pxw4:nth-of-type(2) [data-k=AD]{grid-column:1;grid-row:1/3;height:auto!important;font-size:17px!important}
+.pmx .pxcard .pxw4:nth-of-type(3){grid-template-columns:repeat(3,1fr)!important}
+.pmx .pxtip{padding:7px 10px!important;font-size:12.5px!important;margin-top:4px!important}
+.pxbar{display:block!important}
+.pxsv{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;height:60px}
+.pxsv small{font-size:13px;font-weight:600;opacity:.88}.pxsv b{font-size:20px}
+</style></body>
 </html>
