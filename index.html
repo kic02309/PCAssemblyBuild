@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.58';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16750,14 +16750,18 @@ async function addCharts(buf, jobs) {
   async function spLoad() { try { const r = await api('sp', { op: 'can' }); S.sp = { who: r.who || '' }; } catch (e) { S.sp = { who: '', err: e.message }; } }
   const SP_IMG = name => {                                            // 비품 그림 (그림만 · 수량은 글자)
     const n = String(name || '');
+    if (/스티커|라벨|안내|용지|리본/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><rect x="34" y="16" width="72" height="84" rx="6" fill="#fff" stroke="#c7d3e6" stroke-width="2"/><g fill="#dfe9f7"><rect x="44" y="28" width="22" height="12" rx="2"/><rect x="74" y="28" width="22" height="12" rx="2"/><rect x="44" y="48" width="22" height="12" rx="2"/><rect x="74" y="48" width="22" height="12" rx="2"/><rect x="44" y="68" width="22" height="12" rx="2"/><rect x="74" y="68" width="22" height="12" rx="2"/></g><rect x="92" y="38" width="44" height="58" rx="5" fill="#f6f8fc" stroke="#c7d3e6" stroke-width="2"/><path d="M100 52h28M100 62h28M100 72h18" stroke="#b9c6da" stroke-width="3"/></svg>`;
+    if (/테이프|필름|스트레치/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><circle cx="80" cy="55" r="40" fill="#cfa36a"/><circle cx="80" cy="55" r="20" fill="#fff" stroke="#b58a52" stroke-width="3"/><path d="M118 66h30v14h-34z" fill="#dcb47e"/></svg>`;
     if (/박스/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><path d="M30 42 80 24l50 18-50 18z" fill="#e9c391"/><path d="M30 42v44l50 18V60z" fill="#d2a066"/><path d="M130 42v44L80 104V60z" fill="#bd8a50"/><path d="M30 42 14 58l50 18 16-16z" fill="#e4b57a"/><path d="M130 42l16 16-50 18-16-16z" fill="#c9965c"/><path d="M55 33l50 18" stroke="#b07b42" stroke-width="5" opacity=".55"/></svg>`;
     if (/실드|쉴드|에어|버블/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><g stroke="#9db8dc" stroke-width="2"><rect x="18" y="58" width="64" height="40" rx="18" fill="#fff"/><rect x="74" y="54" width="68" height="44" rx="20" fill="#f4f8fe"/><rect x="40" y="20" width="76" height="46" rx="21" fill="#fff"/></g><g fill="#cfe0f5"><circle cx="60" cy="36" r="5"/><circle cx="80" cy="44" r="4"/><circle cx="98" cy="34" r="5"/><circle cx="40" cy="76" r="4"/><circle cx="108" cy="72" r="5"/><circle cx="124" cy="82" r="4"/></g><path d="M48 30q30-14 60 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
     if (/케이블|타이|쫄대/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><g stroke="#20252e" stroke-width="5" stroke-linecap="round" fill="none"><path d="M20 84 136 30"/><path d="M22 74 140 42"/><path d="M26 92 132 22"/><path d="M18 64 142 52"/><path d="M30 98 128 16"/></g><g fill="#20252e"><rect x="128" y="10" width="14" height="12" rx="2" transform="rotate(-30 135 16)"/><rect x="136" y="24" width="14" height="12" rx="2" transform="rotate(-24 143 30)"/></g><rect x="66" y="38" width="22" height="46" rx="4" transform="rotate(-24 77 61)" fill="#d9b88a"/></svg>`;
     if (/봉투|비닐/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><path d="M30 34h100l-6 64H36z" fill="#f2f5fa" stroke="#b9c6da" stroke-width="2"/><path d="M42 34q8-18 18 0M100 34q8-18 18 0" stroke="#b9c6da" stroke-width="4" fill="none"/><path d="M50 54h60M48 70h64" stroke="#d6dfeb" stroke-width="3"/></svg>`;
-    if (/테이프/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><circle cx="80" cy="55" r="40" fill="#cfa36a"/><circle cx="80" cy="55" r="20" fill="#fff" stroke="#b58a52" stroke-width="3"/><path d="M118 66h30v14h-34z" fill="#dcb47e"/></svg>`;
-    if (/스티커|라벨|안내|용지|리본/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><rect x="34" y="16" width="72" height="84" rx="6" fill="#fff" stroke="#c7d3e6" stroke-width="2"/><g fill="#dfe9f7"><rect x="44" y="28" width="22" height="12" rx="2"/><rect x="74" y="28" width="22" height="12" rx="2"/><rect x="44" y="48" width="22" height="12" rx="2"/><rect x="74" y="48" width="22" height="12" rx="2"/><rect x="44" y="68" width="22" height="12" rx="2"/><rect x="74" y="68" width="22" height="12" rx="2"/></g><rect x="92" y="38" width="44" height="58" rx="5" fill="#f6f8fc" stroke="#c7d3e6" stroke-width="2"/><path d="M100 52h28M100 62h28M100 72h18" stroke="#b9c6da" stroke-width="3"/></svg>`;
     return `<svg viewBox="0 0 160 110" aria-hidden="true"><rect x="44" y="24" width="72" height="66" rx="10" fill="#eef3fb" stroke="#b9c8e2" stroke-width="2"/><path d="M60 46h40M60 60h40M60 74h24" stroke="#9db0d0" stroke-width="4" stroke-linecap="round"/></svg>`;
   };
+  const SP_CATS = ['박스·포장', '완충재', '결속·보조', '스티커·안내장', '출력용', '환경·기타'];     // 대분류 순서 (비어 있으면 '기타')
+  const spCat = it => it.cat || '기타';
+  const spOrd = it => [it.ordWho ? '발주 ' + it.ordWho : '', it.vendor || ''].filter(Boolean).join(' · ');   // 카드 · 발주 줄
+  const spTel = v => String(v || '').replace(/[^\d+]/g, '');
   const spN = v => (v == null || v === '' ? '-' : Number(v).toLocaleString());
   const spMD = d => { const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(d || ''); return m ? (+m[1]) + '/' + (+m[2]) : ''; };
   const spHasParts = it => it.parts.length > 0 && it.parts[0].p !== '';
@@ -16779,9 +16783,13 @@ async function addCharts(buf, jobs) {
   async function spReload() { try { S.spD = await api('sp', { op: 'get' }); } catch (e) { toast(e.message, true); } if (S.view === 'sp') spDraw(); }
   function spDraw() {
     const D = S.spD, main = $('#main'), adm = D.who === 'admin', today = D.today;
-    const items = D.items.filter(it => it.active);
+    const all = D.items.filter(it => it.active);
+    const cats = [...SP_CATS.filter(c => all.some(it => spCat(it) === c)), ...(all.some(it => spCat(it) === '기타') ? ['기타'] : [])];
+    if (S.spCat && S.spCat !== 'all' && !cats.includes(S.spCat)) S.spCat = 'all';
+    const cf = S.spCat || 'all';
+    const items = cf === 'all' ? all : all.filter(it => spCat(it) === cf);
     const lows = [], none = [];
-    items.forEach(it => {
+    all.forEach(it => {
       it.specs.forEach(s => { if (spSt(s) === 'low') lows.push([it, s]); });
       it.parts.forEach(pt => { if (spPartDay(pt) !== today) none.push([it, pt]); });
     });
@@ -16804,20 +16812,23 @@ async function addCharts(buf, jobs) {
         <div class="bptop"><div class="bpimg">${SP_IMG(it.name)}</div><div class="bph"><b>${esc(it.name)}</b>${badge(st)}${who(it)}<span class="bpd${L && L.d === today ? '' : ' old'}">${L ? `최근 실사 ${spMD(L.d)}${L.d === today ? ' (오늘)' : ''}` : '실사 기록 없음'}</span></div></div>
         ${parts ? rowsParts(it) : `<div class="bprows">${rowsSingle(it)}</div>`}
         ${priceLine(it)}
+        ${spOrd(it) ? `<div class="bpord">${esc(spOrd(it))}</div>` : ''}
         <div class="bpbtns">${btn}${it.price && spIsMain(it) ? `<button type="button" class="bpin2" data-bppr="${it.id}">단가 기록</button>` : ''}</div>
       </div>`;
     };
     const pn = it => `정 ${esc(it.mainName || '-')}${it.subName ? ' · 부 ' + esc(it.subName) : ''}`;
     const right = `<aside class="bpside">
       <h3>재고 상태 한눈에</h3>
-      <div class="bpsec low"><div class="bpst">! 발주 필요 <b>${lows.length}</b></div>${lows.length ? lows.map(([it, s]) => `<button type="button" class="bpline" data-bpi="${it.id}"><span><b>${esc(it.name)}</b> ${esc(s.s)}</span><span>${spN(s.total)} / 기준 ${spN(s.min)}${esc(it.unit)}</span><small>${pn(it)}</small></button>`).join('') : '<div class="bpempty">기준보다 적은 품목이 없습니다</div>'}</div>
-      <div class="bpsec none"><div class="bpst">오늘 실사 전 <b>${none.length}</b></div>${none.length ? none.map(([it, pt]) => `<button type="button" class="bpline" data-bpi="${it.id}"><span><b>${esc(it.name)}</b>${pt.n ? ' ' + esc(pt.n) : ''}</span><small>${pt.p ? esc(pt.uname || '담당 없음') : pn(it)}</small></button>`).join('') : '<div class="bpempty">모두 오늘 실사했습니다</div>'}</div>
+      <div class="bpsec low"><div class="bpst">! 발주 필요 <b>${lows.length}</b></div>${lows.length ? lows.map(([it, s]) => `<button type="button" class="bpline" data-bpi="${it.id}"><span><b>${esc(it.name)}</b> ${esc(s.s)}</span><span>${spN(s.total)} / 기준 ${spN(s.min)}${esc(it.unit)}</span><small>${spOrd(it) ? esc(spOrd(it)) : pn(it)}</small></button>`).join('') : '<div class="bpempty">기준보다 적은 품목이 없습니다</div>'}</div>
+      <div class="bpsec none"><div class="bpst">오늘 실사 전 <b>${none.length}</b></div><div class="bpscr">${none.length ? none.map(([it, pt]) => `<button type="button" class="bpline" data-bpi="${it.id}"><span><b>${esc(it.name)}</b>${pt.n ? ' ' + esc(pt.n) : ''}</span><small>${pt.p ? esc(pt.uname || '담당 없음') : pn(it)}</small></button>`).join('') : '<div class="bpempty">모두 오늘 실사했습니다</div>'}</div></div>
       <div class="bpnote">합계가 기준 수량보다 <b>적으면</b> 발주 필요로 표시됩니다. 파트별 품목의 합계는 각 파트의 가장 최근 수량을 더한 값입니다.</div>
     </aside>`;
     const setBtn = adm ? '<button type="button" id="bpset">⚙ 품목 · 기준 · 담당 설정</button>' : D.who === 'mgr' ? '<button type="button" id="bpset">⚙ 담당 설정</button>' : '';
     main.innerHTML = pageHead('소모품 관리', '', setBtn)
       + `<div class="pgb bpwrap"><div class="bpsub"><span>실사한 재고 수량을 입력하면, 합계가 기준 수량보다 적을 때 <b>발주 필요</b>를 알려 줍니다.</span></div>
-      <div class="bpgrid"><div class="bpcards">${items.length ? items.map(card).join('') : '<div class="bpempty">등록된 품목이 없습니다' + (adm ? ' (오른쪽 위 설정에서 추가)' : '') + '</div>'}</div>${right}</div></div>`;
+      ${cats.length > 1 ? `<div class="bpchips">${['all', ...cats].map(c => `<button type="button" class="bpchip${cf === c ? ' on' : ''}" data-bpc="${esc(c)}">${c === 'all' ? '전체' : esc(c)}<i>${c === 'all' ? all.length : all.filter(it => spCat(it) === c).length}</i>${c !== 'all' && all.some(it => spCat(it) === c && spItemSt(it) === 'low') ? '<u></u>' : ''}</button>`).join('')}</div>` : ''}
+      <div class="bpgrid"><div class="bpmain">${items.length ? (cf === 'all' && cats.length > 1 ? cats : [cf]).map(c => { const g = items.filter(it => cf !== 'all' || spCat(it) === c); return g.length ? `<section class="bpgrp">${cf === 'all' && cats.length > 1 ? `<h4 class="bpgh">${esc(c)} <small>${g.length}</small></h4>` : ''}<div class="bpcards">${g.map(card).join('')}</div></section>` : ''; }).join('') : '<div class="bpempty">등록된 품목이 없습니다' + (adm ? ' (오른쪽 위 설정에서 추가)' : '') + '</div>'}</div>${right}</div></div>`;
+    $$('[data-bpc]').forEach(b => (b.onclick = () => { S.spCat = b.dataset.bpc; spDraw(); }));
     $$('[data-bpin]').forEach(b => (b.onclick = e => { e.stopPropagation(); spInput(+b.dataset.bpin, b.dataset.bpp); }));
     $$('[data-bppr]').forEach(b => (b.onclick = e => { e.stopPropagation(); spPrice(+b.dataset.bppr); }));
     $$('[data-bpi]').forEach(b => (b.onclick = () => spHist(+b.dataset.bpi)));
@@ -16881,6 +16892,7 @@ async function addCharts(buf, jobs) {
     }).join('');
     const pr = it.price && it.prices.length ? `<h4>단가 기록 <small>박스 단가 · 원</small></h4><table class="bphtab"><thead><tr><th>날짜</th>${it.specs.map(s => `<th>${esc(s.s)}</th>`).join('')}<th></th></tr></thead><tbody>${[...new Set(it.prices.map(x => x.d))].slice(0, 8).map(d => `<tr><td>${spMD(d)}</td>${it.specs.map(s => { const x = it.prices.find(y => y.d === d && y.k === s.k); return `<td class="n">${x ? spN(x.v) : ''}</td>`; }).join('')}<td class="by">${esc((it.prices.find(y => y.d === d) || {}).by || '')}</td></tr>`).join('')}</tbody></table>` : '';
     modal(`<div class="bpm-hd"><div class="bpm-ic">${SP_IMG(it.name)}</div><div><h3>${esc(it.name)} · 최근 실사</h3><p>정 ${esc(it.mainName || '-')}${it.subName ? ' · 부 ' + esc(it.subName) : ''}</p></div></div>
+      ${(it.ordWho || it.vendor || it.contact || it.memo) ? `<div class="bpinfo"><h4>발주 정보</h4>${it.ordWho ? `<div><span>발주 담당</span><b>${esc(it.ordWho)}</b></div>` : ''}${it.vendor ? `<div><span>발주처</span><b>${esc(it.vendor)}</b></div>` : ''}${it.contact ? `<div><span>연락처</span><b><a href="tel:${esc(spTel(it.contact))}">${esc(it.contact)}</a></b></div>` : ''}${it.memo ? `<div><span>메모</span><b>${esc(it.memo)}</b></div>` : ''}</div>` : ''}
       <div class="bphwrap">${rows ? `<table class="bphtab"><thead><tr><th>날짜</th>${parts ? '<th>파트</th>' : ''}${it.specs.map(s => `<th>${esc(s.s || '수량')}</th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="bpempty">실사 기록 없음</div>'}${pr}</div>
       <div class="bpm-ft">${spMyParts(it).length ? '<button type="button" class="primary" data-i>수량 입력</button>' : ''}<button type="button" data-c>닫기</button></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'wide');
@@ -16892,7 +16904,7 @@ async function addCharts(buf, jobs) {
   const spUopt = sel => `<option value="">— 없음 —</option>` + (S.spD.users || []).map(([u, n, g]) => `<option value="${esc(u)}"${u === sel ? ' selected' : ''}>${esc(n)}${g ? ' (' + esc(g) + ')' : ''}</option>`).join('');
   function spSettings() {
     const D = S.spD, adm = D.who === 'admin';
-    const list = () => D.items.filter(it => adm || it.active).map(it => `<div class="bpsetrow${it.active ? '' : ' off'}"><span><b>${esc(it.name)}</b> <small>${it.specs.map(s => esc(s.s || '단일')).join(' · ')} · ${esc(it.unit)}${it.price ? ' · 단가표' : ''}</small><br><small>정 ${esc(it.mainName || '-')} · 부 ${esc(it.subName || '-')}${spHasParts(it) ? ' · ' + it.parts.map(pt => esc(pt.n) + ' ' + esc(pt.uname || '-')).join(', ') : ''}${it.active ? '' : ' · 사용 안 함'}</small></span><button type="button" data-e="${it.id}">${adm ? '수정' : '담당'}</button></div>`).join('');
+    const list = () => D.items.filter(it => adm || it.active).map(it => `<div class="bpsetrow${it.active ? '' : ' off'}"><span><b>${esc(it.name)}</b> <small>${esc(spCat(it))} · ${it.specs.map(s => esc(s.s || '단일')).join(' · ')} · ${esc(it.unit)}${it.price ? ' · 단가표' : ''}</small><br><small>정 ${esc(it.mainName || '-')} · 부 ${esc(it.subName || '-')}${spHasParts(it) ? ' · ' + it.parts.map(pt => esc(pt.n) + ' ' + esc(pt.uname || '-')).join(', ') : ''}${it.active ? '' : ' · 사용 안 함'}</small></span><button type="button" data-e="${it.id}">${adm ? '수정' : '담당'}</button></div>`).join('');
     modal(`<h3>${adm ? '품목 · 기준 · 담당 설정' : '담당 설정'}</h3><div class="note">${adm ? '합계가 기준 수량보다 적으면 <b>발주 필요</b>로 표시됩니다. ' : '품목 · 규격 · 기준 수량은 관리자가 정합니다. '}담당(정 · 부 · 파트)만 수량을 입력할 수 있습니다.</div><div class="bpsetl">${list()}</div><div class="acts">${adm ? '<button data-n>＋ 품목 추가</button>' : ''}<button data-c>닫기</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
       if ($('[data-n]', bg)) $('[data-n]', bg).onclick = () => { close(); spEdit(null); };
@@ -16914,7 +16926,7 @@ async function addCharts(buf, jobs) {
     });
   }
   function spEdit(id) {                                               // 관리자 : 품목 전체
-    const D = S.spD, it = id ? D.items.find(x => x.id === id) : { name: '', unit: '개', specs: [{ k: 's1', s: '', min: null, per: null }], parts: [], price: false, main: '', sub: '', ord: (D.items.length + 1), active: true };
+    const D = S.spD, it = id ? D.items.find(x => x.id === id) : { name: '', unit: '개', specs: [{ k: 's1', s: '', min: null, per: null }], parts: [], price: false, main: '', sub: '', ord: (D.items.length + 1), active: true, cat: (S.spCat && S.spCat !== 'all' ? S.spCat : ''), ordWho: '', vendor: '', contact: '', memo: '' };
     if (!it) return;
     const specs = it.specs.map(s => ({ k: s.k, s: s.s, min: s.min, per: s.per }));
     const parts = spHasParts(it) ? it.parts.map(pt => ({ p: pt.p, n: pt.n, uid: pt.uid })) : [];
@@ -16927,6 +16939,11 @@ async function addCharts(buf, jobs) {
         <label>담당 (정)<select id="bpm">${spUopt(it.main)}</select></label>
         <label>담당 (부)<select id="bps">${spUopt(it.sub)}</select></label>
         <label>보이는 순서<input id="bpo" inputmode="numeric" value="${it.ord || 0}"></label>
+        <label>대분류<select id="bpcat">${[...SP_CATS, ''].map(c => `<option value="${esc(c)}"${(it.cat || '') === c ? ' selected' : ''}>${c || '(기타)'}</option>`).join('')}</select></label>
+        <label>발주 담당<input id="bpow" maxlength="40" value="${esc(it.ordWho || '')}" placeholder="예: 공중섭 매니저"></label>
+        <label>발주처<input id="bpven" maxlength="60" value="${esc(it.vendor || '')}" placeholder="예: 태림 이석구 과장"></label>
+        <label>연락처<input id="bpct" maxlength="60" value="${esc(it.contact || '')}" placeholder="예: 010-0000-0000"></label>
+        <label class="bpwide">발주 메모<input id="bpmemo" maxlength="400" value="${esc(it.memo || '')}" placeholder="발주 주기 · 입고 요일 · 주의사항"></label>
         <label class="bpchk"><input id="bppr" type="checkbox"${it.price ? ' checked' : ''}> 단가표 사용 (박스 단가 기록)</label>
         ${id ? `<label class="bpchk"><input id="bpa" type="checkbox"${it.active ? ' checked' : ''}> 사용 (끄면 화면에서 숨김 · 기록은 보관)</label>` : ''}
       </div>
@@ -16950,7 +16967,7 @@ async function addCharts(buf, jobs) {
       $('[data-s]', bg).onclick = async () => {
         grab();
         if (specs.some(s => (s.min != null && !/^\d+$/.test(String(s.min))) || (s.per != null && !/^\d+$/.test(String(s.per))))) return toast('기준 수량 · 1박스 개수는 숫자 (비우면 없음)', true);
-        const q = { op: 'item', name: $('#bpn', bg).value.trim(), unit: $('#bpu', bg).value.trim(), main: $('#bpm', bg).value, sub: $('#bps', bg).value, ord: $('#bpo', bg).value, price: $('#bppr', bg).checked,
+        const q = { op: 'item', name: $('#bpn', bg).value.trim(), unit: $('#bpu', bg).value.trim(), main: $('#bpm', bg).value, sub: $('#bps', bg).value, ord: $('#bpo', bg).value, cat: $('#bpcat', bg).value, ordWho: $('#bpow', bg).value, vendor: $('#bpven', bg).value, contact: $('#bpct', bg).value, memo: $('#bpmemo', bg).value, price: $('#bppr', bg).checked,
           specs: specs.map(s => ({ k: s.k, s: s.s.trim(), min: s.min == null ? null : +s.min, per: s.per == null ? null : +s.per })), parts: parts.map(p => ({ p: p.p, n: p.n.trim(), uid: p.uid })) };
         if (id) { q.id = String(id); q.active = $('#bpa', bg).checked; }
         const b = $('[data-s]', bg); b.disabled = true;
@@ -17288,6 +17305,22 @@ html[data-theme=dark]{--bplow:#ff9a5c;--bplowbg:#3a2516;--bpok:#5fd0b8;--bpokbg:
 .bpsprow input,.bpptrow input,.bpptrow select{height:36px}.bpsprow button,.bpptrow button{height:36px;padding:0}
 @media(max-width:900px){.bpgrid{grid-template-columns:1fr}.bpside{position:static;order:-1}}
 @media(max-width:560px){.bpside{order:0}.bpcards{grid-template-columns:1fr;gap:10px}.bpcard{padding:12px;border-radius:14px}.bpimg{flex-basis:84px;height:66px}.bpimg svg{height:54px}.bph>b{font-size:17px}.bptab th,.bptab td{padding:5px 5px;font-size:13px}.bptab tbody th small{display:block}.bpform{grid-template-columns:1fr}.modal.bpm{padding:18px 16px 14px}.bpnf{grid-template-columns:64px 1fr}.bpnbox{height:52px}.bpnbox input{font-size:23px}}
+
+/* v29.58 : 대분류 필터 · 발주 정보 */
+.bpchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.bpchip{position:relative;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.bpchip i{font-style:normal;font-size:12px;font-weight:800;color:var(--sub);background:var(--line2);border-radius:999px;padding:1px 7px}
+.bpchip.on{background:var(--blue);border-color:var(--blue);color:#fff}.bpchip.on i{background:rgba(255,255,255,.22);color:#fff}
+.bpchip u{position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:var(--bplow);border:2px solid var(--panel);text-decoration:none}
+.bpscr{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto;padding-right:2px}.bpsec.none .bpline{padding:6px 10px}
+.bpcard{min-width:0}.bpmain{display:flex;flex-direction:column;gap:20px;min-width:0}
+.bpgh{margin:0 0 10px;font-size:16px;color:var(--ink);display:flex;align-items:center;gap:8px}.bpgh small{font-size:12px;font-weight:700;color:var(--sub);background:var(--line2);border-radius:999px;padding:1px 8px}
+.bpord{font-size:12.5px;color:var(--sub);border-top:1px dashed var(--line);padding-top:8px;line-height:1.4}
+.bpinfo{background:var(--line2);border-radius:12px;padding:10px 12px;margin:10px 0;display:flex;flex-direction:column;gap:5px;font-size:13.5px}
+.bpinfo h4{margin:0 0 2px;font-size:13px;color:var(--sub)}
+.bpinfo div{display:grid;grid-template-columns:64px 1fr;gap:8px}.bpinfo span{color:var(--sub)}.bpinfo b{color:var(--ink);font-weight:700;word-break:keep-all}.bpinfo a{color:var(--blue);text-decoration:none}
+.bpform .bpwide{grid-column:1/-1}
+@media(max-width:560px){.bpchips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-right:-16px;padding-right:16px}.bpchip{flex:0 0 auto}.bpgrp .bpcards,.bpcards{grid-template-columns:minmax(0,1fr)}.bpcard{min-width:0}.bph{flex-wrap:wrap}.bph b{word-break:keep-all;flex:1 1 auto;min-width:0}.bpgrid{grid-template-columns:minmax(0,1fr)}.bpwrap{min-width:0;overflow-x:hidden}}
 </style>
 <style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style></body>
 </html>
