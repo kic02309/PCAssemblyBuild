@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9538,7 +9538,7 @@ async function addCharts(buf, jobs) {
   const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
     'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList', 'previewPeople', 'previewCheck', 'previewAccounts']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
-  const pvRead = (a, d) => PV_READ.has(a) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
+  const pvRead = (a, d) => PV_READ.has(a) || (a === 'sp' && d && ['can', 'get'].includes(d.op)) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
   async function api(action, data) {
     if (S.mpv && !pvRead(action, data)) throw new Error('모바일 미리보기에서는 저장되지 않습니다');
     if (S.pv && !pvRead(action, data)) throw new Error('미리보기 중에는 저장·수정되지 않습니다 (아래 [내 화면으로 돌아가기])');
@@ -9909,6 +9909,7 @@ async function addCharts(buf, jobs) {
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
     clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>',
     video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg>',
+    spi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16v11H4z"/><path d="M3 5h18v4H3zM10 13h4"/></svg>',   // v29.57 소모품 관리
     box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>',
   };
@@ -10005,12 +10006,13 @@ async function addCharts(buf, jobs) {
       canProd() && ['prod', 'prod', ordered ? '라인 생산' : '라인생산', IC.box],
       ['education', 'education', ordered ? '교육 일정' : '교육일정', IC.cal, '<i class="bd hide" id="edubd"></i>'],
       ['org', 'org', '조직도', IC.org],
+      canSp() && ['sp', 'sp', '소모품 관리', IC.spi],   // v29.57 : 소모품 관리 (조직도 밑)
       m.acc && ['acc', 'acc', ordered ? '사고 현황' : m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>'],
       m.hr && ['hr', 'hr', '인사평가', IC.hr],
       canSettings() && ['adm', canHub() ? 'admin' : 'settings', '관리자 설정', IC.gear]
     ].filter(Boolean);
     if (!ordered) return items;
-    const order = ['work', 'mgr', 'acc', 'leave', 'prod', 'video', 'education', 'org', 'hr', 'adm'];
+    const order = ['work', 'mgr', 'acc', 'leave', 'prod', 'video', 'education', 'org', 'sp', 'hr', 'adm'];
     return order.map(cat => items.find(item => item[0] === cat)).filter(Boolean);
   }
   function shell(layout) {
@@ -10020,7 +10022,7 @@ async function addCharts(buf, jobs) {
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(canProd() ? [['prod', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(canSp() ? [['sp', '소모품 관리']] : []).concat(canProd() ? [['prod', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -10050,12 +10052,12 @@ async function addCharts(buf, jobs) {
           <div class="czl" title="화면 버전 ${APP_VER}"><b>조립팀 업무데이터<em class="czv">${APP_VER}</em></b><small>PC ASSEMBLY WORK</small></div>
           <nav class="czn"></nav>
           <span class="czd">${today.getMonth() + 1}월 ${today.getDate()}일 ${wd}요일</span>
-          <div class="czu"><span class="av pclk" data-pc="${esc(m.name)}" title="내 카드">${esc(m.name.slice(0, 1))}</span><b class="pclk" data-pc="${esc(m.name)}" title="내 카드 (월 통계 · 연차)">${esc(m.name)}</b><span class="tag">${esc(m.group)} · ${esc(m.role)}</span>${pvBtn()}<button id="pw">비밀번호 변경</button></div>
+          <div class="czu"><span class="av pclk" data-pc="${esc(m.name)}" title="내 카드">${esc(m.name.slice(0, 1))}</span><b class="pclk" data-pc="${esc(m.name)}" title="내 카드 (월 통계 · 연차)">${esc(m.name)}</b><span class="tag">${esc(m.group)} · ${esc(m.role)}</span>${pvBtn()}<button id="pw">비밀번호 변경</button>${isAdm0() ? thmBtn('czthm') + '<button id="lo" class="czlo" title="로그아웃">로그아웃</button>' : ''}</div>
         </header>
         <div class="czb">
           <aside class="czr">
             ${sideMenuEntries(m).map(item => rb(...item)).join('')}
-            <div class="grow"></div>${thmBtn('rb')}<button id="lo" class="rb" title="로그아웃"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg><span>로그아웃</span></button>
+            <div class="grow"></div>${isAdm0() ? '' : thmBtn('rb') + `<button id="lo" class="rb" title="로그아웃"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg><span>로그아웃</span></button>`}   <!-- v29.57 : 관리자는 다크모드 · 로그아웃을 이름 옆으로 -->
           </aside>
           <div class="content"><div id="proxy"></div><main id="main" class="pg"></main></div>
         </div>
@@ -10084,12 +10086,12 @@ async function addCharts(buf, jobs) {
     const cur = S.view;     // v28.10 : 보기 전용의 [조직도] = 인원 화면의 조직도 탭
     $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === cur || (b.dataset.v === 'dash' && S.view === 'manage') || (b.dataset.v === 'admin' && (S.view === 'settings' || S.view === 'people' || S.view === 'stats' || S.view === 'goal'))) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
     if ($('.czn')) {                                                      // v28.17 : 분류 켜짐 + 위 막대 세부 메뉴
-      const v = S.view, cat = v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'goal'].includes(v) ? 'adm' : 'work';
+      const v = S.view, cat = v === 'sp' ? 'sp' : v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'goal'].includes(v) ? 'adm' : 'work';
       $$('.czr [data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
       let it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
-        : cat === 'mgr' ? [] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
+        : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', '소모품 관리']] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '인사평가']];
       if (cat === 'work' && canPa()) it = it.concat([['pa', '프리미엄 사전안내']]);   // v29.37
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
@@ -10158,7 +10160,7 @@ async function addCharts(buf, jobs) {
       opt = opt || {};
       if (view === 'people' && !opt.tab && !opt._pop) opt.tab = 'list';
       if (view === 'people' && opt.tab) S.pTab = opt.tab;                  // 위쪽 막대 [인원 현황] / [조직도] 켜짐이 바로 맞게
-      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'pa'].includes(view) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
+      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'pa', 'sp'].includes(view) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
     }
     if (view === 'admin' && canHub()) {                                    // v28.8 : 고르기 화면 없이 바로 (마지막에 본 탭 → 인원 → 설정 → 통계)
       const ok = k => k === 'people' ? can('people') : k === 'settings' ? canSetPage() : k === 'stats' ? can('stats') : k === 'goal' ? isAdm0() && !isRO() : false;
@@ -10175,6 +10177,7 @@ async function addCharts(buf, jobs) {
     if (view === 'input' && !S.target && wtSelf() && !isManager()) view = 'wt';                // v28.55 : 업무표 사용자는 수량 입력 대신 업무표
     if (view === 'wt') { $('#proxy').innerHTML = ''; return canWtMenu() ? renderWt(opt) : go('dash'); }
     if (view === 'pa') { $('#proxy').innerHTML = ''; return canPa() ? renderPa(opt) : go('dash'); }   // v29.37 : 프리미엄 사전안내
+    if (view === 'sp') { $('#proxy').innerHTML = ''; return canSp() ? renderSp() : go('dash'); }   // v29.57 : 소모품 관리
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
     document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob');
     if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
@@ -16741,6 +16744,221 @@ async function addCharts(buf, jobs) {
     };
     sync();
   }
+  // ================================================================ v29.57 : 소모품 관리 — 실사 재고 수량 입력 · 합계가 기준보다 적으면 '발주 필요'
+  //   파트별 입력(실드에어 1~4그룹) · 단가표(박스 단가 · 날짜별) · 담당 정/부 · 매니저 이상 담당 지정 · 관리자 품목 설정
+  const canSp = () => !!(S.me && S.sp && S.sp.who);
+  async function spLoad() { try { const r = await api('sp', { op: 'can' }); S.sp = { who: r.who || '' }; } catch (e) { S.sp = { who: '', err: e.message }; } }
+  const SP_IMG = name => {                                            // 비품 그림 (그림만 · 수량은 글자)
+    const n = String(name || '');
+    if (/박스/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><path d="M30 42 80 24l50 18-50 18z" fill="#e9c391"/><path d="M30 42v44l50 18V60z" fill="#d2a066"/><path d="M130 42v44L80 104V60z" fill="#bd8a50"/><path d="M30 42 14 58l50 18 16-16z" fill="#e4b57a"/><path d="M130 42l16 16-50 18-16-16z" fill="#c9965c"/><path d="M55 33l50 18" stroke="#b07b42" stroke-width="5" opacity=".55"/></svg>`;
+    if (/실드|쉴드|에어|버블/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><g stroke="#9db8dc" stroke-width="2"><rect x="18" y="58" width="64" height="40" rx="18" fill="#fff"/><rect x="74" y="54" width="68" height="44" rx="20" fill="#f4f8fe"/><rect x="40" y="20" width="76" height="46" rx="21" fill="#fff"/></g><g fill="#cfe0f5"><circle cx="60" cy="36" r="5"/><circle cx="80" cy="44" r="4"/><circle cx="98" cy="34" r="5"/><circle cx="40" cy="76" r="4"/><circle cx="108" cy="72" r="5"/><circle cx="124" cy="82" r="4"/></g><path d="M48 30q30-14 60 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+    if (/케이블|타이|쫄대/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><g stroke="#20252e" stroke-width="5" stroke-linecap="round" fill="none"><path d="M20 84 136 30"/><path d="M22 74 140 42"/><path d="M26 92 132 22"/><path d="M18 64 142 52"/><path d="M30 98 128 16"/></g><g fill="#20252e"><rect x="128" y="10" width="14" height="12" rx="2" transform="rotate(-30 135 16)"/><rect x="136" y="24" width="14" height="12" rx="2" transform="rotate(-24 143 30)"/></g><rect x="66" y="38" width="22" height="46" rx="4" transform="rotate(-24 77 61)" fill="#d9b88a"/></svg>`;
+    if (/봉투|비닐/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><path d="M30 34h100l-6 64H36z" fill="#f2f5fa" stroke="#b9c6da" stroke-width="2"/><path d="M42 34q8-18 18 0M100 34q8-18 18 0" stroke="#b9c6da" stroke-width="4" fill="none"/><path d="M50 54h60M48 70h64" stroke="#d6dfeb" stroke-width="3"/></svg>`;
+    if (/테이프/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><circle cx="80" cy="55" r="40" fill="#cfa36a"/><circle cx="80" cy="55" r="20" fill="#fff" stroke="#b58a52" stroke-width="3"/><path d="M118 66h30v14h-34z" fill="#dcb47e"/></svg>`;
+    if (/스티커|라벨|안내|용지|리본/.test(n)) return `<svg viewBox="0 0 160 110" aria-hidden="true"><rect x="34" y="16" width="72" height="84" rx="6" fill="#fff" stroke="#c7d3e6" stroke-width="2"/><g fill="#dfe9f7"><rect x="44" y="28" width="22" height="12" rx="2"/><rect x="74" y="28" width="22" height="12" rx="2"/><rect x="44" y="48" width="22" height="12" rx="2"/><rect x="74" y="48" width="22" height="12" rx="2"/><rect x="44" y="68" width="22" height="12" rx="2"/><rect x="74" y="68" width="22" height="12" rx="2"/></g><rect x="92" y="38" width="44" height="58" rx="5" fill="#f6f8fc" stroke="#c7d3e6" stroke-width="2"/><path d="M100 52h28M100 62h28M100 72h18" stroke="#b9c6da" stroke-width="3"/></svg>`;
+    return `<svg viewBox="0 0 160 110" aria-hidden="true"><rect x="44" y="24" width="72" height="66" rx="10" fill="#eef3fb" stroke="#b9c8e2" stroke-width="2"/><path d="M60 46h40M60 60h40M60 74h24" stroke="#9db0d0" stroke-width="4" stroke-linecap="round"/></svg>`;
+  };
+  const spN = v => (v == null || v === '' ? '-' : Number(v).toLocaleString());
+  const spMD = d => { const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(d || ''); return m ? (+m[1]) + '/' + (+m[2]) : ''; };
+  const spHasParts = it => it.parts.length > 0 && it.parts[0].p !== '';
+  // 규격 상태 : none = 실사 기록 없음 · low = 합계가 기준보다 적음 · ok
+  const spSt = s => s.total == null ? 'none' : (s.min != null && s.total < s.min) ? 'low' : 'ok';
+  const spItemSt = it => { const st = it.specs.map(spSt); return st.includes('low') ? 'low' : st.every(x => x === 'none') ? 'none' : it.specs.some(x => x.min != null) ? 'ok' : 'nomin'; };
+  const spPartDay = pt => Object.values(pt.last || {}).map(l => l.d).sort().pop() || '';   // 그 파트 마지막 실사일
+  const spLast = it => { let L = null; it.parts.forEach(pt => Object.values(pt.last || {}).forEach(l => { if (!L || l.d > L.d || (l.d === L.d && l.at > L.at)) L = l; })); return L; };
+  const spIsMain = it => !!(S.spD && (S.spD.who === 'admin' || [it.main, it.sub].includes(S.spD.me)));            // 정 · 부 · 관리자
+  const spMyParts = it => spHasParts(it) ? it.parts.filter(pt => spIsMain(it) || pt.uid === S.spD.me) : (spIsMain(it) ? it.parts : []);
+  async function renderSp() {
+    const main = $('#main'); if (!S.sp) await spLoad();
+    if (!S.spD) main.innerHTML = pageHead('소모품 관리') + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
+    let D; try { D = await api('sp', { op: 'get' }); }
+    catch (e) { if (S.view === 'sp') main.innerHTML = pageHead('소모품 관리') + '<div class="pgb"><div class="warn">' + esc(e.message) + '</div></div>'; return; }
+    if (S.view !== 'sp') return;
+    S.spD = D; spDraw();
+  }
+  async function spReload() { try { S.spD = await api('sp', { op: 'get' }); } catch (e) { toast(e.message, true); } if (S.view === 'sp') spDraw(); }
+  function spDraw() {
+    const D = S.spD, main = $('#main'), adm = D.who === 'admin', today = D.today;
+    const items = D.items.filter(it => it.active);
+    const lows = [], none = [];
+    items.forEach(it => {
+      it.specs.forEach(s => { if (spSt(s) === 'low') lows.push([it, s]); });
+      it.parts.forEach(pt => { if (spPartDay(pt) !== today) none.push([it, pt]); });
+    });
+    const who = it => `<span class="bpwho">정 <b>${esc(it.mainName || '-')}</b>${it.subName ? ` · 부 <b>${esc(it.subName)}</b>` : ''}</span>`;
+    const badge = st => st === 'low' ? '<span class="bpbd low">! 발주 필요</span>' : st === 'none' ? '<span class="bpbd none">실사 전</span>' : st === 'nomin' ? '<span class="bpbd none">기준 미설정</span>' : '<span class="bpbd ok">✓ 충분</span>';
+    const priceLine = it => {
+      if (!it.price) return '';
+      const ps = it.specs.filter(s => s.price), d = ps.map(s => s.price.d).sort().pop();
+      return `<div class="bpprice"><span class="bpplb">단가 <small>박스</small></span><span class="bppv">${it.specs.map(s => `<em>${esc(s.s)} <b>${s.price ? spN(s.price.v) : '-'}</b></em>`).join('')}</span><small>${d ? spMD(d) + ' 기준' : '단가 없음'}</small></div>`;
+    };
+    const rowsSingle = it => it.specs.map(s => { const t = spSt(s); return `<div class="bprow ${t}"><span>${esc(s.s || '수량')}</span><b>${spN(s.total)}<small>${esc(it.unit)}</small></b><em>${s.min != null ? '기준 ' + spN(s.min) : '기준 없음'}</em></div>`; }).join('');
+    const rowsParts = it => `<table class="bptab"><thead><tr><th></th>${it.specs.map(s => `<th>${esc(s.s)}</th>`).join('')}</tr></thead><tbody>
+      ${it.parts.map(pt => { const pd = spPartDay(pt); return `<tr class="${pd === today ? '' : 'old'}"><th><b>${esc(pt.n)}</b><small>${esc(pt.uname || '담당 없음')}${pd ? ' · ' + spMD(pd) : ''}</small></th>${it.specs.map(s => `<td>${pt.last[s.k] ? spN(pt.last[s.k].qty) : '-'}</td>`).join('')}</tr>`; }).join('')}
+      <tr class="sum"><th>합계</th>${it.specs.map(s => `<td class="${spSt(s)}">${spN(s.total)}</td>`).join('')}</tr>
+      <tr class="min"><th>기준</th>${it.specs.map(s => `<td>${s.min != null ? spN(s.min) : '-'}</td>`).join('')}</tr></tbody></table>`;
+    const card = it => {
+      const st = spItemSt(it), L = spLast(it), mine = spMyParts(it), parts = spHasParts(it);
+      const btn = !mine.length ? '' : parts && !spIsMain(it) && mine.length === 1 ? `<button type="button" class="primary bpin" data-bpin="${it.id}" data-bpp="${esc(mine[0].p)}">${esc(mine[0].n)} 수량 입력</button>` : `<button type="button" class="primary bpin" data-bpin="${it.id}">수량 입력</button>`;
+      return `<div class="bpcard ${st}${parts ? ' wide' : ''}" data-bpi="${it.id}">
+        <div class="bptop"><div class="bpimg">${SP_IMG(it.name)}</div><div class="bph"><b>${esc(it.name)}</b>${badge(st)}${who(it)}<span class="bpd${L && L.d === today ? '' : ' old'}">${L ? `최근 실사 ${spMD(L.d)}${L.d === today ? ' (오늘)' : ''}` : '실사 기록 없음'}</span></div></div>
+        ${parts ? rowsParts(it) : `<div class="bprows">${rowsSingle(it)}</div>`}
+        ${priceLine(it)}
+        <div class="bpbtns">${btn}${it.price && spIsMain(it) ? `<button type="button" class="bpin2" data-bppr="${it.id}">단가 기록</button>` : ''}</div>
+      </div>`;
+    };
+    const pn = it => `정 ${esc(it.mainName || '-')}${it.subName ? ' · 부 ' + esc(it.subName) : ''}`;
+    const right = `<aside class="bpside">
+      <h3>재고 상태 한눈에</h3>
+      <div class="bpsec low"><div class="bpst">! 발주 필요 <b>${lows.length}</b></div>${lows.length ? lows.map(([it, s]) => `<button type="button" class="bpline" data-bpi="${it.id}"><span><b>${esc(it.name)}</b> ${esc(s.s)}</span><span>${spN(s.total)} / 기준 ${spN(s.min)}${esc(it.unit)}</span><small>${pn(it)}</small></button>`).join('') : '<div class="bpempty">기준보다 적은 품목이 없습니다</div>'}</div>
+      <div class="bpsec none"><div class="bpst">오늘 실사 전 <b>${none.length}</b></div>${none.length ? none.map(([it, pt]) => `<button type="button" class="bpline" data-bpi="${it.id}"><span><b>${esc(it.name)}</b>${pt.n ? ' ' + esc(pt.n) : ''}</span><small>${pt.p ? esc(pt.uname || '담당 없음') : pn(it)}</small></button>`).join('') : '<div class="bpempty">모두 오늘 실사했습니다</div>'}</div>
+      <div class="bpnote">합계가 기준 수량보다 <b>적으면</b> 발주 필요로 표시됩니다. 파트별 품목의 합계는 각 파트의 가장 최근 수량을 더한 값입니다.</div>
+    </aside>`;
+    const setBtn = adm ? '<button type="button" id="bpset">⚙ 품목 · 기준 · 담당 설정</button>' : D.who === 'mgr' ? '<button type="button" id="bpset">⚙ 담당 설정</button>' : '';
+    main.innerHTML = pageHead('소모품 관리', '', setBtn)
+      + `<div class="pgb bpwrap"><div class="bpsub"><span>실사한 재고 수량을 입력하면, 합계가 기준 수량보다 적을 때 <b>발주 필요</b>를 알려 줍니다.</span></div>
+      <div class="bpgrid"><div class="bpcards">${items.length ? items.map(card).join('') : '<div class="bpempty">등록된 품목이 없습니다' + (adm ? ' (오른쪽 위 설정에서 추가)' : '') + '</div>'}</div>${right}</div></div>`;
+    $$('[data-bpin]').forEach(b => (b.onclick = e => { e.stopPropagation(); spInput(+b.dataset.bpin, b.dataset.bpp); }));
+    $$('[data-bppr]').forEach(b => (b.onclick = e => { e.stopPropagation(); spPrice(+b.dataset.bppr); }));
+    $$('[data-bpi]').forEach(b => (b.onclick = () => spHist(+b.dataset.bpi)));
+    if ($('#bpset')) $('#bpset').onclick = () => spSettings();
+  }
+  // ---------------- 숫자 입력창 (공통) : 큰 숫자 · 천 단위 쉼표 · 단위 표시 · 지난 값 안내
+  const spNumFix = el => { const raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, ''); el.value = raw === '' ? '' : Number(raw).toLocaleString(); el.closest('.bpnf').classList.toggle('has', raw !== ''); };
+  const spNumVal = el => el.value.replace(/[^\d]/g, '');
+  const spNumRow = (k, label, sub, val, unit, hint) => `<label class="bpnf${val !== '' && val != null ? ' has' : ''}"><span class="bpnl"><b>${label}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="bpnbox"><input type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${val === '' || val == null ? '' : Number(val).toLocaleString()}" placeholder="0"><i>${esc(unit)}</i></span>${hint ? `<small class="bpnh">${hint}</small>` : ''}</label>`;
+  const spNumWire = bg => { $$('.bpnf input', bg).forEach((i, n, all) => { i.oninput = () => spNumFix(i); i.onfocus = () => setTimeout(() => i.select(), 0); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const nx = all[n + 1]; if (nx) { nx.focus(); nx.select(); } else { const s = $('[data-s]', bg); if (s) s.click(); } } }; }); };
+  function spInput(id, p0) {
+    const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
+    const parts = spHasParts(it), mine = spMyParts(it); if (!mine.length) return;
+    let cur = (p0 != null && mine.find(x => x.p === p0)) || mine[0];
+    const body = () => it.specs.map(s => { const l = cur.last[s.k], t = l && l.d === D.today ? l.qty : ''; return spNumRow(s.k, esc(s.s || it.name), s.min != null && !parts ? '기준 ' + spN(s.min) : '', t, it.unit, l ? `지난번 ${spN(l.qty)} · ${spMD(l.d)}${l.d === D.today ? ' (오늘 입력함)' : ''}` : '처음 입력'); }).join('');
+    modal(`<div class="bpm-hd"><div class="bpm-ic">${SP_IMG(it.name)}</div><div><h3>${esc(it.name)}</h3><p>${spMD(D.today)} 오늘 실사 수량${parts ? (mine.length === 1 ? ` · <b>${esc(cur.n)}</b> ${esc(cur.uname || '')}` : '') : ' · 지금 있는 총수량'}</p></div></div>
+      ${parts && mine.length > 1 ? `<div class="bpm-seg">${mine.map(pt => `<button type="button" data-pp="${esc(pt.p)}" class="${pt.p === cur.p ? 'on' : ''}">${esc(pt.n)}<small>${esc(pt.uname || '-')}</small></button>`).join('')}</div>` : ''}
+      <div class="bpm-body" id="bpmb">${body()}</div>
+      <p class="bpm-tip">비우고 저장하면 오늘 기록이 지워집니다 · Enter = 다음 칸</p>
+      <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
+      $('[data-c]', bg).onclick = close;
+      const wire = () => { spNumWire(bg); const f = $('.bpnf input', bg); if (f) setTimeout(() => f.focus(), 60); };
+      wire();
+      $$('[data-pp]', bg).forEach(b => (b.onclick = () => { cur = mine.find(x => x.p === b.dataset.pp) || cur; $$('[data-pp]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#bpmb', bg).innerHTML = body(); wire(); }));
+      $('[data-s]', bg).onclick = async () => {
+        const counts = {}; $$('.bpnf input', bg).forEach(i => { counts[i.dataset.k] = spNumVal(i); });
+        const b = $('[data-s]', bg); b.disabled = true;
+        try { const r = await api('sp', { op: 'save', id: it.id, part: parts ? cur.p : '', counts }); const i = D.items.findIndex(x => x.id === it.id); if (i >= 0) D.items[i] = r.item; close(); toast(`${it.name}${parts ? ' ' + cur.n : ''} 저장했습니다`); spDraw(); }
+        catch (e) { b.disabled = false; toast(e.message, true); }
+      };
+    });
+  }
+  function spPrice(id) {
+    const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
+    const body = () => it.specs.map(s => spNumRow(s.k, esc(s.s || it.name), s.per ? `1박스 ${spN(s.per)}${esc(it.unit)}` : '', '', '원', s.price ? `지난 단가 ${spN(s.price.v)}원 · ${spMD(s.price.d)}` : '단가 없음')).join('');
+    modal(`<div class="bpm-hd"><div class="bpm-ic">${SP_IMG(it.name)}</div><div><h3>${esc(it.name)} 단가 기록</h3><p>거래명세서의 <b>박스 단가</b>(공급가)를 적으세요</p></div></div>
+      <label class="bpm-date"><span>명세서 날짜</span><input type="date" id="bppd" value="${D.today}" max="${D.today}"></label>
+      <div class="bpm-body">${body()}</div>
+      <p class="bpm-tip">바뀐 규격만 적으면 됩니다 · 같은 날짜를 다시 저장하면 고쳐집니다</p>
+      <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
+      $('[data-c]', bg).onclick = close; spNumWire(bg);
+      $('[data-s]', bg).onclick = async () => {
+        const prices = {}; $$('.bpnf input', bg).forEach(i => { const v = spNumVal(i); if (v !== '') prices[i.dataset.k] = v; });
+        if (!Object.keys(prices).length) return toast('단가를 하나 이상 적으세요', true);
+        const b = $('[data-s]', bg); b.disabled = true;
+        try { const r = await api('sp', { op: 'price', id: it.id, date: $('#bppd', bg).value, prices }); const i = D.items.findIndex(x => x.id === it.id); if (i >= 0) D.items[i] = r.item; close(); toast('단가를 기록했습니다'); spDraw(); }
+        catch (e) { b.disabled = false; toast(e.message, true); }
+      };
+    });
+  }
+  function spHist(id) {
+    const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
+    const parts = spHasParts(it), pName = p => (it.parts.find(x => x.p === p) || {}).n || '';
+    const sName = k => (it.specs.find(x => x.k === k) || {}).s || '';
+    const days = [...new Set(it.hist.map(h => h.d))].slice(0, 10);
+    const rows = days.map(d => {
+      const ps = [...new Set(it.hist.filter(h => h.d === d).map(h => h.p))];
+      return ps.map((p, n) => { const hs = it.hist.filter(h => h.d === d && h.p === p); return `<tr><td>${n ? '' : spMD(d)}</td>${parts ? `<td><b>${esc(pName(p))}</b></td>` : ''}${it.specs.map(s => { const h = hs.find(x => x.k === s.k); return `<td class="n">${h ? spN(h.qty) : ''}</td>`; }).join('')}<td class="by">${esc((hs[0] || {}).by || '')}</td></tr>`; }).join('');
+    }).join('');
+    const pr = it.price && it.prices.length ? `<h4>단가 기록 <small>박스 단가 · 원</small></h4><table class="bphtab"><thead><tr><th>날짜</th>${it.specs.map(s => `<th>${esc(s.s)}</th>`).join('')}<th></th></tr></thead><tbody>${[...new Set(it.prices.map(x => x.d))].slice(0, 8).map(d => `<tr><td>${spMD(d)}</td>${it.specs.map(s => { const x = it.prices.find(y => y.d === d && y.k === s.k); return `<td class="n">${x ? spN(x.v) : ''}</td>`; }).join('')}<td class="by">${esc((it.prices.find(y => y.d === d) || {}).by || '')}</td></tr>`).join('')}</tbody></table>` : '';
+    modal(`<div class="bpm-hd"><div class="bpm-ic">${SP_IMG(it.name)}</div><div><h3>${esc(it.name)} · 최근 실사</h3><p>정 ${esc(it.mainName || '-')}${it.subName ? ' · 부 ' + esc(it.subName) : ''}</p></div></div>
+      <div class="bphwrap">${rows ? `<table class="bphtab"><thead><tr><th>날짜</th>${parts ? '<th>파트</th>' : ''}${it.specs.map(s => `<th>${esc(s.s || '수량')}</th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="bpempty">실사 기록 없음</div>'}${pr}</div>
+      <div class="bpm-ft">${spMyParts(it).length ? '<button type="button" class="primary" data-i>수량 입력</button>' : ''}<button type="button" data-c>닫기</button></div>`, (bg, close) => {
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'wide');
+      $('[data-c]', bg).onclick = close;
+      if ($('[data-i]', bg)) $('[data-i]', bg).onclick = () => { close(); spInput(id); };
+    });
+  }
+  // ---------------- 설정 : 관리자 = 품목 전체 · 매니저 = 담당(정 · 부 · 파트)만
+  const spUopt = sel => `<option value="">— 없음 —</option>` + (S.spD.users || []).map(([u, n, g]) => `<option value="${esc(u)}"${u === sel ? ' selected' : ''}>${esc(n)}${g ? ' (' + esc(g) + ')' : ''}</option>`).join('');
+  function spSettings() {
+    const D = S.spD, adm = D.who === 'admin';
+    const list = () => D.items.filter(it => adm || it.active).map(it => `<div class="bpsetrow${it.active ? '' : ' off'}"><span><b>${esc(it.name)}</b> <small>${it.specs.map(s => esc(s.s || '단일')).join(' · ')} · ${esc(it.unit)}${it.price ? ' · 단가표' : ''}</small><br><small>정 ${esc(it.mainName || '-')} · 부 ${esc(it.subName || '-')}${spHasParts(it) ? ' · ' + it.parts.map(pt => esc(pt.n) + ' ' + esc(pt.uname || '-')).join(', ') : ''}${it.active ? '' : ' · 사용 안 함'}</small></span><button type="button" data-e="${it.id}">${adm ? '수정' : '담당'}</button></div>`).join('');
+    modal(`<h3>${adm ? '품목 · 기준 · 담당 설정' : '담당 설정'}</h3><div class="note">${adm ? '합계가 기준 수량보다 적으면 <b>발주 필요</b>로 표시됩니다. ' : '품목 · 규격 · 기준 수량은 관리자가 정합니다. '}담당(정 · 부 · 파트)만 수량을 입력할 수 있습니다.</div><div class="bpsetl">${list()}</div><div class="acts">${adm ? '<button data-n>＋ 품목 추가</button>' : ''}<button data-c>닫기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      if ($('[data-n]', bg)) $('[data-n]', bg).onclick = () => { close(); spEdit(null); };
+      $$('[data-e]', bg).forEach(b => (b.onclick = () => { close(); (adm ? spEdit : spAssign)(+b.dataset.e); }));
+    });
+  }
+  function spAssign(id) {                                             // 매니저 : 담당 정 · 부 · 파트만
+    const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
+    modal(`<h3>${esc(it.name)} · 담당 지정</h3><div class="bpform"><label>담당 (정)<select id="bpm">${spUopt(it.main)}</select></label><label>담당 (부)<select id="bps">${spUopt(it.sub)}</select></label>
+      ${spHasParts(it) ? it.parts.map(pt => `<label>${esc(pt.n)} 입력 담당<select data-pu="${esc(pt.p)}">${spUopt(pt.uid)}</select></label>`).join('') : ''}</div>
+      <div class="acts"><button data-c>취소</button><button class="primary" data-s>저장</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = () => { close(); spSettings(); };
+      $('[data-s]', bg).onclick = async () => {
+        const parts = {}; $$('[data-pu]', bg).forEach(x => { parts[x.dataset.pu] = x.value; });
+        const b = $('[data-s]', bg); b.disabled = true;
+        try { await api('sp', { op: 'assign', id: it.id, main: $('#bpm', bg).value, sub: $('#bps', bg).value, parts }); close(); toast('담당을 바꿨습니다'); await spReload(); spSettings(); }
+        catch (e) { b.disabled = false; toast(e.message, true); }
+      };
+    });
+  }
+  function spEdit(id) {                                               // 관리자 : 품목 전체
+    const D = S.spD, it = id ? D.items.find(x => x.id === id) : { name: '', unit: '개', specs: [{ k: 's1', s: '', min: null, per: null }], parts: [], price: false, main: '', sub: '', ord: (D.items.length + 1), active: true };
+    if (!it) return;
+    const specs = it.specs.map(s => ({ k: s.k, s: s.s, min: s.min, per: s.per }));
+    const parts = spHasParts(it) ? it.parts.map(pt => ({ p: pt.p, n: pt.n, uid: pt.uid })) : [];
+    const srows = () => specs.map((s, i) => `<div class="bpsprow"><input data-sn="${i}" maxlength="20" value="${esc(s.s)}" placeholder="규격 (없으면 비움)"><input data-sm="${i}" inputmode="numeric" value="${s.min == null ? '' : s.min}" placeholder="기준 수량"><input data-sb="${i}" inputmode="numeric" value="${s.per == null ? '' : s.per}" placeholder="1박스 개수"><button type="button" data-sx="${i}" title="규격 빼기"${specs.length < 2 ? ' disabled' : ''}>✕</button></div>`).join('');
+    const prows = () => parts.map((p, i) => `<div class="bpptrow"><input data-pn="${i}" maxlength="20" value="${esc(p.n)}" placeholder="파트 이름 (예: 1그룹)"><select data-pu="${i}">${spUopt(p.uid)}</select><button type="button" data-px="${i}" title="파트 빼기">✕</button></div>`).join('');
+    modal(`<h3>${id ? '품목 수정' : '품목 추가'}</h3>
+      <div class="bpform">
+        <label>품목 이름<input id="bpn" maxlength="30" value="${esc(it.name)}" placeholder="예: 박스"></label>
+        <label>단위<input id="bpu" maxlength="10" value="${esc(it.unit)}" placeholder="개 · 롤 · 장"></label>
+        <label>담당 (정)<select id="bpm">${spUopt(it.main)}</select></label>
+        <label>담당 (부)<select id="bps">${spUopt(it.sub)}</select></label>
+        <label>보이는 순서<input id="bpo" inputmode="numeric" value="${it.ord || 0}"></label>
+        <label class="bpchk"><input id="bppr" type="checkbox"${it.price ? ' checked' : ''}> 단가표 사용 (박스 단가 기록)</label>
+        ${id ? `<label class="bpchk"><input id="bpa" type="checkbox"${it.active ? ' checked' : ''}> 사용 (끄면 화면에서 숨김 · 기록은 보관)</label>` : ''}
+      </div>
+      <div class="bplb">규격 · 기준 수량 · 1박스 개수 <small>기준을 비우면 발주 알림 없음 · 기준은 합계와 비교</small></div><div id="bpsp"></div><button type="button" id="bpadd" class="sm">＋ 규격 추가</button>
+      <div class="bplb">파트별 입력 <small>비우면 정 · 부가 총수량을 입력 · 파트가 있으면 파트 담당이 자기 파트만 입력하고 합계를 냄</small></div><div id="bppt"></div><button type="button" id="bppadd" class="sm">＋ 파트 추가</button>
+      <div class="acts"><button data-c>취소</button><button class="primary" data-s>저장</button></div>`, (bg, close) => {
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpset');
+      const grab = () => {
+        $$('[data-sn]', bg).forEach(i => { specs[+i.dataset.sn].s = i.value; }); $$('[data-sm]', bg).forEach(i => { specs[+i.dataset.sm].min = i.value.trim() === '' ? null : i.value.trim(); }); $$('[data-sb]', bg).forEach(i => { specs[+i.dataset.sb].per = i.value.trim() === '' ? null : i.value.trim(); });
+        $$('[data-pn]', bg).forEach(i => { parts[+i.dataset.pn].n = i.value; }); $$('[data-pu]', bg).forEach(i => { parts[+i.dataset.pu].uid = i.value; });
+      };
+      const redraw = () => {
+        $('#bpsp', bg).innerHTML = srows(); $('#bppt', bg).innerHTML = prows();
+        $$('[data-sx]', bg).forEach(b => (b.onclick = () => { grab(); specs.splice(+b.dataset.sx, 1); redraw(); }));
+        $$('[data-px]', bg).forEach(b => (b.onclick = () => { grab(); parts.splice(+b.dataset.px, 1); redraw(); }));
+      };
+      redraw();
+      $('#bpadd', bg).onclick = () => { grab(); if (specs.length >= 12) return toast('규격은 12개까지', true); let n = 1; while (specs.some(s => s.k === 's' + n)) n++; specs.push({ k: 's' + n, s: '', min: null, per: null }); redraw(); };
+      $('#bppadd', bg).onclick = () => { grab(); if (parts.length >= 12) return toast('파트는 12개까지', true); let n = 1; while (parts.some(p => p.p === 'p' + n)) n++; parts.push({ p: 'p' + n, n: '', uid: '' }); redraw(); };
+      $('[data-c]', bg).onclick = () => { close(); spSettings(); };
+      $('[data-s]', bg).onclick = async () => {
+        grab();
+        if (specs.some(s => (s.min != null && !/^\d+$/.test(String(s.min))) || (s.per != null && !/^\d+$/.test(String(s.per))))) return toast('기준 수량 · 1박스 개수는 숫자 (비우면 없음)', true);
+        const q = { op: 'item', name: $('#bpn', bg).value.trim(), unit: $('#bpu', bg).value.trim(), main: $('#bpm', bg).value, sub: $('#bps', bg).value, ord: $('#bpo', bg).value, price: $('#bppr', bg).checked,
+          specs: specs.map(s => ({ k: s.k, s: s.s.trim(), min: s.min == null ? null : +s.min, per: s.per == null ? null : +s.per })), parts: parts.map(p => ({ p: p.p, n: p.n.trim(), uid: p.uid })) };
+        if (id) { q.id = String(id); q.active = $('#bpa', bg).checked; }
+        const b = $('[data-s]', bg); b.disabled = true;
+        try { await api('sp', q); close(); toast('저장했습니다'); await spReload(); spSettings(); }
+        catch (e) { b.disabled = false; toast(e.message, true); }
+      };
+    });
+  }
   function prefetchManage() {
     const ym = (curPeriod() || {}).ym; if (!ym || !isManager()) return;
     const key = 'M|' + ym; S._mcache = S._mcache || {}; S._mpf = S._mpf || {};
@@ -16758,7 +16976,7 @@ async function addCharts(buf, jobs) {
       try { const gc = await api('goalCfg'); S.goals = gc.goals || []; S.hw = gc.hw || []; } catch (e) { S.goals = []; S.hw = []; }   // v28.51 : SQL 전이면 기본 기준(90/80) · v28.72 휴일근무일
       hwApply();
       S.prEd = false; S.prP = null; await prWho();                                        // v28.63 : 생산업무 담당자
-      S.wt = null; S.wtv = null; await wtLoad(); S.pa = null; S.pav = null; await paLoad();                                          // v28.55 : 업무표 사용자
+      S.wt = null; S.wtv = null; await wtLoad(); S.pa = null; S.pav = null; await paLoad(); S.sp = null; S.spD = null; await spLoad();                                          // v28.55 : 업무표 사용자
       S.mgD = null; S.mgv = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); });   // v28.59 : 매니저 관리
       S.pc = {};
       if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {}, asm: r.day.asm || {} };
@@ -16768,7 +16986,7 @@ async function addCharts(buf, jobs) {
       let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org'] : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'smob', 'org'].concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'sp'] : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'smob', 'org', 'sp'].concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -16952,5 +17170,124 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .pxsv small{font-size:13px;font-weight:600;opacity:.88}.pxsv b{font-size:20px}
 </style><style id="phone-v2955">
 @media(min-width:701px){.pmx{max-width:430px;margin:8px auto 24px;border-radius:26px;box-shadow:0 8px 30px rgba(20,40,90,.22),0 0 0 8px #1c2b4a;overflow:visible}.pmx .pxhd{border-radius:26px 26px 40px 40px}}
-</style><style id="mpv-css">#mpvbar{position:fixed;bottom:16px;right:16px;z-index:9000;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#1c2b4a;color:#fff;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.25)}#mpvbar span{opacity:.85}#mpvbar button{height:30px;padding:0 12px}.pvl button small{display:block;color:#6b7893;font-weight:400}</style></body>
+</style><style id="mpv-css">#mpvbar{position:fixed;bottom:16px;right:16px;z-index:9000;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#1c2b4a;color:#fff;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.25)}#mpvbar span{opacity:.85}#mpvbar button{height:30px;padding:0 12px}.pvl button small{display:block;color:#6b7893;font-weight:400}</style><style id="bp-v2957">
+/* v29.57 : 소모품 관리 */
+:root{--bplow:#d9480f;--bplowbg:#fff1e6;--bpok:#0c8a78;--bpokbg:#e3f5f1;--bpimg:#f4f7fc;--bpfield:#f5f7fb}
+html[data-theme=dark]{--bplow:#ff9a5c;--bplowbg:#3a2516;--bpok:#5fd0b8;--bpokbg:#16302b;--bpimg:#22252b;--bpfield:#24272e}
+.bpwrap{padding-top:4px}
+.bpsub{color:var(--sub);font-size:14px;margin:0 0 14px}
+.bpgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.bpcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:stretch}
+.bpcard{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;box-shadow:var(--sh,none);transition:border-color .15s,box-shadow .15s}
+.bpcard:hover{border-color:var(--blue);box-shadow:0 4px 18px rgba(29,107,243,.10)}
+.bpcard.low{border-color:var(--bplow)}
+@media(min-width:1180px){.bpcard.wide{grid-column:span 2}}
+.bptop{display:flex;gap:14px;align-items:center}
+.bpimg{flex:0 0 112px;height:84px;background:var(--bpimg);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.bpimg svg{height:70px;width:auto;max-width:100%}
+.bph{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}
+.bph>b{font-size:19px;color:var(--ink);white-space:nowrap}
+.bpwho,.bpd{flex-basis:100%;font-size:12.5px;color:var(--sub)}
+.bpwho b{color:var(--ink);font-weight:700}
+.bpd.old{color:var(--bplow)}
+.bpbd{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.bpbd.low{background:var(--bplowbg);color:var(--bplow)}.bpbd.ok{background:var(--bpokbg);color:var(--bpok)}.bpbd.none{background:var(--line2);color:var(--sub)}
+.bprows{display:flex;flex-direction:column;gap:4px}
+.bprow{display:grid;grid-template-columns:minmax(48px,auto) 1fr auto;align-items:baseline;gap:8px;padding:6px 10px;border-radius:10px;background:var(--line2)}
+.bprow span{font-size:13.5px;color:var(--sub);font-weight:600}
+.bprow b{font-size:19px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.bprow b small{font-size:12px;font-weight:600;color:var(--sub);margin-left:2px}
+.bprow em{font-style:normal;font-size:12px;color:var(--sub);white-space:nowrap}
+.bprow.low{background:var(--bplowbg)}.bprow.low b,.bprow.low em{color:var(--bplow)}.bprow.none b{color:var(--sub)}
+.bptab{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+.bptab th,.bptab td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line2);font-size:14px}
+.bptab thead th{font-size:12.5px;color:var(--sub);font-weight:700;border-bottom:1px solid var(--line)}
+.bptab tbody th{text-align:left;font-weight:500;white-space:nowrap}
+.bptab tbody th b{font-size:13.5px;color:var(--ink);margin-right:6px}
+.bptab tbody th small{font-size:12px;color:var(--sub)}
+.bptab td{font-weight:700;color:var(--ink)}
+.bptab tr.old td,.bptab tr.old th small{color:var(--sub)}
+.bptab tr.old th small{color:var(--bplow)}
+.bptab tr.sum th,.bptab tr.sum td{background:var(--line2);font-size:16px;font-weight:800;border-bottom:0}
+.bptab tr.sum th{border-radius:10px 0 0 10px}.bptab tr.sum td:last-child{border-radius:0 10px 10px 0}
+.bptab tr.sum td.low{background:var(--bplowbg);color:var(--bplow)}
+.bptab tr.min th,.bptab tr.min td{font-size:12.5px;color:var(--sub);font-weight:600;border-bottom:0}
+.bpprice{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;font-size:12.5px;color:var(--sub)}
+.bpplb{font-weight:800;color:var(--ink)}.bpplb small{font-weight:500;color:var(--sub)}
+.bppv{display:flex;flex-wrap:wrap;gap:4px 12px;flex:1}.bppv em{font-style:normal}.bppv b{color:var(--ink);font-variant-numeric:tabular-nums}
+.bpbtns{display:flex;gap:8px;margin-top:auto}
+.bpbtns:empty{display:none}
+.bpin{flex:1;height:42px;border-radius:12px;font-weight:800;font-size:14.5px}
+.bpin2{height:42px;border-radius:12px;font-weight:700;padding:0 14px;background:var(--line2);color:var(--ink)}
+.bpside{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;position:sticky;top:12px;display:flex;flex-direction:column;gap:14px}
+.bpside h3{margin:0;font-size:18px;color:var(--ink)}
+.bpsec{display:flex;flex-direction:column;gap:6px}
+.bpst{font-size:13.5px;font-weight:800;display:flex;justify-content:space-between;align-items:center;padding-bottom:4px;border-bottom:1px solid var(--line2)}
+.bpsec.low .bpst{color:var(--bplow)}.bpsec.none .bpst{color:var(--sub)}
+.bpst b{font-size:15px}
+.bpline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 8px;text-align:left;width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);color:var(--ink);font-size:13.5px;cursor:pointer}
+.bpline:hover{border-color:var(--blue)}
+.bpsec.low .bpline{background:var(--bplowbg);border-color:transparent}
+.bpsec.low .bpline span:nth-child(2){color:var(--bplow);font-weight:800}
+.bpline small{flex-basis:100%;color:var(--sub);font-size:12px}
+.bpempty{font-size:13px;color:var(--sub);padding:6px 2px}
+.bpnote{font-size:12px;color:var(--sub);background:var(--line2);border-radius:10px;padding:8px 10px;line-height:1.5}
+/* ---- 숫자 입력창 ---- */
+.modal.bpm{width:440px;padding:22px 22px 18px}
+.modal.bpm.wide{width:640px}
+.modal.bpset{width:580px}
+.bpm-hd{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.bpm-ic{flex:0 0 64px;height:52px;border-radius:12px;background:var(--bpimg);display:flex;align-items:center;justify-content:center}
+.bpm-ic svg{height:42px;width:auto}
+.bpm-hd h3{margin:0 0 2px;font-size:19px}
+.bpm-hd p{margin:0;font-size:13px;color:var(--sub)}
+.bpm-seg{display:flex;gap:6px;background:var(--line2);padding:4px;border-radius:14px;margin-bottom:12px;overflow-x:auto}
+.bpm-seg button{flex:1;min-width:64px;border-radius:10px;padding:7px 6px;background:transparent;color:var(--sub);font-weight:800;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:1px;box-shadow:none}
+.bpm-seg button small{font-size:11px;font-weight:600;opacity:.8}
+.bpm-seg button.on{background:var(--panel);color:var(--blue);box-shadow:0 1px 4px rgba(16,24,40,.12)}
+.bpm-body{display:flex;flex-direction:column;gap:10px}
+.bpnf{display:grid;grid-template-columns:84px 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center}
+.bpnl{display:flex;flex-direction:column;gap:1px}
+.bpnl b{font-size:16px;color:var(--ink)}
+.bpnl small{font-size:11.5px;color:var(--sub)}
+.bpnbox{position:relative;display:flex;align-items:center;height:56px;border-radius:14px;background:var(--bpfield);border:2px solid transparent;transition:border-color .15s,background .15s}
+.bpnbox:focus-within{border-color:var(--blue);background:var(--panel);box-shadow:0 0 0 4px var(--blue-soft)}
+.bpnf.has .bpnbox{background:var(--panel);border-color:var(--line)}
+.bpnf.has .bpnbox:focus-within{border-color:var(--blue)}
+.bpnbox input{flex:1;min-width:0;height:100%;border:0!important;background:transparent!important;box-shadow:none!important;outline:none;text-align:right;font-size:26px;font-weight:800;color:var(--ink);padding:0 6px 0 14px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.bpnbox input::placeholder{color:var(--line);font-weight:700}
+.bpnbox i{font-style:normal;font-size:14px;font-weight:700;color:var(--sub);padding-right:16px}
+.bpnh{grid-column:2;font-size:12px;color:var(--sub);padding:4px 4px 0;text-align:right}
+.bpm-date{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:8px 12px;background:var(--line2);border-radius:12px}
+.bpm-date span{font-weight:800;font-size:14px;white-space:nowrap}
+.bpm-date input{height:38px;border-radius:10px;font-weight:700}
+.bpm-tip{font-size:12px;color:var(--sub);margin:12px 0 0;text-align:center}
+.bpm-ft{display:flex;gap:8px;margin-top:14px}
+.bpm-ft button{height:50px;border-radius:14px;font-weight:800;font-size:15px;padding:0 18px}
+.bpm-ft .primary{flex:1;font-size:16px}
+.bphwrap{max-height:60vh;overflow:auto;margin:4px 0}
+.bphwrap h4{margin:16px 0 6px;font-size:14px}.bphwrap h4 small{font-weight:500;color:var(--sub)}
+.bphtab{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.bphtab th{font-size:12px;color:var(--sub);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+.bphtab th:first-child{text-align:left}
+.bphtab td{padding:6px 8px;border-bottom:1px solid var(--line2)}
+.bphtab td.n{text-align:right;font-weight:700}
+.bphtab td.by{text-align:right;color:var(--sub);font-size:12px}
+/* ---- 설정 ---- */
+.bpsetl{display:flex;flex-direction:column;gap:6px;margin:10px 0;max-height:55vh;overflow:auto}
+.bpsetrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line2);border-radius:10px}
+.bpsetrow small{color:var(--sub)}.bpsetrow.off{opacity:.55}
+.bpform{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:8px 0}
+.bpform label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--sub);font-weight:700}
+.bpform input,.bpform select{height:38px}
+.bpform .bpchk{grid-column:1/-1;flex-direction:row;align-items:center;gap:8px;font-weight:600}
+.bpform .bpchk input{height:auto}
+.bplb{font-size:12.5px;font-weight:800;color:var(--sub);margin:12px 0 6px}.bplb small{font-weight:500}
+.bpsprow{display:grid;grid-template-columns:1fr 96px 96px 36px;gap:6px;margin-bottom:6px}
+.bpptrow{display:grid;grid-template-columns:1fr 1fr 36px;gap:6px;margin-bottom:6px}
+.bpsprow input,.bpptrow input,.bpptrow select{height:36px}.bpsprow button,.bpptrow button{height:36px;padding:0}
+@media(max-width:900px){.bpgrid{grid-template-columns:1fr}.bpside{position:static;order:-1}}
+@media(max-width:560px){.bpside{order:0}.bpcards{grid-template-columns:1fr;gap:10px}.bpcard{padding:12px;border-radius:14px}.bpimg{flex-basis:84px;height:66px}.bpimg svg{height:54px}.bph>b{font-size:17px}.bptab th,.bptab td{padding:5px 5px;font-size:13px}.bptab tbody th small{display:block}.bpform{grid-template-columns:1fr}.modal.bpm{padding:18px 16px 14px}.bpnf{grid-template-columns:64px 1fr}.bpnbox{height:52px}.bpnbox input{font-size:23px}}
+</style>
+<style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style></body>
 </html>
