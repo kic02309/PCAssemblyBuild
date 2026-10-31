@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.60';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.61';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16858,12 +16858,18 @@ async function addCharts(buf, jobs) {
     const cats = all.some(it => spCatName(D, it) === '기타') ? cats0.concat([{ id: 0, name: '기타', color: '#64748b' }]) : cats0;
     if (S.spCat && S.spCat !== 'all' && !cats.some(c => c.name === S.spCat)) S.spCat = 'all';
     const cf = S.spCat || 'all';
-    const shown = cf === 'all' ? all : all.filter(it => spCatName(D, it) === cf);
+    const noOwn = it => !it.main && !it.sub && !it.parts.some(p => p.uid);
+    const isMine = it => it.main === D.me || it.sub === D.me || it.parts.some(p => p.uid === D.me);
+    const noMinAll = it => it.specs.every(x => x.min == null);
+    const SPF = { mine: ['내 담당', isMine], none: ['미실사', it => spItemSt(it) === 'none'], nomin: ['기준 미설정', noMinAll], stale: ['오래된 실사', spStale], low: ['발주 필요', it => spItemSt(it) === 'low'], noown: ['담당 없음', noOwn] };
+    const fk = SPF[S.spF] ? S.spF : '', qv = (S.spQ || '').trim().toLowerCase();
+    const shown = all.filter(it => (cf === 'all' || spCatName(D, it) === cf) && (!fk || SPF[fk][1](it)) && (!qv || (it.name || '').toLowerCase().includes(qv)));
     const lows = [];
     all.forEach(it => it.specs.forEach(s => { if (spSt(s) === 'low') lows.push([it, s]); }));
     const nOk = all.filter(it => spItemSt(it) === 'ok').length;
-    const nNomin = all.filter(it => spItemSt(it) === 'none' || spItemSt(it) === 'nomin').length;
     const nStale = all.filter(spStale).length;
+    const nNone = all.filter(SPF.none[1]).length, nNoMin = all.filter(noMinAll).length, nNoOwn = all.filter(noOwn).length;
+    const nEval = all.filter(it => ['ok', 'low'].includes(spItemSt(it))).length;      // 실사 + 기준이 있어 판단 가능한 품목
     const pill = (it, st) => st === 'low' ? '<span class="sxp low">발주 필요</span>' : spStale(it) ? `<span class="sxp warn">⏱ ${spAgoOf(it)}일 전</span>` : st === 'ok' ? '<span class="sxp ok">충분</span>' : st === 'nomin' ? '<span class="sxp none">기준 미설정</span>' : '<span class="sxp none">실사 전</span>';
     const priceLine = it => {
       if (!it.price) return '';
@@ -16882,6 +16888,7 @@ async function addCharts(buf, jobs) {
       const when = ago == null ? '실사 기록 없음' : ago === 0 ? '오늘 실사' : `${ago}일 전 실사`;
       return `<div class="sxc ${st}${spStale(it) ? ' stale' : ''}${parts ? ' wide' : ''}" data-bpi="${it.id}">
         <div class="sxh"><div class="sxi">${spIcon(it)}</div><div class="sxt"><b>${esc(it.name)}</b><span class="sxw">${SP_PERSON} ${spWhoTxt(it)}<em class="${ago != null && spStale(it) ? 'w' : ''}">${when}</em></span></div>${pill(it, st)}</div>
+        ${parts ? (() => { const tot = it.parts.length * it.specs.length, f = it.parts.reduce((a, pt) => a + it.specs.filter(x => pt.last[x.k] && pt.last[x.k].d === today).length, 0), gf = it.parts.filter(pt => it.specs.every(x => pt.last[x.k] && pt.last[x.k].d === today)).length; return `<div class="sxpg${f < tot ? ' w' : ''}">오늘 입력 <b>${f}/${tot}</b>칸 · ${gf}/${it.parts.length}${esc(it.parts.length && /그룹/.test(it.parts[0].n || '') ? '그룹' : '파트')} 완료</div>`; })() : ''}
         ${parts ? rowsParts(it) : `<div class="sxrows">${rowsSingle(it)}</div>`}
         ${priceLine(it)}
         <div class="sxbt">${btn}${it.price && spIsMain(it) ? `<button type="button" class="sxgo ghost" data-bppr="${it.id}">단가 기록</button>` : ''}</div>
@@ -16893,21 +16900,25 @@ async function addCharts(buf, jobs) {
       return `<button type="button" class="sxchip${cf === c.name ? ' on' : ''}" data-bpc="${esc(c.name)}">${c.color ? `<i class="sxdot" style="background:${c.color}"></i>` : ''}${c.name === 'all' ? '전체' : esc(c.name)}<em>${n}</em>${alert ? '<u></u>' : ''}</button>`;
     }).join('')}${adm ? '<button type="button" class="sxchip add" id="bpcadd">＋ 분류</button>' : ''}</div>`;
     const groups = cf === 'all' && cats.length > 1 ? cats : [{ name: cf === 'all' ? (cats[0] ? cats[0].name : '') : cf, color: (cats.find(c => c.name === cf) || {}).color || '' }];
-    const list = shown.length ? groups.map(c => { const g = shown.filter(it => cf !== 'all' || cats.length <= 1 || spCatName(D, it) === c.name); return g.length ? `<section class="sxg">${cf === 'all' && cats.length > 1 ? `<h4 class="sxgh"><i class="sxdot" style="background:${c.color || '#64748b'}"></i>${esc(c.name)}<small>${g.length}</small></h4>` : ''}<div class="sxgrid">${g.map(card).join('')}</div></section>` : ''; }).join('') : `<div class="bpempty">등록된 품목이 없습니다${adm ? ' (오른쪽 위 ＋ 품목 추가)' : ''}</div>`;
+    const list = shown.length ? groups.map(c => { const g = shown.filter(it => cf !== 'all' || cats.length <= 1 || spCatName(D, it) === c.name); return g.length ? `<section class="sxg">${cf === 'all' && cats.length > 1 ? `<h4 class="sxgh"><i class="sxdot" style="background:${c.color || '#64748b'}"></i>${esc(c.name)}<small>${g.length}</small></h4>` : ''}<div class="sxgrid">${g.map(card).join('')}</div></section>` : ''; }).join('') : `<div class="bpempty">${all.length ? '조건에 맞는 품목이 없습니다 (위의 「조건 지우기」)' : '등록된 품목이 없습니다' + (adm ? ' (오른쪽 위 ＋ 품목 추가)' : '')}</div>`;
     const side = `<aside class="sxside"><h3>재고 한눈에</h3>
       <div class="sxk3"><div class="sxk"><b>${all.length}</b><span>전체 품목</span></div><div class="sxk ok"><b>${nOk}</b><span>충분</span></div><div class="sxk low"><b>${lows.length}</b><span>발주 필요</span></div></div>
-      <div class="sxneed"><h4>발주 필요</h4>${lows.length ? lows.map(([it, s]) => `<button type="button" class="sxn" data-bpi="${it.id}"><span class="sxi s">${spIcon(it)}</span><span class="sxnt"><b>${esc(it.name)}${s.s ? ' ' + esc(s.s) : ''}</b><small>${esc(it.ordWho ? '발주 ' + it.ordWho : '발주 담당 없음')}${it.vendor ? ' · ' + esc(it.vendor) : ''}</small></span><span class="sxq">${spN(s.total)}<small> / ${spN(s.min)}</small></span></button>`).join('') : '<div class="sxok">✓ 기준보다 적은 품목이 없습니다</div>'}</div>
-      ${nNomin || nStale ? `<div class="sxmini">${nStale ? `<span class="w">⏱ 실사 오래됨 <b>${nStale}</b></span>` : ''}${nNomin ? `<span>기준 미설정·실사 전 <b>${nNomin}</b></span>` : ''}</div>` : ''}
+      <div class="sxneed"><h4>발주 필요</h4>${lows.length ? lows.map(([it, s]) => `<button type="button" class="sxn" data-bpi="${it.id}"><span class="sxi s">${spIcon(it)}</span><span class="sxnt"><b>${esc(it.name)}${s.s ? ' ' + esc(s.s) : ''}</b><small>${esc(it.ordWho ? '발주 ' + it.ordWho : '발주 담당 없음')}${it.vendor ? ' · ' + esc(it.vendor) : ''}</small></span><span class="sxq">${spN(s.total)}<small> / ${spN(s.min)}</small></span></button>`).join('') : (nEval === 0 ? '<div class="sxok wait"><b>재고 판단 전</b>실사 수량과 기준 수량을 입력하면 발주 필요 여부를 알려 줍니다</div>' : nEval < all.length ? `<div class="sxok part"><b>기준 이하 품목 없음</b>판단한 ${nEval}종 기준 · 아직 판단 못 한 ${all.length - nEval}종</div>` : '<div class="sxok">✓ 모든 품목이 기준 이상입니다</div>')}</div>
+      <div class="sxmini">${[['stale', '⏱ 오래된 실사', nStale, 'w'], ['none', '미실사', nNone, ''], ['nomin', '기준 미설정', nNoMin, ''], ['noown', '담당 없음', nNoOwn, '']].filter(x => x[2]).map(x => `<button type="button" class="sxmb ${x[3]}" data-sf="${x[0]}">${x[1]} <b>${x[2]}</b></button>`).join('')}</div>
+      <div class="sxjn">판단 가능 <b>${nEval}</b>종 · 판단 전 <b>${all.length - nEval}</b>종 <small>(한 품목이 여러 항목에 겹칠 수 있어요)</small></div>
       <div class="sxprog"><h4>분류별 실사 진행</h4>${cats.map(c => { const g = all.filter(it => spCatName(D, it) === c.name), f = g.filter(it => spItemSt(it) !== 'none' && !spStale(it)).length; return `<div><span>${esc(c.name)}</span><i class="sxbar2"><i style="width:${g.length ? Math.round(f / g.length * 100) : 0}%;background:${c.color || '#64748b'}"></i></i><em>${f}/${g.length}</em></div>`; }).join('')}</div>
       <div class="sxnote">기준 수량보다 적으면 발주 필요로 표시돼요</div></aside>`;
     const hdr = adm ? '<span class="sxhb"><button type="button" class="sxb" id="bpadd">＋ 품목 추가</button><button type="button" class="sxb p" id="bpset">⚙ 설정</button></span>' : D.who === 'mgr' ? '<span class="sxhb"><button type="button" class="sxb p" id="bpset">⚙ 담당 설정</button></span>' : '';
     main.innerHTML = pageHead(spTitle(), '', hdr)
       + `<div class="pgb bpwrap"><div class="bpsub"><span>실사한 재고 수량을 입력하면, 합계가 기준 수량보다 적을 때 <b>발주 필요</b>를 알려 줍니다.</span></div>
-      ${chips}<div class="sxgrid2"><div class="sxmain">${list}</div>${side}</div></div>`;
+      ${chips}<div class="sxfb"><input type="search" id="sxq" placeholder="품목 검색" value="${esc(S.spQ || '')}" autocomplete="off">${Object.keys(SPF).map(k => { const n = all.filter(SPF[k][1]).length; return `<button type="button" class="sxf${fk === k ? ' on' : ''}" data-sf="${k}">${SPF[k][0]}<em>${n}</em></button>`; }).join('')}${fk || qv ? '<button type="button" class="sxf clr" id="sxclr">조건 지우기</button>' : ''}</div><div class="sxgrid2"><div class="sxmain">${list}</div>${side}</div></div>`;
     $$('[data-bpin]').forEach(b => (b.onclick = e => { e.stopPropagation(); spInput(+b.dataset.bpin, b.dataset.bpp); }));
     $$('[data-bppr]').forEach(b => (b.onclick = e => { e.stopPropagation(); spPrice(+b.dataset.bppr); }));
     $$('[data-bpi]').forEach(b => (b.onclick = () => spHist(+b.dataset.bpi)));
     $$('[data-bpc]').forEach(b => (b.onclick = () => { S.spCat = b.dataset.bpc; spDraw(); }));
+    $$('[data-sf]').forEach(b => (b.onclick = () => { S.spF = S.spF === b.dataset.sf ? '' : b.dataset.sf; spDraw(); }));
+    if ($('#sxclr')) $('#sxclr').onclick = () => { S.spF = ''; S.spQ = ''; spDraw(); };
+    if ($('#sxq')) $('#sxq').oninput = e => { const pos = e.target.selectionStart; S.spQ = e.target.value; spDraw(); const q = $('#sxq'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } };
     if ($('#bpset')) $('#bpset').onclick = () => spSettings();
     if ($('#bpadd')) $('#bpadd').onclick = () => spEdit(null, true);
     if ($('#bpcadd')) $('#bpcadd').onclick = () => spSettings('분류');
@@ -16925,7 +16936,7 @@ async function addCharts(buf, jobs) {
     modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)}</h3><p>${spMD(D.today)} 오늘 실사 수량${parts ? (mine.length === 1 ? ` · <b>${esc(cur.n)}</b> ${esc(cur.uname || '')}` : '') : ' · 지금 있는 총수량'}</p></div></div>
       ${parts && mine.length > 1 ? `<div class="bpm-seg">${mine.map(pt => `<button type="button" data-pp="${esc(pt.p)}" class="${pt.p === cur.p ? 'on' : ''}">${esc(pt.n)}<small>${esc(pt.uname || '-')}</small></button>`).join('')}</div>` : ''}
       <div class="bpm-body" id="bpmb">${body()}</div>
-      <p class="bpm-tip">비우고 저장하면 오늘 기록이 지워집니다 · Enter = 다음 칸</p>
+      <p class="bpm-tip">실제로 0개면 0을 입력하세요 · 빈 칸으로 저장하면 오늘 기록이 지워집니다(저장 전에 한 번 더 물어봐요) · Enter = 다음 칸</p>
       <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
       $('[data-c]', bg).onclick = close;
@@ -16934,6 +16945,8 @@ async function addCharts(buf, jobs) {
       $$('[data-pp]', bg).forEach(b => (b.onclick = () => { cur = mine.find(x => x.p === b.dataset.pp) || cur; $$('[data-pp]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#bpmb', bg).innerHTML = body(); wire(); }));
       $('[data-s]', bg).onclick = async () => {
         const counts = {}; $$('.bpnf input', bg).forEach(i => { counts[i.dataset.k] = spNumVal(i); });
+        const gone = it.specs.filter(x => counts[x.k] === '' && cur.last[x.k] && cur.last[x.k].d === D.today);
+        if (gone.length && !(await confirmBox('빈 칸으로 저장하면 오늘 입력한 기록이 지워집니다.<br><b>' + gone.map(x => esc(x.s || it.name) + ' (' + spN(cur.last[x.k].qty) + esc(it.unit) + ')').join(', ') + '</b><br>지울까요? (수량이 0개면 0을 입력하세요)', '지우고 저장', '돌아가기'))) return;
         const b = $('[data-s]', bg); b.disabled = true;
         try { const r = await api('sp', { op: 'save', id: it.id, part: parts ? cur.p : '', counts }); const i = D.items.findIndex(x => x.id === it.id); if (i >= 0) D.items[i] = r.item; close(); toast(`${it.name}${parts ? ' ' + cur.n : ''} 저장했습니다`); spDraw(); }
         catch (e) { b.disabled = false; toast(e.message, true); }
@@ -17469,7 +17482,7 @@ html[data-theme=dark]{--bplow:#ff9a5c;--bplowbg:#3a2516;--bpok:#5fd0b8;--bpokbg:
 .bpinfo div{display:grid;grid-template-columns:64px 1fr;gap:8px}.bpinfo span{color:var(--sub)}.bpinfo b{color:var(--ink);font-weight:700;word-break:keep-all}.bpinfo a{color:var(--blue);text-decoration:none}
 .bpform .bpwide{grid-column:1/-1}
 @media(max-width:560px){.bpchips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-right:-16px;padding-right:16px}.bpchip{flex:0 0 auto}.bpgrp .bpcards,.bpcards{grid-template-columns:minmax(0,1fr)}.bpcard{min-width:0}.bph{flex-wrap:wrap}.bph b{word-break:keep-all;flex:1 1 auto;min-width:0}.bpgrid{grid-template-columns:minmax(0,1fr)}.bpwrap{min-width:0;overflow-x:hidden}}
-</style><style id="bp-v2959">
+</style><style id="bp-v2961">.sxfb{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-6px 0 14px}.sxfb input{height:34px;width:150px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 14px;font-size:13.5px}.sxf{border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer}.sxf em{font-style:normal;margin-left:5px;font-size:11.5px;opacity:.7}.sxf.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}.sxf.clr{border-style:dashed}.sxmb{border:0;background:var(--line2);color:var(--ink);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;margin:0 6px 6px 0}.sxmb.w{background:#fff1e2;color:#b45309}.sxjn{font-size:12px;color:var(--sub);margin:2px 0 10px}.sxok.wait,.sxok.part{background:#fff7e6;color:#8a5a00;font-size:13px;line-height:1.5}.sxok.wait b,.sxok.part b{display:block;margin-bottom:2px}.sxpg{font-size:12px;color:var(--sub);margin:-4px 0 6px}.sxpg.w{color:#b45309}</style><style id="bp-v2959">
 /* v29.59 : 소모품 관리 새 화면 (카드 · 오른쪽 요약 · 설정) */
 :root{--sxwarn:#b45309;--sxwarnbg:#fff4e0}
 html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
