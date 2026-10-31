@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16847,7 +16847,7 @@ async function addCharts(buf, jobs) {
   const spAgo = (d, today) => { if (!d) return null; return Math.round((new Date(today + 'T00:00:00') - new Date(d + 'T00:00:00')) / 864e5); };
   const spThr = it => ({ d: 3, w: 9, m: 33, n: 0 })[spCycle(it)];                // 오래된 실사 경고 : 주기 기준 (매일 = 3일 넘게 · 주 1회 = 9일 · 월 1회 = 33일 · 비정기 = 없음)
   const spAgoOf = it => { const L = spLast(it); return L ? spAgo(L.d, S.spD.today) : null; };
-  const spStale = it => { const t = spThr(it), g = spAgoOf(it); return t > 0 && g != null && g > t; };
+  const spStale = it => { const t = spThr(it), g = spAgoOf(it); if (!(t > 0) || g == null) return false; if (g > t) return true; return spHasParts(it) && it.parts.some(pt => { const pd = spPartDay(pt); return !pd || spAgo(pd, S.spD.today) > t; }); };   // 그룹 하나라도 오래되면 경고
   const SP_PERSON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-4 3.2-6 7-6s7 2 7 6"/></svg>';
   const spWhoTxt = it => { const n = [it.mainName, it.subName].filter(Boolean); const base = n.length ? n : [...new Set(it.parts.map(p => p.uname).filter(Boolean))]; return base.length ? esc(base[0]) + (base.length > 1 ? ` 외 ${base.length - 1}` : '') : '담당 없음'; };
   const spCatName = (D, it) => ((D.cats || []).some(c => c.name === it.cat) ? it.cat : '기타');
@@ -16856,16 +16856,22 @@ async function addCharts(buf, jobs) {
   const SPC = { d: ['매일', 1], w: ['주 1회', 7], m: ['월 1회', 30], n: ['비정기', 0] };
   const spCycle = it => { const c = S.spD && S.spD.cyc && S.spD.cyc[it.id]; return SPC[c] ? c : 'w'; };
   async function spLoadCyc(D) { try { const r = await api('sp2', { op: 'cycles' }); D.cyc = r.cyc || {}; } catch (e) { D.cyc = {}; } }
-  function spSeries(it, recs, only) {                                        // 날짜별 합계 → 직전 실사 대비 (파트별 마지막 값을 이어서 합침)
+  function spSeries(it, recs, only) {                                        // 날짜별 합계 · 직전 대비 : 그룹(파트)마다 자기 직전 값과 비교 (처음 입력한 그룹은 비교 대상 아님)
     const ps = only != null ? [only] : (spHasParts(it) ? it.parts.map(x => x.p) : ['']);
     const mine = recs.filter(r => ps.includes(r.p));
     const dates = [...new Set(mine.map(r => r.d))].sort();
     const cur = {}, out = []; let prev = null;
     dates.forEach(d => {
-      const filled = new Set(); mine.filter(r => r.d === d).forEach(r => { cur[r.p + '|' + r.k] = r.qty; filled.add(r.p); });
+      const filled = new Set(), before = Object.assign({}, cur), got = {};
+      mine.filter(r => r.d === d).forEach(r => { cur[r.p + '|' + r.k] = r.qty; got[r.p + '|' + r.k] = r.qty; filled.add(r.p); });
       const tot = {}; it.specs.forEach(s => { let t = 0, any = false; ps.forEach(p => { const v = cur[p + '|' + s.k]; if (v != null) { t += v; any = true; } }); tot[s.k] = any ? t : null; });
       const row = { d, tot, miss: ps.filter(p => !filled.has(p)).length, use: {}, inn: {}, gap: prev ? Math.max(1, spAgo(prev.d, d)) : 0 };
-      if (prev) it.specs.forEach(s => { const a = prev.tot[s.k], b = tot[s.k]; if (a == null || b == null) return; if (b < a) row.use[s.k] = a - b; else if (b > a) row.inn[s.k] = b - a; else row.use[s.k] = 0; });
+      if (prev) it.specs.forEach(s => {
+        let dec = 0, inc = 0, cmp = 0;
+        ps.forEach(p => { const k = p + '|' + s.k; if (got[k] == null || before[k] == null) return; cmp++; if (got[k] < before[k]) dec += before[k] - got[k]; else if (got[k] > before[k]) inc += got[k] - before[k]; });
+        if (!cmp) return;                                                   // 비교할 이전 값이 없음 → 비교 불가
+        if (inc) row.inn[s.k] = inc; else row.use[s.k] = dec;
+      });
       out.push(row); prev = row;
     });
     return out;
@@ -16879,7 +16885,7 @@ async function addCharts(buf, jobs) {
     return ps.length ? ps.join('') + (r.gap > 1 ? `<small>${r.gap}일 사이</small>` : '') : '<span class="sxu0">-</span>';
   };
   const spDoneToday = it => spMyParts(it).some(pt => it.specs.some(x => pt.last[x.k] && pt.last[x.k].d === S.spD.today));
-  const spDue = it => { const c = spCycle(it); if (c === 'd' || spDoneToday(it)) return true; if (c === 'n') return false; const g = spAgoOf(it); return g == null || g >= SPC[c][1]; };
+  const spDue = it => { const c = spCycle(it); if (c === 'd' || spDoneToday(it)) return true; if (c === 'n') return false; const n = SPC[c][1]; return spMyParts(it).some(pt => { const pd = spPartDay(pt), g = pd ? spAgo(pd, S.spD.today) : null; return g == null || g >= n; }); };
   const spWho = it => {
     const o = [];
     if (it.mainName) o.push(`<span class="wp"><i>정</i>${esc(it.mainName)}</span>`);
