@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.66';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16979,7 +16979,14 @@ async function addCharts(buf, jobs) {
     if ($('#bpcadd')) $('#bpcadd').onclick = () => spSettings('분류');
   }
   // ---------------- 숫자 입력창 (공통) : 큰 숫자 · 천 단위 쉼표 · 단위 표시 · 지난 값 안내
-  const spNumFix = el => { const raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, ''); el.value = raw === '' ? '' : Number(raw).toLocaleString(); el.closest('.bpnf').classList.toggle('has', raw !== ''); };
+  // v29.66 : 숫자 이외의 글자(-, ., 글자)는 다른 수량으로 바꾸지 않고 "오류"로 표시하고 저장을 막음 (-5 → 5, 1.5 → 15 가 되던 문제)
+  const SP_BAD = '0 이상의 정수만 입력할 수 있습니다 (마이너스 · 소수점 · 글자는 안 돼요)';
+  const spBad = el => /[^\d,]/.test(String(el.value).trim());
+  const spNumFix = el => { const f = el.closest('.bpnf'), m = el.closest('.modal');
+    if (spBad(el)) f.classList.add('bad');
+    else { f.classList.remove('bad'); const raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, ''); el.value = raw === '' ? '' : Number(raw).toLocaleString(); f.classList.toggle('has', raw !== ''); }
+    const e = m && m.querySelector('.bpm-err'); if (e) e.hidden = !m.querySelector('.bpnf.bad'); };
+  const spBadFirst = bg => $$('.bpnf input', bg).find(spBad);
   const spNumVal = el => el.value.replace(/[^\d]/g, '');
   const spNumRow = (k, label, sub, val, unit, hint) => `<label class="bpnf${val !== '' && val != null ? ' has' : ''}"><span class="bpnl"><b>${label}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="bpnbox"><input type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${val === '' || val == null ? '' : Number(val).toLocaleString()}" placeholder="0"><i>${esc(unit)}</i></span>${hint ? `<small class="bpnh">${hint}</small>` : ''}</label>`;
   const spNumWire = bg => { $$('.bpnf input', bg).forEach((i, n, all) => { i.oninput = () => spNumFix(i); i.onfocus = () => setTimeout(() => i.select(), 0); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const nx = all[n + 1]; if (nx) { nx.focus(); nx.select(); } else { const s = $('[data-s]', bg); if (s) s.click(); } } }; }); };
@@ -16992,14 +16999,20 @@ async function addCharts(buf, jobs) {
     modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)}</h3><p>${spMD(D.today)} 오늘 실사 수량${parts ? (mine.length === 1 ? ` · <b>${esc(cur.n)}</b> ${esc(cur.uname || '')}` : '') : ' · 지금 있는 총수량'}</p></div></div>
       ${parts && mine.length > 1 ? `<div class="bpm-seg">${mine.map(pt => `<button type="button" data-pp="${esc(pt.p)}" class="${pt.p === cur.p ? 'on' : ''}">${esc(pt.n)}<small>${esc(pt.uname || '-')}</small></button>`).join('')}</div>` : ''}
       <div class="bpm-body" id="bpmb">${body()}</div>
+      <p class="bpm-err" hidden>${SP_BAD}</p>
       <p class="bpm-tip">실제로 0개면 0을 입력하세요 · 비운 칸은 기존 값 그대로 유지돼요 · Enter = 다음 칸</p>
       <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
-      $('[data-c]', bg).onclick = close;
-      const wire = () => { spNumWire(bg); const f = $('.bpnf input', bg); if (f) setTimeout(() => f.focus(), 60); };
+      // v29.66 : 입력해 놓고 그냥 닫으면 말없이 사라지던 문제 → 저장 안 한 입력이 있으면 확인
+      const dirty = () => $$('.bpnf input', bg).some(i => i.value !== (i.dataset.o || ''));
+      const ask = async () => !dirty() || await confirmBox('저장하지 않은 입력이 있어요.<br>닫으면 사라집니다.', '닫기', '계속 입력');
+      bg._guard = ask;
+      $('[data-c]', bg).onclick = async () => { if (await ask()) close(); };
+      const wire = () => { $$('.bpnf input', bg).forEach(i => (i.dataset.o = i.value)); spNumWire(bg); const f = $('.bpnf input', bg); if (f) setTimeout(() => f.focus(), 60); };
       wire();
-      $$('[data-pp]', bg).forEach(b => (b.onclick = () => { cur = mine.find(x => x.p === b.dataset.pp) || cur; $$('[data-pp]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#bpmb', bg).innerHTML = body(); wire(); }));
+      $$('[data-pp]', bg).forEach(b => (b.onclick = async () => { if (b.dataset.pp === cur.p) return; if (!(await ask())) return; cur = mine.find(x => x.p === b.dataset.pp) || cur; $$('[data-pp]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#bpmb', bg).innerHTML = body(); const er = $('.bpm-err', bg); if (er) er.hidden = true; wire(); }));
       $('[data-s]', bg).onclick = async () => {
+        const bad = spBadFirst(bg); if (bad) { toast(SP_BAD, true); bad.focus(); return; }
         const counts = {}; $$('.bpnf input', bg).forEach(i => { const v = spNumVal(i); if (v !== '') counts[i.dataset.k] = v; });      // v29.62 : 빈 칸은 보내지 않음 = 기존 값 유지
         if (!Object.keys(counts).length) return toast('입력한 수량이 없습니다 (비운 칸은 기존 값 그대로예요)', true);
         const b = $('[data-s]', bg); b.disabled = true;
@@ -17041,9 +17054,9 @@ async function addCharts(buf, jobs) {
       <div class="gxft"><div class="gxsum" id="gxsum"></div><div class="gxbt"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s disabled>변경 내용 확인</button></div></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'gx');
       const ins = $$('.gxc input', bg);
-      const val = i => { const r = i.value.replace(/[^\d]/g, ''); return r === '' ? null : Number(r); };
+      const val = i => { if (spBad(i)) return null; const r = i.value.replace(/[^\d]/g, ''); return r === '' ? null : Number(r); };   // v29.66 : 숫자 아닌 글자가 있으면 값으로 치지 않음 (오류 표시 · 저장 막힘)
       const find = k => { const [id, p, sk] = k.split('|'); const it = D.items.find(x => x.id === +id); return { it, pt: it.parts.find(x => x.p === p), s: it.specs.find(x => x.k === sk) }; };
-      let chg = 0;
+      let chg = 0, bad = 0;
       const upd = () => {
         let ch = 0, bl = 0, zr = [];
         ins.forEach(i => { const k = i.dataset.k, v = val(i), b = base[k], c = v !== null && v !== b; i.parentNode.classList.toggle('chg', c); i.parentNode.classList.toggle('has', v !== null);
@@ -17064,21 +17077,23 @@ async function addCharts(buf, jobs) {
               return `<div class="gxbc"><small>${esc(s.s || '수량')}</small>${got ? `<b>${spN(tot)}${esc(it.unit)} = ${tot >= s.per ? `<em>${Math.floor(tot / s.per)}박스</em>${tot % s.per ? ' + <em>' + spN(tot % s.per) + esc(it.unit) + '</em>' : ''}` : `<em>1박스 미만</em>`}</b>` : '<b>-</b>'}</div>`; }).join(''); }
         });
         $('#gxsum', bg).innerHTML = `변경 <b>${ch}</b>칸 · 미입력 <b>${bl}</b>칸 <span>(그대로 유지)</span>${zr.length ? ` · <u>0으로 기록되는 칸 ${zr.length}</u>` : ''}`;
-        const sb = $('[data-s]', bg); sb.disabled = !ch; sb.textContent = ch ? `변경 내용 확인 (${ch}칸)` : '변경 내용 확인';
+        const nb = ins.filter(spBad).length; bad = nb;
+        if (nb) $('#gxsum', bg).innerHTML = `<u>숫자가 아닌 칸 ${nb}개</u> · ${SP_BAD}`;
+        const sb = $('[data-s]', bg); sb.disabled = !ch || !!nb; sb.textContent = ch ? `변경 내용 확인 (${ch}칸)` : '변경 내용 확인';
         bg._zr = zr;
       };
       ins.forEach((i, n) => {
-        i.oninput = () => { const r = i.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, ''); i.value = r === '' ? '' : Number(r).toLocaleString(); upd(); };
+        i.oninput = () => { if (spBad(i)) i.parentNode.classList.add('bad'); else { i.parentNode.classList.remove('bad'); const r = i.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, ''); i.value = r === '' ? '' : Number(r).toLocaleString(); } upd(); };
         i.onfocus = () => setTimeout(() => i.select(), 0);
-        i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const nx = ins[n + 1]; if (nx) { nx.focus(); nx.select(); } else if (chg) $('[data-s]', bg).click(); } };
+        i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const nx = ins[n + 1]; if (nx) { nx.focus(); nx.select(); } else if (chg && !bad) $('[data-s]', bg).click(); } };
       });
       upd();
       const first = ins.find(i => i.value === '') || ins[0]; if (first && window.innerWidth > 700) setTimeout(() => first.focus(), 60);
-      const ask = async () => !chg || await confirmBox('저장하지 않은 변경 <b>' + chg + '칸</b>이 있어요.<br>닫으면 사라집니다.', '닫기', '계속 입력');
+      const ask = async () => (!chg && !bad) || await confirmBox('저장하지 않은 입력이 있어요' + (chg ? ' (<b>' + chg + '칸</b>)' : '') + '.<br>닫으면 사라집니다.', '닫기', '계속 입력');
       bg._guard = ask;
       $('[data-c]', bg).onclick = async () => { if (await ask()) close(); };
       $('[data-s]', bg).onclick = async () => {
-        if (!chg) return;
+        if (!chg || bad) return;
         const zr = bg._zr || [];
         const lines = []; ins.forEach(i => { const k = i.dataset.k, v = val(i), b = base[k]; if (v === null || v === b) return; const f = find(k), l = f.pt.last[f.s.k];
           const from = b !== null ? spN(b) : l ? `${spN(l.qty)} <small>(${spMD(l.d)})</small>` : '없음';
@@ -17116,11 +17131,13 @@ async function addCharts(buf, jobs) {
     modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)} 단가 기록</h3><p>거래명세서의 <b>박스 단가</b>(공급가)를 적으세요</p></div></div>
       <label class="bpm-date"><span>명세서 날짜</span><input type="date" id="bppd" value="${D.today}" max="${D.today}"></label>
       <div class="bpm-body">${body()}</div>
+      <p class="bpm-err" hidden>${SP_BAD}</p>
       <p class="bpm-tip">바뀐 규격만 적으면 됩니다 · 같은 날짜를 다시 저장하면 고쳐집니다</p>
       <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
       $('[data-c]', bg).onclick = close; spNumWire(bg);
       $('[data-s]', bg).onclick = async () => {
+        const bad = spBadFirst(bg); if (bad) { toast(SP_BAD, true); bad.focus(); return; }
         const prices = {}; $$('.bpnf input', bg).forEach(i => { const v = spNumVal(i); if (v !== '') prices[i.dataset.k] = v; });
         if (!Object.keys(prices).length) return toast('단가를 하나 이상 적으세요', true);
         const b = $('[data-s]', bg); b.disabled = true;
@@ -17678,7 +17695,7 @@ html[data-theme=dark]{--bplow:#ff9a5c;--bplowbg:#3a2516;--bpok:#5fd0b8;--bpokbg:
 .gxb{border:1px solid var(--line);border-radius:14px;padding:10px 12px 8px;margin:0 0 12px;background:var(--panel)}.gxt{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:15px}.gxt small{color:var(--sub);font-weight:500;font-size:12px}.gxi{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}.gxi img,.gxi svg{width:24px;height:24px;object-fit:contain}
 .gxhd,.gxr,.gxs{display:grid;grid-template-columns:150px 84px repeat(var(--n),minmax(92px,1fr)) 64px;gap:8px;align-items:center}.gxhd{font-size:12px;color:var(--sub);font-weight:700;padding:4px 0 6px;border-bottom:1px solid var(--line)}.gxhd .c{text-align:center}.gxhd small{display:block;font-weight:500;font-size:11px;color:var(--sub)}
 .gxr{padding:8px 0;border-bottom:1px solid var(--line2)}.gxm{display:contents}.gxn b{display:block;font-size:14.5px}.gxn small{color:var(--sub);font-size:12px}.gxch{justify-self:start;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--line2);color:var(--sub)}.gxch.ok{background:#e4f7ee;color:#0a7a50}.gxch.old{background:#fff1e2;color:#b45309}.gxch.mid{background:var(--line2);color:var(--ink)}.gxp{order:99;justify-self:center;font-size:12.5px;font-weight:700;color:var(--sub);grid-column:-2/-1}.gxp.ok{color:#0a7a50}.gxp.mid{color:#b45309}
-.gxc{display:block;position:relative}.gxc input{width:100%;height:42px;border:1.5px solid var(--line);border-radius:11px;background:var(--panel);color:var(--ink);text-align:right;padding:0 12px;font-size:17px;font-weight:700;box-sizing:border-box}.gxc input::placeholder{font-size:13px;font-weight:500;color:var(--sub);opacity:.6}.gxc input:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}.gxc.chg input{border-color:var(--blue);background:var(--blue-soft)}.gxl{display:none}.gxh{display:block;text-align:right;font-size:11.5px;color:var(--sub);margin-top:3px;white-space:nowrap}.gxh.w{color:#c2410c}
+.gxc{display:block;position:relative}.gxc input{width:100%;height:42px;border:1.5px solid var(--line);border-radius:11px;background:var(--panel);color:var(--ink);text-align:right;padding:0 12px;font-size:17px;font-weight:700;box-sizing:border-box}.gxc input::placeholder{font-size:13px;font-weight:500;color:var(--sub);opacity:.6}.gxc input:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}.gxc.chg input{border-color:var(--blue);background:var(--blue-soft)}.gxc.bad input,.gxc.bad input:focus{border-color:#dc2626;background:#fef2f2;color:#b91c1c;box-shadow:0 0 0 3px rgba(220,38,38,.15)}.bpnf.bad .bpnbox,.bpnf.bad .bpnbox:focus-within{border-color:#dc2626;background:#fef2f2;box-shadow:0 0 0 3px rgba(220,38,38,.15)}.bpnf.bad .bpnbox input{color:#b91c1c}.bpm-err{font-size:13px;font-weight:700;color:#b91c1c;margin:10px 0 0;text-align:center}.bpm-err[hidden]{display:none}.gxsum u{text-decoration:none;color:#b91c1c;font-weight:700}.gxl{display:none}.gxh{display:block;text-align:right;font-size:11.5px;color:var(--sub);margin-top:3px;white-space:nowrap}.gxh.w{color:#c2410c}
 .gxs{padding:8px 0 4px}.gxs .gxsn{grid-column:1/3;font-weight:800;font-size:13.5px}.gxs .gxsn small{display:block;font-weight:500;font-size:11px;color:var(--sub)}.gxsv{display:grid;grid-template-columns:repeat(var(--n),minmax(92px,1fr));gap:8px;text-align:center}.gxs.t1 b{font-size:19px;color:var(--blue)}.gxs.t2 i{font-style:normal;color:var(--sub);font-size:15px;font-weight:700}.gxs.t1{background:var(--blue-soft);border-radius:10px;padding:8px 6px;margin-top:6px}.gxs.t1 .gxsn{padding-left:6px}
 .gxb.n1 .gxhd,.gxb.n1 .gxr,.gxb.n1 .gxs{grid-template-columns:150px 84px minmax(92px,240px) 64px}.gxb.n1 .gxsv{justify-items:center}.gxbox{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}.gxbox b{font-size:13.5px}.gxbox>small{color:var(--sub);font-size:12px;margin-left:6px}.gxbx{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:8px;margin-top:8px}.gxbc{background:var(--line2);border-radius:11px;padding:8px 12px}.gxbc small{display:block;color:var(--sub);font-size:11.5px;margin-bottom:2px}.gxbc b{font-size:15px}.gxbc em{font-style:normal;color:var(--blue)}
 .gxft{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;justify-content:space-between;background:var(--panel);border-top:1px solid var(--line);margin:0 -22px;padding:12px 22px 14px}.gxsum{font-size:13.5px;color:var(--ink)}.gxsum span{color:var(--sub)}.gxsum u{text-decoration:none;color:#c2410c;font-weight:700}.gxbt{display:flex;gap:8px}.gxbt button{height:46px;border-radius:13px;font-weight:800;font-size:14.5px;padding:0 18px}.gxbt .primary:disabled{opacity:.45;cursor:default}
