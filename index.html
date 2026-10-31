@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.63';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16841,16 +16841,52 @@ async function addCharts(buf, jobs) {
     let D; try { D = await api('sp', { op: 'get' }); }
     catch (e) { if (S.view === 'sp') main.innerHTML = pageHead(spTitle()) + '<div class="pgb"><div class="warn">' + esc(e.message) + '</div></div>'; return; }
     if (S.view !== 'sp') return;
-    S.spD = D; spDraw();
+    await spLoadCyc(D); S.spD = D; spDraw();
   }
-  async function spReload() { try { S.spD = await api('sp', { op: 'get' }); } catch (e) { toast(e.message, true); } if (S.view === 'sp') spDraw(); }
+  async function spReload() { try { const D = await api('sp', { op: 'get' }); await spLoadCyc(D); S.spD = D; } catch (e) { toast(e.message, true); } if (S.view === 'sp') spDraw(); }
   const spAgo = (d, today) => { if (!d) return null; return Math.round((new Date(today + 'T00:00:00') - new Date(d + 'T00:00:00')) / 864e5); };
-  const spThr = it => (it.staleDays != null ? it.staleDays : (S.spD && S.spD.staleDef != null ? S.spD.staleDef : 7));
+  const spThr = it => ({ d: 3, w: 9, m: 33, n: 0 })[spCycle(it)];                // 오래된 실사 경고 : 주기 기준 (매일 = 3일 넘게 · 주 1회 = 9일 · 월 1회 = 33일 · 비정기 = 없음)
   const spAgoOf = it => { const L = spLast(it); return L ? spAgo(L.d, S.spD.today) : null; };
   const spStale = it => { const t = spThr(it), g = spAgoOf(it); return t > 0 && g != null && g > t; };
   const SP_PERSON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-4 3.2-6 7-6s7 2 7 6"/></svg>';
   const spWhoTxt = it => { const n = [it.mainName, it.subName].filter(Boolean); const base = n.length ? n : [...new Set(it.parts.map(p => p.uname).filter(Boolean))]; return base.length ? esc(base[0]) + (base.length > 1 ? ` 외 ${base.length - 1}` : '') : '담당 없음'; };
   const spCatName = (D, it) => ((D.cats || []).some(c => c.name === it.cat) ? it.cat : '기타');
+  // ================================================================ v29.64 : 실사 주기 · 직전 대비 사용량 · 한 줄 헤더 · 전체 요약표
+  //   매일(d) · 주 1회(w) · 월 1회(m) · 비정기(n).  재고가 늘면 입고로 보고 그날 사용량은 계산하지 않음.
+  const SPC = { d: ['매일', 1], w: ['주 1회', 7], m: ['월 1회', 30], n: ['비정기', 0] };
+  const spCycle = it => { const c = S.spD && S.spD.cyc && S.spD.cyc[it.id]; return SPC[c] ? c : 'w'; };
+  async function spLoadCyc(D) { try { const r = await api('sp2', { op: 'cycles' }); D.cyc = r.cyc || {}; } catch (e) { D.cyc = {}; } }
+  function spSeries(it, recs, only) {                                        // 날짜별 합계 → 직전 실사 대비 (파트별 마지막 값을 이어서 합침)
+    const ps = only != null ? [only] : (spHasParts(it) ? it.parts.map(x => x.p) : ['']);
+    const mine = recs.filter(r => ps.includes(r.p));
+    const dates = [...new Set(mine.map(r => r.d))].sort();
+    const cur = {}, out = []; let prev = null;
+    dates.forEach(d => {
+      const filled = new Set(); mine.filter(r => r.d === d).forEach(r => { cur[r.p + '|' + r.k] = r.qty; filled.add(r.p); });
+      const tot = {}; it.specs.forEach(s => { let t = 0, any = false; ps.forEach(p => { const v = cur[p + '|' + s.k]; if (v != null) { t += v; any = true; } }); tot[s.k] = any ? t : null; });
+      const row = { d, tot, miss: ps.filter(p => !filled.has(p)).length, use: {}, inn: {}, gap: prev ? Math.max(1, spAgo(prev.d, d)) : 0 };
+      if (prev) it.specs.forEach(s => { const a = prev.tot[s.k], b = tot[s.k]; if (a == null || b == null) return; if (b < a) row.use[s.k] = a - b; else if (b > a) row.inn[s.k] = b - a; else row.use[s.k] = 0; });
+      out.push(row); prev = row;
+    });
+    return out;
+  }
+  const spLastUse = it => { const rows = spSeries(it, it.hist || []); const r = rows[rows.length - 1]; return r && r.gap ? r : null; };
+  const spUseTxt = (it, r) => {
+    if (!r) return '<span class="sxu0">-</span>';
+    const ps = [];
+    it.specs.forEach(s => { const u = r.use[s.k], i = r.inn[s.k], lb = it.specs.length > 1 && s.s ? esc(s.s) + ' ' : '';
+      if (i) ps.push(`<em class="in">${lb}입고</em>`); else if (u != null) ps.push(`<em class="${u ? 'dn' : 'z'}">${lb}${u ? '−' + spN(u) : '0'}</em>`); });
+    return ps.length ? ps.join('') + (r.gap > 1 ? `<small>${r.gap}일 사이</small>` : '') : '<span class="sxu0">-</span>';
+  };
+  const spDoneToday = it => spMyParts(it).some(pt => it.specs.some(x => pt.last[x.k] && pt.last[x.k].d === S.spD.today));
+  const spDue = it => { const c = spCycle(it); if (c === 'd' || spDoneToday(it)) return true; if (c === 'n') return false; const g = spAgoOf(it); return g == null || g >= SPC[c][1]; };
+  const spWho = it => {
+    const o = [];
+    if (it.mainName) o.push(`<span class="wp"><i>정</i>${esc(it.mainName)}</span>`);
+    if (it.subName) o.push(`<span class="wp sub"><i>부</i>${esc(it.subName)}</span>`);
+    if (!o.length) { const nm = [...new Set(it.parts.map(p => p.uname).filter(Boolean))]; nm.slice(0, 2).forEach(n => o.push(`<span class="wp"><i>담</i>${esc(n)}</span>`)); if (nm.length > 2) o.push(`<span class="wp sub">외 ${nm.length - 2}</span>`); }
+    return o.length ? o.join('') : '<span class="wn">담당 없음</span>';
+  };
   function spDraw() {
     const D = S.spD, main = $('#main'), adm = D.who === 'admin', today = D.today;
     const all = D.items.filter(it => it.active);
@@ -16866,11 +16902,12 @@ async function addCharts(buf, jobs) {
     const shown = all.filter(it => (cf === 'all' || spCatName(D, it) === cf) && (!fk || SPF[fk][1](it)) && (!qv || (it.name || '').toLowerCase().includes(qv)));
     const lows = [];
     all.forEach(it => it.specs.forEach(s => { if (spSt(s) === 'low') lows.push([it, s]); }));
-    const nOk = all.filter(it => spItemSt(it) === 'ok').length;
     const nStale = all.filter(spStale).length;
-    const nNone = all.filter(SPF.none[1]).length, nNoMin = all.filter(noMinAll).length, nNoOwn = all.filter(noOwn).length;
-    const nEval = all.filter(it => ['ok', 'low'].includes(spItemSt(it))).length;      // 실사 + 기준이 있어 판단 가능한 품목
-    const pill = (it, st) => st === 'low' ? '<span class="sxp low">발주 필요</span>' : spStale(it) ? `<span class="sxp warn">⏱ ${spAgoOf(it)}일 전</span>` : st === 'ok' ? '<span class="sxp ok">충분</span>' : st === 'nomin' ? '<span class="sxp none">기준 미설정</span>' : '<span class="sxp none">실사 전</span>';
+    const nLow = all.filter(it => spItemSt(it) === 'low').length;
+    const nEval = all.filter(it => ['ok', 'low'].includes(spItemSt(it))).length;
+    const catColor = it => { const c = cats.find(x => x.name === spCatName(D, it)); return (c && c.color) || '#64748b'; };
+    const pill = (it, st) => st === 'low' ? '<span class="sxp low">발주 필요</span>' : st === 'ok' ? '<span class="sxp ok">충분</span>' : st === 'nomin' ? '<span class="sxp none">기준 미설정</span>' : '<span class="sxp none">실사 전</span>';
+    const whenTxt = it => { const g = spAgoOf(it); return g == null ? '실사 전' : g === 0 ? '오늘' : g + '일 전'; };
     const priceLine = it => {
       if (!it.price) return '';
       const ps = it.specs.filter(s => s.price), d = ps.map(s => s.price.d).sort().pop();
@@ -16883,41 +16920,45 @@ async function addCharts(buf, jobs) {
       <tr class="sum"><th>합계</th>${it.specs.map(s => `<td class="${spSt(s)}">${spN(s.total)}</td>`).join('')}</tr>
       <tr class="min"><th>기준</th>${it.specs.map(s => `<td>${s.min != null ? spN(s.min) : '-'}</td>`).join('')}</tr></tbody></table>`;
     const card = it => {
-      const st = spItemSt(it), mine = spMyParts(it), parts = spHasParts(it), ago = spAgoOf(it);
+      const st = spItemSt(it), mine = spMyParts(it), parts = spHasParts(it), c = spCycle(it);
       const btn = !mine.length ? '' : parts && !spIsMain(it) && mine.length === 1 ? `<button type="button" class="sxgo" data-bpin="${it.id}" data-bpp="${esc(mine[0].p)}">${esc(mine[0].n)} 수량 입력</button>` : `<button type="button" class="sxgo" data-bpin="${it.id}">${parts ? '그룹별 입력' : '수량 입력'}</button>`;
-      const when = ago == null ? '실사 기록 없음' : ago === 0 ? '오늘 실사' : `${ago}일 전 실사`;
+      const lu = spLastUse(it);
       return `<div class="sxc ${st}${spStale(it) ? ' stale' : ''}${parts ? ' wide' : ''}" data-bpi="${it.id}">
-        <div class="sxh"><div class="sxi">${spIcon(it)}</div><div class="sxt"><b>${esc(it.name)}</b><span class="sxw">${SP_PERSON} ${spWhoTxt(it)}<em class="${ago != null && spStale(it) ? 'w' : ''}">${when}</em></span></div>${pill(it, st)}</div>
+        <div class="sxh"><div class="sxi">${spIcon(it)}</div><div class="sxt"><b>${esc(it.name)}</b><span class="cyc ${c}">${SPC[c][0]}</span></div>${pill(it, st)}</div>
+        <div class="sxwho">${spWho(it)}</div>
         ${parts ? (() => { const tot = it.parts.length * it.specs.length, f = it.parts.reduce((a, pt) => a + it.specs.filter(x => pt.last[x.k] && pt.last[x.k].d === today).length, 0), gf = it.parts.filter(pt => it.specs.every(x => pt.last[x.k] && pt.last[x.k].d === today)).length; return `<div class="sxpg${f < tot ? ' w' : ''}">오늘 입력 <b>${f}/${tot}</b>칸 · ${gf}/${it.parts.length}${esc(it.parts.length && /그룹/.test(it.parts[0].n || '') ? '그룹' : '파트')} 완료</div>`; })() : ''}
         ${parts ? rowsParts(it) : `<div class="sxrows">${rowsSingle(it)}</div>`}
+        ${lu ? `<div class="sxuse"><span>직전 대비</span><div>${spUseTxt(it, lu)}</div></div>` : ''}
         ${priceLine(it)}
+        <div class="sxlast${spStale(it) ? ' w' : ''}">마지막 실사 <b>${whenTxt(it)}</b></div>
         <div class="sxbt">${btn}${it.price && spIsMain(it) ? `<button type="button" class="sxgo ghost" data-bppr="${it.id}">단가 기록</button>` : ''}</div>
       </div>`;
     };
-    const chips = `<div class="sxchips">${[{ name: 'all', color: '' }].concat(cats).map(c => {
+    const qtyTxt = it => it.specs.map(s => { const t = spSt(s), bx = s.per > 0 && s.total != null && s.total >= s.per ? ` <small>(${Math.floor(s.total / s.per)}박스${s.total % s.per ? '+' + spN(s.total % s.per) : ''})</small>` : '';
+      return `<span class="${t}">${it.specs.length > 1 && s.s ? esc(s.s) + ' ' : ''}<b>${spN(s.total)}</b>${s.total != null ? esc(it.unit) : ''}${bx}${s.min != null && it.specs.length === 1 ? `<small> / 기준 ${spN(s.min)}</small>` : ''}</span>`; }).join('');
+    const trow = it => { const st = spItemSt(it), c = spCycle(it); return `<div class="sxtr" data-bpi="${it.id}"><span class="n"><i class="sxdot" style="background:${catColor(it)}"></i>${spIcon(it)}<b>${esc(it.name)}</b><span class="cyc ${c}">${SPC[c][0]}</span></span><span class="w">${spWho(it)}</span><span class="q">${qtyTxt(it)}</span><span class="u">${spUseTxt(it, spLastUse(it))}</span><span class="s">${pill(it, st)}</span><span class="l${spStale(it) ? ' w' : ''}">${whenTxt(it)}</span></div>`; };
+    const table = `<div class="sxtbl"><div class="sxtr h"><span>품목</span><span>담당</span><span>현재 수량</span><span>직전 대비 사용</span><span>상태</span><span>마지막 실사</span></div>${shown.map(trow).join('')}</div>`;
+    const tabs = `<div class="sxtabs2">${[{ name: 'all', color: '' }].concat(cats).map(c => {
       const n = c.name === 'all' ? all.length : all.filter(it => spCatName(D, it) === c.name).length;
       const alert = c.name !== 'all' && all.some(it => spCatName(D, it) === c.name && spItemSt(it) === 'low');
-      return `<button type="button" class="sxchip${cf === c.name ? ' on' : ''}" data-bpc="${esc(c.name)}">${c.color ? `<i class="sxdot" style="background:${c.color}"></i>` : ''}${c.name === 'all' ? '전체' : esc(c.name)}<em>${n}</em>${alert ? '<u></u>' : ''}</button>`;
-    }).join('')}${adm ? '<button type="button" class="sxchip add" id="bpcadd">＋ 분류</button>' : ''}</div>`;
-    const groups = cf === 'all' && cats.length > 1 ? cats : [{ name: cf === 'all' ? (cats[0] ? cats[0].name : '') : cf, color: (cats.find(c => c.name === cf) || {}).color || '' }];
-    const list = shown.length ? groups.map(c => { const g = shown.filter(it => cf !== 'all' || cats.length <= 1 || spCatName(D, it) === c.name); return g.length ? `<section class="sxg">${cf === 'all' && cats.length > 1 ? `<h4 class="sxgh"><i class="sxdot" style="background:${c.color || '#64748b'}"></i>${esc(c.name)}<small>${g.length}</small></h4>` : ''}<div class="sxgrid">${g.map(card).join('')}</div></section>` : ''; }).join('') : `<div class="bpempty">${all.length ? '조건에 맞는 품목이 없습니다 (위의 「조건 지우기」)' : '등록된 품목이 없습니다' + (adm ? ' (오른쪽 위 ＋ 품목 추가)' : '')}</div>`;
-    const side = `<aside class="sxside"><h3>재고 한눈에</h3>
-      <div class="sxk3"><div class="sxk"><b>${all.length}</b><span>전체 품목</span></div><div class="sxk ok"><b>${nOk}</b><span>충분</span></div><div class="sxk low"><b>${lows.length}</b><span>발주 필요</span></div></div>
-      <div class="sxneed"><h4>발주 필요</h4>${lows.length ? lows.map(([it, s]) => `<button type="button" class="sxn" data-bpi="${it.id}"><span class="sxi s">${spIcon(it)}</span><span class="sxnt"><b>${esc(it.name)}${s.s ? ' ' + esc(s.s) : ''}</b><small>${esc(it.ordWho ? '발주 ' + it.ordWho : '발주 담당 없음')}${it.vendor ? ' · ' + esc(it.vendor) : ''}</small></span><span class="sxq">${spN(s.total)}<small> / ${spN(s.min)}</small></span></button>`).join('') : (nEval === 0 ? '<div class="sxok wait"><b>재고 판단 전</b>실사 수량과 기준 수량을 입력하면 발주 필요 여부를 알려 줍니다</div>' : nEval < all.length ? `<div class="sxok part"><b>기준 이하 품목 없음</b>판단한 ${nEval}종 기준 · 아직 판단 못 한 ${all.length - nEval}종</div>` : '<div class="sxok">✓ 모든 품목이 기준 이상입니다</div>')}</div>
-      <div class="sxmini">${[['stale', '⏱ 오래된 실사', nStale, 'w'], ['none', '미실사', nNone, ''], ['nomin', '기준 미설정', nNoMin, ''], ['noown', '담당 없음', nNoOwn, '']].filter(x => x[2]).map(x => `<button type="button" class="sxmb ${x[3]}" data-sf="${x[0]}">${x[1]} <b>${x[2]}</b></button>`).join('')}</div>
-      <div class="sxjn">판단 가능 <b>${nEval}</b>종 · 판단 전 <b>${all.length - nEval}</b>종 <small>(한 품목이 여러 항목에 겹칠 수 있어요)</small></div>
-      <div class="sxprog"><h4>분류별 실사 진행</h4>${cats.map(c => { const g = all.filter(it => spCatName(D, it) === c.name), f = g.filter(it => spItemSt(it) !== 'none' && !spStale(it)).length; return `<div><span>${esc(c.name)}</span><i class="sxbar2"><i style="width:${g.length ? Math.round(f / g.length * 100) : 0}%;background:${c.color || '#64748b'}"></i></i><em>${f}/${g.length}</em></div>`; }).join('')}</div>
-      <div class="sxnote">기준 수량보다 적으면 발주 필요로 표시돼요</div></aside>`;
+      return `<button type="button" class="sxtab${cf === c.name ? ' on' : ''}" data-bpc="${esc(c.name)}">${c.color ? `<i class="sxdot" style="background:${c.color}"></i>` : ''}${c.name === 'all' ? '전체' : esc(c.name)}<em>${n}</em>${alert ? '<u></u>' : ''}</button>`;
+    }).join('')}${adm ? '<button type="button" class="sxtab add" id="bpcadd">＋ 분류</button>' : ''}</div>`;
+    const empty = `<div class="bpempty">${all.length ? '조건에 맞는 품목이 없습니다 (위의 「조건 지우기」)' : '등록된 품목이 없습니다' + (adm ? ' (오른쪽 위 「＋ 품목 추가」)' : '')}</div>`;
+    const need = lows.length ? lows.map(([it, s]) => `<button type="button" class="sxn" data-bpi="${it.id}"><span class="sxi s">${spIcon(it)}</span><span class="sxnt"><b>${esc(it.name)}${s.s ? ' ' + esc(s.s) : ''}</b><small>${esc(it.ordWho ? '발주 ' + it.ordWho : '발주 담당 없음')}${it.vendor ? ' · ' + esc(it.vendor) : ''}</small></span><span class="sxq">${spN(s.total)}<small> / ${spN(s.min)}</small></span></button>`).join('')
+      : (nEval === 0 ? '<div class="sxok wait"><b>재고 판단 전</b>실사 수량과 기준 수량을 입력하면 발주 필요 여부를 알려 줍니다</div>' : nEval < all.length ? `<div class="sxok part"><b>판단한 ${nEval}종은 기준 이상</b>아직 판단 못 한 ${all.length - nEval}종이 있어요</div>` : '<div class="sxok">✓ 모든 품목이 기준 이상입니다</div>');
+    const side = `<aside class="sxside2"><div class="sxpn"><h3>발주 필요 <em>${lows.length}</em></h3>${need}</div>
+      <div class="sxpn"><h3>분류별 실사 진행</h3>${cats.map(c => { const g = all.filter(it => spCatName(D, it) === c.name), f = g.filter(it => spItemSt(it) !== 'none' && !spStale(it)).length; return `<div class="sxpgr"><span>${esc(c.name)}</span><i class="sxbar2"><i style="width:${g.length ? Math.round(f / g.length * 100) : 0}%;background:${c.color || '#64748b'}"></i></i><em>${f}/${g.length}</em></div>`; }).join('')}</div></aside>`;
     const bulkIts = D.who === 'view' ? [] : all.filter(it => spMyParts(it).length && (cf === 'all' || spCatName(D, it) === cf));
-    const bulk = bulkIts.length ? `<button type="button" class="sxb${adm || D.who === 'mgr' ? '' : ' p'}" id="bpbulk">${cf === 'all' ? (adm ? '전체' : '내 담당') : esc(cf)} 일괄 입력</button>` : '';
+    const bulk = bulkIts.length ? `<button type="button" class="sxb${adm ? '' : ' p'}" id="bpbulk">${cf === 'all' ? (adm ? '전체' : '내 담당') : esc(cf)} 일괄 입력</button>` : '';
     const hdr = adm ? `<span class="sxhb">${bulk}<button type="button" class="sxb" id="bpadd">＋ 품목 추가</button><button type="button" class="sxb p" id="bpset">⚙ 설정</button></span>` : D.who === 'mgr' ? `<span class="sxhb">${bulk}<button type="button" class="sxb p" id="bpset">⚙ 담당 설정</button></span>` : (bulk ? `<span class="sxhb">${bulk}</span>` : '');
     const myAll = D.who === 'view' ? [] : all.filter(it => spMyParts(it).length);
-    let myT = 0, myF = 0; myAll.forEach(it => spMyParts(it).forEach(pt => it.specs.forEach(x => { myT++; if (pt.last[x.k] && pt.last[x.k].d === today) myF++; })));
-    const nLow = all.filter(it => spItemSt(it) === 'low').length;
-    const kpi = `<div class="sxkpi"><button type="button" class="sxkc" data-sf="" title="전체 보기"><span>전체 품목</span><b>${all.length}</b></button><button type="button" class="sxkc low" data-sf="low"><span>발주 필요</span><b>${nLow}</b></button><button type="button" class="sxkc warn" data-sf="stale"><span>오래된 실사</span><b>${nStale}</b></button>${myT ? `<button type="button" class="sxkc blue" id="bpkme"><span>${adm ? '전체' : '내 담당'} 오늘 입력</span><b>${myF}/${myT}<small>칸</small></b></button>` : '<button type="button" class="sxkc" data-sf="none"><span>미실사</span><b>' + nNone + '</b></button>'}</div>`;
-    main.innerHTML = pageHead(spTitle(), '', hdr)
-      + `<div class="pgb bpwrap"><div class="bpsub"><span>실사한 재고 수량을 입력하면, 합계가 기준 수량보다 적을 때 <b>발주 필요</b>를 알려 줍니다.</span></div>
-      ${kpi}${chips}<div class="sxfb"><input type="search" id="sxq" placeholder="품목 검색" value="${esc(S.spQ || '')}" autocomplete="off">${Object.keys(SPF).map(k => { const n = all.filter(SPF[k][1]).length; return `<button type="button" class="sxf${fk === k ? ' on' : ''}" data-sf="${k}">${SPF[k][0]}<em>${n}</em></button>`; }).join('')}${fk || qv ? '<button type="button" class="sxf clr" id="sxclr">조건 지우기</button>' : ''}</div><div class="sxgrid2"><div class="sxmain">${list}</div>${side}</div></div>`;
+    let myT = 0, myF = 0; myAll.filter(spDue).forEach(it => spMyParts(it).forEach(pt => it.specs.forEach(x => { myT++; if (pt.last[x.k] && pt.last[x.k].d === today) myF++; })));
+    const kpi = `<div class="sxkpi"><button type="button" class="sxkc" data-sf="" title="전체 보기"><span>전체 품목</span><b>${all.length}</b></button><button type="button" class="sxkc low" data-sf="low"><span>발주 필요</span><b>${nLow}</b></button><button type="button" class="sxkc warn" data-sf="stale"><span>오래된 실사</span><b>${nStale}</b></button>${myT ? `<button type="button" class="sxkc blue" id="bpkme" title="오늘 입력할 품목만 센 값"><span>${adm ? '전체' : '내 담당'} 오늘 입력</span><b>${myF}<small>/${myT}칸</small></b></button>` : '<button type="button" class="sxkc" data-sf="none"><span>미실사</span><b>' + all.filter(SPF.none[1]).length + '</b></button>'}</div>`;
+    const flt = `<div class="sxfb2"><input type="search" id="sxq" placeholder="🔍 품목 검색" value="${esc(S.spQ || '')}" autocomplete="off">${Object.keys(SPF).map(k => { const n = all.filter(SPF[k][1]).length; return `<button type="button" class="sxf${fk === k ? ' on' : ''}" data-sf="${k}">${SPF[k][0]}<em>${n}</em></button>`; }).join('')}${fk || qv ? '<button type="button" class="sxf clr" id="sxclr">조건 지우기</button>' : ''}</div>`;
+    const bodyAll = `<div class="sxbody">${shown.length ? table : empty}${side}</div>`;
+    const bodyCat = shown.length ? `<div class="sxcards">${shown.map(card).join('')}</div>` : empty;
+    main.innerHTML = pageHead(spTitle(), tabs, hdr)
+      + `<div class="pgb bpwrap sx2"><div class="sxrow2">${kpi}${flt}</div>${cf === 'all' ? bodyAll : bodyCat}</div>`;
     $$('[data-bpin]').forEach(b => (b.onclick = e => { e.stopPropagation(); spInput(+b.dataset.bpin, b.dataset.bpp); }));
     $$('[data-bppr]').forEach(b => (b.onclick = e => { e.stopPropagation(); spPrice(+b.dataset.bppr); }));
     $$('[data-bpi]').forEach(b => (b.onclick = () => spHist(+b.dataset.bpi)));
@@ -16988,9 +17029,9 @@ async function addCharts(buf, jobs) {
         ${hasBox ? `<div class="gxbox"><b>박스 환산</b><small>오늘 확인한 합계 기준 · 발주할 때 참고</small><div class="gxbx" style="--n:${n}"></div></div>` : ''}
       </section>`;
     };
-    modal(`<div class="bpm-hd"><div class="bpm-ic">${its.length === 1 ? spIcon(its[0]) : spIcon(null)}</div><div><h3>${esc(title || (its.length === 1 ? its[0].name + ' 그룹별 입력' : '일괄 입력'))}</h3><p>${spMD(today)} 오늘 실사 수량${its.length > 1 ? ` · ${its.length}개 품목` : ''}</p></div></div>
+    modal(`<div class="bpm-hd"><div class="bpm-ic">${its.length === 1 ? spIcon(its[0]) : spIcon(null)}</div><div><h3>${esc(title || (its.length === 1 ? its[0].name + ' 그룹별 입력' : '일괄 입력'))}</h3><p>${spMD(today)} 오늘 실사 수량${its.length > 1 ? ` · 오늘 입력할 품목 ${its.filter(spDue).length}개 / 전체 ${its.length}개` : ''}</p></div></div>
       <div class="gxnb">비운 칸은 <b>기존 값 그대로</b> 유지돼요 · 실제로 없으면 <b>0</b>을 입력하세요 · 기록 삭제는 품목 상세에서 해요</div>
-      <div class="gxbody">${its.map(block).join('')}</div>
+      <div class="gxbody">${(() => { const dueIts = its.length === 1 ? its : its.filter(spDue), rest = its.length === 1 ? [] : its.filter(x => !spDue(x)); return dueIts.map(block).join('') + (rest.length ? `<details class="gxmore"${dueIts.length ? '' : ' open'}><summary>오늘 입력 안 해도 되는 품목 ${rest.length}개 <small>(실사 주기가 아직 안 된 품목 · 필요하면 펼쳐서 입력)</small></summary>${rest.map(block).join('')}</details>` : ''); })()}</div>
       <div class="gxft"><div class="gxsum" id="gxsum"></div><div class="gxbt"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s disabled>변경 내용 확인</button></div></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'gx');
       const ins = $$('.gxc input', bg);
@@ -17085,8 +17126,9 @@ async function addCharts(buf, jobs) {
   function spHist(id) {
     const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
     const parts = spHasParts(it), pName = p => (it.parts.find(x => x.p === p) || {}).n || '';
-    let days = 10, hist = it.hist.filter(h => spAgo(h.d, D.today) <= 10);
+    let mode = spCycle(it) === 'd' ? 'use' : 'rec', days = mode === 'use' ? 30 : 10, hist = [], grp = false, gs = it.specs[0].k;
     const ago = spAgoOf(it);
+    const getHist = async () => { if (days === 10) return it.hist.filter(h => spAgo(h.d, D.today) <= 10); const r = await api('sp', { op: 'hist', id: it.id, days: String(days) }); return r.hist || []; };
     const tbl = () => {
       const ds = [...new Set(hist.map(h => h.d))];
       const rows = ds.map(d => { const ps = [...new Set(hist.filter(h => h.d === d).map(h => h.p))];
@@ -17094,22 +17136,54 @@ async function addCharts(buf, jobs) {
       return rows ? `<table class="bphtab"><thead><tr><th>날짜</th>${parts ? '<th>파트</th>' : ''}${it.specs.map(s => `<th>${esc(s.s || '수량')}</th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="bpempty">이 기간에 실사 기록이 없습니다</div>';
     };
     const pr = it.price && it.prices.length ? `<h4>단가 기록 <small>박스 단가 · 원</small></h4><table class="bphtab"><thead><tr><th>날짜</th>${it.specs.map(s => `<th>${esc(s.s)}</th>`).join('')}<th></th></tr></thead><tbody>${[...new Set(it.prices.map(x => x.d))].slice(0, 8).map(d => `<tr><td>${spMD(d)}</td>${it.specs.map(s => { const x = it.prices.find(y => y.d === d && y.k === s.k); return `<td class="n">${x ? spN(x.v) : ''}</td>`; }).join('')}<td class="by">${esc((it.prices.find(y => y.d === d) || {}).by || '')}</td></tr>`).join('')}</tbody></table>` : '';
-    const info = [['재고 담당', [it.mainName ? '정 ' + it.mainName : '', it.subName ? '부 ' + it.subName : ''].filter(Boolean).join(' · ') || (spHasParts(it) ? it.parts.map(p => p.n + ' ' + (p.uname || '-')).join(', ') : '')], ['발주 담당', it.ordWho], ['발주처', it.vendor], ['연락처', it.contact ? `<a href="tel:${esc(String(it.contact).replace(/[^\d+]/g, ''))}">${esc(it.contact)}</a>` : ''], ['메모', it.memo]].filter(x => x[1]);
+    const ucell = (r, k) => r.inn[k] ? '<em class="in">입고</em>' : r.use[k] == null ? '<em class="z">-</em>' : r.use[k] ? `<b class="dn">−${spN(r.use[k])}</b>` : '<em class="z">0</em>';
+    const useView = () => {
+      if (!hist.length) return '<div class="bpempty">이 기간에 실사 기록이 없습니다</div>';
+      const note = '<p class="sxunote">재고가 전보다 늘면 <b>입고</b>로 보고 그날 사용량은 계산하지 않아요 · 기간의 첫 실사일은 비교할 전 기록이 없어 제외돼요</p>';
+      if (grp && parts) {
+        const ser = it.parts.map(pt => ({ pt, rows: spSeries(it, hist, pt.p) })), sp = it.specs.find(s => s.k === gs) || it.specs[0];
+        const ds = [...new Set(ser.flatMap(x => x.rows.map(r => r.d)))].sort().reverse();
+        return `<div class="sxseg2">${it.specs.map(s => `<button type="button" data-gs="${esc(s.k)}" class="${s.k === sp.k ? 'on' : ''}">${esc(s.s || '수량')}</button>`).join('')}</div>
+          <table class="bphtab usetab"><thead><tr><th>날짜</th>${ser.map(x => `<th>${esc(x.pt.n)}</th>`).join('')}</tr></thead><tbody>${ds.map(d => `<tr><td>${spMD(d)}</td>${ser.map(x => { const r = x.rows.find(y => y.d === d); return `<td class="n">${r ? ucell(r, sp.k) : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table>${note}`;
+      }
+      const rows = spSeries(it, hist), mx = {};
+      it.specs.forEach(s => { mx[s.k] = Math.max(1, ...rows.map(r => r.use[s.k] || 0)); });
+      const sum = it.specs.map(s => { let t = 0, dd = 0, ni = 0; rows.forEach(r => { if (r.inn[s.k]) ni++; else if (r.use[s.k] != null) { t += r.use[s.k]; dd += r.gap; } }); const av = dd ? Math.round(t / dd * 10) / 10 : null;
+        return `<div><small>${esc(s.s || it.name)}</small><b>${spN(t)}<i>${esc(it.unit)}</i></b><span>하루 평균 ${av == null ? '-' : spN(av)}</span>${ni ? `<span class="in">입고 ${ni}회 제외</span>` : ''}</div>`; }).join('');
+      return `<div class="sxus" style="--n:${it.specs.length}">${sum}</div>
+        <table class="bphtab usetab"><thead><tr><th>날짜</th>${it.specs.map(s => `<th>${esc(s.s || '수량')}<small>재고 · 사용</small></th>`).join('')}</tr></thead><tbody>${rows.slice().reverse().map(r => `<tr><td>${spMD(r.d)}${r.gap > 1 ? `<small class="mi">${r.gap}일 사이</small>` : ''}${r.miss ? `<small class="mi w">${r.miss}${/그룹/.test((it.parts[0] || {}).n || '') ? '그룹' : '파트'} 미입력</small>` : ''}</td>${it.specs.map(s => `<td class="n"><span class="uq">${spN(r.tot[s.k])}</span>${ucell(r, s.k)}${r.use[s.k] ? `<i class="ub" style="width:${Math.round(r.use[s.k] / mx[s.k] * 100)}%"></i>` : ''}</td>`).join('')}</tr>`).join('')}</tbody></table>${note}`;
+    };
+    const c0 = spCycle(it), adm = D.who === 'admin';
+    const info = [['재고 담당', [it.mainName ? '정 ' + it.mainName : '', it.subName ? '부 ' + it.subName : ''].filter(Boolean).join(' · ') || (spHasParts(it) ? it.parts.map(p => p.n + ' ' + (p.uname || '-')).join(', ') : '')], ['발주 담당', it.ordWho], ['발주처', it.vendor], ['연락처', it.contact ? `<a href="tel:${esc(String(it.contact).replace(/[^\d+]/g, ''))}">${esc(it.contact)}</a>` : ''], ['메모', it.memo]].concat(adm ? [] : [['실사 주기', SPC[c0][0]]]).filter(x => x[1]);
     modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)}</h3><p>${ago == null ? '실사 기록 없음' : ago === 0 ? '오늘 실사함' : `마지막 실사 ${ago}일 전`}${spStale(it) ? ' · <b class="sxwtxt">실사가 오래됐어요</b>' : ''}</p></div></div>
       ${info.length ? `<div class="bpinfo"><h4>담당 · 발주 정보</h4>${info.map(([k, v]) => `<div><span>${k}</span><b>${k === '연락처' ? v : esc(v)}</b></div>`).join('')}</div>` : ''}
-      <div class="sxseg" id="sxper">${[[10, '10일'], [30, '30일'], [90, '3개월'], [0, '전체']].map(([d, t]) => `<button type="button" data-d="${d}" class="${d === 10 ? 'on' : ''}">${t}</button>`).join('')}</div>
-      <div class="bphwrap" id="sxhb">${tbl()}${pr}</div>
+      ${adm ? `<div class="sxcycrow"><span>실사 주기</span><div class="sxseg" id="sxcyc">${Object.keys(SPC).map(k => `<button type="button" data-cy="${k}" class="${k === c0 ? 'on' : ''}">${SPC[k][0]}</button>`).join('')}</div></div>` : ''}
+      <div class="sxmodes"><div class="sxseg" id="sxmode"><button type="button" data-m="rec" class="${mode === 'rec' ? 'on' : ''}">실사 기록</button><button type="button" data-m="use" class="${mode === 'use' ? 'on' : ''}">사용량</button></div>${parts ? `<button type="button" class="sxgrp${mode === 'use' ? '' : ' hide'}" id="sxgrp">그룹별 보기</button>` : ''}</div>
+      <div class="sxseg" id="sxper">${[[10, '10일'], [30, '30일'], [90, '3개월'], [0, '전체']].map(([d, t]) => `<button type="button" data-d="${d}" class="${d === days ? 'on' : ''}">${t}</button>`).join('')}</div>
+      <div class="bphwrap" id="sxhb"></div>
       <div class="bpm-ft">${spMyParts(it).length ? '<button type="button" class="primary" data-i>수량 입력</button>' : ''}${D.who !== 'view' && spMyParts(it).some(pt => it.specs.some(x => pt.last[x.k] && pt.last[x.k].d === D.today)) ? '<button type="button" class="dng" data-clr>오늘 기록 지우기</button>' : ''}<button type="button" data-c>닫기</button></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'wide');
-      $('[data-c]', bg).onclick = close;
+      const draw = async () => {
+        if (pnl) pnl.classList.toggle('xw', mode === 'use');
+        $('#sxgrp', bg) && $('#sxgrp', bg).classList.toggle('hide', mode !== 'use');
+        $('#sxgrp', bg) && $('#sxgrp', bg).classList.toggle('on', grp);
+        $('#sxhb', bg).innerHTML = '<div class="bpempty">불러오는 중…</div>';
+        try { hist = await getHist(); } catch (e) { return toast(e.message, true); }
+        $('#sxhb', bg).innerHTML = mode === 'use' ? useView() : tbl() + pr;
+        wireGs();
+      };
+      const wireGs = () => $$('[data-gs]', bg).forEach(b => (b.onclick = () => { gs = b.dataset.gs; $('#sxhb', bg).innerHTML = useView(); wireGs(); }));
+      $('.bpm-ft [data-c]', bg).onclick = close;
       if ($('[data-i]', bg)) $('[data-i]', bg).onclick = () => { close(); spInput(id); };
       if ($('[data-clr]', bg)) $('[data-clr]', bg).onclick = () => { close(); spClear(id); };
-      $$('#sxper [data-d]', bg).forEach(b => (b.onclick = async () => {
-        $$('#sxper [data-d]', bg).forEach(x => x.classList.toggle('on', x === b)); days = +b.dataset.d;
-        if (days === 10) hist = it.hist.filter(h => spAgo(h.d, D.today) <= 10);
-        else { try { const r = await api('sp', { op: 'hist', id: it.id, days: String(days) }); hist = r.hist || []; } catch (e) { return toast(e.message, true); } }
-        $('#sxhb', bg).innerHTML = tbl() + pr;
+      $$('#sxper [data-d]', bg).forEach(b => (b.onclick = () => { $$('#sxper [data-d]', bg).forEach(x => x.classList.toggle('on', x === b)); days = +b.dataset.d; draw(); }));
+      $$('#sxmode [data-m]', bg).forEach(b => (b.onclick = () => { mode = b.dataset.m; days = mode === 'use' ? 30 : 10; $$('#sxmode [data-m]', bg).forEach(x => x.classList.toggle('on', x === b)); $$('#sxper [data-d]', bg).forEach(x => x.classList.toggle('on', +x.dataset.d === days)); draw(); }));
+      if ($('#sxgrp', bg)) $('#sxgrp', bg).onclick = () => { grp = !grp; draw(); };
+      $$('#sxcyc [data-cy]', bg).forEach(b => (b.onclick = async () => {
+        try { await api('sp2', { op: 'cycle', id: it.id, c: b.dataset.cy }); (D.cyc = D.cyc || {})[it.id] = b.dataset.cy; $$('#sxcyc [data-cy]', bg).forEach(x => x.classList.toggle('on', x === b)); toast('실사 주기: ' + SPC[b.dataset.cy][0]); spDraw(); }
+        catch (e) { toast(/알 수 없는 요청/.test(e.message) ? '서버에 v29.64 SQL 이 아직 적용되지 않았습니다' : e.message, true); }
       }));
+      draw();
     });
   }
   // ---------------- 설정 : 탭 4개 (메뉴 이름 · 분류 · 품목 · 담당) — 관리자 = 전부 · 매니저 = 담당만
@@ -17605,6 +17679,24 @@ html[data-theme=dark]{--bplow:#ff9a5c;--bplowbg:#3a2516;--bpok:#5fd0b8;--bpokbg:
 .gxcl>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:14px}.gxcl button{border:1px solid #e5484d;color:#e5484d;background:var(--panel);border-radius:10px;padding:6px 14px;font-weight:700;cursor:pointer}.bpm-ft .dng{flex:0 0 auto;color:#e5484d;border:1px solid #e5484d;background:var(--panel)}
 @media(max-width:700px){.sxkpi{grid-template-columns:repeat(2,1fr)}.modal.bpm.gx{padding:16px 14px 0;width:100vw;max-width:100vw}.gxhd{display:none}.gxr,.gxs,.gxb.n1 .gxr,.gxb.n1 .gxs{grid-template-columns:repeat(var(--n),1fr)}.gxm{display:flex;grid-column:1/-1;align-items:center;gap:8px}.gxm .gxn{flex:1}.gxp{grid-column:auto;order:0}.gxl{display:block;font-size:11.5px;color:var(--sub);margin:0 0 3px;font-weight:600}.gxs .gxsn{grid-column:1/-1}.gxsv{grid-column:1/-1!important}.gxft{margin:0 -14px;padding:10px 14px 12px;flex-direction:column;align-items:stretch;gap:8px}.gxbt button{flex:1}.gxbody{max-height:calc(100vh - 300px)}.gxbx{grid-template-columns:1fr}.gxh{text-align:left}}
 .gxcfl{max-height:260px;overflow:auto;margin:10px 0 2px;border:1px solid var(--line);border-radius:10px;padding:2px 10px}.gxcf{display:grid;grid-template-columns:1fr auto 18px auto;gap:6px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line2);font-size:13.5px}.gxcf:last-child{border-bottom:0}.gxcf em{font-style:normal;color:var(--sub);text-align:right}.gxcf em small{font-size:11px}.gxcf i{font-style:normal;color:var(--sub);text-align:center}.gxcf b{min-width:36px;text-align:right}.gxcf b.z{color:#c2410c}
+</style><style id="bp-v2964">
+.sx2{padding-top:4px!important}.ph{gap:16px}.ph h1{white-space:nowrap}.sxtabs2{display:flex;gap:7px;flex:100 1 auto;flex-wrap:wrap;align-items:center}.sxtab{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:0 15px;height:36px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;position:relative}.sxtab em{font-style:normal;font-size:12px;color:var(--sub);background:var(--line2);border-radius:99px;padding:1px 8px}.sxtab.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}.sxtab.on em{background:rgba(255,255,255,.22);color:inherit}.sxtab.add{border-style:dashed;color:var(--sub)}.sxtab u{position:absolute;top:3px;right:5px;width:8px;height:8px;border-radius:50%;background:#e5484d}
+.sxrow2{display:flex;gap:14px;align-items:center;margin:2px 0 10px;flex-wrap:wrap}.sx2 .sxkpi{display:grid;grid-template-columns:repeat(4,150px);gap:10px;margin:0}.sx2 .sxkc{height:58px;padding:0 10px;align-items:center;justify-content:center;text-align:center;gap:1px}.sx2 .sxkc b{font-size:24px}.sx2 .sxkc span{font-size:12.5px}.sxfb2{display:flex;gap:7px;align-items:center;flex-wrap:wrap;flex:1}.sxfb2 input{height:36px;width:180px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 14px;font-size:13.5px}
+.sxbody{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}.sxtbl{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.sxtr{display:grid;grid-template-columns:minmax(230px,1.15fr) minmax(190px,1fr) minmax(170px,1.3fr) minmax(130px,.8fr) 96px 78px;gap:10px;align-items:center;min-height:33px;padding:2px 16px;border-bottom:1px solid var(--line2);font-size:13.5px;cursor:pointer}.sxtr:last-child{border-bottom:0}.sxtr:hover{background:var(--blue-soft)}.sxtr.h{cursor:default;background:var(--bg2,#f8fafc);color:var(--sub);font-weight:700;font-size:12.5px;min-height:34px}.sxtr.h:hover{background:var(--bg2,#f8fafc)}
+.sxtr .n{display:flex;align-items:center;gap:8px;min-width:0}.sxtr .n b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sxtr .n img,.sxtr .n svg{width:22px;height:22px;object-fit:contain;flex:none}.sxtr .n .sxdot{flex:none}.sxtr .q{display:flex;gap:10px;flex-wrap:wrap;font-weight:600}.sxtr .q b{font-weight:800}.sxtr .q small{color:var(--sub);font-weight:600}.sxtr .q .low b{color:#dc2626}.sxtr .u{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.sxtr .l{font-size:13px;color:var(--sub);font-weight:700}.sxtr .l.w{color:#c2410c}
+.cyc{font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--line2);color:var(--sub);white-space:nowrap}.cyc.d{background:#e8f0ff;color:#1d4ed8}.cyc.n{background:transparent;border:1px dashed var(--line);color:var(--sub)}
+.wp{display:inline-flex;align-items:center;gap:6px;background:#e8f0ff;color:#173fa8;font-weight:800;border-radius:8px;padding:2px 10px 2px 4px;font-size:13.5px;margin:1px 5px 1px 0;white-space:nowrap}.wp i{font-style:normal;background:#1d4ed8;color:#fff;border-radius:6px;font-size:11.5px;padding:1px 6px;font-weight:800}.wp.sub{background:#eef2f7;color:#334155}.wp.sub i{background:#64748b}.wn{color:#c2410c;font-weight:800;font-size:13.5px;border:1.5px dashed #f0a36b;border-radius:8px;padding:2px 10px;white-space:nowrap}
+[data-theme=dark] .wp{background:#1d2a44;color:#bcd2ff}[data-theme=dark] .wp.sub{background:#273248;color:#cbd5e1}
+.sxu0{color:var(--sub)}.sxtr .u em,.sxuse em{font-style:normal;font-weight:800}.sxtr .u em.dn,.sxuse em.dn{color:#1d6bf3}.sxtr .u em.z,.sxuse em.z{color:var(--sub);font-weight:600}.sxtr .u em.in,.sxuse em.in{color:#0a7a50;background:#e4f7ee;border-radius:99px;padding:1px 8px;font-size:12.5px}.sxtr .u small,.sxuse small{color:var(--sub);font-size:11.5px}
+.sxside2 .sxpn{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}.sxpn h3{margin:0 0 8px;font-size:15px}.sxpn h3 em{font-style:normal;color:#dc2626;margin-left:4px}.sxpgr{display:grid;grid-template-columns:96px 1fr 40px;gap:8px;align-items:center;font-size:13px;margin:7px 0}.sxpgr em{font-style:normal;color:var(--sub);text-align:right;font-size:12px}
+.sxcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;align-items:start}.sxcards .sxc{margin:0}.sxwho{margin:2px 0 4px}.sxwho .wp{font-size:15px;padding:4px 12px 4px 5px}.sxwho .wn{font-size:14.5px}.sxt{display:flex;flex-direction:column;gap:3px;align-items:flex-start}.sxuse{display:flex;align-items:baseline;gap:10px;margin:6px 0 2px;font-size:13px;color:var(--sub);font-weight:700}.sxuse div{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.sxlast{font-size:13px;color:var(--sub);font-weight:600;margin:4px 0 8px}.sxlast b{color:var(--ink)}.sxlast.w b{color:#c2410c}
+.modal.bpm.xw{width:min(880px,96vw)}.sxmodes{display:flex;align-items:center;gap:10px;margin:8px 0 6px}.sxgrp{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;height:32px;padding:0 14px;font-weight:700;font-size:13px;cursor:pointer}.sxgrp.on{background:var(--ink);color:var(--panel)}.sxgrp.hide{display:none}.sxcycrow{display:flex;align-items:center;gap:12px;margin:10px 0 2px}.sxcycrow>span{font-size:13px;font-weight:700;color:var(--sub)}.sxseg2{display:flex;gap:6px;margin:8px 0}.sxseg2 button{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:5px 13px;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink)}.sxseg2 button.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.sxus{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px;margin:8px 0}.sxus>div{background:var(--line2);border-radius:12px;padding:9px 12px;text-align:center}.sxus small{display:block;color:var(--sub);font-weight:700;font-size:12px}.sxus b{display:block;font-size:22px;color:#1d6bf3}.sxus b i{font-style:normal;font-size:12px;color:var(--sub);margin-left:2px}.sxus span{display:block;font-size:12px;color:var(--sub)}.sxus span.in{color:#0a7a50}
+.usetab th{text-align:center}.usetab th:first-child{text-align:left}.sxrow2{margin-top:2px}.usetab td{position:relative}.usetab td.n{text-align:center}.usetab .uq{display:block;font-weight:700}.usetab em.in{font-style:normal;font-size:12px;font-weight:800;color:#0a7a50;background:#e4f7ee;border-radius:99px;padding:1px 8px}.usetab em.z{font-style:normal;color:var(--sub);font-size:12.5px}.usetab b.dn{color:#1d6bf3;font-size:13px}.usetab .ub{position:absolute;left:10%;bottom:2px;height:3px;border-radius:3px;background:#9db9f5;max-width:80%}.usetab small{display:block;font-size:11px;color:var(--sub);font-weight:500}.usetab small.mi.w{color:#c2410c}.sxunote{font-size:12px;color:var(--sub);margin:8px 2px 0}
+.gxmore{margin:4px 0 10px}.gxmore>summary{cursor:pointer;font-weight:700;font-size:13.5px;padding:10px 12px;background:var(--line2);border-radius:11px;margin-bottom:10px;list-style:none}.gxmore>summary small{color:var(--sub);font-weight:500;margin-left:6px}
+@media(max-width:1500px){.sxbody{grid-template-columns:minmax(0,1fr)}.sxtr{grid-template-columns:minmax(200px,1.2fr) minmax(170px,1fr) minmax(150px,1.2fr) minmax(110px,.8fr) 90px 70px}}
+@media(max-width:900px){.sxrow2{margin-top:8px}.ph{flex-wrap:wrap}.sxtabs2{flex-wrap:nowrap;overflow-x:auto;width:100%;flex:1 1 100%;padding-bottom:4px;order:5}.sxtab{flex:none}.sx2 .sxkpi{grid-template-columns:repeat(2,1fr);width:100%}.sxtr.h{display:none}.sxtr{grid-template-columns:1fr auto;row-gap:5px;padding:10px 14px}.sxtr .n{grid-column:1}.sxtr .s{grid-column:2;grid-row:1;justify-self:end}.sxtr .w,.sxtr .q,.sxtr .u{grid-column:1/-1}.sxtr .l{grid-column:1/-1}.sxtr .u:before{content:"직전 대비 ";color:var(--sub);font-size:12px;font-weight:700}.sxcards{grid-template-columns:1fr}.sxus{grid-template-columns:repeat(2,1fr)}}
 </style><style id="bp-v2961">.sxfb{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-6px 0 14px}.sxfb input{height:34px;width:150px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 14px;font-size:13.5px}.sxf{border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer}.sxf em{font-style:normal;margin-left:5px;font-size:11.5px;opacity:.7}.sxf.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}.sxf.clr{border-style:dashed}.sxmb{border:0;background:var(--line2);color:var(--ink);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;margin:0 6px 6px 0}.sxmb.w{background:#fff1e2;color:#b45309}.sxjn{font-size:12px;color:var(--sub);margin:2px 0 10px}.sxok.wait,.sxok.part{background:#fff7e6;color:#8a5a00;font-size:13px;line-height:1.5}.sxok.wait b,.sxok.part b{display:block;margin-bottom:2px}.sxpg{font-size:12px;color:var(--sub);margin:-4px 0 6px}.sxpg.w{color:#b45309}</style><style id="bp-v2959">
 /* v29.59 : 소모품 관리 새 화면 (카드 · 오른쪽 요약 · 설정) */
 :root{--sxwarn:#b45309;--sxwarnbg:#fff4e0}
