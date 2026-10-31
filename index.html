@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.61';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.62';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16908,10 +16908,16 @@ async function addCharts(buf, jobs) {
       <div class="sxjn">판단 가능 <b>${nEval}</b>종 · 판단 전 <b>${all.length - nEval}</b>종 <small>(한 품목이 여러 항목에 겹칠 수 있어요)</small></div>
       <div class="sxprog"><h4>분류별 실사 진행</h4>${cats.map(c => { const g = all.filter(it => spCatName(D, it) === c.name), f = g.filter(it => spItemSt(it) !== 'none' && !spStale(it)).length; return `<div><span>${esc(c.name)}</span><i class="sxbar2"><i style="width:${g.length ? Math.round(f / g.length * 100) : 0}%;background:${c.color || '#64748b'}"></i></i><em>${f}/${g.length}</em></div>`; }).join('')}</div>
       <div class="sxnote">기준 수량보다 적으면 발주 필요로 표시돼요</div></aside>`;
-    const hdr = adm ? '<span class="sxhb"><button type="button" class="sxb" id="bpadd">＋ 품목 추가</button><button type="button" class="sxb p" id="bpset">⚙ 설정</button></span>' : D.who === 'mgr' ? '<span class="sxhb"><button type="button" class="sxb p" id="bpset">⚙ 담당 설정</button></span>' : '';
+    const bulkIts = D.who === 'view' ? [] : all.filter(it => spMyParts(it).length && (cf === 'all' || spCatName(D, it) === cf));
+    const bulk = bulkIts.length ? `<button type="button" class="sxb${adm || D.who === 'mgr' ? '' : ' p'}" id="bpbulk">${cf === 'all' ? (adm ? '전체' : '내 담당') : esc(cf)} 일괄 입력</button>` : '';
+    const hdr = adm ? `<span class="sxhb">${bulk}<button type="button" class="sxb" id="bpadd">＋ 품목 추가</button><button type="button" class="sxb p" id="bpset">⚙ 설정</button></span>` : D.who === 'mgr' ? `<span class="sxhb">${bulk}<button type="button" class="sxb p" id="bpset">⚙ 담당 설정</button></span>` : (bulk ? `<span class="sxhb">${bulk}</span>` : '');
+    const myAll = D.who === 'view' ? [] : all.filter(it => spMyParts(it).length);
+    let myT = 0, myF = 0; myAll.forEach(it => spMyParts(it).forEach(pt => it.specs.forEach(x => { myT++; if (pt.last[x.k] && pt.last[x.k].d === today) myF++; })));
+    const nLow = all.filter(it => spItemSt(it) === 'low').length;
+    const kpi = `<div class="sxkpi"><button type="button" class="sxkc" data-sf="" title="전체 보기"><span>전체 품목</span><b>${all.length}</b></button><button type="button" class="sxkc low" data-sf="low"><span>발주 필요</span><b>${nLow}</b></button><button type="button" class="sxkc warn" data-sf="stale"><span>오래된 실사</span><b>${nStale}</b></button>${myT ? `<button type="button" class="sxkc blue" id="bpkme"><span>내 담당 오늘 입력</span><b>${myF}/${myT}<small>칸</small></b></button>` : '<button type="button" class="sxkc" data-sf="none"><span>미실사</span><b>' + nNone + '</b></button>'}</div>`;
     main.innerHTML = pageHead(spTitle(), '', hdr)
       + `<div class="pgb bpwrap"><div class="bpsub"><span>실사한 재고 수량을 입력하면, 합계가 기준 수량보다 적을 때 <b>발주 필요</b>를 알려 줍니다.</span></div>
-      ${chips}<div class="sxfb"><input type="search" id="sxq" placeholder="품목 검색" value="${esc(S.spQ || '')}" autocomplete="off">${Object.keys(SPF).map(k => { const n = all.filter(SPF[k][1]).length; return `<button type="button" class="sxf${fk === k ? ' on' : ''}" data-sf="${k}">${SPF[k][0]}<em>${n}</em></button>`; }).join('')}${fk || qv ? '<button type="button" class="sxf clr" id="sxclr">조건 지우기</button>' : ''}</div><div class="sxgrid2"><div class="sxmain">${list}</div>${side}</div></div>`;
+      ${kpi}${chips}<div class="sxfb"><input type="search" id="sxq" placeholder="품목 검색" value="${esc(S.spQ || '')}" autocomplete="off">${Object.keys(SPF).map(k => { const n = all.filter(SPF[k][1]).length; return `<button type="button" class="sxf${fk === k ? ' on' : ''}" data-sf="${k}">${SPF[k][0]}<em>${n}</em></button>`; }).join('')}${fk || qv ? '<button type="button" class="sxf clr" id="sxclr">조건 지우기</button>' : ''}</div><div class="sxgrid2"><div class="sxmain">${list}</div>${side}</div></div>`;
     $$('[data-bpin]').forEach(b => (b.onclick = e => { e.stopPropagation(); spInput(+b.dataset.bpin, b.dataset.bpp); }));
     $$('[data-bppr]').forEach(b => (b.onclick = e => { e.stopPropagation(); spPrice(+b.dataset.bppr); }));
     $$('[data-bpi]').forEach(b => (b.onclick = () => spHist(+b.dataset.bpi)));
@@ -16920,6 +16926,8 @@ async function addCharts(buf, jobs) {
     if ($('#sxclr')) $('#sxclr').onclick = () => { S.spF = ''; S.spQ = ''; spDraw(); };
     if ($('#sxq')) $('#sxq').oninput = e => { const pos = e.target.selectionStart; S.spQ = e.target.value; spDraw(); const q = $('#sxq'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } };
     if ($('#bpset')) $('#bpset').onclick = () => spSettings();
+    if ($('#bpbulk')) $('#bpbulk').onclick = () => spGrid(bulkIts, cf === 'all' ? (adm ? '전체 일괄 입력' : '내 담당 일괄 입력') : cf + ' 일괄 입력');
+    if ($('#bpkme')) $('#bpkme').onclick = () => spGrid(myAll, '내 담당 일괄 입력');
     if ($('#bpadd')) $('#bpadd').onclick = () => spEdit(null, true);
     if ($('#bpcadd')) $('#bpcadd').onclick = () => spSettings('분류');
   }
@@ -16931,12 +16939,13 @@ async function addCharts(buf, jobs) {
   function spInput(id, p0) {
     const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
     const parts = spHasParts(it), mine = spMyParts(it); if (!mine.length) return;
+    if (parts && mine.length > 1 && p0 == null) return spGrid([it]);           // v29.62 : 그룹이 여러 개면 한 화면에서 같이 입력
     let cur = (p0 != null && mine.find(x => x.p === p0)) || mine[0];
     const body = () => it.specs.map(s => { const l = cur.last[s.k], t = l && l.d === D.today ? l.qty : ''; return spNumRow(s.k, esc(s.s || it.name), s.min != null && !parts ? '기준 ' + spN(s.min) : '', t, it.unit, l ? `지난번 ${spN(l.qty)} · ${spMD(l.d)}${l.d === D.today ? ' (오늘 입력함)' : ''}` : '처음 입력'); }).join('');
     modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)}</h3><p>${spMD(D.today)} 오늘 실사 수량${parts ? (mine.length === 1 ? ` · <b>${esc(cur.n)}</b> ${esc(cur.uname || '')}` : '') : ' · 지금 있는 총수량'}</p></div></div>
       ${parts && mine.length > 1 ? `<div class="bpm-seg">${mine.map(pt => `<button type="button" data-pp="${esc(pt.p)}" class="${pt.p === cur.p ? 'on' : ''}">${esc(pt.n)}<small>${esc(pt.uname || '-')}</small></button>`).join('')}</div>` : ''}
       <div class="bpm-body" id="bpmb">${body()}</div>
-      <p class="bpm-tip">실제로 0개면 0을 입력하세요 · 빈 칸으로 저장하면 오늘 기록이 지워집니다(저장 전에 한 번 더 물어봐요) · Enter = 다음 칸</p>
+      <p class="bpm-tip">실제로 0개면 0을 입력하세요 · 비운 칸은 기존 값 그대로 유지돼요 · Enter = 다음 칸</p>
       <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
       $('[data-c]', bg).onclick = close;
@@ -16944,13 +16953,111 @@ async function addCharts(buf, jobs) {
       wire();
       $$('[data-pp]', bg).forEach(b => (b.onclick = () => { cur = mine.find(x => x.p === b.dataset.pp) || cur; $$('[data-pp]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#bpmb', bg).innerHTML = body(); wire(); }));
       $('[data-s]', bg).onclick = async () => {
-        const counts = {}; $$('.bpnf input', bg).forEach(i => { counts[i.dataset.k] = spNumVal(i); });
-        const gone = it.specs.filter(x => counts[x.k] === '' && cur.last[x.k] && cur.last[x.k].d === D.today);
-        if (gone.length && !(await confirmBox('빈 칸으로 저장하면 오늘 입력한 기록이 지워집니다.<br><b>' + gone.map(x => esc(x.s || it.name) + ' (' + spN(cur.last[x.k].qty) + esc(it.unit) + ')').join(', ') + '</b><br>지울까요? (수량이 0개면 0을 입력하세요)', '지우고 저장', '돌아가기'))) return;
+        const counts = {}; $$('.bpnf input', bg).forEach(i => { const v = spNumVal(i); if (v !== '') counts[i.dataset.k] = v; });      // v29.62 : 빈 칸은 보내지 않음 = 기존 값 유지
+        if (!Object.keys(counts).length) return toast('입력한 수량이 없습니다 (비운 칸은 기존 값 그대로예요)', true);
         const b = $('[data-s]', bg); b.disabled = true;
         try { const r = await api('sp', { op: 'save', id: it.id, part: parts ? cur.p : '', counts }); const i = D.items.findIndex(x => x.id === it.id); if (i >= 0) D.items[i] = r.item; close(); toast(`${it.name}${parts ? ' ' + cur.n : ''} 저장했습니다`); spDraw(); }
         catch (e) { b.disabled = false; toast(e.message, true); }
       };
+    });
+  }
+  // ================================================================ v29.62 : 한 번에 입력 (그룹별 · 내 담당 일괄) · 오늘 기록 지우기
+  //   빈 칸 = 기존 값 그대로 · 입력한 칸만 바뀜 · 저장 전에 변경 내용 확인 · 서버는 전부 성공 / 전부 취소
+  async function spSave2(body) {
+    try { return await api('sp2', body); }
+    catch (e) { throw new Error(/알 수 없는 요청/.test(e.message || '') ? '서버에 v29.62 SQL 이 아직 적용되지 않았습니다 (관리자에게 문의)' : e.message); }
+  }
+  function spGrid(its, title) {
+    const D = S.spD, today = D.today;
+    its = its.filter(it => spMyParts(it).length);
+    if (!its.length) return toast('입력할 수 있는 품목이 없습니다', true);
+    const rows = []; its.forEach(it => spMyParts(it).forEach(pt => rows.push({ it, pt })));
+    const kk = (it, pt, s) => it.id + '|' + pt.p + '|' + s.k;
+    const base = {}; rows.forEach(({ it, pt }) => it.specs.forEach(s => { const l = pt.last[s.k]; base[kk(it, pt, s)] = l && l.d === today ? l.qty : null; }));
+    const chip = (it, pt) => { const pd = spPartDay(pt); if (!pd) return '<span class="gxch none">미실사</span>'; const g = spAgo(pd, today); return g === 0 ? '<span class="gxch ok">오늘</span>' : `<span class="gxch ${g > spThr(it) && spThr(it) > 0 ? 'old' : 'mid'}">${g}일 전</span>`; };
+    const cell = (it, pt, s) => { const k = kk(it, pt, s), l = pt.last[s.k], v = base[k];
+      const hint = l && l.d !== today ? `<small class="gxh${spThr(it) > 0 && spAgo(l.d, today) > spThr(it) ? ' w' : ''}">지난번 ${spN(l.qty)} · ${spMD(l.d)}</small>` : '';
+      return `<label class="gxc"><span class="gxl">${esc(s.s || '수량')}</span><input type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${v == null ? '' : Number(v).toLocaleString()}" placeholder="수량">${hint}</label>`; };
+    const block = it => {
+      const rs = rows.filter(r => r.it === it), parts = spHasParts(it), n = it.specs.length, multi = rs.length > 1, hasBox = it.specs.some(s => s.per > 0);
+      return `<section class="gxb${n === 1 ? ' n1' : ''}" data-it="${it.id}" style="--n:${n}">
+        <h4 class="gxt"><span class="gxi">${spIcon(it)}</span><b>${esc(it.name)}</b><small>${esc(it.unit)} 단위 · 지금 있는 수량</small></h4>
+        <div class="gxhd"><span>${parts ? '그룹 · 담당' : '구분'}</span><span>마지막 실사</span>${it.specs.map(s => `<span class="c">${esc(s.s || '수량')}${s.per > 0 ? `<small>1박스 ${spN(s.per)}${esc(it.unit)}</small>` : ''}</span>`).join('')}<span class="c">진행</span></div>
+        ${rs.map(({ pt }) => `<div class="gxr" data-p="${esc(pt.p)}"><div class="gxm"><div class="gxn"><b>${esc(parts ? pt.n : '총수량')}</b>${parts ? `<small>${esc(pt.uname || '담당 없음')}</small>` : ''}</div>${chip(it, pt)}<span class="gxp"></span></div>${it.specs.map(s => cell(it, pt, s)).join('')}</div>`).join('')}
+        ${multi ? `<div class="gxs t1"><span class="gxsn">오늘 확인한 합계</span><span class="gxsv" style="grid-column:span ${n}"></span></div><div class="gxs t2"><span class="gxsn">최근값 포함 합계<small class="gxnote"></small></span><span class="gxsv" style="grid-column:span ${n}"></span></div>` : ''}
+        ${hasBox ? `<div class="gxbox"><b>박스 환산</b><small>오늘 확인한 합계 기준 · 발주할 때 참고</small><div class="gxbx" style="--n:${n}"></div></div>` : ''}
+      </section>`;
+    };
+    modal(`<div class="bpm-hd"><div class="bpm-ic">${its.length === 1 ? spIcon(its[0]) : spIcon(null)}</div><div><h3>${esc(title || (its.length === 1 ? its[0].name + ' 그룹별 입력' : '일괄 입력'))}</h3><p>${spMD(today)} 오늘 실사 수량${its.length > 1 ? ` · ${its.length}개 품목` : ''}</p></div></div>
+      <div class="gxnb">비운 칸은 <b>기존 값 그대로</b> 유지돼요 · 실제로 없으면 <b>0</b>을 입력하세요 · 기록 삭제는 품목 상세에서 해요</div>
+      <div class="gxbody">${its.map(block).join('')}</div>
+      <div class="gxft"><div class="gxsum" id="gxsum"></div><div class="gxbt"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s disabled>변경 내용 확인</button></div></div>`, (bg, close) => {
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'gx');
+      const ins = $$('.gxc input', bg);
+      const val = i => { const r = i.value.replace(/[^\d]/g, ''); return r === '' ? null : Number(r); };
+      const find = k => { const [id, p, sk] = k.split('|'); const it = D.items.find(x => x.id === +id); return { it, pt: it.parts.find(x => x.p === p), s: it.specs.find(x => x.k === sk) }; };
+      let chg = 0;
+      const upd = () => {
+        let ch = 0, bl = 0, zr = [];
+        ins.forEach(i => { const k = i.dataset.k, v = val(i), b = base[k], c = v !== null && v !== b; i.parentNode.classList.toggle('chg', c); i.parentNode.classList.toggle('has', v !== null);
+          if (c) { ch++; if (v === 0) { const f = find(k); zr.push(f.it.name + ' ' + (spHasParts(f.it) ? f.pt.n + ' ' : '') + (f.s.s || '')); } } if (v === null) bl++; });
+        chg = ch;
+        $$('.gxb', bg).forEach(bk => {
+          const it = D.items.find(x => x.id === +bk.dataset.it), rs = rows.filter(r => r.it === it);
+          rs.forEach(({ pt }) => { const row = bk.querySelector(`.gxr[data-p="${CSS.escape(pt.p)}"]`); let f = 0; it.specs.forEach(s => { const v = val(row.querySelector(`input[data-k="${CSS.escape(kk(it, pt, s))}"]`)); if (v !== null || base[kk(it, pt, s)] !== null) f++; });
+            const e = row.querySelector('.gxp'); e.textContent = (f === it.specs.length ? '✓ ' : f ? '' : '– ') + f + '/' + it.specs.length; e.className = 'gxp ' + (f === it.specs.length ? 'ok' : f ? 'mid' : 'none'); });
+          const t1 = bk.querySelector('.gxs.t1 .gxsv');
+          if (t1) { const t2 = bk.querySelector('.gxs.t2 .gxsv'); let old = 0, none = 0;
+            const a = it.specs.map(s => { let x = 0, y = 0, got = false; rs.forEach(({ pt }) => { const v = val(bk.querySelector(`input[data-k="${CSS.escape(kk(it, pt, s))}"]`)), l = pt.last[s.k]; if (v !== null) { x += v; y += v; got = true; } else if (l) { y += l.qty; old++; } else none++; }); return [got ? x : null, y]; });
+            t1.innerHTML = a.map(x => `<b>${x[0] == null ? '-' : spN(x[0])}</b>`).join(''); t2.innerHTML = a.map(x => `<i>${spN(x[1])}</i>`).join('');
+            bk.querySelector('.gxnote').textContent = old || none ? `(${old ? '지난 값 ' + old + '칸' : ''}${old && none ? ' · ' : ''}${none ? '기록 없음 ' + none + '칸' : ''} 포함)` : ''; }
+          const bx = bk.querySelector('.gxbx');
+          if (bx) { const rs2 = rs; bx.innerHTML = it.specs.map(s => { let tot = 0, got = false; rs2.forEach(({ pt }) => { const v = val(bk.querySelector(`input[data-k="${CSS.escape(kk(it, pt, s))}"]`)); if (v !== null) { tot += v; got = true; } });
+              if (!(s.per > 0)) return '<div class="gxbc"><small>' + esc(s.s || '수량') + '</small><b>-</b></div>';
+              return `<div class="gxbc"><small>${esc(s.s || '수량')}</small>${got ? `<b>${spN(tot)}${esc(it.unit)} = ${tot >= s.per ? `<em>${Math.floor(tot / s.per)}박스</em>${tot % s.per ? ' + <em>' + spN(tot % s.per) + esc(it.unit) + '</em>' : ''}` : `<em>1박스 미만</em>`}</b>` : '<b>-</b>'}</div>`; }).join(''); }
+        });
+        $('#gxsum', bg).innerHTML = `변경 <b>${ch}</b>칸 · 미입력 <b>${bl}</b>칸 <span>(그대로 유지)</span>${zr.length ? ` · <u>0으로 기록되는 칸 ${zr.length}</u>` : ''}`;
+        const sb = $('[data-s]', bg); sb.disabled = !ch; sb.textContent = ch ? `변경 내용 확인 (${ch}칸)` : '변경 내용 확인';
+        bg._zr = zr;
+      };
+      ins.forEach((i, n) => {
+        i.oninput = () => { const r = i.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, ''); i.value = r === '' ? '' : Number(r).toLocaleString(); upd(); };
+        i.onfocus = () => setTimeout(() => i.select(), 0);
+        i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const nx = ins[n + 1]; if (nx) { nx.focus(); nx.select(); } else if (chg) $('[data-s]', bg).click(); } };
+      });
+      upd();
+      const first = ins.find(i => i.value === '') || ins[0]; if (first && window.innerWidth > 700) setTimeout(() => first.focus(), 60);
+      const ask = async () => !chg || await confirmBox('저장하지 않은 변경 <b>' + chg + '칸</b>이 있어요.<br>닫으면 사라집니다.', '닫기', '계속 입력');
+      bg._guard = ask;
+      $('[data-c]', bg).onclick = async () => { if (await ask()) close(); };
+      $('[data-s]', bg).onclick = async () => {
+        if (!chg) return;
+        const zr = bg._zr || [];
+        const ok = await confirmBox(`변경 <b>${chg}</b>칸을 저장합니다.<br>비워 둔 칸은 기존 값 그대로 유지돼요.${zr.length ? `<br><span style="color:#b45309">0으로 기록되는 칸: <b>${zr.slice(0, 6).map(esc).join(', ')}${zr.length > 6 ? ' 외 ' + (zr.length - 6) : ''}</b><br>실제로 없는 게 맞나요?</span>` : ''}`, '저장', '돌아가기');
+        if (!ok) return;
+        const map = {}; ins.forEach(i => { const v = val(i), k = i.dataset.k; if (v === null || v === base[k]) return; const [id, p, sk] = k.split('|'); const m = id + '|' + p; (map[m] = map[m] || { id: +id, part: p, counts: {} }).counts[sk] = String(v); });
+        const b = $('[data-s]', bg); b.disabled = true;
+        try { const r = await spSave2({ op: 'many', rows: Object.values(map) }); (r.items || []).forEach(x => { const i = D.items.findIndex(y => y.id === x.id); if (i >= 0) D.items[i] = x; }); chg = 0; close(); toast(`${r.n}칸 저장했습니다`); spDraw(); }
+        catch (e) { b.disabled = false; toast(e.message, true); }
+      };
+    });
+  }
+  function spClear(id) {
+    const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
+    const parts = spHasParts(it);
+    const list = spMyParts(it).map(pt => ({ pt, ks: it.specs.filter(s => pt.last[s.k] && pt.last[s.k].d === D.today) })).filter(x => x.ks.length);
+    if (!list.length) return toast('오늘 입력한 기록이 없습니다');
+    modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)} 오늘 기록 지우기</h3><p>잘못 넣은 오늘(${spMD(D.today)}) 기록만 지웁니다 · 이전 날짜 기록은 그대로예요</p></div></div>
+      <div class="gxcl">${list.map((x, i) => `<div><span><b>${esc(parts ? x.pt.n : '총수량')}</b> ${x.ks.map(s => esc(s.s || '수량') + ' ' + spN(x.pt.last[s.k].qty) + esc(it.unit)).join(' · ')}</span><button type="button" data-x="${i}">지우기</button></div>`).join('')}</div>
+      <div class="bpm-ft"><button type="button" data-c>닫기</button></div>`, (bg, close) => {
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
+      $('[data-c]', bg).onclick = close;
+      $$('[data-x]', bg).forEach(b => (b.onclick = async () => {
+        const x = list[+b.dataset.x];
+        if (!(await confirmBox(`<b>${esc(it.name)}${parts ? ' ' + esc(x.pt.n) : ''}</b>의 오늘 기록을 지웁니다.<br>${x.ks.map(s => esc(s.s || '수량') + ' ' + spN(x.pt.last[s.k].qty) + esc(it.unit)).join(', ')}<br>지울까요?`, '지우기', '돌아가기'))) return;
+        try { const r = await spSave2({ op: 'clear', id: it.id, part: x.pt.p }); const i = D.items.findIndex(y => y.id === it.id); if (i >= 0) D.items[i] = r.item; close(); toast('오늘 기록을 지웠습니다'); spDraw(); }
+        catch (e) { toast(e.message, true); }
+      }));
     });
   }
   function spPrice(id) {
@@ -16989,10 +17096,11 @@ async function addCharts(buf, jobs) {
       ${info.length ? `<div class="bpinfo"><h4>담당 · 발주 정보</h4>${info.map(([k, v]) => `<div><span>${k}</span><b>${k === '연락처' ? v : esc(v)}</b></div>`).join('')}</div>` : ''}
       <div class="sxseg" id="sxper">${[[10, '10일'], [30, '30일'], [90, '3개월'], [0, '전체']].map(([d, t]) => `<button type="button" data-d="${d}" class="${d === 10 ? 'on' : ''}">${t}</button>`).join('')}</div>
       <div class="bphwrap" id="sxhb">${tbl()}${pr}</div>
-      <div class="bpm-ft">${spMyParts(it).length ? '<button type="button" class="primary" data-i>수량 입력</button>' : ''}<button type="button" data-c>닫기</button></div>`, (bg, close) => {
+      <div class="bpm-ft">${spMyParts(it).length ? '<button type="button" class="primary" data-i>수량 입력</button>' : ''}${D.who !== 'view' && spMyParts(it).some(pt => it.specs.some(x => pt.last[x.k] && pt.last[x.k].d === D.today)) ? '<button type="button" class="dng" data-clr>오늘 기록 지우기</button>' : ''}<button type="button" data-c>닫기</button></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'wide');
       $('[data-c]', bg).onclick = close;
       if ($('[data-i]', bg)) $('[data-i]', bg).onclick = () => { close(); spInput(id); };
+      if ($('[data-clr]', bg)) $('[data-clr]', bg).onclick = () => { close(); spClear(id); };
       $$('#sxper [data-d]', bg).forEach(b => (b.onclick = async () => {
         $$('#sxper [data-d]', bg).forEach(x => x.classList.toggle('on', x === b)); days = +b.dataset.d;
         if (days === 10) hist = it.hist.filter(h => spAgo(h.d, D.today) <= 10);
@@ -17482,6 +17590,17 @@ html[data-theme=dark]{--bplow:#ff9a5c;--bplowbg:#3a2516;--bpok:#5fd0b8;--bpokbg:
 .bpinfo div{display:grid;grid-template-columns:64px 1fr;gap:8px}.bpinfo span{color:var(--sub)}.bpinfo b{color:var(--ink);font-weight:700;word-break:keep-all}.bpinfo a{color:var(--blue);text-decoration:none}
 .bpform .bpwide{grid-column:1/-1}
 @media(max-width:560px){.bpchips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-right:-16px;padding-right:16px}.bpchip{flex:0 0 auto}.bpgrp .bpcards,.bpcards{grid-template-columns:minmax(0,1fr)}.bpcard{min-width:0}.bph{flex-wrap:wrap}.bph b{word-break:keep-all;flex:1 1 auto;min-width:0}.bpgrid{grid-template-columns:minmax(0,1fr)}.bpwrap{min-width:0;overflow-x:hidden}}
+</style><style id="bp-v2962">.sxkpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 14px}.sxkc{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:14px;padding:12px 16px;cursor:pointer}.sxkc span{font-size:12.5px;color:var(--sub);font-weight:600}.sxkc b{font-size:26px;line-height:1.1;font-weight:800}.sxkc b small{font-size:12px;font-weight:600;color:var(--sub);margin-left:3px}.sxkc.low b{color:#e5484d}.sxkc.warn b{color:#d97706}.sxkc.blue{border-color:var(--blue);background:var(--blue-soft)}.sxkc.blue b{color:var(--blue)}
+.modal.bpm.gx{width:min(980px,96vw);padding:20px 22px 0}.gxnb{background:var(--blue-soft);color:var(--blue);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;margin:12px 0 10px}.gxnb b{font-weight:800}.gxbody{max-height:calc(100vh - 330px);overflow:auto;margin:0 -6px;padding:0 6px}
+.gxb{border:1px solid var(--line);border-radius:14px;padding:10px 12px 8px;margin:0 0 12px;background:var(--panel)}.gxt{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:15px}.gxt small{color:var(--sub);font-weight:500;font-size:12px}.gxi{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}.gxi img,.gxi svg{width:24px;height:24px;object-fit:contain}
+.gxhd,.gxr,.gxs{display:grid;grid-template-columns:150px 84px repeat(var(--n),minmax(92px,1fr)) 64px;gap:8px;align-items:center}.gxhd{font-size:12px;color:var(--sub);font-weight:700;padding:4px 0 6px;border-bottom:1px solid var(--line)}.gxhd .c{text-align:center}.gxhd small{display:block;font-weight:500;font-size:11px;color:var(--sub)}
+.gxr{padding:8px 0;border-bottom:1px solid var(--line2)}.gxm{display:contents}.gxn b{display:block;font-size:14.5px}.gxn small{color:var(--sub);font-size:12px}.gxch{justify-self:start;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--line2);color:var(--sub)}.gxch.ok{background:#e4f7ee;color:#0a7a50}.gxch.old{background:#fff1e2;color:#b45309}.gxch.mid{background:var(--line2);color:var(--ink)}.gxp{order:99;justify-self:center;font-size:12.5px;font-weight:700;color:var(--sub);grid-column:-2/-1}.gxp.ok{color:#0a7a50}.gxp.mid{color:#b45309}
+.gxc{display:block;position:relative}.gxc input{width:100%;height:42px;border:1.5px solid var(--line);border-radius:11px;background:var(--panel);color:var(--ink);text-align:right;padding:0 12px;font-size:17px;font-weight:700;box-sizing:border-box}.gxc input::placeholder{font-size:13px;font-weight:500;color:var(--sub);opacity:.6}.gxc input:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}.gxc.chg input{border-color:var(--blue);background:var(--blue-soft)}.gxl{display:none}.gxh{display:block;text-align:right;font-size:11.5px;color:var(--sub);margin-top:3px;white-space:nowrap}.gxh.w{color:#c2410c}
+.gxs{padding:8px 0 4px}.gxs .gxsn{grid-column:1/3;font-weight:800;font-size:13.5px}.gxs .gxsn small{display:block;font-weight:500;font-size:11px;color:var(--sub)}.gxsv{display:grid;grid-template-columns:repeat(var(--n),minmax(92px,1fr));gap:8px;text-align:center}.gxs.t1 b{font-size:19px;color:var(--blue)}.gxs.t2 i{font-style:normal;color:var(--sub);font-size:15px;font-weight:700}.gxs.t1{background:var(--blue-soft);border-radius:10px;padding:8px 6px;margin-top:6px}.gxs.t1 .gxsn{padding-left:6px}
+.gxb.n1 .gxhd,.gxb.n1 .gxr,.gxb.n1 .gxs{grid-template-columns:150px 84px minmax(92px,240px) 64px}.gxb.n1 .gxsv{justify-items:center}.gxbox{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}.gxbox b{font-size:13.5px}.gxbox>small{color:var(--sub);font-size:12px;margin-left:6px}.gxbx{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:8px;margin-top:8px}.gxbc{background:var(--line2);border-radius:11px;padding:8px 12px}.gxbc small{display:block;color:var(--sub);font-size:11.5px;margin-bottom:2px}.gxbc b{font-size:15px}.gxbc em{font-style:normal;color:var(--blue)}
+.gxft{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;justify-content:space-between;background:var(--panel);border-top:1px solid var(--line);margin:0 -22px;padding:12px 22px 14px}.gxsum{font-size:13.5px;color:var(--ink)}.gxsum span{color:var(--sub)}.gxsum u{text-decoration:none;color:#c2410c;font-weight:700}.gxbt{display:flex;gap:8px}.gxbt button{height:46px;border-radius:13px;font-weight:800;font-size:14.5px;padding:0 18px}.gxbt .primary:disabled{opacity:.45;cursor:default}
+.gxcl>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:14px}.gxcl button{border:1px solid #e5484d;color:#e5484d;background:var(--panel);border-radius:10px;padding:6px 14px;font-weight:700;cursor:pointer}.bpm-ft .dng{flex:0 0 auto;color:#e5484d;border:1px solid #e5484d;background:var(--panel)}
+@media(max-width:700px){.sxkpi{grid-template-columns:repeat(2,1fr)}.modal.bpm.gx{padding:16px 14px 0;width:100vw;max-width:100vw}.gxhd{display:none}.gxr,.gxs,.gxb.n1 .gxr,.gxb.n1 .gxs{grid-template-columns:repeat(var(--n),1fr)}.gxm{display:flex;grid-column:1/-1;align-items:center;gap:8px}.gxm .gxn{flex:1}.gxp{grid-column:auto;order:0}.gxl{display:block;font-size:11.5px;color:var(--sub);margin:0 0 3px;font-weight:600}.gxs .gxsn{grid-column:1/-1}.gxsv{grid-column:1/-1!important}.gxft{margin:0 -14px;padding:10px 14px 12px;flex-direction:column;align-items:stretch;gap:8px}.gxbt button{flex:1}.gxbody{max-height:calc(100vh - 300px)}.gxbx{grid-template-columns:1fr}.gxh{text-align:left}}
 </style><style id="bp-v2961">.sxfb{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-6px 0 14px}.sxfb input{height:34px;width:150px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 14px;font-size:13.5px}.sxf{border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer}.sxf em{font-style:normal;margin-left:5px;font-size:11.5px;opacity:.7}.sxf.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}.sxf.clr{border-style:dashed}.sxmb{border:0;background:var(--line2);color:var(--ink);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;margin:0 6px 6px 0}.sxmb.w{background:#fff1e2;color:#b45309}.sxjn{font-size:12px;color:var(--sub);margin:2px 0 10px}.sxok.wait,.sxok.part{background:#fff7e6;color:#8a5a00;font-size:13px;line-height:1.5}.sxok.wait b,.sxok.part b{display:block;margin-bottom:2px}.sxpg{font-size:12px;color:var(--sub);margin:-4px 0 6px}.sxpg.w{color:#b45309}</style><style id="bp-v2959">
 /* v29.59 : 소모품 관리 새 화면 (카드 · 오른쪽 요약 · 설정) */
 :root{--sxwarn:#b45309;--sxwarnbg:#fff4e0}
