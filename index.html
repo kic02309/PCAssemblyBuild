@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.66';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.67';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9538,7 +9538,7 @@ async function addCharts(buf, jobs) {
   const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
     'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList', 'previewPeople', 'previewCheck', 'previewAccounts']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
-  const pvRead = (a, d) => PV_READ.has(a) || (a === 'sp' && d && ['can', 'get', 'hist'].includes(d.op)) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
+  const pvRead = (a, d) => PV_READ.has(a) || (a === 'sp3') || (a === 'sp' && d && ['can', 'get', 'hist'].includes(d.op)) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
   async function api(action, data) {
     if (S.mpv && !pvRead(action, data)) throw new Error('모바일 미리보기에서는 저장되지 않습니다');
     if (S.pv && !pvRead(action, data)) throw new Error('미리보기 중에는 저장·수정되지 않습니다 (아래 [내 화면으로 돌아가기])');
@@ -16832,10 +16832,13 @@ async function addCharts(buf, jobs) {
   const spSt = s => s.total == null ? 'none' : (s.min != null && s.total < s.min) ? 'low' : 'ok';
   const spItemSt = it => { const st = it.specs.map(spSt); return st.includes('low') ? 'low' : st.every(x => x === 'none') ? 'none' : it.specs.some(x => x.min != null) ? 'ok' : 'nomin'; };
   const spPartDay = pt => Object.values(pt.last || {}).map(l => l.d).sort().pop() || '';   // 그 파트 마지막 실사일
+  // v29.67 : 규격마다 따로 확인 — 한 규격이라도 한 번도 안 넣었거나(miss) 오래됐으면(oldest) 그 그룹은 아직 "끝난 게" 아님
+  const spPartState = (it, pt) => { let miss = 0, oldest = ''; it.specs.forEach(s => { const l = (pt.last || {})[s.k]; if (!l) miss++; else if (!oldest || l.d < oldest) oldest = l.d; }); return { miss, n: it.specs.length, oldest }; };
   const spLast = it => { let L = null; it.parts.forEach(pt => Object.values(pt.last || {}).forEach(l => { if (!L || l.d > L.d || (l.d === L.d && l.at > L.at)) L = l; })); return L; };
   const spIsMain = it => !!(S.spD && (S.spD.who === 'admin' || [it.main, it.sub].includes(S.spD.me)));            // 정 · 부 · 관리자
   const spMyParts = it => spHasParts(it) ? it.parts.filter(pt => spIsMain(it) || pt.uid === S.spD.me) : (spIsMain(it) ? it.parts : []);
   async function renderSp() {
+    S.spMode = '';
     const main = $('#main'); if (!S.sp) await spLoad();
     if (!S.spD) main.innerHTML = pageHead(spTitle()) + '<div class="pgb"><div class="muted">불러오는 중…</div></div>';
     let D; try { D = await api('sp', { op: 'get' }); }
@@ -16847,7 +16850,7 @@ async function addCharts(buf, jobs) {
   const spAgo = (d, today) => { if (!d) return null; return Math.round((new Date(today + 'T00:00:00') - new Date(d + 'T00:00:00')) / 864e5); };
   const spThr = it => ({ d: 3, w: 9, m: 33, n: 0 })[spCycle(it)];                // 오래된 실사 경고 : 주기 기준 (매일 = 3일 넘게 · 주 1회 = 9일 · 월 1회 = 33일 · 비정기 = 없음)
   const spAgoOf = it => { const L = spLast(it); return L ? spAgo(L.d, S.spD.today) : null; };
-  const spStale = it => { const t = spThr(it), g = spAgoOf(it); if (!(t > 0) || g == null) return false; if (g > t) return true; return spHasParts(it) && it.parts.some(pt => { const pd = spPartDay(pt); return !pd || spAgo(pd, S.spD.today) > t; }); };   // 그룹 하나라도 오래되면 경고
+  const spStale = it => { const t = spThr(it), g = spAgoOf(it); if (!(t > 0) || g == null) return false; if (g > t) return true; return it.parts.some(pt => { const st = spPartState(it, pt); return st.miss > 0 || !st.oldest || spAgo(st.oldest, S.spD.today) > t; }); };   // 그룹 · 규격 하나라도 없거나 오래되면 경고
   const SP_PERSON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-4 3.2-6 7-6s7 2 7 6"/></svg>';
   const spWhoTxt = it => { const n = [it.mainName, it.subName].filter(Boolean); const base = n.length ? n : [...new Set(it.parts.map(p => p.uname).filter(Boolean))]; return base.length ? esc(base[0]) + (base.length > 1 ? ` 외 ${base.length - 1}` : '') : '담당 없음'; };
   const spCatName = (D, it) => ((D.cats || []).some(c => c.name === it.cat) ? it.cat : '기타');
@@ -16885,7 +16888,7 @@ async function addCharts(buf, jobs) {
     return ps.length ? ps.join('') + (r.gap > 1 ? `<small>${r.gap}일 사이</small>` : '') : '<span class="sxu0">-</span>';
   };
   const spDoneToday = it => spMyParts(it).some(pt => it.specs.some(x => pt.last[x.k] && pt.last[x.k].d === S.spD.today));
-  const spDue = it => { const c = spCycle(it); if (c === 'd' || spDoneToday(it)) return true; if (c === 'n') return false; const n = SPC[c][1]; return spMyParts(it).some(pt => { const pd = spPartDay(pt), g = pd ? spAgo(pd, S.spD.today) : null; return g == null || g >= n; }); };
+  const spDue = it => { const c = spCycle(it); if (c === 'd' || spDoneToday(it)) return true; if (c === 'n') return false; const n = SPC[c][1]; return spMyParts(it).some(pt => { const st = spPartState(it, pt); return st.miss > 0 || !st.oldest || spAgo(st.oldest, S.spD.today) >= n; }); };   // 규격 하나라도 안 했거나 주기가 됐으면 오늘 입력 대상
   const spWho = it => {
     const o = [];
     if (it.mainName) o.push(`<span class="wp"><i>정</i>${esc(it.mainName)}</span>`);
@@ -16894,6 +16897,7 @@ async function addCharts(buf, jobs) {
     return o.length ? o.join('') : '<span class="wn">담당 없음</span>';
   };
   function spDraw() {
+    if (S.spMode === 'log' && spCanLog()) return spLogDraw();
     const D = S.spD, main = $('#main'), adm = D.who === 'admin', today = D.today;
     const all = D.items.filter(it => it.active);
     const cats0 = (D.cats || []).filter(c => all.some(it => it.cat === c.name));
@@ -16956,7 +16960,8 @@ async function addCharts(buf, jobs) {
       <div class="sxpn"><h3>분류별 실사 진행</h3>${cats.map(c => { const g = all.filter(it => spCatName(D, it) === c.name), f = g.filter(it => spItemSt(it) !== 'none' && !spStale(it)).length; return `<div class="sxpgr"><span>${esc(c.name)}</span><i class="sxbar2"><i style="width:${g.length ? Math.round(f / g.length * 100) : 0}%;background:${c.color || '#64748b'}"></i></i><em>${f}/${g.length}</em></div>`; }).join('')}</div></aside>`;
     const bulkIts = D.who === 'view' ? [] : all.filter(it => spMyParts(it).length && (cf === 'all' || spCatName(D, it) === cf));
     const bulk = bulkIts.length ? `<button type="button" class="sxb${adm ? '' : ' p'}" id="bpbulk">${cf === 'all' ? (adm ? '전체' : '내 담당') : esc(cf)} 일괄 입력</button>` : '';
-    const hdr = adm ? `<span class="sxhb">${bulk}<button type="button" class="sxb" id="bpadd">＋ 품목 추가</button><button type="button" class="sxb p" id="bpset">⚙ 설정</button></span>` : D.who === 'mgr' ? `<span class="sxhb">${bulk}<button type="button" class="sxb p" id="bpset">⚙ 담당 설정</button></span>` : (bulk ? `<span class="sxhb">${bulk}</span>` : '');
+    const logB = spCanLog() ? '<button type="button" class="sxb" id="bplog">재고 입력 내역</button>' : '';
+    const hdr = adm ? `<span class="sxhb">${bulk}${logB}<button type="button" class="sxb" id="bpadd">＋ 품목 추가</button><button type="button" class="sxb p" id="bpset">⚙ 설정</button></span>` : D.who === 'mgr' ? `<span class="sxhb">${bulk}${logB}<button type="button" class="sxb p" id="bpset">⚙ 담당 설정</button></span>` : (bulk || logB ? `<span class="sxhb">${bulk}${logB}</span>` : '');
     const myAll = D.who === 'view' ? [] : all.filter(it => spMyParts(it).length);
     let myT = 0, myF = 0; myAll.filter(spDue).forEach(it => spMyParts(it).forEach(pt => it.specs.forEach(x => { myT++; if (pt.last[x.k] && pt.last[x.k].d === today) myF++; })));
     const kpi = `<div class="sxkpi"><button type="button" class="sxkc" data-sf="" title="전체 보기"><span>전체 품목</span><b>${all.length}</b></button><button type="button" class="sxkc low" data-sf="low"><span>발주 필요</span><b>${nLow}</b></button><button type="button" class="sxkc warn" data-sf="stale"><span>오래된 실사</span><b>${nStale}</b></button>${myT ? `<button type="button" class="sxkc blue" id="bpkme" title="오늘 입력할 품목만 센 값"><span>${adm ? '전체' : '내 담당'} 오늘 입력</span><b>${myF}<small>/${myT}칸</small></b></button>` : '<button type="button" class="sxkc" data-sf="none"><span>미실사</span><b>' + all.filter(SPF.none[1]).length + '</b></button>'}</div>`;
@@ -16972,6 +16977,7 @@ async function addCharts(buf, jobs) {
     $$('[data-sf]').forEach(b => (b.onclick = () => { S.spF = S.spF === b.dataset.sf ? '' : b.dataset.sf; spDraw(); }));
     if ($('#sxclr')) $('#sxclr').onclick = () => { S.spF = ''; S.spQ = ''; spDraw(); };
     if ($('#sxq')) $('#sxq').oninput = e => { const pos = e.target.selectionStart; S.spQ = e.target.value; spDraw(); const q = $('#sxq'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } };
+    if ($('#bplog')) $('#bplog').onclick = spLogOpen;
     if ($('#bpset')) $('#bpset').onclick = () => spSettings();
     if ($('#bpbulk')) $('#bpbulk').onclick = () => spGrid(bulkIts, cf === 'all' ? (adm ? '전체 일괄 입력' : '내 담당 일괄 입력') : cf + ' 일괄 입력');
     if ($('#bpkme')) $('#bpkme').onclick = () => spGrid(myAll, adm ? '전체 일괄 입력' : '내 담당 일괄 입력');
@@ -17034,9 +17040,9 @@ async function addCharts(buf, jobs) {
     const rows = []; its.forEach(it => spMyParts(it).forEach(pt => rows.push({ it, pt })));
     const kk = (it, pt, s) => it.id + '|' + pt.p + '|' + s.k;
     const base = {}; rows.forEach(({ it, pt }) => it.specs.forEach(s => { const l = pt.last[s.k]; base[kk(it, pt, s)] = l && l.d === today ? l.qty : null; }));
-    const chip = (it, pt) => { const pd = spPartDay(pt); if (!pd) return '<span class="gxch none">미실사</span>'; const g = spAgo(pd, today); return g === 0 ? '<span class="gxch ok">오늘</span>' : `<span class="gxch ${g > spThr(it) && spThr(it) > 0 ? 'old' : 'mid'}">${g}일 전</span>`; };
+    const chip = (it, pt) => { const st = spPartState(it, pt); if (st.miss === st.n || !st.oldest) return '<span class="gxch none">미실사</span>'; if (st.miss) return '<span class="gxch old">일부 미실사</span>'; const g = spAgo(st.oldest, today); return g === 0 ? '<span class="gxch ok">오늘</span>' : `<span class="gxch ${g > spThr(it) && spThr(it) > 0 ? 'old' : 'mid'}">${g}일 전</span>`; };
     const cell = (it, pt, s) => { const k = kk(it, pt, s), l = pt.last[s.k], v = base[k];
-      const hint = l && l.d !== today ? `<small class="gxh${spThr(it) > 0 && spAgo(l.d, today) > spThr(it) ? ' w' : ''}">지난번 ${spN(l.qty)} · ${spMD(l.d)}</small>` : '';
+      const hint = !l ? '<small class="gxh w">아직 기록 없음</small>' : l.d !== today ? `<small class="gxh${spThr(it) > 0 && spAgo(l.d, today) > spThr(it) ? ' w' : ''}">지난번 ${spN(l.qty)} · ${spMD(l.d)}</small>` : '';
       return `<label class="gxc"><span class="gxl">${esc(s.s || '수량')}</span><input type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${v == null ? '' : Number(v).toLocaleString()}" placeholder="수량">${hint}</label>`; };
     const block = it => {
       const rs = rows.filter(r => r.it === it), parts = spHasParts(it), n = it.specs.length, multi = rs.length > 1, hasBox = it.specs.some(s => s.per > 0);
@@ -17145,6 +17151,102 @@ async function addCharts(buf, jobs) {
         catch (e) { b.disabled = false; toast(e.message, true); }
       };
     });
+  }
+  // ================================================================ v29.67 : 재고 입력 내역 (전체 품목의 실제 저장된 실사 기록 · 조회 전용)
+  //   서버(sp3)가 기간 · 조건을 적용해 50건씩 보냄 · 같은 날 같은 칸을 다시 저장했으면 마지막 저장값만 있음(수정 이력 아님)
+  const SPL_P = [['today', '오늘'], ['7', '최근 7일'], ['30', '최근 30일'], ['month', '이번 달'], ['custom', '기간 선택']];
+  const splAdd = (d, n) => { const x = new Date(d + 'T00:00:00'); x.setDate(x.getDate() + n); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+  const splDow = d => '일월화수목금토'[new Date(d + 'T00:00:00').getDay()];
+  const splDef = () => ({ pk: '30', from: '', to: '', cat: '', item: '', grp: '', who: '', q: '' });
+  const splRange = (L, today) => L.pk === 'today' ? [today, today] : L.pk === '7' ? [splAdd(today, -6), today] : L.pk === 'month' ? [today.slice(0, 8) + '01', today] : L.pk === 'custom' ? [L.from, L.to] : [splAdd(today, -29), today];
+  const splDirty = L => L.pk !== '30' || L.cat || L.item || L.grp || L.who || L.q;
+  // 보는 권한 : 입력 권한자 + 팀장(보기 전용 계정 중 팀장만) · 서버(sp3)에서도 같은 기준으로 확인
+  const spCanLog = () => { const D = S.spD; return !!(D && D.who && (D.who !== 'view' || (S.me && S.me.group === '팀장'))); };
+  function spLogOpen() {
+    const D = S.spD; if (!spCanLog()) return toast('재고 입력 내역을 볼 권한이 없습니다', true);
+    S.spMode = 'log'; S.spL = Object.assign(S.spL || {}, splDef(), { rows: [], more: false, total: null, days: {}, opts: [], whos: S.spL ? S.spL.whos || [] : [], st: 'load', msg: '', seq: (S.spL && S.spL.seq) || 0, fo: false, cur: null });
+    spLogDraw(); spLogLoad(true);
+  }
+  function spLogDraw() {
+    const D = S.spD, L = S.spL, main = $('#main'), today = D.today; if (!main) return;
+    // v29.67 : 선택지는 "그 기간에 실제 기록이 있는" 품목 · 분류 · 그룹을 서버가 내려준 것 (숨긴 품목도 포함 · "(숨김)" 표시)
+    const O = L.opts || [], cn = c => ((D.cats || []).some(x => x.name === c) ? c : '기타');
+    const known = L.known = L.known || {}; O.forEach(o => { known[o.i] = o; });
+    const catOpts = [...new Set(O.map(o => cn(o.c)).concat(L.cat ? [L.cat] : []))].sort((a, b) => { const ia = (D.cats || []).findIndex(x => x.name === a), ib = (D.cats || []).findIndex(x => x.name === b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+    const itMap = {}; O.forEach(o => { if (!L.cat || cn(o.c) === L.cat) itMap[o.i] = o; }); if (L.item && !itMap[L.item] && known[L.item]) itMap[L.item] = known[L.item];
+    const itemOpts = Object.values(itMap).sort((a, b) => a.n.localeCompare(b.n, 'ko')).map(o => [o.i, o.n + (o.a ? '' : ' (숨김)')]);
+    const grpOpts = [...new Set(O.filter(o => (!L.cat || cn(o.c) === L.cat) && (!L.item || String(o.i) === String(L.item))).map(o => o.g).concat(L.grp ? [L.grp] : []))];
+    const [f, t] = splRange(L, today), nf = [L.cat, L.item, L.grp, L.who].filter(Boolean).length;
+    const sel = (id, lab, val, opts) => `<label class="splsel1"><small>${lab}</small><select id="${id}"><option value="">전체</option>${opts.map(o => `<option value="${esc(o[0])}"${String(o[0]) === String(val) ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label>`;
+    main.innerHTML = pageHead('재고 입력 내역', `<span class="muted spl-sub">전체 품목 · 실제로 입력한 기록만 (조회만 가능)</span>`, '<button type="button" class="sxb" id="splBack">← 소모품 현황</button>')
+      + `<div class="pgb spl"><div class="splf">
+        <div class="splp">${SPL_P.map(p => `<button type="button" class="splchip${L.pk === p[0] ? ' on' : ''}" data-pk="${p[0]}">${p[1]}</button>`).join('')}
+          ${L.pk === 'custom' ? `<span class="spldt"><input type="date" id="splfrom" value="${esc(L.from)}" max="${today}"> ~ <input type="date" id="splto" value="${esc(L.to)}" max="${today}"></span>` : ''}
+          <span class="note">${f && t ? spMD(f) + ' ~ ' + spMD(t) : ''}</span>
+          <button type="button" class="splfb" id="splfb">필터${nf ? ' (' + nf + ')' : ''} ▾</button></div>
+        <div class="splsel${L.fo ? ' open' : ''}" id="splsel">
+          ${sel('splcat', '분류', L.cat, catOpts.map(c => [c, c]))}${sel('splitem', '품목', L.item, itemOpts)}${sel('splgrp', '그룹', L.grp, grpOpts.map(g => [g, g]))}${sel('splwho', '입력자', L.who, (L.whos || []).map(w => [w, w]))}
+          <input type="search" id="splq" placeholder="🔍 품목명 검색" value="${esc(L.q)}" autocomplete="off">
+          ${splDirty(L) ? '<button type="button" class="splreset" id="splreset">조건 초기화</button>' : ''}
+          <span class="splcnt" id="splcnt"></span></div></div>
+        <div id="splbody"></div></div>`;
+    $('#splBack').onclick = () => { S.spMode = ''; spDraw(); };
+    $$('[data-pk]').forEach(b => (b.onclick = () => { L.pk = b.dataset.pk; if (L.pk === 'custom' && !L.from) { L.from = splAdd(today, -6); L.to = today; } spLogDraw(); spLogLoad(true); }));
+    const chg = (id, key, pre) => { $(id).onchange = e => { L[key] = e.target.value; if (pre) pre(); spLogDraw(); spLogLoad(true); }; };
+    chg('#splcat', 'cat', () => { L.item = ''; L.grp = ''; }); chg('#splitem', 'item', () => { L.grp = ''; }); chg('#splgrp', 'grp'); chg('#splwho', 'who');
+    if ($('#splfrom')) { $('#splfrom').onchange = e => { L.from = e.target.value; spLogLoad(true); spLogDraw(); }; $('#splto').onchange = e => { L.to = e.target.value; spLogLoad(true); spLogDraw(); }; }
+    $('#splfb').onclick = () => { L.fo = !L.fo; $('#splsel').classList.toggle('open', L.fo); };
+    if ($('#splreset')) $('#splreset').onclick = () => { Object.assign(L, splDef()); spLogDraw(); spLogLoad(true); };
+    const q = $('#splq'); let tq; const go = () => { clearTimeout(tq); tq = setTimeout(() => { const v = q.value.trim(); if (v === L.q) return; L.q = v; spLogLoad(true, true); }, 300); };
+    q.oninput = e => { if (!e.isComposing) go(); }; q.addEventListener('compositionend', go);
+    spLogBody();
+  }
+  function spLogBody() {
+    const D = S.spD, L = S.spL, box = $('#splbody'); if (!box) return;
+    const cnt = $('#splcnt'); if (cnt) cnt.innerHTML = L.total == null ? '' : `조회 <b>${L.total.toLocaleString()}</b>건${L.more ? ` <small>· ${L.rows.length.toLocaleString()}건 표시</small>` : ''}`;
+    if (L.st === 'load' && !L.rows.length) { box.innerHTML = '<div class="splmsg">불러오는 중…</div>'; return; }
+    if (L.st === 'err') { box.innerHTML = `<div class="splmsg warn">${esc(L.msg)}<br><button type="button" class="sxb p" id="splretry">다시 시도</button></div>`; $('#splretry').onclick = () => spLogLoad(true); return; }
+    if (L.st === 'bad') { box.innerHTML = `<div class="splmsg warn">${esc(L.msg)}</div>`; return; }
+    if (!L.rows.length) { box.innerHTML = `<div class="splmsg">조건에 맞는 입력 기록이 없습니다${splDirty(L) ? '<br><button type="button" class="sxb" id="splreset2">조건 초기화</button>' : ''}<small>입력하지 않은 날짜와 칸은 표시되지 않아요</small></div>`; if ($('#splreset2')) $('#splreset2').onclick = () => { Object.assign(L, splDef()); spLogDraw(); spLogLoad(true); }; return; }
+    const cat = r => ((D.cats || []).some(c => c.name === r.cat) ? r.cat : '기타');
+    let h = '<div class="spltbl"><div class="splh"><span>저장 시각</span><span>분류</span><span>품목</span><span>그룹·파트</span><span>규격</span><span class="r">수량</span><span>단위</span><span>입력자</span></div>', cd = '';
+    L.rows.forEach(r => {
+      if (r.d !== cd) { cd = r.d; const g = L.days[r.d] || {}; h += `<div class="spld"><b>${spMD(r.d)} (${splDow(r.d)})</b>${g.n != null ? `<span class="t">${g.n}건</span><small>입력자 ${g.w}명</small>` : ''}${r.d === D.today ? '<small class="td">오늘</small>' : ''}</div>`; }
+      const tm = r.sd === r.d ? r.t : spMD(r.sd) + ' ' + r.t, z = Number(r.q) === 0, q = Number(r.q).toLocaleString(), sp = r.spec || '', gr = r.grp || '공통';
+      h += `<div class="splr" data-spl="${r.i}" role="button" tabindex="0">
+        <span class="tm dk">${esc(tm)}</span><span class="cat dk">${esc(cat(r))}</span>
+        <span class="nm"><b>${esc(r.item)}</b>${r.act ? '' : ' <small class="off">(숨김 품목)</small>'}<span class="ms mb">${esc(gr)}${sp ? ' · ' + esc(sp) : ''}</span></span>
+        <span class="gp dk${gr === '공통' ? ' c' : ''}">${esc(gr)}</span><span class="sp dk">${esc(sp) || '-'}</span>
+        <span class="q${z ? ' z' : ''}">${z ? '<i>0</i>' : q}<small class="mb">${esc(r.unit || '')}</small></span><span class="u dk">${esc(r.unit || '')}</span><span class="wh dk">${esc(r.by || '-')}</span>
+        <span class="mt mb">${esc(tm)} 저장 · <b>${esc(r.by || '-')}</b> · ${esc(cat(r))}</span></div>`;
+    });
+    h += '</div>' + (L.more ? `<div class="splmore"><button type="button" class="sxb" id="splmore"${L.ml ? ' disabled' : ''}>${L.ml ? '불러오는 중…' : '더 보기 (50건 더)'}</button></div>` : '')
+      + '<p class="splfoot">같은 날 같은 칸을 다시 저장한 경우 <b>마지막 저장값</b>만 표시돼요 (수정 이력은 아님) · 입력하지 않은 날과 칸은 나오지 않아요 · 시각은 한국 시간 · 행을 누르면 품목 상세 기록이 열려요</p>';
+    box.innerHTML = h;
+    const open = id => { const it = S.spD.items.find(x => x.id === +id); if (it) spHist(it.id); else toast('숨김 처리된 품목이라 상세 기록은 관리자만 볼 수 있어요 (이 목록에서는 그대로 확인됩니다)', true); };
+    $$('[data-spl]', box).forEach(el => { el.onclick = () => open(el.dataset.spl); el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(el.dataset.spl); } }; });
+    if ($('#splmore')) $('#splmore').onclick = () => spLogLoad(false);
+  }
+  async function spLogLoad(reset, keepFocus) {
+    const D = S.spD, L = S.spL, seq = ++L.seq, [from, to] = splRange(L, D.today);
+    if (!from || !to || from > to || (new Date(to) - new Date(from)) / 864e5 > 400) { L.st = 'bad'; L.rows = []; L.total = null; L.msg = !from || !to ? '기간을 고르세요' : from > to ? '시작일이 종료일보다 늦습니다' : '조회 기간은 최대 400일까지입니다'; spLogBody(); return; }
+    if (reset) { L.rows = []; L.more = false; L.cur = null; L.total = null; L.st = 'load'; L.ml = false; } else { if (L.ml || !L.more) return; L.ml = true; }
+    spLogBody();
+    try {
+      const body = { from, to, cat: L.cat, item: L.item || '', grp: L.grp, who: L.who, q: L.q, lim: 50 }; if (!reset && L.cur) body.cur = L.cur;
+      const r = await api('sp3', body);
+      if (seq !== L.seq || S.spMode !== 'log') return;
+      const have = new Set(L.rows.map(x => x.d + '|' + x.i + '|' + x.p + '|' + x.k));
+      (r.rows || []).forEach(x => { const k = x.d + '|' + x.i + '|' + x.p + '|' + x.k; if (!have.has(k)) { have.add(k); L.rows.push(x); } });
+      L.more = !!r.more; L.ml = false; L.st = 'ok';
+      const last = (r.rows || [])[(r.rows || []).length - 1]; if (last) L.cur = { d: last.d, at: last.raw, i: last.i, p: last.p, k: last.k };
+      if (reset) { L.total = r.total || 0; L.days = r.days || {}; const w = r.whos || [], sg = JSON.stringify(r.opts || []); const chgd = w.join('|') !== (L.whos || []).join('|') || sg !== JSON.stringify(L.opts || []); L.whos = w; L.opts = r.opts || []; if (chgd && !keepFocus) { spLogDraw(); return; } }
+      spLogBody();
+    } catch (e) {
+      if (seq !== L.seq || S.spMode !== 'log') return;
+      const msg = /알 수 없는 요청/.test(e.message || '') ? '서버에 v29.67 SQL 이 아직 적용되지 않았습니다 (관리자에게 문의)' : (e.message || '불러오지 못했습니다');
+      L.ml = false; if (reset) { L.st = 'err'; L.msg = msg; spLogBody(); } else { toast(msg, true); spLogBody(); }
+    }
   }
   function spHist(id) {
     const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
@@ -17808,5 +17910,27 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 @media(max-width:560px){.sxgrid{grid-template-columns:minmax(0,1fr)}.sxchips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-right:-16px;padding-right:16px}.sxchip{flex:0 0 auto}.sxprog{display:none}.sxar{flex-wrap:wrap}.sxar .sxrn{flex-basis:100%}.sxhb .sxb{padding:8px 10px;font-size:12.5px}}
 </style>
 
+<style id="bp-v2967">
+.spl{padding-top:4px!important}.spl-sub{font-size:13px}
+.splf{background:var(--panel);border-radius:16px;padding:12px 14px;box-shadow:var(--sh);margin-bottom:12px}
+.splp{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.splchip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;height:34px;padding:0 14px;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}.splchip.on{background:var(--ink,#1d2430);color:var(--panel);border-color:var(--ink,#1d2430)}
+.spldt{display:inline-flex;gap:6px;align-items:center}.spldt input{height:34px;border-radius:10px}.splp .note{color:var(--sub,#5b6574);font-size:12.5px;margin-left:4px}
+.splfb{display:none;margin-left:auto;height:34px;border-radius:99px;font-weight:700}
+.splsel{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}.splsel1{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:10px;height:34px;padding:0 4px 0 10px}.splsel1 small{color:var(--sub,#5b6574);font-size:12px;white-space:nowrap}.splsel1 select{border:0;background:transparent;height:30px;font-size:13.5px;font-weight:700;max-width:150px;outline:0}
+#splq{height:34px;width:190px;border-radius:99px;padding:0 14px}.splreset{border:0;background:transparent;color:var(--blue);font-weight:700;font-size:13.5px;padding:0 6px}.splcnt{margin-left:auto;font-size:13.5px}.splcnt b{font-size:16px}.splcnt small{color:var(--sub,#5b6574)}
+.spltbl{background:var(--panel);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
+.splh,.splr{display:grid;grid-template-columns:78px 92px minmax(0,1.3fr) 100px 110px 96px 56px 110px;gap:10px;align-items:center;padding:0 18px}
+.splh{height:38px;background:var(--head);color:var(--sub,#5b6574);font-size:12.5px;font-weight:700;border-bottom:1px solid var(--line)}.splh .r{text-align:right}
+.splr{min-height:40px;border-bottom:1px solid var(--line2);font-size:14px;cursor:pointer}.splr:hover,.splr:focus{background:var(--blue-soft);outline:0}
+.spld{display:flex;align-items:center;gap:10px;height:36px;padding:0 18px;background:var(--blue-soft);border-bottom:1px solid var(--line);font-size:14px}.spld .t{background:var(--blue);color:#fff;border-radius:99px;font-size:11.5px;padding:1px 9px}.spld small{color:var(--sub,#5b6574);font-size:12.5px}.spld small.td{color:var(--blue);font-weight:700}
+.splr .tm{color:var(--sub,#5b6574);font-size:13px;font-variant-numeric:tabular-nums}.splr .cat,.splr .u{color:var(--sub,#5b6574);font-size:13px}.splr .gp.c{color:var(--sub,#5b6574)}.splr .nm b{font-weight:800}.splr .nm .off{color:var(--sub,#5b6574)}
+.splr .q{text-align:right;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}.splr .q.z{color:#c2410c}.splr .q.z i{font-style:normal;background:#fff1e6;border-radius:6px;padding:1px 8px}
+.mb{display:none}.splmore{display:flex;justify-content:center;padding:14px}.splfoot{color:var(--sub,#5b6574);font-size:12.5px;margin:10px 4px 0}.splmsg{background:var(--panel);border-radius:16px;box-shadow:var(--sh);padding:44px 16px;text-align:center;color:var(--sub,#5b6574);font-size:14px;line-height:2}.splmsg.warn{color:#b91c1c}.splmsg small{display:block;font-size:12.5px}
+@media(max-width:900px){.splh,.splr{grid-template-columns:70px 80px minmax(0,1.3fr) 90px 90px 90px 50px 90px}}
+@media(max-width:700px){.spl-sub{display:none}.splfb{display:inline-flex;align-items:center}.splsel{display:none}.splsel.open{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}.splsel1{min-width:0}.splsel1 select{max-width:none;min-width:0;width:100%;flex:1}#splq{grid-column:1/-1;width:100%}.splreset{grid-column:1/-1;text-align:left}.splcnt{margin-left:0;grid-column:1/-1}
+ .dk{display:none!important}.mb{display:inline}.splh{display:none}
+ .splr{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:11px 14px}.splr .nm{display:block}.splr .nm b{font-size:15px}.splr .nm .ms{display:inline;margin-left:6px;font-size:12.5px;color:var(--sub,#5b6574)}
+ .splr .q{font-size:19px;align-self:center;grid-row:1;grid-column:2}.splr .q small{font-size:12px;color:var(--sub,#5b6574);font-weight:600;margin-left:2px}.splr .mt{grid-column:1/-1;color:var(--sub,#5b6574);font-size:12.5px}.splr .mt b{color:var(--ink);font-weight:700}.spld{padding:0 14px}}
+</style>
 <style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style></body>
 </html>
