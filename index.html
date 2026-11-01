@@ -9461,7 +9461,7 @@ async function addCharts(buf, jobs) {
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.67';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.68';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -11374,6 +11374,20 @@ async function addCharts(buf, jobs) {
     if(!cv||!(cv.production>1e-8)||!(cv.asm>=cv.production-1e-9))return cv;
     return {...cv,asm:Math.max(0,cv.asm-cv.production),mfg:(cv.mfg||0)+cv.production};
   }
+  // v29.68 : 안정화 파트 전용 · 표시 전용 — 출고 구간(출고 구분으로 입력한 줄의 환산)을 OS 설치 · 안정화 · 그 외로 나눔
+  //   저장된 요약의 열별 개수(t)와 그 달 항목별 분으로 다시 계산하고, 합계가 기존 출고 환산과 정확히 같을 때만 나눔 (아니면 기존 표시 그대로)
+  function ddStabSplit(cv, s, M, f6){
+    if(!cv||!s||!s.t||!(f6>0)||!(cv.ship>1e-8))return cv;
+    const r10=s.r10||{};
+    if(['C','D','D2','E','E2','G'].some(c=>(+r10[c]||0)>0))return cv;           // 출고(F) 이외 구분이 섞이면 나누지 않음
+    if(cv.asm>1e-6||cv.mfg>1e-6)return cv;
+    const MM=C.minsMap(M);                                                      // M = 그 달에 바꾼 항목만 있는 값 → 기본 분과 합쳐서 사용
+    let all=(+s.gq||0)*0.1; for(const c in s.t)all+=(+s.t[c]||0)*(MM[c]||0)/30;
+    if(Math.abs(all/f6-cv.ship)>1e-4)return cv;                                 // 열 단위 합계가 기존 출고 환산과 다르면 나누지 않음 (이중 계산 방지)
+    const mm=c=>(+s.t[c]||0)*(MM[c]||0)/30/f6, os=mm('AA')+mm('AB'), st=mm('AD')+mm('AE');
+    if(os<0||st<0||os+st>cv.ship+1e-6)return cv;
+    return {...cv,os,st};
+  }
   function ddProdPerson(o, s, live, M) {
     const p = live.current[o.uid], old = live.old[o.uid] || 0;
     if (!p && !old) return;
@@ -11409,6 +11423,7 @@ async function addCharts(buf, jobs) {
       if (s) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
         o.cv = ddProdMfg(ddAdjustedConversion(rawSum,s,p.conversion,o.adj,M));   // v29.35 : 라인 생산분 = 제조
+        if(o.grp==='안정화'&&o.cv&&!o.adj)o.cv=ddStabSplit(o.cv,s,M,f6);            // v29.68 : 안정화 파트만 OS 설치 · 안정화 구분
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
         { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; o.os = P.os; o.st = P.st; }   // v29.51 os · st / v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
@@ -11455,6 +11470,7 @@ async function addCharts(buf, jobs) {
     if(!workers.length||!workers.every(ddConversionReady))return null;
     const cv={production:0};
     for(const k of ['asm','ship','mfg','other'])cv[k]=workers.reduce((n,p)=>n+p.cv[k],0)/workers.length;
+    if(workers.every(p=>typeof p.cv.os==='number'&&typeof p.cv.st==='number')){cv.os=workers.reduce((n,p)=>n+p.cv.os,0)/workers.length;cv.st=workers.reduce((n,p)=>n+p.cv.st,0)/workers.length;}   // v29.68
     return ddConversionReady({v:x.avg,cv})?cv:null;
   }
   function ddGroupDisplay(x,scale){
@@ -11462,18 +11478,21 @@ async function addCharts(buf, jobs) {
     const rate=hasAvg&&hasTarget?pctR(x.avg,x.tg):null;
     const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
     const context=`근무 실적 ${x.w}명 · 목표 설정 ${x.tn}명${x.sup?' · 지원 '+x.sup+'명':''}`;
-    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv},scale):'<div class="ddconv"></div>'}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}</div>
+    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv,split:x.g==='안정화'},scale):'<div class="ddconv"></div>'}${hasAvg&&cv&&x.g==='안정화'&&typeof cv.os==='number'?'<div class="ddsplit-lg" title="막대는 환산, 오른쪽 숫자는 체크된 대수 (한 대가 OS 설치·안정화·출고에 함께 셈될 수 있어 합치지 않음)"><span><i class="os"></i>OS 설치</span><span><i class="st"></i>안정화</span><span><i class="sh"></i>출고·검수 등</span><span><i class="ot"></i>기타시간</span></div>':''}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}</div>
       <div class="ddcombo-value" title="${esc(context)}"><span class="ddcombo-target" title="기존 목표 설정 인원의 평균 목표">목표 <b>${hasTarget?fmt(x.tg):'—'}</b></span><span class="ddcombo-current" title="기존 근무 실적 인원의 평균 환산">환산 <b>${fmt(x.avg)}</b></span><span class="ddcombo-rate" title="평균 환산 ÷ 평균 목표 × 100">${rate==null?'—':rate+'%'}</span></div>
-      <div class="ddcombo-qty" aria-label="그룹 수량"><span><b>${x.q??0}</b><small>조립</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span><span class="m"><b>${x.mq||0}</b><small>제조</small></span></div>`;
+      ${x.g==='안정화'?`<div class="ddcombo-qty ddcombo-qty-stab" aria-label="안정화 그룹 대수" title="체크된 대수입니다. 한 대가 OS 설치·안정화·출고에 함께 셈될 수 있어 서로 합치지 않습니다"><span class="os"><b>${x.os||0}</b><small>OS 설치</small></span><span class="st"><b>${x.st||0}</b><small>안정화</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span></div>`:`<div class="ddcombo-qty" aria-label="그룹 수량"><span><b>${x.q??0}</b><small>조립</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span><span class="m"><b>${x.mq||0}</b><small>제조</small></span></div>`}`;
   }
   function ddConversionBar(p, sharedScale=0){
     const cv=p.cv,keys=['asm','ship','mfg','other'],names=['조립환산','출고환산','제조환산','기타시간 환산'];
     const vals=keys.map(k=>Number(cv&&cv[k]));
     const ready=ddConversionReady(p);
     if(!ready)return ddBar(p.v,p.target,p.oth,'#8daed5',sharedScale).replace('<div class="ddtr">','<div class="ddtr ddconv-unavailable" title="항목별 구성 자료 없음 · 기존 합계 표시">');
+    // v29.68 : 안정화 그룹은 출고 구간을 OS 설치 · 안정화 · 출고(검수·완충 등)로 나눠 그림 (합계는 그대로)
+    const sp=!!p.split&&typeof cv.os==='number'&&typeof cv.st==='number'&&cv.os+cv.st<=cv.ship+1e-6;
+    const segs=sp?[['asm',vals[0],names[0]],['os',cv.os,'OS 설치 환산'],['st',cv.st,'안정화 환산'],['ship',Math.max(0,cv.ship-cv.os-cv.st),'출고(검수·완충 등) 환산'],['mfg',vals[2],names[2]],['other',vals[3],names[3]]]:keys.map((k,i)=>[k,vals[i],names[i]]);
     const scale=Math.max(20,sharedScale,p.v,p.target||0),filled=Math.max(0,Math.min(100,p.v/scale*100));
-    const detail=vals.map((v,i)=>names[i]+' '+v.toFixed(2)).join(' · ');
-    return `<div class="ddconv" role="img" tabindex="0" aria-label="${esc(detail)} · 합계 ${Number(p.v).toFixed(2)}" title="${esc(detail)}"><div class="ddconv-fill" style="width:${filled}%">${vals.map((v,i)=>v>0?`<span class="ddconv-seg ddconv-${keys[i]}" style="flex:${v}" title="${names[i]} ${v.toFixed(2)}"><small>${v.toFixed(2)}</small></span>`:'').join('')}</div>${p.target>0?`<i class="ddconv-goal" style="left:${Math.min(100,p.target/scale*100)}%" aria-hidden="true"></i>`:''}</div>`;
+    const detail=segs.map(g=>g[2]+' '+g[1].toFixed(2)).join(' · ');
+    return `<div class="ddconv" role="img" tabindex="0" aria-label="${esc(detail)} · 합계 ${Number(p.v).toFixed(2)}" title="${esc(detail)}"><div class="ddconv-fill" style="width:${filled}%">${segs.map(g=>g[1]>0?`<span class="ddconv-seg ddconv-${g[0]}" style="flex:${g[1]}" title="${g[2]} ${g[1].toFixed(2)}"><small>${g[1].toFixed(2)}</small></span>`:'').join('')}</div>${p.target>0?`<i class="ddconv-goal" style="left:${Math.min(100,p.target/scale*100)}%" aria-hidden="true"></i>`:''}</div>`;
   }
 
   function ddFeedbackSection(r, D) {
@@ -17931,6 +17950,12 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
  .dk{display:none!important}.mb{display:inline}.splh{display:none}
  .splr{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:11px 14px}.splr .nm{display:block}.splr .nm b{font-size:15px}.splr .nm .ms{display:inline;margin-left:6px;font-size:12.5px;color:var(--sub,#5b6574)}
  .splr .q{font-size:19px;align-self:center;grid-row:1;grid-column:2}.splr .q small{font-size:12px;color:var(--sub,#5b6574);font-weight:600;margin-left:2px}.splr .mt{grid-column:1/-1;color:var(--sub,#5b6574);font-size:12.5px}.splr .mt b{color:var(--ink);font-weight:700}.spld{padding:0 14px}}
+</style>
+<style id="dd-stab-v2968">
+.ddgroups,.ddcombo-v28{--cv-os:#56b4aa;--cv-st:#a8cf6a}
+.ddconv .ddconv-os{background:var(--cv-os)}.ddconv .ddconv-st{background:var(--cv-st)}
+.ddsplit-lg{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:11.5px;color:var(--sub,#5b6574)}.ddsplit-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;background:var(--cv-ship)}.ddsplit-lg i.os{background:var(--cv-os)}.ddsplit-lg i.st{background:var(--cv-st)}.ddsplit-lg i.ot{background:repeating-linear-gradient(135deg,#d9dde6 0 2px,#f3f4f7 2px 4px)}
+.ddcombo-v28 .ddcombo-qty>.os{background:var(--cv-os)}.ddcombo-v28 .ddcombo-qty>.st{background:var(--cv-st)}
 </style>
 <style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style></body>
 </html>
