@@ -3594,7 +3594,8 @@ html[data-theme=dark] .pa-r.done{background:rgba(95,208,141,.08)}html[data-theme
 html[data-theme=dark] .ddwork span,html[data-theme=dark] .ddvol2>span{background:rgba(45,212,191,.10)}
 html[data-theme=dark] .ddwork b,html[data-theme=dark] .ddvol2 b{color:#5eead4}
 </style>
-<style id="rt-v2960">.rtm td small{display:block;font-size:10.5px;color:var(--sub);font-weight:500}.rtm td.rtlow{opacity:.45}.rtm td.rtsl{background:rgba(229,72,77,.12)}.rtm td.rtfa{background:rgba(18,163,122,.12)}.rtm th{text-align:right}.rtm th:nth-child(-n+2){text-align:left}.rtm td:first-child{text-align:left}.modal.rtm{width:min(1040px,95vw);max-height:90vh;overflow:auto}.rtbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}.rtbar label{margin-left:auto;font-size:13px;color:var(--sub)}.rtbar input{width:64px;height:32px;text-align:center;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}.rth{margin:14px 0 6px;font-size:14px}.rtt{width:100%;border-collapse:collapse;font-size:13.5px}.rtt th{text-align:left;color:var(--sub);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}.rtt td{padding:7px 8px;border-bottom:1px solid var(--line2)}.rtt .n,.rtt th:nth-child(n+3){text-align:right}.rtt .l{text-align:left!important}.rtu{cursor:pointer}.rtu:hover{background:var(--line2)}.rtd td{background:var(--line2);font-size:12.5px;color:var(--sub)}.rtd span{display:inline-block;margin:2px 12px 2px 0}.rtbar2{display:inline-block;width:70px;height:8px;border-radius:4px;background:var(--line2);overflow:hidden;vertical-align:middle}.rtbar2 b{display:block;height:100%;background:var(--blue);border-radius:4px}.rtbar2 b.sl{background:#e5484d}.rtbar2 b.fa{background:#12a37a}.rtall td{background:var(--line2);font-weight:700}.rtx td{color:var(--sub);text-decoration:line-through}.rtchips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.rtchip{padding:5px 12px!important;font-size:13px!important}.rtday{margin:2px 6px 2px 0}</style></head>
+<style id="rt-v2960">.rtm td small{display:block;font-size:10.5px;color:var(--sub);font-weight:500}.rtm td.rtlow{opacity:.45}.rtm td.rtsl{background:rgba(229,72,77,.12)}.rtm td.rtfa{background:rgba(18,163,122,.12)}.rtm th{text-align:right}.rtm th:nth-child(-n+2){text-align:left}.rtm td:first-child{text-align:left}.modal.rtm{width:min(1040px,95vw);max-height:90vh;overflow:auto}.rtbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}.rtbar label{margin-left:auto;font-size:13px;color:var(--sub)}.rtbar input{width:64px;height:32px;text-align:center;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}.rth{margin:14px 0 6px;font-size:14px}.rtt{width:100%;border-collapse:collapse;font-size:13.5px}.rtt th{text-align:left;color:var(--sub);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}.rtt td{padding:7px 8px;border-bottom:1px solid var(--line2)}.rtt .n,.rtt th:nth-child(n+3){text-align:right}.rtt .l{text-align:left!important}.rtu{cursor:pointer}.rtu:hover{background:var(--line2)}.rtd td{background:var(--line2);font-size:12.5px;color:var(--sub)}.rtd span{display:inline-block;margin:2px 12px 2px 0}.rtbar2{display:inline-block;width:70px;height:8px;border-radius:4px;background:var(--line2);overflow:hidden;vertical-align:middle}.rtbar2 b{display:block;height:100%;background:var(--blue);border-radius:4px}.rtbar2 b.sl{background:#e5484d}.rtbar2 b.fa{background:#12a37a}.rtall td{background:var(--line2);font-weight:700}.rtx td{color:var(--sub);text-decoration:line-through}.rtchips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.rtchip{padding:5px 12px!important;font-size:13px!important}.rtday{margin:2px 6px 2px 0}</style><style>td.mk.special-disabled{cursor:default!important;background:#edf0f4!important;color:#9aa3b0!important;box-shadow:none!important}td.mk.special-disabled:hover{background:#edf0f4!important}</style>
+</head>
 <body>
 <div id="app"></div>
 <div id="toast"></div>
@@ -8019,7 +8020,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.73';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.74';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8369,6 +8370,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return C.COLS.map(x => Object.assign({}, x, { label: NM[x.c] || x.label }))
       .filter(x => x.label !== '-' && (!HD.includes(x.c) || used(x.c)))
       .map(x => Object.assign(x, { gi: grpIdx(x.c, CT) })).sort((a, b) => a.gi - b.gi || colPos(a.c) - colPos(b.c));
+  }
+  // v29.74: 대상 직원 소속 기준. 기존 체크는 해제만 허용.
+  const specialAllowed = u => !!u && ['1그룹', '안정화'].includes(u.group);
+  const specialRestricted = (c, date, u = who()) => !specialAllowed(u) && !!(C.COL[c] && C.COL[c].ext) && String(((rateSet(ymOfDate(date)) || {}).names || {})[c] || '').replace(/\s/g, '') === '안정화(특수)';
+  function syncSpecialCell(td, c, value) {
+    const blocked = specialRestricted(c, S.date) && !value;
+    td.classList.toggle('special-disabled', blocked);
+    td.setAttribute('aria-disabled', String(blocked));
+    td.title = blocked ? '1그룹 · 안정화 파트 전용' : specialRestricted(c, S.date) ? '기존 체크 해제 가능' : '';
   }
   // 수량 칸 : 조립 / 반조 / 제조사용(출고) / 제조
   const qtyChips = (P, oldLay) => P.by.filter(([, n]) => n).map(([c, n]) => `<span class="qchip">${C.QLAB[c]} ${n}</span>`).join('');
@@ -9042,6 +9052,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const g = $('#grid');
     g.classList.toggle('pad', !ro);
     g.innerHTML = '<thead>' + h1 + h2 + h3 + f1 + f2r + '</thead><tbody>' + body + '</tbody>';     // v28.18 : 합계 · 환산 줄을 위로 (스크롤해도 보임)
+    $$('td.mk[data-c]', g).forEach(td => syncSpecialCell(td, td.dataset.c, doc.rows[+td.closest('tr').dataset.i].m[td.dataset.c]));
     $('#rowinfo').textContent = doc.rows.length + ' / ' + C.MAX_ROWS + '줄';
     { const n = $('#mfgn'), mf = doc.rows.filter(r => r.k === '제조' && r.q !== '' && r.q != null); if (n) n.innerHTML = mf.length ? `오늘 제조 <b>${mf.length}</b>건 · <b>${mf.reduce((a, r) => a + C.num(r.q), 0)}</b>대` : ''; }
     if (ro) { g.onclick = e => { const sl = e.target.closest('td.snl1'); if (sl) mfgList(+sl.closest('tr').dataset.i); }; return; }
@@ -9483,6 +9494,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function toggle(td) {
     const tr = td.closest('tr'), i = +tr.dataset.i, r = S.day.doc.rows[i], c = td.dataset.c, x = C.COL[c];
+    if (specialRestricted(c, S.date) && !r.m[c]) return;
     if (!String(r.o).trim()) return toast('주문번호부터 입력하세요', true);
     if (r.q === '' || r.q == null) return toast('수량을 먼저 입력하세요', true);
     if (x.kind !== 'type' && !C.EXCLUSIVE.type.some(k => r.m[k]) && !r.m[c]) return toast('조립구분(일반~반조)을 먼저 선택하세요', true);
@@ -9493,6 +9505,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       r.m[c] = 1;
     }
     td.classList.toggle('on', !!r.m[c]); td.textContent = r.m[c] ? 'V' : '';
+    syncSpecialCell(td, c, r.m[c]);
     changed();
   }
   async function clearRow(i, silent) {
@@ -9501,7 +9514,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     S.day.doc.rows[i] = { o: '', q: '', m: {}, memo: '' };
     const tr = $(`#grid tr[data-i="${i}"]`);
     $$('input', tr).forEach(x => (x.value = ''));
-    $$('td.mk,td.n', tr).forEach(x => { x.classList.remove('on'); if (x.classList.contains('mk')) x.textContent = ''; });
+    $$('td.mk,td.n', tr).forEach(x => { x.classList.remove('on'); if (x.classList.contains('mk')) { x.textContent = ''; syncSpecialCell(x, x.dataset.c, 0); } });
     tr.querySelector('td.o').classList.remove('mfg'); tr.querySelector('input[data-f="o"]').title = '';
     const c1 = tr.querySelector('td.c1'); c1.classList.remove('hasmemo'); delete c1.dataset.mtip;
     const mb = tr.querySelector('[data-memo]'); if (mb) { mb.classList.remove('on'); mb.textContent = '+ 메모'; }
@@ -15383,7 +15396,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const lab = c => (SM_OS.concat(SM_A, SM_OP, SPL).find(x => x[0] === c) || [c, c])[1].replace('<br>', ' ');
     const tagOf = c => SM_TAG[c] || ((C.COL[c] && C.COL[c].ext) ? lab(c) : c);
     const sync = () => {
-      $$('.pmx [data-k]').forEach(b => { const c = b.dataset.k, v = V.sel[c]; b.classList.toggle('on', !!v); const old = b.querySelector('sup'); if (old) old.remove(); if (v > 1 || (v && C.COL[c].kind === 'num')) b.insertAdjacentHTML('beforeend', `<sup>${v}</sup>`); });
+      $$('.pmx [data-k]').forEach(b => { const c = b.dataset.k, v = V.sel[c]; b.classList.toggle('on', !!v); b.disabled = specialRestricted(c, S.today, S.me) && !v; const old = b.querySelector('sup'); if (old) old.remove(); if (v > 1 || (v && C.COL[c].kind === 'num')) b.insertAdjacentHTML('beforeend', `<sup>${v}</sup>`); });
       const nm = c => { const v = V.sel[c]; return lab(c) + (C.COL[c].kind === 'num' && V.q > 1 && v ? ' ×' + v : (C.COL[c].kind === 'num' && v > 1 ? ' ×' + v : '')); };
       const ks = Object.keys(V.sel); $('#smsum').textContent = ks.length ? ks.map(nm).join(' + ') : '항목을 선택하세요';
       $('#smtip').innerHTML = V.tip || '항목을 누르면 설명이 나옵니다';
@@ -15412,6 +15425,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $('#smq').oninput = () => { V.q = Math.max(1, Math.floor(+$('#smq').value || 1)); };
     $$('.pmx [data-k]').forEach(b => (b.onclick = () => {
       const c = b.dataset.k, num = C.COL[c].kind === 'num';
+      if (specialRestricted(c, S.today, S.me) && !V.sel[c]) return;
       V.tip = `<b>${esc(lab(c))}</b> ${esc(tp[c] || '')}`;
       if (num) { const n = (V.sel[c] || 0) >= V.q ? 0 : (V.sel[c] || 0) + 1; if (n) V.sel[c] = n; else delete V.sel[c]; }
       else if (V.sel[c]) delete V.sel[c]; else V.sel[c] = 1;
