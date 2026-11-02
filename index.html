@@ -6949,7 +6949,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const v=num(x.data?.일평균);map.get(nm).values[key]=v; }));
       const filtered=[...map.values()].filter(x=>!ST.hrv4keyword||x.name.includes(ST.hrv4keyword)).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
       const fmt=x=>x===null||!isFinite(x)?'—':(Math.round(x*100)/100).toFixed(2);
-      body().innerHTML='<div class="card" style="padding:12px"><div class="row" style="justify-content:space-between;margin-bottom:10px"><strong>기간별 월말데이터 · '+ymLab(range.from)+' ~ '+ymLab(range.to)+'</strong><button id="czfHrReturn" class="sm">월별 화면으로</button></div><div class="muted" style="font-size:11.5px;margin-bottom:10px">현재 조회 권한 내 대상 · 기록이 없는 월은 — 표기 · 평균은 수치가 있는 월만 산술평균</div><div style="overflow:auto;max-height:calc(100vh - 290px)"><table class="list" style="white-space:nowrap"><thead><tr><th>이름</th><th>등급</th>'+keys.map(k=>'<th class="num">'+ymLab(k)+'</th>').join('')+'<th class="num">기간 평균</th></tr></thead><tbody>'+filtered.map(x=>{const vals=keys.map(k=>x.values[k]===undefined?null:x.values[k]);const present=vals.filter(v=>v!==null&&isFinite(v));const avg=present.length?present.reduce((a,b)=>a+b,0)/present.length:null;return '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.grade)+'</td>'+vals.map(v=>'<td class="num">'+fmt(v)+'</td>').join('')+'<td class="num"><b>'+fmt(avg)+'</b></td></tr>';}).join('')+'</tbody></table></div></div>';
+      body().innerHTML='<div class="card" style="padding:12px"><div class="row" style="justify-content:space-between;margin-bottom:10px"><strong>기간별 월말데이터 · '+ymLab(range.from)+' ~ '+ymLab(range.to)+'</strong><button id="czfHrReturn" class="sm">월별 화면으로</button></div><div class="muted" style="font-size:11.5px;margin-bottom:10px">현재 조회 권한 내 대상 · 기록이 없는 월은 — 표기 · 평균은 수치가 있는 월만 산술평균</div><div style="overflow:auto;max-height:calc(100vh - 290px)"><table class="list" style="white-space:nowrap"><thead><tr><th>이름</th><th>레벨</th>'+keys.map(k=>'<th class="num">'+ymLab(k)+'</th>').join('')+'<th class="num">기간 평균</th></tr></thead><tbody>'+filtered.map(x=>{const vals=keys.map(k=>x.values[k]===undefined?null:x.values[k]);const present=vals.filter(v=>v!==null&&isFinite(v));const avg=present.length?present.reduce((a,b)=>a+b,0)/present.length:null;return '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.grade)+'</td>'+vals.map(v=>'<td class="num">'+fmt(v)+'</td>').join('')+'<td class="num"><b>'+fmt(avg)+'</b></td></tr>';}).join('')+'</tbody></table></div></div>';
       const b=$('#czfHrReturn');if(b)b.onclick=()=>{ST.hrRange=null;ST.hrv4mode='귀속월';go(ST.tab);};
     }catch(e){if(seq===ST.hrRangeSeq&&ST.hrRange)body().innerHTML='<div class="warn">기간별 평가 조회 실패: '+esc(e.message)+'</div>';}
   }
@@ -7001,7 +7001,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function renderPList() {
     const d = ST.data;
     const EF = A.colFilter({ key: 'hrev', scope: '#plist', base: () => d.list, redraw: () => renderPList(), cols: [
-      ['grade', '등급', x => x.person.grade]] });
+      ['grade', '레벨', x => x.person.grade]] });
     const rows = EF.filter(d.list).filter(x => !ST.hrv4keyword || x.person.name.includes(ST.hrv4keyword)).map(x => {
       const dt = x.data, low = dt.달성률 !== null && dt.달성률 < 1;
       return `<tr class="${x.person.name === ST.sel ? 'on' : ''}" data-n="${esc(x.person.name)}">
@@ -7032,7 +7032,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const p = x.person;
     $('#editor').innerHTML = `<section class="card ed">
       <div class="edh"><h2>${esc(p.name)}</h2><span class="chipg">${esc(p.part)}</span>${p.role === '파트장' ? '<span class="badge lead">파트장</span>' : ''}
-        <span class="chipg">등급 ${esc(p.grade || '없음')}</span>${p.memo ? `<span class="chipg">${esc(p.memo)}</span>` : ''}</div>
+        <span class="chipg">레벨 ${esc(p.grade || '없음')}</span>${p.memo ? `<span class="chipg">${esc(p.memo)}</span>` : ''}</div>
       <div id="side"></div>
       <div class="hr-readonly-note">🔒 <b>보기 전용</b> · 업무데이터만 확인하는 화면입니다.</div></section>`;
     renderSide(x);
@@ -7048,7 +7048,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function renderSide(x) {
     const d=x.data, a=d.근태기록||{}, pt=partPerformance(x);
-    const cells=arr=>arr.map(([k,v])=>`<span><small>${k}</small><b>${v}</b></span>`).join('');
+    const cells=arr=>arr.map(([k,v,c])=>`<span><small>${k}</small><b${c?` class="${c}"`:''}>${v}</b></span>`).join('');
     const row=(kind,arr)=>`<div class="eval-fact-row eval-${kind==='실적'?'production':kind==='사고'?'accident':'attendance'}"><strong>${kind}</strong><div>${cells(arr)}</div></div>`;
     const val=v=>v==null?'-':fixedAvg(v);
     $('#side').innerHTML=`${d.hasData?'':'<div class="banner warn">업무데이터 없음 · 원본 이름과 실적 반영 상태를 확인하세요.</div>'}
@@ -7057,7 +7057,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ${row('실적',[['총수량',val(d.총수량)],['일평균',val(d.일평균)],['달성률',pct(d.달성률)],['근무일',dash(d.근무일수)],['개인목표',val(d.개인목표)],['전월평균',val(d.전월평균)]])}
       ${row('사고',[['품질지적',dash(d.품질지적)],['미/오발송',dash(d.미오발송)],['오조립',dash(d.오조립)],['파손',dash(d.파손)],['지시불이행',dash(d.지시불이행)]])}
       ${row('근태',[['지각',dash(d.지각)],['조퇴',dash(d.조퇴)],['결근',dash(d.결근)],['당일연차',dash(d.당일연차)]])}<div class="eval-rank-note">총량 ${dash(d.총수량순위)}위 · 평균 ${dash(d.평균순위)}위 · 파트 ${d.파트순위?d.파트순위+'/'+d.파트인원:'-'} <span>｜</span> ${esc(Object.keys(a).map(k=>k+' '+a[k]).join(' · ')||'근태 기록 없음')} · <a href="#" id="attGo">근태 탭</a></div></div>
-      <aside class="eval-part"><strong>파트 성과 · ${esc(x.person.part)}</strong><small>실적·목표 반영 ${pt.valid}/${pt.count}명</small><div>${cells([['목표',val(pt.goal)],['실적',val(pt.actual)],['달성률',pct(pt.ratio)],['사고 건수',pt.accidents==null?'-':pt.accidents],['인당 사고',val(pt.perPerson)]])}</div><div class="eval-part-progress" role="img" aria-label="달성률 ${pct(pt.ratio)}"><i style="width:${pt.ratio==null?0:Math.max(0,Math.min(100,pt.ratio*100))}%"></i></div><small>목표·실적은 반영 인원의 일평균 합계</small></aside></div>`;
+      <aside class="eval-part"><strong>파트 성과 · ${esc(x.person.part)}</strong><small>실적·목표 반영 ${pt.valid}/${pt.count}명</small><div>${cells([['목표',val(pt.goal)],['실적',val(pt.actual)],['달성률',pct(pt.ratio)],['사고 건수',pt.accidents==null?'-':pt.accidents,'hr-red'],['인당 사고',val(pt.perPerson),'hr-red']])}</div><div class="eval-part-progress" role="img" aria-label="달성률 ${pct(pt.ratio)}"><i style="width:${pt.ratio==null?0:Math.max(0,Math.min(100,pt.ratio*100))}%"></i></div><small>목표·실적은 반영 인원의 일평균 합계</small></aside></div>`;
     $('#attGo').onclick=e=>{e.preventDefault();go('att');};
   }
 
@@ -7092,7 +7092,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="scroll"><table class="tbl" id="ovTbl"></table></div></section>`;
     body().querySelectorAll('[data-pp]').forEach(c => (c.onclick = () => { ST.part = c.dataset.pp; ST.sel = null; ST.tab = 'eval'; go('eval'); }));
     const OF = A.colFilter({ key: 'hrov', scope: '#ovTbl', base: () => d.list, redraw: () => draw(), cols: [
-      ['part', '파트', x => x.person.part, parts.map(p => p.name)], ['role', '직책', x => x.person.role], ['grade', '등급', x => x.person.grade]] });
+      ['part', '파트', x => x.person.part, parts.map(p => p.name)], ['role', '직책', x => x.person.role], ['grade', '레벨', x => x.person.grade]] });
     const draw = () => {
       const rows = OF.filter(d.list);
       $('#ovBar').innerHTML = `<span class="muted">${rows.length}명</span>` + OF.bar();
@@ -7379,7 +7379,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   }
   function editTable(table, rows, opts = {}) {
     const cols = opts.cols || CFG.headers[table];
-    return `${rowEditTables.includes(table)?'<p class="cfg-edit-help">[수정] → 값 변경 → 하단 [저장]으로 반영합니다. [입력 완료]는 행 편집만 종료합니다.</p>':''}<div class="scroll"><table class="edit" id="ed_${table}"><tr>${cols.map(h => `<th>${esc(h)}</th>`).join('')}${opts.fixed ? '' : '<th></th>'}</tr>
+    return `${rowEditTables.includes(table)?'<p class="cfg-edit-help">[수정] → 값 변경 → 하단 [저장]으로 반영합니다. [입력 완료]는 행 편집만 종료합니다.</p>':''}<div class="scroll"><table class="edit" id="ed_${table}"><tr>${cols.map(h => `<th>${esc((opts.label || {})[h] || h)}</th>`).join('')}${opts.fixed ? '' : '<th></th>'}</tr>
       ${rows.map(r => rowHtml(table, r, opts)).join('')}</table></div>${opts.fixed ? '' : `<button class="sm" data-add="${table}" style="margin-top:6px">+ 줄 추가</button>`}`;
   }
   function wireTable(table, opts = {}) {
@@ -7426,9 +7426,9 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const users = new Set(), st0 = {}; (CFG['설정'] || []).forEach(r => (st0[r['항목']] = r['값']));
     cfgb().innerHTML = `
       <div class="card"><h2>명단 (파트장 · 사원)</h2>
-        <div class="banner info">대상·등급·원본이름·파트는 왼쪽 메뉴 <b>[인원 관리]</b>에서 사람별로 고칩니다. 여기서는 보기만 합니다.
+        <div class="banner info">대상·레벨·원본이름·파트는 왼쪽 메뉴 <b>[인원 관리]</b>에서 사람별로 고칩니다. 여기서는 보기만 합니다.
           <button class="sm" id="hrGoPpl" style="margin-left:8px">인원 관리로 가기</button></div>
-        <div style="max-height:52vh;overflow:auto"><table class="tbl"><tr><th>이름</th><th>파트</th><th>직책</th><th>등급</th><th>원본이름</th><th>사용</th><th>비고</th></tr>
+        <div style="max-height:52vh;overflow:auto"><table class="tbl"><tr><th>이름</th><th>파트</th><th>직책</th><th>레벨</th><th>원본이름</th><th>사용</th><th>비고</th></tr>
         ${(() => { const po = (CFG['파트'] || []).map(x => x['파트']), ix = p => { const i = po.indexOf(p); return i < 0 ? 999 : i; };   // 파트 순서대로 (그룹을 옮긴 사람도 새 파트 자리에)
           return (CFG['명단'] || []).map((r, i) => [r, i]).sort((A, B) => (ix(A[0]['파트']) - ix(B[0]['파트'])) || (A[1] - B[1])).map(x => x[0]); })().map(r => `<tr class="gc" style="--gc:${A.gcol(r['파트'])}"><td>${esc(r['이름'])}</td><td>${A.gdot(r['파트'])}</td><td>${esc(r['직책'])}</td><td>${esc(r['등급'])}</td><td>${esc(r['원본이름'])}</td><td>${esc(r['사용'])}</td><td>${esc(r['비고'])}</td></tr>`).join('')}</table></div></div>
       <div class="card"><h2>파트 · 담당 매니저</h2>
@@ -7436,7 +7436,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
         ${editTable('파트', CFG['파트'], { w: { 파트: 80, 담당매니저: 80, 순서: 40 } })}
         <div class="actions"><button class="primary" id="svPart">파트 저장</button></div></div>
       <div class="cfg3">
-        <div class="card"><h2>등급별 목표수량</h2><div class="muted" style="margin-bottom:6px">인원별 데이터의 개인목표 · 달성률 계산에 쓰입니다.</div>${editTable('등급목표', CFG['등급목표'], { w: { 등급: 50, 목표수량: 70, 설명: 150 } })}<div class="actions"><button class="primary" id="svGrade">저장</button></div></div>
+        <div class="card"><h2>레벨별 목표수량</h2><div class="muted" style="margin-bottom:6px">인원별 데이터의 개인목표 · 달성률 계산에 쓰입니다.</div>${editTable('등급목표', CFG['등급목표'], { w: { 등급: 50, 목표수량: 70, 설명: 150 }, label: { 등급: '레벨' } })}<div class="actions"><button class="primary" id="svGrade">저장</button></div></div>
         <div class="card"><h2>기본 월</h2><div class="fld"><label>매니저 화면에 기본으로 열리는 월</label><input type="month" id="stMonth" value="${esc(st0['현재평가월'] || '')}"></div><div class="actions"><button class="primary" id="svSet">저장</button></div></div></div>`;
     wireTable('파트'); wireTable('등급목표');
     $('#svGrade').onclick = () => saveTable('등급목표', readTable('등급목표'));
@@ -8280,7 +8280,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.70';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.71';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -14939,7 +14939,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     return F;
   }
   const PCOL = [['title', '직책', x => x.title], ['rank', '직급', x => x.rank], ['level', '레벨', x => x.level], ['status', '상태', x => x.status], ['job', '세부직무', x => x.job],
-    ['lvg', '연차 등급', x => x.lv_grade], ['sat', '토요', x => x.in_roster ? '포함' : '제외'], ['hrg', '평가 등급', x => x.hr_use ? (x.hr_grade || '-') : '대상 아님'],
+    ['lvg', '연차 등급', x => x.lv_grade], ['sat', '토요', x => x.in_roster ? '포함' : '제외'], ['hrg', '레벨(목표수량)', x => x.hr_use ? (x.hr_grade || '-') : '대상 아님'],
     ['acct', '계정', x => !x.acct ? '미등록' : x.acct.nopin ? '비밀번호 없음' : x.acct.tmp ? '임시 비밀번호' : '등록됨']];
   const pBase = () => { const P = S._ppl, g = S.pG || '', f = S.pF || ''; return P.rows.filter(x => (!g || g.split(',').includes(x.grp)) && (!f || (f === 'y') === !!x.acct || (f === 'hr' && x.hr_use) || (f === 'sat' && x.in_roster))); };
   const PF = colFilter({ key: 'ppl', cols: PCOL, base: pBase, redraw: () => drawPList(), scope: '.plist' });
@@ -15066,7 +15066,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
         <div class="row" style="gap:8px">${inp('p_grant', '연차 부여일수', v.grant_days, 1)}${inp('p_memo', '메모 (관리자만 · 200자까지)', v.memo, 3).replace('<input', '<input maxlength="200"')}</div></div>
       <div data-pane="hr" class="hide">${P.hrOn ? '' : '<div class="note">월말데이터 자료 전입니다. 이 값은 가져온 뒤 반영됩니다.</div>'}
         <label class="dck"><input type="checkbox" id="p_hru" ${v.hr_use !== false ? 'checked' : ''}><span><b>월말데이터 대상</b><small>끄면 목록에서 빠짐 (기록은 남음)</small></span></label>
-        <div class="row" style="gap:8px"><div class="fld" style="flex:1"><label>월말데이터 등급 (목표수량)</label><select id="p_hrg">${opt(P.hrGrades, v.hr_grade, true)}</select></div>
+        <div class="row" style="gap:8px"><div class="fld" style="flex:1"><label>레벨 (목표수량)</label><select id="p_hrg">${opt(P.hrGrades, v.hr_grade, true)}</select></div>
           ${inp('p_alias', '원본이름 (업무데이터 이름이 다를 때)', v.hr_alias, 2)}</div>
         ${inp('p_hnote', '비고 (100자까지)', v.hr_note).replace('<input', '<input maxlength="100"')}
         <div class="note">파트는 그룹(${esc(v.grp || '-')})을 따릅니다. 담당 매니저는 [월말데이터마감 → 기준 · 명단 → 파트]에서 정합니다.</div></div>
@@ -16783,7 +16783,7 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
  .splr{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:11px 14px}.splr .nm{display:block}.splr .nm b{font-size:15px}.splr .nm .ms{display:inline;margin-left:6px;font-size:12.5px;color:var(--sub,#5b6574)}
  .splr .q{font-size:19px;align-self:center;grid-row:1;grid-column:2}.splr .q small{font-size:12px;color:var(--sub,#5b6574);font-weight:600;margin-left:2px}.splr .mt{grid-column:1/-1;color:var(--sub,#5b6574);font-size:12.5px}.splr .mt b{color:var(--ink);font-weight:700}.spld{padding:0 14px}}
 </style>
-<style id="hr-v2970">.hr-readonly-note{margin-top:12px;padding:8px 12px;border:1px dashed var(--line,#cfd6e3);border-radius:10px;color:var(--sub,#5b6574);font-size:12.5px}</style>
+<style id="hr-v2970">.eval-accident b,.eval-attendance b,.hr-red{color:#d32f2f!important}.hr-readonly-note{margin-top:12px;padding:8px 12px;border:1px dashed var(--line,#cfd6e3);border-radius:10px;color:var(--sub,#5b6574);font-size:12.5px}</style>
 <style id="dd-stab-v2969">
 .ddgroups,.ddcombo-v28{--cv-os:#56b4aa;--cv-st:#a8cf6a;--cv-rest:#c9b7e6}
 .ddconv .ddconv-os{background:var(--cv-os)}.ddconv .ddconv-st{background:var(--cv-st)}.ddconv .ddconv-rest{background:var(--cv-rest);cursor:help}
