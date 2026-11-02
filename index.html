@@ -1879,7 +1879,7 @@ html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
 .ddsummary-v7>.card{padding:14px 16px;min-width:0;border-radius:14px!important}
 .ddsummary-v7 .ddh{font-size:14px;margin-bottom:10px}
 .ddquick-bars{display:grid;gap:8px}
-.ddquick-bar{display:grid;grid-template-columns:110px minmax(50px,1fr) 48px;gap:10px;align-items:center;font-size:12.5px}
+.ddquick-bar{display:grid;grid-template-columns:110px minmax(50px,1fr) 56px 84px;gap:10px;align-items:center;font-size:12.5px}.ddquick-bar>em{font-style:normal;text-align:right;color:var(--sub);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}.ddq100{display:flex;gap:2px;height:28px;border-radius:8px;overflow:hidden;margin:2px 0 6px}.ddq100>span{display:flex;align-items:center;justify-content:center;color:#13233c;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;min-width:0}.ddq100-ot,.ddq100-lg i.ddq100-ot{background:repeating-linear-gradient(135deg,#d9dde6 0 2px,#f3f4f7 2px 4px)}.ddq100-lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--sub);margin-bottom:12px}.ddq100-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}.ddq100-lg b{color:var(--text,#1c2433);font-variant-numeric:tabular-nums}.ddq100-sum{margin-left:auto}.ddq100-note{font-size:11px;color:#b45309;margin:-6px 0 10px}.ddq-sep{border-top:1px dashed var(--line);margin:10px 0}.ddsplit-lg em{font-style:normal;color:var(--sub);font-size:11px}
 .ddquick-bar>span{color:var(--sub);font-weight:650;white-space:nowrap}
 .ddquick-bar>b{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .ddquick-track{height:9px;background:var(--line2);border-radius:8px;overflow:hidden}
@@ -1926,7 +1926,7 @@ html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
 .ddcombo-v7 + .ddleg{padding:7px 12px}
 @media(max-width:1450px){.ddcombo-row{grid-template-columns:72px minmax(130px,1.2fr) 175px minmax(230px,1fr);gap:8px}.ddcombo-value small{font-size:11px}.ddsummary-v7 .dd-support-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1150px){.ddkpis-v7{grid-template-columns:repeat(2,minmax(0,1fr))}.ddcombo-row{grid-template-columns:78px minmax(150px,1fr) minmax(180px,auto)}.ddcombo-checks{grid-column:2 / -1}.ddsummary-v7{grid-template-columns:1fr}.ddsummary-v7 .dd-support-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:720px){.ddkpis-v7{grid-template-columns:minmax(0,1fr)}.ddsummary-v7 .dd-support-grid{grid-template-columns:minmax(0,1fr)}.ddcombo-row{grid-template-columns:70px minmax(0,1fr);gap:6px 9px}.ddcombo-value{grid-column:2}.ddcombo-checks{grid-column:1/-1}.ddquick-bar{grid-template-columns:90px minmax(40px,1fr) 44px;gap:6px}#main:has(.ddkpis-v7) > .ph{padding:9px 15px}#main:has(.ddkpis-v7) .pgb{padding:8px 14px 28px}}
+@media(max-width:720px){.ddquick-bar{grid-template-columns:80px minmax(30px,1fr) 48px 72px!important}.ddkpis-v7{grid-template-columns:minmax(0,1fr)}.ddsummary-v7 .dd-support-grid{grid-template-columns:minmax(0,1fr)}.ddcombo-row{grid-template-columns:70px minmax(0,1fr);gap:6px 9px}.ddcombo-value{grid-column:2}.ddcombo-checks{grid-column:1/-1}.ddquick-bar{grid-template-columns:90px minmax(40px,1fr) 44px;gap:6px}#main:has(.ddkpis-v7) > .ph{padding:9px 15px}#main:has(.ddkpis-v7) .pgb{padding:8px 14px 28px}}
 
 
 /* 2026-10-22: 그룹별 평균 환산 상태칩 3종 동일한 행/높이/수직 정렬 */
@@ -8019,7 +8019,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.72';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.73';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9960,6 +9960,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   //   저장된 요약의 열별 개수(t)와 그 달 항목별 분으로 다시 계산하고, 합계가 기존 출고 환산과 정확히 같을 때만 나눔 (아니면 기존 표시 그대로)
   //   det = 그 외 작업의 항목별 [이름, 건수, 환산] (마우스를 올렸을 때 보여 줌)
   const DD_STAB_OTHER=[['재인증',['AC']],['바이오스',['AF']],['완충',['AH','AI']],['옵션 변경',['AJ','AK','AL','AM','AN']],['난이도 추가',['AO','AP','AQ','AR']],['반조 받음',['AS']],['개인포장',['AT']]];
+  // v29.73 : '안정화(특수)' = 항목 설정에서 이름 붙인 추가 칸 → 안정화 건수 · 환산에 합침
+  let DD_SPC=null;
+  const ddSpecialCol=ym=>{const set=rateSet(ym)||(S.rates||[]).slice(-1)[0]||{},NM=set.names||{};return Object.keys(NM).find(c=>C.COL[c]&&C.COL[c].ext&&String(NM[c]).replace(/[\s\n]/g,'')==='안정화(특수)')||null;};
   function ddStabSplit(cv, s, M, f6){
     if(!cv||!s||!s.t||!(f6>0)||!(cv.ship>1e-8))return cv;
     const r10=s.r10||{};
@@ -9968,10 +9971,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const MM=C.minsMap(M);                                                      // M = 그 달에 바꾼 항목만 있는 값 → 기본 분과 합쳐서 사용
     let all=(+s.gq||0)*0.1; for(const c in s.t)all+=(+s.t[c]||0)*(MM[c]||0)/30;
     if(Math.abs(all/f6-cv.ship)>1e-4)return cv;                                 // 열 단위 합계가 기존 출고 환산과 다르면 나누지 않음 (이중 계산 방지)
-    const mm=c=>(+s.t[c]||0)*(MM[c]||0)/30/f6, os=mm('AA')+mm('AB'), st=mm('AD')+mm('AE'), ins=mm('AG');
+    const mm=c=>(+s.t[c]||0)*(MM[c]||0)/30/f6, os=mm('AA')+mm('AB'), st=mm('AD')+mm('AE')+(DD_SPC?mm(DD_SPC):0), ins=mm('AG');
     if(os<-1e-9||st<-1e-9||ins<-1e-9||os+st+ins>cv.ship+1e-6)return cv;
     const used=new Set(['AA','AB','AD','AE','AG']), det=[];
-    DD_STAB_OTHER.forEach(([nm,cs])=>{ let q=0,v=0; cs.forEach(c=>{used.add(c);q+=+s.t[c]||0;v+=mm(c);}); if(q>0||Math.abs(v)>1e-9)det.push([nm,q,v]); });
+    if(DD_SPC)used.add(DD_SPC);
+    DD_STAB_OTHER.forEach(([nm,cs0])=>{ const cs=cs0.filter(c=>c!==DD_SPC); let q=0,v=0; cs.forEach(c=>{used.add(c);q+=+s.t[c]||0;v+=mm(c);}); if(q>0||Math.abs(v)>1e-9)det.push([nm,q,v]); });
     let eq=0,ev=0; for(const c in s.t){ if(used.has(c))continue; eq+=+s.t[c]||0; ev+=mm(c); }                  // 위에 없는 나머지 항목 (추가 항목 등)
     if(eq>0||Math.abs(ev)>1e-9)det.push(['기타 항목',eq,ev]);
     return {...cv,os,st,ins,det};
@@ -9998,7 +10002,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     (r.offs || []).forEach(o => (off[N(o.name)] = o.kind));                                  // 병가 · 경조 (대시보드 입력)가 먼저
     const asg = {}; (r.asg || []).forEach(a => (asg[N(a.name)] = a.task));
     const notes = {}; (r.notes || []).forEach(n => (notes[N(n.name)] = n));
-    const M = minsOf(r.date), num = v => +v || 0, GY = (periodOf(r.date) || curPeriod() || {}).ym; S._gym = GY;
+    const M = minsOf(r.date), num = v => +v || 0, GY = (periodOf(r.date) || curPeriod() || {}).ym; S._gym = GY; DD_SPC = ddSpecialCol(ymOfDate(r.date));
     const P = (r.people || []).map(p => {
       const o = Object.assign({}, p), st = p.status || '';
       o.ptarget = +p.target || 0; o.target = effT(o.ptarget, GY);                          // v28.51 : 목표 기준 [개인 | 팀]
@@ -10013,7 +10017,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         o.cv = ddProdMfg(ddAdjustedConversion(rawSum,s,p.conversion,o.adj,M));   // v29.35 : 라인 생산분 = 제조
         if(o.grp==='안정화'&&o.cv&&!o.adj)o.cv=ddStabSplit(o.cv,s,M,f6);            // v29.68 : 안정화 파트만 OS 설치 · 안정화 구분
         o.v = sd.f7; o.oth = f6 ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
-        { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; o.os = P.os; o.st = P.st; }   // v29.51 os · st / v28.24 : 조립 / 반조 / 출고 / 제조 따로
+        { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; o.os = P.os; o.st = P.st;
+          if(DD_SPC&&s.t)o.st+=+s.t[DD_SPC]||0;                                          // v29.73 : 안정화(특수) = 안정화 건수에 합침
+          if(s.t&&f6>0){const MM=C.minsMap(M),mm=c=>(+s.t[c]||0)*(MM[c]||0)/30/f6; o.osC=mm('AA')+mm('AB'); o.stC=mm('AD')+mm('AE')+(DD_SPC?mm(DD_SPC):0);} }   // v29.73 : OS · 안정화 환산 (열 기준) / v29.51 os · st / v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
       o.kind = o.off ? 'off' : o.task ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
       if (liveView && r._prod) ddProdPerson(o, s, r._prod, M);
@@ -10032,14 +10038,31 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const mg = (r.mgrs || {})[g] || L.filter(p => p.title === '매니저').map(p => p.disp).join('/');
       return { g, L, n: L.length, th, tn: t.length, att: L.filter(p => p.kind !== 'off').length, w: w.length, sup: L.filter(p => p.kind === 'sup').length, mg,
         avg: w.length ? w.reduce((a, p) => a + p.v, 0) / w.length : null, tg: t.length ? t.reduce((a, p) => a + p.target, 0) / t.length : null,
-        q: Math.round(w.reduce((a, p) => a + p.q, 0) * 10) / 10, mq: w.reduce((a, p) => a + (p.mq || 0), 0), ship: w.reduce((a, p) => a + (p.ship || 0), 0), ban: w.reduce((a, p) => a + (p.ban || 0), 0), os: w.reduce((a, p) => a + (p.os || 0), 0), st: w.reduce((a, p) => a + (p.st || 0), 0) };
+        q: Math.round(w.reduce((a, p) => a + p.q, 0) * 10) / 10, mq: w.reduce((a, p) => a + (p.mq || 0), 0), ship: w.reduce((a, p) => a + (p.ship || 0), 0), ban: w.reduce((a, p) => a + (p.ban || 0), 0), os: w.reduce((a, p) => a + (p.os || 0), 0), st: w.reduce((a, p) => a + (p.st || 0), 0),
+        osc: w.length && w.every(p => typeof p.osC === 'number') ? w.reduce((a, p) => a + p.osC, 0) / w.length : null, stc: w.length && w.every(p => typeof p.stC === 'number') ? w.reduce((a, p) => a + p.stC, 0) / w.length : null };
     });
     return { r, P, body, work, tw, G, total: P.length, off: P.filter(p => p.kind === 'off'), sup: P.filter(p => p.kind === 'sup'), none: body.filter(p => p.kind === 'none'),
       mgr: P.filter(p => p.kind === 'mgr'), zero: body.filter(p => p.kind === 'zero'),
       sumV: work.reduce((a, p) => a + p.v, 0), sumO: work.reduce((a, p) => a + p.oth, 0), sumQ: Math.round(work.reduce((a, p) => a + p.q, 0)), sumMQ: work.reduce((a, p) => a + (p.mq || 0), 0), sumShip: work.reduce((a, p) => a + (p.ship || 0), 0), sumBan: work.reduce((a, p) => a + (p.ban || 0), 0), sumOS: work.reduce((a, p) => a + (p.os || 0), 0), sumST: work.reduce((a, p) => a + (p.st || 0), 0),
       sumBy: C.ASM.map(c => [c, work.reduce((a, p) => a + (p.qp ? (p.qp.by.find(x => x[0] === c) || [0, 0])[1] : 0), 0)]),
       hit: tw.filter(p => lvOf(p.v, p.target, GY) === 'ok').length, GY, tgAvg: tw.length ? tw.reduce((a, p) => a + p.target, 0) / tw.length : null,
-      asgOff: P.filter(p => p.off && p.task) };
+      asgOff: P.filter(p => p.off && p.task), cvt: ddSummaryConv(work), sumOSC: work.reduce((a, p) => a + (p.osC || 0), 0), sumSTC: work.reduce((a, p) => a + (p.stC || 0), 0) };
+  }
+  // v29.73 : 오늘 전체 작업 구성 (환산 합계) — 조립 · 출고 · 제조 · OS · 안정화 · 기타시간. 구성 자료가 한 명이라도 없으면 null (기존 표시)
+  //   OS · 안정화 환산은 해당 칸 기준으로 계산해 사람별로 조립/출고 환산에서 빼서 합계는 그대로 둠 (뺄 수 없으면 그대로 두고 별도 표시)
+  function ddSummaryConv(work){
+    if(!work.length||!work.every(ddConversionReady))return null;
+    const t={asm:0,ship:0,mfg:0,other:0,os:0,st:0,osRaw:0,stRaw:0,carved:true};
+    work.forEach(p=>{
+      const cv=p.cv; t.mfg+=cv.mfg; t.other+=cv.other;
+      let a=cv.asm, sh=cv.ship, os=0, st=0;
+      if(typeof cv.os==='number'&&typeof cv.st==='number'){ os=cv.os; st=cv.st; sh-=os+st; }       // 안정화 파트 : 출고 구간에서 이미 나눔
+      else if(typeof p.osC==='number'){ os=p.osC; st=p.stC||0; const x=os+st;
+        if(x>1e-9){ if(a>=x-1e-9)a-=x; else if(sh>=x-1e-9)sh-=x; else { t.carved=false; os=0; st=0; } } }
+      t.asm+=Math.max(0,a); t.ship+=Math.max(0,sh); t.os+=os; t.st+=st;
+      t.osRaw+=p.osC||0; t.stRaw+=p.stC||0;
+    });
+    return t;
   }
   const f1d = v => v == null || !isFinite(v) ? '-' : (Math.round(v * 10) / 10).toFixed(1);
   const ddBar = (v, t, oth, col, sharedScale=0) => {
@@ -10070,7 +10093,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const rate=hasAvg&&hasTarget?pctR(x.avg,x.tg):null;
     const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
     const context=`근무 실적 ${x.w}명 · 목표 설정 ${x.tn}명${x.sup?' · 지원 '+x.sup+'명':''}`;
-    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv,split:x.g==='안정화'},scale):'<div class="ddconv"></div>'}${hasAvg&&cv&&x.g==='안정화'&&typeof cv.os==='number'?`<div class="ddsplit-lg" title="막대는 환산 비중 · 건수는 체크된 수량의 그룹 합계입니다 (한 대가 OS 설치·안정화에 함께 셈될 수 있어 서로 합치지 않습니다)"><span><i class="os"></i>OS 설치 <b>${x.os||0}</b>건</span><span><i class="st"></i>안정화 <b>${x.st||0}</b>건</span><span><i class="sh"></i>출고(검수)</span><span><i class="rest"></i>그 외 작업</span><span><i class="ot"></i>기타시간</span></div>`:''}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}</div>
+    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv,split:x.g==='안정화'},scale):'<div class="ddconv"></div>'}${hasAvg&&cv&&x.g==='안정화'&&typeof cv.os==='number'?`<div class="ddsplit-lg" title="막대는 환산 비중 · 건수는 체크된 수량의 그룹 합계입니다 (한 대가 OS 설치·안정화에 함께 셈될 수 있어 서로 합치지 않습니다)"><span><i class="os"></i>OS 설치 <b>${x.os||0}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span><span><i class="st"></i>안정화 <b>${x.st||0}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span><span><i class="sh"></i>출고(검수)</span><span><i class="rest"></i>그 외 작업</span><span><i class="ot"></i>기타시간</span></div>`:''}${hasAvg&&!(cv&&x.g==='안정화'&&typeof cv.os==='number')&&(x.os||x.st)?`<div class="ddsplit-lg ddenv" title="건수는 그룹 합계 · 환산은 그룹 평균 (OS = O/S · D+M, 안정화 = 안정화 · 안+삭제 · 안정화(특수))">${x.os?`<span><i class="os"></i>OS 설치 <b>${x.os}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span>`:''}${x.st?`<span><i class="st"></i>안정화 <b>${x.st}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span>`:''}</div>`:''}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}</div>
       <div class="ddcombo-value" title="${esc(context)}"><span class="ddcombo-target" title="기존 목표 설정 인원의 평균 목표">목표 <b>${hasTarget?fmt(x.tg):'—'}</b></span><span class="ddcombo-current" title="기존 근무 실적 인원의 평균 환산">환산 <b>${fmt(x.avg)}</b></span><span class="ddcombo-rate" title="평균 환산 ÷ 평균 목표 × 100">${rate==null?'—':rate+'%'}</span></div>
       ${`<div class="ddcombo-qty" aria-label="그룹 수량"><span><b>${x.q??0}</b><small>조립</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span><span class="m"><b>${x.mq||0}</b><small>제조</small></span></div>`}`;
   }
@@ -10248,11 +10271,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     </div>`;
     // V7: 상단 숫자 = 요약, 그룹별 상세 카드는 아래에서 계속 표시. 
     h += `<div class="ddrow2 ddsummary-v7">
-      <div class="card ddquick-v7"><h3 class="ddh">실적 요약</h3>
-        ${(() => { const mx = Math.max(1, D.sumQ, D.sumBan, D.sumShip, D.sumMQ);
-          const rows = [['조립수량', D.sumQ, '#1f5fbf'], ['반조', D.sumBan, '#64748b'], ['제조사용(출고)', D.sumShip, '#b45309'], ['제조수량(제조)', D.sumMQ, '#6d3fc9']];
-          return `<div class="ddquick-bars">${rows.map(([label, n, col]) => `<div class="ddquick-bar"><span>${label}</span><div class="ddquick-track"><i style="width:${n / mx * 100}%;background:${col}"></i></div><b>${n}대</b></div>`).join('')}</div>`
-            + `<div class="ddwork" title="그날 OS(O/S · D+M) · 안정화(안정화 · 안+삭제) 체크한 대수 · 줄당 한 번"><span>OS 설치 <b>${D.sumOS || 0}</b>대</span><span>안정화 <b>${D.sumST || 0}</b>대</span></div>`;
+      <div class="card ddquick-v7"><h3 class="ddh">실적 요약${D.cvt ? '<small>오늘 전체 작업 = 100% · 환산 기준</small>' : ''}</h3>
+        ${(() => { const mx = Math.max(1, D.sumQ, D.sumBan, D.sumShip, D.sumMQ), T = D.cvt, f2 = n => (Math.round(n * 10) / 10).toFixed(1);
+          const tot = T ? T.asm + T.ship + T.mfg + T.other + T.os + T.st : 0;
+          const pc = n => tot > 0 ? Math.round(n / tot * 100) : 0;
+          const segs = T && tot > 0 ? [['조립', T.asm, '#8daed5'], ['출고', T.ship, '#d5ab8b'], ['제조', T.mfg, '#b5a1e1'], ['OS 설치', T.os, '#56b4aa'], ['안정화', T.st, '#a8cf6a'], ['기타시간', T.other, '']] : [];
+          const top = segs.length ? `<div class="ddq100" role="img" aria-label="${esc(segs.map(g => g[0] + ' ' + f2(g[1]) + ' (' + pc(g[1]) + '%)').join(' · '))}">${segs.filter(g => g[1] > 0.0001).map(g => `<span style="flex:${g[1]};${g[2] ? 'background:' + g[2] : ''}" class="${g[2] ? '' : 'ddq100-ot'}" title="${esc(g[0] + ' 환산 ' + f2(g[1]) + ' · ' + pc(g[1]) + '%')}">${g[1] / tot >= 0.09 ? g[0] + ' ' + pc(g[1]) + '%' : g[1] / tot >= 0.04 ? pc(g[1]) + '%' : ''}</span>`).join('')}</div><div class="ddq100-lg">${segs.filter(g => g[1] > 0.0001).map(g => `<span><i style="${g[2] ? 'background:' + g[2] : ''}" class="${g[2] ? '' : 'ddq100-ot'}"></i>${g[0]} <b>${f2(g[1])}</b></span>`).join('')}<span class="ddq100-sum">합계 환산 <b>${f2(tot)}</b></span></div>${T.carved ? '' : '<div class="ddq100-note">일부 인원은 OS · 안정화 환산을 조립/출고에서 나눌 수 없어 아래 OS · 안정화 환산이 위 구성에 포함돼 있을 수 있습니다</div>'}` : '';
+          const cvOf = k => T ? '<em>환산 ' + f2(T[k]) + '</em>' : '<em></em>';
+          const rows = [['조립수량', D.sumQ, '#1f5fbf', 'asm'], ['반조', D.sumBan, '#64748b', null], ['제조사용(출고)', D.sumShip, '#b45309', 'ship'], ['제조수량(제조)', D.sumMQ, '#6d3fc9', 'mfg']];
+          const mxe = Math.max(1, D.sumOS || 0, D.sumST || 0);
+          const env = (label, n, col, raw) => `<div class="ddquick-bar"><span>${label}</span><div class="ddquick-track"><i style="width:${n / mxe * 100}%;background:${col}"></i></div><b>${n}건</b><em>${raw > 0 ? '환산 ' + f2(raw) : ''}</em></div>`;
+          return top + `<div class="ddquick-bars">${rows.map(([label, n, col, k]) => `<div class="ddquick-bar"><span>${label}</span><div class="ddquick-track"><i style="width:${n / mx * 100}%;background:${col}"></i></div><b>${n}대</b>${k ? cvOf(k) : '<em></em>'}</div>`).join('')}</div>`
+            + `<div class="ddq-sep" title="OS 설치 = O/S · D+M 체크 건수 · 안정화 = 안정화 · 안+삭제 · 안정화(특수) 체크 건수 (줄당 한 번)"></div><div class="ddquick-bars">${env('OS 설치', D.sumOS || 0, '#56b4aa', D.sumOSC)}${env('안정화', D.sumST || 0, '#a8cf6a', D.sumSTC)}</div>`;
         })()}</div>
       <div class="card dd-support-v7"><h3 class="ddh">업무지원 <small>총 ${D.sup.length}명</small></h3>
         <div class="ddasg dd-support-grid">${tasks.concat(Object.values(D.sup.reduce((a, p) => (tasks.includes(p.task) || (a[p.task] = p.task), a), {}))).map(t => {
