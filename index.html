@@ -6513,7 +6513,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 </script>
 <script>/* 월말데이터 계산 (예전 구글 앱스 스크립트 Code.gs 의 buildMonth_ · items_ · orderRows_ 를 그대로 옮김) */
 (function (G) {
-  const SLOTS = 10;
   const str = v => (v === null || v === undefined) ? '' : String(v).trim();
   const num = v => {
     if (v === '' || v === null || v === undefined) return null;
@@ -6530,32 +6529,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     '설정': ['항목', '값', '설명'],
     '파트': ['파트', '담당매니저', '순서'],
     '명단': ['이름', '파트', '직책', '등급', '원본이름', '사용', '비고'],
-    '항목': ['번호', '사용', '구분', '항목명', '배점', '평가기준', '계산방식', '합산', '기본점', '단위', '단위점수', '최소', '최대', '대상'],
     '등급목표': ['등급', '목표수량', '설명'],
-    '점유율표': ['순위부터', '순위까지', '점수'],
-    '감점기준': ['구분', '항목', '감점'],
     '원본': ['평가월', '이름', '원본그룹', '직위', '조립수량', '목표수량', '평가평균', '실제평균', '근무일수', '총량',
       '달성률', '순위', '조퇴', '지각', '당일연차', '결근', '품질지적', '지시불이행', '미발송', '오발송', '오조립', '파손', '원본등급'],
-    '평가기록': ['평가월', '이름', '파트', '직책', '등급', '기준구분']
-      .concat(Array.from({ length: SLOTS }, (_, i) => '점수' + (i + 1))).concat(Array.from({ length: SLOTS }, (_, i) => '참고' + (i + 1)))
-      .concat(['합계', '관리자', '월목표', '결과', '달성률', '업무평가1', '업무평가2', '건강관리', '특이사항',
-        '총수량', '총수량순위', '일평균', '평균순위', '개인목표', '전월평균', '근무일수', '당일연차', '지각', '조퇴', '결근',
-        '품질지적', '지시불이행', '미오발송', '오조립', '파손', '상태', '작성자', '저장시각', '항목설정']),
     '수정기록': ['시각', '작성자', '평가월', '이름', '칸', '이전값', '새값'],
     '마감': ['평가월', '마감', '시각', '처리자'],
     '보고순서': ['블록', '위치', '블록순서', '순서', '직급', '이름', '사번', '계약월', '비고']
   };
   const ATT_KINDS = ['지각', '조퇴', '결근', '당일연차'];
   const ACC_KINDS = ['품질지적', '미발송', '오발송', '오조립', '파손'];
-
-  function items(rows) {
-    return (rows || []).slice().sort((a, b) => num(a['번호']) - num(b['번호'])).map(r => ({
-      no: num(r['번호']), use: str(r['사용']) === 'Y', group: str(r['구분']), name: str(r['항목명']), max: str(r['배점']),
-      desc: str(r['평가기준']), calc: str(r['계산방식']) || '수동', sign: str(r['합산']) === '빼기' ? -1 : 1,
-      base: num(r['기본점']), unit: num(r['단위']), unitPts: num(r['단위점수']), min: num(r['최소']), maxv: num(r['최대']),
-      target: str(r['대상']) || '전체'
-    })).filter(it => it.no >= 1 && it.no <= SLOTS);
-  }
 
   function person(r, joinMap) {
     return { name: str(r['이름']), part: str(r['파트']), role: str(r['직책']) || '사원', grade: str(r['등급']).toUpperCase(),
@@ -6570,7 +6552,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
   // 서버 hrMonth 응답 → { items, list:[{person, data, refs, notes, rec}] }  (Code.gs buildMonth_ + getPart_ 와 같은 결과)
   function build(resp) {
-    const its = items(resp.items);
     const cfg = resp.cfg || {};
     const targets = {};
     (cfg['등급목표'] || []).forEach(r => { targets[str(r['등급']).toUpperCase()] = num(r['목표수량']); });
@@ -6623,7 +6604,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     });
 
     people.forEach(x => { x.refs = []; x.notes = []; });   // v29.70 : 점수 계산 삭제 (업무데이터만)
-    return { items: its, list: people };
+    return { items: [], list: people };
   }
 
   // 보고순서 : 블록별 팀장·매니저 → 파트장 → 계약월(입사) 빠른 순 → 기존 순서
@@ -6658,53 +6639,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       평가평균: r4(m.f7), 실제평균: r4(m.i7), 근무일수: (m.c4 || 0) + (m.d4 || 0), 총량: r4(conv), 달성률: u.target ? r4(m.c8) : null, 순위: null };
   }
 
-  // 엑셀 날짜 숫자 → 'YYYY-MM-DD HH:MM:SS' (벽시계 시각 그대로)
-  function serialToText(v) {
-    const t = new Date(Math.round((v - 25569) * 86400000));
-    const p = n => String(n).padStart(2, '0');
-    return `${t.getUTCFullYear()}-${p(t.getUTCMonth() + 1)}-${p(t.getUTCDate())} ${p(t.getUTCHours())}:${p(t.getUTCMinutes())}:${p(t.getUTCSeconds())}`;
-  }
-  function monthKey(v) {
-    const s = str(v).replace(/[./년\s]/g, '-').replace(/월/g, '').replace(/-+/g, '-').replace(/-$/, '');
-    const m = s.match(/^(\d{4})-(\d{1,2})/);
-    return m ? m[1] + '-' + ('0' + m[2]).slice(-2) : s;
-  }
-  // 구글 시트 "조립팀 인사보고" 엑셀 → 표들 (XLSX 라이브러리 필요)
-  function readSheetBook(XLSX, wb) {
-    const out = {};
-    Object.keys(HEADERS).forEach(name => {
-      const ws = wb.Sheets[name]; if (!ws || !ws['!ref']) { out[name] = []; return; }
-      const rg = XLSX.utils.decode_range(ws['!ref']);
-      const head = []; for (let c = rg.s.c; c <= rg.e.c; c++) { const cell = ws[XLSX.utils.encode_cell({ r: rg.s.r, c })]; head.push(cell ? str(cell.v) : ''); }
-      const rows = [];
-      for (let r = rg.s.r + 1; r <= rg.e.r; r++) {
-        const o = {}; let any = false;
-        HEADERS[name].forEach(h => {
-          const ci = head.indexOf(h); let v = '';
-          if (ci >= 0) {
-            const cell = ws[XLSX.utils.encode_cell({ r, c: rg.s.c + ci })];
-            if (cell && cell.v !== undefined && cell.v !== null) {
-              v = cell.v;
-              const isDate = cell.t === 'd' || (cell.t === 'n' && cell.z && /[ymdhs]/i.test(cell.z) && !/general/i.test(cell.z) && !/^[0#.,%]+$/.test(cell.z));
-              const dateCol = ['시각', '저장시각', '계약월', '평가월'].includes(h);
-              if (cell.t === 'd') v = serialToText((cell.v.getTime() / 86400000) + 25569);
-              else if (isDate || (dateCol && typeof cell.v === 'number' && cell.v > 20000 && cell.v < 80000)) v = serialToText(cell.v);
-              if (h === '계약월' && typeof v === 'string') v = v.slice(0, 10);
-              if (h === '평가월') v = monthKey(String(v).slice(0, 7));
-            }
-          }
-          if (typeof v === 'string') v = v.trim();
-          if (v !== '') any = true;
-          o[h] = v;
-        });
-        if (any) rows.push(o);
-      }
-      out[name] = rows;
-    });
-    return out;
-  }
-
-  G.HRC = { SLOTS, HEADERS, ATT_KINDS, num, str, normName, items, build, orderRows, webRow, readSheetBook, monthKey };
+  G.HRC = { HEADERS, ATT_KINDS, num, str, normName, build, orderRows, webRow };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -6736,7 +6671,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 <script>/* 월말데이터 — 업무데이터 사이트 안의 메뉴 (관리자 · 담당 매니저) */
 (function () {
   let A = null;
-  const H = window.HRC, SLOTS = 10, num = H.num;
+  const H = window.HRC, num = H.num;
   const $ = s => document.querySelector(s);
   const esc = v => String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const f1 = (v, d = 1) => { const n = num(v); return n === null ? '-' : (Math.round(n * 10 ** d) / 10 ** d).toString(); };
@@ -6831,7 +6766,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
 
   // ------------------------------------------------------------ 틀
-  const TABS_ADMIN = [['overview', '현황'], ['eval', '인원별 데이터'], ['att', '근태'], ['data', '데이터'], ['cfg', '기준 · 명단'], ['close', '마감 · 다운로드'], ['log', '수정기록']];
+  const TABS_ADMIN = [['overview', '현황'], ['eval', '인원별 데이터'], ['att', '근태'], ['cfg', '기준 · 명단'], ['close', '마감 · 다운로드'], ['log', '수정기록']];
   const TABS_MGR = [['eval', '인원별 데이터'], ['att', '근태']];   // v29.70 : 점수 · 총평 입력 없음 (보기 전용)
   async function render(main, tab) {
     if (!(await guard())) return;                                   // 같은 메뉴를 다시 눌러도 저장 안 한 점수 확인
@@ -6959,7 +6894,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     ST.dirty = false; ST.tab = tab; ST.hrRange = null; ST.hrRangeSeq = (ST.hrRangeSeq || 0) + 1; ST.hrv4mode = '귀속월'; ST.tseq = (ST.tseq || 0) + 1;
     document.querySelectorAll('#hrTabs [data-hrt]').forEach(b => b.classList.toggle('on', b.dataset.hrt === tab));
     if (!admin() && !['eval', 'att'].includes(tab)) tab = 'eval';
-    ({ overview: viewOverview, eval: viewEval, att: viewAtt, data: viewData, cfg: viewCfg, close: viewClose, log: viewLog })[tab]();
+    ({ overview: viewOverview, eval: viewEval, att: viewAtt, cfg: viewCfg, close: viewClose, log: viewLog })[tab]();
     attachHrFilter();
   }
   const body = () => $('#hrb');
@@ -7084,7 +7019,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="card kpi"><span>업무데이터 반영</span><b>${d.list.length - noData}<small> 명</small></b><em>${noData ? '데이터 없음 ' + noData + '명' : '모두 반영'}</em></div>
         <div class="card kpi"><span>평균 일평균</span><b>${(() => { const v = avgOf(d.list.filter(x => x.data.hasData).map(x => x.data.일평균)); return v === null ? '-' : fixedAvg(v); })()}</b><em>반영 인원 기준</em></div>
         <div class="card kpi"><span>${ymLab(d.month)} 근태 기록</span><b>${attN}<small> 건</small></b><em>${H.ATT_KINDS.map(k => k + ' ' + (att[k] || 0)).join(' · ')}</em></div></div>
-      <div class="banner ${src.n ? 'info' : 'warn'}" style="margin:12px 0">${src.n ? `이 달 전체 업무원본 ${src.n}명 · ${src.src === 'web' ? '업무데이터에서 자동 반영' : '업무통계 엑셀로 올림'} (${esc(src.at)})${noData ? ` · 업무데이터 없는 인원 ${noData}명` : ''}` : '이 달의 업무데이터가 아직 없습니다 → [데이터] 탭'}</div>
+      <div class="banner ${src.n ? 'info' : 'warn'}" style="margin:12px 0">${src.n ? `이 달 전체 업무원본 ${src.n}명 · ${src.src === 'web' ? '업무데이터에서 자동 반영' : '업무통계 엑셀로 올림'} (${esc(src.at)})${noData ? ` · 업무데이터 없는 인원 ${noData}명` : ''}` : '이 달의 업무데이터가 아직 없습니다 (업무데이터 입력이 있으면 메뉴를 열 때 자동 반영)'}</div>
       <section class="card dsec" style="margin:4px 0 14px"><div class="dst" style="margin-bottom:6px"><b>파트별</b><span class="muted">누르면 그 파트 인원별 데이터로</span></div>
         <div class="prows">${byPart.map(b => `<div class="prow" data-pp="${esc(b.p.name)}" style="--gc:${A.gcol(b.p.name)}"><b><span class="gdot" style="background:${A.gcol(b.p.name)}"></span>${esc(b.p.name)}</b><span class="mg">${esc(b.p.manager || '')}</span>
           <div class="bar"><i style="width:${b.n ? b.has / b.n * 100 : 0}%"></i></div><span class="nm">반영 <b>${b.has}</b> / ${b.n} · 일평균 ${b.avg === null ? '-' : fixedAvg(b.avg)} · 달성 ${pct(b.ach)}</span></div>`).join('')}</div></section>
@@ -7163,206 +7098,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }, 'md');
   }
 
-  // ============================================================ 관리자 — 데이터
-const normH = s => String(s === null || s === undefined ? '' : s).replace(/\s+/g, '');
-function findHeader(aoa, must) {
-  for (let r = 0; r < Math.min(aoa.length, 40); r++) {
-    const row = (aoa[r] || []).map(normH);
-    if (must.every(m => row.some(c => c === m))) return r;
-  }
-  return -1;
-}
-function colMap(row) { const m = {}; row.forEach((c, i) => { const k = normH(c); if (k && m[k] === undefined) m[k] = i; }); return m; }
-
-function parseWork(ws) {
-  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
-  const hr = findHeader(aoa, ['이름', '평가평균']);
-  if (hr < 0) throw new Error('"이름", "평가평균" 제목 줄이 없습니다. 업무데이터 시트인지 확인하세요.');
-  const m = colMap(aoa[hr]);
-  const pick = (row, ...keys) => { for (const k of keys) if (m[k] !== undefined) return row[m[k]]; return ''; };
-  const out = {}, order = [];
-  // v28.12 : 사람별 항목 개수 (일반 ~ 개+포 44칸 = 사이트 항목 C ~ AT 순서) — 표지 칸으로 순서가 맞을 때만
-  const hrow = (aoa[hr] || []).map(normH), e0 = hrow.indexOf('일반');
-  const ITEM_C = ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM','AN','AO','AP','AQ','AR','AS','AT'];
-  const anchor = [[0, '일반'], [2, '추천웍스'], [8, 'A'], [13, 'F'], [14, 'A'], [24, 'O/S'], [33, '옵1'], [38, '난1']];
-  const hasItems = e0 >= 0 && anchor.every(([i, l]) => hrow[e0 + i] === l);
-  const SKIP = { H: 1, I: 1, J: 1 };                                   // 운송 칸은 달마다 이름이 달라(퀵+당 · 안+택) 넣지 않음
-  for (let r = hr + 1; r < aoa.length; r++) {
-    const row = aoa[r]; const name = String(pick(row, '이름') || '').trim();
-    if (!name || name === '이름' || /^[\d.]+$/.test(name)) continue;
-    const k = normH(name); if (out[k]) continue;
-    let ach = num(pick(row, '달성_%', '달성율', '달성률')); if (ach !== null && ach > 3) ach = ach / 100;
-    out[k] = {
-      이름: name, 원본그룹: pick(row, '그룹'), 직위: pick(row, '직위'), 조립수량: num(pick(row, '조립수량')), 목표수량: num(pick(row, '목표수량')),
-      평가평균: num(pick(row, '평가평균')), 실제평균: num(pick(row, '실제평균')), 근무일수: num(pick(row, '총근무일', '근무일')), 총량: num(pick(row, '총량(환산)', '총량')),
-      달성률: ach, 순위: num(pick(row, '순위(평가)')), 조퇴: num(pick(row, '조퇴')), 지각: num(pick(row, '지각')), 당일연차: num(pick(row, '당일연차')),
-      결근: num(pick(row, '결근')), 지시불이행: num(pick(row, '지시불이행')), 원본등급: pick(row, '등급'),
-      품질지적: 0, 미발송: 0, 오발송: 0, 오조립: 0, 파손: 0
-    };
-    if (hasItems) { const it = {}; ITEM_C.forEach((c, i) => { if (SKIP[c]) return; const v = num(row[e0 + i]); if (v) it[c] = v; }); if (Object.keys(it).length) out[k].항목 = it; }
-    order.push(k);
-  }
-  return { rows: out, order, items: hasItems };
-}
-
-const ACC_KINDS = { '품질지적': '품질지적', '지시불이행': '지시불이행', '미발송': '미발송', '오발송': '오발송', '오배송': '오발송', '오조립': '오조립', '파손': '파손' };
-function parseAcc(ws) {
-  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
-  const hr = findHeader(aoa, ['이름', '구분']);
-  if (hr < 0) throw new Error('"이름", "구분" 제목 줄이 없습니다. 사고 시트인지 확인하세요.');
-  const m = colMap(aoa[hr]); const out = {}; let n = 0;
-  for (let r = hr + 1; r < aoa.length; r++) {
-    const row = aoa[r]; const name = String(row[m['이름']] || '').trim(); const kind = ACC_KINDS[normH(row[m['구분']])];
-    if (!name || !kind) continue;
-    const k = normH(name); out[k] = out[k] || { 이름: name }; out[k][kind] = (out[k][kind] || 0) + 1; n++;
-    // v28.26 : 사고 내역 (통계 [사고] 탭) — [출고일 · 주문번호 · 구분 · 내용 · 처리 · 처리일]
-    const cv = h => { const i = m[h]; if (i === undefined) return ''; const v = row[i]; if (v instanceof Date && !isNaN(v)) { const d = new Date(v.getTime() + 12 * 36e5); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); } if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); } return String(v == null ? '' : v).trim().replace(/\./g, '-').replace(/-$/, '').slice(0, 300); };
-    (out[k].내역 = out[k].내역 || []).push([cv('출고일자') || cv('출고일') || cv('날짜'), cv('주문번호'), kind, cv('내용'), cv('처리'), cv('처리일자')]);
-  }
-  return { rows: out, count: n };
-}
-
-
-// v28.11 : 예전(1~4월) 전체 통합파일 — [업무데이터] 시트 (16·17줄 두 줄 제목) + [점수] 시트의 목표
-//  칸 : 구분 · 파트 · 이름 … 조립수량 · 근무일 · 실수량(환산) … 총량(환산) · 점유율 · 평균(환산) · 달성_%
-function isOldBook(wb) { return wb.SheetNames.includes('업무데이터') && wb.SheetNames.includes('점수') && oldHeader(XLSX.utils.sheet_to_json(wb.Sheets['업무데이터'], { header: 1, raw: true, defval: '' })) >= 0; }
-function oldHeader(aoa) {
-  for (let r = 0; r < Math.min(aoa.length, 40); r++) if ((aoa[r] || []).some(c => normH(c) === '조립수량') && (aoa[r + 1] || []).some(c => normH(c) === '평균(환산)')) return r;
-  return -1;
-}
-function parseOld(wb) {
-  const aoa = XLSX.utils.sheet_to_json(wb.Sheets['업무데이터'], { header: 1, raw: true, defval: '' });
-  const hr = oldHeader(aoa); if (hr < 0) throw new Error('예전 통합파일의 [업무데이터] 시트 제목 줄(조립수량 · 평균(환산))을 찾지 못했습니다.');
-  const top = aoa[hr] || [], bot = aoa[hr + 1] || [], m = {};
-  for (let i = 0; i < Math.max(top.length, bot.length); i++) [bot[i], top[i]].forEach(h => { const k = normH(h); if (k && m[k] === undefined) m[k] = i; });
-  const col = k => m[k], need = ['이름', '조립수량', '근무일', '평균(환산)'];
-  need.forEach(k => { if (col(k) === undefined) throw new Error('[업무데이터] 시트에 "' + k + '" 칸이 없습니다.'); });
-  // 목표 : [점수] 시트 (이름 · 목표)
-  const tg = {}; try {
-    const sa = XLSX.utils.sheet_to_json(wb.Sheets['점수'], { header: 1, raw: true, defval: '' }), sh = findHeader(sa, ['목표']);
-    if (sh >= 0) { const sm = colMap(sa[sh]), ni = sa[sh].findIndex(c => normH(c) === '이름'); for (let r = sh + 1; r < sa.length; r++) { const nm = normH(sa[r][ni]); const t = num(sa[r][sm['목표']]); if (nm && t) tg[nm] = t; } }
-  } catch (e) { }
-  const GR = ['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조', '안정화', '지원', '출력'];
-  const out = {}, order = []; let blk = [], blkG = '';
-  const flush = () => { blk.forEach(k => { if (!out[k].원본그룹) out[k].원본그룹 = blkG; }); blk = []; blkG = ''; };
-  let prevNo = 0;
-  for (let r = hr + 2; r < aoa.length; r++) {
-    const row = aoa[r], name = String(row[col('이름')] || '').trim(), no = num(row[0]), part = String(row[col('파트')] !== undefined ? row[col('파트')] : row[1] || '').trim();
-    if (!name || /^[\d.]+$/.test(name) || normH(name) === '이름') continue;
-    if (no !== null && no <= prevNo) flush(); prevNo = no === null ? prevNo : no;   // 구분 번호가 1로 돌아가면 새 그룹
-    const k = normH(name); if (out[k]) continue;
-    const isRole = part === '매니저' || part === '파트장';
-    if (!isRole && !blkG) blkG = part;
-    let ach = num(row[col('달성_%')]); if (ach !== null && ach > 3) ach = ach / 100;
-    const days = num(row[col('근무일')]);
-    out[k] = { 이름: name, 원본그룹: isRole ? '' : part, 직위: isRole ? part : '', 조립수량: num(row[col('조립수량')]), 목표수량: tg[k] || null,
-      평가평균: num(row[col('평균(환산)')]), 실제평균: num(row[col('실수량(환산)')]), 근무일수: days === null ? null : Math.floor(days + 1e-9), 총량: num(row[col('총량(환산)')]),
-      달성률: ach, 순위: null, 조퇴: null, 지각: null, 당일연차: null, 결근: null, 지시불이행: null, 원본등급: '', 품질지적: 0, 미발송: 0, 오발송: 0, 오조립: 0, 파손: 0, 예전양식: 1 };
-    blk.push(k); order.push(k);
-  }
-  flush();
-  return { rows: out, order };
-}
-// 파일 이름 → 평가월 ("26년 1월 ..." → 2026-01)
-function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\s_.-]*(\d{1,2})[\s_.-]*월/); if (!x) return ''; const y = x[1].length === 2 ? '20' + x[1] : x[1]; return y + '-' + String(+x[2]).padStart(2, '0'); }
-
-  async function viewData() {
-    body().innerHTML = '<div class="muted" style="padding:20px">불러오는 중…</div>';
-    let d; try { d = await getMonth(ST.month, (META.parts[0] || {}).name || ''); } catch (e) { toast(e.message, 1); return; }
-    const src = d.rawSrc || {}, hasPeriod = (A.S.periods || []).some(p => p.ym === ST.month), locked = (META.locks || {})[ST.month];
-    body().innerHTML = `<div class="dgrid" style="grid-template-columns:1fr 1fr">
-      <section class="card dsec"><div class="dst"><b>① 실적 — 업무데이터</b>${src.n ? `<span class="chip open">${src.src === 'web' ? '업무데이터 자동' : '업무통계 엑셀'}</span>` : '<span class="chip closed">없음</span>'}</div>
-        <div style="line-height:1.9">${src.n ? `${ymLab(ST.month)} ${src.n}명 · 마지막 반영 ${esc(src.at)}` : '아직 반영된 업무데이터가 없습니다.'}<br>
-        ${hasPeriod ? '웹 입력으로 자동 계산 (10분마다 반영, 마감 달은 고정)' : '<span class="warn-t">귀속월 기간이 없어 자동 반영 불가 → ④ 엑셀로 올리세요.</span>'}</div>
-        <div class="row" style="margin-top:10px"><button class="primary" id="dWeb" ${hasPeriod && !locked ? '' : 'disabled'}>업무데이터로 지금 반영</button>${locked ? '<span class="muted">🔒 마감된 달</span>' : ''}</div></section>
-      <section class="card dsec"><div class="dst"><b>② 사고 파일</b><span class="muted">품질지적 · 미/오발송 · 오조립 · 파손 · 지시불이행</span></div>
-        <div class="row"><input type="file" id="upAcc" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upAccSheet" class="hidden" style="width:auto"></select><button class="primary" id="accBtn" disabled>올리기</button><button id="accAll" disabled title="01월 ~ 12월 시트를 각 평가월로 한 번에">📚 모든 달 한꺼번에</button></div>
-        <div id="accPrev" class="muted" style="margin-top:8px">다시 올리면 그 달 사고만 바뀝니다. 한 파일에 01월 ~ 12월 시트가 있으면 [모든 달 한꺼번에]로 올리세요.</div></section>
-      <section class="card dsec"><div class="dst"><b>③ 근태</b><span class="chip open">매니저 기록</span></div><div style="line-height:1.8">매니저가 [근태] 탭에서 기록합니다. <a href="#" id="dAtt">근태 보기</a></div></section>
-      <section class="card dsec"><div class="dst"><b>④ 업무통계 엑셀 올리기</b><span class="muted">웹 입력 전 달(10월 이전) · 예전(1~4월) 통합파일도 됨</span></div>
-        <div class="row"><input type="file" id="upWork" accept=".xlsx,.xlsm,.xls" style="width:auto"><select id="upWorkSheet" class="hidden" style="width:auto"></select>
-          <label class="muted" style="display:flex;align-items:center;gap:6px">평가월 <input type="month" id="upYm" value="${ST.month}" style="width:auto"></label><button class="primary" id="upBtn" disabled>올리기</button></div>
-        <div id="upPreview" style="margin-top:10px"></div></section></div>`;
-    $('#dAtt').onclick = e => { e.preventDefault(); go('att'); };
-    $('#dWeb').onclick = async () => {
-      if (src.n && src.src === 'upload' && !(await A.confirmBox(`${ymLab(ST.month)}은(는) 엑셀로 올린 자료가 있습니다. 업무데이터(웹) 자료로 바꿀까요?`, '바꾸기'))) return;
-      try { busy(true); const r = await syncWeb(ST.month, true); toast(r && r.count ? `업무데이터 ${r.count}명 반영${r.missing && r.missing.length ? ' · 자료 없는 인원 ' + r.missing.length + '명' : ''}` : '반영할 일일 입력이 없습니다'); viewData(); }
-      catch (e) { toast(e.message, 1); } finally { busy(false); }
-    };
-    try { await libs('XLSX'); } catch (e) { toast(e.message, 1); return; }
-    const books = {};
-    const setup = (fileSel, sheetSel, key, prefer, cb) => {
-      $(fileSel).onchange = async e => {
-        const f = e.target.files[0]; if (!f) return;
-        try {
-          const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: true });
-          books[key] = wb; books[key + 'Name'] = f.name;
-          const fy = ymFromName(f.name); if (fy && key === 'work' && $('#upYm')) $('#upYm').value = fy;   // v28.11 : 파일 이름의 "26년 1월" → 평가월
-          const s = $(sheetSel); s.classList.remove('hidden');
-          const def = wb.SheetNames.find(n => prefer.some(p => n.includes(p))) || wb.SheetNames[0];
-          s.innerHTML = wb.SheetNames.map(n => `<option ${n === def ? 'selected' : ''}>${esc(n)}</option>`).join('');
-          s.onchange = cb; cb();
-        } catch (err) { toast('파일을 읽지 못했습니다: ' + err.message, 1); }
-      };
-    };
-    let work = null, acc = null;
-    const pvWork = () => {
-      work = null; $('#upBtn').disabled = true;
-      try {
-        const old = isOldBook(books.work), w = old ? parseOld(books.work) : parseWork(books.work.Sheets[$('#upWorkSheet').value]);
-        $('#upWorkSheet').classList.toggle('hidden', old);
-        work = w.order.map(k => w.rows[k]);
-        const fy = ymFromName(books.workName), um = $('#upYm').value;
-        $('#upYm').classList.toggle('warnbox', !fy);
-        $('#upPreview').innerHTML = (fy ? '' : `<div class="banner warn">파일 이름에서 달("26년 1월")을 찾지 못했습니다. <b>평가월(${esc(ymLab(um))})</b>이 맞는지 꼭 확인하세요.</div>`)
-          + `<div class="banner info">평가월 <b>${esc(ymLab(um))}</b> · ${old ? '<b>예전 통합파일</b> ([업무데이터] + [점수] 시트) · ' : ''}인원 ${work.length}명 읽음 · 조립수량 합계 ${Math.round(work.reduce((a, r) => a + (r.조립수량 || 0), 0)).toLocaleString()}${w.items ? ' · <b>업무 종류(항목별 개수)</b> 같이 읽음' : ''} · 앞부분 미리보기</div><div class="scroll"><table class="tbl"><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th></tr>
-          ${work.slice(0, 6).map(r => `<tr><td>${esc(r.이름)}</td><td>${esc(r.원본그룹)}</td><td>${f1(r.평가평균, 2)}</td><td>${f1(r.총량)}</td><td>${dash(r.목표수량)}</td><td>${dash(r.근무일수)}</td><td>${dash(r.지각)}</td><td>${dash(r.조퇴)}</td><td>${dash(r.결근)}</td></tr>`).join('')}</table></div>`;
-        $('#upBtn').disabled = false;
-      } catch (err) { $('#upPreview').innerHTML = `<div class="banner lock">${esc(err.message)}</div>`; }
-    };
-    const pvAcc = () => {
-      acc = null; $('#accBtn').disabled = true;
-      $('#accAll').disabled = !accMonths().length;
-      try { const a = parseAcc(books.acc.Sheets[$('#upAccSheet').value]); acc = Object.values(a.rows); $('#accPrev').textContent = `[${$('#upAccSheet').value}] 시트 → 평가월 ${ymLab(ST.month)} · 사고 ${a.count}건 · ${acc.length}명 읽음`; $('#accBtn').disabled = false; }
-      catch (err) { $('#accPrev').textContent = err.message; }
-    };
-    setup('#upWork', '#upWorkSheet', 'work', ['업무데이터', '업무'], pvWork);
-    $('#upYm').onchange = () => { if (books.work) pvWork(); };
-    setup('#upAcc', '#upAccSheet', 'acc', ['사고'], pvAcc);
-    $('#upBtn').onclick = async () => {
-      const um = $('#upYm').value || ST.month;
-      if (!/^\d{4}-\d{2}$/.test(um)) return toast('평가월을 고르세요', 1);
-      if (!work || !(await A.confirmBox(`<b>${ymLab(um)}</b> 업무데이터 ${work.length}명을 올립니다.<br>이 달에 이미 반영된 자료가 있으면 새 자료로 바뀝니다.`, '올리기'))) return;
-      try {
-        const r = await api('hrUpload', { month: um, rows: work, src: 'upload' }); META = r.meta; refreshMonthSel();
-        $('#upPreview').innerHTML = `<div class="banner info">${ymLab(r.month)} 올리기 완료 · ${r.count}명</div>` + (r.missing.length ? `<div class="banner warn">명단에는 있는데 업무데이터에 없는 인원 ${r.missing.length}명: ${r.missing.map(esc).join(', ')}<br>이름이 다르면 [기준 · 명단]의 "원본이름"을 고치세요.</div>` : '');
-        toast('올리기 완료');
-      } catch (e) { toast(e.message, 1); }
-    };
-    // v28.27 : 한 파일 = 01월 ~ 12월 시트 → 시트 이름의 달로 한 번에 (해는 파일 이름, 없으면 지금 평가월의 해)
-    function accMonths() {
-      if (!books.acc) return [];
-      const y = (ymFromName(books.accName || '') || '').slice(0, 4) || ((String(books.accName || '').match(/20\d\d/) || [])[0]) || String(ST.month || '').slice(0, 4) || String(new Date().getFullYear());
-      return books.acc.SheetNames.map(sn => { const m = String(sn).replace(/\s+/g, '').match(/^(\d{1,2})월$/); if (!m || +m[1] < 1 || +m[1] > 12) return null;
-        try { const a = parseAcc(books.acc.Sheets[sn]); return a.count ? { sn, ym: y + '-' + String(+m[1]).padStart(2, '0'), rows: Object.values(a.rows), n: a.count } : null; } catch (e) { return null; } }).filter(Boolean);
-    }
-    $('#accAll').onclick = async () => {
-      const L = accMonths(); if (!L.length) return toast('01월 ~ 12월 시트에서 사고를 찾지 못했습니다', 1);
-      if (!(await A.confirmBox(`사고 파일의 <b>${L.length}개 달</b>을 한 번에 올립니다.<br>${L.map(x => `${esc(x.sn)} → ${ymLab(x.ym)} ${x.n}건`).join('<br>')}<br><span class="muted">각 달 사고 자료는 새 파일 내용으로 바뀝니다 (비어 있는 시트는 건너뜀).</span>`, '올리기'))) return;
-      let done = 0; for (const x of L) { try { await api('hrAccUpload', { month: x.ym, rows: x.rows }); done++; $('#accPrev').textContent = `올리는 중… ${done}/${L.length} (${ymLab(x.ym)})`; } catch (e) { toast(ymLab(x.ym) + ' : ' + e.message, 1); } }
-      $('#accPrev').textContent = `사고 ${done}개 달 올림 · ${L.filter((x, i) => i < done).map(x => ymLab(x.ym)).join(', ')}`; toast('사고 자료를 올렸습니다');
-    };
-    $('#accBtn').onclick = async () => {
-      if (!acc || !(await A.confirmBox(`${ymLab(ST.month)} 사고 자료(${acc.length}명)를 올립니다. 이 달 사고 자료는 새 파일 내용으로 바뀝니다.`, '올리기'))) return;
-      try { const r = await api('hrAccUpload', { month: ST.month, rows: acc }); $('#accPrev').textContent = `${ymLab(r.month)} 사고 ${r.count}명 올림`; toast('사고 자료를 올렸습니다'); } catch (e) { toast(e.message, 1); }
-    };
-  }
-
   // ============================================================ 관리자 — 기준 · 명단 (편집 표)
-  async function loadCfg() { CFG = await api('hrCfg', {month:ST.orderMonth||ST.month||META.current}); CFG.headers = {}; ['설정', '파트', '명단', '항목', '등급목표', '점유율표', '감점기준', '보고순서'].forEach(t => (CFG.headers[t] = H.HEADERS[t])); return CFG; }
-  const COL_OPTS = { '사용': ['Y', 'N'], '계산방식': ['목표수량', '성장', '순위표', '품질감점', '근태감점', '수동'], '합산': ['더하기', '빼기'], '대상': ['전체', '사원', '파트장'],
-    '직책': ['사원', '파트장'], '등급': ['', 'A', 'B', 'C', 'D'], '구분@감점기준': ['품질', '근태'] };
-  const rowEditTables = ['등급목표','점유율표','감점기준'];
+  async function loadCfg() { CFG = await api('hrCfg', {month:ST.orderMonth||ST.month||META.current}); CFG.headers = {}; ['설정', '파트', '명단', '등급목표', '보고순서'].forEach(t => (CFG.headers[t] = H.HEADERS[t])); return CFG; }
+  const COL_OPTS = { '사용': ['Y', 'N'], '직책': ['사원', '파트장'], '등급': ['', 'A', 'B', 'C', 'D'] };
+  const rowEditTables = ['등급목표'];
   function rowHtml(table, r, opts = {}) {
     const cols = opts.cols || CFG.headers[table];
     const cell = h => {
@@ -7412,7 +7151,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       return true; }
     catch (e) { toast(e.message, 1); return false; }
   }
-  // v29.70 : 평가 기준 · 인센티브 기준 · 구글 시트 가져오기 삭제 → 명단 · 파트 / 보고 순서표만
+  // v29.70 : 기준 · 명단 = 명단 · 파트 / 보고 순서표
   const CFG_SUBS = [['roster', '명단 · 파트'], ['order', '보고 순서표']];
   async function viewCfg() {
     if (!CFG_SUBS.some(([k]) => k === ST.cfgSub)) ST.cfgSub = 'roster';
@@ -7622,7 +7361,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     }));
     $('#dlOrder').onclick = () => downloadOrder($('#dlMonth').value);
   }
-  // v29.70 : 보고 순서표만 엑셀로 (점수 · 총평 · 인센티브 없음)
+  // v29.70 : 보고 순서표만 엑셀로
   async function downloadOrder(month) {
     try {
       busy(true, '엑셀 만드는 중…'); await libs('XLSX');
@@ -7829,8 +7568,8 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     let monthNote = '';
     if (Z.mode === '월간' && Z.ym && !self) {
       if (mi && mi.lock) monthNote = `<div class="accnote lock">🔒 ${ymLab(Z.ym)} 월말데이터가 잠겨 있어 사고를 등록 · 고칠 수 없습니다</div>`;
-      else if (Z.ym < (D.webFrom || '') && !(mi && mi.src === 'web')) monthNote = `<div class="accnote xl">📄 ${ymLab(Z.ym)}은 <b>엑셀로 관리하는 달</b>입니다 (웹 등록은 ${ymLab(D.webFrom)}부터)${canEdit() ? ' · 월말데이터마감 [데이터]에서 사고 엑셀로 올리세요' : ''}</div>`;
-      else if (mi && mi.src === 'xl') monthNote = `<div class="accnote xl">📄 ${ymLab(Z.ym)}은 <b>엑셀로 올린 사고 자료</b>입니다${canEdit() ? ' · 이 달은 월말데이터마감 [데이터]에서 엑셀로 관리하고, 웹 등록은 안 됩니다' : ''}</div>`;
+      else if (Z.ym < (D.webFrom || '') && !(mi && mi.src === 'web')) monthNote = `<div class="accnote xl">📄 ${ymLab(Z.ym)}은 <b>엑셀로 관리하는 달</b>입니다 (웹 등록은 ${ymLab(D.webFrom)}부터)${canEdit() ? ' · 엑셀 업로드는 v29.72부터 막혀 있습니다' : ''}</div>`;
+      else if (mi && mi.src === 'xl') monthNote = `<div class="accnote xl">📄 ${ymLab(Z.ym)}은 <b>엑셀로 올린 사고 자료</b>입니다${canEdit() ? ' · 이 달은 엑셀로 관리한 달이라 웹 등록은 안 됩니다' : ''}</div>`;
       else if (canEdit() && !self) monthNote = `<div class="accnote web">✎ ${ymLab(Z.ym)}은 웹에서 등록하는 달입니다 · 등록하면 사고 통계 · 월말데이터에 바로 반영됩니다</div>`;
     }
     main.innerHTML = head() + `<div class="pgb acc">
@@ -7979,7 +7718,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
         const mi = monthInfo(sel), w = $('#fwarn', bg);
         const octoberTest = sel === '2026-10' && canEdit() && A.S.me && ['관리자', '매니저'].includes(A.S.me.role);
         const early = sel < (D.webFrom || '') && !(it && it.ym === sel) && !octoberTest;
-        const msg = mi && mi.lock ? `🔒 ${ymLab(sel)} 월말데이터가 잠겨 있어 저장할 수 없습니다` : early ? `📄 웹 등록은 ${ymLab(D.webFrom)}부터입니다 · ${ymLab(sel)}은 월말데이터마감 [데이터]에서 사고 엑셀로 올리세요` : mi && mi.src === 'xl' ? `📄 ${ymLab(sel)}은 엑셀로 올린 사고 자료가 있어 웹에서 저장할 수 없습니다 (월말데이터마감 [데이터]에서 엑셀로 관리)` : '';
+        const msg = mi && mi.lock ? `🔒 ${ymLab(sel)} 월말데이터가 잠겨 있어 저장할 수 없습니다` : early ? `📄 웹 등록은 ${ymLab(D.webFrom)}부터입니다 · ${ymLab(sel)}은 엑셀로 관리한 달입니다` : mi && mi.src === 'xl' ? `📄 ${ymLab(sel)}은 엑셀로 올린 사고 자료가 있어 웹에서 저장할 수 없습니다 (엑셀로 관리한 달)` : '';
         w.style.display = msg ? '' : 'none'; w.className = 'accnote ' + (mi && mi.lock ? 'lock' : 'xl'); w.innerHTML = msg;
         const sb = $('[data-s]', bg); if (sb) sb.disabled = !!msg;
       };
@@ -8258,7 +7997,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       const today = A.S.today || '', ys = [-2, -1, 0, 1, 2, 3].map(k => { const d = new Date(+today.slice(0, 4), +today.slice(5, 7) - 1 + k, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); });
       if (wf && !ys.includes(wf)) ys.unshift(wf);
       el.innerHTML = `<h4 style="margin:0 0 4px">🛠 사고 담당 <span class="muted">사고를 등록 · 고칠 수 있는 사람 (관리자는 기본) · 전체 그룹 사고를 봄</span></h4>
-        <div class="row" style="gap:8px;margin:6px 0 10px;font-size:13px"><b>웹 등록 시작 달</b><select id="adwf" ${A.S.me.ro ? 'disabled' : ''}>${ys.map(y => `<option value="${y}" ${y === wf ? 'selected' : ''}>${ymLab(y)}</option>`).join('')}</select><span class="muted">이 달부터 [사고] 메뉴에서 등록 · 그 전 달은 월말데이터마감 [데이터]에서 사고 엑셀로</span></div>
+        <div class="row" style="gap:8px;margin:6px 0 10px;font-size:13px"><b>웹 등록 시작 달</b><select id="adwf" ${A.S.me.ro ? 'disabled' : ''}>${ys.map(y => `<option value="${y}" ${y === wf ? 'selected' : ''}>${ymLab(y)}</option>`).join('')}</select><span class="muted">이 달부터 [사고] 메뉴에서 등록 · 그 전 달은 엑셀로 관리한 자료 (엑셀 업로드는 v29.72부터 막힘)</span></div>
         <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>계정</th><th></th></tr></thead><tbody>
         ${L.map(v => `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.grp || '-')}</td><td>${v.reg ? '<span class="lst ok">등록됨</span>' : '<span class="muted">[처음 등록] 전</span>'}</td><td>${A.S.me.ro ? '' : `<button class="danger sm" data-ad="${esc(v.name)}">빼기</button>`}</td></tr>`).join('') || '<tr><td colspan="4" class="muted" style="padding:12px">없음 · 관리자만 등록할 수 있습니다</td></tr>'}</tbody></table>
         ${A.S.me.ro ? '' : `<div class="row" style="gap:8px;margin-top:10px"><input id="adn" list="adppl" placeholder="인원 명단의 이름" autocomplete="off" style="max-width:200px"><datalist id="adppl"></datalist><button class="primary" id="adadd">+ 사고 담당 추가</button></div>`}`;
@@ -8280,7 +8019,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.71';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.72';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8671,6 +8410,10 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
           if ($('#rp').value !== $('#rp2').value) throw new Error('비밀번호 확인이 다릅니다');
           if (window.weakPin($('#rp').value)) throw new Error(WEAK_PIN_MSG);
           r = await api('register', { name: $('#rn').value, pin: $('#rp').value, rid });
+          if (r.pending) {                                                           // v29.72 : 관리자 승인 전에는 로그인 안 됨
+            await confirmBox('<b>' + esc(r.name || $('#rn').value) + '</b> 님 등록 신청이 접수되었습니다.<br>관리자가 <b>승인</b>하면 [로그인] 탭에서 들어올 수 있습니다.', '알겠습니다');
+            busy = false; go.disabled = false; go.textContent = label; renderLogin('login'); return;
+          }
           if (r.again) await confirmBox('이미 등록된 계정 <b>' + esc(r.me.name) + '</b>(으)로 로그인합니다.<br>다음부터는 [로그인] 탭을 쓰세요.', '알겠습니다');
           else toast(r.me.name + ' · ' + r.me.group + '(으)로 등록되었습니다');
         }
@@ -9054,6 +8797,24 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
   try { const ro = new ResizeObserver(es => es.forEach(e => document.documentElement.style.setProperty('--phh', Math.round(e.target.getBoundingClientRect().height) + 'px')));
     new MutationObserver(() => { const ph = document.querySelector('#main .ph'); if (ph && !ph._ro) { ph._ro = 1; ro.observe(ph); } }).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
   document.addEventListener('click', e => { if (e.target.closest && e.target.closest('.thm')) setTheme(isDark() ? 'light' : 'dark'); });
+  // v29.72 : 가입 승인 (관리자 · 보기 전용 제외) — 대기 인원이 있으면 로그인할 때 창으로 알림
+  async function pendingPopup() {
+    let L; try { L = (await api('pendingUsers')).list || []; } catch (e) { return; }
+    if (!L.length) return;
+    for (let i = 0; i < 150 && document.querySelector('.modal-bg'); i++) await new Promise(r => setTimeout(r, 800));   // 다른 창(월 백업 안내 등)이 닫힌 뒤에 띄움
+    modal(`<h3>🛡 가입 승인 대기 <span class="muted">${L.length}명</span></h3>
+      <div class="note" style="margin-bottom:8px">[처음 등록]으로 신청한 계정입니다. 본인이 맞는지 확인한 뒤 승인하세요. 승인 전에는 로그인할 수 없습니다.</div>
+      <table class="list"><thead><tr><th>이름</th><th>그룹</th><th>신청 시각</th><th></th></tr></thead><tbody id="pdl">${L.map(u => `<tr data-u="${esc(u.id)}"><td><b>${esc(u.name)}</b></td><td>${esc(u.grp || '-')}</td><td class="muted">${esc(String(u.at || '').slice(5, 16).replace('T', ' '))}</td>
+        <td style="white-space:nowrap"><button class="primary sm" data-ok="1">승인</button> <button class="danger sm" data-ok="0">거절</button></td></tr>`).join('')}</tbody></table>
+      <div class="acts"><button data-c>나중에</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      $$('[data-ok]', bg).forEach(b => (b.onclick = async () => {
+        const tr = b.closest('tr'), ok = b.dataset.ok === '1', nm = tr.querySelector('b').textContent;
+        if (!ok && !(await confirmBox('<b>' + esc(nm) + '</b> 님 신청을 거절할까요?<br><span class="muted">신청한 계정이 지워집니다.</span>', '거절'))) return;
+        try { await api('userApprove', { userId: tr.dataset.u, ok }); tr.remove(); toast(nm + (ok ? ' 승인했습니다' : ' 거절했습니다')); if (!$('#pdl tr', bg)) close(); } catch (e) { toast(e.message, true); }
+      }));
+    }, 'mfm');
+  }
   function changePin(msg, force) {
     const adm = S.me && S.me.role === '관리자';
     modal(`<h3>비밀번호 변경</h3>${typeof msg === 'string' ? '<div class="note" style="margin-bottom:10px">' + msg + '</div>' : ''}
@@ -14000,7 +13761,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
     const D = V.data, { keys, R, P } = m, AK = keys.length - 1;
     if (V.unit === 'week') return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">사고는 달마다 올린 사고 파일이라 주 단위가 없습니다 · [월] · [분기] · [연간]에서 보세요</div></div>`;
     const A = stAccData(V, m), cmp = (a, b, f, unit) => !A.pHas ? `<i>${pv} - (비교할 사고 파일 없음)</i>` : dl(a, b, f, false, unit), RA = A.filter(x => x.r === 'R'), PA = A.filter(x => x.r === 'P'), sel = V.accSel || null;
-    if (!(D.acc || []).length) return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">이 기간에 올린 사고 파일이 없습니다 · 월말데이터마감 [데이터]에서 달마다 사고 파일을 올리거나 [사고] 메뉴에서 등록하면 여기에 나옵니다</div></div>`;
+    if (!(D.acc || []).length) return `<div><h3>사고 · ${esc(gl)}</h3><div class="cap">이 기간에 올린 사고 파일이 없습니다 · [사고] 메뉴에서 등록하면 여기에 나옵니다</div></div>`;
     const per = (n, q) => q > 0 ? n / q * 100 : null, f2x = v => v == null ? '-' : v.toFixed(2), pc = (n, t) => t ? Math.round(n / t * 100) + '%' : '-';   // v28.36 : 사고율 % = 사고 ÷ 조립수량(출고 · 반조 · 제조 제외)
     const ppl = {}; RA.forEach(x => { const p = ppl[x.uid] = ppl[x.uid] || { uid: x.uid, name: x.name, grp: x.grp, n: 0, k: {}, list: [] }; p.n++; p.k[x.kind] = (p.k[x.kind] || 0) + 1; p.list.push(x); });
     const qOfU = {}; (R.ps || []).forEach(a => (qOfU[a.u] = (qOfU[a.u] || 0) + (a.q || 0)));
@@ -16333,6 +16094,7 @@ function ymFromName(n) { const x = String(n || '').match(/(\d{2,4})[\s_.-]*년[\
       setTimeout(() => { void bkRemind(); }, 2500);
       if (canMgr() && !isRO()) setTimeout(() => { void mgLoad(); }, 1200);
       if (isRO() && S.me.role === '관리자' && !S.pv) api('mgCan').then(r => { if (r && r.can === false) { S.mgNo = true; const v = S.view || 'home'; shell(S.layout); go(v === 'mgr' ? 'home' : v); } }).catch(() => { });   // v28.70 : 이사 = 매니저 관리 숨김                 // v28.59 : 이번 주 할 일                                           // v28.56 : 월 백업 알림
+      if (!pre && S.me && S.me.role === '관리자' && !isRO() && !r.mustChange) setTimeout(() => { void pendingPopup(); }, 3500);   // v29.72 : 가입 승인 대기 알림
       if (!pre && r.mustChange) changePin('임시 비밀번호이거나 쉬운 비밀번호입니다. 본인만 아는 <b>새 번호로 바꿔야</b> 쓸 수 있습니다.', true);   // 새로고침해도 다시
       if (isManager()) setTimeout(() => { prefetchManage(); if (window.Leave) window.Leave.prefetch().then(updateBadge).catch(() => { }); }, 600);
     } catch (e) { if (S.token) { toast(e.message, true); } renderLogin(); }
