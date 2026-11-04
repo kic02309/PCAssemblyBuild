@@ -8021,7 +8021,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.75';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15168,6 +15168,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ---------- PC 화면
   async function renderProd(opt) {
     S.prv = S.prv || { d: S.today }; if (opt && opt.date) S.prv.d = opt.date;
+    if (S.prv.range) return renderProdRange();
     const main = $('#main'); main.innerHTML = pageHead('라인생산') + '<div class="pgb"><div class="muted" style="padding:20px">불러오는 중…</div></div>';
     api('prSettings').then(r => { S.prCfg = r; }).catch(() => { });
     let P; try { P = await api('prGet', { date: S.prv.d }); } catch (e) { main.innerHTML = pageHead('라인생산') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
@@ -15176,6 +15177,76 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     P.draft.items = P.draft.items || []; P.draft.oth = P.draft.oth || []; P.draft.mobEx = P.draft.mobEx || []; P.draft.mobEdit = P.draft.mobEdit || {};
     S.prP = P; S.prSt = P.ver ? { k: 'ok', t: (P.at || '').slice(11, 16) } : { k: 'new' }; drawProd();
   }
+  // v29.76 read-only period query (PC line-production view only). Reuses existing prGet and prCalc: no new SQL/RPC.
+  async function renderProdRange() {
+    S.prv = S.prv || { d: S.today };
+    S.prv.range = true;
+    S.prv.rfrom = S.prv.rfrom || C.addDays(S.today, -6);
+    S.prv.rto = S.prv.rto || S.today;
+    const main = $('#main');
+    main.innerHTML = pageHead('라인생산', '<span class="prst">기간별 생산현황 · 조회 전용</span>', '<button id="prRangeBack">‹ 일일 생산으로</button>') + `<div class="pgb prpg pr-range">
+      <div class="card pr-range-controls"><div class="mgch"><b>기간별 생산현황</b><span class="muted">저장 · 수정 없이 실제 입력과 확정 실적을 조회합니다</span></div>
+      <div class="pr-range-tools"><label>시작일 <input id="prRangeFrom" type="date" value="${esc(S.prv.rfrom)}"></label><label>종료일 <input id="prRangeTo" type="date" value="${esc(S.prv.rto)}"></label><button class="primary" id="prRangeGo">조회</button></div>
+      <div class="note">하루 단위 조회 · 최대 62일 · 확정된 날짜는 확정 당시 기록, 미확정 날짜는 현재 입력 기준입니다. 일평균은 입력이 있는 날 기준입니다.</div>
+      </div><div id="prRangeResult" aria-live="polite" class="pr-range-result"><div class="muted">[조회]를 누르면 기간별 생산 수량과 환산이 표시됩니다.</div></div></div>`;
+    $('#prRangeBack').onclick = () => { S.prRangeSeq = (S.prRangeSeq || 0) + 1; S.prv.range = false; renderProd(); };
+    $('#prRangeGo').onclick = () => prRangeLoad();
+  }
+  async function prRangeLoad() {
+    const from = $('#prRangeFrom') && $('#prRangeFrom').value, to = $('#prRangeTo') && $('#prRangeTo').value;
+    if (!from || !to || from > to) return toast('조회 시작일과 종료일을 확인하세요', true);
+    const ds = []; for (let d = from; d <= to && ds.length < 63; d = C.addDays(d, 1)) ds.push(d);
+    if (ds.length > 62 || ds[ds.length - 1] !== to) return toast('한 번에 최대 62일까지만 조회할 수 있습니다', true);
+    S.prv.rfrom = from; S.prv.rto = to;
+    const seq = S.prRangeSeq = (S.prRangeSeq || 0) + 1;
+    const target = $('#prRangeResult');
+    if (!target) return;
+    target.innerHTML = '<div class="card muted">기간별 실적을 읽는 중… <b id="prRangeProgress">0 / ' + ds.length + '</b></div>';
+    const data = new Array(ds.length), errors = [];
+    let next = 0, finished = 0;
+    const worker = async () => {
+      while (next < ds.length && S.prRangeSeq === seq && S.view === 'prod' && S.prv.range) {
+        const i = next++, d = ds[i];
+        try {
+          const P = await api('prGet', { date: d });
+          // Only confirmed snapshots are finalized; don't recalculate using subsequently edited mobile rows.
+          const confirmed = P.status === 'confirmed' && P.conf && P.conf.tot;
+          if (!confirmed) {
+            P.draft = P.draft || {};
+            if (!P.draft.people) P.draft.people = prAutoPeople(P);
+            P.draft.items = P.draft.items || []; P.draft.oth = P.draft.oth || [];
+            P.draft.mobEx = P.draft.mobEx || []; P.draft.mobEdit = P.draft.mobEdit || {};
+          }
+          const V = confirmed ? P.conf.tot : prCalc(P);
+          const has = !!(confirmed || (P.draft && ((P.draft.items || []).length || (P.draft.oth || []).length)) || (P.mobile || []).length);
+          data[i] = { d, has, status: confirmed ? '확정' : P.status === 'changed' ? '재확정 필요' : has ? '미확정' : '입력 없음',
+            qty: +V.qty || 0, S: +V.S || 0, O: +V.O || 0, T: +V.T || 0,
+            ppl: confirmed ? (P.conf.alloc || []).length : (V.ppl || []).length };
+        } catch (e) { errors.push({ d, msg: (e && e.message) || String(e) }); }
+        finished++;
+        if (S.prRangeSeq === seq && $('#prRangeProgress')) $('#prRangeProgress').textContent = finished + ' / ' + ds.length;
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(3, ds.length) }, worker));
+    if (S.prRangeSeq !== seq || S.view !== 'prod' || !S.prv.range || !$('#prRangeResult')) return;
+    if (errors.length) {
+      $('#prRangeResult').innerHTML = `<div class="warn">조회에 실패한 날짜 ${errors.length}일이 있어 합계를 표시하지 않습니다. ${errors.map(e => esc(e.d)).join(', ')}<br>잠시 후 [조회]를 다시 눌러 주세요.</div>`;
+      return;
+    }
+    const used = data.filter(x => x.has), sums = used.reduce((a, r) => {
+      ['qty', 'S', 'O', 'T'].forEach(k => a[k] += r[k]); return a;
+    }, { qty: 0, S: 0, O: 0, T: 0 });
+    const n = used.length, num2 = x => f2(x), numQ = x => Number.isInteger(x) ? x.toLocaleString('ko-KR') : f2(x);
+    const td = (r, k) => r.has ? (k === 'qty' || k === 'ppl' ? numQ(r[k]) : num2(r[k])) : '—';
+    const rows = data.map(r => `<tr class="${r.status === '재확정 필요' ? 'pr-range-changed' : ''}"><td>${esc(dLabel(r.d))}</td><td><span class="pr-range-status ${r.status === '확정' ? 'ok' : ''}">${esc(r.status)}</span></td><td class="num">${td(r, 'qty')}</td><td class="num">${td(r, 'S')}</td><td class="num">${td(r, 'O')}</td><td class="num"><b>${td(r, 'T')}</b></td><td class="num">${td(r, 'ppl')}</td></tr>`).join('');
+    const stats = `<div class="prsum"><div><small>조회 기간</small><b>${ds.length}<em>일</em></b></div><div><small>실적 입력일</small><b>${n}<em>일</em></b></div><div><small>생산 총수량</small><b>${numQ(sums.qty)}<em>대</em></b></div><div><small>총 환산</small><b class="c2">${num2(sums.T)}</b></div></div>`;
+    $('#prRangeResult').innerHTML = `${stats}<div class="card prc pr-range-table"><div class="mgch"><b>날짜별 생산현황</b><span class="muted">${esc(dLabel(from))} ~ ${esc(dLabel(to))} · 미확정 포함</span></div>
+      <div class="pr-range-scroll"><table class="list prt"><thead><tr><th>일자</th><th>확정 상태</th><th>생산수량(대)</th><th>생산환산(S)</th><th>기타환산(O)</th><th>총환산(T)</th><th>작업인원(명)</th></tr></thead>
+      <tbody>${rows}<tr class="pr-range-total"><th colspan="2">기간 합계</th><th>${numQ(sums.qty)}</th><th>${num2(sums.S)}</th><th>${num2(sums.O)}</th><th>${num2(sums.T)}</th><th>—</th></tr>
+      <tr class="pr-range-avg"><th colspan="2">일평균 (입력 ${n}일)</th><th>${n ? num2(sums.qty / n) : '—'}</th><th>${n ? num2(sums.S / n) : '—'}</th><th>${n ? num2(sums.O / n) : '—'}</th><th>${n ? num2(sums.T / n) : '—'}</th><th>—</th></tr>
+      </tbody></table></div><div class="note">작업인원은 날짜별 인원입니다. 중복 참여 가능성이 있어 기간 합계/일평균에서는 합산하지 않습니다. 미확정·재확정 필요일은 확정 실적과 다를 수 있습니다.</div></div>`;
+  }
+
   function prAutoPeople(P) {
     const off = {}; (P.off || []).forEach(([n, k]) => { const x = normName(n); if (!off[x] || k !== '반차') off[x] = k; });
     const U = {}; (P.users || []).forEach(u => (U[normName(u.name)] = u));
@@ -15203,10 +15274,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function drawProd() {
     const P = S.prP, main = $('#main');
     main.innerHTML = pageHead('라인생산', `<div class="row" style="gap:6px;margin-left:12px"><button id="prpv">‹</button><input type="date" id="prd" value="${P.date}"><button id="prnx">›</button><button id="prtd">오늘</button></div><span id="prst" class="prst"></span><span id="prcf"></span>`,
-      `${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button><button id="prset">⚙ 설정</button>' : ''}${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
+      `${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button><button id="prset">⚙ 설정</button>' : ''}<button id="prRangeOpen">▦ 기간별 생산현황</button>${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
     const mv = k => { S.prv.d = C.addDays(P.date, k); renderProd(); };
     $('#prpv').onclick = () => mv(-1); $('#prnx').onclick = () => mv(1); $('#prtd').onclick = () => { S.prv.d = S.today; renderProd(); }; $('#prd').onchange = e => { S.prv.d = e.target.value || S.today; renderProd(); };
     if ($('#prhelp')) $('#prhelp').onclick = () => prHelp(P); if ($('#prset')) $('#prset').onclick = () => prSettings(P);
+    $('#prRangeOpen').onclick = () => { S.prv.range = true; renderProdRange(); };
     if ($('#prok')) $('#prok').onclick = prConfirm; if ($('#pred')) $('#pred').onclick = prEditors;
     prStatus(); prConfBar(); drawProdBody();
   }
@@ -15324,15 +15396,19 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const main = $('#main'); S.pmv = S.pmv || { k: 'asm' };
     let R; try { R = await api('prMob', { op: 'list' }); } catch (e) { main.innerHTML = `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
     if (S.view !== 'pmob') return;
-    const k = S.pmv.k, cf = R.conf, mine = cf && cf.mine;
+    // Edit state is local to today's own records. Discard invalid/stale edit requests.
+    if (S.pmv.edit && (S.pmv.edit.day !== R.today || !R.rows.some(x => String(x.id) === String(S.pmv.edit.id) && x.kind === 'asm'))) S.pmv.edit = null;
+    const edit = S.pmv.edit || null;
+    const k = edit ? 'asm' : S.pmv.k, cf = R.conf, mine = cf && cf.mine;
     const rowTxt = r => r.kind === 'asm' ? `${esc(r.data.no)}${r.data.model ? ' · ' + esc(r.data.model) : ''} · ${r.data.q}대 · 케이스 ${esc(r.data.cs)} / 쿨러 ${esc(r.data.cl)}` : `${esc(r.data.cat)} ${r.data.mins}분 · ${esc(r.data.reason)}`;
     const btns = (arr, id, cls) => `<div class="px${cls}" id="${id}">${arr.map(x => `<button type="button" class="pxc" data-v="${x}">${x}</button>`).join('')}</div>`;
     main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="pmpc">PC 화면</button><button id="pmlo">로그아웃</button></span></div>
       <div class="pxr"><div><h1>라인생산 업무</h1><div class="pxmeta">${dLabel(R.today)} · ${esc(S.me.name)}</div></div><div class="pxcn"><b>${R.rows.length}</b><small>오늘 입력</small></div></div></div>
       <div class="pxbd">
       ${mine ? `<div class="pxcf">오늘 확정된 내 생산업무 배분 <b>${f2(mine.p)}</b> <small>(${mine.m}분 참여)</small></div>` : cf ? `<div class="pxcf wait">${cf.status === 'confirmed' ? '오늘 실적 확정됨' : '담당자가 아직 확정 전입니다'}</div>` : ''}
+      ${edit ? `<div class="pxedit-banner"><b>✎ 기존 제조 기록 수정 중</b><span>제조번호 ${esc(edit.data.no)} · 신규 등록이 아닌 기존 기록 수정</span></div>` : ''}
       <div class="pxseg"><button type="button" data-pk="asm" class="${k === 'asm' ? 'on' : ''}">개별 조립</button><button type="button" data-pk="oth" class="${k === 'oth' ? 'on' : ''}">기타업무</button></div>
-      ${k === 'asm' ? `<div class="pxcard"><div class="pxlb">제조번호 · 수량</div><div class="pxord"><input class="pxin" id="pmno" inputmode="text" enterkeyhint="next" maxlength="40" placeholder="151886306" autocomplete="off" spellcheck="false"><div class="pxqty"><button type="button" data-q="-1">−</button><input id="pmq" type="number" value="1" min="1"><button type="button" data-q="1">+</button></div></div>
+      ${k === 'asm' ? `<div class="pxcard"><div class="pxlb">제조번호 · 수량</div><div class="pxord"><input class="pxin" id="pmno" ${edit ? 'readonly title="수정 중 제조번호는 변경할 수 없습니다"' : ''} inputmode="text" enterkeyhint="next" maxlength="40" placeholder="151886306" autocomplete="off" spellcheck="false"><div class="pxqty"><button type="button" data-q="-1">−</button><input id="pmq" type="number" value="1" min="1"><button type="button" data-q="1">+</button></div></div>
         <div class="pxgap"></div><div class="pxlb">모델명</div><input class="pxtxt" id="pmmodel" inputmode="text" enterkeyhint="next" maxlength="60" placeholder="예: R-5193 (웍스는 X-0291)" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
         <div class="pxcard"><div class="pxlb">케이스 난이도</div>${btns(PR_CS, 'pmcs', 'g6')}<div class="pxgap"></div><div class="pxlb">CPU쿨러 난이도</div>${btns(PR_CL, 'pmcl', 'g7').replace('data-v="없음">', 'data-v="없음" style="font-size:11.5px">')}</div>`
         : `<div class="pxcard"><div class="pxlb">항목</div>${btns(PR_OTH, 'pmcat', 'g3')}</div>
@@ -15340,22 +15416,58 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="pxcard"><div class="pxlb">사유</div><input class="pxtxt" id="pmrs" maxlength="200" placeholder="예: 2층 앵글 정리"></div>`}
       <div class="pxcard" style="padding:10px 12px"><div class="pxlast"><span>오늘 입력 <b>${R.rows.length}</b>건</span><button type="button" id="pmall">전체 보기 ›</button></div></div>
       <div class="muted" style="font-size:12px;text-align:center;color:#64748b">폰 입력은 담당자(박동건 · 양주성)가 확인하고 [실적 확정]하면 반영됩니다.</div>
-      </div><div class="pxbar"><button type="button" class="pxs" id="pmsave">저장</button></div></div>`;
-    $$('[data-pk]').forEach(b => (b.onclick = () => { S.pmv.k = b.dataset.pk; renderPmob(); }));
+      </div><div class="pxbar ${edit ? 'pxbar-edit' : ''}">${edit ? '<button type="button" class="pxcancel" id="pmcancel">수정 취소</button>' : ''}<button type="button" class="pxs" id="pmsave">${edit ? '수정 저장' : '저장'}</button></div></div>`;
+    $$('[data-pk]').forEach(b => (b.onclick = () => { if (S.pmv.edit) return toast('수정 취소 후 다른 업무로 이동하세요', true); S.pmv.k = b.dataset.pk; renderPmob(); }));
+    if (edit) {
+      $('#pmno').value = edit.data.no || '';
+      $('#pmq').value = edit.data.q || 1;
+      $('#pmmodel').value = edit.data.model || '';
+      // This workflow changes quantity only; preserve existing model, difficulty and memo.
+      $('#pmmodel').readOnly = true;
+      ['pmcs', 'pmcl'].forEach(id => $$('#' + id + ' button').forEach(b => { b.classList.toggle('on', b.dataset.v === (id === 'pmcs' ? edit.data.cs : edit.data.cl)); b.disabled = true; }));
+      $('#pmcancel').onclick = () => { S.pmv.edit = null; renderPmob(); };
+    }
     $('#pmpc').onclick = () => go('input'); $('#pmlo').onclick = () => logout();
     const pick = id => $$('#' + id + ' button').forEach(b => (b.onclick = () => { $$('#' + id + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); if (id === 'pmmin') $('#pmmins').value = b.dataset.v; }));
     ['pmcs', 'pmcl', 'pmcat', 'pmmin'].forEach(id => $('#' + id) && pick(id));
     $$('[data-q]').forEach(b => (b.onclick = () => { const i = $('#pmq'); i.value = Math.max(1, (+i.value || 1) + +b.dataset.q); }));
     const val = id => { const b = $('#' + id + ' button.on'); return b ? b.dataset.v : ''; };
-    $('#pmall').onclick = () => modal(`<h3>오늘 입력 ${R.rows.length}건</h3><div class="pmlist">${R.rows.map(r => `<div class="pxrow"><span>${rowTxt(r)}</span><button class="sm" data-del="${r.id}">✕</button></div>`).join('') || '<div class="muted">아직 없음</div>'}</div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
+    $('#pmall').onclick = () => modal(`<h3>오늘 입력 ${R.rows.length}건</h3><div class="pmlist">${R.rows.map(r => `<div class="pxrow"><span>${rowTxt(r)}</span>${r.kind === 'asm' ? `<button class="sm pxedit-btn" data-edit="${r.id}" ${cf && cf.status === 'confirmed' ? 'disabled title="확정된 실적은 담당자에게 수정 요청"' : ''}>✎ 수정</button>` : ''}<button class="sm" data-del="${r.id}">✕</button></div>`).join('') || '<div class="muted">아직 없음</div>'}</div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
+      $$('[data-edit]', bg).forEach(b => (b.onclick = () => {
+        if (cf && cf.status === 'confirmed') return toast('이미 확정된 실적입니다. 담당자에게 재확정 포함 수정을 요청하세요', true);
+        const row = R.rows.find(x => String(x.id) === String(b.dataset.edit) && x.kind === 'asm');
+        if (!row) return toast('제조 입력 기록을 찾을 수 없습니다', true);
+        S.pmv.edit = { id: row.id, day: R.today, at: row.at, kind: row.kind, data: { ...row.data } };
+        S.pmv.k = 'asm'; close(); renderPmob(); window.scrollTo({ top: 0, behavior: 'smooth' });
+      }));
       $$('[data-del]', bg).forEach(b => (b.onclick = async () => { if (!(await confirmBox('지울까요?', '지우기'))) return; try { await api('prMob', { op: 'del', id: b.dataset.del }); close(); renderPmob(); } catch (e) { toast(e.message, true); } }));
     });
     $('#pmsave').onclick = async () => {
       const data = k === 'asm' ? { no: $('#pmno').value.trim(), model: $('#pmmodel').value.trim(), q: +$('#pmq').value, cs: val('pmcs'), cl: val('pmcl') } : { cat: val('pmcat') || '기타시간', mins: +$('#pmmins').value, reason: $('#pmrs').value.trim() };
       if (k === 'asm' && (!data.no || !data.model || !data.cs || !data.cl)) return toast('제조번호 · 모델명 · 케이스 · 쿨러 난이도를 모두 넣으세요', true);
+      if (k === 'asm' && (!Number.isInteger(data.q) || data.q < 1 || data.q > 999)) return toast('수량은 1~999대로 입력하세요', true);
       if (k === 'oth' && (!(data.mins > 0) || data.reason.length < 2)) return toast('시간 · 사유를 넣으세요', true);
-      $('#pmsave').disabled = true; try { await api('prMob', { op: 'add', kind: k, data }); toast('저장했습니다'); renderPmob(); } catch (e) { toast(e.message, true); $('#pmsave').disabled = false; }
+      const btn = $('#pmsave'); btn.disabled = true;
+      try {
+        if (edit) {
+          // Never discard existing metadata while editing the count.
+          data.model = edit.data.model; data.cs = edit.data.cs; data.cl = edit.data.cl; data.memo = edit.data.memo || '';
+          if (data.no !== edit.data.no) throw new Error('제조번호는 수정할 수 없습니다');
+          // Re-read before an update: never silently overwrite an intervening edit or confirmed allocation.
+          const fresh = await api('prMob', { op: 'list' });
+          if (fresh.today !== edit.day || (fresh.conf && fresh.conf.status === 'confirmed')) throw new Error('실적이 이미 확정됐거나 날짜가 바뀌었습니다. 담당자에게 문의하세요');
+          const current = fresh.rows.find(x => String(x.id) === String(edit.id) && x.kind === 'asm');
+          if (!current || (edit.at && current.at !== edit.at)) throw new Error('다른 곳에서 해당 입력이 변경됐습니다. 전체 보기를 다시 열어 확인하세요');
+          await api('prMob', { op: 'edit', id: edit.id, kind: 'asm', data });
+          S.pmv.edit = null;
+          toast('기존 제조 기록을 수정했습니다 (신규 등록 없음)');
+        } else {
+          await api('prMob', { op: 'add', kind: k, data });
+          toast('저장했습니다');
+        }
+        renderPmob();
+      } catch (e) { toast(e.message, true); btn.disabled = false; }
     };
   }
   // ================================================================ v29.53 : 안정화 업무 (폰 입력) — 주문번호 + 업무 체크 → 본인 오늘 입력표에 한 줄 추가
@@ -16596,5 +16708,42 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 .ddconv .ddconv-os{background:var(--cv-os)}.ddconv .ddconv-st{background:var(--cv-st)}.ddconv .ddconv-rest{background:var(--cv-rest);cursor:help}
 .ddsplit-lg{display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:4px;font-size:11.5px;color:var(--sub,#5b6574)}.ddsplit-lg b{color:var(--text,#1c2433);font-variant-numeric:tabular-nums}.ddsplit-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;background:var(--cv-ship)}.ddsplit-lg i.os{background:var(--cv-os)}.ddsplit-lg i.st{background:var(--cv-st)}.ddsplit-lg i.rest{background:var(--cv-rest)}.ddsplit-lg i.ot{background:repeating-linear-gradient(135deg,#d9dde6 0 2px,#f3f4f7 2px 4px)}
 </style>
-<style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style></body>
+<style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style><style id="v2975-line-mobile-edit-and-range">
+/* Additive styles only; retains v29.75 layout, navy palette and original controls. */
+.pmx .pxedit-banner{display:flex;flex-direction:column;gap:3px;background:#eaf1ff;border:1px solid #becdef;border-radius:12px;color:#223c70;padding:10px 12px;margin-bottom:10px;font-size:12px}
+.pmx .pxedit-banner b{font-size:14px}
+.pmx .pxin[readonly]{background:#edf2f9;color:#596783}
+.pmx .pxbar.pxbar-edit{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px}
+.pmx .pxbar .pxcancel{background:#edf1f8;color:#2a477d;border:1px solid #bccae2}
+.pmlist .pxrow{flex-wrap:wrap}.pmlist .pxrow span{min-width:150px;line-height:1.5;overflow-wrap:anywhere}
+.pmlist .pxedit-btn{border:1px solid #bfceed;color:#214b96;background:#f2f6ff;white-space:nowrap;padding:7px 9px}
+.pmlist .pxedit-btn:disabled{opacity:.4;cursor:not-allowed}
+.pr-range .pr-range-tools{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:12px 0}
+.pr-range .pr-range-tools label{font-size:13px;font-weight:700;color:var(--sub);display:flex;flex-direction:column;gap:5px}
+.pr-range .pr-range-tools input{padding:9px 11px;min-width:160px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink)}
+.pr-range .pr-range-tools button{min-height:40px;padding:8px 25px}
+.pr-range .pr-range-result{margin-top:12px}
+.pr-range .pr-range-scroll{max-width:100%;overflow-x:auto}
+.pr-range .pr-range-scroll table{width:100%;min-width:790px}
+.pr-range .pr-range-scroll th,.pr-range .pr-range-scroll td{text-align:center;white-space:nowrap;padding:11px 8px}
+.pr-range .pr-range-status{display:inline-block;font-size:11.5px;color:#7d5c16;background:#fff4dc;padding:3px 8px;border-radius:8px}
+.pr-range .pr-range-status.ok{background:#e3f4e8;color:#196838}
+.pr-range .pr-range-total th{background:#e6f3ff;color:#20395c;font-weight:800}
+.pr-range .pr-range-avg th{background:#f2ebff;color:#3b2b68;font-weight:800}
+.pr-range .pr-range-changed td{background:#fff9ea}
+@media(max-width:650px){.pr-range .pr-range-tools{gap:8px}.pr-range .pr-range-tools label{flex:1 1 140px;min-width:0}.pr-range .pr-range-tools input{width:100%;min-width:0}.pr-range .pr-range-tools button{flex:1 0 100%}}
+</style>
+
+<style id="v2976-compact-pc-sidebar">
+/* v29.76 cumulative: compact desktop sidebar only.
+   Role visibility, routes, top navigation, mobile screens and data logic are unchanged. */
+@media (min-width: 701px) {
+  .czb > aside.czr { flex: 0 0 60px; width: 60px; }
+  .czb > aside.czr .rb { gap: 4px; padding: 13px 1px; font-size: 10.5px; line-height: 1.17; min-width: 0; }
+  .czb > aside.czr .rb svg { width: 20px; height: 20px; flex: 0 0 20px; }
+  .czb > aside.czr .rb span { display: block; max-width: 58px; text-align: center; overflow-wrap: anywhere; word-break: keep-all; }
+  .czb > aside.czr .rb .bd { top: 5px; right: 2px; min-width: 16px; padding: 0 4px; font-size: 10px; line-height: 15px; }
+}
+</style>
+</body>
 </html>
