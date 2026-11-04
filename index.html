@@ -3619,6 +3619,10 @@ html[data-theme=dark] .ddwork b,html[data-theme=dark] .ddvol2 b{color:#5eead4}
 .modal.rtm .rttab:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:2px}
 .modal.rtm .rtbody .rth:first-child{margin-top:2px}
 @media(max-width:700px){.modal.rtm{width:min(1040px,98vw);height:92dvh;max-height:92dvh;padding:14px!important}.modal.rtm .rtfixed .rtbar label{margin-left:0}.modal.rtm .rttab{flex:0 0 auto}.modal.rtm .rtbody{overflow-x:auto}}
+</style><style id="rt-v2979">
+/* 입력 시간 분석의 [기준 적용]을 월 선택/제외 기준과 동일한 행에 배치 */
+.modal.rtm .rtfixed .rtbar #rtapply{flex:0 0 auto;white-space:nowrap;background:var(--blue,#2563eb);border-color:var(--blue,#2563eb);color:#fff;font-weight:700}
+.modal.rtm .rtfixed .rtbar #rtapply:hover{filter:brightness(.94)}
 </style><style>td.mk.special-disabled{cursor:default!important;background:#edf0f4!important;color:#9aa3b0!important;box-shadow:none!important}td.mk.special-disabled:hover{background:#edf0f4!important}</style>
 </head>
 <body>
@@ -8045,7 +8049,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.78';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.79';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13515,9 +13519,24 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
   // v29.60 : 입력 시간 분석 (관리자 전용) — 주문번호 · 제조 라벨이 서버에 저장된 시각으로 건당 · 대당 걸린 시간을 분석 (월 단위)
   //   걸린 시간 = 이 줄을 저장한 시각 ~ 같은 사람 · 같은 날 · 같은 구분의 다음 줄을 저장한 시각 (그날 마지막 줄은 계산 안 함)
-  const RT = { ym: '', gap: 90, min: 3, grp: '', data: null, open: {}, det: null, tab: 'group' };
+  // v29.79: 입력 시간 분석 제외 기준 기본값 10~60분, 브라우저별 적용값 보존
+  const RT = { ym: '', gap: 60, min: 10, grp: '', data: null, open: {}, det: null, tab: 'group', prefsLoaded: false };
+  const RT_PREF_KEY = 'cz_rt_avg_limits_v2979';
+  function rtReadPrefs() {
+    if (RT.prefsLoaded) return;
+    RT.prefsLoaded = true;
+    try {
+      const saved = JSON.parse(localStorage.getItem(RT_PREF_KEY) || 'null');
+      if (!saved) return;
+      const mn = Number(saved.min), gp = Number(saved.gap);
+      if (Number.isInteger(mn) && Number.isInteger(gp) && mn >= 0 && mn <= 60 && gp >= 5 && gp <= 600 && mn < gp) {
+        RT.min = mn; RT.gap = gp;
+      }
+    } catch (_) { /* 저장소 접근이 제한되어도 기본값 10~60을 사용 */ }
+  }
   const RTK = k => (k === 'm' ? '제조' : '주문건');
   function rtOpen() {
+    rtReadPrefs();
     RT.ym = RT.ym || S.today.slice(0, 7); RT.det = null; RT.tab = 'group';
     modal('<div id="rtb"></div>', (bg, close) => { RT.close = close; rtLoad(bg); }, 'rtm');
   }
@@ -13579,7 +13598,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     box.innerHTML = `<div class="rtfixed">
       <h3>입력 시간 분석 <small class="muted">관리자 전용 · 사용자 화면에는 시각이 나오지 않습니다</small></h3>
       <div class="rtbar"><button class="sm" data-mv="-1">◀</button><b>${esc(RT.ym)}</b><button class="sm" data-mv="1">▶</button>
-        <label>평균 제외 기준 <input type="number" id="rtmin" min="0" max="60" value="${D.min}"> 분 미만 · <input type="number" id="rtgap" min="5" max="600" value="${D.gap}"> 분 초과</label></div>
+        <label>평균 제외 기준 <input type="number" id="rtmin" min="0" max="60" value="${D.min}"> 분 미만 · <input type="number" id="rtgap" min="5" max="600" value="${D.gap}"> 분 초과</label><button type="button" class="sm" id="rtapply">기준 적용</button></div>
       <div class="muted" style="margin:2px 0 6px;font-size:12.5px">${D.since ? '시각 기록 시작일 ' + esc(D.since) + ' (그 전 데이터는 분석 불가)' : '아직 기록된 시각이 없습니다 (적용한 날부터 쌓입니다)'} · <b>걸린 시간</b> = 줄을 저장한 시각부터 같은 사람 · 같은 날 다음 줄을 저장한 시각까지 (그날 마지막 줄 제외) · <b>대당</b> = 걸린 시간 ÷ 수량 · 본인이 오늘 직접 입력한 줄만</div>
       <div class="rttabs" role="tablist" aria-label="입력 시간 분석 항목">${rtTabs.map(([k, label]) => `<button type="button" role="tab" class="rttab ${RT.tab === k ? 'on' : ''}" aria-selected="${RT.tab === k}" aria-controls="rtpane" data-rt-tab="${k}">${label}</button>`).join('')}</div>
       </div>
@@ -13587,8 +13606,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <div class="rtfoot"><div class="acts"><button data-x>닫기</button></div></div>`;
     box.querySelectorAll('[data-rt-tab]').forEach(b => (b.onclick = () => { if (RT.tab === b.dataset.rtTab) return; RT.tab = b.dataset.rtTab; rtDraw(bg); }));
     box.querySelectorAll('[data-mv]').forEach(b => (b.onclick = () => { RT.ym = mv(+b.dataset.mv); RT.open = {}; rtLoad(bg); }));
-    box.querySelector('#rtmin').onchange = e => { RT.min = Math.min(60, Math.max(0, +e.target.value || 0)); rtLoad(bg); };
-    box.querySelector('#rtgap').onchange = e => { RT.gap = Math.min(600, Math.max(5, +e.target.value || 90)); rtLoad(bg); };
+    // 두 값을 모두 입력한 뒤 명시적으로 적용한다. 닫기 버튼은 설정 저장 동작이 아니다.
+    const rtApply = () => {
+      const mn = Number(box.querySelector('#rtmin').value);
+      const gp = Number(box.querySelector('#rtgap').value);
+      if (!Number.isInteger(mn) || !Number.isInteger(gp) || mn < 0 || mn > 60 || gp < 5 || gp > 600 || mn >= gp) {
+        toast('기준을 확인하세요: 0~60분 미만, 5~600분 초과 · 앞 숫자는 뒤 숫자보다 작아야 합니다', true);
+        return;
+      }
+      RT.min = mn; RT.gap = gp;
+      try { localStorage.setItem(RT_PREF_KEY, JSON.stringify({ min: mn, gap: gp })); }
+      catch (_) { toast('이 브라우저에 기준을 저장하지 못했습니다. 현재 화면에는 적용됩니다', true); }
+      rtLoad(bg);
+    };
+    box.querySelector('#rtapply').onclick = rtApply;
+    ['rtmin', 'rtgap'].forEach(id => { box.querySelector('#' + id).onkeydown = e => { if (e.key === 'Enter') rtApply(); }; });
     box.querySelectorAll('.rtchip').forEach(b => (b.onclick = () => { RT.grp = b.dataset.g; RT.open = {}; rtLoad(bg); }));
     box.querySelectorAll('.rtu').forEach(tr => (tr.onclick = () => { RT.open[tr.dataset.k] = !RT.open[tr.dataset.k]; rtDraw(bg); }));
     box.querySelectorAll('.rtday').forEach(b => (b.onclick = e => { e.stopPropagation(); const [uid, kind] = b.dataset.u.split('|'); const u = (D.users || []).find(x => x.uid === uid && x.kind === kind); rtDetail(bg, u, b.dataset.d); }));
