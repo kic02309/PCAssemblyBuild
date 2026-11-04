@@ -3490,6 +3490,14 @@ html[data-theme=dark] .pa-pvw{background:#3a3115;color:#f5df7a}
 .pa-hand{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.pa-hand>span{display:inline-flex;align-items:center;gap:4px;background:var(--blue-soft);color:var(--blue);border-radius:999px;padding:3px 4px 3px 10px;font-size:12.5px;font-weight:700}
 .pa-hand button{padding:0 6px;min-height:0;border:0;background:transparent;color:inherit;box-shadow:none}
 @media (max-width:1100px){.pa-hd{flex-wrap:wrap}.pa-tiles{flex-wrap:wrap;flex-basis:100%;order:3}.pa-t{flex:1 1 96px}.pa-body{flex-direction:column;align-items:stretch}.pa-left{width:auto;position:static}.pa-list{max-height:none}.pa-cfg{flex-direction:column}.pa-pm{flex-direction:column}.pa-pm textarea{width:auto;min-height:160px}}
+
+/* v29.77 · PC 라인생산 설정·기간별 현황: 위쪽 흰 메뉴로 이동, 다른 메뉴/모바일 영향 없음 */
+.czn .pr-top-action{font-size:13px;font-weight:700;padding:0 13px;white-space:nowrap;flex:none;color:#374151}
+.czn .pr-top-action[hidden]{display:none!important}
+.czn .pr-top-action.pr-range-on{color:#1f63e6;background:#f0f6ff}
+html[data-theme=dark] .czn .pr-top-action{color:#d5dce8}
+html[data-theme=dark] .czn .pr-top-action.pr-range-on{color:#83b6ff;background:#20334d}
+@media(max-width:700px){.czn .pr-top-action{display:none!important}}
 </style>
 <style id="premium-panel-v2950">
 /* v29.50 : 사전안내 오른쪽 패널 디자인 (옅은 푸른 상자 · 푸른 선택 버튼 · 3칸 같은 크기 가운데 정렬) */
@@ -8021,7 +8029,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.77';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8665,11 +8673,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
-        : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', spTitle()]] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']].concat(canPmob() ? [['pmob', '📱 폰 입력']] : []) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
+        : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', spTitle()]] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']] : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '월말데이터마감']];
       if (cat === 'work' && canPa()) it = it.concat([['pa', '프리미엄 사전안내']]);   // v29.37
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
-      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
+      // v29.77: 라인생산의 [설정]·[기간별 생산현황]을 PC 상단 세부 메뉴로 이동 (모바일은 그대로)
+      const prTopMenu = cat === 'prod' && v === 'prod' ? '<button type="button" id="prNavSet" class="pr-top-action" hidden>⚙ 설정</button><button type="button" id="prNavRange" class="pr-top-action">▦ 기간별 생산현황</button>' : '';
+      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>${cat === 'prod' && k === 'prod' ? prTopMenu : ''}`).join('');
+      if ($('#prNavRange')) $('#prNavRange').onclick = () => { S.prv = S.prv || { d: S.today }; S.prv.range = true; renderProdRange(); };
     }
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
@@ -15177,12 +15188,24 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     P.draft.items = P.draft.items || []; P.draft.oth = P.draft.oth || []; P.draft.mobEx = P.draft.mobEx || []; P.draft.mobEdit = P.draft.mobEdit || {};
     S.prP = P; S.prSt = P.ver ? { k: 'ok', t: (P.at || '').slice(11, 16) } : { k: 'new' }; drawProd();
   }
+  // v29.77: PC 상단 메뉴에서만 두 버튼 노출 · 기존 권한/핸들러 유지.
+  function prTopActions(P) {
+    const nav = $('.czn'), set = nav && $('#prNavSet', nav), range = nav && $('#prNavRange', nav);
+    if (S.view !== 'prod' || !set || !range) return false;
+    const allowed = prShowHelp(P);
+    set.hidden = !allowed;
+    set.onclick = allowed ? () => prSettings(P) : null;
+    range.classList.toggle('pr-range-on', !!(S.prv && S.prv.range));
+    range.onclick = () => { if (S.prv && S.prv.range) return; S.prv.range = true; renderProdRange(); };
+    return true;
+  }
   // v29.76 read-only period query (PC line-production view only). Reuses existing prGet and prCalc: no new SQL/RPC.
   async function renderProdRange() {
     S.prv = S.prv || { d: S.today };
     S.prv.range = true;
     S.prv.rfrom = S.prv.rfrom || C.addDays(S.today, -6);
     S.prv.rto = S.prv.rto || S.today;
+    prTopActions(S.prP);
     const main = $('#main');
     main.innerHTML = pageHead('라인생산', '<span class="prst">기간별 생산현황 · 조회 전용</span>', '<button id="prRangeBack">‹ 일일 생산으로</button>') + `<div class="pgb prpg pr-range">
       <div class="card pr-range-controls"><div class="mgch"><b>기간별 생산현황</b><span class="muted">저장 · 수정 없이 실제 입력과 확정 실적을 조회합니다</span></div>
@@ -15273,12 +15296,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function drawProd() {
     const P = S.prP, main = $('#main');
+    const onPcTop = prTopActions(P);
     main.innerHTML = pageHead('라인생산', `<div class="row" style="gap:6px;margin-left:12px"><button id="prpv">‹</button><input type="date" id="prd" value="${P.date}"><button id="prnx">›</button><button id="prtd">오늘</button></div><span id="prst" class="prst"></span><span id="prcf"></span>`,
-      `${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button><button id="prset">⚙ 설정</button>' : ''}<button id="prRangeOpen">▦ 기간별 생산현황</button>${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
+      `${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button>' + (onPcTop ? '' : '<button id="prset">⚙ 설정</button>') : ''}${onPcTop ? '' : '<button id="prRangeOpen">▦ 기간별 생산현황</button>'}${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
     const mv = k => { S.prv.d = C.addDays(P.date, k); renderProd(); };
     $('#prpv').onclick = () => mv(-1); $('#prnx').onclick = () => mv(1); $('#prtd').onclick = () => { S.prv.d = S.today; renderProd(); }; $('#prd').onchange = e => { S.prv.d = e.target.value || S.today; renderProd(); };
     if ($('#prhelp')) $('#prhelp').onclick = () => prHelp(P); if ($('#prset')) $('#prset').onclick = () => prSettings(P);
-    $('#prRangeOpen').onclick = () => { S.prv.range = true; renderProdRange(); };
+    if ($('#prRangeOpen')) $('#prRangeOpen').onclick = () => { S.prv.range = true; renderProdRange(); };
     if ($('#prok')) $('#prok').onclick = prConfirm; if ($('#pred')) $('#pred').onclick = prEditors;
     prStatus(); prConfBar(); drawProdBody();
   }
@@ -15474,8 +15498,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const canSmob = () => !!(S.me && !isRO() && (S.me.group === '안정화' || S.mpv === 'smob'));
   const SM_A = [['AG', '검수'], ['AH', '완충1'], ['AI', '완충2'], ['AT', '개인포장']];
   const SM_OS = [['AD', '안정화'], ['AA', 'O/S'], ['AB', 'DOEM + M'], ['AC', 'OS 재인증'], ['AE', '안정화 설치<br>+ OS삭제'], ['AF', 'Bios+Up']];
-  const SM_OP = [['AJ', '옵1'], ['AK', '옵2'], ['AL', '옵3']];
-  const SM_TAG = { F: '출고', AG: '검수', AH: '완충1', AI: '완충2', AA: 'OS', AB: 'D+M', AC: '재인증', AD: '안정화', AE: '안정화+삭제', AF: 'Bios', AJ: '옵1', AK: '옵2', AL: '옵3', AT: '개인포장', C: '일반', D: '특수', D2: '프리', E: '추천', E2: '웍스', G: '반조' };
+  const SM_OP = [['AJ', '옵1'], ['AK', '옵2'], ['AL', '옵3'], ['AM', '옵4']];
+  const SM_TAG = { F: '출고', AG: '검수', AH: '완충1', AI: '완충2', AA: 'OS', AB: 'D+M', AC: '재인증', AD: '안정화', AE: '안정화+삭제', AF: 'Bios', AJ: '옵1', AK: '옵2', AL: '옵3', AM: '옵4', AT: '개인포장', C: '일반', D: '특수', D2: '프리', E: '추천', E2: '웍스', G: '반조' };
   const smSpecial = () => {                                          // '안정화(특수)' = 항목 설정에서 이름 붙인 추가 칸 → 이름으로 찾음
     const set = rateSet(ymOfDate(S.today)) || (S.rates || []).slice(-1)[0] || {}, NM = set.names || {};
     return Object.keys(NM).find(c => C.COL[c] && C.COL[c].ext && String(NM[c]).replace(/[\s\n]/g, '') === '안정화(특수)') || null;
@@ -15498,18 +15522,30 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const rows = () => (V.doc.rows || []).filter(x => x && String(x.o || '').trim());
     const chip = ([c, t], cls) => `<button type="button" class="pxc${cls || ''}" data-k="${c}">${t}</button>`;
     const grid = (arr, cls) => `<div class="pxw4 ${cls || ''}">${arr.map(a => chip(a, a[1].indexOf('<br>') > 0 ? ' sm' : '')).join('')}</div>`;
+    // Each option is an independent numeric task (0 = unselected). Keep the saved AJ–AM codes unchanged.
+    const optionGrid = () => `<div class="smopt-grid">${SM_OP.map(([c, t]) => `<div class="smopt-card" data-opt="${c}"><button type="button" class="smopt-name" data-k="${c}" aria-pressed="false">${t}</button><div class="smopt-counter"><button type="button" data-opt-q="${c}" data-step="-1" aria-label="${t} 수량 감소">−</button><output data-opt-val="${c}" aria-label="${t} 선택 수량">0</output><button type="button" data-opt-q="${c}" data-step="1" aria-label="${t} 수량 증가">+</button></div></div>`).join('')}</div>`;
     main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="smpc">PC 화면</button><button id="smlo">로그아웃</button></span></div>
       <div class="pxr"><div><h1>안정화 업무</h1><div class="pxmeta">${dLabel(S.today)} · ${esc(S.me.name)}</div></div><div class="pxcn"><b id="smn">0</b><small>오늘 입력</small></div></div></div>
       <div class="pxbd">
       <div class="pxcard"><div class="pxlb">주문번호 · 수량</div><div class="pxord pxvo"><input class="pxin" id="smo" inputmode="numeric" enterkeyhint="done" maxlength="30" placeholder="28972341" autocomplete="off" spellcheck="false"><span class="pxfix">출고 ✓</span></div><div class="pxvq"><div class="pxqty"><button type="button" data-q="-1">−</button><input id="smq" type="number" value="1" min="1"><button type="button" data-q="1">+</button></div></div><div id="smdup"></div></div>
-      <div class="pxcard">${grid(SM_A)}${grid(SM_OS.concat(SPL))}${grid(SM_OP)}<div class="pxtip" id="smtip">항목을 누르면 설명이 나옵니다</div><div id="smhint"></div></div>
+      <div class="pxcard">${grid(SM_A)}${grid(SM_OS.concat(SPL))}${optionGrid()}<div class="pxtip" id="smtip">항목을 누르면 설명이 나옵니다</div><div id="smhint"></div></div>
       <div class="pxcard" style="padding:10px 12px"><div class="pxlast"><span id="smlast"></span><button type="button" id="small">전체 보기 ›</button></div></div>
       ${V.can ? '' : '<div class="pxmsg bad">오늘 입력표를 수정할 수 없습니다 (담당 매니저에게 문의)</div>'}
       </div><div class="pxbar"><button type="button" class="pxs pxsv" id="smsave"><small id="smsum"></small><b>저장</b></button></div></div>`;
     const lab = c => (SM_OS.concat(SM_A, SM_OP, SPL).find(x => x[0] === c) || [c, c])[1].replace('<br>', ' ');
+    const optCodes = new Set(SM_OP.map(x => x[0]));
     const tagOf = c => SM_TAG[c] || ((C.COL[c] && C.COL[c].ext) ? lab(c) : c);
     const sync = () => {
-      $$('.pmx [data-k]').forEach(b => { const c = b.dataset.k, v = V.sel[c]; b.classList.toggle('on', !!v); b.disabled = specialRestricted(c, S.today, S.me) && !v; const old = b.querySelector('sup'); if (old) old.remove(); if (v > 1 || (v && C.COL[c].kind === 'num')) b.insertAdjacentHTML('beforeend', `<sup>${v}</sup>`); });
+      $$('.pmx [data-k]').forEach(b => { const c = b.dataset.k, v = V.sel[c]; b.classList.toggle('on', !!v); b.disabled = specialRestricted(c, S.today, S.me) && !v; const old = b.querySelector('sup'); if (old) old.remove(); if (!optCodes.has(c) && (v > 1 || (v && C.COL[c].kind === 'num'))) b.insertAdjacentHTML('beforeend', `<sup>${v}</sup>`); });
+      $$('.pmx .smopt-card').forEach(card => {
+        const c = card.dataset.opt, n = V.sel[c] || 0, title = card.querySelector('.smopt-name');
+        card.classList.toggle('on', n > 0);
+        if (title) title.setAttribute('aria-pressed', String(n > 0));
+        const out = card.querySelector('[data-opt-val]'); if (out) out.textContent = String(n);
+        const minus = card.querySelector('[data-step="-1"]'), plus = card.querySelector('[data-step="1"]');
+        if (minus) minus.disabled = !n;
+        if (plus) plus.disabled = n >= V.q || (title && title.disabled);
+      });
       const nm = c => { const v = V.sel[c]; return lab(c) + (C.COL[c].kind === 'num' && V.q > 1 && v ? ' ×' + v : (C.COL[c].kind === 'num' && v > 1 ? ' ×' + v : '')); };
       const ks = Object.keys(V.sel); $('#smsum').textContent = ks.length ? ks.map(nm).join(' + ') : '항목을 선택하세요';
       $('#smtip').innerHTML = V.tip || '항목을 누르면 설명이 나옵니다';
@@ -15535,13 +15571,27 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     };
     $('#smo').oninput = () => { clearTimeout(tm); V.dups = []; V.own = false; sync(); tm = setTimeout(check, 350); };
     $$('[data-q]').forEach(b => (b.onclick = () => { const i = $('#smq'); i.value = V.q = Math.max(1, (+i.value || 1) + +b.dataset.q); Object.keys(V.sel).forEach(c => { if (C.COL[c].kind === 'num' && V.sel[c] > V.q) V.sel[c] = V.q; }); sync(); }));
-    $('#smq').oninput = () => { V.q = Math.max(1, Math.floor(+$('#smq').value || 1)); };
+    $('#smq').oninput = () => {
+      V.q = Math.max(1, Math.floor(+$('#smq').value || 1));
+      // Manually changing the order count must also constrain option counts.
+      Object.keys(V.sel).forEach(c => { if (C.COL[c].kind === 'num' && V.sel[c] > V.q) V.sel[c] = V.q; });
+      sync();
+    };
     $$('.pmx [data-k]').forEach(b => (b.onclick = () => {
       const c = b.dataset.k, num = C.COL[c].kind === 'num';
       if (specialRestricted(c, S.today, S.me) && !V.sel[c]) return;
       V.tip = `<b>${esc(lab(c))}</b> ${esc(tp[c] || '')}`;
-      if (num) { const n = (V.sel[c] || 0) >= V.q ? 0 : (V.sel[c] || 0) + 1; if (n) V.sel[c] = n; else delete V.sel[c]; }
+      if (optCodes.has(c)) { if (V.sel[c]) delete V.sel[c]; else V.sel[c] = 1; }
+      else if (num) { const n = (V.sel[c] || 0) >= V.q ? 0 : (V.sel[c] || 0) + 1; if (n) V.sel[c] = n; else delete V.sel[c]; }
       else if (V.sel[c]) delete V.sel[c]; else V.sel[c] = 1;
+      sync();
+    }));
+    $$('.pmx [data-opt-q]').forEach(b => (b.onclick = () => {
+      const c = b.dataset.optQ, step = Number(b.dataset.step), n = V.sel[c] || 0;
+      if (!optCodes.has(c) || (specialRestricted(c, S.today, S.me) && !n)) return;
+      const next = Math.max(0, Math.min(V.q, n + step));
+      if (next) V.sel[c] = next; else delete V.sel[c];
+      V.tip = `<b>${esc(lab(c))}</b> ${esc(tp[c] || '')}`;
       sync();
     }));
     $('#smpc').onclick = () => go('input'); $('#smlo').onclick = () => logout();
@@ -16426,6 +16476,17 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .pxbar{display:block!important}
 .pxsv{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;height:60px}
 .pxsv small{font-size:13px;font-weight:600;opacity:.88}.pxsv b{font-size:20px}
+
+/* v29.77 stabilization mobile options: independent quantities, 2 columns × 2 rows */
+.pmx .smopt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px;padding-top:10px;border-top:1px solid #edf1f7}
+.pmx .smopt-card{min-width:0;padding:7px 8px 8px;border:1.5px solid #c3cde3;border-radius:12px;background:#f6f8fc;transition:background .15s,border-color .15s}
+.pmx .smopt-card.on{background:#edf3ff;border-color:#2a4a85}
+.pmx .smopt-name{display:block;width:100%;height:27px;padding:0 4px;text-align:center;font-size:14px;font-weight:800;color:#3b4d6b;background:transparent}
+.pmx .smopt-card.on .smopt-name{color:#223c70}
+.pmx .smopt-counter{height:38px;display:grid;grid-template-columns:minmax(34px,1fr) 42px minmax(34px,1fr);align-items:center;border:1px solid #c3cde3;border-radius:9px;background:#fff;overflow:hidden}
+.pmx .smopt-counter button{width:100%;height:100%;padding:0;font-size:24px;font-weight:700;color:#2a4a85;background:transparent}
+.pmx .smopt-counter button:disabled{opacity:.28;cursor:default}
+.pmx .smopt-counter output{min-width:0;font-size:18px;text-align:center;font-weight:800;color:#0f1b33}
 </style><style id="phone-v2955">
 @media(min-width:701px){.pmx{max-width:430px;margin:8px auto 24px;border-radius:26px;box-shadow:0 8px 30px rgba(20,40,90,.22),0 0 0 8px #1c2b4a;overflow:visible}.pmx .pxhd{border-radius:26px 26px 40px 40px}}
 </style><style id="mpv-css">#mpvbar{position:fixed;bottom:16px;right:16px;z-index:9000;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#1c2b4a;color:#fff;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.25)}#mpvbar span{opacity:.85}#mpvbar button{height:30px;padding:0 12px}.pvl button small{display:block;color:#6b7893;font-weight:400}</style><style id="bp-v2957">
