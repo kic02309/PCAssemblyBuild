@@ -15724,9 +15724,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let D; try { D = await api('sp', { op: 'get' }); }
     catch (e) { if (S.view === 'sp') main.innerHTML = pageHead(spTitle()) + '<div class="pgb"><div class="warn">' + esc(e.message) + '</div></div>'; return; }
     if (S.view !== 'sp') return;
-    await spLoadCyc(D); S.spD = D; spDraw();
+    await spLoadCyc(D); await spLoadReceipts(D); S.spD = D; spDraw();
   }
-  async function spReload() { try { const D = await api('sp', { op: 'get' }); await spLoadCyc(D); S.spD = D; } catch (e) { toast(e.message, true); } if (S.view === 'sp') spDraw(); }
+  async function spReload() { try { const D = await api('sp', { op: 'get' }); await spLoadCyc(D); await spLoadReceipts(D); S.spD = D; } catch (e) { toast(e.message, true); } if (S.view === 'sp') spDraw(); }
   const spAgo = (d, today) => { if (!d) return null; return Math.round((new Date(today + 'T00:00:00') - new Date(d + 'T00:00:00')) / 864e5); };
   const spThr = it => ({ d: 3, w: 9, m: 33, n: 0 })[spCycle(it)];                // 오래된 실사 경고 : 주기 기준 (매일 = 3일 넘게 · 주 1회 = 9일 · 월 1회 = 33일 · 비정기 = 없음)
   const spAgoOf = it => { const L = spLast(it); return L ? spAgo(L.d, S.spD.today) : null; };
@@ -15735,25 +15735,42 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const spWhoTxt = it => { const n = [it.mainName, it.subName].filter(Boolean); const base = n.length ? n : [...new Set(it.parts.map(p => p.uname).filter(Boolean))]; return base.length ? esc(base[0]) + (base.length > 1 ? ` 외 ${base.length - 1}` : '') : '담당 없음'; };
   const spCatName = (D, it) => ((D.cats || []).some(c => c.name === it.cat) ? it.cat : '기타');
   // ================================================================ v29.64 : 실사 주기 · 직전 대비 사용량 · 한 줄 헤더 · 전체 요약표
-  //   매일(d) · 주 1회(w) · 월 1회(m) · 비정기(n).  재고가 늘면 입고로 보고 그날 사용량은 계산하지 않음.
+  //   매일(d) · 주 1회(w) · 월 1회(m) · 비정기(n). v29.79 이후 실제 입고 기록 반영.
   const SPC = { d: ['매일', 1], w: ['주 1회', 7], m: ['월 1회', 30], n: ['비정기', 0] };
   const spCycle = it => { const c = S.spD && S.spD.cyc && S.spD.cyc[it.id]; return SPC[c] ? c : 'w'; };
   async function spLoadCyc(D) { try { const r = await api('sp2', { op: 'cycles' }); D.cyc = r.cyc || {}; } catch (e) { D.cyc = {}; } }
-  function spSeries(it, recs, only) {                                        // 날짜별 합계 · 직전 대비 : 그룹(파트)마다 자기 직전 값과 비교 (처음 입력한 그룹은 비교 대상 아님)
-    const ps = only != null ? [only] : (spHasParts(it) ? it.parts.map(x => x.p) : ['']);
+  // v29.79 누적: 파트·규격·날짜별 실제 입고량. 실사와 별도 저장, 누락된 입고는 추정하지 않습니다.
+  async function spLoadReceipts(D) {
+    try { const r = await api('sp2', { op: 'receipts' }); if (!Array.isArray(r.rows)) throw new Error('입고 조회 응답 오류'); D.receipts = r.rows; D.receiptReady = true; }
+    catch (e) { D.receipts = []; D.receiptReady = false; D.receiptError = e.message || '입고 조회 불가'; }
+  }
+  const spReceiptQty = (D, id, p, k, date) => ((D.receipts || []).find(r => +r.id === +id && r.p === p && r.k === k && r.d === date) || {}).qty;
+  const spReceiptsBetween = (D, id, p, k, fromExclusive, throughInclusive) => (D.receipts || []).reduce((n, r) =>
+    n + (+r.id === +id && r.p === p && r.k === k && r.d > fromExclusive && r.d <= throughInclusive ? (+r.qty || 0) : 0), 0);
+  const spReceiptsToday = (D, it) => (D.receipts || []).filter(r => +r.id === +it.id && r.d === D.today).reduce((n, r) => n + (+r.qty || 0), 0);
+  function spSeries(it, recs, only) { // v29.79 : 실사 간 실제 입고량을 합산하여 사용량 계산
+    const D = S.spD || {}, ps = only != null ? [only] : (spHasParts(it) ? it.parts.map(x => x.p) : ['']);
     const mine = recs.filter(r => ps.includes(r.p));
     const dates = [...new Set(mine.map(r => r.d))].sort();
-    const cur = {}, out = []; let prev = null;
+    const cur = {}, lastDate = {}, out = []; let prev = null;
     dates.forEach(d => {
-      const filled = new Set(), before = Object.assign({}, cur), got = {};
-      mine.filter(r => r.d === d).forEach(r => { cur[r.p + '|' + r.k] = r.qty; got[r.p + '|' + r.k] = r.qty; filled.add(r.p); });
+      const filled = new Set(), before = Object.assign({}, cur), beforeDate = Object.assign({}, lastDate), got = {};
+      mine.filter(r => r.d === d).forEach(r => { const k = r.p + '|' + r.k; cur[k] = r.qty; got[k] = r.qty; lastDate[k] = d; filled.add(r.p); });
       const tot = {}; it.specs.forEach(s => { let t = 0, any = false; ps.forEach(p => { const v = cur[p + '|' + s.k]; if (v != null) { t += v; any = true; } }); tot[s.k] = any ? t : null; });
-      const row = { d, tot, miss: ps.filter(p => !filled.has(p)).length, use: {}, inn: {}, gap: prev ? Math.max(1, spAgo(prev.d, d)) : 0 };
+      const row = { d, tot, miss: ps.filter(p => !filled.has(p)).length, use: {}, inn: {}, intake: {}, gap: prev ? Math.max(1, spAgo(prev.d, d)) : 0 };
       if (prev) it.specs.forEach(s => {
-        let dec = 0, inc = 0, cmp = 0;
-        ps.forEach(p => { const k = p + '|' + s.k; if (got[k] == null || before[k] == null) return; cmp++; if (got[k] < before[k]) dec += before[k] - got[k]; else if (got[k] > before[k]) inc += got[k] - before[k]; });
-        if (!cmp) return;                                                   // 비교할 이전 값이 없음 → 비교 불가
-        if (inc) row.inn[s.k] = inc; else row.use[s.k] = dec;
+        let used = 0, mismatch = 0, compared = 0, intake = 0;
+        ps.forEach(p => {
+          const k = p + '|' + s.k;
+          if (got[k] == null || before[k] == null || !beforeDate[k]) return;
+          compared++;
+          const inQty = spReceiptsBetween(D, it.id, p, s.k, beforeDate[k], d);
+          const diff = before[k] + inQty - got[k]; intake += inQty;
+          if (diff < 0) mismatch += -diff; else used += diff;
+        });
+        if (!compared) return;
+        if (intake) row.intake[s.k] = intake;
+        if (mismatch) row.inn[s.k] = mismatch; else row.use[s.k] = used;
       });
       out.push(row); prev = row;
     });
@@ -15764,7 +15781,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!r) return '<span class="sxu0">-</span>';
     const ps = [];
     it.specs.forEach(s => { const u = r.use[s.k], i = r.inn[s.k], lb = it.specs.length > 1 && s.s ? esc(s.s) + ' ' : '';
-      if (i) ps.push(`<em class="in">${lb}입고</em>`); else if (u != null) ps.push(`<em class="${u ? 'dn' : 'z'}">${lb}${u ? '−' + spN(u) : '0'}</em>`); });
+      if (i) ps.push(`<em class="in">${lb}입고 확인 필요</em>`); else if (u != null) ps.push(`<em class="${u ? 'dn' : 'z'}">${lb}${u ? '−' + spN(u) : '0'}</em>`); });
     return ps.length ? ps.join('') + (r.gap > 1 ? `<small>${r.gap}일 사이</small>` : '') : '<span class="sxu0">-</span>';
   };
   const spDoneToday = it => spMyParts(it).some(pt => it.specs.some(x => pt.last[x.k] && pt.last[x.k].d === S.spD.today));
@@ -15813,12 +15830,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const st = spItemSt(it), mine = spMyParts(it), parts = spHasParts(it), c = spCycle(it);
       const btn = !mine.length ? '' : parts && !spIsMain(it) && mine.length === 1 ? `<button type="button" class="sxgo" data-bpin="${it.id}" data-bpp="${esc(mine[0].p)}">${esc(mine[0].n)} 수량 입력</button>` : `<button type="button" class="sxgo" data-bpin="${it.id}">${parts ? '그룹별 입력' : '수량 입력'}</button>`;
       const lu = spLastUse(it);
+      const todayIn = spReceiptsToday(D, it);
       return `<div class="sxc ${st}${spStale(it) ? ' stale' : ''}${parts ? ' wide' : ''}" data-bpi="${it.id}">
         <div class="sxh"><div class="sxi">${spIcon(it)}</div><div class="sxt"><b>${esc(it.name)}</b><span class="cyc ${c}">${SPC[c][0]}</span></div>${pill(it, st)}</div>
         <div class="sxwho">${spWho(it)}</div>
         ${parts ? (() => { const tot = it.parts.length * it.specs.length, f = it.parts.reduce((a, pt) => a + it.specs.filter(x => pt.last[x.k] && pt.last[x.k].d === today).length, 0), gf = it.parts.filter(pt => it.specs.every(x => pt.last[x.k] && pt.last[x.k].d === today)).length; return `<div class="sxpg${f < tot ? ' w' : ''}">오늘 입력 <b>${f}/${tot}</b>칸 · ${gf}/${it.parts.length}${esc(it.parts.length && /그룹/.test(it.parts[0].n || '') ? '그룹' : '파트')} 완료</div>`; })() : ''}
         ${parts ? rowsParts(it) : `<div class="sxrows">${rowsSingle(it)}</div>`}
-        ${lu ? `<div class="sxuse"><span>직전 대비</span><div>${spUseTxt(it, lu)}</div></div>` : ''}
+        ${todayIn ? `<div class="sxuse"><span>오늘 입고</span><div><em class="in">+${spN(todayIn)}${esc(it.unit)}</em></div></div>` : ''}
+        ${lu ? `<div class="sxuse"><span>직전 대비 사용</span><div>${spUseTxt(it, lu)}</div></div>` : ''}
         ${priceLine(it)}
         <div class="sxlast${spStale(it) ? ' w' : ''}">마지막 실사 <b>${whenTxt(it)}</b></div>
         <div class="sxbt">${btn}${it.price && spIsMain(it) ? `<button type="button" class="sxgo ghost" data-bppr="${it.id}">단가 기록</button>` : ''}</div>
@@ -15876,20 +15895,25 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const spNumVal = el => el.value.replace(/[^\d]/g, '');
   const spNumRow = (k, label, sub, val, unit, hint) => `<label class="bpnf${val !== '' && val != null ? ' has' : ''}"><span class="bpnl"><b>${label}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="bpnbox"><input type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${val === '' || val == null ? '' : Number(val).toLocaleString()}" placeholder="0"><i>${esc(unit)}</i></span>${hint ? `<small class="bpnh">${hint}</small>` : ''}</label>`;
   const spNumWire = bg => { $$('.bpnf input', bg).forEach((i, n, all) => { i.oninput = () => spNumFix(i); i.onfocus = () => setTimeout(() => i.select(), 0); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const nx = all[n + 1]; if (nx) { nx.focus(); nx.select(); } else { const s = $('[data-s]', bg); if (s) s.click(); } } }; }); };
+  // v29.79 : 잔여재고와 오늘 누적 입고를 나란히 입력 (한 서버 트랜잭션)
   function spInput(id, p0) {
     const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
     const parts = spHasParts(it), mine = spMyParts(it); if (!mine.length) return;
-    if (parts && mine.length > 1 && p0 == null) return spGrid([it]);           // v29.62 : 그룹이 여러 개면 한 화면에서 같이 입력
+    if (!D.receiptReady) return toast('입고 기능 SQL 적용 후 사용할 수 있습니다. 관리자에게 문의하세요.', true);
+    if (parts && mine.length > 1 && p0 == null) return spGrid([it]);
     let cur = (p0 != null && mine.find(x => x.p === p0)) || mine[0];
-    const body = () => it.specs.map(s => { const l = cur.last[s.k], t = l && l.d === D.today ? l.qty : ''; return spNumRow(s.k, esc(s.s || it.name), s.min != null && !parts ? '기준 ' + spN(s.min) : '', t, it.unit, l ? `지난번 ${spN(l.qty)} · ${spMD(l.d)}${l.d === D.today ? ' (오늘 입력함)' : ''}` : '처음 입력'); }).join('');
-    modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)}</h3><p>${spMD(D.today)} 오늘 실사 수량${parts ? (mine.length === 1 ? ` · <b>${esc(cur.n)}</b> ${esc(cur.uname || '')}` : '') : ' · 지금 있는 총수량'}</p></div></div>
+    const body = () => it.specs.map(s => {
+      const l = cur.last[s.k], t = l && l.d === D.today ? l.qty : '';
+      const iq = spReceiptQty(D, it.id, cur.p, s.k, D.today);
+      return `<div class="sp-pair"><div class="sp-pair-col">${spNumRow(s.k, esc(s.s || it.name) + (l ? ' · 잔여재고' : ' · 기초재고'), s.min != null && !parts ? '기준 ' + spN(s.min) : '', t, it.unit, l ? `지난 실사 ${spN(l.qty)} · ${spMD(l.d)}` : '최초 등록 수량 = 기초재고 (입고와 구분)')}</div><div class="sp-pair-col">${spNumRow('in:' + s.k, esc(s.s || it.name) + ' · 입고', '오늘 입고 합계', iq == null ? '' : iq, it.unit, '같은 날 여러 번 입고하면 합계 수량을 적으세요')}</div></div>`;
+    }).join('');
+    modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)}</h3><p>${spMD(D.today)} 잔여재고 실사 · 당일 누적 입고${parts ? ` · <b>${esc(cur.n)}</b>` : ''}</p></div></div>
       ${parts && mine.length > 1 ? `<div class="bpm-seg">${mine.map(pt => `<button type="button" data-pp="${esc(pt.p)}" class="${pt.p === cur.p ? 'on' : ''}">${esc(pt.n)}<small>${esc(pt.uname || '-')}</small></button>`).join('')}</div>` : ''}
       <div class="bpm-body" id="bpmb">${body()}</div>
       <p class="bpm-err" hidden>${SP_BAD}</p>
-      <p class="bpm-tip">실제로 0개면 0을 입력하세요 · 비운 칸은 기존 값 그대로 유지돼요 · Enter = 다음 칸</p>
+      <p class="bpm-tip">최초 재고는 기초재고로 기록합니다. 잔여재고와 입고는 별개입니다. 입고 100개를 두 번 받았다면 <b>오늘 입고 합계 200</b>으로 입력하세요. 빈 칸은 유지됩니다.</p>
       <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
-      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm');
-      // v29.66 : 입력해 놓고 그냥 닫으면 말없이 사라지던 문제 → 저장 안 한 입력이 있으면 확인
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'sp-receipt-modal');
       const dirty = () => $$('.bpnf input', bg).some(i => i.value !== (i.dataset.o || ''));
       const ask = async () => !dirty() || await confirmBox('저장하지 않은 입력이 있어요.<br>닫으면 사라집니다.', '닫기', '계속 입력');
       bg._guard = ask;
@@ -15899,11 +15923,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $$('[data-pp]', bg).forEach(b => (b.onclick = async () => { if (b.dataset.pp === cur.p) return; if (!(await ask())) return; cur = mine.find(x => x.p === b.dataset.pp) || cur; $$('[data-pp]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#bpmb', bg).innerHTML = body(); const er = $('.bpm-err', bg); if (er) er.hidden = true; wire(); }));
       $('[data-s]', bg).onclick = async () => {
         const bad = spBadFirst(bg); if (bad) { toast(SP_BAD, true); bad.focus(); return; }
-        const counts = {}; $$('.bpnf input', bg).forEach(i => { const v = spNumVal(i); if (v !== '') counts[i.dataset.k] = v; });      // v29.62 : 빈 칸은 보내지 않음 = 기존 값 유지
-        if (!Object.keys(counts).length) return toast('입력한 수량이 없습니다 (비운 칸은 기존 값 그대로예요)', true);
+        const counts = {}, receipts = {}, receiptBase = {};
+        $$('.bpnf input', bg).forEach(i => {
+          const v = spNumVal(i); if (v === '' || i.value === i.dataset.o) return;
+          if (i.dataset.k.startsWith('in:')) { const k = i.dataset.k.slice(3); receipts[k] = v; receiptBase[k] = spReceiptQty(D, it.id, cur.p, k, D.today) ?? null; } else counts[i.dataset.k] = v;
+        });
+        if (!Object.keys(counts).length && !Object.keys(receipts).length) return toast('변경한 수량이 없습니다', true);
         const b = $('[data-s]', bg); b.disabled = true;
-        try { const r = await api('sp', { op: 'save', id: it.id, part: parts ? cur.p : '', counts }); const i = D.items.findIndex(x => x.id === it.id); if (i >= 0) D.items[i] = r.item; close(); toast(`${it.name}${parts ? ' ' + cur.n : ''} 저장했습니다`); spDraw(); }
-        catch (e) { b.disabled = false; toast(e.message, true); }
+        try {
+          const r = await spSave2({ op: 'manyWithReceipt', rows: [{ id: it.id, part: parts ? cur.p : '', counts, receipts, receiptBase }] });
+          (r.items || []).forEach(x => { const i = D.items.findIndex(y => y.id === x.id); if (i >= 0) D.items[i] = x; });
+          await spLoadReceipts(D); close(); toast(`${it.name}${parts ? ' ' + cur.n : ''} 저장했습니다`); spDraw();
+        } catch (e) { b.disabled = false; toast(e.message, true); }
       };
     });
   }
@@ -15911,19 +15942,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   //   빈 칸 = 기존 값 그대로 · 입력한 칸만 바뀜 · 저장 전에 변경 내용 확인 · 서버는 전부 성공 / 전부 취소
   async function spSave2(body) {
     try { return await api('sp2', body); }
-    catch (e) { throw new Error(/알 수 없는 요청/.test(e.message || '') ? '서버에 v29.62 SQL 이 아직 적용되지 않았습니다 (관리자에게 문의)' : e.message); }
+    catch (e) { throw new Error(/알 수 없는 요청/.test(e.message || '') ? '서버에 v29.79 소모품 입고 SQL이 아직 적용되지 않았습니다 (관리자에게 문의)' : e.message); }
   }
   function spGrid(its, title) {
     const D = S.spD, today = D.today;
     its = its.filter(it => spMyParts(it).length);
     if (!its.length) return toast('입력할 수 있는 품목이 없습니다', true);
+    if (!D.receiptReady) return toast('입고 기능 SQL 적용 후 사용할 수 있습니다. 관리자에게 문의하세요.', true);
     const rows = []; its.forEach(it => spMyParts(it).forEach(pt => rows.push({ it, pt })));
     const kk = (it, pt, s) => it.id + '|' + pt.p + '|' + s.k;
-    const base = {}; rows.forEach(({ it, pt }) => it.specs.forEach(s => { const l = pt.last[s.k]; base[kk(it, pt, s)] = l && l.d === today ? l.qty : null; }));
+    const base = {}; rows.forEach(({ it, pt }) => it.specs.forEach(s => { const l = pt.last[s.k]; base[kk(it, pt, s)] = l && l.d === today ? l.qty : null; base[kk(it, pt, s) + '|r'] = spReceiptQty(D, it.id, pt.p, s.k, today) ?? null; }));
     const chip = (it, pt) => { const st = spPartState(it, pt); if (st.miss === st.n || !st.oldest) return '<span class="gxch none">미실사</span>'; if (st.miss) return '<span class="gxch old">일부 미실사</span>'; const g = spAgo(st.oldest, today); return g === 0 ? '<span class="gxch ok">오늘</span>' : `<span class="gxch ${g > spThr(it) && spThr(it) > 0 ? 'old' : 'mid'}">${g}일 전</span>`; };
-    const cell = (it, pt, s) => { const k = kk(it, pt, s), l = pt.last[s.k], v = base[k];
-      const hint = !l ? '<small class="gxh w">아직 기록 없음</small>' : l.d !== today ? `<small class="gxh${spThr(it) > 0 && spAgo(l.d, today) > spThr(it) ? ' w' : ''}">지난번 ${spN(l.qty)} · ${spMD(l.d)}</small>` : '';
-      return `<label class="gxc"><span class="gxl">${esc(s.s || '수량')}</span><input type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${v == null ? '' : Number(v).toLocaleString()}" placeholder="수량">${hint}</label>`; };
+    const cell = (it, pt, s) => { const k = kk(it, pt, s), l = pt.last[s.k], v = base[k], ri = base[k + '|r'];
+      const hint = !l ? '<small class="gxh w">최초 입력 = 기초재고</small>' : l.d !== today ? `<small class="gxh">지난번 ${spN(l.qty)} · ${spMD(l.d)}</small>` : '';
+      return `<label class="gxc"><span class="gxl">${esc(s.s || '수량')}</span><span class="sp-ginput"><span class="sp-ginput-col"><small>${l ? '잔여재고' : '기초재고'}</small><input aria-label="${l ? '잔여재고' : '기초재고'}" type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${v == null ? '' : Number(v).toLocaleString()}" placeholder="잔여"></span><span class="sp-ginput-col"><small>오늘 입고</small><input aria-label="오늘 누적 입고" type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k + '|r')}" value="${ri == null ? '' : Number(ri).toLocaleString()}" placeholder="입고"></span></span>${hint}</label>`;
+    };
     const block = it => {
       const rs = rows.filter(r => r.it === it), parts = spHasParts(it), n = it.specs.length, multi = rs.length > 1, hasBox = it.specs.some(s => s.per > 0);
       return `<section class="gxb${n === 1 ? ' n1' : ''}" data-it="${it.id}" style="--n:${n}">
@@ -15935,7 +15968,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       </section>`;
     };
     modal(`<div class="bpm-hd"><div class="bpm-ic">${its.length === 1 ? spIcon(its[0]) : spIcon(null)}</div><div><h3>${esc(title || (its.length === 1 ? its[0].name + ' 그룹별 입력' : '일괄 입력'))}</h3><p>${spMD(today)} 오늘 실사 수량${its.length > 1 ? ` · 오늘 입력할 품목 ${its.filter(spDue).length}개 / 전체 ${its.length}개` : ''}</p></div></div>
-      <div class="gxnb">비운 칸은 <b>기존 값 그대로</b> 유지돼요 · 실제로 없으면 <b>0</b>을 입력하세요 · 기록 삭제는 품목 상세에서 해요</div>
+      <div class="gxnb">각 품목에 <b>잔여재고(최초는 기초재고) / 오늘 입고</b> 두 칸이 있습니다 · 입고는 당일 누적 합계 · 비운 칸은 기존 값 유지</div>
       <div class="gxbody">${(() => { const dueIts = its.length === 1 ? its : its.filter(spDue), rest = its.length === 1 ? [] : its.filter(x => !spDue(x)); return dueIts.map(block).join('') + (rest.length ? `<details class="gxmore"${dueIts.length ? '' : ' open'}><summary>오늘 입력 안 해도 되는 품목 ${rest.length}개 <small>(실사 주기가 아직 안 된 품목 · 필요하면 펼쳐서 입력)</small></summary>${rest.map(block).join('')}</details>` : ''); })()}</div>
       <div class="gxft"><div class="gxsum" id="gxsum"></div><div class="gxbt"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s disabled>변경 내용 확인</button></div></div>`, (bg, close) => {
       const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'gx');
@@ -15982,13 +16015,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (!chg || bad) return;
         const zr = bg._zr || [];
         const lines = []; ins.forEach(i => { const k = i.dataset.k, v = val(i), b = base[k]; if (v === null || v === b) return; const f = find(k), l = f.pt.last[f.s.k];
-          const from = b !== null ? spN(b) : l ? `${spN(l.qty)} <small>(${spMD(l.d)})</small>` : '없음';
-          lines.push(`<div class="gxcf"><span>${esc(f.it.name)}${spHasParts(f.it) ? ' ' + esc(f.pt.n) : ''}${f.s.s ? ' ' + esc(f.s.s) : ''}</span><em>${from}</em><i>→</i><b${v === 0 ? ' class="z"' : ''}>${spN(v)}</b></div>`); });
+          const from = b !== null ? spN(b) : k.endsWith('|r') ? '입고 기록 없음' : l ? `${spN(l.qty)} <small>(${spMD(l.d)})</small>` : '없음';
+          lines.push(`<div class="gxcf"><span>${esc(f.it.name)}${spHasParts(f.it) ? ' ' + esc(f.pt.n) : ''}${f.s.s ? ' ' + esc(f.s.s) : ''} <strong>${k.endsWith('|r') ? '입고' : '잔여'}</strong></span><em>${from}</em><i>→</i><b${v === 0 ? ' class="z"' : ''}>${spN(v)}</b></div>`); });
         const ok = await confirmBox(`변경 <b>${chg}</b>칸을 저장합니다.<br>비워 둔 칸은 기존 값 그대로 유지돼요.<div class="gxcfl">${lines.join('')}</div>${zr.length ? `<br><span style="color:#b45309">0으로 기록되는 칸: <b>${zr.slice(0, 6).map(esc).join(', ')}${zr.length > 6 ? ' 외 ' + (zr.length - 6) : ''}</b><br>실제로 없는 게 맞나요?</span>` : ''}`, '저장', '돌아가기');
         if (!ok) return;
-        const map = {}; ins.forEach(i => { const v = val(i), k = i.dataset.k; if (v === null || v === base[k]) return; const [id, p, sk] = k.split('|'); const m = id + '|' + p; (map[m] = map[m] || { id: +id, part: p, counts: {} }).counts[sk] = String(v); });
+        const map = {}; ins.forEach(i => { const v = val(i), k = i.dataset.k; if (v === null || v === base[k]) return; const [id, p, sk, ty] = k.split('|'); const m = id + '|' + p, row = map[m] = map[m] || { id: +id, part: p, counts: {}, receipts: {}, receiptBase: {} }; row[ty === 'r' ? 'receipts' : 'counts'][sk] = String(v); if (ty === 'r') row.receiptBase[sk] = base[k]; });
         const b = $('[data-s]', bg); b.disabled = true;
-        try { const r = await spSave2({ op: 'many', rows: Object.values(map) }); (r.items || []).forEach(x => { const i = D.items.findIndex(y => y.id === x.id); if (i >= 0) D.items[i] = x; }); chg = 0; close(); toast(`${r.n}칸 저장했습니다`); spDraw(); }
+        try { const r = await spSave2({ op: 'manyWithReceipt', rows: Object.values(map) }); (r.items || []).forEach(x => { const i = D.items.findIndex(y => y.id === x.id); if (i >= 0) D.items[i] = x; }); await spLoadReceipts(D); chg = 0; close(); toast(`${r.n}칸 저장했습니다`); spDraw(); }
         catch (e) { b.disabled = false; toast(e.message, true); }
       };
     });
@@ -16135,16 +16168,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const ago = spAgoOf(it);
     const getHist = async () => { if (days === 10) return it.hist.filter(h => spAgo(h.d, D.today) <= 10); const r = await api('sp', { op: 'hist', id: it.id, days: String(days) }); return r.hist || []; };
     const tbl = () => {
-      const ds = [...new Set(hist.map(h => h.d))];
-      const rows = ds.map(d => { const ps = [...new Set(hist.filter(h => h.d === d).map(h => h.p))];
-        return ps.map((p, n) => { const hs = hist.filter(h => h.d === d && h.p === p); return `<tr><td>${n ? '' : spMD(d)}</td>${parts ? `<td><b>${esc(pName(p))}</b></td>` : ''}${it.specs.map(s => { const h = hs.find(x => x.k === s.k); return `<td class="n">${h ? spN(h.qty) : ''}</td>`; }).join('')}<td class="by">${esc((hs[0] || {}).by || '')}</td></tr>`; }).join(''); }).join('');
+      const rh = (D.receipts || []).filter(r => +r.id === +it.id && (days === 0 || spAgo(r.d, D.today) <= days));
+      const ds = [...new Set(hist.map(h => h.d).concat(rh.map(r => r.d)))].sort().reverse();
+      const rows = ds.map(d => { const ps = [...new Set(hist.filter(h => h.d === d).map(h => h.p).concat(rh.filter(h => h.d === d).map(h => h.p)))];
+        return ps.map((p, n) => { const hs = hist.filter(h => h.d === d && h.p === p); return `<tr><td>${n ? '' : spMD(d)}</td>${parts ? `<td><b>${esc(pName(p))}</b></td>` : ''}${it.specs.map(s => { const h = hs.find(x => x.k === s.k), iq = rh.find(x => x.d === d && x.p === p && x.k === s.k); return `<td class="n">${h ? spN(h.qty) : '-'}${iq ? `<small class="sp-rec-hist">입고 +${spN(iq.qty)}</small>` : ''}</td>`; }).join('')}<td class="by">${esc((hs[0] || {}).by || '')}</td></tr>`; }).join(''); }).join('');
       return rows ? `<table class="bphtab"><thead><tr><th>날짜</th>${parts ? '<th>파트</th>' : ''}${it.specs.map(s => `<th>${esc(s.s || '수량')}</th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="bpempty">이 기간에 실사 기록이 없습니다</div>';
     };
     const pr = it.price && it.prices.length ? `<h4>단가 기록 <small>박스 단가 · 원</small></h4><table class="bphtab"><thead><tr><th>날짜</th>${it.specs.map(s => `<th>${esc(s.s)}</th>`).join('')}<th></th></tr></thead><tbody>${[...new Set(it.prices.map(x => x.d))].slice(0, 8).map(d => `<tr><td>${spMD(d)}</td>${it.specs.map(s => { const x = it.prices.find(y => y.d === d && y.k === s.k); return `<td class="n">${x ? spN(x.v) : ''}</td>`; }).join('')}<td class="by">${esc((it.prices.find(y => y.d === d) || {}).by || '')}</td></tr>`).join('')}</tbody></table>` : '';
-    const ucell = (r, k) => r.inn[k] ? '<em class="in">입고</em>' : r.use[k] == null ? '<em class="z">-</em>' : r.use[k] ? `<b class="dn">−${spN(r.use[k])}</b>` : '<em class="z">0</em>';
+    const ucell = (r, k) => r.inn[k] ? '<em class="in">입고 누락 확인</em>' : r.use[k] == null ? '<em class="z">-</em>' : r.use[k] ? `<b class="dn">−${spN(r.use[k])}</b>` : '<em class="z">0</em>';
     const useView = () => {
       if (!hist.length) return '<div class="bpempty">이 기간에 실사 기록이 없습니다</div>';
-      const note = '<p class="sxunote">재고가 전보다 늘면 <b>입고</b>로 보고 그날 사용량은 계산하지 않아요 · 기간의 첫 실사일은 비교할 전 기록이 없어 제외돼요</p>';
+      const note = '<p class="sxunote">사용량 = 직전 실사 잔여 + 다음 실사일까지 누적 입고 − 현재 실사 잔여 · 입고 미기록/과거 데이터는 정확한 사용량으로 단정할 수 없습니다.</p>';
       if (grp && parts) {
         const ser = it.parts.map(pt => ({ pt, rows: spSeries(it, hist, pt.p) })), sp = it.specs.find(s => s.k === gs) || it.specs[0];
         const ds = [...new Set(ser.flatMap(x => x.rows.map(r => r.d)))].sort().reverse();
@@ -16154,7 +16188,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const rows = spSeries(it, hist), mx = {};
       it.specs.forEach(s => { mx[s.k] = Math.max(1, ...rows.map(r => r.use[s.k] || 0)); });
       const sum = it.specs.map(s => { let t = 0, dd = 0, ni = 0; rows.forEach(r => { if (r.inn[s.k]) ni++; else if (r.use[s.k] != null) { t += r.use[s.k]; dd += r.gap; } }); const av = dd ? Math.round(t / dd * 10) / 10 : null;
-        return `<div><small>${esc(s.s || it.name)}</small><b>${spN(t)}<i>${esc(it.unit)}</i></b><span>하루 평균 ${av == null ? '-' : spN(av)}</span>${ni ? `<span class="in">입고 ${ni}회 제외</span>` : ''}</div>`; }).join('');
+        return `<div><small>${esc(s.s || it.name)}</small><b>${spN(t)}<i>${esc(it.unit)}</i></b><span>하루 평균 ${av == null ? '-' : spN(av)}</span>${ni ? `<span class="in">입고 확인 ${ni}회 제외</span>` : ''}</div>`; }).join('');
       return `<div class="sxus" style="--n:${it.specs.length}">${sum}</div>
         <table class="bphtab usetab"><thead><tr><th>날짜</th>${it.specs.map(s => `<th>${esc(s.s || '수량')}<small>재고 · 사용</small></th>`).join('')}</tr></thead><tbody>${rows.slice().reverse().map(r => `<tr><td>${spMD(r.d)}${r.gap > 1 ? `<small class="mi">${r.gap}일 사이</small>` : ''}${r.miss ? `<small class="mi w">${r.miss}${/그룹/.test((it.parts[0] || {}).n || '') ? '그룹' : '파트'} 미입력</small>` : ''}</td>${it.specs.map(s => `<td class="n"><span class="uq">${spN(r.tot[s.k])}</span>${ucell(r, s.k)}${r.use[s.k] ? `<i class="ub" style="width:${Math.round(r.use[s.k] / mx[s.k] * 100)}%"></i>` : ''}</td>`).join('')}</tr>`).join('')}</tbody></table>${note}`;
     };
@@ -16550,7 +16584,18 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .pmx .smopt-counter output{min-width:0;font-size:18px;text-align:center;font-weight:800;color:#0f1b33}
 </style><style id="phone-v2955">
 @media(min-width:701px){.pmx{max-width:430px;margin:8px auto 24px;border-radius:26px;box-shadow:0 8px 30px rgba(20,40,90,.22),0 0 0 8px #1c2b4a;overflow:visible}.pmx .pxhd{border-radius:26px 26px 40px 40px}}
-</style><style id="mpv-css">#mpvbar{position:fixed;bottom:16px;right:16px;z-index:9000;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#1c2b4a;color:#fff;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.25)}#mpvbar span{opacity:.85}#mpvbar button{height:30px;padding:0 12px}.pvl button small{display:block;color:#6b7893;font-weight:400}</style><style id="bp-v2957">
+</style><style id="mpv-css">#mpvbar{position:fixed;bottom:16px;right:16px;z-index:9000;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#1c2b4a;color:#fff;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.25)}#mpvbar span{opacity:.85}#mpvbar button{height:30px;padding:0 12px}.pvl button small{display:block;color:#6b7893;font-weight:400}</style><style id="sp-receipts-v2979">
+/* v29.79: consumables inbound + remaining stock. PC/mobile inputs share layout. */
+.sp-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:10px;border:1px solid var(--line);border-radius:14px}
+.sp-pair-col{min-width:0}.sp-receipt-modal .sp-pair .bpnf{display:flex!important;flex-direction:column!important;gap:7px;align-items:stretch!important;width:100%;min-width:0;box-sizing:border-box}
+.sp-receipt-modal .sp-pair .bpnl{display:block;width:100%;min-width:0;white-space:normal;overflow-wrap:break-word}.sp-pair .bpnl b{font-size:13px;display:block}.sp-pair .bpnl small{font-size:11px}
+.sp-receipt-modal .sp-pair .bpnbox{min-width:0;width:100%;flex-shrink:0}.sp-pair .bpnbox input{min-width:0;width:100%}.sp-pair .bpnh{font-size:11px;line-height:1.35}
+.sp-ginput{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}.sp-ginput-col{min-width:0;display:block}
+.sp-ginput-col small{display:block;font-size:10px;color:var(--sub);margin:0 0 3px}.sp-ginput-col input{min-width:0!important;width:100%;padding:0 6px!important;font-size:14px!important}
+.sp-ginput-col.chg input{border-color:var(--blue);background:var(--blue-soft)}.sp-ginput-col.bad input{border-color:#dc2626;color:#b91c1c}
+.sp-rec-hist{display:block;color:#0c8a78;font-size:11px;font-weight:700}
+@media(max-width:560px){.sp-pair{gap:8px;padding:8px}.sp-pair .bpnl b{font-size:12px}.sp-pair .bpnbox input{font-size:18px}}
+</style><style id="bp-v2957">
 /* v29.57 : 소모품 관리 */
 :root{--bplow:#d9480f;--bplowbg:#fff1e6;--bpok:#0c8a78;--bpokbg:#e3f5f1;--bpimg:#f4f7fc;--bpfield:#f5f7fb}
 html[data-theme=dark]{--bplow:#ff9a5c;--bplowbg:#3a2516;--bpok:#5fd0b8;--bpokbg:#16302b;--bpimg:#22252b;--bpfield:#24272e}
