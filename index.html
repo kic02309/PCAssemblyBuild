@@ -8049,7 +8049,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.79';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.80';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15826,20 +15826,23 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ${it.parts.map(pt => { const pd = spPartDay(pt); return `<tr class="${pd === today ? '' : 'old'}"><th><b>${esc(pt.n)}</b><small>${esc(pt.uname || '담당 없음')}${pd ? ' · ' + spMD(pd) : ''}</small></th>${it.specs.map(s => `<td>${pt.last[s.k] ? spN(pt.last[s.k].qty) : '-'}</td>`).join('')}</tr>`; }).join('')}
       <tr class="sum"><th>합계</th>${it.specs.map(s => `<td class="${spSt(s)}">${spN(s.total)}</td>`).join('')}</tr>
       <tr class="min"><th>기준</th>${it.specs.map(s => `<td>${s.min != null ? spN(s.min) : '-'}</td>`).join('')}</tr></tbody></table>`;
+    // v29.80: all item cards have the same compact summary layout; detail stays in the tabbed entry popup.
     const card = it => {
       const st = spItemSt(it), mine = spMyParts(it), parts = spHasParts(it), c = spCycle(it);
-      const btn = !mine.length ? '' : parts && !spIsMain(it) && mine.length === 1 ? `<button type="button" class="sxgo" data-bpin="${it.id}" data-bpp="${esc(mine[0].p)}">${esc(mine[0].n)} 수량 입력</button>` : `<button type="button" class="sxgo" data-bpin="${it.id}">${parts ? '그룹별 입력' : '수량 입력'}</button>`;
-      const lu = spLastUse(it);
-      const todayIn = spReceiptsToday(D, it);
-      return `<div class="sxc ${st}${spStale(it) ? ' stale' : ''}${parts ? ' wide' : ''}" data-bpi="${it.id}">
-        <div class="sxh"><div class="sxi">${spIcon(it)}</div><div class="sxt"><b>${esc(it.name)}</b><span class="cyc ${c}">${SPC[c][0]}</span></div>${pill(it, st)}</div>
+      const qty = it.specs.filter(s => s.total != null).reduce((sum, s) => sum + Number(s.total || 0), 0);
+      const someQty = it.specs.some(s => s.total != null);
+      const fullQty = it.specs.every(s => s.total != null);
+      const nFields = it.specs.length * it.parts.length;
+      const nToday = it.parts.reduce((n, pt) => n + it.specs.filter(s => pt.last[s.k] && pt.last[s.k].d === today).length, 0);
+      const nspec = it.specs.length;
+      const btn = !mine.length ? '' : `<button type="button" class="sxgo" data-bpin="${it.id}"${parts && !spIsMain(it) && mine.length === 1 ? ` data-bpp="${esc(mine[0].p)}"` : ''}>수량 입력</button>`;
+      const inToday = spReceiptsToday(D, it);
+      return `<div class="sxc sp80-card ${st}${spStale(it) ? ' stale' : ''}" data-bpi="${it.id}">
+        <div class="sxh"><div class="sxi">${spIcon(it)}</div><div class="sxt"><b>${esc(it.name)}</b><span class="sp80-tags"><span class="cyc ${c}">${SPC[c][0]}</span>${nspec > 1 ? `<span class="sp80-tag">규격 ${nspec}종</span>` : ''}${parts ? `<span class="sp80-tag">파트 ${it.parts.length}개</span>` : ''}</span></div>${pill(it, st)}</div>
         <div class="sxwho">${spWho(it)}</div>
-        ${parts ? (() => { const tot = it.parts.length * it.specs.length, f = it.parts.reduce((a, pt) => a + it.specs.filter(x => pt.last[x.k] && pt.last[x.k].d === today).length, 0), gf = it.parts.filter(pt => it.specs.every(x => pt.last[x.k] && pt.last[x.k].d === today)).length; return `<div class="sxpg${f < tot ? ' w' : ''}">오늘 입력 <b>${f}/${tot}</b>칸 · ${gf}/${it.parts.length}${esc(it.parts.length && /그룹/.test(it.parts[0].n || '') ? '그룹' : '파트')} 완료</div>`; })() : ''}
-        ${parts ? rowsParts(it) : `<div class="sxrows">${rowsSingle(it)}</div>`}
-        ${todayIn ? `<div class="sxuse"><span>오늘 입고</span><div><em class="in">+${spN(todayIn)}${esc(it.unit)}</em></div></div>` : ''}
-        ${lu ? `<div class="sxuse"><span>직전 대비 사용</span><div>${spUseTxt(it, lu)}</div></div>` : ''}
-        ${priceLine(it)}
-        <div class="sxlast${spStale(it) ? ' w' : ''}">마지막 실사 <b>${whenTxt(it)}</b></div>
+        <div class="sp80-total"><span>현재 잔여재고 <small>${nspec > 1 ? (fullQty ? '· 전체 규격 합계' : '· 확인된 규격 합계') : ''}</small></span><strong>${someQty ? spN(qty) : '-'}<small>${someQty ? esc(it.unit) : ''}</small></strong></div>
+        <div class="sp80-meta"><span>마지막 실사 <b>${whenTxt(it)}</b></span><span>오늘 입력 <b>${nToday}/${nFields}칸</b></span></div>
+        ${inToday > 0 ? `<div class="sp80-inbound">오늘 입고 <b>+${spN(inToday)}${esc(it.unit)}</b></div>` : ''}
         <div class="sxbt">${btn}${it.price && spIsMain(it) ? `<button type="button" class="sxgo ghost" data-bppr="${it.id}">단가 기록</button>` : ''}</div>
       </div>`;
     };
@@ -15896,46 +15899,133 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const spNumRow = (k, label, sub, val, unit, hint) => `<label class="bpnf${val !== '' && val != null ? ' has' : ''}"><span class="bpnl"><b>${label}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="bpnbox"><input type="text" inputmode="numeric" autocomplete="off" data-k="${esc(k)}" value="${val === '' || val == null ? '' : Number(val).toLocaleString()}" placeholder="0"><i>${esc(unit)}</i></span>${hint ? `<small class="bpnh">${hint}</small>` : ''}</label>`;
   const spNumWire = bg => { $$('.bpnf input', bg).forEach((i, n, all) => { i.oninput = () => spNumFix(i); i.onfocus = () => setTimeout(() => i.select(), 0); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const nx = all[n + 1]; if (nx) { nx.focus(); nx.select(); } else { const s = $('[data-s]', bg); if (s) s.click(); } } }; }); };
   // v29.79 : 잔여재고와 오늘 누적 입고를 나란히 입력 (한 서버 트랜잭션)
+  // v29.80: one visible spec at a time; draft values are retained across every spec/part tab.
   function spInput(id, p0) {
     const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
-    const parts = spHasParts(it), mine = spMyParts(it); if (!mine.length) return;
+    const mine = spMyParts(it), parts = spHasParts(it);
+    if (!mine.length) return;
     if (!D.receiptReady) return toast('입고 기능 SQL 적용 후 사용할 수 있습니다. 관리자에게 문의하세요.', true);
-    if (parts && mine.length > 1 && p0 == null) return spGrid([it]);
-    let cur = (p0 != null && mine.find(x => x.p === p0)) || mine[0];
-    const body = () => it.specs.map(s => {
-      const l = cur.last[s.k], t = l && l.d === D.today ? l.qty : '';
-      const iq = spReceiptQty(D, it.id, cur.p, s.k, D.today);
-      return `<div class="sp-pair"><div class="sp-pair-col">${spNumRow(s.k, esc(s.s || it.name) + (l ? ' · 잔여재고' : ' · 기초재고'), s.min != null && !parts ? '기준 ' + spN(s.min) : '', t, it.unit, l ? `지난 실사 ${spN(l.qty)} · ${spMD(l.d)}` : '최초 등록 수량 = 기초재고 (입고와 구분)')}</div><div class="sp-pair-col">${spNumRow('in:' + s.k, esc(s.s || it.name) + ' · 입고', '오늘 입고 합계', iq == null ? '' : iq, it.unit, '같은 날 여러 번 입고하면 합계 수량을 적으세요')}</div></div>`;
-    }).join('');
-    modal(`<div class="bpm-hd"><div class="bpm-ic">${spIcon(it)}</div><div><h3>${esc(it.name)}</h3><p>${spMD(D.today)} 잔여재고 실사 · 당일 누적 입고${parts ? ` · <b>${esc(cur.n)}</b>` : ''}</p></div></div>
-      ${parts && mine.length > 1 ? `<div class="bpm-seg">${mine.map(pt => `<button type="button" data-pp="${esc(pt.p)}" class="${pt.p === cur.p ? 'on' : ''}">${esc(pt.n)}<small>${esc(pt.uname || '-')}</small></button>`).join('')}</div>` : ''}
-      <div class="bpm-body" id="bpmb">${body()}</div>
-      <p class="bpm-err" hidden>${SP_BAD}</p>
-      <p class="bpm-tip">최초 재고는 기초재고로 기록합니다. 잔여재고와 입고는 별개입니다. 입고 100개를 두 번 받았다면 <b>오늘 입고 합계 200</b>으로 입력하세요. 빈 칸은 유지됩니다.</p>
-      <div class="bpm-ft"><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div>`, (bg, close) => {
-      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'sp-receipt-modal');
-      const dirty = () => $$('.bpnf input', bg).some(i => i.value !== (i.dataset.o || ''));
-      const ask = async () => !dirty() || await confirmBox('저장하지 않은 입력이 있어요.<br>닫으면 사라집니다.', '닫기', '계속 입력');
+    if (!it.specs.length) return toast('입력 가능한 규격이 없습니다', true);
+
+    let part = (p0 != null && mine.find(pt => pt.p === p0)) || mine[0];
+    let specIndex = 0, saving = false;
+    const keyOf = (p, k) => JSON.stringify([p, k]);
+    const draft = new Map();
+    mine.forEach(pt => it.specs.forEach(s => {
+      const l = pt.last[s.k], c = l && l.d === D.today ? String(l.qty) : '';
+      const r = spReceiptQty(D, it.id, pt.p, s.k, D.today);
+      const q = r == null ? '' : String(r);
+      draft.set(keyOf(pt.p, s.k), { count: c, receipt: q, baseCount: c, baseReceipt: q });
+    }));
+    const val = v => String(v || '').replace(/,/g, '').trim();
+    const invalid = v => v !== '' && (!/^\d+$/.test(val(v)) || Number(val(v)) > 9999999);
+    const changed = (e, fld) => val(e[fld]) !== '' && val(e[fld]) !== val(e[fld === 'count' ? 'baseCount' : 'baseReceipt']);
+    const getEntry = (pt, s) => draft.get(keyOf(pt.p, s.k));
+    const dirtyCount = () => [...draft.values()].reduce((n, e) => n + (changed(e, 'count') ? 1 : 0) + (changed(e, 'receipt') ? 1 : 0), 0);
+    const invalidCount = () => [...draft.values()].reduce((n, e) => n + (invalid(e.count) ? 1 : 0) + (invalid(e.receipt) ? 1 : 0), 0);
+    const info = (pt, s) => {
+      const older = (it.hist || []).filter(h => h.p === pt.p && h.k === s.k && h.d < D.today).sort((a, b) => b.d.localeCompare(a.d));
+      const olderCount = older[0] || null, l = pt.last[s.k], e = getEntry(pt, s);
+      const currentCount = e.count !== '' ? Number(val(e.count)) : l && l.d === D.today ? Number(l.qty) : null;
+      const origReceipt = spReceiptQty(D, it.id, pt.p, s.k, D.today) || 0;
+      const receipt = e.receipt !== '' ? Number(val(e.receipt)) : origReceipt;
+      const inBetween = olderCount ? spReceiptsBetween(D, it.id, pt.p, s.k, olderCount.d, D.today) - origReceipt + receipt : null;
+      const used = olderCount && currentCount !== null && !invalid(e.count) && !invalid(e.receipt)
+        ? Number(olderCount.qty) + inBetween - currentCount : null;
+      return { older: olderCount, last: l, currentCount, receipt, inBetween, used };
+    };
+    const fmtInput = v => v === '' ? '' : (/^\d+$/.test(val(v)) ? Number(val(v)).toLocaleString() : v);
+    modal(`<div class="sp80-head"><div class="bpm-ic">${spIcon(it)}</div><div class="sp80-heading"><h3>${esc(it.name)} · 수량 입력</h3><p>규격별 잔여재고와 오늘 누적 입고량</p></div><button type="button" class="sp80-x" data-c aria-label="닫기">×</button></div>
+      <div class="sp80-top">${parts && mine.length > 1 ? `<div class="sp80-parts" id="sp80-parts"></div>` : ''}<div class="sp80-specs" id="sp80-specs" role="tablist" aria-label="규격 선택"></div></div>
+      <div class="sp80-scroll"><div class="sp80-panel" id="sp80-panel" role="tabpanel"></div><div class="sp80-help">입고는 오늘 하루의 <b>누적 합계</b>를 입력합니다. 빈칸은 기존 값 유지 · 최초 수량은 기초재고로 기록됩니다.</div><p class="bpm-err" hidden>${SP_BAD}</p></div>
+      <div class="sp80-footer"><span id="sp80-status" aria-live="polite">변경 없음</span><div class="sp80-actions"><button type="button" data-prev>이전</button><button type="button" data-next>다음</button><button type="button" data-c>닫기</button><button type="button" class="primary" data-s>저장</button></div></div>`, (bg, close) => {
+      const pnl = $('.modal', bg); if (pnl) pnl.classList.add('bpm', 'sp80-modal');
+      const ask = async () => !dirtyCount() || await confirmBox(`저장하지 않은 입력이 <b>${dirtyCount()}칸</b> 있습니다.<br>닫으면 사라집니다.`, '닫기', '계속 입력');
       bg._guard = ask;
-      $('[data-c]', bg).onclick = async () => { if (await ask()) close(); };
-      const wire = () => { $$('.bpnf input', bg).forEach(i => (i.dataset.o = i.value)); spNumWire(bg); const f = $('.bpnf input', bg); if (f) setTimeout(() => f.focus(), 60); };
-      wire();
-      $$('[data-pp]', bg).forEach(b => (b.onclick = async () => { if (b.dataset.pp === cur.p) return; if (!(await ask())) return; cur = mine.find(x => x.p === b.dataset.pp) || cur; $$('[data-pp]', bg).forEach(x => x.classList.toggle('on', x === b)); $('#bpmb', bg).innerHTML = body(); const er = $('.bpm-err', bg); if (er) er.hidden = true; wire(); }));
-      $('[data-s]', bg).onclick = async () => {
-        const bad = spBadFirst(bg); if (bad) { toast(SP_BAD, true); bad.focus(); return; }
-        const counts = {}, receipts = {}, receiptBase = {};
-        $$('.bpnf input', bg).forEach(i => {
-          const v = spNumVal(i); if (v === '' || i.value === i.dataset.o) return;
-          if (i.dataset.k.startsWith('in:')) { const k = i.dataset.k.slice(3); receipts[k] = v; receiptBase[k] = spReceiptQty(D, it.id, cur.p, k, D.today) ?? null; } else counts[i.dataset.k] = v;
+      $$('[data-c]', bg).forEach(b => b.onclick = async () => { if (!saving && await ask()) close(); });
+      const renderPartTabs = () => {
+        const root = $('#sp80-parts', bg); if (!root) return;
+        const savedScroll = root.scrollLeft;
+        root.innerHTML = mine.map(pt => `<button type="button" class="${pt.p === part.p ? 'on' : ''}" data-part="${esc(pt.p)}">${esc(pt.n)}${pt.uname ? `<small>${esc(pt.uname)}</small>` : ''}</button>`).join('');
+        root.scrollLeft = savedScroll;
+        $$('[data-part]', root).forEach(b => b.onclick = () => {
+          if (saving) return;
+          const pt = mine.find(x => x.p === b.dataset.part); if (pt && pt.p !== part.p) { part = pt; renderPartTabs(); renderSpecTabs(); renderPanel(); }
         });
-        if (!Object.keys(counts).length && !Object.keys(receipts).length) return toast('변경한 수량이 없습니다', true);
-        const b = $('[data-s]', bg); b.disabled = true;
-        try {
-          const r = await spSave2({ op: 'manyWithReceipt', rows: [{ id: it.id, part: parts ? cur.p : '', counts, receipts, receiptBase }] });
-          (r.items || []).forEach(x => { const i = D.items.findIndex(y => y.id === x.id); if (i >= 0) D.items[i] = x; });
-          await spLoadReceipts(D); close(); toast(`${it.name}${parts ? ' ' + cur.n : ''} 저장했습니다`); spDraw();
-        } catch (e) { b.disabled = false; toast(e.message, true); }
       };
+      const renderSpecTabs = () => {
+        const root = $('#sp80-specs', bg);
+        const savedScroll = root.scrollLeft;
+        root.innerHTML = it.specs.map((s, i) => {
+          const e = getEntry(part, s), mark = changed(e, 'count') || changed(e, 'receipt');
+          return `<button type="button" role="tab" aria-selected="${i === specIndex}" class="${i === specIndex ? 'on' : ''}" data-spec="${i}">${esc(s.s || '수량')}${mark ? '<i title="변경 내용 있음"></i>' : ''}</button>`;
+        }).join('');
+        root.scrollLeft = savedScroll;
+        $$('[data-spec]', root).forEach(b => b.onclick = () => { if (saving) return; const i = +b.dataset.spec; if (i !== specIndex) { specIndex = i; renderSpecTabs(); renderPanel(); } });
+      };
+      const preview = () => {
+        const s = it.specs[specIndex], v = info(part, s), el = $('#sp80-usage', bg); if (!el) return;
+        if (invalid(getEntry(part, s).count) || invalid(getEntry(part, s).receipt)) {
+          el.innerHTML = '<b class="bad">올바른 수량을 입력하세요</b>'; return;
+        }
+        if (v.currentCount === null) { el.innerHTML = '<span>오늘 잔여재고를 입력하면 계산됩니다</span>'; return; }
+        if (!v.older) { el.innerHTML = '<b>기초재고 기준</b><small>직전 날짜의 실사 기록이 없어 사용량을 계산하지 않습니다</small>'; return; }
+        if (v.used < 0) { el.innerHTML = '<b class="warn">입고 기록 확인 필요</b><small>직전 실사 + 입고보다 현재 잔여재고가 많습니다</small>'; return; }
+        el.innerHTML = `<b>${spN(v.used)} <small>${esc(it.unit)}</small></b><small>${spN(v.older.qty)} + ${spN(v.inBetween)} − ${spN(v.currentCount)} · ${spMD(v.older.d)} 이후</small>`;
+      };
+      const status = () => {
+        const n = dirtyCount(), bad = invalidCount();
+        $('#sp80-status', bg).innerHTML = bad ? `<span class="sp80-invalid">잘못된 숫자 ${bad}칸</span>` : n ? `변경 <b>${n}칸</b> · 탭 이동해도 유지` : '변경 없음 · 빈칸은 유지';
+        $('[data-s]', bg).disabled = !n || !!bad || saving;
+        $('[data-s]', bg).textContent = saving ? '저장 중…' : n ? `변경 ${n}칸 저장` : '저장';
+        $('[data-prev]', bg).disabled = specIndex === 0 || saving;
+        $('[data-next]', bg).disabled = specIndex === it.specs.length - 1 || saving;
+      };
+      const renderPanel = () => {
+        const s = it.specs[specIndex], e = getEntry(part, s), v = info(part, s), isFirst = !v.last;
+        const since = v.last ? `마지막 실사 ${spN(v.last.qty)}${esc(it.unit)} · ${spMD(v.last.d)}` : '아직 실사 기록 없음';
+        const boxPart = `<div class="sp80-current"><span class="sp80-currname">${esc(s.s || it.name)}</span><span class="sp80-currmeta">${specIndex + 1}/${it.specs.length} 규격 · ${esc(it.unit)} 단위${s.per > 0 ? ` · 1박스 ${spN(s.per)}${esc(it.unit)}` : ''}</span></div>`;
+        $('#sp80-panel', bg).innerHTML = `${boxPart}
+          <div class="sp80-fields"><label class="sp80-field bpnf"><span>${isFirst ? '기초재고' : '잔여재고'}</span><small>현재 실제로 남아 있는 수량</small><div class="sp80-input"><input type="text" inputmode="numeric" autocomplete="off" data-field="count" value="${esc(fmtInput(e.count))}" placeholder="0" aria-label="${isFirst ? '기초재고' : '잔여재고'} ${esc(s.s || '')}"><em>${esc(it.unit)}</em></div><small class="sp80-note">${since}</small></label>
+          <label class="sp80-field bpnf"><span>오늘 입고</span><small>오늘 입고된 수량의 누적 합계</small><div class="sp80-input"><input type="text" inputmode="numeric" autocomplete="off" data-field="receipt" value="${esc(fmtInput(e.receipt))}" placeholder="0" aria-label="오늘 입고 ${esc(s.s || '')}"><em>${esc(it.unit)}</em></div><small class="sp80-note">기존 값 ${spN(spReceiptQty(D, it.id, part.p, s.k, D.today) || 0)}${esc(it.unit)} · 중복 더하기 아님</small></label></div>
+          <div class="sp80-usage"><span>계산된 사용량</span><div id="sp80-usage"></div></div>`;
+        const inputs = $$('[data-field]', $('#sp80-panel', bg));
+        inputs.forEach((input, i) => {
+          input.oninput = () => {
+            spNumFix(input); e[input.dataset.field] = input.value; renderSpecTabs(); status(); preview();
+          };
+          input.onfocus = () => { if (window.innerWidth > 700) setTimeout(() => input.select(), 0); };
+          input.onkeydown = event => { if (event.key === 'Enter') { event.preventDefault(); if (inputs[i + 1]) inputs[i + 1].focus(); else if (specIndex < it.specs.length - 1) { specIndex++; renderSpecTabs(); renderPanel(); } } };
+        });
+        preview(); status();
+      };
+      $('[data-prev]', bg).onclick = () => { if (specIndex > 0 && !saving) { specIndex--; renderSpecTabs(); renderPanel(); } };
+      $('[data-next]', bg).onclick = () => { if (specIndex < it.specs.length - 1 && !saving) { specIndex++; renderSpecTabs(); renderPanel(); } };
+      $('[data-s]', bg).onclick = async () => {
+        if (saving || !dirtyCount()) return;
+        if (invalidCount()) return toast(SP_BAD, true);
+        const groups = new Map(), zeros = [];
+        mine.forEach(pt => it.specs.forEach(s => {
+          const e = getEntry(pt, s), oc = changed(e, 'count'), or = changed(e, 'receipt');
+          if (!oc && !or) return;
+          let row = groups.get(pt.p);
+          if (!row) { row = { id: it.id, part: parts ? pt.p : '', counts: {}, receipts: {}, receiptBase: {} }; groups.set(pt.p, row); }
+          if (oc) { row.counts[s.k] = val(e.count); if (val(e.count) === '0') zeros.push((parts ? pt.n + ' · ' : '') + (s.s || it.name)); }
+          if (or) { row.receipts[s.k] = val(e.receipt); row.receiptBase[s.k] = e.baseReceipt === '' ? null : Number(val(e.baseReceipt)); }
+        }));
+        if (!groups.size) return;
+        if (zeros.length) {
+          const ok = await confirmBox(`잔여재고를 <b>0</b>으로 저장할 규격: ${zeros.slice(0, 5).map(esc).join(', ')}${zeros.length > 5 ? ' 외 ' + (zeros.length - 5) : ''}<br>실제 재고가 없는 것이 맞나요?`, '0으로 저장', '돌아가기');
+          if (!ok) return;
+        }
+        const b = $('[data-s]', bg); saving = true; bg._lock = true; status();
+        try {
+          const r = await spSave2({ op: 'manyWithReceipt', rows: [...groups.values()] });
+          (r.items || []).forEach(x => { const i = D.items.findIndex(y => y.id === x.id); if (i >= 0) D.items[i] = x; });
+          await spLoadReceipts(D); close(); toast(`${it.name} ${r.n}칸 저장했습니다`); spDraw();
+        } catch (ex) { saving = false; bg._lock = false; status(); toast(ex.message, true); }
+      };
+      renderPartTabs(); renderSpecTabs(); renderPanel();
     });
   }
   // ================================================================ v29.62 : 한 번에 입력 (그룹별 · 내 담당 일괄) · 오늘 기록 지우기
@@ -16911,6 +17001,79 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
   .czb > aside.czr .rb span { display: block; max-width: 58px; text-align: center; overflow-wrap: anywhere; word-break: keep-all; }
   .czb > aside.czr .rb .bd { top: 5px; right: 2px; min-width: 16px; padding: 0 4px; font-size: 10px; line-height: 15px; }
 }
+</style>
+<style id="sp-ui-v2980">
+/* v29.80: uniform category cards, compact tabbed stock-and-inbound entry popup */
+/* v29.80 QA correction: quantity-entry popup must be immediately opaque.
+   Legacy v25pop animates opacity from 0; prior captures showed the modal mid-animation.
+   Restrict the override to this popup; other modals retain their existing behavior. */
+.modal.bpm.sp80-modal{animation:none!important;opacity:1!important;transform:none!important;background:var(--panel)}
+
+.sxcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+.sxcards>.sp80-card{grid-column:auto!important;margin:0;min-height:273px;height:100%;gap:10px;padding:15px 16px;border-radius:17px;overflow:hidden}
+.sp80-card .sxh{min-height:52px}
+.sp80-card .sxt b{line-height:1.3}
+.sp80-card .sxp{font-size:11px;padding:3px 7px}
+.sp80-tags{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.sp80-tag{display:inline-block;padding:1px 7px;background:var(--line2);border-radius:7px;font-size:11px;color:var(--sub);font-weight:700}
+.sp80-card .sxwho{margin:0;min-height:28px;max-height:32px;overflow:hidden;white-space:nowrap}
+.sp80-card .sxwho .wp{font-size:12px;padding:2px 8px 2px 4px;margin:0 4px 0 0}
+.sp80-card .sxwho .wp i{font-size:10px;padding:1px 5px}
+.sp80-card .sxwho .wn{font-size:12px}
+.sp80-total{margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 14px;background:var(--line2);border-radius:12px;min-height:64px}
+.sp80-total>span{color:var(--sub);font-size:13px;font-weight:700}
+.sp80-total>span small{display:block;font-size:10px;font-weight:500;margin-top:2px}
+.sp80-total strong{font-size:23px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
+.sp80-total strong small{font-size:12px;margin-left:3px;color:var(--sub)}
+.sp80-meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--sub);font-weight:600;flex-wrap:wrap;margin:0 1px}
+.sp80-meta b{color:var(--ink)}
+.sp80-inbound{font-size:11.5px;color:var(--sub);font-weight:600;margin-top:-6px}.sp80-inbound b{color:#0a7a50}
+.sp80-card .sxbt{margin-top:auto;min-height:40px}
+.sp80-card .sxgo{height:39px;font-size:13px}
+.modal.bpm.sp80-modal{width:min(820px,calc(100vw - 24px));height:auto;max-height:calc(100dvh - 24px);display:flex;flex-direction:column;overflow:hidden;padding:0;border-radius:18px;box-shadow:0 15px 55px rgba(15,23,42,.27);min-width:0}
+.sp80-modal .sp80-head{padding:18px 22px 12px;display:flex;align-items:center;gap:12px;flex:none}
+.sp80-modal .bpm-ic{width:54px;height:54px;flex:0 0 54px}
+.sp80-modal .sp80-heading{min-width:0;flex:1}
+.sp80-modal .sp80-heading h3{font-size:19px;margin:0 0 3px;color:var(--ink)}
+.sp80-modal .sp80-heading p{margin:0;font-size:12px;color:var(--sub)}
+.sp80-modal .sp80-x{font-size:27px;line-height:1;padding:0;border:0;background:transparent;color:var(--sub);width:32px;height:32px}
+.sp80-modal .sp80-top{flex:none;min-width:0;padding:0 22px 10px}
+.sp80-modal .sp80-parts,.sp80-modal .sp80-specs{display:flex;gap:6px;overflow-x:auto;max-width:100%;padding:3px 0 7px;scrollbar-width:thin}
+.sp80-modal .sp80-parts button,.sp80-modal .sp80-specs button{border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;font-weight:800;border-radius:10px;padding:9px 14px;white-space:nowrap;min-height:39px;position:relative;flex:1 0 auto}
+.sp80-modal .sp80-parts button small{font-size:10px;margin-left:6px;color:var(--sub);font-weight:600}
+.sp80-modal .sp80-parts button.on{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
+.sp80-modal .sp80-specs button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.sp80-modal .sp80-specs button i{position:absolute;top:3px;right:5px;width:7px;height:7px;background:#10b981;border-radius:50%;border:1px solid var(--panel)}
+.sp80-modal .sp80-scroll{overflow-y:auto;min-height:0;flex:1 1 auto;padding:0 22px 14px;overscroll-behavior:contain}
+.sp80-modal .sp80-panel{border:1px solid var(--line);border-radius:14px;padding:15px;min-width:0}
+.sp80-current{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line2)}
+.sp80-currname{font-size:18px;font-weight:800;color:var(--ink)}.sp80-currmeta{color:var(--sub);font-size:12px}
+.sp80-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sp80-field{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.sp80-field>span{font-size:14px;font-weight:800;color:var(--ink)}
+.sp80-field>small{font-size:11px;color:var(--sub);line-height:1.4}
+.sp80-input{display:flex;align-items:center;gap:5px;margin:7px 0 4px}
+.sp80-input input{width:100%;min-width:0;height:52px;border:1.5px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);text-align:right;padding:5px 12px;font-size:23px;font-weight:800;font-variant-numeric:tabular-nums}
+.sp80-input em{font-style:normal;color:var(--sub);font-weight:700;font-size:13px;white-space:nowrap}
+.sp80-field .sp80-note{font-size:11px;color:var(--sub);min-height:15px}
+.sp80-field.bad .sp80-input input{border-color:#dc2626!important;background:#fff1f2!important;color:#b91c1c!important}
+.sp80-usage{margin-top:12px;background:var(--line2);border-radius:12px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.sp80-usage>span{color:var(--sub);font-size:13px;font-weight:800;white-space:nowrap}
+.sp80-usage #sp80-usage{text-align:right;font-size:13px;color:var(--ink)}
+.sp80-usage #sp80-usage b{display:block;font-size:19px}
+.sp80-usage #sp80-usage b small{font-size:12px}
+.sp80-usage #sp80-usage small{display:block;font-size:11px;color:var(--sub);margin-top:3px}
+.sp80-usage #sp80-usage .warn{color:#c2410c}.sp80-usage #sp80-usage .bad{color:#dc2626}
+.sp80-help{font-size:11px;line-height:1.6;color:var(--sub);margin-top:12px}
+.sp80-modal .bpm-err{color:#dc2626;font-size:12px;font-weight:700}
+.sp80-footer{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);background:var(--panel);padding:12px 22px 14px}
+.sp80-footer #sp80-status{font-size:12px;color:var(--sub);font-weight:600}.sp80-footer #sp80-status b{color:var(--blue)}
+.sp80-invalid{color:#dc2626;font-weight:800}.sp80-actions{display:flex;gap:7px;align-items:center}
+.sp80-actions button{border-radius:10px;min-width:61px;height:42px;font-size:13px;font-weight:800;padding:0 11px}
+.sp80-actions .primary{min-width:110px}.sp80-actions button:disabled{opacity:.42}
+@media(min-width:1200px) and (max-width:1510px){.sxcards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1199px) and (min-width:711px){.sxcards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:710px){.sxcards{grid-template-columns:minmax(0,1fr)}.sp80-modal .sp80-head{padding:13px 14px 9px}.sp80-modal .sp80-top{padding:0 14px 6px}.sp80-modal .sp80-scroll{padding:0 14px 10px}.sp80-fields{grid-template-columns:minmax(0,1fr)}.sp80-modal .sp80-panel{padding:11px}.sp80-field{padding:10px}.sp80-input input{height:43px;font-size:20px}.sp80-footer{flex-direction:column;align-items:stretch;padding:9px 14px 12px}.sp80-footer #sp80-status{font-size:11px}.sp80-actions{width:100%}.sp80-actions button{flex:1;min-width:0;padding:0 5px}.sp80-actions .primary{flex:1.4;min-width:0}}
 </style>
 </body>
 </html>
