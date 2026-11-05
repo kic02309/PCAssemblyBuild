@@ -8056,7 +8056,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.81';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.82';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8631,7 +8631,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(canSp() ? [['sp', spTitle()]] : []).concat(canProd() ? [['prod', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(dfStatCan() ? [['df','조립 불량 통계']] : []).concat(canSp() ? [['sp', spTitle()]] : []).concat(canProd() ? [['prod', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -8703,6 +8703,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', spTitle()]] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [['prod', '라인생산']] : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '월말데이터마감']];
       if (cat === 'work' && canPa()) it = it.concat([['pa', '프리미엄 사전안내']]);   // v29.37
+      if (cat === 'work' && dfCan()) it = it.concat([['df', '조립 불량 관리']]); // v29.81 : 사전안내 바로 오른쪽
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
       // v29.77: 라인생산의 [설정]·[기간별 생산현황]을 PC 상단 세부 메뉴로 이동 (모바일은 그대로)
       const prTopMenu = cat === 'prod' && v === 'prod' ? '<button type="button" id="prNavSet" class="pr-top-action" hidden>⚙ 설정</button><button type="button" id="prNavRange" class="pr-top-action">▦ 기간별 생산현황</button>' : '';
@@ -8765,14 +8766,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'att') { if (window.HR && window.HR.quickAtt) window.HR.quickAtt(); return; }   // 근태 입력 = 창만 열림
     if (S.view === 'education' && view !== 'education' && window.EDU && !(await window.EDU.guard())) { setNav(); return; }
     if (S.view === 'hr' && view !== 'hr' && window.HR && !(await window.HR.guard())) { setNav(); return; }   // 월말데이터 저장 안 한 점수
-    if (S.view === 'pa' && view !== 'pa' && !(await paGuard())) { setNav(); return; }   // v29.37 : 사전안내 저장 안 한 주문
+    if (S.view === 'pa' && view !== 'pa' && !(await paGuard())) { setNav(); return; }
+    if (S.view === 'df' && view !== 'df' && !(await dfGuard())) { setNav(); return; }   // v29.37 : 사전안내 저장 안 한 주문
     if (!(await saveFirst())) { setNav(); return; }
     if (view !== 'input' && document.body.classList.contains('input-focus')) setInputFocus(false);
     if (isRO()) {                                                        // v28.10 : 보기 전용은 박스 5개 화면만
       opt = opt || {};
       if (view === 'people' && !opt.tab && !opt._pop) opt.tab = 'list';
       if (view === 'people' && opt.tab) S.pTab = opt.tab;                  // 위쪽 막대 [인원 현황] / [조직도] 켜짐이 바로 맞게
-      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'pa', 'sp'].includes(view) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
+      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'pa', 'sp'].includes(view) && !(view === 'df' && dfStatCan()) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
     }
     if (view === 'admin' && canHub()) {                                    // v28.8 : 고르기 화면 없이 바로 (마지막에 본 탭 → 인원 → 설정 → 통계)
       const ok = k => k === 'people' ? can('people') : k === 'settings' ? canSetPage() : k === 'stats' ? can('stats') : k === 'goal' ? isAdm0() && !isRO() : false;
@@ -8789,6 +8791,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'input' && !S.target && wtSelf() && !isManager()) view = 'wt';                // v28.55 : 업무표 사용자는 수량 입력 대신 업무표
     if (view === 'wt') { $('#proxy').innerHTML = ''; return canWtMenu() ? renderWt(opt) : go('dash'); }
     if (view === 'pa') { $('#proxy').innerHTML = ''; return canPa() ? renderPa(opt) : go('dash'); }   // v29.37 : 프리미엄 사전안내
+    if (view === 'df') { $('#proxy').innerHTML = ''; return dfCan() ? renderDf() : go('dash'); }    // v29.81 : 조립 불량 관리
     if (view === 'sp') { $('#proxy').innerHTML = ''; return canSp() ? renderSp() : go('dash'); }   // v29.57 : 소모품 관리
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
     document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob');
@@ -16398,6 +16401,229 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       };
     });
   }
+    // ================================================================ v29.81 조립 불량 관리
+  // 프리미엄 사전안내 UI 패턴 기반. 기존 데이터 모듈과 별도 관리. 요청은 기존 public.api 라우터로만 전달.
+  const dfCan = () => !!(S.me && S.df && S.df.role && !S.pv && !S.mpv);
+  const dfCanEdit = () => !!(dfCan() && ['editor','manager','admin'].includes(S.df.role) && !isRO());
+  const dfCanCfg = () => !!(dfCan() && ['manager','admin'].includes(S.df.role) && !isRO());
+  const DF_STATE = {check:'체크중',replace:'교체중',done:'완료'};
+  const DF_VERDICT = [['','선택하세요'],['initial','부품 초기불량'],['assembly','조립 불량'],['none','점검 이상 없음'],['unknown','원인 미확정'],['other','기타']];
+  const DF_CAUSE = [['','점검 중'],['initial','초기불량 확인'],['assembly','조립 문제'],['none','이상 없음'],['unknown','원인 미확정'],['other','기타']];
+  const DF_OPTS = [['','조치 선택'],['교체','부품 교체'],['재장착','재장착'],['수정','연결·설정 수정'],['확인','점검만 진행'],['기타','기타']];
+  async function dfLoadAuth() {
+    try { const r=await api('defect',{op:'can'}); S.df={role:r.role||''}; }
+    catch(e){ S.df={role:'',error:e.message}; }
+  }
+  const dfNewItem = () => ({symptom:'',symptom_note:'',part:'',code:'',name:'',cause:'',action:'',note:''});
+  const dfNewForm = () => ({id:null,revision:null,request_key:crypto.randomUUID(),pc_kind:'order',pc_ref:'',state:'check',verdict:'',feedback:'',details:[dfNewItem()]});
+  const dfCopyForm = c => ({id:c.id,revision:c.revision,pc_kind:c.pc_kind,pc_ref:c.pc_ref,state:c.state,verdict:c.verdict,feedback:c.feedback,details:(c.details||[]).map(x=>Object.assign(dfNewItem(),x))});
+  const dfT = v => esc(v || '');
+  const dfOptions = (items,val) => items.map(([v,label])=>`<option value="${esc(v)}"${v===val?' selected':''}>${esc(label)}</option>`).join('');
+  // 기존 분류가 설정에서 제거되어도 기존 기록 수정 시 선택값을 조용히 잃지 않도록 보존.
+  const dfPlainOpts = (items,val,placeholder) => `<option value="">${esc(placeholder||'선택')}</option>`+
+    (val && !items.includes(val)?`<option value="${esc(val)}" selected>${esc(val)} (과거 분류)</option>`:'')+
+    items.map(x=>`<option value="${esc(x)}"${x===val?' selected':''}>${esc(x)}</option>`).join('');
+  const dfH = (F,k)=> dfT(F[k]);
+  const dfStatCan = () => !!(S.df && ['admin','manager','viewer'].includes(S.df.role));
+  const dfCaseCan = () => !!(S.df && ['admin','manager'].includes(S.df.role));
+  const dfData = () => S.dfv || (S.dfv={date:S.today,tab:'work',filter:'all',sel:'',rows:[],form:null,dirty:false,loading:false,stats:null,settings:null});
+  async function dfGuard() {
+    const P=S.dfv;
+    return !P || !P.dirty || await confirmBox('저장하지 않은 불량 처리 내용이 있습니다.<br>변경사항을 버리고 이동하시겠습니까?','이동','취소');
+  }
+  async function renderDf() {
+    if(!dfCan())return go('dash');
+    const P=dfData();
+    if(!P.date)P.date=S.today;
+    // 보기 전용 관리자는 서버 조회 권한도 통계로 제한. 처리 목록 API 요청을 보내지 않음.
+    if(S.df.role==='viewer'){
+      P.tab='stats';
+      if(!P.stats)await dfStatsLoad(); else dfDraw();
+      return;
+    }
+    if(!P.loaded)await dfFetch(false);
+    else dfDraw();
+  }
+  async function dfFetch(keep) {
+    const P=dfData(),token=S.token;
+    const chosen=keep?P.sel:'';
+    P.loading=true;
+    $('#main').innerHTML=pageHead('조립 불량 관리')+'<div class="pgb"><div class="card" style="padding:20px">불량 처리 목록을 확인 중입니다…</div></div>';
+    try {
+      const data=await api('defect',{op:'get',date:P.date});
+      if(token!==S.token||S.view!=='df')return;
+      P.rows=data.rows||[];P.cfg=data.cfg||{};P.primary_name=data.primary_name||'';P.role=data.role;P.loaded=true;P.loading=false;P.dirty=false;
+      if(chosen && P.rows.some(x=>String(x.id)===String(chosen))) P.sel=chosen;
+      else P.sel=(P.rows.find(x=>x.state!=='done')||P.rows[0]||{}).id||'';
+      P.form=P.sel?dfCopyForm(P.rows.find(x=>String(x.id)===String(P.sel))):dfCanEdit()&&P.date===S.today?dfNewForm():null;
+      dfDraw();
+    }catch(e){P.loading=false;$('#main').innerHTML=pageHead('조립 불량 관리')+`<div class="pgb"><div class="warn">${esc(e.message)}<p>SQL 적용 여부와 계정 권한을 확인해 주세요.</p></div></div>`;}
+  }
+  function dfHead(P) {
+    const same=P.rows.filter(x=>x.work_date===P.date);
+    const c=k=>same.filter(x=>x.state===k).length;
+    return `<section class="df-hd"><div class="df-title"><small>ASSEMBLY QUALITY</small><h2>조립 불량 관리</h2><span class="df-owner">정담당 ${esc(P.primary_name||'미지정')} · ${esc(P.date)}</span></div>
+      <div class="df-tiles">${[['all','전체',same.length],['check','체크중',c('check')],['replace','교체중',c('replace')],['done','완료',c('done')]].map(([v,l,n])=>`<button type="button" class="df-tile ${P.filter===v?'on':''}" data-dffilter="${v}"><small>${l}</small><strong>${n}<em>건</em></strong></button>`).join('')}</div>
+      <div class="df-actions">${dfCanEdit()?'<button type="button" class="primary" id="df-new">＋ 신규 처리</button>':''}${dfStatCan()?'<button type="button" id="df-tab-stats">▥ 불량 통계</button>':''}${dfCanCfg()?'<button type="button" id="df-tab-settings">⚙ 설정</button>':''}</div></section>`;
+  }
+  function dfLeft(P){
+    const q=(P.q||'').trim().toLowerCase();
+    const rows=P.rows.filter(x=>(P.filter==='all'||x.state===P.filter) && (!q||String(x.pc_ref||'').toLowerCase().includes(q)||String(x.id).includes(q)));
+    const el=rows.map(x=>`<button type="button" class="df-record ${String(P.sel)===String(x.id)?'on':''}" data-dfsel="${esc(x.id)}"><span class="df-rec-top"><b>${esc(x.pc_ref)}</b><span class="df-state s-${esc(x.state)}">${DF_STATE[x.state]||'-'}</span></span><small>${x.pc_kind==='order'?'주문 PC':'제조 PC'} · #${x.id}${x.work_date!==P.date?' · 이전 미완료':''}</small></button>`).join('');
+    return `<section class="df-listpanel"><div class="df-list-title"><b>당일 처리 목록</b><small>이전 미완료 건 포함</small></div><div class="df-listsearch"><input id="df-search" type="search" placeholder="주문번호 · 제조명 검색" value="${esc(P.q||'')}"><input id="df-day" type="date" value="${esc(P.date)}" max="${esc(S.today)}" title="조회 날짜"></div><div class="df-list" id="df-list">${el||'<div class="df-empty">표시할 처리 건이 없습니다.</div>'}</div></section>`;
+  }
+  function dfRight(P){
+    const F=P.form;
+    if(!F)return '<section class="df-form"><div class="df-empty">왼쪽에서 처리 건을 선택하세요.</div></section>';
+    const dis=dfCanEdit()?'':' disabled';
+    const opts=(arr,v)=>dfOptions(arr,v);
+    const step=(n,title,content)=>`<section class="df-step"><div class="df-step-title"><span>${n}</span><strong>${title}</strong></div>${content}</section>`;
+    const symptoms=(P.cfg.symptoms||['부팅 불량','전원 불량','화면 출력 불량','인식 불량','기타']);
+    const parts=(P.cfg.parts||['CPU','메인보드','메모리','SSD','그래픽카드','기타']);
+    const detail=(F.details||[]).map((o,i)=>`<div class="df-issue"><div class="df-issue-head"><b>증상 ${i+1}</b>${dfCanEdit()&&F.details.length>1?`<button type="button" data-dfremove="${i}" class="df-mutedbtn">항목 제거</button>`:''}</div><div class="df-two"><label>발생 증상 <em>*</em><select data-dfi="${i}" data-dfk="symptom"${dis}>${dfPlainOpts(symptoms,o.symptom,'증상 선택')}</select></label><label>증상 메모 <input data-dfi="${i}" data-dfk="symptom_note" value="${dfT(o.symptom_note)}" maxlength="700" placeholder="필요할 때만 입력"${dis}></label></div></div>`).join('');
+    const products=(F.details||[]).map((o,i)=>`<div class="df-product"><div class="df-issue-head"><b>증상 ${i+1} 관련 제품</b><small>확인 전에는 비워둘 수 있습니다</small></div><div class="df-three"><label>부품 분류<select data-dfi="${i}" data-dfk="part"${dis}>${dfPlainOpts(parts,o.part,'부품 선택')}</select></label><label>제품코드<input data-dfi="${i}" data-dfk="code" maxlength="80" value="${dfT(o.code)}" placeholder="상품코드"${dis}></label><label>제품명·모델명<input data-dfi="${i}" data-dfk="name" maxlength="240" value="${dfT(o.name)}" placeholder="복사·붙여넣기 가능"${dis}></label></div><div class="df-two"><label>원인 분류<select data-dfi="${i}" data-dfk="cause"${dis}>${opts(DF_CAUSE,o.cause)}</select></label><label>처리 방법<select data-dfi="${i}" data-dfk="action"${dis}>${opts(DF_OPTS,o.action)}</select></label></div><label>추가 점검 내용<input data-dfi="${i}" data-dfk="note" value="${dfT(o.note)}" maxlength="1000" placeholder="추가 사항이 있는 경우"${dis}></label></div>`).join('');
+    const idLabel=F.id?'#'+F.id:'신규 처리';
+    return `<section class="df-form"><div class="df-formtitle"><div><h3>불량 처리</h3><small>${esc(idLabel)} · ${F.id?'기존 기록 수정':'신규 작성'}</small></div><span class="df-state s-${esc(F.state)}">${DF_STATE[F.state]||'체크중'}</span></div>
+      <div class="df-scroll">${step('1','주문번호 / 제조명',`<div class="df-two"><label>PC 구분<div class="df-switch"><button type="button" data-dfkind="order" class="${F.pc_kind==='order'?'on':''}"${dis}>주문 PC</button><button type="button" data-dfkind="mfg" class="${F.pc_kind==='mfg'?'on':''}"${dis}>제조 PC</button></div></label><label>${F.pc_kind==='order'?'주문번호':'제조 PC 모델명'} <em>*</em><input id="df-ref" maxlength="120" placeholder="${F.pc_kind==='order'?'주문번호 입력':'제조명 입력'}" value="${dfH(F,'pc_ref')}"${dis}></label></div>`)}
+      ${step('2','발생 증상',`${detail}${dfCanEdit()?'<button type="button" id="df-add" class="df-add">＋ 증상 추가</button>':''}`)}
+      ${step('3','불량 제품 확인',products)}
+      ${step('4','최종 피드백',`<div class="df-two"><label>최종 원인 판단<select id="df-verdict"${dis}>${opts(DF_VERDICT,F.verdict)}</select></label><label>진행 상태<select id="df-state"${dis}>${opts([['check','체크중'],['replace','교체중'],['done','완료']],F.state)}</select></label></div><label>최종 의견<textarea id="df-feedback" rows="2" maxlength="2000" placeholder="교체 결과·재검수 내용 등 필요한 내용만 입력"${dis}>${dfH(F,'feedback')}</textarea></label><p class="df-help">부품 초기불량 확정 시 해당 제품의 원인 분류를 ‘초기불량 확인’으로 선택하고 제품코드·제품명을 입력하세요.</p>`)}
+      </div>${dfCanEdit()?'<div class="df-footer"><span id="df-dirty" class="df-dirty"></span><button type="button" id="df-save">저장</button><button type="button" class="primary" id="df-done">점검 완료</button></div>':''}</section>`;
+  }
+  function dfDraw(){
+    if(S.view!=='df')return;
+    const P=dfData(),main=$('#main');
+    P.members=P.members||{};
+    if(P.tab==='stats')return dfDrawStats();
+    if(P.tab==='settings')return dfDrawSettings();
+    main.innerHTML=`<div class="pgb df-root">${dfHead(P)}<div class="df-layout">${dfLeft(P)}${dfRight(P)}</div></div>`;
+    dfBind();
+  }
+  function dfMark(){const P=dfData();P.dirty=true;const x=$('#df-dirty');if(x)x.textContent='● 저장되지 않은 변경사항';}
+  function dfBind(){
+    const P=dfData();
+    $$('[data-dffilter]').forEach(b=>b.onclick=()=>{P.filter=b.dataset.dffilter;dfDraw();});
+    $('#df-search').oninput=e=>{P.q=e.target.value;const list=$('#df-list');const dummy=document.createElement('div');dummy.innerHTML=dfLeft(P);const fresh=dummy.querySelector('#df-list');list.innerHTML=fresh.innerHTML;$$('[data-dfsel]',list).forEach(b=>b.onclick=()=>dfSelect(b.dataset.dfsel));};
+    $('#df-day').onchange=async e=>{const d=e.target.value;if(!d||d>S.today)return;if(!await dfGuard()){e.target.value=P.date;return;}P.date=d;P.loaded=false;P.tab='work';await dfFetch(false);};
+    $$('[data-dfsel]').forEach(b=>b.onclick=()=>dfSelect(b.dataset.dfsel));
+    if($('#df-new'))$('#df-new').onclick=async()=>{if(!await dfGuard())return;if(P.date!==S.today){P.date=S.today;await dfFetch(false);}P.sel='';P.form=dfNewForm();P.dirty=false;dfDraw();};
+    if($('#df-tab-stats'))$('#df-tab-stats').onclick=async()=>{if(!await dfGuard())return;P.tab='stats';await dfStatsLoad();};
+    if($('#df-tab-settings'))$('#df-tab-settings').onclick=async()=>{if(!await dfGuard())return;P.tab='settings';await dfSettingsLoad();};
+    if(!P.form||!dfCanEdit())return;
+    const F=P.form;
+    $$('[data-dfkind]').forEach(b=>b.onclick=()=>{F.pc_kind=b.dataset.dfkind;dfMark();dfDraw();});
+    $('#df-ref').oninput=e=>{F.pc_ref=e.target.value;dfMark();};
+    $$('[data-dfi]').forEach(b=>{const fn=e=>{F.details[+b.dataset.dfi][b.dataset.dfk]=e.target.value;dfMark();};b.addEventListener(b.tagName==='SELECT'?'change':'input',fn);});
+    $('#df-verdict').onchange=e=>{F.verdict=e.target.value;dfMark();};
+    $('#df-state').onchange=e=>{F.state=e.target.value;dfMark();const tag=$('.df-formtitle .df-state');if(tag){tag.textContent=DF_STATE[F.state];tag.className='df-state s-'+F.state;}};
+    $('#df-feedback').oninput=e=>{F.feedback=e.target.value;dfMark();};
+    if($('#df-add'))$('#df-add').onclick=()=>{if(F.details.length>=12)return toast('증상은 12개까지 추가할 수 있습니다',true);F.details.push(dfNewItem());dfMark();dfDraw();};
+    $$('[data-dfremove]').forEach(b=>b.onclick=()=>{if(F.details.length<=1)return;F.details.splice(+b.dataset.dfremove,1);dfMark();dfDraw();});
+    $('#df-save').onclick=()=>dfSave(false);
+    $('#df-done').onclick=()=>dfSave(true);
+  }
+  async function dfSelect(id){
+    const P=dfData();if(!await dfGuard())return;
+    const c=P.rows.find(x=>String(x.id)===String(id));if(!c)return;
+    P.sel=c.id;P.form=dfCopyForm(c);P.dirty=false;dfDraw();
+  }
+  async function dfSave(finish){
+    const P=dfData(),F=P.form;
+    if(!F||!dfCanEdit()||P.saving)return;
+    if(!F.pc_ref.trim())return toast(F.pc_kind==='order'?'주문번호를 입력하세요':'제조 모델명을 입력하세요',true);
+    if(F.details.some(x=>!String(x.symptom||'').trim()))return toast('발생 증상을 선택하세요',true);
+    if(F.details.some(x=>(x.code||x.name||x.part||x.cause==='initial')&&(!String(x.code||'').trim()||!String(x.name||'').trim()||!String(x.part||'').trim())))return toast('확인된 부품은 제품코드·제품명·분류를 모두 입력하세요',true);
+    const input=JSON.parse(JSON.stringify(F));if(finish)input.state='done';
+    input.pc_ref=String(input.pc_ref||'').trim();
+    input.details.forEach(d=>{
+      ['symptom','symptom_note','part','name','cause','action','note'].forEach(k=>{d[k]=String(d[k]||'').trim();});
+      d.code=String(d.code||'').trim().toUpperCase();
+    });
+    if(input.state==='done'&&!input.verdict)return toast('점검 완료 시 최종 원인 판단을 선택하세요',true);
+    if(input.state==='done'&&input.verdict==='initial'&&!input.details.some(x=>x.cause==='initial'))return toast('초기불량 제품의 원인 분류를 확인하세요',true);
+    if(input.state==='done'&&input.verdict!=='initial'&&input.details.some(x=>x.cause==='initial'))return toast('초기불량 부품이 있으면 최종 판단도 부품 초기불량으로 선택하세요',true);
+    const buttons=['#df-save','#df-done'].map(x=>$(x)).filter(Boolean);P.saving=true;buttons.forEach(b=>b.disabled=true);
+    try{
+      let result=await api('defect',{op:'save',data:input});
+      if(result.duplicate){
+        const existing=(result.existing||[]).map(x=>'#'+esc(x.id)+' · '+esc(x.work_date)+' · '+esc(DF_STATE[x.state]||x.state)).join('<br>');
+        if(!await confirmBox('같은 주문번호·제조명의 접수 기록이 있습니다.<br>'+existing+'<br><br>기존 본체라면 취소하고 해당 기록을 이어서 처리하세요.<br>실제로 다른 본체일 때만 별도 접수하세요.','다른 본체로 접수','취소'))return;
+        input.confirm_duplicate=true;
+        result=await api('defect',{op:'save',data:input});
+      }
+      P.dirty=false;P.sel=result.row.id;toast('불량 처리 내용이 저장됐습니다');await dfFetch(true);
+    }catch(e){toast(e.message,true);}
+    finally{P.saving=false;buttons.forEach(b=>b.disabled=false);}
+  }
+  function dfBackBar(title){return `<div class="df-subhead">${S.df?.role==='viewer'?'':'<button id="df-back">‹ 불량 처리</button>'}<h2>${title}</h2></div>`;}
+  async function dfStatsLoad(){
+    const P=dfData();P.from=P.from||P.date.slice(0,7)+'-01';P.to=P.to||P.date;
+    $('#main').innerHTML='<div class="pgb df-root">'+dfBackBar('불량 통계')+'<div class="df-empty">통계를 불러오는 중…</div></div>';
+    try{P.stats=await api('defect',{op:'stats',from:P.from,to:P.to});dfDraw();}
+    catch(e){toast(e.message,true);dfDraw();}
+  }
+  function dfDrawStats(){
+    const P=dfData(),R=P.stats||{},arr=R.parts||[];let max=Math.max(1,...arr.map(x=>+x.count||0));
+    const bars=arr.length?arr.map(x=>`<div class="df-barrow"><b>${esc(x.name)}</b><div class="df-bartrack"><span style="width:${Math.max(2,(+x.count/max*100))}%"></span></div><strong>${x.count}건</strong></div>`).join(''):'<div class="df-empty">해당 기간에 확정된 초기불량 부품이 없습니다.</div>';
+    const pr=R.products||[];
+    $('#main').innerHTML=`<div class="pgb df-root df-report">${dfBackBar('불량 통계')}<div class="df-stat-tools"><label>시작일 <input type="date" id="df-from" value="${esc(P.from)}"></label><label>종료일 <input type="date" id="df-to" value="${esc(P.to)}"></label><button type="button" id="df-stat-apply" class="primary">조회</button><button type="button" id="df-stat-csv">엑셀 다운로드</button></div><div class="df-reporttiles">${[['불량 본체',R.total||0],['점검 완료',R.done||0],['처리 중',R.pending||0],['초기불량 부품',R.initial_parts||0]].map(([n,v])=>`<div><small>${n}</small><strong>${v}<em>건</em></strong></div>`).join('')}</div><div class="df-reportgrid"><section class="df-reportcard"><h3>부품별 초기불량 발생 건수</h3><p>초기불량으로 확정된 부품만 집계합니다.</p>${bars}</section><section class="df-reportcard"><h3>발생 증상</h3><div class="df-symstats">${(R.symptoms||[]).slice(0,12).map(x=>`<div><span>${esc(x.name)}</span><b>${x.count}건</b></div>`).join('')||'<div class="df-empty">기록 없음</div>'}</div></section></div><section class="df-reportcard"><h3>제품코드별 초기불량 현황</h3><div class="df-tablewrap"><table><thead><tr><th>제품코드</th><th>제품명</th><th>분류</th><th>건수</th></tr></thead><tbody>${pr.map(x=>`<tr data-dfproduct="${esc(x.code)}" title="해당 제품의 불량 처리 사례 보기" tabindex="0" role="button"><td><b style="color:var(--blue)">${esc(x.code)}</b></td><td>${esc(x.name)}</td><td>${esc(x.part)}</td><td>${x.count}건</td></tr>`).join('')||'<tr><td colspan="4">기간 내 초기불량 제품 없음</td></tr>'}</tbody></table></div><div id="df-stat-details" class="df-stat-details"></div></section></div>`;
+    $$('[data-dfproduct]').forEach(tr=>{
+      if(!dfCaseCan()){
+        tr.removeAttribute('tabindex');tr.removeAttribute('role');tr.removeAttribute('title');
+        tr.style.cursor='default';return;
+      }
+      const show=async()=>{
+        const code=tr.dataset.dfproduct,panel=$('#df-stat-details');
+        panel.innerHTML=`<h4>제품코드 ${esc(code)} · 관련 사례 조회 중…</h4>`;
+        try{
+          const data=await api('defect',{op:'productCases',code,from:P.from,to:P.to});
+          if(P.tab!=='stats'||!panel.isConnected)return;
+          const all=data.rows||[];
+          panel.innerHTML=`<h4>제품코드 ${esc(code)} · 관련 처리 사례 ${all.length}건${data.truncated?' (최대 500건 표시)':''}</h4>${data.truncated?'<p class="df-help">500건 초과 자료입니다. 기간을 좁혀 조회하세요.</p>':''}<div class="df-tablewrap"><table><thead><tr><th>일자</th><th>주문번호 / 제조명</th><th>진행상태</th><th>증상</th></tr></thead><tbody>${all.map(c=>`<tr><td>${esc(c.work_date)}</td><td>${esc(c.pc_ref)}</td><td>${esc(DF_STATE[c.state]||'-')}</td><td>${esc((c.details||[]).filter(x=>x.code===code&&x.cause==='initial').map(x=>x.symptom).join(' · '))}</td></tr>`).join('')||'<tr><td colspan="4">해당 기간의 상세 자료가 없습니다.</td></tr>'}</tbody></table></div>`;
+          panel.scrollIntoView({block:'nearest',behavior:'smooth'});
+        }catch(e){panel.innerHTML=`<p class="warn">${esc(e.message)}</p>`;}
+      };
+      tr.onclick=show;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show();}};
+    });
+    if($('#df-back'))$('#df-back').onclick=async()=>{P.tab='work';await dfFetch(true);};
+    $('#df-stat-apply').onclick=()=>{const a=$('#df-from').value,b=$('#df-to').value;if(!a||!b||a>b)return toast('조회 기간을 확인하세요',true);P.from=a;P.to=b;dfStatsLoad();};
+    $('#df-stat-csv').onclick=async()=>{
+      const btn=$('#df-stat-csv');btn.disabled=true;
+      try{
+        const X=await loadXLSX();
+        const rows=[['제품코드','제품명','부품분류','초기불량건수'],...pr.map(x=>[String(x.code??''),String(x.name??''),String(x.part??''),Number(x.count)||0])];
+        const ws=X.utils.aoa_to_sheet(rows);
+        // Excel 파일의 문자열 형식: 앞자리 0 보존 / 셀 텍스트의 수식 자동실행 방지.
+        for(let i=1;i<rows.length;i++)for(let j=0;j<3;j++){
+          const pos=X.utils.encode_cell({r:i,c:j});
+          ws[pos]={t:'s',v:rows[i][j],z:'@'};
+        }
+        ws['!cols']=[{wch:20},{wch:52},{wch:18},{wch:18}];
+        const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,'제품별불량');
+        X.writeFile(wb,'조립불량_제품별_통계_'+P.from+'_'+P.to+'.xlsx');
+      }catch(e){toast(e.message||'엑셀 출력에 실패했습니다',true);}
+      finally{btn.disabled=false;}
+    };
+  }
+  async function dfSettingsLoad(){
+    const P=dfData();$('#main').innerHTML='<div class="pgb df-root">'+dfBackBar('불량 관리 설정')+'<div class="df-empty">설정을 불러오는 중…</div></div>';
+    try{P.settings=await api('defect',{op:'settings'});P.role=P.settings.role;dfDraw();}catch(e){toast(e.message,true);P.tab='work';dfDraw();}
+  }
+  function dfDrawSettings(){
+    const P=dfData(),r=P.settings||{},cfg=r.cfg||{},users=r.users||[];
+    const opt=(selected,filter)=>'<option value="">미지정</option>'+users.filter(filter||(()=>true)).map(x=>`<option value="${esc(x.id)}"${x.id===selected?' selected':''}>${esc(x.name)} (${esc(x.group)} · ${esc(x.role)})</option>`).join('');
+    $('#main').innerHTML=`<div class="pgb df-root df-settings">${dfBackBar('불량 관리 설정')}<div class="df-configgrid"><section class="df-configcard"><h3>담당자 지정</h3><p>정·부 담당자는 불량 처리만 수행하며 설정을 변경할 수 없습니다.</p><label>정담당자<select id="df-c-primary">${opt(cfg.primary_id)}</select></label><label>부담당자 (복수 지정 가능)</label><div class="df-users">${users.filter(x=>x.id!==cfg.primary_id).map(x=>`<label><input type="checkbox" data-df-deputy="${esc(x.id)}"${(cfg.deputy_ids||[]).includes(x.id)?' checked':''}> ${esc(x.name)} <small>${esc(x.group)}</small></label>`).join('')}</div>${P.role==='admin'?`<label>담당 매니저<select id="df-c-manager">${opt(cfg.manager_id,x=>x.role==='매니저')}</select></label>`:''}</section><section class="df-configcard"><h3>입력 분류 관리</h3><p>한 줄에 항목 하나씩 입력합니다. 기존 기록은 변경되지 않습니다.</p><label>발생 증상<textarea id="df-c-symptoms" rows="9">${esc((cfg.symptoms||[]).join('\n'))}</textarea></label><label>부품 분류<textarea id="df-c-parts" rows="9">${esc((cfg.parts||[]).join('\n'))}</textarea></label><p class="df-help">기존 데이터가 있는 분류는 삭제보다는 유지하는 것을 권장합니다. 통계는 저장된 당시 분류를 기준으로 집계됩니다.</p></section></div><div class="df-configfoot"><button type="button" id="df-config-save" class="primary">설정 저장</button></div></div>`;
+    $('#df-back').onclick=async()=>{P.tab='work';await dfFetch(true);};
+    $('#df-config-save').onclick=async()=>{
+      const split=id=>$('#'+id).value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+      const data={primary_id:$('#df-c-primary').value,deputy_ids:$$('[data-df-deputy]:checked').map(x=>x.dataset.dfDeputy),symptoms:split('df-c-symptoms'),parts:split('df-c-parts')};
+      if(P.role==='admin')data.manager_id=$('#df-c-manager').value;
+      const b=$('#df-config-save');b.disabled=true;
+      try{await api('defect',{op:'settingsSave',data,revision:cfg.revision});toast('설정을 저장했습니다');await dfLoadAuth();if(!dfCan()){await go('dash');return;}await dfSettingsLoad();}
+      catch(e){b.disabled=false;toast(e.message,true);}
+    };
+  }
+
   function prefetchManage() {
     const ym = (curPeriod() || {}).ym; if (!ym || !isManager()) return;
     const key = 'M|' + ym; S._mcache = S._mcache || {}; S._mpf = S._mpf || {};
@@ -16415,7 +16641,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       try { const gc = await api('goalCfg'); S.goals = gc.goals || []; S.hw = gc.hw || []; } catch (e) { S.goals = []; S.hw = []; }   // v28.51 : SQL 전이면 기본 기준(90/80) · v28.72 휴일근무일
       hwApply();
       S.prEd = false; S.prP = null; await prWho();                                        // v28.63 : 생산업무 담당자
-      S.wt = null; S.wtv = null; await wtLoad(); S.pa = null; S.pav = null; await paLoad(); S.sp = null; S.spD = null; await spLoad();                                          // v28.55 : 업무표 사용자
+      S.wt = null; S.wtv = null; await wtLoad(); S.pa = null; S.pav = null; await paLoad(); S.df = null; S.dfv = null; await dfLoadAuth(); S.sp = null; S.spD = null; await spLoad();                                          // v28.55 : 업무표 사용자
       S.mgD = null; S.mgv = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); });   // v28.59 : 매니저 관리
       S.pc = {};
       if (r.day && r.day.period) S.pc[pcKey(r.me.id, r.day.period.ym)] = { t: Date.now(), period: r.day.period, target: r.day.target, canEdit: r.day.canEdit, canSetTarget: r.day.canSetTarget, days: r.day.days || {}, asm: r.day.asm || {} };
@@ -16425,7 +16651,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'sp'] : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'smob', 'org', 'sp'].concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'smob', 'org', 'sp'].concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -17021,6 +17247,36 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 @media(min-width:1200px) and (max-width:1510px){.sxcards{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1199px) and (min-width:711px){.sxcards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:710px){.sxcards{grid-template-columns:minmax(0,1fr)}.sp80-modal .sp80-head{padding:13px 14px 9px}.sp80-modal .sp80-top{padding:0 14px 6px}.sp80-modal .sp80-scroll{padding:0 14px 10px}.sp80-fields{grid-template-columns:minmax(0,1fr)}.sp80-modal .sp80-panel{padding:11px}.sp80-field{padding:10px}.sp80-input input{height:43px;font-size:20px}.sp80-footer{flex-direction:column;align-items:stretch;padding:9px 14px 12px}.sp80-footer #sp80-status{font-size:11px}.sp80-actions{width:100%}.sp80-actions button{flex:1;min-width:0;padding:0 5px}.sp80-actions .primary{flex:1.4;min-width:0}}
+</style>
+<style id="assembly-defects-v2981">
+/* v29.81 조립 불량 관리 - 프리미엄 사전안내의 업무 화면 구조와 디자인 토큰 재사용 */
+#main .df-root{--df-blue:var(--blue,#2763da);--df-panel:var(--panel,#fff);--df-line:var(--line,#e3e9f0);--df-sub:var(--sub,#66758b);color:var(--ink,#1e293b);font-size:13px}
+.df-root *{box-sizing:border-box}
+.df-hd{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:16px 19px;background:var(--df-panel);border:1px solid var(--df-line);border-radius:15px;margin-bottom:12px}
+.df-title{min-width:220px;display:flex;flex-direction:column;gap:3px}.df-title>small{font-size:10px;letter-spacing:1.3px;color:var(--df-blue);font-weight:900}.df-title h2{margin:0;font-size:21px;line-height:1.4;letter-spacing:-.6px}.df-owner{color:var(--df-sub);font-size:11px}
+.df-tiles{display:flex;gap:7px;flex:1;min-width:250px;max-width:590px}.df-tile{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--head,#f6f8fc);border:1px solid var(--df-line);border-radius:11px;min-width:0;padding:11px 5px;cursor:pointer}.df-tile.on{border-color:var(--df-blue);background:var(--blue-soft,#edf4ff)}.df-tile small{color:var(--df-sub);font-weight:700;font-size:11.5px}.df-tile strong{font-size:23px;line-height:1.2}.df-tile em,.df-reporttiles em{font-size:12px;font-style:normal;margin-left:3px;color:var(--df-sub)}
+.df-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.df-actions button{padding:9px 11px;white-space:nowrap;border-radius:9px;font-size:12px;font-weight:750}
+.df-layout{display:grid;grid-template-columns:minmax(290px,.37fr) minmax(0,.63fr);align-items:stretch;gap:13px;min-height:620px}
+.df-listpanel,.df-form,.df-reportcard,.df-configcard{background:var(--df-panel);border:1px solid var(--df-line);border-radius:15px;min-width:0;box-shadow:0 2px 10px rgba(30,50,90,.025)}
+.df-listpanel{display:flex;flex-direction:column;min-height:500px}.df-list-title{padding:16px 15px 9px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}.df-list-title>b{font-size:15px}.df-list-title small{font-size:10.5px;color:var(--df-sub)}
+.df-listsearch{display:flex;gap:6px;padding:0 13px 11px}.df-listsearch input{border:1px solid var(--df-line);border-radius:10px;background:var(--field,#fff);color:var(--ink);font-size:12px;height:37px;min-width:0;padding:5px 9px}.df-listsearch input[type=search]{flex:1}.df-listsearch input[type=date]{max-width:142px}
+.df-list{overflow:auto;min-height:180px;max-height:670px;padding:3px 11px 14px;flex:1}.df-record{display:block;width:100%;text-align:left;border:1px solid var(--df-line);border-radius:11px;padding:12px 13px;margin:5px 0 8px;background:var(--df-panel);cursor:pointer;color:var(--ink)}.df-record.on{background:var(--blue-soft,#f0f6ff);border-color:var(--df-blue)}.df-record:hover{border-color:var(--df-blue)}.df-record .df-rec-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.df-record b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.df-record small{display:block;font-size:11px;color:var(--df-sub);margin-top:5px}
+.df-state{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;padding:4px 9px;font-size:11px;white-space:nowrap;font-weight:800;background:#e8efff;color:#2855b8}.df-state.s-replace{background:#fff3dc;color:#9c5b06}.df-state.s-done{background:#e4f8eb;color:#19733c}
+html[data-theme=dark] .df-state.s-check{background:#233a62;color:#adcbff}html[data-theme=dark] .df-state.s-replace{background:#43351b;color:#fbd18e}html[data-theme=dark] .df-state.s-done{background:#193b2d;color:#a1e7ba}
+.df-form{display:flex;flex-direction:column;min-width:0;min-height:500px}.df-formtitle{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--df-line);padding:15px 17px}.df-formtitle h3{margin:0 0 3px;font-size:16px}.df-formtitle small{font-size:11px;color:var(--df-sub)}.df-scroll{padding:15px 18px 10px;overflow:auto;max-height:670px;flex:1}.df-step{border:1px solid var(--df-line);border-radius:12px;padding:12px 13px 15px;margin-bottom:10px}.df-step-title{display:flex;align-items:center;gap:8px;margin-bottom:12px}.df-step-title>span{background:var(--blue-soft,#edf4ff);color:var(--df-blue);font-weight:900;border-radius:8px;width:25px;height:25px;display:inline-flex;align-items:center;justify-content:center}.df-step-title>strong{font-size:13px}
+.df-step label,.df-configcard label{display:block;font-size:11.5px;font-weight:800;color:var(--sub);min-width:0}.df-step em{font-style:normal;color:#d34545}.df-step input,.df-step select,.df-step textarea,.df-configcard input,.df-configcard select,.df-configcard textarea{width:100%;border:1px solid var(--df-line);border-radius:9px;background:var(--field,#fff);color:var(--ink);font:inherit;font-size:12px;padding:9px 10px;margin-top:5px;min-width:0;min-height:37px}.df-step textarea,.df-configcard textarea{resize:vertical;line-height:1.5}.df-step input:disabled,.df-step select:disabled,.df-step textarea:disabled{opacity:.75}
+.df-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.df-three{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:9px}.df-issue,.df-product{border-radius:10px;background:var(--head,#f7f9fc);padding:12px;margin:8px 0}.df-product>.df-two{margin-top:9px}.df-product>label{margin-top:9px}.df-issue-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.df-issue-head b{font-size:12px}.df-issue-head small{font-size:10.5px;color:var(--df-sub)}.df-mutedbtn{background:transparent;border:0;color:#b45309;font-size:11px;padding:3px;cursor:pointer}.df-add{width:100%;border:1px dashed var(--df-blue);background:var(--blue-soft,#f0f7ff);color:var(--df-blue);border-radius:9px;padding:9px;font-weight:800;font-size:12px}
+.df-switch{display:flex;margin-top:5px;height:37px;gap:5px}.df-switch button{flex:1;border:1px solid var(--df-line);border-radius:8px;background:var(--df-panel);color:var(--ink);font-size:12px;font-weight:750}.df-switch button.on{color:var(--df-blue);border-color:var(--df-blue);background:var(--blue-soft,#edf4ff)}
+.df-help{font-size:10.5px;line-height:1.65;color:var(--df-sub);margin:10px 0 0}.df-footer{border-top:1px solid var(--df-line);padding:11px 16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;background:var(--df-panel);border-radius:0 0 15px 15px}.df-footer .df-dirty{margin-right:auto;color:#c16c12;font-size:11px}.df-footer button{border-radius:9px;padding:10px 19px;font-size:12px;font-weight:800}.df-empty{text-align:center;color:var(--df-sub);padding:25px 13px;font-size:12px;line-height:1.6}
+.df-subhead{display:flex;gap:13px;align-items:center;margin:3px 0 15px}.df-subhead h2{margin:0;font-size:20px}.df-subhead button{border-radius:9px;padding:8px 11px;font-size:12px}.df-stat-tools{display:flex;align-items:end;flex-wrap:wrap;gap:7px;margin-bottom:13px}.df-stat-tools label{font-size:11px;font-weight:800;color:var(--df-sub)}.df-stat-tools input{display:block;width:145px;padding:8px;border:1px solid var(--df-line);border-radius:9px;background:var(--field);color:var(--ink);margin-top:4px}.df-stat-tools button{padding:9px 13px;border-radius:9px;font-size:12px}
+.df-reporttiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 14px}.df-reporttiles>div{background:var(--df-panel);border:1px solid var(--df-line);border-radius:11px;padding:15px;display:flex;flex-direction:column;gap:7px}.df-reporttiles small{color:var(--df-sub);font-size:11.5px;font-weight:800}.df-reporttiles strong{font-size:24px}.df-reportgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:12px}.df-reportcard{padding:16px 18px;margin-bottom:12px}.df-reportcard h3,.df-configcard h3{font-size:15px;margin:0 0 8px}.df-reportcard>p,.df-configcard>p{font-size:11px;color:var(--df-sub);line-height:1.55;margin:0 0 14px}.df-barrow{display:flex;align-items:center;gap:12px;padding:8px 2px}.df-barrow>b{width:84px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.df-barrow strong{width:46px;text-align:right;color:var(--df-blue);font-size:12px}.df-bartrack{background:var(--head,#f0f3f8);height:13px;border-radius:99px;flex:1;overflow:hidden}.df-bartrack span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#649deb,#316cdd)}.df-symstats>div{display:flex;justify-content:space-between;border-bottom:1px solid var(--df-line);padding:9px 2px;font-size:12px}.df-symstats b{color:var(--df-blue)}.df-tablewrap{overflow:auto}.df-tablewrap table{width:100%;border-collapse:collapse;font-size:12px}.df-tablewrap td,.df-tablewrap th{padding:9px 11px;border-bottom:1px solid var(--df-line);text-align:left}.df-tablewrap th{color:var(--df-sub);font-weight:800;background:var(--head,#f6f8fb)}
+.df-configgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.df-configcard{padding:18px}.df-configcard label{margin:12px 0}.df-users{border:1px solid var(--df-line);border-radius:9px;padding:9px;max-height:195px;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:4px}.df-users label{display:flex;align-items:center;gap:6px;margin:0;padding:5px;color:var(--ink);font-size:11.5px}.df-users input{width:auto;min-height:0;margin:0}.df-users small{color:var(--df-sub);font-weight:400}.df-configfoot{display:flex;justify-content:flex-end;padding:14px 0}.df-configfoot button{padding:10px 25px;border-radius:9px;font-weight:800}
+@media(min-width:1190px) and (min-height:780px){.df-layout{height:calc(100vh - 250px);min-height:570px}.df-list,.df-scroll{max-height:none}}
+@media(max-width:1150px){.df-hd{align-items:stretch}.df-tiles{order:3;max-width:none;flex-basis:100%}.df-layout{grid-template-columns:300px minmax(0,1fr)}.df-three{grid-template-columns:1fr 1fr}.df-three label:last-child{grid-column:1/-1}}
+@media(max-width:820px){.df-layout{grid-template-columns:1fr}.df-listpanel{min-height:160px}.df-list{max-height:270px;min-height:90px}.df-scroll{max-height:none}.df-reportgrid,.df-configgrid{grid-template-columns:1fr}.df-reporttiles{grid-template-columns:repeat(2,1fr)}.df-hd{padding:12px}.df-tiles{min-width:0}.df-title h2{font-size:18px}}
+@media(max-width:520px){.df-two,.df-three{grid-template-columns:1fr}.df-three label:last-child{grid-column:auto}.df-step{padding:10px}.df-scroll{padding:10px}.df-hd{gap:9px}.df-actions{width:100%}.df-actions button{flex:1}.df-tiles{gap:4px}.df-tile strong{font-size:17px}.df-tile small{font-size:10px}.df-formtitle{padding:11px}.df-footer{flex-wrap:wrap}.df-footer button{flex:1}.df-footer .df-dirty{width:100%}.df-users{grid-template-columns:1fr}}
+
+.df-tablewrap tr[data-dfproduct]{cursor:pointer}.df-tablewrap tr[data-dfproduct]:hover{background:var(--blue-soft,#edf4ff)}.df-stat-details{margin-top:12px}.df-stat-details h4{font-size:13px;margin:10px 0}.df-stat-details:empty{display:none}
 </style>
 </body>
 </html>
