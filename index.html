@@ -8056,7 +8056,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.86';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.88';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15421,10 +15421,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const bar=document.createElement('div');bar.className='mgch prw-toolbar';bar.innerHTML='<b>작업자별 내역</b><span class="prw-grow"></span>';
     ['prpaste','pradd','proadd','prpadd','prpre'].forEach(id=>{const b=box.querySelector('#'+id);if(b)bar.append(b);});root.append(bar);
     const heading=document.createElement('div');heading.className='prw-columns';heading.innerHTML=prWorkerColumns();root.append(heading);
+    // Line-production layout only: common work is always visible at the top.
+    // Employees without individual items or other-time entries do not occupy rows.
     const addGroup=(g,label,shared=false)=>{
-      const details=document.createElement('details');details.className='prw-worker'+(shared?' prw-common':'');details.dataset.worker=g.key;details.open=!!ui.open[g.key];
-      const summary=document.createElement('summary');summary.className='prw-summary';summary.innerHTML=prWorkerSummary(P,R,g,label,shared);details.append(summary);
-      details.addEventListener('toggle',()=>{ui.open[g.key]=details.open;});
+      const details=document.createElement(shared?'section':'details');
+      details.className='prw-worker'+(shared?' prw-common':'');
+      details.dataset.worker=g.key;
+      if(!shared)details.open=!!ui.open[g.key];
+      const summary=document.createElement(shared?'div':'summary');
+      summary.className='prw-summary';
+      summary.innerHTML=prWorkerSummary(P,R,g,label,shared);
+      details.append(summary);
+      if(!shared)details.addEventListener('toggle',()=>{ui.open[g.key]=details.open;});
       const body=document.createElement('div');body.className='prw-detail';
       if(g.items.length)body.append(block(shared?'공동 생산 작업':'개별 생산 작업',itemTable,g.items.map(x=>x.row)));
       if(g.other.length)body.append(block('기타시간',otherTable,g.other.map(x=>x.row)));
@@ -15432,9 +15440,22 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if(!body.children.length){const empty=document.createElement('p');empty.className='prw-empty';empty.textContent='등록된 작업 내역이 없습니다.';body.append(empty);}
       details.append(body);root.append(details);
     };
-    groups.forEach(g=>addGroup(g,g.name));
-    if(common.items.length)addGroup(common,'공동 작업',true);
-    if(!groups.size&&!common.items.length){const empty=document.createElement('p');empty.className='prw-empty';empty.textContent='등록된 작업자와 작업이 없습니다.';root.append(empty);}
+    // Shared production is not owned by any individual and must never be repeated.
+    addGroup(common,'공동 작업',true);
+    const active=[...groups.values()].filter(g=>g.items.length||g.other.length);
+    active.forEach(g=>addGroup(g,g.name));
+    // Preserve the editable participation/allocated-time rows for people who have
+    // no individual input without cluttering the worker production summary.
+    const idleRows=[...groups.values()].filter(g=>!g.items.length&&!g.other.length).flatMap(g=>g.participation);
+    if(idleRows.length){
+      const d=document.createElement('details');d.className='prw-idle-settings';
+      d.open=!!ui.open.__idle_settings;
+      const sm=document.createElement('summary');sm.textContent='개별 입력 없는 참여 인원 · 배분 설정 ('+idleRows.length+'명)';
+      d.append(sm,tableFor(peopleTable,idleRows));
+      d.addEventListener('toggle',()=>{ui.open.__idle_settings=d.open;});
+      root.append(d);
+    }
+    if(!active.length&&!common.items.length){const empty=document.createElement('p');empty.className='prw-empty';empty.textContent='등록된 공동·개별 생산 또는 기타시간 입력 내역이 없습니다.';root.insertBefore(empty,idleRows.length?root.lastElementChild:null);}
     // A shared item is rendered once, never duplicated into each person's detail.
     const note=itemCard.querySelector('.note');if(note)root.append(note);
     itemCard.before(root);itemCard.remove();peopleCard.remove();otherCard.remove();
@@ -16483,15 +16504,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const dfCanCfg = () => !!(dfCan() && ['manager','admin'].includes(S.df.role) && !isRO());
   const DF_STATE = {check:'확인중',replace:'진행중',done:'완료'};
   const DF_VERDICT = [['','선택하세요'],['initial','부품 초기불량'],['assembly','조립 불량'],['none','점검 이상 없음'],['unknown','원인 미확정'],['other','기타']];
-  const DF_CAUSE = [['','점검 중'],['initial','초기불량 확인'],['assembly','조립 문제'],['none','이상 없음'],['unknown','원인 미확정'],['other','기타']];
-  const DF_OPTS = [['','조치 선택'],['교체','부품 교체'],['재장착','재장착'],['수정','연결·설정 수정'],['확인','점검만 진행'],['기타','기타']];
+  const DF_CAUSE = [['compatibility','호환성'],['bios','BIOS·설정'],['driver','드라이버·업데이트'],['','점검 중'],['initial','초기불량 확인'],['assembly','조립 문제'],['none','이상 없음'],['unknown','원인 미확정'],['other','기타']];
+  const DF_OPTS = [['재연결','재연결'],['BIOS 업데이트·설정','BIOS 업데이트·설정'],['드라이버 설치','드라이버 설치'],['OS 재설치','OS 재설치'],['재안정화','재안정화'],['','조치 선택'],['교체','부품 교체'],['재장착','재장착'],['수정','연결·설정 수정'],['확인','점검만 진행'],['기타','기타']];
   async function dfLoadAuth() {
     try { const r=await api('defect',{op:'can'}); S.df={role:r.role||''}; }
     catch(e){ S.df={role:'',error:e.message}; }
   }
   const dfNewItem = () => ({symptom:'',symptom_note:'',part:'',code:'',name:'',cause:'',action:'',note:''});
   const dfNewForm = () => ({id:null,revision:null,request_key:crypto.randomUUID(),pc_kind:'order',pc_ref:'',state:'check',verdict:'',feedback:'',details:[dfNewItem()]});
-  const dfCopyForm = c => ({id:c.id,revision:c.revision,pc_kind:c.pc_kind,pc_ref:c.pc_ref,state:c.state,verdict:c.verdict,feedback:c.feedback,details:(c.details||[]).map(x=>Object.assign(dfNewItem(),x))});
+  const dfCopyForm = c => ({legacy: String(c.request_key||'').startsWith('legacy-xlsx-'),id:c.id,revision:c.revision,pc_kind:c.pc_kind,pc_ref:c.pc_ref,state:c.state,verdict:c.verdict,feedback:c.feedback,details:(c.details||[]).map(x=>Object.assign(dfNewItem(),x))});
   const dfT = v => esc(v || '');
   const dfOptions = (items,val) => items.map(([v,label])=>`<option value="${esc(v)}"${v===val?' selected':''}>${esc(label)}</option>`).join('');
   // 기존 분류가 설정에서 제거되어도 기존 기록 수정 시 선택값을 조용히 잃지 않도록 보존.
@@ -16618,7 +16639,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if(!F||!dfCanEdit()||P.saving)return;
     if(!F.pc_ref.trim())return toast(F.pc_kind==='order'?'주문번호를 입력하세요':'제조 모델명을 입력하세요',true);
     if(F.details.some(x=>!String(x.symptom||'').trim()))return toast('발생 증상을 선택하세요',true);
-    if(F.details.some(x=>(x.code||x.name||x.part||x.cause==='initial')&&(!String(x.code||'').trim()||!String(x.name||'').trim()||!String(x.part||'').trim())))return toast('확인된 부품은 제품코드·제품명·분류를 모두 입력하세요',true);
+    if(!F.legacy&&F.details.some(x=>(x.code||x.name||x.part||x.cause==='initial')&&(!String(x.code||'').trim()||!String(x.name||'').trim()||!String(x.part||'').trim())))return toast('확인된 부품은 제품코드·제품명·분류를 모두 입력하세요',true);
     const input=JSON.parse(JSON.stringify(F));if(finish)input.state='done';
     input.pc_ref=String(input.pc_ref||'').trim();
     input.details.forEach(d=>{
@@ -16676,23 +16697,41 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }catch(e){if(token!==S.token||S.view!=='df'||seq!==P.statsSeq)return;P.stats=null;P.statsError=e.message;dfDrawStats();}
   }
   function dfDrawStats(){
-    const P=dfData(),R=P.stats||{},facets=P.statFacets||{},tab=P.statGroup||'products';
-    const opts=(values,v)=>'<option value="">전체</option>'+[...new Set([...(values||[]),...(v?[v]:[])])].map(x=>`<option value="${esc(x)}"${x===v?' selected':''}>${esc(x)}</option>`).join('');
+    const P=dfData(),R=P.stats||{},facets=P.statFacets||{},tab=P.statGroup||'categories';
     const data=tab==='products'?R.products||[]:tab==='symptoms'?R.symptoms||[]:R.categories||[];
-    const max=Math.max(1,...(R.parts||[]).map(x=>+x.count));
-    $('#main').innerHTML=`<div class="pgb df-root df-report">${dfBackBar('불량 통계')}<section class="df-statfilters"><div class="df-statpresets">${[['month','이번 달'],['7','최근 7일'],['30','최근 30일']].map(([k,t])=>`<button type="button" data-dfperiod="${k}">${t}</button>`).join('')}<small>최초 접수일 기준 · 삭제 제외</small></div><div class="df-stat-tools"><label>시작일<input type="date" id="df-from" value="${esc(P.from)}"></label><label>종료일<input type="date" id="df-to" value="${esc(P.to)}"></label><label>부품 카테고리<select id="df-stat-part">${opts(facets.parts,P.statPart)}</select></label><label>발생 증상<select id="df-stat-symptom">${opts(facets.symptoms,P.statSymptom)}</select></label><label>제품코드<input type="search" id="df-stat-code" maxlength="80" placeholder="코드 전체 입력" value="${esc(P.statCode||'')}"></label><button type="button" id="df-stat-apply" class="primary">조회</button><button type="button" id="df-stat-reset">초기화</button></div></section>
-      ${P.statsError?`<p class="warn">${esc(P.statsError)}</p>`:''}<div class="df-reporttiles">${[['불량 본체',R.total||0],['점검 완료',R.done||0],['처리 중',R.pending||0],['초기불량 부품',R.initial_parts||0]].map(([n,v])=>`<div><small>${n}</small><strong>${v}<em>건</em></strong></div>`).join('')}</div>
-      <div class="df-reportgrid"><section class="df-reportcard"><h3>부품별 초기불량 확정</h3>${(R.parts||[]).map(x=>`<div class="df-barrow"><b>${esc(x.name)}</b><div class="df-bartrack"><span style="width:${Math.max(2,+x.count/max*100)}%"></span></div><strong>${x.count}건</strong></div>`).join('')||'<div class="df-empty">확정된 초기불량 부품이 없습니다.</div>'}</section><section class="df-reportcard"><h3>발생 증상별 본체</h3><div class="df-symstats">${(R.symptoms||[]).map(x=>`<div><span>${esc(x.name)}</span><b>${x.count}건</b></div>`).join('')||'<div class="df-empty">기록 없음</div>'}</div></section></div>
-      <section class="df-reportcard"><div class="df-breakdown-head"><div class="df-group-tabs">${[['products','제품코드별'],['symptoms','증상별'],['categories','카테고리별']].map(([k,t])=>`<button type="button" data-dfgroup="${k}" class="${tab===k?'on':''}" aria-pressed="${tab===k}">${t}</button>`).join('')}</div><button type="button" id="df-stat-csv">엑셀 다운로드</button>${dfCaseCan()?'<button type="button" id="df-cases-all">조건에 맞는 전체 내역</button>':''}</div><p class="df-help">${tab==='products'?'완료·초기불량 확정 제품 기준입니다.':'확인중·진행중·완료를 포함한 접수 본체 기준입니다.'} 같은 본체의 동일 항목은 1건으로 집계합니다.${dfCaseCan()?' 항목을 누르면 처리 내역을 볼 수 있습니다.':''}</p>
-      <div class="df-tablewrap"><table><thead><tr>${tab==='products'?'<th>제품코드</th><th>모델명</th><th>카테고리</th>':'<th>'+ (tab==='symptoms'?'발생 증상':'부품 카테고리')+'</th>'}<th>건수</th>${dfCaseCan()?'<th>내역</th>':''}</tr></thead><tbody>${data.map((x,i)=>`<tr>${tab==='products'?`<td><b>${esc(x.code)}</b></td><td>${esc(x.name)}</td><td>${esc(x.part)}</td>`:`<td>${esc(x.name)}</td>`}<td>${x.count}건</td>${dfCaseCan()?`<td><button type="button" data-dfdetail="${i}">내역 보기</button></td>`:''}</tr>`).join('')||'<tr><td colspan="5">해당 조건의 기록이 없습니다.</td></tr>'}</tbody></table></div><div id="df-stat-details" class="df-stat-details"></div></section></div>`;
+    const palette=['#6384b6','#618f88','#947ab0','#6e98ad','#ad8c55','#ad777b','#7e899c'];
+    const tone=(name,kind)=>palette[dfTagTone(name,kind)%palette.length];
+    const pills=(kind,values,current)=>['',...new Set([...(values||[]),...(current?[current]:[])])].map(v=>`<button type="button" class="df-filter-pill${v===current||(!v&&!current)?' on':''}" data-dffilter="${kind}" data-dfvalue="${esc(v)}" aria-pressed="${v===(current||'')}"${v?` style="--df-accent:${tone(v,kind==='part'?'part':'symptom')}"`:''}>${esc(v||'전체')}</button>`).join('');
+    const chart=(rows,title,kind)=>{
+      const max=Math.max(1,...rows.map(x=>Number(x.count))),total=Number(R.total)||0;
+      return `<section class="df-reportcard df-chartcard"><div class="df-chart-title"><h3>${title}</h3><small>접수 본체 기준</small></div><div class="df-chartrows">${rows.map((x,i)=>{
+        const tag=dfCaseCan()?'button':'div',count=Number(x.count)||0,share=total?count/total*100:0;
+        return `<${tag}${tag==='button'?' type="button"':''} class="df-chartrow"${tag==='button'?` data-dfchart="${kind}" data-dfchartindex="${i}" aria-label="${esc(x.name)} ${count}건 내역 보기"`:''} style="--df-accent:${tone(x.name,kind==='categories'?'part':'symptom')}"><span class="df-chartname">${esc(x.name)}</span><span class="df-charttrack"><span style="width:${count/max*100}%"></span></span><span class="df-chartvalue"><b>${count}<em>건</em></b><small>${share.toFixed(1)}%</small></span></${tag}>`;
+      }).join('')||'<div class="df-empty">해당 조건의 기록이 없습니다.</div>'}</div></section>`;
+    };
+    $('#main').innerHTML=`<div class="pgb df-root df-report">${dfBackBar('불량 통계')}
+      <section class="df-statfilters"><div class="df-statpresets">${[['month','이번 달'],['7','최근 7일'],['30','최근 30일']].map(([k,t])=>`<button type="button" data-dfperiod="${k}">${t}</button>`).join('')}<small>최초 접수일 기준 · 삭제 제외</small></div>
+        <div class="df-stat-tools"><label>시작일<input type="date" id="df-from" value="${esc(P.from)}"></label><label>종료일<input type="date" id="df-to" value="${esc(P.to)}"></label><label>제품코드<input type="search" id="df-stat-code" maxlength="80" placeholder="코드 전체 입력" value="${esc(P.statCode||'')}"></label><button type="button" id="df-stat-apply" class="primary">조회</button><button type="button" id="df-stat-reset">초기화</button></div>
+        <div class="df-filter-line"><b>부품 카테고리</b><div class="df-filter-buttons" role="group" aria-label="부품 카테고리 선택">${pills('part',facets.parts,P.statPart)}</div></div>
+        <div class="df-filter-line"><b>발생 증상</b><div class="df-filter-buttons" role="group" aria-label="발생 증상 선택">${pills('symptom',facets.symptoms,P.statSymptom)}</div></div>
+      </section>
+      ${P.statsError?`<p class="warn" role="alert">${esc(P.statsError)}</p>`:''}
+      <div class="df-stat-overview"><div><small>선택 조건의 불량 본체</small><strong id="df-total">${P.stats?Number(R.total)||0:'—'}<em>건</em></strong></div><p>한 본체의 같은 항목은 한 번 집계합니다. 여러 부품·증상이 있는 본체는 각 항목에 포함되므로 항목별 합계가 전체보다 클 수 있습니다.<br>비율은 선택 조건의 전체 본체 대비입니다.${dfCaseCan()?' 그래프를 누르면 해당 처리 내역을 봅니다.':''}</p></div>
+      <div class="df-reportgrid df-chart-grid">${chart(R.categories||[],'카테고리별 불량 본체','categories')}${chart(R.symptoms||[],'증상별 불량 본체','symptoms')}</div>
+      <section class="df-reportcard"><div class="df-breakdown-head"><div class="df-group-tabs">${[['categories','카테고리별'],['symptoms','증상별'],['products','제품코드별']].map(([k,t])=>`<button type="button" data-dfgroup="${k}" class="${tab===k?'on':''}" aria-pressed="${tab===k}">${t}</button>`).join('')}</div><button type="button" id="df-stat-csv">엑셀 다운로드</button>${dfCaseCan()?'<button type="button" id="df-cases-all">조건에 맞는 전체 내역</button>':''}</div>
+        <p class="df-help">${tab==='products'?'제품코드는 완료·초기불량 확정 부품 중 코드가 기록된 건만 집계합니다. 코드 미기록 과거 자료는 포함되지 않습니다.':'확인중·진행중·완료를 포함한 접수 본체 기준입니다.'} 같은 본체의 동일 항목은 1건으로 집계합니다.</p>
+        <div class="df-tablewrap"><table><thead><tr>${tab==='products'?'<th>제품코드</th><th>모델명</th><th>카테고리</th>':'<th>'+ (tab==='symptoms'?'발생 증상':'부품 카테고리')+'</th>'}<th>건수</th>${dfCaseCan()?'<th>내역</th>':''}</tr></thead><tbody>${data.map((x,i)=>`<tr>${tab==='products'?`<td><b>${esc(x.code)}</b></td><td>${esc(x.name||'')}</td><td>${esc(x.part)}</td>`:`<td>${dfChip(x.name,tab==='categories'?'part':'symptom')}</td>`}<td><b>${Number(x.count)||0}</b>건</td>${dfCaseCan()?`<td><button type="button" data-dfdetail="${i}">내역 보기</button></td>`:''}</tr>`).join('')||'<tr><td colspan="5">해당 조건의 기록이 없습니다.</td></tr>'}</tbody></table></div>
+        <div id="df-stat-details" class="df-stat-details"></div>
+      </section></div>`;
     if($('#df-back'))$('#df-back').onclick=async()=>{P.tab='work';await dfFetch(true);};
-    const take=()=>{P.from=$('#df-from').value;P.to=$('#df-to').value;P.statCode=$('#df-stat-code').value.trim().toUpperCase();P.statPart=$('#df-stat-part').value;P.statSymptom=$('#df-stat-symptom').value;};
+    const take=()=>{P.from=$('#df-from').value;P.to=$('#df-to').value;P.statCode=$('#df-stat-code').value.trim().toUpperCase();};
     $('#df-stat-apply').onclick=()=>{take();dfStatsLoad();};
-    ['#df-stat-part','#df-stat-symptom'].forEach(s=>$(s).onchange=()=>{take();dfStatsLoad();});
+    $$('[data-dffilter]').forEach(b=>b.onclick=()=>{take();P[b.dataset.dffilter==='part'?'statPart':'statSymptom']=b.dataset.dfvalue;dfStatsLoad();});
     $('#df-stat-code').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();take();dfStatsLoad();}};
     $('#df-stat-reset').onclick=()=>{P.statPart=P.statSymptom=P.statCode='';P.from=P.date.slice(0,7)+'-01';P.to=P.date;dfStatsLoad();};
     $$('[data-dfperiod]').forEach(b=>b.onclick=()=>{take();P.to=S.today;P.from=b.dataset.dfperiod==='month'?S.today.slice(0,7)+'-01':C.addDays(S.today,1-Number(b.dataset.dfperiod));dfStatsLoad();});
     $$('[data-dfgroup]').forEach(b=>b.onclick=()=>{P.statGroup=b.dataset.dfgroup;P.caseSeq=(P.caseSeq||0)+1;dfDrawStats();});
+    $$('[data-dfchart]').forEach(b=>b.onclick=()=>{const kind=b.dataset.dfchart,x=(kind==='categories'?R.categories:R.symptoms)[+b.dataset.dfchartindex];dfShowCases({...P.statsQuery,...(kind==='categories'?{part:x.name}:{symptom:x.name})},1,false);});
     $$('[data-dfdetail]').forEach(b=>b.onclick=()=>{const x=data[+b.dataset.dfdetail];dfShowCases({...P.statsQuery,...(tab==='products'?{code:x.code}:tab==='symptoms'?{symptom:x.name}:{part:x.name})},1,tab==='products');});
     if($('#df-cases-all'))$('#df-cases-all').onclick=()=>dfShowCases(P.statsQuery,1,false);
     $('#df-stat-csv').onclick=async()=>{
@@ -17482,6 +17521,22 @@ html[data-theme=dark] .prw-qty{background:#2b405a;color:#bfd1ed}html[data-theme=
 .prw-worker{border-top:1px solid var(--line)}.prw-worker:nth-of-type(even){background:color-mix(in srgb,var(--head,#f5f7fa) 50%,var(--panel,#fff))}.prw-summary{cursor:pointer;list-style:none;min-height:59px;font-size:14px}.prw-summary::-webkit-details-marker{display:none}.prw-summary:focus-visible{outline:2px solid #7899c6;outline-offset:-3px}.prw-summary:hover{background:color-mix(in srgb,var(--blue) 5%,var(--panel))}.prw-worker[open]>.prw-summary{background:color-mix(in srgb,var(--blue) 7%,var(--panel));border-bottom:1px solid var(--line)}.prw-name{display:flex;align-items:center;gap:12px;min-width:0}.prw-name b{overflow-wrap:anywhere}.prw-name i{font-style:normal;display:inline-block;font-size:23px;color:var(--sub);transition:transform .12s}.prw-worker[open]>.prw-summary .prw-name i{transform:rotate(90deg)}
 .prw-detail{padding:0 14px 13px;background:var(--panel)}.prw-detail-block{margin-top:13px}.prw-detail-block h4{font-size:12px;margin:0 0 7px;color:var(--sub)}.prw-table-scroll{overflow:auto;max-width:100%}.prw-table-scroll table{width:100%;margin:0}.prw-detail-block table[aria-label="생산 작업 내역"]{min-width:1120px}.prw-detail-block table[aria-label="기타시간 내역"]{min-width:600px}.prw-detail-block table[aria-label="참여시간·배분"]{min-width:690px}.prw-empty{padding:15px;color:var(--sub);font-size:12px}.prw-basis{margin:12px 0}.prw-basis>summary{cursor:pointer;font-size:12px;color:var(--sub);padding:10px 14px}.prw-basis>.prb{margin-top:3px}
 @media(max-width:700px){.prw-columns{display:none}.prw-summary{grid-template-columns:repeat(3,minmax(0,1fr));padding:12px;gap:10px 6px;font-size:13px}.prw-summary .prw-name{grid-column:1/-1;text-align:left;font-size:15px}.prw-toolbar{padding:11px;gap:6px}.prw-toolbar button{font-size:11px;padding:6px 8px}.prw-toolbar>b{width:100%}.prw-grow{display:none}.prw-detail{padding:0 9px 10px}}
+
+
+/* v29.86 line-production view: pinned, always-open shared section + hide zero-input workers. */
+.prw-common{background:color-mix(in srgb,var(--blue) 4%,var(--panel,#fff));border-top:2px solid color-mix(in srgb,var(--blue) 35%,var(--line,#ddd))}
+.prw-common>.prw-summary{cursor:default;background:color-mix(in srgb,var(--blue) 8%,var(--panel,#fff));border-bottom:1px solid var(--line)}
+.prw-common>.prw-summary:hover{background:color-mix(in srgb,var(--blue) 8%,var(--panel,#fff))}
+.prw-common>.prw-summary .prw-name>i{display:none}
+.prw-common>.prw-summary .prw-name>b{font-size:14px;color:var(--ink)}
+.prw-idle-settings{border-top:1px solid var(--line);padding:6px 14px 12px}
+.prw-idle-settings>summary{cursor:pointer;color:var(--sub);font-size:12px;padding:9px 4px;font-weight:700}
+.prw-idle-settings .prw-table-scroll{padding:4px 0 6px}
+</style>
+<style id="defect-stats-v2988">
+.df-filter-line{display:flex;gap:14px;padding-top:15px;margin-top:12px;border-top:1px solid var(--line);align-items:flex-start}.df-filter-line>b{width:92px;flex-shrink:0;font-size:13px;line-height:34px}.df-filter-buttons{display:flex;gap:7px;flex-wrap:wrap;min-width:0}.df-filter-pill{--df-accent:#6384b6;border:1px solid transparent!important;border-radius:20px!important;padding:7px 13px!important;background:color-mix(in srgb,var(--df-accent) 11%,var(--panel,#fff))!important;color:var(--ink)!important;font-size:12px!important;line-height:18px!important}.df-filter-pill.on{background:var(--df-accent)!important;color:#fff!important}.df-filter-pill:hover{border-color:var(--df-accent)!important}.df-filter-pill:focus-visible,.df-chartrow:focus-visible{outline:2px solid var(--df-accent,#6384b6);outline-offset:2px}
+.df-stat-overview{display:flex;align-items:center;gap:30px;margin:14px 0;padding:17px 22px;border:1px solid var(--line);border-radius:14px;background:var(--panel,#fff)}.df-stat-overview>div{min-width:155px}.df-stat-overview small{display:block;font-size:12px;color:var(--sub)}.df-stat-overview strong{display:block;font-size:30px;line-height:1.25;color:var(--blue);margin-top:5px}.df-stat-overview em{font-style:normal;font-size:13px;font-weight:500;margin-left:5px}.df-stat-overview p{font-size:12px;color:var(--sub);line-height:1.7;margin:0}.df-chart-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.df-chart-title{display:flex;gap:10px;align-items:center;justify-content:space-between}.df-chart-title h3{margin:0}.df-chart-title small{color:var(--sub);font-size:11px;white-space:nowrap}.df-chartrows{margin-top:12px;max-height:360px;overflow:auto;padding-right:4px}.df-chartrow{display:grid!important;grid-template-columns:minmax(105px,1fr) minmax(50px,2fr) 68px;gap:12px;align-items:center;width:100%;min-height:43px;text-align:left;border:0!important;border-radius:6px!important;background:transparent!important;padding:7px 4px!important;color:var(--ink)!important}.df-chartrow+ .df-chartrow{border-top:1px solid var(--line)!important}.df-chartrow:is(button):hover{background:color-mix(in srgb,var(--df-accent) 8%,var(--panel,#fff))!important}.df-chartname{font-size:12px;font-weight:600;overflow-wrap:anywhere;line-height:1.45}.df-charttrack{display:block;height:12px;border-radius:7px;background:color-mix(in srgb,var(--df-accent) 12%,var(--panel,#fff));overflow:hidden}.df-charttrack>span{display:block;height:100%;border-radius:7px;background:var(--df-accent)}.df-chartvalue{text-align:right}.df-chartvalue b{display:block;font-size:15px;line-height:1.3}.df-chartvalue em{font-size:11px;font-weight:400;font-style:normal;margin-left:3px}.df-chartvalue small{display:block;color:var(--sub);font-size:10px;margin-top:3px}
+@media(max-width:760px){.df-filter-line{display:block}.df-filter-line>b{display:block;width:auto;line-height:1.4;margin-bottom:10px}.df-filter-pill{font-size:11px!important;padding:6px 10px!important}.df-stat-overview{display:block;padding:16px}.df-stat-overview p{margin-top:12px;font-size:11px}.df-chart-grid{grid-template-columns:minmax(0,1fr)!important}.df-chartrow{grid-template-columns:minmax(0,1.2fr) minmax(20px,.8fr) 48px;gap:6px}.df-chartname,.df-charttrack{min-width:0}.df-chartvalue{white-space:nowrap}.df-chart-title{flex-wrap:wrap}.df-stat-tools label{min-width:0}.df-report .df-tablewrap :is(th,td):nth-last-child(2){white-space:nowrap}}
 
 </style>
 </body>
