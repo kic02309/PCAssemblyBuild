@@ -8056,7 +8056,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.85';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.86';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15388,6 +15388,69 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if ($('#prok')) $('#prok').onclick = prConfirm; if ($('#pred')) $('#pred').onclick = prEditors;
     prStatus(); prConfBar(); drawProdBody();
   }
+  // v29.86: presentation only. Reparent existing inputs; do not mutate the draft.
+  function prWorkerMount(P,R,box){
+    const itemCard=box.querySelector('.pr-items'),peopleCard=box.querySelector('.pr-people'),otherCard=box.querySelector('.pr-other');
+    if(!itemCard||!peopleCard||!otherCard)return;
+    S.prv=S.prv||{d:P.date};
+    if(!S.prv.workerUI||S.prv.workerUI.date!==P.date)S.prv.workerUI={date:P.date,open:{},owners:{}};
+    const ui=S.prv.workerUI,previous=ui.owners,nextOwners={};
+    const people=P.draft.people||[],users=P.users||[],groups=new Map();
+    const personKey=p=>p.userId||'x:'+p.name;
+    people.forEach(p=>{const key=personKey(p);if(!groups.has(key))groups.set(key,{key,name:p.name,person:p,items:[],other:[],participation:[]});});
+    const groupFor=key=>{
+      if(!groups.has(key))groups.set(key,{key,name:key==='__unassigned'?'수행자 미지정':(users.find(u=>u.id===key)?.name||String(key).replace(/^x:/,'')),items:[],other:[],participation:[]});
+      return groups.get(key);
+    };
+    const common={key:'__common',items:[],other:[],participation:[]};
+    const changedOwner=(id,key)=>{nextOwners[id]=key;if(previous[id]!==undefined&&previous[id]!==key)ui.open[key]=true;else if(ui.ready&&previous[id]===undefined)ui.open[key]=true;};
+    const itemRows=new Map([...itemCard.querySelectorAll('tr[data-it]')].map(tr=>[tr.dataset.it,tr]));
+    R.items.forEach(x=>{const key=x.src==='개별'?(x.who||'__unassigned'):'__common',tr=itemRows.get(String(x.id));if(tr)(key==='__common'?common:groupFor(key)).items.push({row:tr,value:x});changedOwner('i:'+x.id,key);});
+    const otherRows=new Map([...otherCard.querySelectorAll('tr[data-ot]')].map(tr=>[tr.dataset.ot,tr]));
+    R.oth.forEach(x=>{const key=x.who||'__unassigned',tr=otherRows.get(String(x.id));if(tr)groupFor(key).other.push({row:tr,value:x});changedOwner('o:'+x.id,key);});
+    peopleCard.querySelectorAll('tr[data-pp]').forEach(tr=>{const p=people[+tr.dataset.pp];if(p)groupFor(personKey(p)).participation.push(tr);});
+    const itemTable=itemCard.querySelector('table'),otherTable=otherCard.querySelector('table'),peopleTable=peopleCard.querySelector('table');
+    const tableFor=(template,rows)=>{
+      const wrap=document.createElement('div');wrap.className='prw-table-scroll';
+      const t=document.createElement('table');t.className=template.className;t.setAttribute('aria-label',template===itemTable?'생산 작업 내역':template===otherTable?'기타시간 내역':'참여시간·배분');
+      const cols=template.querySelector('colgroup'),head=template.querySelector('thead');if(cols)t.append(cols.cloneNode(true));if(head)t.append(head.cloneNode(true));
+      const body=document.createElement('tbody');rows.forEach(row=>body.append(row));t.append(body);wrap.append(t);return wrap;
+    };
+    const block=(title,template,rows)=>{const sec=document.createElement('section');sec.className='prw-detail-block';const h=document.createElement('h4');h.textContent=title;sec.append(h,tableFor(template,rows));return sec;};
+    const root=document.createElement('div');root.className='card prc prw-workers';
+    const bar=document.createElement('div');bar.className='mgch prw-toolbar';bar.innerHTML='<b>작업자별 내역</b><span class="prw-grow"></span>';
+    ['prpaste','pradd','proadd','prpadd','prpre'].forEach(id=>{const b=box.querySelector('#'+id);if(b)bar.append(b);});root.append(bar);
+    const heading=document.createElement('div');heading.className='prw-columns';heading.innerHTML=prWorkerColumns();root.append(heading);
+    const addGroup=(g,label,shared=false)=>{
+      const details=document.createElement('details');details.className='prw-worker'+(shared?' prw-common':'');details.dataset.worker=g.key;details.open=!!ui.open[g.key];
+      const summary=document.createElement('summary');summary.className='prw-summary';summary.innerHTML=prWorkerSummary(P,R,g,label,shared);details.append(summary);
+      details.addEventListener('toggle',()=>{ui.open[g.key]=details.open;});
+      const body=document.createElement('div');body.className='prw-detail';
+      if(g.items.length)body.append(block(shared?'공동 생산 작업':'개별 생산 작업',itemTable,g.items.map(x=>x.row)));
+      if(g.other.length)body.append(block('기타시간',otherTable,g.other.map(x=>x.row)));
+      if(g.participation.length)body.append(block('참여시간·기존 배분',peopleTable,g.participation));
+      if(!body.children.length){const empty=document.createElement('p');empty.className='prw-empty';empty.textContent='등록된 작업 내역이 없습니다.';body.append(empty);}
+      details.append(body);root.append(details);
+    };
+    groups.forEach(g=>addGroup(g,g.name));
+    if(common.items.length)addGroup(common,'공동 작업',true);
+    if(!groups.size&&!common.items.length){const empty=document.createElement('p');empty.className='prw-empty';empty.textContent='등록된 작업자와 작업이 없습니다.';root.append(empty);}
+    // A shared item is rendered once, never duplicated into each person's detail.
+    const note=itemCard.querySelector('.note');if(note)root.append(note);
+    itemCard.before(root);itemCard.remove();peopleCard.remove();otherCard.remove();
+    const basis=box.querySelector('.prb');if(basis){const d=document.createElement('details');d.className='prw-basis';d.innerHTML='<summary>계산 근거</summary>';basis.before(d);d.append(basis);}
+    ui.owners=nextOwners;ui.ready=true;
+  }
+  function prWorkerColumns(){return '<span>작업자</span><span>조립수량 · 작업환산</span><span>기타시간 (분)</span><span>총 배분환산</span>';}
+  function prWorkerSummary(P,R,g,label,shared){
+    const v=R.ppl.find(p=>(p.userId||'x:'+p.name)===g.key);
+    // Reuse the existing calculator on a view-only subset, with mobile records
+    // already present in R.items/R.oth. Never include P.mobile a second time.
+    const sub=prCalc(Object.assign({},P,{mobile:[],draft:Object.assign({},P.draft,{items:g.items.map(x=>x.value),oth:g.other.map(x=>x.value)})}));
+    const incomplete=g.items.some(x=>x.value.conv==null);
+    return `<span class="prw-name"><i aria-hidden="true">›</i><b>${esc(label)}</b></span><span class="prw-quantity" data-label=" 조립수량 · 작업환산"><span class="prw-qty"><b>${sub.qty}대</b> <small>(${incomplete?'확인 필요':f2(sub.S)})</small></span></span><span class="prw-other" data-label="기타시간"><span>${sub.H}분</span></span><span class="prw-total" data-label="총 배분환산" title="공동·개별 작업을 합친 기존 인정시간 비율 배분 결과"><b>${v?f2(v.p):'—'}</b>${v?`<small>생산 ${f2(v.s)} · 기타 ${f2(v.o)}</small>`:shared?'<small>참여시간 비율로 배분</small>':''}</span>`;
+  }
+
   function drawProdBody() {
     const P = S.prP, box = $('#prbody'); if (!box) return; const R = prCalc(P), ed = P.edit && !S.pv, dis = ed ? '' : 'disabled', dr = P.draft;
     const U = P.users || [], uname = id => (U.find(u => u.id === id) || {}).name || '', opt = (arr, v) => arr.map(x => `<option ${x === v ? 'selected' : ''}>${x}</option>`).join('');
@@ -15417,6 +15480,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ${R.oth.map(x => { const mob = !!x.mob; return `<tr data-ot="${x.id}"><td>${mob ? '<span class="rtag pmt">폰</span> ' + esc(x.whoName || uname(x.who)) : who(x.who, 'o-who')}</td><td><select class="o-cat" ${dis || (mob ? 'disabled' : '')}>${opt(PR_OTH, x.cat)}</select></td><td><input class="o-min" type="number" min="1" value="${esc(x.mins || '')}" ${dis || (mob ? 'disabled' : '')} style="width:70px"></td><td><input class="o-rs" value="${esc(x.reason || '')}" ${dis || (mob ? 'disabled' : '')} placeholder="예: 2층 정리" style="width:100%"></td><td>${ed ? '<button class="sm o-del">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="muted" style="padding:12px">없음 (모두 라인 작업)</td></tr>'}
         </tbody></table></div></div>
     ${prShowHelp(P) ? prBasis(P, R) : ''}`;
+    prWorkerMount(P,R,box);
     if (!ed) return;
     const itemOf = tr => { const id = tr.dataset.it; if (id[0] === 'm' && !dr.items.find(x => x.id === id)) { const mid = id.slice(1); dr.mobEdit[mid] = dr.mobEdit[mid] || {}; return dr.mobEdit[mid]; } return dr.items.find(x => x.id === id); };
     const bindF = (sel, key, num) => $$(sel, box).forEach(el => (el.onchange = () => { const it = itemOf(el.closest('tr')); if (!it) return; it[key] = num ? +el.value : el.value; prDirty(); }));
@@ -17407,6 +17471,17 @@ html[data-theme=dark] .df-root .df-step{border-color:#526d90}html[data-theme=dar
 @media(min-width:1101px) and (max-height:850px){.df-root:not(.df-report):not(.df-settings){padding:8px 12px;min-height:0}.df-root .df-hd{padding:10px 14px;margin-bottom:8px}.df-root .df-title{gap:3px}.df-root .df-title h2{font-size:22px}.df-root .df-tile{gap:4px}.df-root .df-tile strong{font-size:24px}.df-root .df-step{padding:6px 9px 7px;margin-bottom:6px}.df-root .df-step-title{margin-bottom:5px}.df-root .df-product{padding:7px;margin:4px 0}.df-root .df-scroll{padding:7px 9px}.df-root .df-feedbacklabel textarea{height:46px;min-height:46px}.df-root .df-footer{padding:7px 10px}.df-root .df-help{font-size:10.5px}}
 @media(max-width:820px){.df-root .df-formtitle{flex-wrap:wrap}.df-root .df-formtitle>div{flex-basis:100%}.df-root .df-formtitle h3{font-size:18px}.df-root .df-formtitle small{margin-left:auto}.df-root .df-step{padding:9px 10px}.df-root .df-step input,.df-root .df-step select,.df-root .df-step textarea{min-height:37px}.df-root .df-issue input,.df-root .df-issue select{margin-top:0}.df-root .df-switch{height:37px}.df-root .df-footer{padding:10px 12px}}
 html[data-theme=dark] .df-root .df-switch button{background:#223247;color:#c5d0e0;border-color:#536882}html[data-theme=dark] .df-root .df-switch button.on{background:#577fad;color:#fff;border-color:#789ac2}html[data-theme=dark] .df-root .df-step select[data-dfk=symptom]{background:#2b405c;color:#c6d9f2;border-color:#617eaa}html[data-theme=dark] .df-root .df-step select[data-dfk=part]{background:#40354f;color:#dfceef;border-color:#8a73a5}html[data-theme=dark] .df-root .df-step select[data-dfk=cause]{background:#473d2b;color:#ead8ae;border-color:#a58c56}html[data-theme=dark] .df-root .df-step select[data-dfk=action]{background:#28453f;color:#c0e0d7;border-color:#649b8e}html[data-theme=dark] .df-root .df-finalcause select{background:#463c2c;color:#ead6b2;border-color:#9a855e}
+
+</style>
+<style id="line-workers-v2986">
+/* Native disclosure rows, retaining the existing line-production table controls. */
+.prw-qty{display:inline-flex;gap:6px;align-items:baseline;padding:5px 13px;border-radius:8px;background:#eaf0f9;color:#4c6e9b;white-space:nowrap}.prw-qty>b{font-size:15px}.prw-qty>small{font-size:12px;font-weight:700}.prw-other>span{display:inline-block;background:#faf0dd;color:#92723e;border-radius:8px;padding:5px 13px;font-size:13px;font-weight:700}.prw-total>b{font-size:16px;color:var(--blue)}.prw-total>small{display:block;color:var(--sub);font-size:10px;margin-top:3px}.prw-common .prw-name>b{font-size:13px;color:var(--sub)}
+@media(max-width:700px){.prw-summary>[data-label]::before{content:attr(data-label);display:block;font-size:10px;color:var(--sub);margin-bottom:6px}.prw-qty{padding:5px 8px;gap:4px;flex-wrap:wrap;justify-content:center;white-space:normal}.prw-qty>b{font-size:13px}.prw-qty>small{font-size:11px}.prw-other>span{padding:5px 10px}.prw-total>b{font-size:15px}.prw-total>small{font-size:9px}}
+html[data-theme=dark] .prw-qty{background:#2b405a;color:#bfd1ed}html[data-theme=dark] .prw-other>span{background:#453c2c;color:#e1c896}
+.prw-workers{overflow:hidden}.prw-toolbar{padding:13px 15px;gap:7px;flex-wrap:wrap}.prw-grow{flex:1}.prw-columns,.prw-summary{display:grid;grid-template-columns:minmax(170px,1.3fr) repeat(3,minmax(120px,1fr));gap:8px;align-items:center;padding:13px 16px}.prw-columns{background:var(--head,#f3f6fa);font-size:12px;font-weight:800;border-top:1px solid var(--line);color:var(--sub)}.prw-columns>span:not(:first-child),.prw-summary>span:not(:first-child){text-align:center}
+.prw-worker{border-top:1px solid var(--line)}.prw-worker:nth-of-type(even){background:color-mix(in srgb,var(--head,#f5f7fa) 50%,var(--panel,#fff))}.prw-summary{cursor:pointer;list-style:none;min-height:59px;font-size:14px}.prw-summary::-webkit-details-marker{display:none}.prw-summary:focus-visible{outline:2px solid #7899c6;outline-offset:-3px}.prw-summary:hover{background:color-mix(in srgb,var(--blue) 5%,var(--panel))}.prw-worker[open]>.prw-summary{background:color-mix(in srgb,var(--blue) 7%,var(--panel));border-bottom:1px solid var(--line)}.prw-name{display:flex;align-items:center;gap:12px;min-width:0}.prw-name b{overflow-wrap:anywhere}.prw-name i{font-style:normal;display:inline-block;font-size:23px;color:var(--sub);transition:transform .12s}.prw-worker[open]>.prw-summary .prw-name i{transform:rotate(90deg)}
+.prw-detail{padding:0 14px 13px;background:var(--panel)}.prw-detail-block{margin-top:13px}.prw-detail-block h4{font-size:12px;margin:0 0 7px;color:var(--sub)}.prw-table-scroll{overflow:auto;max-width:100%}.prw-table-scroll table{width:100%;margin:0}.prw-detail-block table[aria-label="생산 작업 내역"]{min-width:1120px}.prw-detail-block table[aria-label="기타시간 내역"]{min-width:600px}.prw-detail-block table[aria-label="참여시간·배분"]{min-width:690px}.prw-empty{padding:15px;color:var(--sub);font-size:12px}.prw-basis{margin:12px 0}.prw-basis>summary{cursor:pointer;font-size:12px;color:var(--sub);padding:10px 14px}.prw-basis>.prb{margin-top:3px}
+@media(max-width:700px){.prw-columns{display:none}.prw-summary{grid-template-columns:repeat(3,minmax(0,1fr));padding:12px;gap:10px 6px;font-size:13px}.prw-summary .prw-name{grid-column:1/-1;text-align:left;font-size:15px}.prw-toolbar{padding:11px;gap:6px}.prw-toolbar button{font-size:11px;padding:6px 8px}.prw-toolbar>b{width:100%}.prw-grow{display:none}.prw-detail{padding:0 9px 10px}}
 
 </style>
 </body>
