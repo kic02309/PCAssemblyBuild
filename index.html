@@ -8056,7 +8056,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.89';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8133,7 +8133,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
     'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList', 'previewPeople', 'previewCheck', 'previewAccounts']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
-  const pvRead = (a, d) => PV_READ.has(a) || (a === 'sp3') || (a === 'sp' && d && ['can', 'get', 'hist'].includes(d.op)) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
+  const pvRead = (a, d) => (S.pv?.mode==='lead' && ((a==='defect' && d && ['can','stats'].includes(d.op)) || (a==='pa' && d && ['can','get'].includes(d.op)))) || PV_READ.has(a) || (a === 'sp3') || (a === 'sp' && d && ['can', 'get', 'hist'].includes(d.op)) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
   async function api(action, data) {
     if (S.mpv && !pvRead(action, data)) throw new Error('모바일 미리보기에서는 저장되지 않습니다');
     if (S.pv && !pvRead(action, data)) throw new Error('미리보기 중에는 저장·수정되지 않습니다 (아래 [내 화면으로 돌아가기])');
@@ -12463,9 +12463,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(()=>measure());observer.observe(head);if(nav)observer.observe(nav);}
   }
   const PA_NEW_UNTIL = '2026-12-31';
-  const canPa = () => !!(S.me && S.pa && S.pa.who && !S.pv);
+  const canPa = () => !!(S.me && S.pa && S.pa.who && (!S.pv || S.pv.mode==='lead') && !S.mpv);
   const paNew = () => (S.today || '') <= PA_NEW_UNTIL;
-  async function paLoad() { try { const r = await api('pa', { op: 'can' }); S.pa = { who: r.who || '', canConfig: r.canConfig === true }; } catch (e) { S.pa = { who: '', err: e.message }; } }
+  async function paLoad() { try { const r = await api('pa', { op: 'can' }); S.pa = { who: S.pv?.mode==='lead' && r.who ? 'view' : r.who || '', canConfig: !S.pv && r.canConfig === true }; } catch (e) { S.pa = { who: '', err: e.message }; } }
   const PA_CAP = { '안정화': '당일 테스트', '미처리': '전날 안내', '7시': '전날 미처리' };
   const PA_STL = { none: '안내 전', prog: '진행', call: '이관', done: '완료', recall: '재안내', bundle: '묶음' };
   const paDoem = o => /(^|\/)\s*DO\s*($|\/)/.test(o.tags || '');
@@ -12500,7 +12500,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     else sections = (carryOff.length ? [{ name: '다음날 이관 (이전)', list: carryOff, cls: 'call' }] : []).concat(G.map(g => ({ name: g.name, list: g.list, qty: g.qty }))).concat(other.length ? [{ name: '오늘 상황판에 없는 기록', list: other, cls: 'old' }] : []);
     return { all, main, bundles, G, callL, recallL, shipL, done, todayN, sections, flat: sections.flatMap(s => s.list) };
   }
-  const paEditable = () => { const D = S.pav.D; return D.who !== 'view' && D.date <= D.today && !(D.period.status === '마감' && D.who !== 'admin'); };
+  const paEditable = () => { const D = S.pav.D; return !S.pv && !S.mpv && !isRO() && D.who !== 'view' && D.date <= D.today && !(D.period.status === '마감' && D.who !== 'admin'); };
   async function renderPa(opt) {
     const main = $('#main'); if (!S.pa) await paLoad();
     S.pav = S.pav || { date: S.today, f: 'all', sel: '', D: null, dirty: false };
@@ -12513,6 +12513,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try { D = await api('pa', { op: 'get', date: P.date }); }
     catch (e) { if (seq === P.seq && S.view === 'pa') $('#main').innerHTML = pageHead('프리미엄 사전안내') + '<div class="pgb"><div class="warn">' + esc(e.message) + '</div></div>'; return; }
     if (seq !== P.seq || S.view !== 'pa') return;
+    if(S.pv?.mode==='lead') D={...D,who:'view',canConfig:false};
     P.D = D; P.dirty = false; if (!keepSel) P.form = null;
     paDraw();
   }
@@ -16585,7 +16586,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
     // ================================================================ v29.81 조립 불량 관리
   // 프리미엄 사전안내 UI 패턴 기반. 기존 데이터 모듈과 별도 관리. 요청은 기존 public.api 라우터로만 전달.
-  const dfCan = () => !!(S.me && S.df && S.df.role && !S.pv && !S.mpv);
+  const dfCan = () => !!(S.me && S.df && S.df.role && (!S.pv || S.pv.mode==='lead') && !S.mpv);
   const dfCanEdit = () => !!(dfCan() && ['editor','manager','admin'].includes(S.df.role) && !isRO());
   const dfCanCfg = () => !!(dfCan() && ['manager','admin'].includes(S.df.role) && !isRO());
   const DF_STATE = {check:'확인중',replace:'진행중',done:'완료'};
@@ -16593,7 +16594,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const DF_CAUSE = [['compatibility','호환성'],['bios','BIOS·설정'],['driver','드라이버·업데이트'],['','점검 중'],['initial','초기불량 확인'],['assembly','조립 문제'],['none','이상 없음'],['unknown','원인 미확정'],['other','기타']];
   const DF_OPTS = [['재연결','재연결'],['BIOS 업데이트·설정','BIOS 업데이트·설정'],['드라이버 설치','드라이버 설치'],['OS 재설치','OS 재설치'],['재안정화','재안정화'],['','조치 선택'],['교체','부품 교체'],['재장착','재장착'],['수정','연결·설정 수정'],['확인','점검만 진행'],['기타','기타']];
   async function dfLoadAuth() {
-    try { const r=await api('defect',{op:'can'}); S.df={role:r.role||''}; }
+    try { const r=await api('defect',{op:'can'}); S.df={role:S.pv?.mode==='lead' && ['admin','manager','viewer'].includes(r.role)?'viewer':r.role||''}; }
     catch(e){ S.df={role:'',error:e.message}; }
   }
   const dfNewItem = () => ({symptom:'',symptom_note:'',part:'',code:'',name:'',cause:'',action:'',note:''});
@@ -16903,7 +16904,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'smob', 'org', 'sp'].concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'org', 'pa', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'pmob', 'smob', 'org', 'sp'].concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
