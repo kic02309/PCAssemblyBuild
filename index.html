@@ -8056,7 +8056,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.88';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v29.89';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15837,6 +15837,90 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const spThr = it => ({ d: 3, w: 9, m: 33, n: 0 })[spCycle(it)];                // 오래된 실사 경고 : 주기 기준 (매일 = 3일 넘게 · 주 1회 = 9일 · 월 1회 = 33일 · 비정기 = 없음)
   const spAgoOf = it => { const L = spLast(it); return L ? spAgo(L.d, S.spD.today) : null; };
   const spStale = it => { const t = spThr(it), g = spAgoOf(it); if (!(t > 0) || g == null) return false; if (g > t) return true; return it.parts.some(pt => { const st = spPartState(it, pt); return st.miss > 0 || !st.oldest || spAgo(st.oldest, S.spD.today) > t; }); };   // 그룹 · 규격 하나라도 없거나 오래되면 경고
+  // v29.89: existing item IDs/spec keys and legacy features are preserved.
+  async function sp89Load(D){try{const r=await api('sp2',{op:'ledgerSummary'});D.ledgerItems=r.items||[];D.ledgerReady=true;for(const it of D.items||[]){const L=D.ledgerItems.find(x=>x.id===it.id);if(L)for(const s of it.specs){const a=L.rows.filter(x=>x.k===s.k);s.total=a.length&&a.every(x=>x.stock!=null)?a.reduce((n,x)=>n+Number(x.stock),0):null;}}}catch(e){D.ledgerItems=[];D.ledgerReady=false;D.ledgerError=e.message;}}
+  function sp89Usage(it,L,k,from,to,average=false){
+    const locs=it.parts.map(p=>p.p),u=(L.usage||[]).filter(x=>x.k===k&&!x.issue&&x.qty!=null&&x.from>=from&&x.to<=to);
+    if(!locs.length)return null;
+    if(average){let total=0;for(const p of locs){const a=u.filter(x=>x.p===p).sort((a,b)=>a.from.localeCompare(b.from));let cursor=from;if(!a.length)return null;for(const x of a){if(x.from!==cursor)return null;cursor=x.to;total+=Number(x.qty);}if(cursor!==to)return null;}const days=spAgo(from,to);return days?total/days:null;}
+    const end=[...new Set(u.map(x=>x.to))].sort().pop();if(!end)return null;const a=u.filter(x=>x.to===end),start=a[0]?.from;if(locs.some(p=>!a.some(x=>x.p===p&&x.from===start)))return null;return {qty:a.reduce((n,x)=>n+Number(x.qty),0),from:start,to:end};
+  }
+  function sp89Chart(it,usage){
+    const rows=(usage||[]).filter(x=>x.qty!=null&&!x.issue&&!x.boundary).sort((a,b)=>b.to.localeCompare(a.to)).slice(0,12),max=Math.max(1,...rows.map(x=>Number(x.qty)));
+    return `<section class="sp89-chart"><h4>확인된 사용량 구간</h4><small>파트·규격별 최근 최대 12구간 · 여러 날 사이의 사용량을 특정 하루에 몰아 표시하지 않습니다.</small>${rows.map(x=>`<div class="sp89-chartrow"><span>${esc(it.parts.find(p=>p.p===x.p)?.n||'전체')} · ${esc(it.specs.find(s=>s.k===x.k)?.s||x.k)}<small>${esc(x.from)} → ${esc(x.to)} · ${x.days}일</small></span><i><i style="width:${Number(x.qty)/max*100}%"></i></i><b>${spN(x.qty)}${esc(it.unit)}</b></div>`).join('')||'<p>확인된 구간이 없습니다. 실사·이동 자료가 쌓인 뒤 표시합니다.</p>'}</section>`;
+  }
+  function sp89Enhance(D){
+    if(!D.ledgerReady)return;
+    $$('.sxtr[data-bpi]').forEach(row=>{const id=+row.dataset.bpi,it=D.items.find(x=>x.id===id),L=D.ledgerItems.find(x=>x.id===id);if(!it||!L)return;const u=row.querySelector('.u');if(u)u.innerHTML=it.specs.map(s=>{const a=sp89Usage(it,L,s.k,sp81Day(D.today,-7),D.today,true);return `<span>${esc(s.s||'수량')} · 7일 평균 ${a==null?'자료 부족':spN(+a.toFixed(1))+esc(it.unit)+'/일'}</span>`;}).join('');const missing=L.rows.filter(x=>x.stock==null).length;if(missing)row.querySelector('.q')?.insertAdjacentHTML('beforeend',`<small>미실사 ${missing}칸 · 상세에서 확인</small>`);});
+    const head=$('.sxtbl>.sxtr.h');if(head?.children[3])head.children[3].textContent='사용량·평균';
+    $$('.sxc[data-bpi]').forEach(card=>{const id=+card.dataset.bpi,it=D.items.find(x=>x.id===id),L=D.ledgerItems.find(x=>x.id===id);if(!it||!L)return;
+      const sum=L.rows.filter(x=>x.stock!=null).reduce((n,x)=>n+Number(x.stock),0),missing=L.rows.filter(x=>x.stock==null).length;
+      const total=card.querySelector('.sp80-total');if(total)total.innerHTML=`<span>${missing?'확인된 관리 재고':'실사 기반 계산 재고'}</span><strong>${L.rows.some(x=>x.stock!=null)?spN(sum):'—'}<small>${esc(it.unit)}</small></strong>`;
+      const sub=card.querySelector('.sp81-subcount');if(sub)sub.textContent=missing?`미실사 ${missing}칸 · 미등록 파렛트는 0으로 합산하지 않습니다`:'마지막 실사와 이후 입고·보충·조정을 반영한 재고';
+      let m=document.createElement('div');m.className='sp89-cardstats';m.innerHTML=it.specs.map(s=>{const a=sp89Usage(it,L,s.k,sp81Day(D.today,-7),D.today,true),b=sp89Usage(it,L,s.k,sp81Day(D.today,-30),D.today,true);return `<div><b>${esc(s.s||'수량')}</b><span>7일 평균 ${a==null?'자료 부족':spN(+a.toFixed(1))+esc(it.unit)+'/일'}</span><span>30일 평균 ${b==null?'자료 부족':spN(+b.toFixed(1))+esc(it.unit)+'/일'}</span></div>`;}).join('');card.querySelector('.sxbt')?.before(m);
+    });
+    $$('[data-bpin],[data-sp81in]').forEach(b=>b.onclick=e=>{e.stopPropagation();sp89Open(+(b.dataset.bpin||b.dataset.sp81in),b.dataset.sp81in?'receipt':'count');});
+  }
+  function spHist(id){return S.spD?.ledgerReady?sp89Open(id,'view'):spHistLegacy(id);}
+  async function sp89Open(id,initial='view'){
+    const D=S.spD,it=D.items.find(x=>x.id===id);if(!it)return;
+    let L;try{L=await api('sp2',{op:'ledgerGet',id});}catch(e){return toast(e.message,true);}
+    const key=S.me.id+':'+id+':'+D.today;S.sp89Drafts=S.sp89Drafts||{};const draft=S.sp89Drafts[key]||(S.sp89Drafts[key]={values:{},reason:'',timing:''});
+    let mode=initial,busy=false,requestKey=null,from=sp81Day(D.today,-7),to=D.today,history={usage:[],history:[]},seq=0;
+    const writable=!isRO()&&!S.me.viewer&&D.who!=='view';
+    const allowed=p=>writable&&(p==='@pallet'?spIsMain(it):spMyParts(it).some(x=>x.p===p));
+    const locs=[...new Map(L.rows.map(x=>[x.p,{p:x.p,n:x.n}])).values()];
+    const find=(p,k)=>L.rows.find(x=>x.p===p&&x.k===k);
+    const input=(kind,p,k,unit,slot='qty')=>{const code=[kind,p,k,slot].join('|');return `<label class="sp89-input"><input data-sp89field="${esc(code)}" aria-label="${esc((locs.find(x=>x.p===p)?.n||p)+' '+(it.specs.find(x=>x.k===k)?.s||'수량')+' '+unit)}" type="text" inputmode="${kind==='adjust'?'text':'numeric'}" value="${esc(draft.values[code]||'')}" placeholder="미변경"${allowed(p)?'':' disabled'}><small>${esc(unit)}</small></label>`;};
+    const cell=(kind,p,s)=>{const r=find(p,s.k),boxed=(p==='@pallet'||kind==='move')&&s.per>0;return `<div class="sp89-cell">${boxed?input(kind,p,s.k,'박스','boxes')+input(kind,p,s.k,'낱개','loose'):`${input(kind,p,s.k,kind==='adjust'?'증감 '+it.unit:it.unit)}`}<small>${r?.stock==null?'최초 실사 필요':'관리 재고 '+spN(r.stock)+it.unit}${r?.last?' · '+r.last.d:''}</small></div>`;};
+    const grid=(kind,ps)=>`<div class="sp89-gridwrap"><table class="sp89-grid"><thead><tr><th>파트 / 입력 구분</th>${it.specs.map(s=>`<th>${esc(s.s||'수량')}${s.per>0?`<small>${s.per}${esc(it.unit)}/박스</small>`:''}</th>`).join('')}</tr></thead><tbody>${ps.map(p=>`<tr><th>${esc(p.n)}${allowed(p.p)?'':'<small>조회 전용</small>'}</th>${it.specs.map(s=>`<td>${cell(kind,p.p,s)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const gather=()=>{
+      const kinds=mode==='count'?['count','receipt']:[mode],rows=[];
+      for(const kind of kinds)for(const p of locs){if(!allowed(p.p)||kind==='move'&&p.p==='@pallet'||mode==='count'&&kind==='receipt'&&p.p!==(spHasParts(it)?'@pallet':''))continue;
+        for(const s of it.specs){const prefix=[kind,p.p,s.k].join('|'),q=draft.values[prefix+'|qty'],b=draft.values[prefix+'|boxes'],l=draft.values[prefix+'|loose'];if([q,b,l].every(v=>v==null||String(v).trim()===''))continue;
+          const boxed=(p.p==='@pallet'||kind==='move')&&s.per>0;let qty,boxes,loose;
+          if(boxed){if([b,l].some(v=>v!=null&&v!==''&&!/^\d+$/.test(v)))throw Error('박스·낱개는 0 이상 정수로 입력하세요');boxes=Number(b||0);loose=Number(l||0);if(loose>=s.per)throw Error('낱개는 한 박스 미만으로 입력하세요');qty=boxes*s.per+loose;}
+          else{if(!/^-?\d+$/.test(q||''))throw Error('수량은 정수로 입력하세요');qty=Number(q);}
+          if(qty<0&&kind!=='adjust'||!Number.isSafeInteger(qty)||Math.abs(qty)>9999999)throw Error('수량 범위를 확인하세요');
+          if(kind!=='count'&&qty===0)continue;rows.push({mode:kind,p:p.p,k:s.k,qty,boxes,loose,reason:draft.reason});
+        }
+      }
+      if(mode==='count'&&rows.some(x=>x.mode==='receipt')){if(!draft.timing)throw Error('입고 수량이 실사에 포함됐는지 선택하세요');rows.sort((a,b)=>draft.timing==='included'?(a.mode==='receipt'?-1:1)-(b.mode==='receipt'?-1:1):(a.mode==='count'?-1:1)-(b.mode==='count'?-1:1));}
+      return rows;
+    };
+    modal(`<div class="sp89-modal"><div class="sp89-head"><div><small>소모품 관리</small><h3>${esc(it.name)}</h3></div><button data-sp89close aria-label="닫기">×</button></div><div id="sp89-body"></div><div class="sp89-foot"><span id="sp89-status" role="status"></span><button data-sp89close>닫기</button><button id="sp89-save" class="primary">변경 내용 확인</button></div></div>`,(bg,close)=>{
+      const panel=$('#sp89-body',bg),save=$('#sp89-save',bg),status=$('#sp89-status',bg);
+      const metrics=()=>it.specs.map(s=>{const rs=L.rows.filter(r=>r.k===s.k),part=rs.filter(r=>r.p!=='@pallet'),pallet=rs.find(r=>r.p==='@pallet'),known=part.filter(r=>r.stock!=null).reduce((n,r)=>n+Number(r.stock),0),missing=rs.some(r=>r.stock==null),total=rs.reduce((n,r)=>n+Number(r.stock||0),0),dates=[...new Set(rs.map(r=>r.last?.d).filter(Boolean))].sort(),use=sp89Usage(it,{...L,usage:history.usage},s.k,from,to),avg7=sp89Usage(it,{...L,usage:(D.ledgerItems.find(x=>x.id===id)||{}).usage},s.k,sp81Day(D.today,-7),D.today,true),avg30=sp89Usage(it,{...L,usage:(D.ledgerItems.find(x=>x.id===id)||{}).usage},s.k,sp81Day(D.today,-30),D.today,true);
+        return `<article class="sp89-metric"><h4>${esc(s.s||'수량')}</h4><small>${missing?'일부 미등록 · 확인된 합계':'실사 기반 계산 재고'}</small><strong>${rs.some(r=>r.stock!=null)?spN(total):'—'}<em>${esc(it.unit)}</em></strong><p>파트 ${spN(known)}${esc(it.unit)}${pallet?` · 파렛트 ${pallet.stock==null?'미등록':spN(pallet.stock)+esc(it.unit)+(s.per>0?' ('+Math.floor(pallet.stock/s.per)+'박스 + '+pallet.stock%s.per+'개)':'')}`:''}</p><p>${dates.length?dates[0]+(dates.length>1?' ~ '+dates.at(-1):''):'실사 전'}${missing||dates.length>1?' · 확정 동시 실사 아님':''}</p><dl><div><dt>최근 확인 사용량</dt><dd>${use?spN(use.qty)+esc(it.unit)+' ('+use.from+' → '+use.to+')':'자료 부족'}</dd></div><div><dt>7일 / 30일 평균</dt><dd>${avg7==null?'자료 부족':spN(+avg7.toFixed(1))} / ${avg30==null?'자료 부족':spN(+avg30.toFixed(1))}${avg7!=null||avg30!=null?' '+esc(it.unit)+'/일':''}</dd></div></dl></article>`;
+      }).join('');
+      const draw=()=>{panel.classList.toggle('sp89-entry',mode!=='view');
+        const missing=L.rows.filter(r=>r.stock==null||spThr(it)>0&&spAgo(r.last?.d,D.today)>spThr(it)),active=locs.filter(p=>p.p!=='@pallet'&&L.rows.filter(r=>r.p===p.p).every(r=>r.last?.d===D.today));
+        panel.innerHTML=`<div class="sp89-tabs">${[['view','재고·사용량'],['count','일괄 실사'],['move','파트 보충'],['receipt','외부 입고'],['adjust','재고 조정']].filter(([k])=>k==='view'||writable&&(k!=='move'||spHasParts(it))&&(k!=='adjust'||D.who==='admin')).map(([k,t])=>`<button data-sp89mode="${k}" class="${mode===k?'on':''}" aria-pressed="${mode===k}">${t}</button>`).join('')}</div>
+          ${id===7?'<p class="sp89-alert">기존 180개·450개는 도입 전 재고로 확인됐습니다. 기존 입고 기록과의 포함 관계 확인 전 자동 합산·정정하지 않습니다.</p>':''}
+          <div class="sp89-cards">${metrics()}</div>
+          ${missing.length?`<p class="sp89-alert">오늘 실사 ${active.length}/${locs.filter(p=>p.p!=='@pallet').length}파트 · 미등록·주기 초과 ${missing.length}칸. 최신값 합계는 같은 시점의 확정 실사가 아닙니다.</p>`:''}
+          ${mode==='view'?`<div class="sp89-period"><b>사용량 조회</b><button data-sp89period="7">최근 7일</button><button data-sp89period="30">최근 30일</button><input id="sp89-from" type="date" value="${from}"><span>~</span><input id="sp89-to" type="date" value="${to}"><button id="sp89-query">조회</button></div>${sp89Chart(it,history.usage)}<p class="sp89-note">실사 사이의 입고·내부 이동·조정을 반영합니다. 기간 경계·도입 전 기록은 확정 평균에서 제외하며, 빈 기간을 0으로 채우지 않습니다. 이력은 최근 최대 3,000건이며 기간을 좁혀 조회할 수 있습니다.</p>${locs.map(p=>`<details class="sp89-history"><summary>${esc(p.n||'전체')} · 날짜별 입력 이력</summary><div class="sp89-historylist">${history.history.filter(x=>x.p===p.p).map(x=>`<div><b>${esc(x.d)}</b><span>${esc(it.specs.find(s=>s.k===x.k)?.s||x.k)} · ${x.kind==='receipt'?'당일 누적 입고':x.kind==='delete'?'실사 삭제':'실사'} ${x.qty==null?'—':spN(x.qty)}${esc(it.unit)}</span><span>${esc(x.by_name||'')} · ${esc(x.reason||'')}${x.expected_before!=null?' · 실사 차이 '+spN(x.qty-x.expected_before):''}</span></div>`).join('')||'<p>선택한 기간에 기록이 없습니다.</p>'}</div></details>`).join('')}<details class="sp89-history"><summary>입고·보충·조정 원장 (선택 기간)</summary><p>최근 최대 3,000건 표시 · 더 오래된 기록은 기간을 좁혀 조회하세요.</p>${(history.events||L.events).map(e=>`<div class="sp89-event"><b>${esc(e.d||e.at.slice(0,10))}</b> ${esc(e.kind==='transfer'?'파트 보충':e.kind==='receipt'?'외부 입고':'재고 조정')} · ${esc(e.k)} · ${spN(e.qty)}${esc(it.unit)} · ${esc(locs.find(p=>p.p===e.dst)?.n||e.dst)} · ${esc(e.by_name)} ${esc(e.reason)}</div>`).join('')||'<p>등록된 이동·입고·조정이 없습니다.</p>'}</details><button id="sp89-legacy">기존 단가·담당·입고 정정 기능</button>`:
+          `<div class="sp89-formhead"><b>${D.today} · 입력자 ${esc(S.me.name)}</b><span>빈칸 유지 / 0은 실제 재고 없음</span></div><p class="sp89-note">${mode==='move'?'파렛트에서 가져간 박스 수와 낱개를 입력하세요. 전체 재고·사용량은 바뀌지 않습니다.':mode==='receipt'?'이번에 외부에서 새로 들어온 수량만 입력하세요. 파트로 옮기는 물량은 ‘파트 보충’입니다.':mode==='adjust'?'폐기·분실·오입력 정정은 증감 수량과 사유를 기록합니다. 실제 사용량과 분리됩니다.':'각 파트의 실제 보유 개수를 입력하세요. 파렛트는 남은 완박스와 낱개 잔량을 입력합니다.'}</p>
+          ${grid(mode,mode==='move'?locs.filter(p=>p.p!=='@pallet'):mode==='receipt'&&spHasParts(it)?locs.filter(p=>p.p==='@pallet'):locs)}
+          ${mode==='count'?`<details class="sp89-external"><summary>이번 실사와 함께 외부 입고 기록</summary>${grid('receipt',locs.filter(p=>p.p===(spHasParts(it)?'@pallet':'')))}<label>입고와 실사의 관계<select id="sp89-timing"><option value="">선택하세요</option><option value="included" ${draft.timing==='included'?'selected':''}>입고 후 실사 — 실사 수량에 포함</option><option value="after" ${draft.timing==='after'?'selected':''}>실사 후 입고 — 실사 수량에 미포함</option></select></label></details>`:''}
+          <label class="sp89-reason">재입력·조정 사유 / 메모<input id="sp89-reason" maxlength="500" value="${esc(draft.reason)}" placeholder="오늘 실사 재입력·조정 시 필수"></label><div id="sp89-preview" role="status">입력 전입니다.</div>`}`;
+        save.hidden=mode==='view';save.disabled=busy;$$('[data-sp89close]',bg).forEach(b=>b.onclick=()=>{if(!busy)close();});
+        $$('[data-sp89mode]',bg).forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.sp89mode;draw();});
+        $$('[data-sp89field]',bg).forEach((i,n,inputs)=>{i.oninput=()=>{draft.values[i.dataset.sp89field]=i.value;requestKey=null;preview();};i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();inputs[n+1]?.focus();}};});
+        if($('#sp89-reason',bg))$('#sp89-reason',bg).oninput=e=>{draft.reason=e.target.value;requestKey=null;};if($('#sp89-timing',bg))$('#sp89-timing',bg).onchange=e=>{draft.timing=e.target.value;requestKey=null;preview();};
+        if($('#sp89-query',bg))$('#sp89-query',bg).onclick=()=>{from=$('#sp89-from',bg).value;to=$('#sp89-to',bg).value;loadHistory();};$$('[data-sp89period]',bg).forEach(b=>b.onclick=()=>{to=D.today;from=sp81Day(to,-Number(b.dataset.sp89period));loadHistory();});
+        if($('#sp89-legacy',bg))$('#sp89-legacy',bg).onclick=()=>{close();spHistLegacy(id);};
+      };
+      const preview=()=>{const el=$('#sp89-preview',bg);if(!el)return;try{const rows=gather();el.textContent=rows.length?`변경 예정 ${rows.length}칸 · `+rows.map(x=>`${locs.find(p=>p.p===x.p)?.n} ${it.specs.find(s=>s.k===x.k)?.s} ${x.mode==='count'?'실사':x.mode==='move'?'보충':x.mode==='receipt'?'입고':'조정'} ${spN(x.qty)}${it.unit}`).join(' / '):'입력 전입니다.';}catch(e){el.textContent=e.message;}};
+      const loadHistory=async()=>{const run=++seq;try{const h=await api('sp2',{op:'ledgerHistory',id,from,to});if(run===seq&&panel.isConnected){history=h;draw();}}catch(e){toast(e.message,true);}};
+      save.onclick=async()=>{if(busy)return;let rows;try{rows=gather();if(!rows.length)throw Error('변경할 수량을 입력하세요');}catch(e){return toast(e.message,true);}if(!await confirmBox(rows.map(x=>`${esc(locs.find(p=>p.p===x.p)?.n)} ${esc(it.specs.find(s=>s.k===x.k)?.s)} · ${esc(x.mode)} <b>${spN(x.qty)}${esc(it.unit)}</b>`).join('<br>')+'<br>빈칸은 유지합니다. 0은 실제 재고 없음입니다.','통합 저장','돌아가기'))return;
+        busy=true;save.disabled=true;status.textContent='저장 중…';requestKey=requestKey||crypto.randomUUID();
+        try{await api('sp2',{op:'ledgerSave',id,key:requestKey,rev:L.rev,date:D.today,rows});L=await api('sp2',{op:'ledgerGet',id});draft.values={};draft.reason='';draft.timing='';requestKey=null;await spReload();history=await api('sp2',{op:'ledgerHistory',id,from,to});mode='view';status.textContent='저장 후 서버 재조회 완료';draw();toast('재고를 저장했습니다.');}catch(e){status.textContent=e.message;toast(e.message,true);}finally{busy=false;save.disabled=false;}
+      };
+      bg._guard=()=>!busy;draw();loadHistory();
+    },'sp89-bg');
+  }
+
   const SP_PERSON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-4 3.2-6 7-6s7 2 7 6"/></svg>';
   const spWhoTxt = it => { const n = [it.mainName, it.subName].filter(Boolean); const base = n.length ? n : [...new Set(it.parts.map(p => p.uname).filter(Boolean))]; return base.length ? esc(base[0]) + (base.length > 1 ? ` 외 ${base.length - 1}` : '') : '담당 없음'; };
   const spCatName = (D, it) => ((D.cats || []).some(c => c.name === it.cat) ? it.cat : '기타');
@@ -15847,7 +15931,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function spLoadCyc(D) { try { const r = await api('sp2', { op: 'cycles' }); D.cyc = r.cyc || {}; } catch (e) { D.cyc = {}; } }
   // v29.79 누적: 파트·규격·날짜별 실제 입고량. 실사와 별도 저장, 누락된 입고는 추정하지 않습니다.
   async function spLoadReceipts(D) {
-    try { const r = await api('sp2', { op: 'receipts' }); if (!Array.isArray(r.rows)) throw new Error('입고 조회 응답 오류'); D.receipts = r.rows; D.ledgerVersion = r.ledgerVersion || 0; D.receiptReady = true; }
+    try { const r = await api('sp2', { op: 'receipts' }); if (!Array.isArray(r.rows)) throw new Error('입고 조회 응답 오류'); D.receipts = r.rows; D.ledgerVersion = r.ledgerVersion || 0; D.receiptReady = true; await sp89Load(D); }
     catch (e) { D.receipts = []; D.ledgerVersion = 0; D.receiptReady = false; D.receiptError = e.message || '입고 조회 불가'; }
   }
   const spReceiptQty = (D, id, p, k, date) => ((D.receipts || []).find(r => +r.id === +id && r.p === p && r.k === k && r.d === date) || {}).qty;
@@ -15859,6 +15943,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const sp81Day = (d, n) => { const t = new Date(d + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
   const sp81Base = l => l ? { d: l.d, qty: l.qty, at: l.at } : null;
   function sp81Stock(D, it, pt, s) {
+    const ledger=D.ledgerItems?.find(x=>x.id===it.id)?.rows.find(x=>x.p===pt.p&&x.k===s.k);if(ledger)return ledger.stock;
     const l = (pt.last || {})[s.k]; if (!l) return null;
     const same = spReceiptQty(D, it.id, pt.p, s.k, l.d) || 0;
     return Number(l.qty) + spReceiptsBetween(D, it.id, pt.p, s.k, l.d, D.today) + same - Number(l.ri == null ? same : l.ri);
@@ -15878,7 +15963,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           const u = Number(prev.qty) + row.between - Number(c.qty);
           if (u < 0 || row.between < 0) row.issue = '입고·실사 확인'; else row.used = u;
         }
-        out.push(row); if (c) prev = c;
+        if(D.ledgerReady){row.used=null;row.issue='';}out.push(row); if (c) prev = c;
       });
     }));
     return out.sort((a, b) => b.d.localeCompare(a.d) || a.p.localeCompare(b.p) || a.k.localeCompare(b.k));
@@ -15999,6 +16084,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if ($('#bpkme')) $('#bpkme').onclick = () => spGrid(myAll, adm ? '전체 일괄 입력' : '내 담당 일괄 입력');
     if ($('#bpadd')) $('#bpadd').onclick = () => spEdit(null, true);
     if ($('#bpcadd')) $('#bpcadd').onclick = () => spSettings('분류');
+    sp89Enhance(D);
   }
   // ---------------- 숫자 입력창 (공통) : 큰 숫자 · 천 단위 쉼표 · 단위 표시 · 지난 값 안내
   // v29.66 : 숫자 이외의 글자(-, ., 글자)는 다른 수량으로 바꾸지 않고 "오류"로 표시하고 저장을 막음 (-5 → 5, 1.5 → 15 가 되던 문제)
@@ -16090,7 +16176,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ================================================================ v29.62 : 한 번에 입력 (그룹별 · 내 담당 일괄) · 오늘 기록 지우기
   //   빈 칸 = 기존 값 그대로 · 입력한 칸만 바뀜 · 저장 전에 변경 내용 확인 · 서버는 전부 성공 / 전부 취소
   async function spSave2(body) {
-    try { return await api('sp2', body); }
+    try { return await api('sp2', {...body,ledgerRev:Object.fromEntries((S.spD.ledgerItems||[]).map(x=>[x.id,x.rev]))}); }
     catch (e) { throw new Error(/알 수 없는 요청/.test(e.message || '') ? '서버에 v29.79 소모품 입고 SQL이 아직 적용되지 않았습니다 (관리자에게 문의)' : e.message); }
   }
   function spGrid(its, title) {
@@ -16310,7 +16396,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       L.ml = false; if (reset) { L.st = 'err'; L.msg = msg; spLogBody(); } else { toast(msg, true); spLogBody(); }
     }
   }
-  function spHist(id) {
+  function spHistLegacy(id) {
     const D = S.spD, it = D.items.find(x => x.id === id); if (!it) return;
     if (!sp81Ready(D)) return toast(D.receiptReady ? '먼저 v29.81 SQL을 적용한 후 새로고침해 주세요.' : '입고 이력을 불러오지 못했습니다. 새로고침 후 다시 확인하세요.', true);
     let hist = [], start = sp81Day(D.today, -29), end = D.today, spec = 'all', part = 'all', allRows = [], loaded = false;
@@ -17538,6 +17624,13 @@ html[data-theme=dark] .prw-qty{background:#2b405a;color:#bfd1ed}html[data-theme=
 .df-stat-overview{display:flex;align-items:center;gap:30px;margin:14px 0;padding:17px 22px;border:1px solid var(--line);border-radius:14px;background:var(--panel,#fff)}.df-stat-overview>div{min-width:155px}.df-stat-overview small{display:block;font-size:12px;color:var(--sub)}.df-stat-overview strong{display:block;font-size:30px;line-height:1.25;color:var(--blue);margin-top:5px}.df-stat-overview em{font-style:normal;font-size:13px;font-weight:500;margin-left:5px}.df-stat-overview p{font-size:12px;color:var(--sub);line-height:1.7;margin:0}.df-chart-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.df-chart-title{display:flex;gap:10px;align-items:center;justify-content:space-between}.df-chart-title h3{margin:0}.df-chart-title small{color:var(--sub);font-size:11px;white-space:nowrap}.df-chartrows{margin-top:12px;max-height:360px;overflow:auto;padding-right:4px}.df-chartrow{display:grid!important;grid-template-columns:minmax(105px,1fr) minmax(50px,2fr) 68px;gap:12px;align-items:center;width:100%;min-height:43px;text-align:left;border:0!important;border-radius:6px!important;background:transparent!important;padding:7px 4px!important;color:var(--ink)!important}.df-chartrow+ .df-chartrow{border-top:1px solid var(--line)!important}.df-chartrow:is(button):hover{background:color-mix(in srgb,var(--df-accent) 8%,var(--panel,#fff))!important}.df-chartname{font-size:12px;font-weight:600;overflow-wrap:anywhere;line-height:1.45}.df-charttrack{display:block;height:12px;border-radius:7px;background:color-mix(in srgb,var(--df-accent) 12%,var(--panel,#fff));overflow:hidden}.df-charttrack>span{display:block;height:100%;border-radius:7px;background:var(--df-accent)}.df-chartvalue{text-align:right}.df-chartvalue b{display:block;font-size:15px;line-height:1.3}.df-chartvalue em{font-size:11px;font-weight:400;font-style:normal;margin-left:3px}.df-chartvalue small{display:block;color:var(--sub);font-size:10px;margin-top:3px}
 @media(max-width:760px){.df-filter-line{display:block}.df-filter-line>b{display:block;width:auto;line-height:1.4;margin-bottom:10px}.df-filter-pill{font-size:11px!important;padding:6px 10px!important}.df-stat-overview{display:block;padding:16px}.df-stat-overview p{margin-top:12px;font-size:11px}.df-chart-grid{grid-template-columns:minmax(0,1fr)!important}.df-chartrow{grid-template-columns:minmax(0,1.2fr) minmax(20px,.8fr) 48px;gap:6px}.df-chartname,.df-charttrack{min-width:0}.df-chartvalue{white-space:nowrap}.df-chart-title{flex-wrap:wrap}.df-stat-tools label{min-width:0}.df-report .df-tablewrap :is(th,td):nth-last-child(2){white-space:nowrap}}
 
+</style>
+<style id="sp89-styles">.sp89-cardstats{padding:8px 13px;font-size:11px;color:var(--sub)}.sp89-cardstats>div{display:flex;gap:10px;flex-wrap:wrap;margin:5px 0}.sp89-bg .modal{width:min(1200px,96vw)!important;max-width:1200px!important}.sp89-modal{color:var(--ink)}.sp89-modal .sp89-head,.sp89-modal .sp89-foot{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--panel);flex-wrap:wrap}.sp89-modal .sp89-head>div{flex:1}.sp89-modal h3{font-size:20px;margin:5px 0}.sp89-modal .sp89-head small{color:var(--sub);font-size:11px}.sp89-modal .sp89-foot>span{flex:1;font-size:12px;color:var(--sub)}#sp89-body{max-height:70vh;overflow:auto;padding:12px 20px}.sp89-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}.sp89-tabs button{border:1px solid var(--line);border-radius:8px;padding:9px 15px}.sp89-tabs button.on{background:#587fb9;color:#fff;border-color:#587fb9}.sp89-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.sp89-metric{border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--blue) 4%,var(--panel));padding:17px;min-width:0}.sp89-metric h4{margin:0 0 9px;font-size:16px}.sp89-metric>small{font-size:11px;color:var(--sub)}.sp89-metric>strong{font-size:32px;display:block;margin:5px 0}.sp89-metric em{font-size:13px;font-style:normal;margin-left:6px;color:var(--sub)}.sp89-metric p{font-size:11px;line-height:1.6;color:var(--sub);margin:6px 0}.sp89-metric dl{font-size:11px;border-top:1px solid var(--line);padding-top:8px}.sp89-metric dl>div{margin:8px 0}.sp89-metric dd{margin:4px 0 0;font-weight:700}.sp89-alert{background:#fcf4df;color:#826324;padding:12px;border-radius:9px;font-size:12px;line-height:1.7}.sp89-note{font-size:12px;color:var(--sub);line-height:1.7}.sp89-formhead{display:flex;justify-content:space-between;margin:17px 0 10px;gap:10px;font-size:12px}.sp89-gridwrap{overflow:auto}.sp89-grid{width:100%;border-collapse:collapse;table-layout:fixed;min-width:600px;font-size:13px}.sp89-grid th,.sp89-grid td{border:1px solid var(--line);padding:10px;vertical-align:middle}.sp89-grid th{background:var(--head);font-size:12px;width:22%}.sp89-grid th small,.sp89-cell>small{display:block;font-size:10px;color:var(--sub);line-height:1.6;margin-top:5px;font-weight:400}.sp89-input{display:flex;gap:5px;align-items:center;margin-bottom:4px}.sp89-input input{width:100%;min-width:0;text-align:right;padding:9px;font-size:18px;border:1px solid #9eb7d8;border-radius:7px;background:var(--panel);color:var(--ink)}.sp89-input small{white-space:nowrap;font-size:11px;color:var(--sub)}.sp89-input input:disabled{opacity:.45}.sp89-reason{display:block;font-size:12px;margin:15px 0}.sp89-reason input{display:block;width:100%;margin-top:7px;padding:10px}.sp89-external{padding:13px;border:1px solid var(--line);border-radius:10px;margin-top:15px}.sp89-external summary{cursor:pointer;font-weight:700;font-size:12px;margin-bottom:10px}.sp89-external select{padding:8px;margin:10px}.sp89-period{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:20px;font-size:12px}.sp89-period input{width:140px;padding:8px}.sp89-history{border:1px solid var(--line);border-radius:9px;padding:12px;margin:8px 0;font-size:12px}.sp89-history summary{cursor:pointer;font-weight:700}.sp89-historylist>div{display:flex;gap:12px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--line)}.sp89-historylist>div>span:last-child{color:var(--sub)}.sp89-event{padding:9px;font-size:12px;line-height:1.6}#sp89-preview{padding:12px;border-radius:8px;background:var(--head);font-size:12px;line-height:1.8;margin:10px 0;overflow-wrap:anywhere}#sp89-legacy{margin:12px 0}
+.modal.sp89-bg{width:min(1200px,96vw)!important;max-width:1200px!important;padding:0!important;max-height:94vh;overflow:hidden}
+.sp89-chart{border:1px solid var(--line);border-radius:10px;padding:14px;margin:15px 0}.sp89-chart>h4{font-size:13px;margin:0 0 6px}.sp89-chart>small,.sp89-chart>p{font-size:11px;color:var(--sub);line-height:1.7}.sp89-chartrow{display:grid;grid-template-columns:minmax(160px,1fr) minmax(40px,2fr) 65px;align-items:center;gap:14px;padding:10px 0;font-size:12px;border-bottom:1px solid var(--line)}.sp89-chartrow small{display:block;font-size:10px;color:var(--sub);margin-top:5px}.sp89-chartrow>i{display:block;height:11px;background:#e4ebf5;border-radius:6px;overflow:hidden}.sp89-chartrow>i>i{display:block;background:#7191bd;height:100%;border-radius:6px}.sp89-chartrow b{text-align:right}@media(max-width:700px){.sp89-chartrow{grid-template-columns:minmax(0,1fr) minmax(20px,.5fr) 45px;gap:7px;font-size:11px}.sp89-chartrow>span{min-width:0;overflow-wrap:anywhere}}
+#sp89-body.sp89-entry .sp89-metric{padding:10px 13px}#sp89-body.sp89-entry .sp89-metric>strong{font-size:23px;margin:2px 0}#sp89-body.sp89-entry .sp89-metric :is(p,dl){display:none}#sp89-body.sp89-entry .sp89-grid :is(th,td){padding:7px}#sp89-body.sp89-entry .sp89-input input{font-size:16px;padding:7px}
+@media(max-width:700px){#main:has(>.bpwrap)>.ph{flex-wrap:wrap;max-width:100%;min-width:0}#main:has(>.bpwrap)>.ph>.sxhb{display:flex;flex-wrap:wrap;min-width:0;width:100%;gap:6px}#main:has(>.bpwrap)>.ph>h1{width:100%;font-size:20px}.bpwrap{min-width:0;max-width:100%}#main:has(>.bpwrap) .sxtabs2{flex-wrap:wrap;max-width:100%;min-width:0}#sp89-body.sp89-entry .sp89-cards{display:none}}
+@media(max-width:700px){.modal.sp89-bg{width:96vw!important}.sp89-modal .sp89-head,.sp89-modal .sp89-foot{padding:12px}.sp89-modal h3{font-size:17px}#sp89-body{padding:10px;max-height:65vh}.sp89-cards{grid-template-columns:minmax(0,1fr)}.sp89-metric>strong{font-size:28px}.sp89-formhead{display:block;line-height:1.8}.sp89-grid{min-width:530px}.sp89-tabs button{padding:8px 10px;font-size:12px}.sp89-period input{width:125px}}
 </style>
 </body>
 </html>
