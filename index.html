@@ -3700,6 +3700,8 @@ html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 
 .lo-meta-parts table{min-width:580px;table-layout:fixed}.lo-meta-parts th:first-child{width:17%}.lo-meta-parts th:nth-child(3){width:20%}.lo-meta-parts th:nth-child(4){width:12%}.lo-meta-parts th:last-child{width:58px}
 .lo-meta-parts th,.lo-meta-parts td{padding:5px 7px}.lo-meta-parts td.lo-meta-empty{padding:13px;color:var(--sub);text-align:left}
 .lo-meta-parts td:last-child button{padding:6px 8px}
+.lo-meta-original{margin:0 0 10px;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--panel);font-size:12px;overflow-wrap:anywhere}
+.lo-meta-original ul{display:grid;gap:4px;list-style:none;margin:6px 0;padding:0}.lo-meta-original li b{display:inline-block;min-width:42px;color:var(--sub)}.lo-meta-original p{margin:0;color:var(--sub)}
 .lo-meta-add{margin-top:7px}.lo-meta-modal #loSerialMsg{margin:6px 0 0}
 .lo-meta-footer{border-top:1px solid var(--line)}
 .lo-meta-save{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
@@ -8149,7 +8151,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.04';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.05';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15270,13 +15272,23 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function loParseSpecs(txt) {
     const raw=String(txt||'').replace(/\r/g,'').replace(/\u00a0/g,' '),lines=raw.split('\n').map(x=>x.replace(/^ +| +$/g,'')).filter(x=>x.trim()),specs=[];
     let code='',columns=null;
+    const modelCodes=new Set();
     const mc=raw.match(/(?:모델\s*)?제품\s*코드\s*[:：]\s*([A-Za-z0-9-]+)/);if(mc)code=mc[1];
     // 표의 탭/파이프 구분을 우선하며 제품명 앞뒤의 코드·수량을 보존합니다.
     for(let i=0;i<lines.length;i++) {
-      let l=lines[i];if(/제조번호\s*[:：]|^\[컴퓨존\].*(?:아이웍스|조립PC)/i.test(l))continue;
+      const l=lines[i];if(/제조번호\s*[:：]/i.test(l))continue;
       let cells=l.split(/\t|\s*\|\s*/).map(x=>x.trim()),kind='',name='',pc='',q='';
       const nameCol=cells.findIndex(x=>/^(?:제품명(?:\s*·\s*사양)?|상품명|부품명)$/.test(x));
       if(nameCol>=0){columns={name:nameCol,kind:cells.findIndex(x=>/^(?:구분|품목|분류)$/.test(x)),code:cells.findIndex(x=>/^(?:제품코드|상품코드|코드)$/.test(x)),q:cells.findIndex(x=>/^수량$/.test(x))};continue;}
+      const tableName=columns ? cells[columns.name]||'' : '';
+      const tableKind=columns ? cells[columns.kind]||'' : '';
+      const modelRow=/^(?:모델|완제품|본체)$/.test(tableKind)||(/^\[컴퓨존\]/.test(tableName)&&/(?:아이웍스|조립\s*PC|사무용|게이밍)/i.test(tableName)&&!/조립비|추가 조립/.test(tableName));
+      if(columns&&modelRow){
+        const modelCode=cells[columns.code]||'';
+        if(/^[A-Za-z0-9-]+$/.test(modelCode))modelCodes.add(modelCode);
+        continue;
+      }
+      if(/^\[컴퓨존\].*(?:아이웍스|조립PC)/i.test(l))continue;
       const known=/^(CPU|메인보드|메모리|SSD|HDD|저장장치|그래픽카드|케이스|파워|CPU\s*쿨러|기타|부속품)$/i;
       if(columns&&cells.length>columns.name&&cells[columns.name]){name=cells[columns.name];kind=cells[columns.kind]||loSpecKind(name);pc=cells[columns.code]||'';q=cells[columns.q]||'';}
       else if(cells.length>=2 && known.test(cells[0])) {
@@ -15292,6 +15304,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       }
       if(name){if(kind==='저장장치')kind=loSpecKind(name);specs.push({kind:kind==='부속품'?'기타':kind,name,code:pc,q:q||''});}
     }
+    if(modelCodes.size===1)code=[...modelCodes][0];
+    else if(modelCodes.size>1)code='';
     return {specs,code,raw,note:''};
   }
   function loParseSerials(raw) {
@@ -15566,10 +15580,31 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   window.addEventListener('online',()=>{if(S.view==='line')loRefresh(LO.epoch,true);});
   document.addEventListener('visibilitychange',()=>{if(S.view==='line'){LO.online=false;loStatus();if(!document.hidden)loRefresh(LO.epoch,true);}});
 
+  function loSourceBaseParts(item) {
+    return [['케이스',item.case],['쿨러',item.cooler],['파워',item.psu]]
+      .filter(([,name])=>typeof name==='string'&&name.trim())
+      .map(([kind,name])=>({kind,name}));
+  }
+  function loSourceSpec(row) {
+    const original=row.item.ops||{};
+    const saved=row.meta||{};
+    const current=row.meta||original;
+    const raw=current.raw||(!saved.specs?.length&&original.raw)||'';
+    const parsed=raw&&(!current.specs?.length||!current.code)?loParseSpecs(raw):null;
+    const specs=saved.specs?.length?saved.specs:original.specs?.length?original.specs:parsed?.specs||[];
+    const code=saved.code||original.code||parsed?.code||'';
+    return {...current,raw,specs,code};
+  }
+  function loSourceSpecLabel(row) {
+    const count=loSourceSpec(row).specs.length;
+    if(count)return `전체 사양 ${count}개`;
+    const basic=loSourceBaseParts(row.item).length;
+    return basic?`기본 부품 ${basic}개 · 전체 사양 미저장`:'전체 사양 미저장';
+  }
   async function loSources(date,rowId) {
     try {
       const dt=date||LO.date,r=await loCall('sources',{date:dt});LO.sourceRows=r.rows;
-      modal(`<h3>기존 라인생산 제조건 불러오기</h3><div class="note">기존 라인생산에서 저장한 제조 행을 사용합니다. 전체 사양 확인 후 배치합니다. 실적 저장·확정과 별개입니다. 배치 시점의 사양을 보관하며 이후 사양 수정은 새 배치부터 적용됩니다.</div><label>원본 일자 <input type="date" id="loSrcDate" value="${esc(dt)}"></label><div id="loSrcRows" class="lo-source-list">${r.rows.map((x,i)=>`<button data-lo-source="${i}"><b>${esc(x.item.no||'제조번호 없음')} · ${esc(x.item.model||'모델명 없음')}</b><span>원본 ${esc(x.item.q)} · 배치 ${x.allocated} · 잔여 ${Math.max(0,(+x.item.q||0)-x.allocated)} · 전체 사양 ${x.meta?.specs?.length||x.item.ops?.specs?.length||0}개</span></button>`).join('')||'<p>이 일자에 저장된 제조건이 없습니다.</p>'}</div><div class="acts"><button data-c>닫기</button></div>`,(bg,close)=>{
+      modal(`<h3>기존 라인생산 제조건 불러오기</h3><div class="note">기존 라인생산에서 저장한 제조 행을 사용합니다. 전체 사양 확인 후 배치합니다. 실적 저장·확정과 별개입니다. 배치 시점의 사양을 보관하며 이후 사양 수정은 새 배치부터 적용됩니다.</div><label>원본 일자 <input type="date" id="loSrcDate" value="${esc(dt)}"></label><div id="loSrcRows" class="lo-source-list">${r.rows.map((x,i)=>`<button data-lo-source="${i}"><b>${esc(x.item.no||'제조번호 없음')} · ${esc(x.item.model||'모델명 없음')}</b><span>원본 ${esc(x.item.q)} · 배치 ${x.allocated} · 잔여 ${Math.max(0,(+x.item.q||0)-x.allocated)} · ${loSourceSpecLabel(x)}</span></button>`).join('')||'<p>이 일자에 저장된 제조건이 없습니다.</p>'}</div><div class="acts"><button data-c>닫기</button></div>`,(bg,close)=>{
         $('#loSrcDate',bg).onchange=e=>{const d=e.target.value;close();loSources(d);};$$('[data-lo-source]',bg).forEach(b=>b.onclick=()=>{const x=r.rows[+b.dataset.loSource];close();loMeta(dt,x,r.revision);});$('[data-c]',bg).onclick=close;
         if(rowId){const x=r.rows.find(x=>x.item.id===rowId);if(x){close();loMeta(dt,x,r.revision);}}
       },'wide');
@@ -15577,7 +15612,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function loMeta(dt, row) {
     const item = row.item;
-    const initial = row.meta || item.ops || { specs: [], code: '', note: '', raw: '', serials: [] };
+    const initial = loSourceSpec(row);
+    const baseParts = initial.specs.length ? [] : loSourceBaseParts(item);
     const meta = JSON.parse(JSON.stringify(initial));
     const remaining = Math.max(0, (+item.q || 0) - row.allocated);
     const nextRank = 1 + Math.max(0, ...(LO.data?.batches || []).map(batch => batch.rank));
@@ -15590,10 +15626,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <fieldset class="lo-meta-edit">
           <section class="lo-meta-section">
             <h4>1. 부품 사양 확인</h4>
+            ${baseParts.length ? `<div class="lo-meta-original"><b>라인생산에 저장된 부품</b><ul>${baseParts.map(part => `<li><b>${part.kind}</b> ${esc(part.name)}</li>`).join('')}</ul><p>위 항목은 참고용입니다. 전체 사양표는 관리툴에서 붙여넣으세요.</p></div>` : ''}
             <div class="lo-meta-grid">
               <label>관리툴 사양표 붙여넣기<textarea id="loSpecRaw" rows="4" placeholder="관리툴의 부품 사양표를 여기에 붙여넣으세요."></textarea></label>
               <div class="lo-meta-side">
-                <label>모델 제품코드<input id="loModelCode" value="${esc(meta.code || '')}"></label>
+                <label>모델 제품코드<input id="loModelCode" value="${esc(meta.code || '')}" placeholder="저장된 제품코드 없음"></label>
                 <button id="loSpecParse">전체 사양 읽기</button>
                 <p class="lo-meta-help">표를 붙여넣은 뒤 읽기 버튼을 누르면 아래에 부품이 표시됩니다.</p>
               </div>
@@ -15641,7 +15678,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const line = $('#loBatchLine', bg);
       const rank = $('#loBatchRank', bg);
       const status = $('#loMetaStatus', bg);
-      let saved = !!row.meta && !!meta.specs?.length;
+      let saved = !!row.meta?.specs?.length && meta.code === (row.meta.code || '');
       let metaVer = row.meta?.ver || 0;
       let request = null;
       let busy = false;
