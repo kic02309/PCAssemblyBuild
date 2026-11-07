@@ -8122,7 +8122,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.02';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.03';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8199,7 +8199,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const PV_READ = new Set(['me', 'logout', 'orgView', 'prGet', 'prWho', 'listUsers', 'getMonth', 'getDay', 'getPeriodDays', 'listDates', 'daily', 'people', 'roster', 'stats', 'boardInfo', 'mfgList', 'mfgCheck', 'attList', 'goalCfg',
     'hrMeta', 'hrMonth', 'hrCfg', 'hrHistory', 'hrAtt', 'hrMyAtt', 'hrLog', 'hrExportAll', 'lvGet', 'lvActualSyncInfo', 'eduList', 'eduNotice', 'accNotice', 'accList', 'accItem', 'accXlInfo', 'bkList', 'wtList', 'wtGet', 'mgList', 'calList', 'previewPeople', 'previewCheck', 'previewAccounts']);
   const PV_COND = new Set(['editReq', 'asmOt', 'autoBkKey', 'trash', 'accAdmins']);   // 값 없이 부르면 조회
-  const pvRead = (a, d) => (a === 'lo' && ['can','get','probe','stats'].includes(d?.op)) || (S.pv?.mode==='lead'&&a==='pa'&&['srCan','srGet','srStats'].includes(d?.op)) || (S.pv?.mode==='lead' && ((a==='defect' && d && ['can','stats'].includes(d.op)) || (a==='pa' && d && ['can','get'].includes(d.op)))) || PV_READ.has(a) || (a === 'sp3') || (a === 'sp' && d && ['can', 'get', 'hist'].includes(d.op)) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
+  const pvRead = (a, d) => (a === 'lo' && ['can','get','probe','watch','stats'].includes(d?.op)) || (S.pv?.mode==='lead'&&a==='pa'&&['srCan','srGet','srStats'].includes(d?.op)) || (S.pv?.mode==='lead' && ((a==='defect' && d && ['can','stats'].includes(d.op)) || (a==='pa' && d && ['can','get'].includes(d.op)))) || PV_READ.has(a) || (a === 'sp3') || (a === 'sp' && d && ['can', 'get', 'hist'].includes(d.op)) || (a === 'prMob' && d && d.op === 'list') || (PV_COND.has(a) && !['op', 'mode', 'min', 'id', 'name', 'names'].some(k => d && d[k] != null && d[k] !== ''));
   async function api(action, data) {
     if (S.mpv && !pvRead(action, data)) throw new Error('모바일 미리보기에서는 저장되지 않습니다');
     if (S.pv && !pvRead(action, data)) throw new Error('미리보기 중에는 저장·수정되지 않습니다 (아래 [내 화면으로 돌아가기])');
@@ -15222,7 +15222,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ------------------------------------------------ 시작
   // 매니저·관리자 : 관리 목록을 뒤에서 미리 받아 둠 → [관리] 누르면 바로 보임
   // v29.98 — 라인 상황판. 기존 prCalc/prSave/prConfirm과 별개 운영 기록.
-  const LO = { data:null,date:null,seat:null,timer:null,clock:null,epoch:0,last:0,offset:0,online:false,busy:false,pending:null,held:new Set(),blockedUntil:0,sourceRows:[],stats:null,requestSeq:0 };
+  const LO = { data:null,date:null,seat:null,timer:null,clock:null,epoch:0,last:0,offset:0,online:false,busy:false,pending:null,held:new Set(),blockedUntil:0,sourceRows:[],stats:null,requestSeq:0,notifications:null,notifyConnected:false,notifyDirty:false,syncing:null };
   const canLine = () => canProd() || !!S.loCan;
   const loId = () => 'lo_' + (globalThis.crypto?.randomUUID?.() || (Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));
   const loCall = (op,data) => api('lo',Object.assign({},data||{},{op}));
@@ -15282,6 +15282,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return {serials:out,duplicates:[...new Set(out.filter((x,i)=>out.indexOf(x)!==i))],unknown};
   }
   function loStop(reset) {
+    LO.notifications?.close();LO.notifications=null;LO.notifyConnected=false;LO.notifyDirty=false;LO.syncing=null;
     clearTimeout(LO.timer);clearInterval(LO.clock);LO.epoch++;LO.online=false;LO.held.clear();
     if(document.fullscreenElement?.id==='loWork')document.exitFullscreen().catch(()=>{});
     document.getElementById('loWork')?.remove();document.body.classList.remove('lo-work-open');
@@ -15291,17 +15292,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     loStop();LO.date=LO.date||S.today;const epoch=LO.epoch;
     $('#main').innerHTML=pageHead('상황판')+'<div class="pgb"><div class="card">상황판을 불러오는 중입니다…</div></div>';
     try{const p=JSON.parse(sessionStorage.getItem('linePending')||'null');if(p?.uid===S.me.id)LO.pending=p.request;}catch(e){}
-    await loRefresh(epoch,true);if(epoch===LO.epoch&&S.view==='line'){let remembered='';try{remembered=sessionStorage.getItem('lineWorkSeat')||'';}catch(e){}if(remembered&&LO.data?.stations.some(x=>x.mine&&x.id===remembered))loOpen(remembered,false);loSchedule(epoch);}
+    await loRefresh(epoch,true);if(epoch===LO.epoch&&S.view==='line'){let remembered='';try{remembered=sessionStorage.getItem('lineWorkSeat')||'';}catch(e){}if(remembered&&LO.data?.stations.some(x=>x.mine&&x.id===remembered))loOpen(remembered,false);loWatch(epoch);}
   }
   async function loRefresh(epoch,force) {
     const token=S.token;if(!token||S.view!=='line'||epoch!==LO.epoch)return;
     const seq=++LO.requestSeq;
     try {
-      let r;
-      if(!force&&LO.data){const p=await loCall('probe');if(epoch!==LO.epoch||token!==S.token||seq!==LO.requestSeq)return;
-        LO.last=Date.now();LO.offset=new Date(p.serverAt).getTime()-LO.last;LO.online=true;
-        if(p.revision===LO.data.revision&&p.sourceSig===LO.data.sourceSig){loStatus();return;}}
-      r=await loCall('get',{date:LO.date,pendingBatchId:LO.pending?.batchId});
+      const r=await loCall('get',{date:LO.date,pendingBatchId:LO.pending?.batchId});
       if(epoch!==LO.epoch||token!==S.token||seq!==LO.requestSeq||S.view!=='line')return;
       // Hold the displayed target until the original request is acknowledged, including after reload.
       if(LO.pending){const pinned=r.stations.find(x=>x.id===LO.pending.station&&x.mine);if(pinned)pinned.current=Object.assign({},LO.pending);}
@@ -15309,13 +15306,140 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       loDrawBoard();if(LO.seat)loDrawWork();
     }catch(e){if(epoch!==LO.epoch||token!==S.token)return;LO.online=false;loStatus();if(!LO.data)$('#main').innerHTML=pageHead('상황판')+`<div class="pgb"><div class="warn">${esc(e.message)} <button id="loTry">다시 불러오기</button></div></div>`;if($('#loTry'))$('#loTry').onclick=()=>loRefresh(LO.epoch,true);}
   }
-  function loSchedule(epoch) {
-    clearTimeout(LO.timer);if(epoch!==LO.epoch||S.view!=='line'||!S.token)return;
-    LO.timer=setTimeout(async()=>{if(!document.hidden&&!LO.busy)await loRefresh(epoch,false);loSchedule(epoch);},LO.online?4000:8000);
+  function createLineNotifications(options) {
+    let stopped=false, socket=null, retryTimer=null, heartbeatTimer=null, deadline=null, expiryTimer=null;
+    let joined=false, attempt=0, reference=0, topic='', pendingHeartbeat=null;
+
+    const setState=connected=>{
+      joined=connected;
+      options.onState(connected);
+    };
+    const clearConnection=()=>{
+      clearInterval(heartbeatTimer);
+      clearTimeout(deadline);
+      clearTimeout(expiryTimer);
+      pendingHeartbeat=null;
+      const old=socket;
+      socket=null;
+      if(old){old.onclose=null;old.onerror=null;old.onmessage=null;old.close();}
+    };
+    const reconnect=()=>{
+      clearConnection();
+      setState(false);
+      if(stopped)return;
+      clearTimeout(retryTimer);
+      const delay=Math.min(30000,1000*2**Math.min(attempt++,5));
+      retryTimer=setTimeout(connect,delay);
+    };
+    const send=(event,payload,channel=topic)=>{
+      const ref=String(++reference);
+      socket.send(JSON.stringify({topic:channel,event,payload,ref}));
+      return ref;
+    };
+    async function connect() {
+      if(stopped)return;
+      try {
+        const access=await options.watch();
+        if(stopped)return;
+        if(!/^lo-change-[0-9a-f]{64}$/.test(access.topic))throw new Error('알림 채널을 확인할 수 없습니다');
+        topic='realtime:'+access.topic;
+        const url=options.url.replace(/^http/,'ws')+'/realtime/v1/websocket?apikey='+encodeURIComponent(options.key)+'&vsn=1.0.0';
+        socket=new WebSocket(url);
+        const current=socket;
+        deadline=setTimeout(reconnect,12000);
+        current.onopen=()=>{
+          if(stopped||socket!==current)return;
+          const payload={config:{broadcast:{ack:false,self:false},presence:{enabled:false},postgres_changes:[],private:false}};
+          if(options.key.startsWith('eyJ'))payload.access_token=options.key;
+          const joinRef=send('phx_join',payload);
+          current.onmessage=event=>{
+            if(stopped||socket!==current)return;
+            let message;
+            try{message=JSON.parse(event.data);}catch{return;}
+            if(message.event==='phx_error'||message.event==='phx_close'){reconnect();return;}
+            if(message.event==='phx_reply'&&message.ref===joinRef){
+              if(joined)return;
+              if(message.payload?.status!=='ok'){reconnect();return;}
+              clearTimeout(deadline);
+              attempt=0;
+              setState(true);
+              options.onReady();
+              heartbeatTimer=setInterval(()=>{
+                if(stopped||socket!==current)return;
+                pendingHeartbeat=send('heartbeat',{},'phoenix');
+                deadline=setTimeout(reconnect,10000);
+              },25000);
+              const expires=Date.parse(access.expiresAt)-(Date.parse(access.serverAt)||Date.now());
+              if(Number.isFinite(expires))expiryTimer=setTimeout(()=>{
+                clearConnection();
+                setState(false);
+                options.onExpired();
+                connect();
+              },Math.max(0,expires));
+              return;
+            }
+            if(message.event==='phx_reply'&&message.ref===pendingHeartbeat){
+              clearTimeout(deadline);
+              pendingHeartbeat=null;
+              if(message.payload?.status!=='ok')reconnect();
+              return;
+            }
+            if(joined&&message.topic===topic&&message.event==='broadcast'&&message.payload?.event==='invalidate')options.onChange();
+          };
+        };
+        current.onclose=reconnect;
+        current.onerror=reconnect;
+      }catch(error){
+        if(error.serverRejected){
+          stopped=true;
+          clearConnection();setState(false);
+          options.onError(error);
+        }else reconnect();
+      }
+    }
+    connect();
+    return {
+      get connected(){return joined&&!stopped&&socket?.readyState===1;},
+      close(){stopped=true;clearTimeout(retryTimer);clearConnection();setState(false);}
+    };
   }
+
+  async function loSyncFromNotification(epoch) {
+    if(epoch!==LO.epoch||S.view!=='line'||!S.token)return;
+    LO.notifyDirty=true;
+    if(LO.syncing===epoch||LO.busy||document.hidden)return;
+    LO.syncing=epoch;
+    try {
+      do {
+        LO.notifyDirty=false;
+        await loRefresh(epoch,true);
+      }while(LO.notifyDirty&&!LO.busy&&!document.hidden&&epoch===LO.epoch&&S.view==='line');
+    }finally{if(LO.syncing===epoch)LO.syncing=null;}
+  }
+
+  function loWatch(epoch) {
+    const token=S.token;
+    const active=()=>epoch===LO.epoch&&S.view==='line'&&token===S.token;
+    LO.online=false;
+    LO.notifications=createLineNotifications({
+      url:SB_URL,key:SB_KEY,
+      watch:()=>loCall('watch'),
+      onState:connected=>{if(active()){LO.notifyConnected=connected;if(!connected)LO.online=false;loStatus();}},
+      onReady:()=>{if(active())loSyncFromNotification(epoch);},
+      onChange:()=>{
+        if(!active())return;
+        LO.notifyDirty=true;
+        clearTimeout(LO.timer);
+        LO.timer=setTimeout(()=>{if(active())loSyncFromNotification(epoch);},100);
+      },
+      onExpired:()=>{if(active())loSyncFromNotification(epoch);},
+      onError:error=>{if(active()){LO.online=false;loStatus();toast(error.message,true);}}
+    });
+  }
+
   function loStatus() {
-    const fresh=LO.online&&navigator.onLine!==false&&Date.now()-LO.last<13000;
-    document.querySelectorAll('[data-lo-status]').forEach(x=>{x.textContent=(fresh?'● 연결 정상':'● 연결 확인 필요 · 완료 제한')+' · 마지막 갱신 '+(LO.last?new Date(LO.last).toLocaleTimeString('ko-KR',{hour12:false}):'없음');x.classList.toggle('lo-error',!fresh);});
+    const fresh=LO.online&&LO.notifyConnected&&navigator.onLine!==false;
+    document.querySelectorAll('[data-lo-status]').forEach(x=>{x.textContent=(fresh?'● 알림 연결 정상':'● 알림 연결 확인 중 · 완료 제한')+' · 마지막 내역 갱신 '+(LO.last?new Date(LO.last).toLocaleTimeString('ko-KR',{hour12:false}):'없음');x.classList.toggle('lo-error',!fresh);});
     const st=LO.data?.stations.find(x=>x.id===LO.seat),b=LO.data?.batches.find(x=>x.id===st?.current?.batchId);
     const btn=document.getElementById('loDone');if(btn)btn.disabled=!fresh||LO.busy||!st?.canComplete||!st?.current||!!b?.sourceChanged||!!LO.pending||Date.now()<LO.blockedUntil;
   }
@@ -15379,7 +15503,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function loComplete(retry) {
     if(LO.busy)return;
     const st=LO.data?.stations.find(x=>x.id===LO.seat),b=LO.data?.batches.find(x=>x.id===st?.current?.batchId);
-    if(!retry&&(!st?.canComplete||!st.current||b?.sourceChanged||LO.pending||!LO.online||navigator.onLine===false||Date.now()-LO.last>=13000||Date.now()<LO.blockedUntil))return;
+    if(!retry&&(!st?.canComplete||!st.current||b?.sourceChanged||LO.pending||!LO.online||navigator.onLine===false||!LO.notifyConnected||Date.now()<LO.blockedUntil))return;
     if(retry&&!LO.pending)return;
     const req=retry?LO.pending:Object.assign({},st.current,{station:st.id,requestId:loId(),cfgVer:LO.data.cfgVer});
     const epoch=LO.epoch,tk=S.token,uid=S.me?.id;
@@ -15393,7 +15517,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if(e.serverRejected){LO.pending=null;try{sessionStorage.removeItem('linePending');}catch(e){}await loRefresh(epoch,true);}
       // A definite rejection may be discarded only after explicit user action; uncertain transport failures keep the original request.
       loDrawWork();toast(e.message,true);
-    }finally{if(epoch===LO.epoch&&tk===S.token){LO.busy=false;LO.blockedUntil=Date.now()+900;loDrawWork();loStatus();}}
+    }finally{if(epoch===LO.epoch&&tk===S.token){LO.busy=false;LO.blockedUntil=Date.now()+900;loDrawWork();loStatus();if(LO.notifyDirty)loSyncFromNotification(epoch);}}
   }
   function loSwitchConfig() {
     modal(`<h3>이 PC 스위치 입력 설정</h3><p>키보드 HID 방식 기기의 실제 입력을 이곳에서 확인하세요. 연결 기기·키는 아직 현장 검증 전입니다.</p><p>현재 키: <b id="loKeyNow"></b></p><button id="loCapture">다음 입력 키 감지</button><button id="loKeyOff">키 입력 사용 안 함</button><div class="note">전용 작업대에 포커스가 있을 때만 작동합니다. 입력칸·설정창·반복 입력은 완료로 처리하지 않습니다.</div><div class="acts"><button data-c>닫기</button></div>`,(bg,close)=>{
