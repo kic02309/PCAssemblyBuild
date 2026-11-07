@@ -3633,6 +3633,9 @@ html[data-theme=dark] .ddwork b,html[data-theme=dark] .ddvol2 b{color:#5eead4}
 </style>
 <style>
 /* v29.98 — scoped line operations */
+.czn button.lo-parent-on{color:#1f63e6;box-shadow:inset 0 -3px 0 #1f63e6}
+html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 -3px 0 #7aa7ff}
+
 .lo-banner .lo-metric.lo-metric-plan{background:#eaf1ff;color:#31537d;border-top:3px solid #81a7e1}.lo-banner .lo-metric-plan b{color:#29589a}
 .lo-banner .lo-metric.lo-metric-done{background:#e4f3f2;color:#285c61;border-top:3px solid #6fb8b5}.lo-banner .lo-metric-done b{color:#246267}
 .lo-banner .lo-metric.lo-metric-pending{background:#f0ebf9;color:#594b79;border-top:3px solid #ab98d0}.lo-banner .lo-metric-pending b{color:#62508a}
@@ -8119,7 +8122,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.01';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.02';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8697,7 +8700,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(dfStatCan() ? [['df',S.df?.role==='observer'?'조립 불량 관리':'조립 불량 통계']] : []).concat(srCan() ? [['sr','주문 사양검토']] : []).concat(canSp() ? [['sp', spTitle()]] : []).concat(canLine() ? [[canProd() ? 'prod' : 'line', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(dfStatCan() ? [['df',S.df?.role==='observer'?'조립 불량 관리':'조립 불량 통계']] : []).concat(srCan() ? [['sr','주문 사양검토']] : []).concat(canSp() ? [['sp', spTitle()]] : []).concat(canLine() ? (canProd() ? [['prod', '라인생산']] : []).concat([['line', '상황판']]) : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -8759,20 +8762,20 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function setNav() {
     const cur = S.view;     // v28.10 : 보기 전용의 [조직도] = 인원 화면의 조직도 탭
-    $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === cur || (b.dataset.v === 'dash' && S.view === 'manage') || (b.dataset.v === 'admin' && (S.view === 'settings' || S.view === 'people' || S.view === 'stats' || S.view === 'goal'))) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
+    $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === cur || (b.dataset.v === 'line' && cur === 'linestats') || (b.dataset.v === 'dash' && S.view === 'manage') || (b.dataset.v === 'admin' && (S.view === 'settings' || S.view === 'people' || S.view === 'stats' || S.view === 'goal'))) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
     if ($('.czn')) {                                                      // v28.17 : 분류 켜짐 + 위 막대 세부 메뉴
       const v = S.view, cat = v === 'sp' ? 'sp' : v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'line', 'linestats', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'goal'].includes(v) ? 'adm' : 'work';
       $$('.czr [data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
       let it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
-        : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', spTitle()]] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [[canProd() ? 'prod' : 'line', '라인생산']] : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
+        : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', spTitle()]] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? (canProd() ? [['prod', '라인생산']] : []).concat([['line', '상황판']]) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '데이터 마감']];
       if (cat === 'work' && canPa()) it = it.concat([['pa', '프리미엄 사전안내']]);   // v29.37
       if (cat === 'work' && dfCan()) it = it.concat([['df', '조립 불량 관리']]); // v29.81 : 사전안내 바로 오른쪽
       if (cat === 'work' && srCan()) it = it.concat([['sr','주문 사양검토']]);
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
-      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
+      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : k === 'line' && v === 'linestats' ? 'lo-parent-on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
@@ -15323,9 +15326,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return (hash>>>0)%360;
   }
   function loPageLinks(active) {
-    const links=[['prod','라인생산','range'],['line','상황판','board'],['linestats','상황판 통계','stats']];
-    return links.filter(([view])=>view==='prod'?canProd()&&active!=='prod':canLine())
-      .map(([view,label,color])=>`<button class="lo-nav-${color}${view===active?' on':''}" data-go="${view}" ${view===active?'aria-current="page"':''}>${label}</button>`).join('');
+    if (!canLine() || active === 'prod') return '';
+    if (active === 'linestats') return '<button class="lo-nav-board" data-go="line">‹ 상황판으로</button>';
+    return '<button class="lo-nav-stats" data-go="linestats">상황판 통계</button>';
   }
   function loDrawBoard() {
     const r=LO.data;if(!r||S.view!=='line')return;let remembered='';try{remembered=localStorage.getItem('lineStation')||'';}catch(e){}const bs=r.batches||[],mine=r.stations.find(x=>x.mine&&x.id===remembered)||r.stations.find(x=>x.mine),plan=loSum(bs,'q'),done=loSum(bs,'final');
