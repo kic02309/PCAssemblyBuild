@@ -3680,7 +3680,34 @@ html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 
 #main .ph button[class*="lo-nav-"]{background:color-mix(in srgb,var(--lo-nav-color) 16%,var(--panel));box-shadow:inset 2px 0 var(--lo-nav-color);color:var(--ink);white-space:nowrap}
 #main .ph button[class*="lo-nav-"][aria-current]{box-shadow:inset 0 0 0 1px var(--lo-nav-color)}
 #main .lo-stage.lo-stage-tint h3{background:var(--lo-stage-bg);border-inline-start:3px solid var(--lo-stage-color)}
-.modal.lo-meta-modal{max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
+.modal.lo-meta-modal{width:min(960px,calc(100vw - 24px));max-width:none;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:0;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);color:var(--ink);border-radius:16px!important}
+.lo-meta-head,.lo-meta-footer{flex:none;padding:14px 18px;background:var(--panel)}
+.lo-meta-head{border-bottom:1px solid var(--line)}
+.lo-meta-head h3{margin:0 0 5px;font-size:18px}.lo-meta-head p{margin:0;color:var(--sub);font-size:13px}
+.lo-meta-body{padding:14px 18px;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.lo-meta-edit{padding:0;border:0;min-inline-size:0;margin:0}
+.lo-meta-section{border:1px solid var(--line);border-radius:9px;padding:12px;background:var(--head)}
+.lo-meta-section+.lo-meta-section{margin-top:10px}
+.lo-meta-section h4,.lo-meta-footer h4{font-size:14px;margin:0 0 8px}
+.lo-meta-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:10px;align-items:start}
+.lo-meta-grid.lo-meta-notes{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lo-meta-modal label{display:grid;gap:4px;font-size:12px;font-weight:600;min-width:0}
+.lo-meta-modal input,.lo-meta-modal textarea,.lo-meta-modal select{min-width:0;width:100%;font:inherit;border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+.lo-meta-modal textarea{resize:vertical;min-height:60px;line-height:1.45}
+.lo-meta-side{display:grid;gap:8px}.lo-meta-side button{justify-self:start}
+.lo-meta-help,.lo-meta-status{margin:0;color:var(--sub);font-size:12px;line-height:1.5}
+.lo-meta-parts{margin-top:10px;border:1px solid var(--line);border-radius:7px;background:var(--panel)}
+.lo-meta-parts table{min-width:580px;table-layout:fixed}.lo-meta-parts th:first-child{width:17%}.lo-meta-parts th:nth-child(3){width:20%}.lo-meta-parts th:nth-child(4){width:12%}.lo-meta-parts th:last-child{width:58px}
+.lo-meta-parts th,.lo-meta-parts td{padding:5px 7px}.lo-meta-parts td.lo-meta-empty{padding:13px;color:var(--sub);text-align:left}
+.lo-meta-parts td:last-child button{padding:6px 8px}
+.lo-meta-add{margin-top:7px}.lo-meta-modal #loSerialMsg{margin:6px 0 0}
+.lo-meta-footer{border-top:1px solid var(--line)}
+.lo-meta-save{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.lo-meta-save .lo-meta-status{margin-right:auto}.lo-meta-status[data-saved=true]{color:#08746b}
+html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
+.lo-meta-deploy{display:grid;grid-template-columns:minmax(92px,1fr) minmax(68px,.6fr) minmax(68px,.6fr) auto;align-items:end;gap:8px}
+.lo-meta-modal button{white-space:nowrap}
+@media(max-width:630px){.lo-meta-head,.lo-meta-body,.lo-meta-footer{padding:10px}.lo-meta-grid,.lo-meta-grid.lo-meta-notes{grid-template-columns:minmax(0,1fr)}.lo-meta-deploy{grid-template-columns:repeat(3,minmax(0,1fr))}.lo-meta-deploy button{grid-column:1/-1;justify-self:end}.lo-meta-save .lo-meta-status{flex-basis:100%}}
 .lo-config .lo-config-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);margin:0}
 .lo-config-foot small{margin-right:auto;color:var(--sub);font-size:12px}
 .lo-manager-search{margin:8px 0}.lo-manager-choices,.lo-manager-selected{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -8122,7 +8149,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.03';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.04';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15548,20 +15575,177 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       },'wide');
     }catch(e){toast(e.message,true);}
   }
-  function loMeta(dt,row,revision) {
-    const it=row.item,init=row.meta||it.ops||{specs:[],code:'',note:'',raw:'',serials:[]};let meta=JSON.parse(JSON.stringify(init));let parsedSerial=null;
-    modal(`<h3>${esc(it.no)} · 전체 사양 및 전산 시리얼 목록</h3><div class="note">작업대별 스캔 없이 제조건 전체 전산 목록만 보관합니다. 시리얼과 실물 공정 순번을 연결하지 않습니다.</div><label>관리툴 사양표 붙여넣기<textarea id="loSpecRaw" rows="5"></textarea></label><button id="loSpecParse">전체 사양 읽기</button><label>모델 제품코드 <input id="loModelCode" value="${esc(meta.code||'')}"></label><div class="lo-scroll"><table class="list"><thead><tr><th>구분</th><th>제품명·사양</th><th>제품코드</th><th>수량</th><th></th></tr></thead><tbody id="loSpecEdit"></tbody></table></div><button id="loSpecAdd">부품 행 추가</button><label>주의사항<textarea id="loNotes" rows="2">${esc(meta.note||'')}</textarea></label><label>전산 시리얼 목록 · 원본 수량 ${esc(it.q)}<textarea id="loSerialRaw" rows="4" placeholder="시리얼 한 줄에 하나 또는 시리얼 열 머리글을 포함한 관리툴 표"></textarea></label><p id="loSerialMsg"></p><div class="acts"><button data-c>닫기</button><button id="loMetaSave" class="primary">사양 · 목록 저장</button></div><hr><div class="lo-deploy-form"><h3>이 제조건을 라인에 배치</h3><label>라인 <select id="loBatchLine"><option value="front">앞라인</option><option value="back">뒷라인</option></select></label><label>수량 <input type="number" min="1" id="loBatchQty" value="${Math.max(0,(+it.q||0)-row.allocated)}"></label><label>작업 순서 <input type="number" id="loBatchRank" value="${1+Math.max(0,...(LO.data?.batches||[]).map(x=>x.rank))}"></label><button id="loBatchStart" class="primary">저장된 사양으로 배치 · 시작</button></div>`,(bg,close)=>{
-      let saved=!!row.meta,metaVer=row.meta?.ver||0,request=null;$('#loSpecRaw',bg).value=meta.raw||'';$('#loSerialRaw',bg).value=(meta.serials||[]).join('\n');
-      const collect=()=>{meta.specs=$$('tr', $('#loSpecEdit',bg)).map(tr=>{const a=$$('input',tr).map(x=>x.value.trim());return {kind:a[0],name:a[1],code:a[2],q:a[3]};});meta.code=$('#loModelCode',bg).value.trim();meta.note=$('#loNotes',bg).value;meta.raw=$('#loSpecRaw',bg).value;};
-      const draw=()=>{$('#loSpecEdit',bg).innerHTML=(meta.specs||[]).map((x,i)=>`<tr><td><input value="${esc(x.kind)}" aria-label="부품 구분" style="width:90px"></td><td><input value="${esc(x.name)}" aria-label="제품명" style="min-width:230px;width:100%"></td><td><input value="${esc(x.code||'')}" aria-label="제품코드" style="width:100px"></td><td><input value="${esc(x.q||'')}" aria-label="수량" style="width:60px"></td><td><button data-lo-del="${i}">삭제</button></td></tr>`).join('');$$('[data-lo-del]',bg).forEach(b=>b.onclick=()=>{collect();meta.specs.splice(+b.dataset.loDel,1);saved=false;draw();});};draw();
-      const ser=()=>{parsedSerial=loParseSerials($('#loSerialRaw',bg).value);$('#loSerialMsg',bg).textContent=`목록 ${parsedSerial.serials.length}개 / 원본 ${it.q}개 · 중복 ${parsedSerial.duplicates.length}개 · 미인식 ${parsedSerial.unknown.length}행`+(parsedSerial.unknown.length?' · 미인식 행을 확인해 주세요':'');$('#loSerialMsg',bg).className=parsedSerial.duplicates.length||parsedSerial.unknown.length?'lo-error':'';};ser();
-      bg.addEventListener('input',()=>{saved=false;});$('#loSerialRaw',bg).oninput=ser;
-      $('#loSpecParse',bg).onclick=()=>{const p=loParseSpecs($('#loSpecRaw',bg).value);if(!p.specs.length)return toast('인식한 부품이 없습니다. 표를 확인하거나 부품 행을 직접 입력하세요',true);meta.specs=p.specs;meta.raw=p.raw;if(p.code)$('#loModelCode',bg).value=p.code;saved=false;draw();};
-      $('#loSpecAdd',bg).onclick=()=>{collect();meta.specs.push({kind:'기타',name:'',code:'',q:''});saved=false;draw();};
-      $('#loMetaSave',bg).onclick=async()=>{collect();ser();if(!meta.specs.length)return toast('전체 사양을 입력하세요',true);if(parsedSerial.unknown.length||parsedSerial.duplicates.length)return toast('시리얼 미인식·중복을 먼저 확인하세요',true);if(parsedSerial.serials.length&&parsedSerial.serials.length!==+it.q)return toast('시리얼 개수와 원본 수량이 다릅니다',true);const btn=$('#loMetaSave',bg);btn.disabled=true;try{const savedMeta=await loCall('meta',{date:dt,rowId:it.id,metaVer,meta:Object.assign({},meta,{serials:parsedSerial.serials})});await loRefresh(LO.epoch,true);revision=LO.data.revision;metaVer=savedMeta.metaVer;saved=true;toast('전체 사양과 전산 목록을 저장했습니다');}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};
-      $('#loBatchStart',bg).onclick=async()=>{if(!saved)return toast('전체 사양·목록을 먼저 저장하세요',true);const btn=$('#loBatchStart',bg);btn.disabled=true;request=request||{date:dt,rowId:it.id,sourceHash:row.sourceHash,batchId:loId(),line:$('#loBatchLine',bg).value,q:+$('#loBatchQty',bg).value,rank:+$('#loBatchRank',bg).value};try{await loCall('start',request);close();await loRefresh(LO.epoch,true);toast('라인에 배치했습니다 · 기존 실적은 변경하지 않았습니다');}catch(e){if(e.serverRejected)request=null;toast(e.message,true);}finally{btn.disabled=false;}};
-      $('[data-c]',bg).onclick=close;
-    },'wide lo-meta-modal');
+  function loMeta(dt, row) {
+    const item = row.item;
+    const initial = row.meta || item.ops || { specs: [], code: '', note: '', raw: '', serials: [] };
+    const meta = JSON.parse(JSON.stringify(initial));
+    const remaining = Math.max(0, (+item.q || 0) - row.allocated);
+    const nextRank = 1 + Math.max(0, ...(LO.data?.batches || []).map(batch => batch.rank));
+    modal(`
+      <div class="lo-meta-head">
+        <h3 id="loMetaTitle">제조건 사양 확인 · 배치</h3>
+        <p><b>${esc(item.no)}</b> ${esc(item.model || '')} · 원본 ${esc(item.q)}대 · 배치 가능 ${remaining}대</p>
+      </div>
+      <div class="lo-meta-body">
+        <fieldset class="lo-meta-edit">
+          <section class="lo-meta-section">
+            <h4>1. 부품 사양 확인</h4>
+            <div class="lo-meta-grid">
+              <label>관리툴 사양표 붙여넣기<textarea id="loSpecRaw" rows="4" placeholder="관리툴의 부품 사양표를 여기에 붙여넣으세요."></textarea></label>
+              <div class="lo-meta-side">
+                <label>모델 제품코드<input id="loModelCode" value="${esc(meta.code || '')}"></label>
+                <button id="loSpecParse">전체 사양 읽기</button>
+                <p class="lo-meta-help">표를 붙여넣은 뒤 읽기 버튼을 누르면 아래에 부품이 표시됩니다.</p>
+              </div>
+            </div>
+            <div class="lo-scroll lo-meta-parts"><table class="list">
+              <thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th><th></th></tr></thead>
+              <tbody id="loSpecEdit"></tbody>
+            </table></div>
+            <button class="lo-meta-add" id="loSpecAdd">+ 부품 행 추가</button>
+          </section>
+          <section class="lo-meta-section">
+            <h4>2. 주의사항 · 전산 시리얼 목록</h4>
+            <div class="lo-meta-grid lo-meta-notes">
+              <label>작업대에 표시할 주의사항<textarea id="loNotes" rows="3">${esc(meta.note || '')}</textarea></label>
+              <label>전산 시리얼 목록 (선택)<textarea id="loSerialRaw" rows="3" placeholder="시리얼을 한 줄에 하나씩 붙여넣으세요."></textarea></label>
+            </div>
+            <p id="loSerialMsg" class="lo-meta-help" aria-live="polite"></p>
+          </section>
+        </fieldset>
+      </div>
+      <div class="lo-meta-footer">
+        <div class="lo-meta-save">
+          <p id="loMetaStatus" class="lo-meta-status" aria-live="polite"></p>
+          <button data-c>닫기</button><button id="loMetaSave" class="primary">사양 · 목록 저장</button>
+        </div>
+        <h4>3. 작업 시작</h4>
+        <div class="lo-meta-deploy">
+          <label>라인<select id="loBatchLine"><option value="front">앞라인</option><option value="back">뒷라인</option></select></label>
+          <label>배치 수량<input type="number" min="1" max="${remaining}" id="loBatchQty" value="${remaining}"></label>
+          <label>작업 순서<input type="number" id="loBatchRank" value="${nextRank}"></label>
+          <button id="loBatchStart" class="primary" disabled>▶ 작업 시작</button>
+        </div>
+      </div>`, (bg, close) => {
+      const dialog = $('.lo-meta-modal', bg);
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', 'loMetaTitle');
+      const editor = $('.lo-meta-edit', bg);
+      const table = $('#loSpecEdit', bg);
+      const raw = $('#loSpecRaw', bg);
+      const serialInput = $('#loSerialRaw', bg);
+      const save = $('#loMetaSave', bg);
+      const start = $('#loBatchStart', bg);
+      const qty = $('#loBatchQty', bg);
+      const line = $('#loBatchLine', bg);
+      const rank = $('#loBatchRank', bg);
+      const status = $('#loMetaStatus', bg);
+      let saved = !!row.meta && !!meta.specs?.length;
+      let metaVer = row.meta?.ver || 0;
+      let request = null;
+      let busy = false;
+      raw.value = meta.raw || '';
+      serialInput.value = (meta.serials || []).join('\n');
+
+      const updateControls = () => {
+        const validQty = Number.isInteger(+qty.value) && +qty.value >= 1 && +qty.value <= remaining;
+        editor.disabled = busy || !!request;
+        [qty, line, rank].forEach(field => { field.disabled = busy || !!request; });
+        save.disabled = busy || !!request;
+        start.disabled = busy || !saved || !validQty;
+        start.textContent = request ? '같은 시작 요청 다시 확인' : '▶ 작업 시작';
+        $('[data-c]', bg).disabled = busy;
+        status.dataset.saved = String(saved);
+        status.textContent = request ? '작업 시작 응답을 확인하고 있습니다.' : saved ? '사양 저장 완료 · 작업 시작을 누르면 첫 공정으로 전달됩니다.' : '사양을 먼저 저장하면 작업을 시작할 수 있습니다.';
+      };
+      const markUnsaved = () => { saved = false; updateControls(); };
+      const collect = () => {
+        meta.specs = $$('[data-part-row]', table).map(tr => {
+          const [kind, name, code, q] = $$('input', tr).map(field => field.value.trim());
+          return { kind, name, code, q };
+        });
+        meta.code = $('#loModelCode', bg).value.trim();
+        meta.note = $('#loNotes', bg).value;
+        meta.raw = raw.value;
+      };
+      const draw = () => {
+        table.innerHTML = meta.specs?.length ? meta.specs.map((part, index) => `<tr data-part-row>
+          <td><input value="${esc(part.kind)}" aria-label="부품 구분"></td>
+          <td><input value="${esc(part.name)}" aria-label="제품명"></td>
+          <td><input value="${esc(part.code || '')}" aria-label="제품코드"></td>
+          <td><input value="${esc(part.q || '')}" aria-label="수량"></td>
+          <td><button data-lo-del="${index}">삭제</button></td>
+        </tr>`).join('') : '<tr><td colspan="5" class="lo-meta-empty">불러온 부품 사양이 없습니다. 위 사양표를 붙여넣거나 부품 행을 추가하세요.</td></tr>';
+        $$('[data-lo-del]', table).forEach(button => button.onclick = () => {
+          collect();
+          meta.specs.splice(+button.dataset.loDel, 1);
+          draw();
+          markUnsaved();
+        });
+      };
+      const readSerials = () => {
+        const parsed = loParseSerials(serialInput.value);
+        const message = $('#loSerialMsg', bg);
+        message.textContent = `목록 ${parsed.serials.length}개 / 원본 ${item.q}개 · 중복 ${parsed.duplicates.length}개 · 미인식 ${parsed.unknown.length}행`;
+        message.classList.toggle('lo-error', !!(parsed.duplicates.length || parsed.unknown.length));
+        return parsed;
+      };
+      draw();
+      readSerials();
+      updateControls();
+      editor.addEventListener('input', markUnsaved);
+      serialInput.oninput = readSerials;
+      qty.oninput = updateControls;
+      $('#loSpecParse', bg).onclick = () => {
+        const parsed = loParseSpecs(raw.value);
+        if (!parsed.specs.length) return toast('인식한 부품이 없습니다. 표를 확인하거나 부품 행을 직접 입력하세요', true);
+        meta.specs = parsed.specs;
+        meta.raw = parsed.raw;
+        if (parsed.code) $('#loModelCode', bg).value = parsed.code;
+        draw();
+        markUnsaved();
+      };
+      $('#loSpecAdd', bg).onclick = () => {
+        collect();
+        meta.specs.push({ kind: '기타', name: '', code: '', q: '' });
+        draw();
+        markUnsaved();
+      };
+      save.onclick = async () => {
+        collect();
+        const parsed = readSerials();
+        if (!meta.specs.length) return toast('전체 사양을 입력하세요', true);
+        if (parsed.unknown.length || parsed.duplicates.length) return toast('시리얼 미인식·중복을 먼저 확인하세요', true);
+        if (parsed.serials.length && parsed.serials.length !== +item.q) return toast('시리얼 개수와 원본 수량이 다릅니다', true);
+        busy = bg._lock = true;
+        updateControls();
+        try {
+          const result = await loCall('meta', { date: dt, rowId: item.id, metaVer, meta: { ...meta, serials: parsed.serials } });
+          metaVer = result.metaVer;
+          saved = true;
+          await loRefresh(LO.epoch, true);
+          toast('전체 사양과 전산 목록을 저장했습니다');
+        } catch (error) { toast(error.message, true); }
+        finally { busy = bg._lock = false; updateControls(); }
+      };
+      start.onclick = async () => {
+        if (start.disabled) return;
+        request = request || { date: dt, rowId: item.id, sourceHash: row.sourceHash, batchId: loId(), line: line.value, q: +qty.value, rank: +rank.value };
+        busy = bg._lock = true;
+        updateControls();
+        try {
+          await loCall('start', request);
+          close();
+          await loRefresh(LO.epoch, true);
+          toast('라인에 배치했습니다');
+        } catch (error) {
+          if (error.serverRejected) request = null;
+          toast(error.message, true);
+        } finally { busy = bg._lock = false; updateControls(); }
+      };
+      $('[data-c]', bg).onclick = close;
+    }, 'wide lo-meta-modal');
   }
   function loBatchAction(op,b) {
     modal(`<h3>${op==='ack'?'원본 변경 확인 · 기존 배치 유지':'작업 순서 변경'}</h3><p>${esc(b.snapshot.no)} · ${esc(b.snapshot.model)} · 기존 계획 ${b.q}</p>${op==='ack'?`<div class="warn">원본 수정·삭제 내용을 확인한 뒤 기존 배치의 사양·계획 수량을 유지합니다. 원본이나 기존 실적을 고치지 않습니다.</div><p>현재 원본: ${esc(b.currentSource?JSON.stringify({no:b.currentSource.no,model:b.currentSource.model,q:b.currentSource.q}):'삭제됨')}<br>배치 원본: ${esc(JSON.stringify({no:b.snapshot.no,model:b.snapshot.model,q:b.q}))}</p><label>확인 사유<input id="loActionValue" maxlength="300"></label>`:`<label>작업 순서<input id="loActionValue" type="number" value="${b.rank}"></label>`}<div class="acts"><button data-c>취소</button><button data-s class="primary">확인 · 저장</button></div>`,(bg,close)=>{const rev=LO.data.revision;$('[data-c]',bg).onclick=close;$('[data-s]',bg).onclick=async()=>{const btn=$('[data-s]',bg);btn.disabled=true;try{await loCall(op,{batchId:b.id,rev,sourceHash:b.currentSourceHash,reason:$('#loActionValue',bg).value,rank:+$('#loActionValue',bg).value});close();await loRefresh(LO.epoch,true);}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};});
