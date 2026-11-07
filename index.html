@@ -3654,11 +3654,16 @@ html[data-theme=dark] .ddwork b,html[data-theme=dark] .ddvol2 b{color:#5eead4}
 .lo-config input,.lo-config select{min-width:0;width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:13px}
 .lo-config .lo-config-row{display:grid;gap:6px;align-items:center;margin:6px 0;min-width:0}
 .lo-config [data-lo-stage]{grid-template-columns:29px minmax(0,.9fr) minmax(0,1.2fr) max-content;border-radius:4px}
-.lo-config [data-lo-seatrow]{grid-template-columns:minmax(0,.68fr) minmax(0,.8fr) minmax(0,1.05fr) minmax(0,1.45fr) max-content}
+.lo-config [data-lo-seatrow]{grid-template-columns:minmax(0,.68fr) minmax(0,1.5fr) minmax(0,1fr) max-content}
 .lo-config [data-lo-seatrow] button,.lo-config [data-lo-stage] button{padding:6px 9px}
 .lo-config-step{display:flex;justify-content:center;align-items:center;gap:2px;height:24px;border-radius:5px;background:var(--blue-soft);color:var(--blue);font-weight:700;font-size:12px}
 .lo-config-step[draggable=true]{cursor:grab;user-select:none}.lo-config-step[draggable=true]:active{cursor:grabbing}.lo-drop-before{box-shadow:0 -2px var(--blue)}.lo-drop-after{box-shadow:0 2px var(--blue)}
 .lo-config-lines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.lo-copy-set{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:8px}.lo-copy-set button{min-height:33px}
+.lo-seat-tabs{display:flex;gap:6px;margin:10px 0}.lo-seat-tabs [aria-pressed=true]{background:var(--blue-soft);color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.lo-seat-set-name{font-size:13px;margin:0 0 8px;font-weight:700}.lo-seat-set-name small{font-weight:400;color:var(--sub)}
+.lo-seat-group{margin-top:6px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.lo-seat-group-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,36%);gap:8px;align-items:center;font-size:13px}
 .lo-config .lo-config-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);margin:0}
 .lo-config-foot small{margin-right:auto;color:var(--sub);font-size:12px}
 .lo-manager-search{margin:8px 0}.lo-manager-choices,.lo-manager-selected{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -8100,7 +8105,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v29.99';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.00';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15417,21 +15422,72 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const users=[...r.users].sort((a,b)=>a.name.localeCompare(b.name,'ko')||String(a.group).localeCompare(String(b.group),'ko'));
     const locked=(r.batches||[]).some(b=>+b.final<+b.q), lock=locked?'disabled':'';
     const caption=u=>[u.name,u.group,u.role].filter(Boolean).join(' · ');
-    const uopt=id=>'<option value="">미배정</option>'+users.map(u=>`<option value="${esc(u.id)}" ${u.id===id?'selected':''}>${esc(u.name)} · ${esc(u.group)}</option>`).join('')+(id&&!users.some(u=>u.id===id)?`<option value="${esc(id)}" selected>기존 배정 계정</option>`:'');
+    const uopt=(id,placeholder='미배정')=>{
+      const used=new Set(cfg.stations.map(s=>s.userId));
+      return `<option value="">${placeholder}</option>`+users.map(u=>`<option value="${esc(u.id)}" ${u.id===id?'selected':used.has(u.id)?'disabled':''}>${esc(u.name)} · ${esc(u.group)}</option>`).join('')+(id&&!users.some(u=>u.id===id)?`<option value="${esc(id)}" selected>기존 배정 계정</option>`:'');
+    };
     const openSets=new Set(cfg.sets.slice(0,1).map(s=>s.id));
     modal(`<div class="lo-config-head"><div><h3 id="loCfgTitle">자리 · 작업 세트 설정</h3><p>${locked?'미완료 배치가 있어 공정과 자리 구조는 고정됩니다. 작업자 교대는 가능합니다.':'공정 순서와 모니터 자리를 설정하고, 자리마다 작업자를 배정하세요.'}</p></div><button id="loCfgClose" aria-label="설정 닫기">✕</button></div>
       <div class="lo-config-body"><div class="lo-config-grid">
-        <div><section class="lo-config-panel"><h4>작업 세트 · 공정 순서</h4><p class="lo-config-note">${locked?'모든 배치가 완료된 뒤 순서를 바꿀 수 있습니다.':'공정 왼쪽 손잡이를 끌거나 ↑↓ 버튼으로 순서를 바꿀 수 있습니다.'}</p><div id="loCfgSets"></div><button id="loSetAdd" ${lock}>+ 작업 세트 추가</button><div id="loCfgLines" class="lo-config-lines"></div></section></div>
-        <div><section class="lo-config-panel"><h4>공정별 자리 · 작업자 배정</h4><p class="lo-config-note">자리 ID는 모니터 이름입니다. 예: A-01, B-01. 여기서 각 자리에 로그인할 작업자를 선택하세요.</p><div id="loCfgSeats"></div><button id="loSeatAdd" ${lock}>+ 자리 추가</button></section>
+        <div><section class="lo-config-panel"><h4>작업 세트 · 공정 순서</h4><p class="lo-config-note">${locked?'모든 배치가 완료된 뒤 순서를 바꿀 수 있습니다.':'공정 왼쪽 손잡이를 끌거나 ↑↓ 버튼으로 순서를 바꿀 수 있습니다.'}</p><div id="loCfgSets"></div><div class="lo-copy-set"><label>복사할 세트<select id="loSetSource" ${lock}></select></label><button id="loSetAdd" ${lock}>+ 복사해서 추가</button></div><div id="loCfgLines" class="lo-config-lines"></div></section></div>
+        <div><section class="lo-config-panel"><h4>세트별 작업자 배정</h4><p class="lo-config-note">라인에 지정한 세트의 공정이 순서대로 표시됩니다. 인원을 고르면 모니터 자리 ID가 자동으로 붙습니다.</p><div id="loCfgSeats"></div></section>
         ${r.admin?`<section class="lo-config-panel"><h4>라인 운영 관리자 지정</h4><p class="lo-config-note">자리·작업 세트 설정과 제조건 배치를 맡길 사람입니다. 작업자 배정은 위에서 합니다.</p><label class="lo-manager-search">이름 검색<input id="loManagerSearch" type="search" placeholder="추가할 사람의 이름 입력" autocomplete="off"></label><div id="loManagerChoices" class="lo-manager-choices" hidden></div><div id="loManagerSelected" class="lo-manager-selected"></div></section>`:''}</div>
       </div></div><div class="acts lo-config-foot"><small>설정 저장을 누르면 변경사항이 적용됩니다.</small><button data-c>취소</button><button data-s class="primary">설정 저장</button></div>`,(bg,close)=>{
       const dialog=$('.lo-config',bg);dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','loCfgTitle');
-      let drag=null;
+      let drag=null, seatLine=cfg.lines[0].id, copySource=cfg.lines[0].setId;
+      const previousStage=new WeakMap();
       const setFor=line=>cfg.lines.find(l=>l.id===line)?.setId;
+      const stagesFor=line=>cfg.sets.find(s=>s.id===setFor(line))?.stages||[];
       const collect=()=>{
         cfg.sets=$$('[data-lo-set]',bg).map(el=>({id:el.dataset.loSet,name:$('.lo-set-name',el).value.trim(),stages:$$('[data-lo-stage]',el).map(tr=>({name:$('.lo-stage-name',tr).value.trim(),focus:$('.lo-stage-focus',tr).value.split(',').map(x=>x.trim()).filter(Boolean)}))}));
-        cfg.lines.forEach(l=>{l.setId=$(`[data-lo-line="${l.id}"]`,bg).value;});
-        cfg.stations=$$('[data-lo-seatrow]',bg).map(el=>({id:$('.lo-seat-id',el).value.trim(),line:$('.lo-seat-line',el).value,stage:+$('.lo-seat-stage',el).value,userId:$('.lo-seat-user',el).value}));
+        $$('[data-lo-seatrow]',bg).forEach(el=>{
+          const seat=cfg.stations[+el.dataset.loSeatrow];
+          seat.id=$('.lo-seat-id',el).value.trim();
+          seat.userId=$('.lo-seat-user',el).value;
+        });
+      };
+      const drawSeats=()=>{
+        const line=cfg.lines.find(l=>l.id===seatLine);
+        const set=cfg.sets.find(s=>s.id===line.setId);
+        const lineSeats=cfg.stations.filter(s=>s.line===seatLine);
+        const destinations=cfg.lines.flatMap(l=>stagesFor(l.id).map((stage,i)=>({value:`${l.id}:${i}`,label:`${l.name} · ${i+1} ${stage.name}`})));
+        const renderSeat=seat=>{
+          const index=cfg.stations.indexOf(seat);
+          return `<div data-lo-seatrow="${index}" class="lo-config-row"><input class="lo-seat-id" value="${esc(seat.id)}" aria-label="자리 ID" ${lock}><select class="lo-seat-user" aria-label="작업자">${uopt(seat.userId)}</select><select class="lo-seat-stage" aria-label="자리 이동" ${lock}><option value="">${seat.stage<0?'공정 선택':'자리 이동'}</option>${destinations.filter(d=>d.value!==`${seat.line}:${seat.stage}`).map(d=>`<option value="${esc(d.value)}">${esc(d.label)}</option>`).join('')}</select><button data-lo-seat-del="${index}" ${lock}>삭제</button></div>`;
+        };
+        const unresolved=lineSeats.filter(s=>!stagesFor(seatLine)[s.stage]);
+        const box=$('#loCfgSeats',bg);
+        box.innerHTML=`<div class="lo-seat-tabs">${cfg.lines.map(l=>`<button data-lo-seat-tab="${esc(l.id)}" aria-pressed="${l.id===seatLine}">${esc(l.name)}</button>`).join('')}</div>
+          <p class="lo-seat-set-name">${esc(set?.name||'세트 미지정')} <small>${set?.stages.length||0}공정</small></p>
+          ${unresolved.length?`<section class="lo-seat-group"><strong>공정을 다시 지정할 자리</strong>${unresolved.map(renderSeat).join('')}</section>`:''}
+          ${(set?.stages||[]).map((stage,i)=>`<section class="lo-seat-group" data-lo-seat-group="${i}"><div class="lo-seat-group-head"><strong>${i+1} ${esc(stage.name)}</strong><select data-lo-add-worker="${i}" aria-label="${i+1} ${esc(stage.name)} 인원 추가" ${locked||cfg.stations.length>=40?'disabled':''}>${uopt('','+ 인원 추가')}</select></div>${lineSeats.filter(s=>s.stage===i).map(renderSeat).join('')}</section>`).join('')}`;
+        $$('[data-lo-seat-tab]',box).forEach(b=>b.onclick=()=>{collect();seatLine=b.dataset.loSeatTab;drawSeats();});
+        $$('[data-lo-add-worker]',box).forEach(select=>select.onchange=()=>{
+          if(!select.value)return;
+          collect();
+          if(cfg.stations.some(s=>s.userId===select.value)){drawSeats();return toast('이미 자리에 배정된 작업자입니다',true);}
+          const prefix=seatLine==='front'?'A':'B';
+          const usedIds=new Set(cfg.stations.map(s=>s.id.toUpperCase()));
+          let number=1;
+          while(usedIds.has(`${prefix}-${String(number).padStart(2,'0')}`))number++;
+          const id=`${prefix}-${String(number).padStart(2,'0')}`;
+          cfg.stations.push({id,line:seatLine,stage:+select.dataset.loAddWorker,userId:select.value});
+          drawSeats();
+          $(`[data-lo-seatrow="${cfg.stations.length-1}"] .lo-seat-user`,box)?.focus();
+        });
+        $$('[data-lo-seatrow]',box).forEach(row=>{
+          const index=+row.dataset.loSeatrow;
+          $('.lo-seat-user',row).onchange=()=>{collect();drawSeats();$(`[data-lo-seatrow="${index}"] .lo-seat-user`,box)?.focus();};
+          const destination=$('.lo-seat-stage',row);
+          destination.onchange=()=>{
+            if(!destination.value)return;
+            collect();const [line,stage]=destination.value.split(':');
+            Object.assign(cfg.stations[index],{line,stage:+stage});
+            previousStage.delete(cfg.stations[index]);
+            seatLine=line;drawSeats();
+          };
+          $('[data-lo-seat-del]',row).onclick=()=>{collect();cfg.stations.splice(index,1);drawSeats();};
+        });
       };
       const move=(id,from,to)=>{
         if(locked||from===to)return;
@@ -15445,7 +15501,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const draw=()=>{
         $('#loCfgSets',bg).innerHTML=cfg.sets.map(s=>`<details class="lo-set-edit" data-lo-set="${esc(s.id)}" ${openSets.has(s.id)?'open':''}><summary>${esc(s.name||'이름 없는 세트')} <small>${s.stages.length}공정</small></summary><label>세트명<input class="lo-set-name" value="${esc(s.name)}" ${lock}></label><div>${s.stages.map((g,i)=>`<div data-lo-stage="${i}" class="lo-config-row"><span class="lo-config-step" ${locked?'':`draggable="true" title="${i+1}번 공정 끌어 옮기기"`}><span aria-hidden="true">⠿</span>${i+1}</span><input class="lo-stage-name" value="${esc(g.name)}" aria-label="공정명" ${lock}><input class="lo-stage-focus" value="${esc(g.focus.join(','))}" placeholder="강조 부품: CPU,메인보드" aria-label="강조 부품" ${lock}><span class="lo-stage-tools"><button data-lo-move="-1" title="위로 이동" aria-label="${i+1}번 공정 위로" ${locked||i===0?'disabled':''}>↑</button><button data-lo-move="1" title="아래로 이동" aria-label="${i+1}번 공정 아래로" ${locked||i===s.stages.length-1?'disabled':''}>↓</button><button data-lo-stage-del="${esc(s.id)}:${i}" ${lock}>삭제</button></span></div>`).join('')}</div><div class="lo-config-buttons"><button data-lo-stage-add="${esc(s.id)}" ${locked||s.stages.length>=8?'disabled':''}>+ 공정 추가</button><button data-lo-set-del="${esc(s.id)}" ${locked||cfg.sets.length<=1?'disabled':''}>세트 삭제</button></div></details>`).join('');
         $('#loCfgLines',bg).innerHTML=cfg.lines.map(l=>`<label>${esc(l.name)} 세트<select data-lo-line="${esc(l.id)}" ${lock}>${cfg.sets.map(s=>`<option value="${esc(s.id)}" ${l.setId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`).join('');
-        $('#loCfgSeats',bg).innerHTML=cfg.stations.length?cfg.stations.map((s,i)=>`<div data-lo-seatrow="${i}" class="lo-config-row"><input class="lo-seat-id" value="${esc(s.id)}" aria-label="자리 ID" placeholder="A-01" ${lock}><select class="lo-seat-line" aria-label="라인" ${lock}><option value="front" ${s.line==='front'?'selected':''}>앞라인</option><option value="back" ${s.line==='back'?'selected':''}>뒷라인</option></select><select class="lo-seat-stage" aria-label="공정" ${lock}>${(cfg.sets.find(t=>t.id===setFor(s.line))?.stages||[]).map((g,k)=>`<option value="${k}" ${k===s.stage?'selected':''}>${k+1} ${esc(g.name)}</option>`).join('')}</select><select class="lo-seat-user" aria-label="작업자">${uopt(s.userId)}</select><button data-lo-seat-del="${i}" ${lock}>삭제</button></div>`).join(''):'<p class="lo-config-note lo-config-empty">등록된 자리가 없습니다.</p>';
+        if(!cfg.sets.some(s=>s.id===copySource))copySource=cfg.sets[0].id;
+        $('#loSetSource',bg).innerHTML=cfg.sets.map(s=>`<option value="${esc(s.id)}" ${s.id===copySource?'selected':''}>${esc(s.name)} · ${s.stages.length}공정</option>`).join('');
+        drawSeats();
         $$('[data-lo-set]',bg).forEach(el=>{
           el.ontoggle=()=>{if(el.isConnected){if(el.open)openSets.add(el.dataset.loSet);else openSets.delete(el.dataset.loSet);}};
           $$('[data-lo-stage]',el).forEach(row=>{
@@ -15460,16 +15518,51 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
             row.ondrop=e=>{if(!drag||drag.id!==id)return;e.preventDefault();const from=drag.index,edge=index+(after(e)?1:0);drag=null;clearDrop();move(id,from,edge-(from<edge?1:0));};
           });
         });
-        $$('.lo-seat-line,[data-lo-line]',bg).forEach(el=>el.onchange=()=>{collect();draw();});
+        $$('[data-lo-line]',bg).forEach(select=>select.onchange=()=>{
+          collect();
+          const line=cfg.lines.find(l=>l.id===select.dataset.loLine);
+          const oldStages=stagesFor(line.id);
+          line.setId=select.value;
+          const newStages=stagesFor(line.id);
+          cfg.stations.filter(s=>s.line===line.id).forEach(seat=>{
+            const name=oldStages[seat.stage]?.name||previousStage.get(seat);
+            const matches=newStages.flatMap((stage,i)=>stage.name===name?[i]:[]);
+            seat.stage=matches.length===1?matches[0]:-1;
+            if(seat.stage===-1)previousStage.set(seat,name);
+            else previousStage.delete(seat);
+          });
+          seatLine=line.id;drawSeats();
+        });
         $$('[data-lo-stage-add]',bg).forEach(b=>b.onclick=()=>{collect();const id=b.dataset.loStageAdd;cfg.sets.find(s=>s.id===id).stages.push({name:'새 공정',focus:[]});openSets.add(id);draw();const section=$$('[data-lo-set]',bg).find(el=>el.dataset.loSet===id);$$('.lo-stage-name',section).at(-1)?.focus();});
         $$('[data-lo-stage-del]',bg).forEach(b=>b.onclick=()=>{collect();const [id,i]=b.dataset.loStageDel.split(':'),set=cfg.sets.find(s=>s.id===id),seats=cfg.stations.filter(s=>setFor(s.line)===id);if(set.stages.length<=1)return toast('작업 세트에는 공정이 하나 이상 필요합니다',true);if(seats.some(s=>s.stage===+i))return toast('이 공정의 자리를 다른 공정에 배정한 뒤 삭제하세요',true);set.stages.splice(+i,1);seats.forEach(s=>{if(s.stage>+i)s.stage--;});draw();});
         $$('[data-lo-set-del]',bg).forEach(b=>b.onclick=()=>{collect();if(cfg.lines.some(l=>l.setId===b.dataset.loSetDel))return toast('다른 작업 세트를 라인에 지정한 뒤 삭제하세요',true);cfg.sets=cfg.sets.filter(s=>s.id!==b.dataset.loSetDel);draw();});
-        $$('[data-lo-seat-del]',bg).forEach(b=>b.onclick=()=>{collect();cfg.stations.splice(+b.dataset.loSeatDel,1);draw();});
-        $('#loSetAdd',bg).disabled=locked||cfg.sets.length>=12;$('#loSeatAdd',bg).disabled=locked||cfg.stations.length>=40;
+        $('#loSetAdd',bg).disabled=locked||cfg.sets.length>=12;
       };
       draw();
-      $('#loSetAdd',bg).onclick=()=>{collect();const id=loId();cfg.sets.push({id,name:'새 작업 세트',stages:[{name:'공정 1',focus:[]}]});openSets.clear();openSets.add(id);draw();$('[data-lo-set][open] .lo-set-name',bg)?.focus();};
-      $('#loSeatAdd',bg).onclick=()=>{collect();let n=1;const ids=new Set(cfg.stations.map(s=>s.id));const next=()=>`A-${String(n).padStart(2,'0')}`;while(ids.has(next()))n++;cfg.stations.push({id:next(),line:'front',stage:0,userId:''});draw();$$('.lo-seat-user',bg).at(-1)?.focus();};
+      $('#loCfgSets',bg).oninput=e=>{
+        const field=e.target;
+        if(!field.matches('.lo-set-name,.lo-stage-name'))return;
+        collect();
+        if(field.matches('.lo-set-name')){
+          const section=field.closest('[data-lo-set]');
+          const set=cfg.sets.find(s=>s.id===section.dataset.loSet);
+          const label=set.name||'이름 없는 세트';
+          section.querySelector('summary').firstChild.textContent=`${label} `;
+          $$('[data-lo-line] option,#loSetSource option',bg).filter(option=>option.value===set.id).forEach(option=>{
+            option.textContent=option.parentElement.id==='loSetSource'?`${label} · ${set.stages.length}공정`:label;
+          });
+        }
+        drawSeats();
+      };
+      $('#loSetSource',bg).onchange=e=>{copySource=e.target.value;};
+      $('#loSetAdd',bg).onclick=()=>{
+        collect();
+        const source=cfg.sets.find(s=>s.id===copySource);
+        const id=loId();
+        cfg.sets.push({id,name:`${source.name.slice(0,55)} 복사본`,stages:source.stages.map(stage=>({name:stage.name,focus:[...stage.focus]}))});
+        openSets.clear();openSets.add(id);draw();
+        const name=$('[data-lo-set][open] .lo-set-name',bg);name.focus();name.select();
+      };
       if(r.admin){
         const search=$('#loManagerSearch',bg),choices=$('#loManagerChoices',bg),selected=$('#loManagerSelected',bg);
         const drawManagers=()=>{
@@ -15483,7 +15576,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         selected.onclick=e=>{const b=e.target.closest('[data-lo-manager-remove]');if(!b)return;cfg.managers=cfg.managers.filter(id=>id!==b.dataset.loManagerRemove);drawManagers();search.focus();};
         drawManagers();
       }
-      $('#loCfgClose',bg).onclick=$('[data-c]',bg).onclick=close;$('[data-s]',bg).onclick=async()=>{collect();const btn=$('[data-s]',bg);btn.disabled=true;try{await loCall('config',{ver:r.cfgVer,cfg});close();await loRefresh(LO.epoch,true);toast('자리·작업 세트를 저장했습니다');}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};
+      $('#loCfgClose',bg).onclick=$('[data-c]',bg).onclick=close;
+      $('[data-s]',bg).onclick=async()=>{
+        collect();
+        const unresolved=cfg.stations.find(s=>!stagesFor(s.line)[s.stage]);
+        if(unresolved){
+          seatLine=unresolved.line;drawSeats();
+          $(`[data-lo-seatrow="${cfg.stations.indexOf(unresolved)}"] .lo-seat-stage`,bg)?.focus();
+          return toast('공정을 다시 지정할 자리의 공정을 선택하세요',true);
+        }
+        const btn=$('[data-s]',bg);
+        btn.disabled=true;
+        try{await loCall('config',{ver:r.cfgVer,cfg});close();await loRefresh(LO.epoch,true);toast('자리·작업 세트를 저장했습니다');}
+        catch(e){toast(e.message,true);}
+        finally{btn.disabled=false;}
+      };
     },'lo-config');
   }
   async function renderLineStats() {
