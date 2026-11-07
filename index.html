@@ -8151,7 +8151,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.05';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.06';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15269,8 +15269,79 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (/Core\s*Ultra|코어\s*(?:i[3579]|Ultra|울트라)|라이젠|Ryzen|CPU|Ultra\s*5\s*225/i.test(s)) return 'CPU';
     return '기타';
   }
+  function loSpecColumns(cells) {
+    const labels=cells.map(x=>x.replace(/\s/g,''));
+    const name=labels.findIndex(x=>/^(?:제품명(?:·사양)?|상품명|부품명)$/.test(x));
+    const code=labels.findIndex(x=>/^(?:제품코드|상품코드|코드)$/.test(x));
+    if(name<0||code<0)return null;
+    return {name,code,q:labels.indexOf('수량'),kind:labels.findIndex(x=>/^(?:구분|품목|분류)$/.test(x))};
+  }
+  function loReadSpecTable(lines) {
+    const split=line=>line.split(/\t|\s*\|\s*/).map(x=>x.trim());
+    const isCode=value=>/^[A-Z0-9][A-Z0-9-]{4,29}$/i.test(value||'')&&/\d/.test(value);
+    const isQuantity=value=>/^\d+(?:\s*개)?$/.test(value||'');
+    const isModel=(name,kind)=>/^(?:모델|완제품|본체)$/.test(kind)||(/^\[컴퓨존\]/.test(name)&&/(?:아이웍스|조립\s*PC|사무용|게이밍|추천\s*PC)/i.test(name));
+    const specs=[];
+    let modelName='',modelQty='',code='';
+    const add=(name,pc,q,kind='')=>{
+      if(!name||/조립비|추가\s*조립비|^(?:합계|소계|시리얼\s*번호)$/.test(name))return;
+      if(isModel(name,kind)){
+        modelName=name.replace(/^\[컴퓨존\]\s*/,'');
+        modelQty=isQuantity(q)?parseInt(q,10):'';
+        code=isCode(pc)?pc:'';
+        return;
+      }
+      specs.push({kind:kind||loSpecKind(name),name,code:isCode(pc)?pc:'',q:isQuantity(q)?q.replace(/\s*개$/,''):''});
+    };
+    const heading=lines.findIndex(line=>loSpecColumns(split(line)));
+    if(heading>=0){
+      const columns=loSpecColumns(split(lines[heading]));
+      for(const line of lines.slice(heading+1)){
+        if(/^(?:구분\s*\t)?(?:시리얼\s*번호|KEY ID|MAESTRO KEY)(?:\s|$)/i.test(line))break;
+        const cells=split(line);
+        const name=cells[columns.name],pc=cells[columns.code],q=cells[columns.q];
+        if(loSpecColumns(cells)||!name||(!isCode(pc)&&!isQuantity(q)))continue;
+        add(name,pc,q,cells[columns.kind]);
+      }
+    }else{
+      // 일부 관리툴 브라우저는 표를 셀마다 줄을 바꾼 텍스트로 복사합니다.
+      const nameAt=lines.findIndex(line=>/^(?:제품명|상품명|부품명)$/.test(line));
+      if(nameAt<0||!/^(?:제품코드|상품코드)$/.test(lines[nameAt+1]||''))return null;
+      const hasQuantity=lines[nameAt-1]==='수량';
+      const hasOrder=hasQuantity&&lines[nameAt-2]==='순서';
+      for(let i=nameAt+2;i<lines.length-1;i++){
+        const name=lines[i],pc=lines[i+1];
+        if(/^(?:시리얼\s*번호|KEY ID|MAESTRO KEY)$/i.test(name))break;
+        if(!isCode(pc)||!/[가-힣a-z]/i.test(name)||/^(?:매입완료시간|조립시간\s*\(분\)|제품확인|자동완료|매입완료|자동확인|확인|구분)$/.test(name))continue;
+        const q=hasQuantity&&(!hasOrder||!isModel(name,'')||isQuantity(lines[i-2]))?lines[i-1]:'';
+        add(name,pc,q);
+        i++;
+      }
+    }
+    return specs.length||modelName?{specs,code,modelName,modelQty}:null;
+  }
+  function prSpecClipboardText(plain,html) {
+    if(!html||!plain||(plain.match(/제조번호\s*[:：]/g)||[]).length>1)return '';
+    const fragment=document.createElement('template');
+    fragment.innerHTML=html;
+    const tables=Array.from(fragment.content.querySelectorAll('table'),table=>{
+      const rows=Array.from(table.rows,row=>Array.from(row.cells,cell=>cell.textContent.replace(/\s+/g,' ').trim()));
+      const header=rows.findIndex(row=>loSpecColumns(row));
+      return header<0?null:rows.slice(header);
+    }).filter(Boolean);
+    if(tables.length!==1)return '';
+    const tsv=tables[0].map(row=>row.join('\t')).join('\n');
+    if(!loReadSpecTable(tsv.split('\n'))?.specs.length)return '';
+    const headerAt=plain.search(/제품\s*명|상품\s*명|부품\s*명/);
+    const before=headerAt<0?plain:plain.slice(0,headerAt);
+    const number=plain.match(/제조번호\s*[:：]\s*([A-Za-z0-9-]+)/)?.[1]||before.match(/\[(\d{8,12})\]/)?.[1];
+    const qty=before.match(/제조\s*(?:개수|수량)\s*[:：]\s*(\d+)/)?.[1];
+    return [number?'제조번호 : '+number:'',qty?'제조 개수 : '+qty:'',tsv].filter(Boolean).join('\n');
+  }
   function loParseSpecs(txt) {
     const raw=String(txt||'').replace(/\r/g,'').replace(/\u00a0/g,' '),lines=raw.split('\n').map(x=>x.replace(/^ +| +$/g,'')).filter(x=>x.trim()),specs=[];
+    const table=loReadSpecTable(lines);
+    if(table)return {...table,raw,note:''};
     let code='',columns=null;
     const modelCodes=new Set();
     const mc=raw.match(/(?:모델\s*)?제품\s*코드\s*[:：]\s*([A-Za-z0-9-]+)/);if(mc)code=mc[1];
@@ -16024,10 +16095,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const out = { no: '', model: '', q: '', case: '', cooler: '', psu: '', warn: [] };
     const m1 = T.match(/제조번호\s*[:：]\s*([0-9A-Za-z-]+)/); if (m1) out.no = m1[1];
     const lines = T.split('\n').map(x => x.trim()).filter(Boolean);
+    out.ops = loParseSpecs(T);
     const mi = lines.findIndex(l => /^\[컴퓨존\]/.test(l) && !/조립비|추가 조립/.test(l));
-    if (mi >= 0) { out.model = lines[mi].replace(/^\[컴퓨존\]\s*/, '').replace(/\s*수량\s*$/, '').trim();
+    if (mi >= 0 && !out.ops.modelName) { out.model = lines[mi].replace(/^\[컴퓨존\]\s*/, '').replace(/\s*수량\s*$/, '').trim();
       for (let k = mi; k < Math.min(lines.length, mi + 4); k++) { if (k > mi && /^\d+$/.test(lines[k])) { out.q = +lines[k]; break; } } }
-    const names = lines.filter(l => /^\[[^\]]+\]/.test(l) && !/^\[컴퓨존\]/.test(l)), sh = s => s.replace(/\s+/g, ' ').trim();
+    if (out.ops.modelName) { out.model = out.ops.modelName; out.q = out.ops.modelQty || ''; }
+    const explicitQty = T.match(/제조\s*(?:개수|수량)\s*[:：]\s*(\d+)/);
+    if (explicitQty) out.q = +explicitQty[1];
+    if (!out.no && out.ops.modelName) out.no = lines.slice(0, 12).find(l => /^\[\d{8,12}\]$/.test(l))?.slice(1,-1) || '';
+    const names = out.ops.modelName ? out.ops.specs.map(part => part.name) :
+      lines.filter(l => /^\[[^\]]+\]/.test(l) && !/^\[컴퓨존\]/.test(l));
+    const sh = s => s.replace(/\s+/g, ' ').trim();
     const isCase = s => /\[(미니타워|미들타워|빅타워|슬림|큐브|빌트인|HTPC|미니ITX)[^\]]*\]|(^|\s)케이스(\s|$)/.test(s);
     const isCool = s => /CPU\s*쿨러|\[수랭|수냉|\[공랭|AIO/.test(s) && !/(라이젠|코어 i\d|Ryzen|i[3579]-)/.test(s);
     const isPsu = s => /\[\d{3,4}W\]|\b\d{3,4}W\b/.test(s) && /(ATX|80PLUS|BRONZE|GOLD|SILVER|PLATINUM|STANDARD|파워|SFX)/i.test(s);
@@ -16035,7 +16113,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (c) out.case = sh(c); if (p) out.psu = sh(p);
     if (cl) out.cooler = sh(cl); else if (cpu && /쿨러\s*포함|쿨러포함/.test(cpu)) out.cooler = '기본 쿨러 (CPU 동봉)'; else out.warn.push('쿨러');
     if (!out.case) out.warn.push('케이스'); if (!out.psu) out.warn.push('파워'); if (!out.model) out.warn.push('모델명');
-    out.ops = loParseSpecs(T);
     return out;
   }
   const prParse = txt => { const parts = String(txt || '').split(/(?=[^\n]*제조번호\s*[:：])/).filter(x => /제조번호\s*[:：]/.test(x)); return (parts.length ? parts : [txt]).map(prParseOne).filter(x => x.no || x.model); };
@@ -16393,13 +16470,37 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function prPaste() {
     const P = S.prP, dr = P.draft;
     modal(`<h3>📋 사양표 붙여넣기</h3><div class="note">제조/분해 화면의 사양표를 그대로 붙여 넣으세요. <b>여러 건을 한 번에</b> 넣어도 제조번호마다 한 줄씩 들어갑니다. 못 읽은 칸은 '확인 필요'로 남깁니다 (추측하지 않음).</div>
-      <textarea id="ppt" style="width:100%;min-height:200px;font-size:12px" placeholder="- 아이웍스 제조/분해제조번호 : 151886304 …"></textarea>
+      <textarea id="ppt" style="width:100%;min-height:100px;font-size:12px" placeholder="- 아이웍스 제조/분해제조번호 : 151886304 …"></textarea>
       <div class="row" style="gap:8px;margin-top:6px"><label class="row" style="gap:4px">구분 <select id="pps"><option>공동</option><option>개별</option></select></label><span id="ppw" class="muted"></span></div>
-      <div id="ppv" style="max-height:30vh;overflow:auto;margin-top:6px"></div>
+      <div id="ppv" style="max-height:min(45vh,420px);overflow:auto;margin-top:6px"></div>
       <div class="acts"><button data-c>취소</button><button class="primary" data-s>목록에 넣기</button></div>`, (bg, close) => {
       let L = [];
-      const show = () => { L = prParse($('#ppt', bg).value); $('#ppv', bg).innerHTML = L.length ? `<table class="list"><thead><tr><th>제조번호</th><th>모델</th><th>수량</th><th>케이스</th><th>쿨러</th><th>파워</th></tr></thead><tbody>${L.map(x => `<tr><td>${esc(x.no || '?')}</td><td>${esc(x.model || '확인 필요')}</td><td>${x.q || 1}</td><td>${esc(x.case || '확인 필요')}</td><td>${esc(x.cooler || '확인 필요')}</td><td>${esc(x.psu || '확인 필요')}</td></tr>`).join('')}</tbody></table>` : ''; $('#ppw', bg).textContent = L.length ? L.length + '건 인식' : ''; };
-      $('#ppt', bg).oninput = show; $('[data-c]', bg).onclick = close; $('#ppt', bg).focus();
+      const input = $('#ppt', bg);
+      const show = () => {
+        L = prParse(input.value);
+        $('#ppv', bg).innerHTML = L.map(x => {
+          const parts = x.ops.specs;
+          return `<details open style="margin:6px 0;border:1px solid var(--brd);border-radius:8px;padding:8px">
+            <summary style="cursor:pointer"><b>${esc(x.no || '제조번호 확인 필요')} · ${esc(x.model || '모델명 확인 필요')}</b>
+              <span class="muted"> · ${x.q ? x.q+'대' : '수량 확인 필요'} · 모델 제품코드 ${esc(x.ops.code || '미확인')} · 부품 ${parts.length}개</span></summary>
+            ${parts.length ? `<table class="list" style="margin-top:6px"><thead><tr><th>부품 분류</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead>
+              <tbody>${parts.map(part => `<tr><td>${esc(part.kind)}</td><td>${esc(part.name)}</td><td>${esc(part.code || '—')}</td><td>${esc(part.q || '—')}</td></tr>`).join('')}</tbody></table>`
+              : '<p class="muted">읽은 부품 사양이 없습니다. 원본 사양표를 확인하세요.</p>'}
+          </details>`;
+        }).join('');
+        $('#ppw', bg).textContent = L.length ? L.length + '건 인식' : '';
+      };
+      input.oninput = show;
+      input.onpaste = e => {
+        const clipboard = e.clipboardData;
+        const text = clipboard && prSpecClipboardText(clipboard.getData('text/plain'), clipboard.getData('text/html'));
+        if (!text) return;
+        e.preventDefault();
+        input.setRangeText(text, input.selectionStart, input.selectionEnd, 'end');
+        show();
+      };
+      $('[data-c]', bg).onclick = close;
+      input.focus();
       $('[data-s]', bg).onclick = async () => {
         if (!L.length) return toast('인식된 사양표가 없습니다', true);
         const dup = L.filter(x => x.no && dr.items.some(y => String(y.no) === String(x.no)));
