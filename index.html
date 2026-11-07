@@ -3664,6 +3664,20 @@ html[data-theme=dark] .ddwork b,html[data-theme=dark] .ddvol2 b{color:#5eead4}
 .lo-seat-set-name{font-size:13px;margin:0 0 8px;font-weight:700}.lo-seat-set-name small{font-weight:400;color:var(--sub)}
 .lo-seat-group{margin-top:6px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .lo-seat-group-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,36%);gap:8px;align-items:center;font-size:13px}
+.lo-stage-tint{--lo-stage-color:hsl(var(--lo-stage-hue) 57% 52%);--lo-stage-bg:color-mix(in srgb,var(--lo-stage-color) 13%,var(--panel))}
+.lo-stage-tint .lo-config-step,.lo-seat-stage-number{background:var(--lo-stage-bg);color:var(--ink);box-shadow:inset 2px 0 var(--lo-stage-color)}
+.lo-seat-group.lo-stage-tint{border-inline-start:3px solid var(--lo-stage-color);background:color-mix(in srgb,var(--lo-stage-color) 6%,var(--panel))}
+.lo-seat-stage-number{display:inline-grid;place-items:center;min-width:23px;min-height:23px;margin-right:4px;border-radius:5px}
+.lo-config [data-lo-add-worker][aria-expanded=true]{background:var(--lo-stage-bg);color:var(--ink);box-shadow:inset 0 0 0 1px var(--lo-stage-color)}
+.lo-worker-picker{margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--panel)}
+.lo-worker-picker p{margin:6px 0 4px}.lo-worker-results{display:flex;gap:5px;flex-wrap:wrap;max-height:150px;overflow-y:auto}
+.lo-worker-results button{display:inline-flex;align-items:baseline;gap:5px;max-width:100%;white-space:normal;text-align:left;background:var(--head);border:1px solid var(--line)}
+.lo-worker-results small{color:var(--sub);font-size:11px}
+#main .ph button.lo-nav-settings{--lo-nav-color:#57729d}#main .ph button.lo-nav-range{--lo-nav-color:#5f67a5}#main .ph button.lo-nav-board{--lo-nav-color:#168083}#main .ph button.lo-nav-stats{--lo-nav-color:#9266b0}
+#main .ph button[class*="lo-nav-"]{background:color-mix(in srgb,var(--lo-nav-color) 16%,var(--panel));box-shadow:inset 2px 0 var(--lo-nav-color);color:var(--ink);white-space:nowrap}
+#main .ph button[class*="lo-nav-"][aria-current]{box-shadow:inset 0 0 0 1px var(--lo-nav-color)}
+#main .lo-stage.lo-stage-tint h3{background:var(--lo-stage-bg);border-inline-start:3px solid var(--lo-stage-color)}
+.modal.lo-meta-modal{max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
 .lo-config .lo-config-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);margin:0}
 .lo-config-foot small{margin-right:auto;color:var(--sub);font-size:12px}
 .lo-manager-search{margin:8px 0}.lo-manager-choices,.lo-manager-selected{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -8105,7 +8119,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.00';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.01';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8683,7 +8697,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       APP.innerHTML = `
       <header class="roh">
         <div class="logo">조립팀 업무데이터</div>
-        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(dfStatCan() ? [['df',S.df?.role==='observer'?'조립 불량 관리':'조립 불량 통계']] : []).concat(srCan() ? [['sr','주문 사양검토']] : []).concat(canSp() ? [['sp', spTitle()]] : []).concat(canLine() ? [['line', '상황판'],['linestats','상황판 통계']].concat(canProd() ? [['prod','라인생산']] : []) : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
+        <nav>${RO_NAV.concat(canWtMenu() ? [['wt', '영상업무']] : []).concat(canPa() ? [['pa', '프리미엄 사전안내']] : []).concat(dfStatCan() ? [['df',S.df?.role==='observer'?'조립 불량 관리':'조립 불량 통계']] : []).concat(srCan() ? [['sr','주문 사양검토']] : []).concat(canSp() ? [['sp', spTitle()]] : []).concat(canLine() ? [[canProd() ? 'prod' : 'line', '라인생산']] : []).concat(canMgr() ? [['mgr', '매니저 관리']] : []).map(([v, t]) => `<button data-v="${v}">${v === 'home' ? '🏠 ' : ''}${t}${v === 'acc' ? '<i class="bd hide" id="acbdro"></i>' : v === 'education' ? '<i class="bd hide" id="edubdro"></i>' : v === 'mgr' ? '<i class="bd hide" id="mgbd"></i>' : ''}</button>`).join('')}</nav>
         <div class="me"><b>${esc(m.name)}</b><span class="tag">보기 전용</span>${pvBtn()}
           <button id="pw">비밀번호 변경</button><button id="lo">로그아웃</button>${thmBtn()}</div>
       </header>
@@ -8752,16 +8766,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
         : cat === 'adm' ? [can('people') && ['people', '인원 현황/관리'], canSetPage() && ['settings', '기간 · 백업 · 설정'], can('stats') && ['stats', '통계'], isAdm0() && !isRO() && ['goal', '목표']].filter(Boolean)
-        : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', spTitle()]] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? (canProd() ? [['prod', '라인생산']] : []).concat([['line','상황판'],['linestats','상황판 통계']]) : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
+        : cat === 'mgr' ? [] : cat === 'sp' ? [['sp', spTitle()]] : cat === 'video' ? [['wt', '월간 업무표']] : cat === 'prod' ? [[canProd() ? 'prod' : 'line', '라인생산']] : cat === 'org' ? [['org', '조직도']] : cat === 'education' ? [['education', '교육일정']] : cat === 'acc' ? (S.me.acc && S.me.acc.scope === 'self' ? [['acc', '내 사고']] : [['acc', '사고 목록'], ['accpre', '선출고 목록']])
         : [[cat, cat === 'leave' ? '연차 · 토요' : '데이터 마감']];
       if (cat === 'work' && canPa()) it = it.concat([['pa', '프리미엄 사전안내']]);   // v29.37
       if (cat === 'work' && dfCan()) it = it.concat([['df', '조립 불량 관리']]); // v29.81 : 사전안내 바로 오른쪽
       if (cat === 'work' && srCan()) it = it.concat([['sr','주문 사양검토']]);
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
-      // v29.77: 라인생산의 [설정]·[기간별 생산현황]을 PC 상단 세부 메뉴로 이동 (모바일은 그대로)
-      const prTopMenu = cat === 'prod' && v === 'prod' ? '<button type="button" id="prNavSet" class="pr-top-action" hidden>⚙ 설정</button><button type="button" id="prNavRange" class="pr-top-action">▦ 기간별 생산현황</button>' : '';
-      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>${cat === 'prod' && k === 'prod' ? prTopMenu : ''}`).join('');
-      if ($('#prNavRange')) $('#prNavRange').onclick = () => { S.prv = S.prv || { d: S.today }; S.prv.range = true; renderProdRange(); };
+      $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
     const p = $('#proxy'); if (!p) return;
     if (S.target && S.target.id !== S.me.id) {
@@ -15305,12 +15316,23 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const st=LO.data?.stations.find(x=>x.id===LO.seat),b=LO.data?.batches.find(x=>x.id===st?.current?.batchId);
     const btn=document.getElementById('loDone');if(btn)btn.disabled=!fresh||LO.busy||!st?.canComplete||!st?.current||!!b?.sourceChanged||!!LO.pending||Date.now()<LO.blockedUntil;
   }
+  function loStageHue(name) {
+    let hash=2166136261;
+    const key=String(name||'').normalize('NFC').replace(/\s+/g,'').toLowerCase();
+    for(const char of key)hash=Math.imul(hash^char.codePointAt(0),16777619);
+    return (hash>>>0)%360;
+  }
+  function loPageLinks(active) {
+    const links=[['prod','라인생산','range'],['line','상황판','board'],['linestats','상황판 통계','stats']];
+    return links.filter(([view])=>view==='prod'?canProd()&&active!=='prod':canLine())
+      .map(([view,label,color])=>`<button class="lo-nav-${color}${view===active?' on':''}" data-go="${view}" ${view===active?'aria-current="page"':''}>${label}</button>`).join('');
+  }
   function loDrawBoard() {
     const r=LO.data;if(!r||S.view!=='line')return;let remembered='';try{remembered=localStorage.getItem('lineStation')||'';}catch(e){}const bs=r.batches||[],mine=r.stations.find(x=>x.mine&&x.id===remembered)||r.stations.find(x=>x.mine),plan=loSum(bs,'q'),done=loSum(bs,'final');
-    $('#main').innerHTML=pageHead('상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loConfig">자리 · 작업 세트 설정</button><button id="loLoad" class="primary">저장된 제조건 배치</button>':''}<button id="loReload">새로고침</button>`)+`<div class="pgb lo-board">
+    $('#main').innerHTML=pageHead('상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${loPageLinks('line')}${r.manage?'<button id="loConfig">자리 · 작업 세트 설정</button><button id="loLoad" class="primary">저장된 제조건 배치</button>':''}<button id="loReload">새로고침</button>`)+`<div class="pgb lo-board">
     <div class="lo-banner"><div><h2>라인 상황판</h2><small>선택 일자 + 이전 일자의 미완료 배치</small></div><div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><button id="loMine" class="primary" ${mine?'':'disabled'}>⛶ 내 작업대 전체화면 열기</button></div>
     <div class="lo-info">본인 자리 카드를 선택하면 전용 작업대로 열립니다. <span data-lo-status></span></div>
-    <div class="lo-lines">${r.cfg.lines.map(ln=>{const set=r.cfg.sets.find(x=>x.id===ln.setId),b=bs.filter(x=>x.line===ln.id),p=loSum(b,'q'),d=loSum(b,'final');return `<section class="lo-line"><h2>${esc(ln.name)} <small>계획 ${p} · 최종 완료 ${d} · 미완료 ${p-d}</small></h2><div class="lo-stages" style="--lo-stages:${set?.stages.length||4}">${(set?.stages||[]).map((g,i)=>`<div class="lo-stage"><h3>${i+1} ${esc(g.name)}</h3>${r.stations.filter(x=>x.line===ln.id&&+x.stage===i).map(x=>{const b=bs.find(b=>b.id===x.current?.batchId);return `<button class="lo-seat ${x.mine?'lo-mine':''}" data-lo-seat="${esc(x.id)}" ${x.mine?'':'disabled'}>${x.mine?'<span class="lo-tag">내 자리</span>':''}<b>${esc(x.id)} ${esc(x.assignedName||'미배정')}</b><span>${b?esc(b.snapshot.model||b.snapshot.no):'대기 작업 없음'}</span><small>${b?'제조 '+esc(b.snapshot.no)+' · '+x.current.seq+'/'+b.q:'앞 공정 대기'}</small>${b?.sourceChanged?'<strong class="lo-error">원본 변경 확인 필요</strong>':''}${x.mine?'<span class="lo-seat-open">전체화면 열기</span>':''}</button>`;}).join('')||'<div class="lo-empty">자리 미설정</div>'}</div>`).join('')}</div></section>`;}).join('')}</div>
+    <div class="lo-lines">${r.cfg.lines.map(ln=>{const set=r.cfg.sets.find(x=>x.id===ln.setId),b=bs.filter(x=>x.line===ln.id),p=loSum(b,'q'),d=loSum(b,'final');return `<section class="lo-line"><h2>${esc(ln.name)} <small>계획 ${p} · 최종 완료 ${d} · 미완료 ${p-d}</small></h2><div class="lo-stages" style="--lo-stages:${set?.stages.length||4}">${(set?.stages||[]).map((g,i)=>`<div class="lo-stage lo-stage-tint" style="--lo-stage-hue:${loStageHue(g.name)}"><h3>${i+1} ${esc(g.name)}</h3>${r.stations.filter(x=>x.line===ln.id&&+x.stage===i).map(x=>{const b=bs.find(b=>b.id===x.current?.batchId);return `<button class="lo-seat ${x.mine?'lo-mine':''}" data-lo-seat="${esc(x.id)}" ${x.mine?'':'disabled'}>${x.mine?'<span class="lo-tag">내 자리</span>':''}<b>${esc(x.id)} ${esc(x.assignedName||'미배정')}</b><span>${b?esc(b.snapshot.model||b.snapshot.no):'대기 작업 없음'}</span><small>${b?'제조 '+esc(b.snapshot.no)+' · '+x.current.seq+'/'+b.q:'앞 공정 대기'}</small>${b?.sourceChanged?'<strong class="lo-error">원본 변경 확인 필요</strong>':''}${x.mine?'<span class="lo-seat-open">전체화면 열기</span>':''}</button>`;}).join('')||'<div class="lo-empty">자리 미설정</div>'}</div>`).join('')}</div></section>`;}).join('')}</div>
     <section class="card lo-batches"><h3>현재 배치 제조건</h3><div class="lo-scroll"><table class="list"><thead><tr><th>원본 일자 / 순서</th><th>제조번호 · 모델</th><th>라인 · 작업 세트</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${r.manage?'<th>관리</th>':''}</tr></thead><tbody>${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr><td>${esc(b.d)} / ${b.rank}</td><td><b>${esc(b.snapshot.no)}</b><br>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td>${esc(loLineName(b.line))}<br>${esc(b.set_data.name)}</td><td>${b.q} / ${b.final} / ${b.q-b.final}</td><td>${b.counts.map((x,i)=>`<div>${esc(b.set_data.stages[i].name)} ${x.done} · ${x.waiting}</div>`).join('')}</td>${r.manage?`<td><button data-lo-meta="${esc(b.id)}">사양·시리얼 목록</button> <button data-lo-order="${esc(b.id)}">순서</button>${b.sourceChanged?` <button data-lo-ack="${esc(b.id)}">기존 배치 유지 확인</button>`:''}</td>`:''}</tr>`).join('')||'<tr><td colspan="6">배치된 제조건이 없습니다. 기존 라인생산에 저장한 제조건을 불러오세요.</td></tr>'}</tbody></table></div></section>
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
     $('#loDate').onchange=async e=>{LO.date=e.target.value;await loRefresh(LO.epoch,true);};$('#loReload').onclick=()=>loRefresh(LO.epoch,true);
@@ -15412,7 +15434,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $('#loMetaSave',bg).onclick=async()=>{collect();ser();if(!meta.specs.length)return toast('전체 사양을 입력하세요',true);if(parsedSerial.unknown.length||parsedSerial.duplicates.length)return toast('시리얼 미인식·중복을 먼저 확인하세요',true);if(parsedSerial.serials.length&&parsedSerial.serials.length!==+it.q)return toast('시리얼 개수와 원본 수량이 다릅니다',true);const btn=$('#loMetaSave',bg);btn.disabled=true;try{const savedMeta=await loCall('meta',{date:dt,rowId:it.id,metaVer,meta:Object.assign({},meta,{serials:parsedSerial.serials})});await loRefresh(LO.epoch,true);revision=LO.data.revision;metaVer=savedMeta.metaVer;saved=true;toast('전체 사양과 전산 목록을 저장했습니다');}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};
       $('#loBatchStart',bg).onclick=async()=>{if(!saved)return toast('전체 사양·목록을 먼저 저장하세요',true);const btn=$('#loBatchStart',bg);btn.disabled=true;request=request||{date:dt,rowId:it.id,sourceHash:row.sourceHash,batchId:loId(),line:$('#loBatchLine',bg).value,q:+$('#loBatchQty',bg).value,rank:+$('#loBatchRank',bg).value};try{await loCall('start',request);close();await loRefresh(LO.epoch,true);toast('라인에 배치했습니다 · 기존 실적은 변경하지 않았습니다');}catch(e){if(e.serverRejected)request=null;toast(e.message,true);}finally{btn.disabled=false;}};
       $('[data-c]',bg).onclick=close;
-    },'wide');
+    },'wide lo-meta-modal');
   }
   function loBatchAction(op,b) {
     modal(`<h3>${op==='ack'?'원본 변경 확인 · 기존 배치 유지':'작업 순서 변경'}</h3><p>${esc(b.snapshot.no)} · ${esc(b.snapshot.model)} · 기존 계획 ${b.q}</p>${op==='ack'?`<div class="warn">원본 수정·삭제 내용을 확인한 뒤 기존 배치의 사양·계획 수량을 유지합니다. 원본이나 기존 실적을 고치지 않습니다.</div><p>현재 원본: ${esc(b.currentSource?JSON.stringify({no:b.currentSource.no,model:b.currentSource.model,q:b.currentSource.q}):'삭제됨')}<br>배치 원본: ${esc(JSON.stringify({no:b.snapshot.no,model:b.snapshot.model,q:b.q}))}</p><label>확인 사유<input id="loActionValue" maxlength="300"></label>`:`<label>작업 순서<input id="loActionValue" type="number" value="${b.rank}"></label>`}<div class="acts"><button data-c>취소</button><button data-s class="primary">확인 · 저장</button></div>`,(bg,close)=>{const rev=LO.data.revision;$('[data-c]',bg).onclick=close;$('[data-s]',bg).onclick=async()=>{const btn=$('[data-s]',bg);btn.disabled=true;try{await loCall(op,{batchId:b.id,rev,sourceHash:b.currentSourceHash,reason:$('#loActionValue',bg).value,rank:+$('#loActionValue',bg).value});close();await loRefresh(LO.epoch,true);}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};});
@@ -15422,10 +15444,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const users=[...r.users].sort((a,b)=>a.name.localeCompare(b.name,'ko')||String(a.group).localeCompare(String(b.group),'ko'));
     const locked=(r.batches||[]).some(b=>+b.final<+b.q), lock=locked?'disabled':'';
     const caption=u=>[u.name,u.group,u.role].filter(Boolean).join(' · ');
-    const uopt=(id,placeholder='미배정')=>{
+    const uopt=id=>{
       const used=new Set(cfg.stations.map(s=>s.userId));
-      return `<option value="">${placeholder}</option>`+users.map(u=>`<option value="${esc(u.id)}" ${u.id===id?'selected':used.has(u.id)?'disabled':''}>${esc(u.name)} · ${esc(u.group)}</option>`).join('')+(id&&!users.some(u=>u.id===id)?`<option value="${esc(id)}" selected>기존 배정 계정</option>`:'');
+      return '<option value="">미배정</option>'+users.map(u=>`<option value="${esc(u.id)}" ${u.id===id?'selected':used.has(u.id)?'disabled':''}>${esc(u.name)} · ${esc(u.group)}</option>`).join('')+(id&&!users.some(u=>u.id===id)?`<option value="${esc(id)}" selected>기존 배정 계정</option>`:'');
     };
+    const nameKey=name=>String(name||'').normalize('NFC').replace(/\s+/g,'').toLowerCase();
     const openSets=new Set(cfg.sets.slice(0,1).map(s=>s.id));
     modal(`<div class="lo-config-head"><div><h3 id="loCfgTitle">자리 · 작업 세트 설정</h3><p>${locked?'미완료 배치가 있어 공정과 자리 구조는 고정됩니다. 작업자 교대는 가능합니다.':'공정 순서와 모니터 자리를 설정하고, 자리마다 작업자를 배정하세요.'}</p></div><button id="loCfgClose" aria-label="설정 닫기">✕</button></div>
       <div class="lo-config-body"><div class="lo-config-grid">
@@ -15460,20 +15483,49 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         box.innerHTML=`<div class="lo-seat-tabs">${cfg.lines.map(l=>`<button data-lo-seat-tab="${esc(l.id)}" aria-pressed="${l.id===seatLine}">${esc(l.name)}</button>`).join('')}</div>
           <p class="lo-seat-set-name">${esc(set?.name||'세트 미지정')} <small>${set?.stages.length||0}공정</small></p>
           ${unresolved.length?`<section class="lo-seat-group"><strong>공정을 다시 지정할 자리</strong>${unresolved.map(renderSeat).join('')}</section>`:''}
-          ${(set?.stages||[]).map((stage,i)=>`<section class="lo-seat-group" data-lo-seat-group="${i}"><div class="lo-seat-group-head"><strong>${i+1} ${esc(stage.name)}</strong><select data-lo-add-worker="${i}" aria-label="${i+1} ${esc(stage.name)} 인원 추가" ${locked||cfg.stations.length>=40?'disabled':''}>${uopt('','+ 인원 추가')}</select></div>${lineSeats.filter(s=>s.stage===i).map(renderSeat).join('')}</section>`).join('')}`;
+          ${(set?.stages||[]).map((stage,i)=>`<section class="lo-seat-group lo-stage-tint" style="--lo-stage-hue:${loStageHue(stage.name)}" data-lo-seat-group="${i}"><div class="lo-seat-group-head"><strong><span class="lo-seat-stage-number">${i+1}</span> ${esc(stage.name)}</strong><button data-lo-add-worker="${i}" aria-expanded="false" aria-label="${i+1} ${esc(stage.name)} 인원 추가" ${locked||cfg.stations.length>=40?'disabled':''}>+ 인원 추가</button></div>${lineSeats.filter(s=>s.stage===i).map(renderSeat).join('')}</section>`).join('')}`;
         $$('[data-lo-seat-tab]',box).forEach(b=>b.onclick=()=>{collect();seatLine=b.dataset.loSeatTab;drawSeats();});
-        $$('[data-lo-add-worker]',box).forEach(select=>select.onchange=()=>{
-          if(!select.value)return;
+        const addWorker=(stage,userId)=>{
           collect();
-          if(cfg.stations.some(s=>s.userId===select.value)){drawSeats();return toast('이미 자리에 배정된 작업자입니다',true);}
+          if(cfg.stations.some(s=>s.userId===userId)){drawSeats();return toast('이미 자리에 배정된 작업자입니다',true);}
           const prefix=seatLine==='front'?'A':'B';
           const usedIds=new Set(cfg.stations.map(s=>s.id.toUpperCase()));
           let number=1;
           while(usedIds.has(`${prefix}-${String(number).padStart(2,'0')}`))number++;
           const id=`${prefix}-${String(number).padStart(2,'0')}`;
-          cfg.stations.push({id,line:seatLine,stage:+select.dataset.loAddWorker,userId:select.value});
+          cfg.stations.push({id,line:seatLine,stage,userId});
           drawSeats();
           $(`[data-lo-seatrow="${cfg.stations.length-1}"] .lo-seat-user`,box)?.focus();
+        };
+        $$('[data-lo-add-worker]',box).forEach(button=>button.onclick=()=>{
+          const wasOpen=button.getAttribute('aria-expanded')==='true';
+          $('.lo-worker-picker',box)?.remove();
+          $('[data-lo-add-worker][aria-expanded="true"]',box)?.setAttribute('aria-expanded','false');
+          if(wasOpen)return;
+          collect();
+          const used=new Set(cfg.stations.map(s=>s.userId));
+          const picker=document.createElement('div');
+          picker.className='lo-worker-picker';
+          picker.innerHTML='<label>이름 검색<input type="search" placeholder="다른 그룹 · 단기근무자도 이름으로 검색" autocomplete="off"></label><p class="lo-config-note" aria-live="polite"></p><div class="lo-worker-results"></div>';
+          button.closest('.lo-seat-group-head').after(picker);
+          button.setAttribute('aria-expanded','true');
+          const search=$('input',picker),results=$('.lo-worker-results',picker);
+          const showWorkers=()=>{
+            const query=nameKey(search.value);
+            const matches=users.filter(u=>query?nameKey(u.name).includes(query):u.group==='라인');
+            $('.lo-config-note',picker).textContent=query?`이름 검색 결과 ${matches.length}명`:`라인생산 소속 ${matches.length}명`;
+            results.innerHTML=matches.length?matches.map(u=>`<button data-lo-pick-worker="${esc(u.id)}" ${used.has(u.id)?'disabled':''}><b>${esc(u.name)}</b><small>${esc(u.group||'')}${used.has(u.id)?' · 배정됨':''}</small></button>`).join(''):'<span class="lo-config-note">표시할 작업자가 없습니다.</span>';
+          };
+          results.onclick=e=>{
+            const choice=e.target.closest('[data-lo-pick-worker]');
+            if(choice&&!choice.disabled)addWorker(+button.dataset.loAddWorker,choice.dataset.loPickWorker);
+          };
+          picker.onkeydown=e=>{
+            if(e.key!=='Escape')return;
+            e.preventDefault();e.stopPropagation();picker.remove();button.setAttribute('aria-expanded','false');button.focus();
+          };
+          search.oninput=showWorkers;
+          showWorkers();search.focus();
         });
         $$('[data-lo-seatrow]',box).forEach(row=>{
           const index=+row.dataset.loSeatrow;
@@ -15508,6 +15560,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           el.ontoggle=()=>{if(el.isConnected){if(el.open)openSets.add(el.dataset.loSet);else openSets.delete(el.dataset.loSet);}};
           $$('[data-lo-stage]',el).forEach(row=>{
             const id=el.dataset.loSet,index=+row.dataset.loStage,handle=$('.lo-config-step',row);
+            row.classList.add('lo-stage-tint');
+            row.style.setProperty('--lo-stage-hue',loStageHue($('.lo-stage-name',row).value));
             $$('[data-lo-move]',row).forEach(b=>b.onclick=()=>move(id,index,index+ +b.dataset.loMove));
             if(locked)return;
             handle.ondragstart=e=>{drag={id,index};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(index));};
@@ -15543,6 +15597,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const field=e.target;
         if(!field.matches('.lo-set-name,.lo-stage-name'))return;
         collect();
+        if(field.matches('.lo-stage-name'))field.closest('[data-lo-stage]').style.setProperty('--lo-stage-hue',loStageHue(field.value));
         if(field.matches('.lo-set-name')){
           const section=field.closest('[data-lo-set]');
           const set=cfg.sets.find(s=>s.id===section.dataset.loSet);
@@ -15595,7 +15650,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   async function renderLineStats() {
     loStop();const p=(S.periods||[]).find(x=>x.status==='진행');const from=LO.statsFrom||p?.start||p?.start_date||S.today,to=LO.statsTo||S.today;
-    $('#main').innerHTML=pageHead('상황판 통계',`<input id="loFrom" type="date" value="${esc(from)}"> ~ <input id="loTo" type="date" value="${esc(to)}"><button id="loStatsGo" class="primary">조회</button>`)+`<div class="pgb lo-stats"><div class="note">생산 수량은 마지막 공정 완료만 집계합니다. 배치 계획은 원본 일자, 시간대·작업자 처리는 완료일(한국시간) 기준입니다. 귀속월은 기존 기간 설정을 사용합니다. 자리 수신~완료 시간에는 대기가 포함될 수 있습니다.</div><div id="loStatsResult">불러오는 중…</div></div>`;
+    $('#main').innerHTML=pageHead('상황판 통계',`<input id="loFrom" type="date" value="${esc(from)}"> ~ <input id="loTo" type="date" value="${esc(to)}"><button id="loStatsGo" class="primary">조회</button>`,loPageLinks('linestats'))+`<div class="pgb lo-stats"><div class="note">생산 수량은 마지막 공정 완료만 집계합니다. 배치 계획은 원본 일자, 시간대·작업자 처리는 완료일(한국시간) 기준입니다. 귀속월은 기존 기간 설정을 사용합니다. 자리 수신~완료 시간에는 대기가 포함될 수 있습니다.</div><div id="loStatsResult">불러오는 중…</div></div>`;
     $('#loStatsGo').onclick=()=>{LO.statsFrom=$('#loFrom').value;LO.statsTo=$('#loTo').value;loStatsLoad();};await loStatsLoad();
   }
   async function loStatsLoad() {
@@ -15735,26 +15790,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     P.draft.items = P.draft.items || []; P.draft.oth = P.draft.oth || []; P.draft.mobEx = P.draft.mobEx || []; P.draft.mobEdit = P.draft.mobEdit || {};
     S.prP = P; S.prSt = P.ver ? { k: 'ok', t: (P.at || '').slice(11, 16) } : { k: 'new' }; drawProd();
   }
-  // v29.77: PC 상단 메뉴에서만 두 버튼 노출 · 기존 권한/핸들러 유지.
-  function prTopActions(P) {
-    const nav = $('.czn'), set = nav && $('#prNavSet', nav), range = nav && $('#prNavRange', nav);
-    if (S.view !== 'prod' || !set || !range) return false;
-    const allowed = prShowHelp(P);
-    set.hidden = !allowed;
-    set.onclick = allowed ? () => prSettings(P) : null;
-    range.classList.toggle('pr-range-on', !!(S.prv && S.prv.range));
-    range.onclick = () => { if (S.prv && S.prv.range) return; S.prv.range = true; renderProdRange(); };
-    return true;
-  }
   // v29.76 read-only period query (PC line-production view only). Reuses existing prGet and prCalc: no new SQL/RPC.
   async function renderProdRange() {
     S.prv = S.prv || { d: S.today };
     S.prv.range = true;
     S.prv.rfrom = S.prv.rfrom || C.addDays(S.today, -6);
     S.prv.rto = S.prv.rto || S.today;
-    prTopActions(S.prP);
     const main = $('#main');
-    main.innerHTML = pageHead('라인생산', '<span class="prst">기간별 생산현황 · 조회 전용</span>', '<button id="prRangeBack">‹ 일일 생산으로</button>') + `<div class="pgb prpg pr-range">
+    main.innerHTML = pageHead('라인생산', '<span class="prst">기간별 생산현황 · 조회 전용</span>', '<button id="prRangeBack">‹ 일일 생산으로</button>'+loPageLinks('prod')) + `<div class="pgb prpg pr-range">
       <div class="card pr-range-controls"><div class="mgch"><b>기간별 생산현황</b><span class="muted">저장 · 수정 없이 실제 입력과 확정 실적을 조회합니다</span></div>
       <div class="pr-range-tools"><label>시작일 <input id="prRangeFrom" type="date" value="${esc(S.prv.rfrom)}"></label><label>종료일 <input id="prRangeTo" type="date" value="${esc(S.prv.rto)}"></label><button class="primary" id="prRangeGo">조회</button></div>
       <div class="note">하루 단위 조회 · 최대 62일 · 확정된 날짜는 확정 당시 기록, 미확정 날짜는 현재 입력 기준입니다. 일평균은 입력이 있는 날 기준입니다.</div>
@@ -15843,9 +15886,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function drawProd() {
     const P = S.prP, main = $('#main');
-    const onPcTop = prTopActions(P);
     main.innerHTML = pageHead('라인생산', `<div class="row" style="gap:6px;margin-left:12px"><button id="prpv">‹</button><input type="date" id="prd" value="${P.date}"><button id="prnx">›</button><button id="prtd">오늘</button></div><span id="prst" class="prst"></span><span id="prcf"></span>`,
-      `${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button>' + (onPcTop ? '' : '<button id="prset">⚙ 설정</button>') : ''}${onPcTop ? '' : '<button id="prRangeOpen">▦ 기간별 생산현황</button>'}${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
+      `${prShowHelp(P) ? '<button id="prset" class="lo-nav-settings">⚙ 설정</button>' : ''}<button id="prRangeOpen" class="lo-nav-range">▦ 기간별 생산현황</button>${loPageLinks('prod')}${prShowHelp(P) ? '<button id="prhelp">📖 계산 방법</button>' : ''}${P.admin ? '<button id="pred">👤 입력 담당자</button>' : ''}${P.edit ? `<button class="primary" id="prok">✔ 실적 확정</button>` : '<span class="chip none">보기 전용</span>'}`) + `<div class="pgb prpg" id="prbody"></div>`;
     const mv = k => { S.prv.d = C.addDays(P.date, k); renderProd(); };
     $('#prpv').onclick = () => mv(-1); $('#prnx').onclick = () => mv(1); $('#prtd').onclick = () => { S.prv.d = S.today; renderProd(); }; $('#prd').onchange = e => { S.prv.d = e.target.value || S.today; renderProd(); };
     if ($('#prhelp')) $('#prhelp').onclick = () => prHelp(P); if ($('#prset')) $('#prset').onclick = () => prSettings(P);
