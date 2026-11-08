@@ -3759,6 +3759,11 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 .lo-board .lo-seat b{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 6px}
 .lo-board .lo-seat b small{font-weight:500;white-space:nowrap;color:var(--sub)}
 .lo-board .lo-seat-open{margin-top:auto}
+.lo-stopwatch{display:grid;gap:3px;padding:12px;border:1px solid #527c9d;border-radius:9px;background:#08182d;text-align:center}
+.lo-stopwatch h2{padding:0;border:0;font-size:clamp(16px,1.4vw,23px)}
+.lo-stopwatch[data-running=true]{border-color:#6fc3ee}
+.lo-stopwatch .lo-elapsed{font-size:clamp(42px,6vw,100px)}
+.lo-stopwatch p{font-size:13px}
 @supports(grid-template-rows:subgrid){
   .lo-board .lo-stages{grid-auto-flow:column;grid-template-rows:minmax(80px,auto) repeat(var(--lo-seat-rows),minmax(150px,auto))}
   .lo-board .lo-stage{display:grid;grid-row:span var(--lo-stage-rows);grid-template-rows:subgrid}
@@ -8197,7 +8202,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.14';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.15';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16024,7 +16029,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     document.body.classList.add('lo-work-open');
     root.innerHTML=`<div class="lo-work-head"><b class="lo-monitor">모니터 ${esc(st.id)}</b><h1>${esc(loSeatTitle(st,g?.name||loLineStages(st.line)[st.stage]?.name))}</h1><span>${esc(loLineName(st.line))} · ${esc(st.assignedName||'미배정')}${editable?'':' · 조회 전용'}</span>${editable?'<button id="loSwitchConfig">스위치 설정</button>':''}<button id="loFull">⛶ 전체화면</button><button id="loExit">나가기</button></div>
     <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><b>제조번호 ${esc(b?.snapshot.no||'—')} · 현재 작업 ${u&&b?u.seq+' / '+b.q:'—'}</b><h2>${esc(b?.snapshot.model||'대기 작업 없음')}</h2><small>모델 제품코드 ${esc(meta?.code||'미기록')} · ${esc(b?.set_data.name||'')}</small></div><h3>전체 부품 사양 <small>현재 공정 관련 부품 강조</small></h3><div class="lo-spec-scroll"><table><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${g?.focus.includes(x.kind)?'lo-focus':''}"><th>${esc(x.kind)}</th><td>${esc(x.name)}</td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
-    <aside class="lo-complete-card"><div class="lo-work-state">${b?.sourceChanged?'원본 변경 확인 필요':pendingHere?'완료 결과 확인 필요':u?'작업 수신':'앞 공정 대기'}</div>${(g||loLineStages(st.line)[st.stage])?.instructions?`<p><b>완료 기준</b> · ${esc((g||loLineStages(st.line)[st.stage]).instructions)}</p>`:''}<h2>이 공정 경과시간</h2><div id="loElapsed" class="lo-elapsed">—</div><p>작업 수신 이후 · 대기 포함 가능</p><div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?'<button id="loDone" class="lo-done">✓ 작업 완료<small>본체를 넘길 때 스위치 또는 버튼</small></button>':'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}<div id="loResult" class="lo-result" aria-live="polite">${esc(pendingHere?'이전 요청의 결과가 불확실합니다. 같은 요청으로 결과를 확인하세요.':editable?LO.result||'서버 저장 성공 후 다음 작업으로 이동합니다.':'이 자리의 작업 현황을 표시합니다.')}</div>${pendingHere?'<button id="loRetry" class="lo-retry">동일 요청 결과 확인 · 재전송</button>':''}<div class="lo-work-connection" data-lo-status></div><button id="loWorkRefresh">연결 · 작업 새로고침</button></aside></div>
+    <aside class="lo-complete-card"><div class="lo-work-state">${b?.sourceChanged?'원본 변경 확인 필요':pendingHere?'완료 결과 확인 필요':u?'작업 수신':'앞 공정 대기'}</div><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">00:00</div><p>${u?.readyAt?'진행 중 · 작업 수신부터 경과시간':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${(g||loLineStages(st.line)[st.stage])?.instructions?`<p><b>완료 기준</b> · ${esc((g||loLineStages(st.line)[st.stage]).instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?'<button id="loDone" class="lo-done">✓ 작업 완료<small>본체를 넘길 때 스위치 또는 버튼</small></button>':'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}<div id="loResult" class="lo-result" aria-live="polite">${esc(pendingHere?'이전 요청의 결과가 불확실합니다. 같은 요청으로 결과를 확인하세요.':editable?LO.result||'서버 저장 성공 후 다음 작업으로 이동합니다.':'이 자리의 작업 현황을 표시합니다.')}</div>${pendingHere?'<button id="loRetry" class="lo-retry">동일 요청 결과 확인 · 재전송</button>':''}<div class="lo-work-connection" data-lo-status></div><button id="loWorkRefresh">연결 · 작업 새로고침</button></aside></div>
     <div class="lo-caution"><b>⚠ 주의사항</b><span>${esc(meta?.note||'등록된 주의사항 없음')}</span></div><div class="lo-work-foot">공정 신호 기준 · 시리얼 실물 대조 없음 · 순번은 실물을 확정 식별하지 않습니다.</div>`;
     $('#loExit',root).onclick=loCloseWork;$('#loFull',root).onclick=()=>root.requestFullscreen?.().catch(()=>toast('브라우저 전체화면을 열 수 없습니다',true));$('#loWorkRefresh',root).onclick=()=>loRefresh(LO.epoch,true);
     if(editable){$('#loSwitchConfig',root).onclick=loSwitchConfig;$('#loDone',root).onclick=()=>loComplete();}
@@ -16033,7 +16038,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     loTick();loStatus();
   }
   function loTick() {
-    const el=document.getElementById('loElapsed');if(el){const t=loWorkUnit(loCurrentSeat())?.readyAt;const n=t?Math.max(0,Math.floor((Date.now()+LO.offset-new Date(t).getTime())/1000)):null;el.textContent=n===null?'—':(n>=3600?Math.floor(n/3600)+':':'')+String(Math.floor(n/60)%60).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}loStatus();
+    const el=document.getElementById('loElapsed');
+    if(el){
+      const readyAt=Date.parse(loWorkUnit(loCurrentSeat())?.readyAt);
+      const seconds=Number.isFinite(readyAt)?Math.max(0,Math.floor((Date.now()+LO.offset-readyAt)/1000)):0;
+      const display=(seconds>=3600?Math.floor(seconds/3600)+':':'')
+        +String(Math.floor(seconds/60)%60).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+      if(el.textContent!==display)el.textContent=display;
+    }
+    loStatus();
   }
   async function loComplete(retry) {
     if(LO.busy)return;
