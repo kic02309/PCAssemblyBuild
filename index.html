@@ -3641,12 +3641,26 @@ html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 
 
 .lo-banner>.lo-start{min-height:54px;padding:12px 24px;font-size:17px;font-weight:800;white-space:nowrap}
 .lo-prepared{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;padding:10px 14px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
-.lo-stage h3 .lo-stage-open{margin-left:auto;padding:4px 7px;font-size:11px;white-space:nowrap}
-.lo-stage h3:has(.lo-stage-open){display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.lo-stage h3 .lo-stage-open{justify-self:start;padding:4px 7px;font-size:11px;white-space:nowrap}
 .lo-seat .lo-seat-view-only{color:var(--sub);margin-top:auto}
+.modal.lo-guide-dialog{display:flex;flex-direction:column;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:0;overflow:hidden}
+.lo-guide-head,.lo-guide-foot{flex:none;padding:12px 18px;background:var(--panel)}
+.lo-guide-head{border-bottom:1px solid var(--line)}.lo-guide-head h3{margin:0}
+.lo-guide-body{padding:12px 18px;min-height:0;overflow:auto;overscroll-behavior:contain}
+.lo-guide-foot{border-top:1px solid var(--line)}
+.lo-guide-foot .acts{margin:0;display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.lo-guide-foot .lo-error{margin:0 0 6px}.lo-guide-foot .lo-error:empty{display:none}
+.lo-guide-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0}
+.lo-guide-tools button{white-space:normal}.lo-guide-tools small{color:var(--sub)}
+.lo-guide-body .lo-source-list{max-height:none;overflow:visible}
+.lo-guide-head .lo-guide-progress{margin:8px 0 0}
+@media(max-width:480px){.lo-guide-head,.lo-guide-body,.lo-guide-foot{padding:8px 10px}}
 .lo-guide-progress{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
-.lo-guide-progress span{padding:5px 9px;border-radius:6px;background:var(--head);color:var(--sub);font-size:12px}
-.lo-guide-progress [aria-current]{background:var(--blue-soft);color:var(--blue);font-weight:700}
+.lo-guide-progress span{--lo-guide-step-color:#3979db;padding:5px 9px;border-radius:6px;background:color-mix(in srgb,var(--lo-guide-step-color) 12%,var(--panel));color:var(--ink);font-size:12px;border-inline-start:3px solid var(--lo-guide-step-color)}
+.lo-guide-progress span:nth-child(2){--lo-guide-step-color:#16846e}
+.lo-guide-progress span:nth-child(3){--lo-guide-step-color:#a86c14}
+.lo-guide-progress span:nth-child(4){--lo-guide-step-color:#8054bb}
+.lo-guide-progress [aria-current]{background:color-mix(in srgb,var(--lo-guide-step-color) 26%,var(--panel));font-weight:700;box-shadow:inset 0 0 0 1px var(--lo-guide-step-color)}
 .lo-guide-rows{display:grid;gap:8px;margin:10px 0}
 .lo-guide-row{border:1px solid var(--line);border-radius:8px;padding:10px}
 .lo-guide-row label{display:grid;gap:4px;margin:5px 0}.lo-guide-row button{margin-top:5px}
@@ -3737,6 +3751,20 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 @media(max-width:480px){.lo-config [data-lo-stage]{grid-template-columns:29px minmax(0,1fr) max-content}.lo-config [data-lo-stage] .lo-stage-focus{grid-row:2;grid-column:2 / -1}.lo-config [data-lo-seatrow]{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px;border:1px solid var(--line);border-radius:8px}.lo-config [data-lo-seatrow] button{justify-self:start}.lo-config-panel{padding:10px}}
 
 .lo-board{background:#f5f8fd;color:#16243a}.lo-banner{display:flex;align-items:center;gap:20px;padding:20px 24px;background:linear-gradient(125deg,#263f65,#102340);border-radius:12px;color:#fff;flex-wrap:wrap}.lo-banner h2{margin:0 0 4px}.lo-banner>div:first-child{margin-right:auto}.lo-banner .lo-metric{background:#fff;color:#243956;border-radius:9px;padding:8px 24px;text-align:center;min-width:100px}.lo-metric b{display:block;font-size:29px;color:#0865e9}.lo-banner button{padding:15px 24px;font-size:17px}.lo-info{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#e5f0ff;color:#244f8b;padding:13px 18px;margin:14px 0;border-radius:8px}.lo-lines{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lo-line{background:#fff;border:1px solid #d9e3f1;border-radius:12px;padding:14px;overflow:hidden}.lo-line h2{font-size:22px;margin:0 0 14px}.lo-line h2 small{font-size:13px;font-weight:500;margin-left:8px}.lo-stages{display:grid;grid-template-columns:repeat(var(--lo-stages),minmax(120px,1fr));gap:9px;overflow:auto}.lo-stage h3{font-size:14px;padding:10px;background:#e4eeff;border-radius:7px;margin:0 0 10px}.lo-seat{display:flex;width:100%;flex-direction:column;align-items:flex-start;gap:10px;white-space:normal;text-align:left;min-height:150px;margin-bottom:9px;border:1px solid #dae3ee;border-radius:9px;padding:12px;color:#16243a;background:#fff}.lo-seat:disabled{opacity:1;cursor:default}.lo-seat b{font-size:16px}.lo-seat span:not(.lo-tag){font-size:13px;overflow-wrap:anywhere}.lo-seat small{font-size:12px}.lo-seat.lo-mine{border:2px solid #0865fa;box-shadow:0 2px 9px #0865fa18}.lo-tag,.lo-seat-open{background:#0964f5;color:#fff;border-radius:5px;padding:4px 8px}.lo-seat-open{align-self:stretch;text-align:center}.lo-empty{padding:20px 6px;color:#77869b;font-size:13px}.lo-batches{margin-top:16px!important}.lo-scroll{overflow:auto}.lo-foot{font-size:12px;color:#65768c;margin-top:15px}.lo-error{color:#d92b3d!important}.lo-source-list{display:grid;gap:8px;margin-top:14px;max-height:55vh;overflow:auto}.lo-source-list button{text-align:left;display:flex;flex-direction:column;gap:8px;padding:12px;white-space:normal}.lo-set-edit{padding:14px;border:1px solid #dbe4ef;border-radius:8px;margin:12px 0}.lo-config-row{display:flex;gap:7px;align-items:center;margin:7px 0}.lo-config-row input{min-width:60px}.lo-seat-id{width:90px}.lo-manager-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));max-height:180px;overflow:auto;gap:8px}.lo-manager-list label{font-size:12px;display:flex;gap:5px}.lo-deploy-form{display:flex;flex-wrap:wrap;align-items:end;gap:10px}.lo-deploy-form h3{flex-basis:100%}.lo-deploy-form input{width:100px}body.lo-work-open{overflow:hidden!important}#loWork{position:fixed;inset:0;z-index:2000;background:radial-gradient(ellipse at 50% 0,#162b47,#071324);color:#edf4ff;display:flex;flex-direction:column;padding:14px;overflow:auto;font-family:inherit}#loWork:fullscreen{width:100vw;height:100vh}#loWork button{font:inherit;background:#142b49;color:#edf4ff;border:1px solid #7289aa;border-radius:6px;padding:9px 14px;cursor:pointer}#loWork button:disabled{opacity:.45;cursor:default}.lo-work-head{display:flex;align-items:center;gap:22px;padding-bottom:14px;border-bottom:1px solid #4c6585}.lo-work-head h1{font-size:clamp(21px,2.3vw,37px);margin:0;flex:1}.lo-work-head span{font-size:19px}.lo-monitor{background:#0b66f8;border:1px solid #6199fb;padding:9px 14px;border-radius:6px;font-size:23px}.lo-work-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(320px,1fr);gap:16px;margin-top:16px;flex:1;min-height:0}.lo-spec-card,.lo-complete-card{border:1px solid #526b8e;border-radius:11px;background:#10203766;overflow:hidden;min-width:0}.lo-spec-card{display:flex;flex-direction:column}.lo-model-head{padding:20px 24px;border-bottom:1px solid #516586}.lo-model-head>b{font-size:clamp(17px,1.6vw,25px)}.lo-model-head h2{font-size:clamp(27px,3vw,48px);margin:12px 0}.lo-model-head small{font-size:17px;color:#b2c6e5}.lo-spec-card h3{font-size:24px;margin:15px 20px;display:flex;justify-content:space-between;gap:10px}.lo-spec-card h3 small{font-size:13px;align-self:center;color:#b4c9e8;font-weight:400}.lo-spec-scroll{overflow:auto;margin:0 14px 16px;flex:1}.lo-spec-scroll table{border-collapse:collapse;width:100%;font-size:clamp(14px,1.45vw,23px)}.lo-spec-scroll td,.lo-spec-scroll th{border:1px solid #425c80;padding:10px 13px;text-align:left;overflow-wrap:anywhere}.lo-spec-scroll thead{background:#263c58}.lo-spec-scroll tbody th{white-space:nowrap;font-size:.95em}.lo-spec-scroll tr.lo-focus{background:#153b6a}.lo-spec-scroll tr.lo-focus th{box-shadow:inset 6px 0 #0bc7ef}.lo-spec-scroll td:nth-last-child(-n+2){text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}.lo-complete-card{padding:20px;display:flex;flex-direction:column;gap:12px}.lo-work-state{background:#1e4e8c;border:1px solid #6092f2;padding:7px 13px;border-radius:7px;font-size:21px;font-weight:bold;align-self:flex-start}.lo-complete-card h2{font-size:24px;margin:0;padding-top:12px;border-top:1px solid #4c6281}.lo-elapsed{font-size:clamp(55px,7.5vw,123px);font-weight:800;line-height:1.1;text-align:center;color:#c4edff;font-variant-numeric:tabular-nums}.lo-complete-card p{margin:0;text-align:center;color:#bed1ec}.lo-work-count{padding:12px;border-top:1px solid #465d7e;border-bottom:1px solid #465d7e;font-size:20px;text-align:center}.lo-work-count b{font-size:30px;color:#c4edff}#loWork .lo-done{background:linear-gradient(#0876ff,#0049dd);border:2px solid #13c7ff;color:white;font-size:clamp(29px,3.8vw,63px);font-weight:800;min-height:150px;margin-top:6px;flex:1}#loWork .lo-done small{display:block;font-size:clamp(14px,1.5vw,22px);font-weight:500;margin-top:9px}.lo-result{min-height:36px;display:flex;align-items:center;justify-content:center;padding:9px;border:1px solid #529177;background:#0d4135;border-radius:7px;overflow-wrap:anywhere;text-align:center}.lo-work-connection{font-size:12px;color:#bbd3ee}.lo-caution{border:2px solid #e4bb29;background:#2c2b20;border-radius:9px;margin-top:16px;display:flex;align-items:center;gap:24px;padding:12px 20px;min-height:60px;font-size:20px}.lo-caution b{color:#ffd55e;white-space:nowrap}.lo-work-foot{font-size:11px;color:#8097b4;margin-top:8px}.lo-stats h3{margin-top:23px}.lo-stats table{width:100%}.lo-work-open .modal-bg{z-index:2200!important}.lo-work-open #toast{z-index:2300!important}
+.lo-board .lo-lines{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lo-board .lo-stage{min-width:0}
+.lo-board .lo-stage h3{box-sizing:border-box;display:grid;grid-template-rows:1fr auto;align-items:start;gap:5px;min-height:80px;overflow-wrap:anywhere}
+.lo-board .lo-stage-caption small{display:block;font-size:11px;font-weight:500}
+.lo-board .lo-seat{box-sizing:border-box;min-width:0;overflow-wrap:anywhere}
+.lo-board .lo-seat b{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 6px}
+.lo-board .lo-seat b small{font-weight:500;white-space:nowrap;color:var(--sub)}
+.lo-board .lo-seat-open{margin-top:auto}
+@supports(grid-template-rows:subgrid){
+  .lo-board .lo-stages{grid-auto-flow:column;grid-template-rows:minmax(80px,auto) repeat(var(--lo-seat-rows),minmax(150px,auto))}
+  .lo-board .lo-stage{display:grid;grid-row:span var(--lo-stage-rows);grid-template-rows:subgrid}
+  .lo-board .lo-stage h3,.lo-board .lo-stage .lo-seat{margin:0}
+}
+@media(max-width:1100px){.lo-board .lo-lines{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:1200px){.lo-lines{grid-template-columns:1fr}.lo-work-head{gap:10px}.lo-work-head span{font-size:14px}.lo-monitor{font-size:18px}.lo-complete-card{padding:14px}.lo-work-grid{grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr)}}
 @media(max-width:760px){.lo-banner{gap:10px;padding:14px}.lo-banner .lo-metric{min-width:80px;padding:8px 14px}.lo-work-grid{display:flex;flex-direction:column;min-height:initial}.lo-spec-scroll{max-height:55vh}.lo-complete-card{min-height:430px}.lo-work-head{flex-wrap:wrap}.lo-work-head h1{flex-basis:55%}.lo-work-head span{display:none}.lo-model-head{padding:15px}.lo-spec-card h3 small{display:none}.lo-caution{font-size:15px;gap:12px}.lo-config-row{flex-wrap:wrap}#loWork{padding:9px}.lo-spec-scroll table{font-size:14px}.lo-spec-scroll td,.lo-spec-scroll th{padding:8px}}
 
@@ -8169,7 +8197,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.13';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.14';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15776,11 +15804,22 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const seats=loStageSeats(line,i,cfg.stations);
       return `<div class="lo-guide-row"><strong>${esc(loStageNumber(stages,i))} ${esc(stage.name)}</strong>${(seats.length?seats:[{id:'',userId:''}]).map(seat=>`<label>${seat.id?`${esc(seat.id)} · ${r.registeredStations.includes(seat.id)?'공용 PC 지정됨':'개인 로그인 가능 · 공용 PC 미지정'}`:'새 작업대 · ID 자동 부여'}<select data-lo-guide-seat="${esc(seat.id)}" data-lo-guide-stage="${i}" ${locked&&!seat.id?'disabled':''}>${options(seat)}</select></label>`).join('')}</div>`;
     }).join('');
-    modal(`<h3>작업 시작 준비</h3>${loGuideProgress(step)}
+    modal(`<div class="lo-guide-head"><h3 id="loGuideTitle">작업 시작 준비</h3>${loGuideProgress(step)}</div>
+      <div class="lo-guide-body">
       ${step===1?`<label>작업할 라인 <select id="loGuideLine" ${guide.dirty?'disabled':''}>${cfg.lines.map(x=>`<option value="${esc(x.id)}" ${x.id===line?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
         <p class="lo-guide-summary">${locked?'진행 중인 배치가 있어 공정 순서는 현재 설정을 사용합니다.':'현재 설정을 불러왔습니다. 본체를 다음 사람에게 넘기는 지점에서만 세부 작업을 추가하세요. 최대 8개 작업을 설정할 수 있습니다.'}</p>
-        <div class="lo-guide-rows">${structure}</div>`:`<p class="lo-guide-summary">${esc(loLineName(line))} · 오늘 작업할 사람을 순서대로 확인하세요. 공용 PC 지정은 각 현장 PC에서 할 수 있습니다.</p><div class="lo-guide-rows">${assignments}</div><p id="loGuideMissing" class="lo-error" role="status"></p>`}
-      <div class="acts"><button data-c>닫기</button>${step===2?'<button id="loGuideBack">이전 · 공정 순서</button>':''}<button id="loGuideNext" class="primary">${step===1?'다음 · 담당자 확인':'다음 · 제조건 선택'}</button></div>`,(bg,close)=>{
+        <div class="lo-guide-tools"><button id="loGuideConfig" type="button" ${guide.dirty?'disabled':''}>자리 · 작업 세트 설정</button><small>세트를 바꾸거나 자리 구조를 관리할 때만 사용합니다.</small></div>
+        <div class="lo-guide-rows">${structure}</div>`:`<p class="lo-guide-summary">${esc(loLineName(line))} · 오늘 작업할 사람을 순서대로 확인하세요.</p>
+        <div class="lo-guide-tools">${r.admin?'<button id="loGuideTerminal" type="button">이 PC 작업대 지정</button>':''}<small>공용 PC 지정은 사용할 PC에서 합니다. 새 작업대는 설정이 적용된 뒤 지정할 수 있습니다.</small></div>
+        <div class="lo-guide-rows">${assignments}</div>`}
+      </div>
+      <div class="lo-guide-foot">${step===2?'<p id="loGuideMissing" class="lo-error" role="status"></p>':''}
+        <div class="acts"><button data-c>닫기</button>${step===2?'<button id="loGuideBack">이전 · 공정 순서</button>':''}<button id="loGuideNext" class="primary">${step===1?'다음 · 담당자 확인':'다음 · 제조건 선택'}</button></div>
+      </div>`,(bg,close)=>{
+      const dialog=$('.lo-guide-dialog',bg);
+      dialog.setAttribute('role','dialog');
+      dialog.setAttribute('aria-modal','true');
+      dialog.setAttribute('aria-labelledby','loGuideTitle');
       const next=$('#loGuideNext',bg);
       const go=page=>{close();loGuide(guide,page);};
       const collect=()=>{
@@ -15798,13 +15837,20 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $('[data-c]',bg).onclick=close;
       if(step===1){
         const select=$('#loGuideLine',bg);
-      select.onchange=()=>{if(collect()&&!guide.dirty){guide.line=select.value;go(1);}else{select.value=line;if(guide.dirty)toast('현재 라인에 변경한 설정이 있습니다. 라인을 바꾸려면 창을 닫고 다시 열어 주세요.');}};
+        select.onchange=()=>{if(collect()&&!guide.dirty){guide.line=select.value;go(1);}else{select.value=line;if(guide.dirty)toast('현재 라인에 변경한 설정이 있습니다. 라인을 바꾸려면 창을 닫고 다시 열어 주세요.');}};
+        $('#loGuideConfig',bg).onclick=()=>{
+          if(!collect())return;
+          if(guide.dirty)return toast('이 화면에 변경한 설정이 있습니다. 먼저 준비를 마치거나 창을 닫아 주세요.');
+          loConfig(()=>{close();loGuide({cfg:structuredClone(LO.data.cfg),line,ver:LO.data.cfgVer,dirty:false});});
+        };
         $$('[data-lo-split]',bg).forEach(b=>b.onclick=()=>{
           if(!collect()||!loGuideEditStages(guide))return;
           loGuideSplit(guide,+b.dataset.loSplit);go(1);
         });
         next.onclick=()=>{if(collect())go(2);};
       }else{
+        const terminal=$('#loGuideTerminal',bg);
+        if(terminal)terminal.onclick=()=>loTerminalSettings(()=>go(2),line);
         const missing=loMissingAssignments(line,cfg);
         $('#loGuideMissing',bg).textContent=missing.length?`담당자 배정 필요 · ${missing.join(', ')}`:'';
         next.disabled=!!missing.length;
@@ -15816,7 +15862,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         $('#loGuideBack',bg).onclick=()=>go(1);
         next.onclick=()=>{if(!loMissingAssignments(line,cfg).length){close();loSources(guide.date||LO.date,null,guide);}};
       }
-    },'wide');
+    },'wide lo-guide-dialog');
   }
 
   function loSetPrepared(prepared) {
@@ -15883,10 +15929,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $$('[data-lo-choose-seat]',bg).forEach(button=>button.onclick=()=>{close();loOpen(button.dataset.loChooseSeat,'view');});
     });
   }
-  function loTerminalSettings() {
+  function loTerminalSettings(onUpdated,lineId) {
     const r=LO.data;
     if(!r?.admin)return;
-    const choices=r.cfg.lines.flatMap(line=>r.stations.filter(st=>st.line===line.id).map(st=>{
+    const choices=r.cfg.lines.filter(line=>!lineId||line.id===lineId).flatMap(line=>r.stations.filter(st=>st.line===line.id).map(st=>{
       const group=r.cfg.sets.find(set=>set.id===line.setId)?.stages[st.stage];
       return `<option value="${esc(st.id)}" ${st.id===r.terminalStation?'selected':''}>${esc(line.name)} · ${esc(loSeatLabel(st))} ${esc(group?.name||'공정')} · ${esc(st.assignedName||'미배정')} (${esc(st.id)})</option>`;
     })).join('');
@@ -15906,6 +15952,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           }
           bg._lock=false;close();
           await loRefresh(LO.epoch,true);
+          onUpdated?.();
           toast(station?'이 PC의 작업대를 지정했습니다.':'이 PC의 작업대 지정을 해제했습니다.');
         }catch(error){toast(error.message,true);}
         finally{bg._lock=false;save.disabled=!choices;if(clear)clear.disabled=false;}
@@ -15917,9 +15964,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function loStageCard(line,stage,index,batches) {
     const seats=loStageSeats(line,index);
     return `<div class="lo-stage lo-stage-tint" style="--lo-stage-hue:${loStageHue(stage.name)}">
-      <h3><span>${esc(loStageNumber(loLineStages(line),index))} ${esc(stage.name)}${stage.groupName?`<br><small>${esc(stage.groupName)}</small>`:''}</span>${seats.length?`<button type="button" class="lo-stage-open" data-lo-stage-open="${index}" data-lo-line="${esc(line)}" aria-label="${esc(loLineName(line))} ${esc(loStageNumber(loLineStages(line),index))}번 ${esc(stage.name)} 조회 화면 열기">조회 화면 열기</button>`:''}</h3>
+      <h3><span class="lo-stage-caption">${esc(loStageNumber(loLineStages(line),index))} ${esc(stage.name)}${stage.groupName?`<small>${esc(stage.groupName)}</small>`:''}</span>${seats.length?`<button type="button" class="lo-stage-open" data-lo-stage-open="${index}" data-lo-line="${esc(line)}" aria-label="${esc(loLineName(line))} ${esc(loStageNumber(loLineStages(line),index))}번 ${esc(stage.name)} 조회 화면 열기">조회 화면 열기</button>`:''}</h3>
       ${seats.map(st=>{const batch=batches.find(b=>b.id===st.current?.batchId);
-        const content=`<b>${esc(loSeatTitle(st,stage.name))} · ${esc(st.assignedName||'미배정')} (${esc(st.id)})</b><span>${batch?esc(batch.snapshot.model||batch.snapshot.no):'대기 작업 없음'}</span><small>${batch?'제조 '+esc(batch.snapshot.no)+' · '+st.current.seq+'/'+batch.q:'앞 공정 대기'}</small>${batch?.sourceChanged?'<strong class="lo-error">원본 변경 확인 필요</strong>':''}`;
+        const content=`<b>${seats.length>1?`${esc(loSeatLabel(st))} · `:''}${esc(st.assignedName||'미배정')} <small>${esc(st.id)}</small></b><span>${batch?esc(batch.snapshot.model||batch.snapshot.no):'대기 작업 없음'}</span><small>${batch?'제조 '+esc(batch.snapshot.no)+' · '+st.current.seq+'/'+batch.q:'앞 공정 대기'}</small>${batch?.sourceChanged?'<strong class="lo-error">원본 변경 확인 필요</strong>':''}`;
         return st.canComplete
           ?`<button type="button" class="lo-seat lo-mine" data-lo-seat="${esc(st.id)}">${content}<span class="lo-seat-open">작업 화면 열기</span></button>`
           :`<div class="lo-seat">${content}<small class="lo-seat-view-only">조회 전용</small></div>`;
@@ -15929,19 +15976,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const r=LO.data;if(!r||S.view!=='line')return;
     const bs=r.batches||[],plan=loSum(bs,'q'),done=loSum(bs,'final'),prepared=LO.prepared;
     const station=r.stations.find(st=>st.id===r.terminalStation);
-    const missing=prepared&&!prepared.attempted?loMissingAssignments(prepared.request.line):[];
-    $('#main').innerHTML=pageHead('상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${loPageLinks('line')}${r.manage?`<button id="loConfig">자리 · 작업 세트 설정</button>`:''}${r.admin&&'terminalStation' in r?'<button id="loTerminal">이 PC 작업대 지정</button>':''}<button id="loReload">새로고침</button>`)+`<div class="pgb lo-board">
+    const missing=prepared&&!prepared.attempted?loMissingAssignments(prepared.request.line,prepared.request.cfg):[];
+    $('#main').innerHTML=pageHead('상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${loPageLinks('line')}<button id="loReload">새로고침</button>`)+`<div class="pgb lo-board">
     <div class="lo-banner"><div><h2>라인 상황판</h2><small>선택 일자 + 이전 일자의 미완료 배치</small></div>${r.manage?`<button type="button" id="loMainStart" class="primary lo-start" ${prepared?!loCanStart()?'disabled':'':!LO.online?'disabled':''}>${LO.starting?'시작 확인 중…':prepared?.attempted?'시작 결과 확인':prepared?'▶ 작업 시작':'▶ 작업 시작 준비'}</button>`:''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div></div>
     ${r.manage?`<div class="lo-prepared">${prepared?`<b>준비된 제조건</b> ${esc(prepared.request.date)} · ${esc(prepared.label)} · ${esc(loLineName(prepared.request.line))} · ${esc(prepared.request.q)}대 · 순서 ${esc(prepared.request.rank)}${missing.length?`<strong class="lo-error">담당자 배정 필요 · ${esc(missing.join(', '))}</strong>`:''}${!prepared.attempted&&!LO.starting?'<button type="button" id="loClearPrepared">준비 해제</button>':''}`:'<span class="muted">[작업 시작 준비]를 누르면 공정 순서부터 차례대로 안내합니다.</span>'}</div>`:''}
     <div class="lo-info">공정 제목에서 조회 화면을 열 수 있습니다. 완료 처리는 자리 카드의 [작업 화면 열기]에서 가능합니다.${station?` 이 PC 지정 자리 ${esc(loLineName(station.line))} ${esc(loSeatLabel(station))} · ${esc(station.assignedName||'미배정')}.`:loTerminalToken()?' 이 PC의 자리 지정을 다시 확인하세요.':''} <span data-lo-status></span></div>
-    <div class="lo-lines">${r.cfg.lines.map(ln=>{const set=r.cfg.sets.find(x=>x.id===ln.setId),b=bs.filter(x=>x.line===ln.id),p=loSum(b,'q'),d=loSum(b,'final');return `<section class="lo-line"><h2>${esc(ln.name)} <small>계획 ${p} · 최종 완료 ${d} · 미완료 ${p-d}</small></h2><div class="lo-stages" style="--lo-stages:${set?.stages.length||4}">${(set?.stages||[]).map((g,i)=>loStageCard(ln.id,g,i,bs)).join('')}</div></section>`;}).join('')}</div>
+    <div class="lo-lines">${r.cfg.lines.map(ln=>{const set=r.cfg.sets.find(x=>x.id===ln.setId),b=bs.filter(x=>x.line===ln.id),p=loSum(b,'q'),d=loSum(b,'final'),rows=Math.max(1,...(set?.stages||[]).map((_,i)=>loStageSeats(ln.id,i).length));return `<section class="lo-line"><h2>${esc(ln.name)} <small>계획 ${p} · 최종 완료 ${d} · 미완료 ${p-d}</small></h2><div class="lo-stages" style="--lo-stages:${set?.stages.length||4};--lo-seat-rows:${rows};--lo-stage-rows:${rows+1}">${(set?.stages||[]).map((g,i)=>loStageCard(ln.id,g,i,bs)).join('')}</div></section>`;}).join('')}</div>
     <section class="card lo-batches"><h3>현재 배치 제조건</h3><div class="lo-scroll"><table class="list"><thead><tr><th>원본 일자 / 순서</th><th>제조번호 · 모델</th><th>라인 · 작업 세트</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${r.manage?'<th>관리</th>':''}</tr></thead><tbody>${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr><td>${esc(b.d)} / ${b.rank}</td><td><b>${esc(b.snapshot.no)}</b><br>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td>${esc(loLineName(b.line))}<br>${esc(b.set_data.name)}</td><td>${b.q} / ${b.final} / ${b.q-b.final}</td><td>${b.counts.map((x,i)=>`<div>${esc(b.set_data.stages[i].name)} ${x.done} · ${x.waiting}</div>`).join('')}</td>${r.manage?`<td><button data-lo-meta="${esc(b.id)}">사양·시리얼 목록</button> <button data-lo-order="${esc(b.id)}">순서</button>${b.sourceChanged?` <button data-lo-ack="${esc(b.id)}">기존 배치 유지 확인</button>`:''}${b.canCancel?` <button type="button" class="danger" data-lo-cancel="${esc(b.id)}">작업 취소</button>`:''}</td>`:''}</tr>`).join('')||'<tr><td colspan="6">배치된 제조건이 없습니다. 기존 라인생산에 저장한 제조건을 불러오세요.</td></tr>'}</tbody></table></div></section>
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
     $('#loDate').onchange=async e=>{LO.date=e.target.value;await loRefresh(LO.epoch,true);};$('#loReload').onclick=()=>loRefresh(LO.epoch,true);
-    if($('#loConfig'))$('#loConfig').onclick=loConfig;
     if($('#loMainStart'))$('#loMainStart').onclick=()=>LO.prepared?loStartPrepared():loGuide();
     if($('#loClearPrepared'))$('#loClearPrepared').onclick=()=>{if(!LO.prepared?.attempted&&!LO.starting){loSetPrepared(null);loDrawBoard();}};
-    if($('#loTerminal'))$('#loTerminal').onclick=loTerminalSettings;
     $$('[data-lo-stage-open]').forEach(b=>b.onclick=()=>loOpenStage(b.dataset.loLine,+b.dataset.loStageOpen));
     $$('[data-lo-seat]').forEach(b=>b.onclick=()=>loOpen(b.dataset.loSeat,'work'));
     $$('[data-lo-meta]').forEach(x=>x.onclick=()=>{const b=bs.find(b=>b.id===x.dataset.loMeta);loSources(b.d,b.row_id);});
@@ -16058,10 +16103,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try {
       const dt=date||LO.date,r=await loCall('sources',{date:dt});LO.sourceRows=r.rows;
       if(guide)guide.date=dt;
-      modal(`<h3>${guide?'제조건 선택':'저장된 제조건 준비'}</h3>${guide?loGuideProgress(3):''}<div class="note">${guide?`${esc(loLineName(guide.line))}에 배치할 제조건을 선택하세요.`:'기존 라인생산에서 저장한 제조건을 고르고 사양과 배치 조건을 확인하세요. 준비 완료 후 상황판에서 작업을 시작할 수 있습니다.'} 실적 저장·확정과 별개입니다.</div><label>원본 일자 <input type="date" id="loSrcDate" value="${esc(dt)}"></label><div id="loSrcRows" class="lo-source-list">${r.rows.map((x,i)=>`<button data-lo-source="${i}"><b>${esc(x.item.no||'제조번호 없음')} · ${esc(x.item.model||'모델명 없음')}</b><span>원본 ${esc(x.item.q)} · 배치 ${x.allocated} · 잔여 ${Math.max(0,(+x.item.q||0)-x.allocated)} · ${loSourceSpecLabel(x)}</span></button>`).join('')||'<p>이 일자에 저장된 제조건이 없습니다.</p>'}</div><div class="acts"><button data-c>${guide?'이전 · 담당자 확인':'닫기'}</button></div>`,(bg,close)=>{
+      modal(`<div class="lo-guide-head"><h3 id="loSourceTitle">${guide?'제조건 선택':'저장된 제조건 준비'}</h3>${guide?loGuideProgress(3):''}</div><div class="lo-guide-body"><div class="note">${guide?`${esc(loLineName(guide.line))}에 배치할 제조건을 선택하세요.`:'기존 라인생산에서 저장한 제조건을 고르고 사양과 배치 조건을 확인하세요. 준비 완료 후 상황판에서 작업을 시작할 수 있습니다.'} 실적 저장·확정과 별개입니다.</div><label>원본 일자 <input type="date" id="loSrcDate" value="${esc(dt)}"></label><div id="loSrcRows" class="lo-source-list">${r.rows.map((x,i)=>`<button data-lo-source="${i}"><b>${esc(x.item.no||'제조번호 없음')} · ${esc(x.item.model||'모델명 없음')}</b><span>원본 ${esc(x.item.q)} · 배치 ${x.allocated} · 잔여 ${Math.max(0,(+x.item.q||0)-x.allocated)} · ${loSourceSpecLabel(x)}</span></button>`).join('')||'<p>이 일자에 저장된 제조건이 없습니다.</p>'}</div></div><div class="lo-guide-foot"><div class="acts"><button data-c>${guide?'이전 · 담당자 확인':'닫기'}</button></div></div>`,(bg,close)=>{
         $('#loSrcDate',bg).onchange=e=>{const d=e.target.value;close();loSources(d,null,guide);};$$('[data-lo-source]',bg).forEach(b=>b.onclick=()=>{const x=r.rows[+b.dataset.loSource];close();loMeta(dt,x,guide);});$('[data-c]',bg).onclick=()=>{close();if(guide)loGuide(guide,2);};
         if(rowId){const x=r.rows.find(x=>x.item.id===rowId);if(x){close();loMeta(dt,x);}}
-      },'wide');
+      },'wide lo-guide-dialog');
     }catch(e){toast(e.message,true);}
   }
   function loMeta(dt, row, guide) {
@@ -16082,6 +16127,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <p><b>${esc(item.no)}</b> ${esc(item.model || '')} · 원본 ${esc(item.q)}대 · 배치 가능 ${remaining}대</p>
       </div>
       <div class="lo-meta-body">
+        ${guide?`<div class="lo-guide-summary"><b>작업 순서 · 담당자</b><br>${loLineStages(guide.line,cfg).map((stage,i)=>`${esc(loStageNumber(loLineStages(guide.line,cfg),i))} ${esc(stage.name)} · ${loStageSeats(guide.line,i,cfg.stations).filter(st=>st.userId).map(st=>esc(LO.data.users.find(u=>u.id===st.userId)?.name||'기존 담당자')).join(', ')}`).join(' → ')}</div>`:''}
         <fieldset class="lo-meta-edit">
           <section class="lo-meta-section">
             <h4>1. 부품 사양 확인</h4>
@@ -16123,7 +16169,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <button id="loBatchPrepare" class="primary" disabled>${guide?'▶ 작업 시작':'준비 완료'}</button>
         </div>
         <p id="loBatchAssignmentStatus" class="lo-meta-help" aria-live="polite"></p>
-        ${guide?`<div class="lo-guide-summary"><b>작업 순서 · 담당자</b><br>${loLineStages(guide.line,cfg).map((stage,i)=>`${esc(loStageNumber(loLineStages(guide.line,cfg),i))} ${esc(stage.name)} · ${loStageSeats(guide.line,i,cfg.stations).filter(st=>st.userId).map(st=>esc(LO.data.users.find(u=>u.id===st.userId)?.name||'기존 담당자')).join(', ')}`).join(' → ')}</div>`:''}
       </div>`, (bg, close) => {
       const dialog = $('.lo-meta-modal', bg);
       dialog.setAttribute('role', 'dialog');
@@ -16279,7 +16324,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function loBatchAction(op,b) {
     modal(`<h3>${op==='ack'?'원본 변경 확인 · 기존 배치 유지':'작업 순서 변경'}</h3><p>${esc(b.snapshot.no)} · ${esc(b.snapshot.model)} · 기존 계획 ${b.q}</p>${op==='ack'?`<div class="warn">원본 수정·삭제 내용을 확인한 뒤 기존 배치의 사양·계획 수량을 유지합니다. 원본이나 기존 실적을 고치지 않습니다.</div><p>현재 원본: ${esc(b.currentSource?JSON.stringify({no:b.currentSource.no,model:b.currentSource.model,q:b.currentSource.q}):'삭제됨')}<br>배치 원본: ${esc(JSON.stringify({no:b.snapshot.no,model:b.snapshot.model,q:b.q}))}</p><label>확인 사유<input id="loActionValue" maxlength="300"></label>`:`<label>작업 순서<input id="loActionValue" type="number" value="${b.rank}"></label>`}<div class="acts"><button data-c>취소</button><button data-s class="primary">확인 · 저장</button></div>`,(bg,close)=>{const rev=LO.data.revision;$('[data-c]',bg).onclick=close;$('[data-s]',bg).onclick=async()=>{const btn=$('[data-s]',bg);btn.disabled=true;try{await loCall(op,{batchId:b.id,rev,sourceHash:b.currentSourceHash,reason:$('#loActionValue',bg).value,rank:+$('#loActionValue',bg).value});close();await loRefresh(LO.epoch,true);}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};});
   }
-  function loConfig() {
+  function loConfig(onSaved) {
     const r=LO.data,cfg=JSON.parse(JSON.stringify(r.cfg));
     const users=[...r.users].sort((a,b)=>a.name.localeCompare(b.name,'ko')||String(a.group).localeCompare(String(b.group),'ko'));
     const locked=(r.batches||[]).some(b=>+b.final<+b.q), lock=locked?'disabled':'';
@@ -16483,7 +16528,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         }
         const btn=$('[data-s]',bg);
         btn.disabled=true;
-        try{await loCall('config',{ver:r.cfgVer,cfg});close();await loRefresh(LO.epoch,true);toast('자리·작업 세트를 저장했습니다');}
+        try{await loCall('config',{ver:r.cfgVer,cfg});close();await loRefresh(LO.epoch,true);toast('자리·작업 세트를 저장했습니다');onSaved?.();}
         catch(e){toast(e.message,true);}
         finally{btn.disabled=false;}
       };
