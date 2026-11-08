@@ -8273,7 +8273,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.20';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.21';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16126,8 +16126,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const hours=Math.floor(seconds/3600);
     return `${hours?pad(hours)+':':''}${pad(Math.floor(seconds/60)%60)}:${pad(seconds%60)}`;
   }
-  function loMonitorClock(start,end) {
-    const startMs=Date.parse(start),endMs=Date.parse(end);
+  function loMonitorClock(start,end,serverAt) {
+    const startMs=Date.parse(start),endMs=Date.parse(end||serverAt);
     return Number.isFinite(startMs)?`<b ${end?'':`data-lo-monitor-clock="${startMs}"`}>${loMonitorTime(endMs-startMs)}</b>`:'—';
   }
   function loMonitorView(data) {
@@ -16136,7 +16136,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const statusNames={active:'진행 중',waiting:'대기',paused:'일시정지',done:'완료'};
     const rows=data.rows.map(row=>{
       const status=row.stageDone?'done':data.pausedAt?'paused':row.seq?'active':'waiting';
-      const current=row.seq?`<b>${esc(row.seq)}번</b><small>${loMonitorClock(row.activeAt,data.pausedAt||null)}</small>`:'—';
+      const current=row.seq?`<b>${esc(row.seq)}번</b><small>${loMonitorClock(row.activeAt,data.pausedAt,data.serverAt)}</small>`:'—';
       const average=row.averageMs==null?'—':loMonitorTime(row.averageMs);
       return `<tr><td><b>${loStageNumber(stages,row.stage)} · ${esc(row.name)}</b>${row.seat?`<small>${esc(row.seat)}</small>`:''}</td>
         <td>${esc(row.owner||'미배정')}</td><td><span class="lo-monitor-pill" data-state="${status}">${statusNames[status]}</span></td>
@@ -16148,11 +16148,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="lo-monitor-model">${esc(data.model||'—')} <span class="lo-monitor-code">제품코드 ${esc(data.productCode||'—')}</span></div>
         <small>${data.finishedAt?'최종 완료 '+esc(loStamp(data.finishedAt)):data.pausedAt?'제조건 일시정지':'배치 시작 '+esc(loStamp(data.startedAt))}</small></div>
       <div class="lo-monitor-metrics"><div><small>계획</small><b>${data.quantity}대</b></div><div><small>최종 완료</small><b>${data.final}대</b></div>
-        <div><small>${data.finishedAt?'최종 소요 시간':'배치 경과 시간'}</small>${loMonitorClock(data.startedAt,data.finishedAt)}</div></div>
+        <div><small>${data.finishedAt?'최종 작업 시간':'배치 작업 시간'}</small>${loMonitorClock(data.elapsedStartedAt||data.startedAt,data.finishedAt||data.pausedAt,data.serverAt)}</div></div>
       </div>
       <progress class="lo-monitor-progress" max="${data.quantity}" value="${data.final}" aria-label="배치 완료율"></progress>
       <div class="lo-scroll"><table class="list lo-monitor-table"><thead><tr><th>공정 · 자리</th><th>담당자</th><th>상태</th><th>현재 제품 · 시간</th><th>공정 완료</th><th>평균 작업 시간</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="lo-monitor-note">평균 작업 시간은 측정된 완료 건 기준이며 일시정지 시간을 제외합니다. 배치 경과 시간에는 일시정지 시간이 포함됩니다.</p>`;
+      <p class="lo-monitor-note">배치 작업 시간은 일시정지 중 멈춥니다. 평균 작업 시간은 측정된 완료 건 기준입니다.</p>`;
   }
   function loMonitor(id) {
     LO.monitor?.close();
