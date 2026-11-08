@@ -3113,6 +3113,8 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 #hrb .eval-accident>strong{color:#d84c4c;background:#fff0f0}
 #hrb .eval-attendance>strong{color:#d08016;background:#fff5e6}
 #hrb .eval-fact-row>div{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;align-items:center}
+#hrb .eval-production>div{grid-template-columns:repeat(7,minmax(0,1fr))}
+@media(max-width:650px){#hrb .eval-production>div{grid-template-columns:repeat(4,minmax(0,1fr))}}
 #hrb .eval-accident>div{grid-template-columns:repeat(5,minmax(0,1fr))}
 #hrb .eval-attendance>div{grid-template-columns:repeat(4,minmax(0,1fr))}
 #hrb .eval-fact-row span{display:flex;flex-direction:column;gap:3px;align-items:flex-start;justify-content:center;align-self:stretch;min-width:0;padding:2px 7px;border-left:1px solid var(--line,#dbe3ef)}
@@ -6682,9 +6684,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
   // 서버 hrMonth 응답 → { items, list:[{person, data, refs, notes, rec}] }  (Code.gs buildMonth_ + getPart_ 와 같은 결과)
   function build(resp) {
-    const cfg = resp.cfg || {};
-    const targets = {};
-    (cfg['등급목표'] || []).forEach(r => { targets[str(r['등급']).toUpperCase()] = num(r['목표수량']); });
     const join = {};
     (resp.order || []).forEach(r => { if (str(r['이름'])) join[normName(r['이름'])] = str(r['계약월']).slice(0, 10); });
 
@@ -6697,6 +6696,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (e.acc['지시불이행']) r['지시불이행'] = Math.max(num(r['지시불이행']) || 0, e.acc['지시불이행']);
       }
       const rk = (r && r._rank) || {};
+      const personalTarget = num(e.personalTarget);
+      const recordedTarget = num(r && r['목표수량']);
       const att = e.att || {};
       const addAtt = (base, k) => { const n = att[k] || 0; if (!n) return base; return (base === null ? 0 : base) + n; };
       const d = {
@@ -6706,7 +6707,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         일평균: r ? num(r['평가평균']) : null,
         실제평균: r ? num(r['실제평균']) : null,
         평균순위: r ? (num(r['순위']) || rk.a || null) : null,
-        개인목표: targets[p.grade] !== undefined ? targets[p.grade] : (r ? num(r['목표수량']) : null),
+        개인목표: personalTarget > 0 ? personalTarget : (recordedTarget > 0 ? recordedTarget : null),
         근무일수: r ? num(r['근무일수']) : null,
         당일연차: addAtt(r ? num(r['당일연차']) : null, '당일연차'),
         지각: addAtt(r ? num(r['지각']) : null, '지각'),
@@ -6859,7 +6860,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }
     const b = H.build(r);
     b.list.forEach(x=>{const z=checks.get(String(x.person.name).replace(/\s/g,''));if(z&&x.data.일평균!=null&&Math.abs(z.average-x.data.일평균)>0.0001)x.productionRecheck=z;});
-    b.list.forEach((x,i)=>{x.data.설정개인목표=(r.list[i]||{}).personalTarget??null;});
     META = r.meta;
     return { month: r.month, part: r.part, locked: r.locked, items: b.items, list: b.list, order: H.orderRows(r.order, r.list.map(e => e.person)), rawSrc: r.rawSrc };
   }
@@ -7115,13 +7115,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function renderSide(x) {
     const d=x.data, a=d.근태기록||{}, pt=partPerformance(x);
+    const teamTarget = A.goalOf(ST.data.month).team;
+    const targetQty = v => v == null ? '-' : f1(v, 2) + '대';
     const cells=arr=>arr.map(([k,v,c])=>`<span><small>${k}</small><b${c?` class="${c}"`:''}>${v}</b></span>`).join('');
     const row=(kind,arr)=>`<div class="eval-fact-row eval-${kind==='실적'?'production':kind==='사고'?'accident':'attendance'}"><strong>${kind}</strong><div>${cells(arr)}</div></div>`;
     const val=v=>v==null?'-':fixedAvg(v);
     $('#side').innerHTML=`${d.hasData?'':'<div class="banner warn">업무데이터 없음 · 원본 이름과 실적 반영 상태를 확인하세요.</div>'}
       ${x.productionRecheck?`<div class="banner warn">제조 환산 수정 후 재반영이 필요합니다. 웹 계산 ${val(x.productionRecheck.average)} · 제조 ${x.productionRecheck.manufacturing}. 아래는 기존에 반영된 실적입니다.</div>`:''}
       <div class="eval-summary"><div class="eval-facts">
-      ${row('실적',[['총수량',val(d.총수량)],['일평균',val(d.일평균)],['달성률',pct(d.달성률)],['근무일',dash(d.근무일수)],['개인목표',val(d.개인목표)],['전월평균',val(d.전월평균)]])}
+      ${row('실적',[['팀목표 수량',targetQty(teamTarget)],['개인목표 수량',targetQty(d.개인목표)],['달성율',pct(d.달성률)],['총수량',val(d.총수량)],['일평균',val(d.일평균)],['근무일',dash(d.근무일수)],['전월평균',val(d.전월평균)]])}
       ${row('사고',[['품질지적',dash(d.품질지적)],['미/오발송',dash(d.미오발송)],['오조립',dash(d.오조립)],['파손',dash(d.파손)],['지시불이행',dash(d.지시불이행)]])}
       ${row('근태',[['지각',dash(d.지각)],['조퇴',dash(d.조퇴)],['결근',dash(d.결근)],['당일연차',dash(d.당일연차)]])}<div class="eval-rank-note">총량 ${dash(d.총수량순위)}위 · 평균 ${dash(d.평균순위)}위 · 파트 ${d.파트순위?d.파트순위+'/'+d.파트인원:'-'} <span>｜</span> ${esc(Object.keys(a).map(k=>k+' '+a[k]).join(' · ')||'근태 기록 없음')} · <a href="#" id="attGo">근태 탭</a></div></div>
       <aside class="eval-part"><strong>파트 성과 · ${esc(x.person.part)}</strong><small>실적·목표 반영 ${pt.valid}/${pt.count}명</small><div>${cells([['목표',val(pt.goal)],['실적',val(pt.actual)],['달성률',pct(pt.ratio)],['사고 건수',pt.accidents==null?'-':pt.accidents,'hr-red'],['인당 사고',val(pt.perPerson),'hr-red']])}</div><div class="eval-part-progress" role="img" aria-label="달성률 ${pct(pt.ratio)}"><i style="width:${pt.ratio==null?0:Math.max(0,Math.min(100,pt.ratio*100))}%"></i></div><small>목표·실적은 반영 인원의 일평균 합계</small></aside></div>`;
@@ -7307,7 +7309,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ${editTable('파트', CFG['파트'], { w: { 파트: 80, 담당매니저: 80, 순서: 40 } })}
         <div class="actions"><button class="primary" id="svPart">파트 저장</button></div></div>
       <div class="cfg3">
-        <div class="card"><h2>레벨별 목표수량</h2><div class="muted" style="margin-bottom:6px">인원별 데이터의 개인목표 · 달성률 계산에 쓰입니다.</div>${editTable('등급목표', CFG['등급목표'], { w: { 등급: 50, 목표수량: 70, 설명: 150 }, label: { 등급: '레벨' } })}<div class="actions"><button class="primary" id="svGrade">저장</button></div></div>
+        <div class="card"><h2>레벨별 목표수량</h2><div class="muted" style="margin-bottom:6px">등급별 조립능력평가 기준입니다.</div>${editTable('등급목표', CFG['등급목표'], { w: { 등급: 50, 목표수량: 70, 설명: 150 }, label: { 등급: '레벨' } })}<div class="actions"><button class="primary" id="svGrade">저장</button></div></div>
         <div class="card"><h2>기본 월</h2><div class="fld"><label>매니저 화면에 기본으로 열리는 월</label><input type="month" id="stMonth" value="${esc(st0['현재평가월'] || '')}"></div><div class="actions"><button class="primary" id="svSet">저장</button></div></div></div>`;
     wireTable('파트'); wireTable('등급목표');
     $('#svGrade').onclick = () => saveTable('등급목표', readTable('등급목표'));
@@ -8151,7 +8153,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.07';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.08';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18202,7 +18204,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter, loadLib });
   if (window.EDU) window.EDU.init({api,modal,toast,confirmBox,S,loadLib,pageHead,gdot,updateBadge:()=>updateEduBadge(false)});
   if (window.ACC) window.ACC.init({ api, modal, toast, confirmBox, S, C, saveBlob, go, gdot, gcol, loadLib, pageHead, normName, peopleNames: () => ((S._ppl && S._ppl.rows) || []).map(x => x.name), updateAccBadge });
-  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter, adjOn, adjYm, adjItems, monthlyActivityReport, monthlyPersonReport });   // v28.52 : 지원 보정
+  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter, adjOn, adjYm, adjItems, goalOf, monthlyActivityReport, monthlyPersonReport });   // v28.52 : 지원 보정
   // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
   // v28.56 : 화면을 안 보고 있을 때(최소화 · 다른 탭 · 화면 꺼짐)는 알림 확인을 쉼 → 서버 호출 줄이기 · 다시 보면 바로 1번 확인
   const pollBadges = () => { S._pollAt = Date.now(); if (S.me && S.me.acc) void updateAccBadge(); if (S.me) void updateEduBadge(false); };
