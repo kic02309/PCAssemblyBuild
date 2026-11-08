@@ -3639,6 +3639,8 @@ html[data-theme=dark] .ddwork b,html[data-theme=dark] .ddvol2 b{color:#5eead4}
 .czn button.lo-parent-on{color:#1f63e6;box-shadow:inset 0 -3px 0 #1f63e6}
 html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 -3px 0 #7aa7ff}
 
+.lo-banner>.lo-start{min-height:54px;padding:12px 24px;font-size:17px;font-weight:800;white-space:nowrap}
+@media(max-width:480px){.lo-banner>.lo-start{width:100%}}
 .lo-banner .lo-metric.lo-metric-plan{background:#eaf1ff;color:#31537d;border-top:3px solid #81a7e1}.lo-banner .lo-metric-plan b{color:#29589a}
 .lo-banner .lo-metric.lo-metric-done{background:#e4f3f2;color:#285c61;border-top:3px solid #6fb8b5}.lo-banner .lo-metric-done b{color:#246267}
 .lo-banner .lo-metric.lo-metric-pending{background:#f0ebf9;color:#594b79;border-top:3px solid #ab98d0}.lo-banner .lo-metric-pending b{color:#62508a}
@@ -8155,7 +8157,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.09';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.10';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10159,6 +10161,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function ddModel(r, liveView = false) {
     const N = s => normName(s || ''), off = {}, half = {}, why = {};
+    const saturdayDuty = Array.isArray(r.satDuty) ? new Set(r.satDuty.map(N)) : null;
     (r.leaves || []).forEach(l => { const n = N(l.name); if (l.half) half[n] = l.half; else { off[n] = l.train ? '훈련' : lvKind(l.reason) || '연차'; why[n] = l.reason || ''; } });
     (r.alts || []).forEach(n => { if (!off[N(n)]) off[N(n)] = '대체'; });
     (r.offs || []).forEach(o => (off[N(o.name)] = o.kind));                                  // 병가 · 경조 (대시보드 입력)가 먼저
@@ -10185,6 +10188,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       }
       o.kind = o.off ? 'off' : o.task ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
       if (liveView && r._prod) ddProdPerson(o, s, r._prod, M);
+      if (saturdayDuty && !saturdayDuty.has(N(p.name)) && !o.off) {
+        o.off = '토요 미배정';
+        // Keep actual production visible even when the employee is outside the duty roster.
+        if (o.kind !== 'work' || !(o.v > 0)) o.kind = 'off';
+      }
       return o;
     });
     // 라인 총량 : 출근한 라인 인원(휴무 · 업무지원 · 매니저 제외)에게 똑같이 나눔
@@ -10198,12 +10206,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const ek = p => p.empno ? String(p.empno).padStart(12, '0') : '999999999999';
       const L = body.filter(p => p.grp === g).sort((a, b) => listRank(a) - listRank(b) || ek(a).localeCompare(ek(b)) || a.name.localeCompare(b.name, 'ko')), w = L.filter(p => p.kind === 'work'), t = w.filter(p => p.target), th = t.filter(p => lvOf(p.v, p.target, GY) === 'ok').length;
       const mg = (r.mgrs || {})[g] || L.filter(p => p.title === '매니저').map(p => p.disp).join('/');
-      return { g, L, n: L.length, th, tn: t.length, att: L.filter(p => p.kind !== 'off').length, w: w.length, sup: L.filter(p => p.kind === 'sup').length, mg,
+      return { g, L, n: L.length, th, tn: t.length, att: L.filter(p => !p.off).length, w: w.length, sup: L.filter(p => p.kind === 'sup').length, mg,
         avg: w.length ? w.reduce((a, p) => a + p.v, 0) / w.length : null, tg: t.length ? t.reduce((a, p) => a + p.target, 0) / t.length : null,
         q: Math.round(w.reduce((a, p) => a + p.q, 0) * 10) / 10, mq: w.reduce((a, p) => a + (p.mq || 0), 0), ship: w.reduce((a, p) => a + (p.ship || 0), 0), ban: w.reduce((a, p) => a + (p.ban || 0), 0), os: w.reduce((a, p) => a + (p.os || 0), 0), st: w.reduce((a, p) => a + (p.st || 0), 0),
         osc: w.length && w.every(p => typeof p.osC === 'number') ? w.reduce((a, p) => a + p.osC, 0) / w.length : null, stc: w.length && w.every(p => typeof p.stC === 'number') ? w.reduce((a, p) => a + p.stC, 0) / w.length : null };
     });
-    return { r, P, body, work, tw, G, total: P.length, off: P.filter(p => p.kind === 'off'), sup: P.filter(p => p.kind === 'sup'), none: body.filter(p => p.kind === 'none'),
+    return { r, P, body, work, tw, G, total: P.length, off: P.filter(p => p.off), sup: P.filter(p => p.kind === 'sup'), none: body.filter(p => p.kind === 'none'),
       mgr: P.filter(p => p.kind === 'mgr'), zero: body.filter(p => p.kind === 'zero'),
       sumV: work.reduce((a, p) => a + p.v, 0), sumO: work.reduce((a, p) => a + p.oth, 0), sumQ: Math.round(work.reduce((a, p) => a + p.q, 0)), sumMQ: work.reduce((a, p) => a + (p.mq || 0), 0), sumShip: work.reduce((a, p) => a + (p.ship || 0), 0), sumBan: work.reduce((a, p) => a + (p.ban || 0), 0), sumOS: work.reduce((a, p) => a + (p.os || 0), 0), sumST: work.reduce((a, p) => a + (p.st || 0), 0),
       sumBy: C.ASM.map(c => [c, work.reduce((a, p) => a + (p.qp ? (p.qp.by.find(x => x[0] === c) || [0, 0])[1] : 0), 0)]),
@@ -10403,7 +10411,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const dl = r.date, isPrev = dl === r.prevWork;
     const head = pageHead('일일 업무현황', dailyTabs('dash') + `<div class="ddnav">${staff ? '' : `<button id="ddp" title="전 날">◀</button>`}<b>${dl.slice(0, 4)}년 ${+dl.slice(5, 7)}월 ${+dl.slice(8)}일 (${C.WD[new Date(dl + 'T00:00:00').getDay()]})</b>
         ${staff ? '' : `<button id="ddn" title="다음 날" ${dl >= r.today ? 'disabled' : ''}>▶</button><input type="date" id="ddd" value="${dl}" max="${r.today}">`}
-        ${isPrev ? '<span class="chip open">전 근무일</span>' : staff ? '' : '<button id="ddprev" class="sm">전 근무일로</button>'}${r.workday ? '' : '<span class="chip closed">휴일</span>'}<span class="chip asmc hide" id="ddasmc"></span></div>`,
+        ${isPrev ? '<span class="chip open">전 근무일</span>' : staff ? '' : '<button id="ddprev" class="sm">전 근무일로</button>'}${r.satDuty?.length ? '<span class="chip open">토요근무</span>' : r.workday ? '' : '<span class="chip closed">휴일</span>'}<span class="chip asmc hide" id="ddasmc"></span></div>`,
       staff ? '' : `${isRO() ? '' : '<button id="ddasg">🧩 업무배정 · 휴무 입력</button>'}${isAdm() && !isRO() ? '<button id="ddasm">🌙 조립 야근</button>' : ''}<button class="primary" id="ddxl">⬇ 일일 업무데이터 엑셀</button>`);
     const seg = [[D.work.length, '#1f5fbf', '조립 ' + D.work.length], [D.sup.length, '#1e7a3c', '업무지원 ' + D.sup.length], [D.mgr.length, '#94a3b8', '매니저 ' + D.mgr.length],
       [D.none.length + D.zero.length, '#e6c229', '미입력 ' + (D.none.length + D.zero.length)], [D.off.length, '#c62828', '휴무 ' + D.off.length]];
@@ -10416,7 +10424,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!staff || !adjOn(D.GY)) h += teamLine(D);                         // v28.51 : 팀 줄 · v28.52 : 사원 화면은 보정 자료 권한이 없어 11월 귀속부터 숨김
     // V7: 체크사항은 그룹별 평균환산 카드 안으로 통합. 상단에 별도 카드를 만들지 않음.
     h += `<div class="ddkpis ddkpis-v7">
-      <div class="card ddk ddk-att-v7"><div class="l">출근 / 휴무 <small>(총 ${D.total}명)</small></div>
+      <div class="card ddk ddk-att-v7"><div class="l">출근 / 휴무 <small>(총 ${D.total}명${Array.isArray(r.satDuty)?' · 토요근무 명단 기준':''})</small></div>
         <div class="v">${att}<small> / 휴무 ${D.off.length}명</small><em class="dd-att-rate">${D.total ? Math.round(att / D.total * 100) : 0}%</em></div>
         <div class="ddstack dd-att-stack">${att > 0 ? `<i style="flex:${att};background:#1f5fbf"></i>` : ''}${D.off.length ? `<i style="flex:${D.off.length};background:#d9344a"></i>` : ''}</div>
         <div class="dd-att-legend"><span class="dd-att-in">출근 ${att}</span>${D.off.length ? `<button type="button" id="dd-off-toggle" class="dd-off-toggle" aria-expanded="false" aria-controls="dd-off-panel">휴무 ${D.off.length} ▾</button>` : '<span class="dd-att-off">휴무 0</span>'}<span class="dd-att-none">업무 미입력 ${D.none.length + D.zero.length}</span></div>
@@ -10761,7 +10769,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let yy = top; put(yy, 11, '휴무 · 업무배정', { size: 12, bold: true }); mrg(yy, 11, yy, 19); yy++;
       const box = (label, names, bg, fg) => { put(yy, 11, label, { bold: true, color: fg, fill: bg }); mrg(yy, 11, yy, 13); put(yy, 14, names.length + '명', { bold: true, al: 'center', color: fg, fill: bg });
         put(yy, 15, names.join(', ') || '-', { size: 9.5, wrap: true }); mrg(yy, 15, yy, 19); ws.getRow(yy).height = Math.max(18, Math.ceil(names.join(', ').length / 34) * 15); for (let c = 11; c <= 19; c++) cell(yy, c).border = { bottom: thin }; yy++; };
-      ['연차', '병가', '경조', '대체', '육아', '훈련'].forEach(k => { const L = D.off.filter(p => p.off === k); if (L.length || k !== '훈련') box(k, L.map(p => p.disp), 'FDECEC', 'C62828'); });
+      ['연차', '병가', '경조', '대체', '육아', '훈련', ...(Array.isArray(r.satDuty)?['토요 미배정']:[])].forEach(k => { const L = D.off.filter(p => p.off === k); if (L.length || k !== '훈련') box(k, L.map(p => p.disp), 'FDECEC', 'C62828'); });
       const tl = (r.tasks || []).concat([...new Set(D.sup.map(p => p.task))].filter(t => !(r.tasks || []).includes(t)));
       tl.forEach(t => { const L = D.sup.filter(p => p.task === t); if (L.length) box(t, L.map(p => p.disp), 'E6F4EA', '1E7A3C'); });
       y = Math.max(y, yy) + 1;
@@ -15668,19 +15676,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function loDrawBoard() {
     const r=LO.data;if(!r||S.view!=='line')return;let remembered='';try{remembered=localStorage.getItem('lineStation')||'';}catch(e){}const bs=r.batches||[],mine=r.stations.find(x=>x.mine&&x.id===remembered)||r.stations.find(x=>x.mine),plan=loSum(bs,'q'),done=loSum(bs,'final');
     $('#main').innerHTML=pageHead('상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${loPageLinks('line')}${r.manage?'<button id="loConfig">자리 · 작업 세트 설정</button><button id="loLoad" class="primary">저장된 제조건 배치</button>':''}<button id="loReload">새로고침</button>`)+`<div class="pgb lo-board">
-    <div class="lo-banner"><div><h2>라인 상황판</h2><small>선택 일자 + 이전 일자의 미완료 배치</small></div><div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><button id="loMine" class="primary" ${mine?'':'disabled'}>⛶ 내 작업대 전체화면 열기</button></div>
+    <div class="lo-banner"><div><h2>라인 상황판</h2><small>선택 일자 + 이전 일자의 미완료 배치</small></div>${r.manage?'<button type="button" id="loMainStart" class="primary lo-start">▶ 작업 시작</button>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><button id="loMine" class="primary" ${mine?'':'disabled'}>⛶ 내 작업대 전체화면 열기</button></div>
     <div class="lo-info">본인 자리 카드를 선택하면 전용 작업대로 열립니다. <span data-lo-status></span></div>
     <div class="lo-lines">${r.cfg.lines.map(ln=>{const set=r.cfg.sets.find(x=>x.id===ln.setId),b=bs.filter(x=>x.line===ln.id),p=loSum(b,'q'),d=loSum(b,'final');return `<section class="lo-line"><h2>${esc(ln.name)} <small>계획 ${p} · 최종 완료 ${d} · 미완료 ${p-d}</small></h2><div class="lo-stages" style="--lo-stages:${set?.stages.length||4}">${(set?.stages||[]).map((g,i)=>`<div class="lo-stage lo-stage-tint" style="--lo-stage-hue:${loStageHue(g.name)}"><h3>${i+1} ${esc(g.name)}</h3>${r.stations.filter(x=>x.line===ln.id&&+x.stage===i).map(x=>{const b=bs.find(b=>b.id===x.current?.batchId);return `<button class="lo-seat ${x.mine?'lo-mine':''}" data-lo-seat="${esc(x.id)}" ${x.mine?'':'disabled'}>${x.mine?'<span class="lo-tag">내 자리</span>':''}<b>${esc(x.id)} ${esc(x.assignedName||'미배정')}</b><span>${b?esc(b.snapshot.model||b.snapshot.no):'대기 작업 없음'}</span><small>${b?'제조 '+esc(b.snapshot.no)+' · '+x.current.seq+'/'+b.q:'앞 공정 대기'}</small>${b?.sourceChanged?'<strong class="lo-error">원본 변경 확인 필요</strong>':''}${x.mine?'<span class="lo-seat-open">전체화면 열기</span>':''}</button>`;}).join('')||'<div class="lo-empty">자리 미설정</div>'}</div>`).join('')}</div></section>`;}).join('')}</div>
-    <section class="card lo-batches"><h3>현재 배치 제조건</h3><div class="lo-scroll"><table class="list"><thead><tr><th>원본 일자 / 순서</th><th>제조번호 · 모델</th><th>라인 · 작업 세트</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${r.manage?'<th>관리</th>':''}</tr></thead><tbody>${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr><td>${esc(b.d)} / ${b.rank}</td><td><b>${esc(b.snapshot.no)}</b><br>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td>${esc(loLineName(b.line))}<br>${esc(b.set_data.name)}</td><td>${b.q} / ${b.final} / ${b.q-b.final}</td><td>${b.counts.map((x,i)=>`<div>${esc(b.set_data.stages[i].name)} ${x.done} · ${x.waiting}</div>`).join('')}</td>${r.manage?`<td><button data-lo-meta="${esc(b.id)}">사양·시리얼 목록</button> <button data-lo-order="${esc(b.id)}">순서</button>${b.sourceChanged?` <button data-lo-ack="${esc(b.id)}">기존 배치 유지 확인</button>`:''}</td>`:''}</tr>`).join('')||'<tr><td colspan="6">배치된 제조건이 없습니다. 기존 라인생산에 저장한 제조건을 불러오세요.</td></tr>'}</tbody></table></div></section>
+    <section class="card lo-batches"><h3>현재 배치 제조건</h3><div class="lo-scroll"><table class="list"><thead><tr><th>원본 일자 / 순서</th><th>제조번호 · 모델</th><th>라인 · 작업 세트</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${r.manage?'<th>관리</th>':''}</tr></thead><tbody>${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr><td>${esc(b.d)} / ${b.rank}</td><td><b>${esc(b.snapshot.no)}</b><br>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td>${esc(loLineName(b.line))}<br>${esc(b.set_data.name)}</td><td>${b.q} / ${b.final} / ${b.q-b.final}</td><td>${b.counts.map((x,i)=>`<div>${esc(b.set_data.stages[i].name)} ${x.done} · ${x.waiting}</div>`).join('')}</td>${r.manage?`<td><button data-lo-meta="${esc(b.id)}">사양·시리얼 목록</button> <button data-lo-order="${esc(b.id)}">순서</button>${b.sourceChanged?` <button data-lo-ack="${esc(b.id)}">기존 배치 유지 확인</button>`:''}${b.canCancel?` <button type="button" class="danger" data-lo-cancel="${esc(b.id)}">작업 취소</button>`:''}</td>`:''}</tr>`).join('')||'<tr><td colspan="6">배치된 제조건이 없습니다. 기존 라인생산에 저장한 제조건을 불러오세요.</td></tr>'}</tbody></table></div></section>
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
     $('#loDate').onchange=async e=>{LO.date=e.target.value;await loRefresh(LO.epoch,true);};$('#loReload').onclick=()=>loRefresh(LO.epoch,true);
     if($('#loConfig'))$('#loConfig').onclick=loConfig;
     if($('#loLoad'))$('#loLoad').onclick=()=>loSources();
+    if($('#loMainStart'))$('#loMainStart').onclick=()=>loSources();
     $('#loMine').onclick=()=>mine&&loOpen(mine.id);
     $$('[data-lo-seat]').forEach(b=>b.onclick=()=>loOpen(b.dataset.loSeat));
     $$('[data-lo-meta]').forEach(x=>x.onclick=()=>{const b=bs.find(b=>b.id===x.dataset.loMeta);loSources(b.d,b.row_id);});
     $$('[data-lo-order]').forEach(x=>x.onclick=()=>loBatchAction('order',bs.find(b=>b.id===x.dataset.loOrder)));
     $$('[data-lo-ack]').forEach(x=>x.onclick=()=>loBatchAction('ack',bs.find(b=>b.id===x.dataset.loAck)));
+    $$('[data-lo-cancel]').forEach(button=>button.onclick=()=>loCancelBatch(bs.find(b=>b.id===button.dataset.loCancel),button));
     loStatus();
   }
   function loOpen(sid,fullscreen=true) {
@@ -15959,6 +15969,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       };
       $('[data-c]', bg).onclick = close;
     }, 'wide lo-meta-modal');
+  }
+  async function loCancelBatch(batch,button) {
+    if (!batch?.canCancel || button.disabled) return;
+    button.disabled=true;
+    const epoch=LO.epoch;
+    try {
+      if (!await confirmBox(`<b>${esc(batch.snapshot.no)} · ${esc(batch.snapshot.model||'')}</b> 배치 ${batch.q}대를 취소할까요?<br>취소한 수량은 원본 제조건에서 다시 배치할 수 있습니다.`,'작업 취소')) return;
+      if (epoch!==LO.epoch || S.view!=='line') return;
+      await loCall('cancel',{batchId:batch.id});
+      await loRefresh(epoch,true);
+      toast('작업을 취소했습니다. 원본 제조건에서 다시 배치할 수 있습니다.');
+    } catch (error) {
+      await loRefresh(epoch,true);
+      toast(error.message,true);
+    } finally { button.disabled=false; }
   }
   function loBatchAction(op,b) {
     modal(`<h3>${op==='ack'?'원본 변경 확인 · 기존 배치 유지':'작업 순서 변경'}</h3><p>${esc(b.snapshot.no)} · ${esc(b.snapshot.model)} · 기존 계획 ${b.q}</p>${op==='ack'?`<div class="warn">원본 수정·삭제 내용을 확인한 뒤 기존 배치의 사양·계획 수량을 유지합니다. 원본이나 기존 실적을 고치지 않습니다.</div><p>현재 원본: ${esc(b.currentSource?JSON.stringify({no:b.currentSource.no,model:b.currentSource.model,q:b.currentSource.q}):'삭제됨')}<br>배치 원본: ${esc(JSON.stringify({no:b.snapshot.no,model:b.snapshot.model,q:b.q}))}</p><label>확인 사유<input id="loActionValue" maxlength="300"></label>`:`<label>작업 순서<input id="loActionValue" type="number" value="${b.rank}"></label>`}<div class="acts"><button data-c>취소</button><button data-s class="primary">확인 · 저장</button></div>`,(bg,close)=>{const rev=LO.data.revision;$('[data-c]',bg).onclick=close;$('[data-s]',bg).onclick=async()=>{const btn=$('[data-s]',bg);btn.disabled=true;try{await loCall(op,{batchId:b.id,rev,sourceHash:b.currentSourceHash,reason:$('#loActionValue',bg).value,rank:+$('#loActionValue',bg).value});close();await loRefresh(LO.epoch,true);}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};});
