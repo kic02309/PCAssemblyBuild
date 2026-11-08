@@ -3664,6 +3664,7 @@ html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 
 .lo-guide-rows{display:grid;gap:8px;margin:10px 0}
 .lo-guide-row{border:1px solid var(--line);border-radius:8px;padding:10px}
 .lo-guide-row label{display:grid;gap:4px;margin:5px 0}.lo-guide-row button{margin-top:5px}
+.lo-guide-row-actions{display:flex;flex-wrap:wrap;gap:6px}
 .lo-guide-row[data-lo-sub]{margin-left:14px;border-left:3px solid var(--blue)}
 .lo-guide-row strong{display:block;margin-bottom:4px}.lo-guide-summary{margin:8px 0;line-height:1.6}
 @media(max-width:480px){.lo-banner>.lo-start{width:100%}}
@@ -8202,7 +8203,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.15';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.16';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15760,6 +15761,35 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     guide.cfg.stations.filter(st=>st.line===guide.line&&st.stage>=insert).forEach(st=>st.stage++);
     guide.dirty=true;
   }
+  function loGuideRemove(guide,index,registeredStations) {
+    const line=guide.line;
+    const stages=loLineStages(line,guide.cfg),group=stages[index]?.groupId;
+    if(!group)return false;
+    if(stages.length===1){toast('작업 세트에는 공정이 하나 이상 필요합니다.',true);return false;}
+    const inUse=guide.cfg.stations.some(st=>st.line===line&&+st.stage===index
+      &&(st.userId||registeredStations.includes(st.id)));
+    if(inUse){
+      toast('이 세부 작업에 연결된 담당자 또는 공용 PC 지정부터 해제해 주세요.',true);
+      return false;
+    }
+    if(!loGuideEditStages(guide))return false;
+    const draft=loLineStages(line,guide.cfg);
+    let first=index,last=index+1;
+    while(first>0&&draft[first-1].groupId===group)first--;
+    while(draft[last]?.groupId===group)last++;
+    draft.splice(index,1);
+    const remaining=draft.slice(first,last-1);
+    remaining.forEach((stage,i)=>{
+      const generated=/ 세부 [1-8]$/.test(stage.name)
+        &&[53,54].some(limit=>stage.name.slice(0,-5)===stage.groupName?.slice(0,limit));
+      if(generated)stage.name=remaining.length===1?stage.groupName:`${stage.groupName.slice(0,i===0?54:53)} 세부 ${i+1}`;
+      if(remaining.length===1){delete stage.groupId;delete stage.groupName;}
+    });
+    guide.cfg.stations=guide.cfg.stations.filter(st=>st.line!==line||+st.stage!==index);
+    guide.cfg.stations.filter(st=>st.line===line&&+st.stage>index).forEach(st=>st.stage=+st.stage-1);
+    guide.dirty=true;
+    return true;
+  }
   function loGuideEditStages(guide) {
     const line=guide.cfg.lines.find(x=>x.id===guide.line);
     const set=guide.cfg.sets.find(x=>x.id===line.setId);
@@ -15803,7 +15833,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <strong>${esc(loStageNumber(stages,i))} · ${esc(stage.groupName||stage.name)}</strong>
       <label>작업 이름<input data-lo-guide-name="${i}" maxlength="60" value="${esc(stage.name)}" ${locked?'disabled':''}></label>
       <label>완료 기준 (선택)<input data-lo-guide-instructions="${i}" maxlength="300" value="${esc(stage.instructions||'')}" placeholder="예: 케이블을 고정한 뒤 다음 작업대로 넘기기" ${locked?'disabled':''}></label>
-      ${locked||stages.length>=8?'':`<button type="button" data-lo-split="${i}">+ 이어서 할 세부 작업 추가</button>`}
+      ${locked?'':`<div class="lo-guide-row-actions">${stages.length>=8?'':`<button type="button" data-lo-split="${i}">+ 이어서 할 세부 작업 추가</button>`}${stage.groupId?`<button type="button" class="danger" data-lo-remove="${i}" aria-label="${esc(loStageNumber(stages,i))} 세부 작업 삭제">세부 작업 삭제</button>`:''}</div>`}
     </div>`).join('');
     const assignments=stages.map((stage,i)=>{
       const seats=loStageSeats(line,i,cfg.stations);
@@ -15827,11 +15857,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       dialog.setAttribute('aria-labelledby','loGuideTitle');
       const next=$('#loGuideNext',bg);
       const go=page=>{close();loGuide(guide,page);};
-      const collect=()=>{
+      const collect=(allowBlank=false)=>{
         if(locked)return true;
         const names=$$('[data-lo-guide-name]',bg).map(x=>x.value.trim());
         const notes=$$('[data-lo-guide-instructions]',bg).map(x=>x.value.trim());
-        if(names.some(name=>!name)){toast('작업 이름을 입력하세요.',true);return false;}
+        if(!allowBlank&&names.some(name=>!name)){toast('작업 이름을 입력하세요.',true);return false;}
         if(names.some((name,i)=>name!==stages[i].name||notes[i]!==String(stages[i].instructions||''))){
           if(!loGuideEditStages(guide))return false;
           loLineStages(line,cfg).forEach((stage,i)=>{stage.name=names[i];stage.instructions=notes[i];});
@@ -15851,6 +15881,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         $$('[data-lo-split]',bg).forEach(b=>b.onclick=()=>{
           if(!collect()||!loGuideEditStages(guide))return;
           loGuideSplit(guide,+b.dataset.loSplit);go(1);
+        });
+        $$('[data-lo-remove]',bg).forEach(b=>b.onclick=()=>{
+          if(collect(true)&&loGuideRemove(guide,+b.dataset.loRemove,r.registeredStations))go(1);
         });
         next.onclick=()=>{if(collect())go(2);};
       }else{
