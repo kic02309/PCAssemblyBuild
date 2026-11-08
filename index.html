@@ -3113,8 +3113,9 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 #hrb .eval-accident>strong{color:#d84c4c;background:#fff0f0}
 #hrb .eval-attendance>strong{color:#d08016;background:#fff5e6}
 #hrb .eval-fact-row>div{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;align-items:center}
-#hrb .eval-production>div{grid-template-columns:repeat(7,minmax(0,1fr))}
-@media(max-width:650px){#hrb .eval-production>div{grid-template-columns:repeat(4,minmax(0,1fr))}}
+#hrb .eval-production>div{grid-template-columns:repeat(8,minmax(0,1fr))}
+#hrb .eval-production span:nth-child(3),#hrb .eval-production span:nth-child(5){border-left-width:2px}
+@media(max-width:650px){#hrb .eval-production>div{grid-template-columns:repeat(4,minmax(0,1fr))}#hrb .eval-production span:nth-child(5){border-left:0}}
 #hrb .eval-accident>div{grid-template-columns:repeat(5,minmax(0,1fr))}
 #hrb .eval-attendance>div{grid-template-columns:repeat(4,minmax(0,1fr))}
 #hrb .eval-fact-row span{display:flex;flex-direction:column;gap:3px;align-items:flex-start;justify-content:center;align-self:stretch;min-width:0;padding:2px 7px;border-left:1px solid var(--line,#dbe3ef)}
@@ -7116,6 +7117,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function renderSide(x) {
     const d=x.data, a=d.근태기록||{}, pt=partPerformance(x);
     const teamTarget = A.goalOf(ST.data.month).team;
+    const teamRate = d.일평균 !== null && teamTarget > 0 ? d.일평균 / teamTarget : null;
     const targetQty = v => v == null ? '-' : f1(v, 2) + '대';
     const cells=arr=>arr.map(([k,v,c])=>`<span><small>${k}</small><b${c?` class="${c}"`:''}>${v}</b></span>`).join('');
     const row=(kind,arr)=>`<div class="eval-fact-row eval-${kind==='실적'?'production':kind==='사고'?'accident':'attendance'}"><strong>${kind}</strong><div>${cells(arr)}</div></div>`;
@@ -7123,7 +7125,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $('#side').innerHTML=`${d.hasData?'':'<div class="banner warn">업무데이터 없음 · 원본 이름과 실적 반영 상태를 확인하세요.</div>'}
       ${x.productionRecheck?`<div class="banner warn">제조 환산 수정 후 재반영이 필요합니다. 웹 계산 ${val(x.productionRecheck.average)} · 제조 ${x.productionRecheck.manufacturing}. 아래는 기존에 반영된 실적입니다.</div>`:''}
       <div class="eval-summary"><div class="eval-facts">
-      ${row('실적',[['팀목표 수량',targetQty(teamTarget)],['개인목표 수량',targetQty(d.개인목표)],['달성율',pct(d.달성률)],['총수량',val(d.총수량)],['일평균',val(d.일평균)],['근무일',dash(d.근무일수)],['전월평균',val(d.전월평균)]])}
+      ${row('실적',[['팀목표 수량',targetQty(teamTarget)],['팀 달성율',pct(teamRate)],['개인목표 수량',targetQty(d.개인목표)],['개인 달성율',pct(d.달성률)],['총수량',val(d.총수량)],['일평균',val(d.일평균)],['근무일',dash(d.근무일수)],['전월평균',val(d.전월평균)]])}
       ${row('사고',[['품질지적',dash(d.품질지적)],['미/오발송',dash(d.미오발송)],['오조립',dash(d.오조립)],['파손',dash(d.파손)],['지시불이행',dash(d.지시불이행)]])}
       ${row('근태',[['지각',dash(d.지각)],['조퇴',dash(d.조퇴)],['결근',dash(d.결근)],['당일연차',dash(d.당일연차)]])}<div class="eval-rank-note">총량 ${dash(d.총수량순위)}위 · 평균 ${dash(d.평균순위)}위 · 파트 ${d.파트순위?d.파트순위+'/'+d.파트인원:'-'} <span>｜</span> ${esc(Object.keys(a).map(k=>k+' '+a[k]).join(' · ')||'근태 기록 없음')} · <a href="#" id="attGo">근태 탭</a></div></div>
       <aside class="eval-part"><strong>파트 성과 · ${esc(x.person.part)}</strong><small>실적·목표 반영 ${pt.valid}/${pt.count}명</small><div>${cells([['목표',val(pt.goal)],['실적',val(pt.actual)],['달성률',pct(pt.ratio)],['사고 건수',pt.accidents==null?'-':pt.accidents,'hr-red'],['인당 사고',val(pt.perPerson),'hr-red']])}</div><div class="eval-part-progress" role="img" aria-label="달성률 ${pct(pt.ratio)}"><i style="width:${pt.ratio==null?0:Math.max(0,Math.min(100,pt.ratio*100))}%"></i></div><small>목표·실적은 반영 인원의 일평균 합계</small></aside></div>`;
@@ -8153,7 +8155,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.08';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.09';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
