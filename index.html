@@ -7052,6 +7052,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const toast = (m, e) => A.toast(m, !!e);
   const ST = { tab: null, month: null, part: null, data: null, sel: null, dirty: false, timer: null, meta: null, synced: {} };
   let META = null, CFG = null;
+  const hrMonths = () => [...new Set([...(META?.months || []), ...A.S.periods.map(p=>p.ym)])].sort().reverse();
+  const hrDefaultMonth = () => A.curPeriod()?.ym || hrMonths()[0];
   const admin = () => !!(META && META.admin);
   const ro = () => !!(META && META.ro);                                 // v28 : 보기 전용 관리자 (팀장님)
   const superA = () => !!(META && META.superAdmin && !META.ro);
@@ -7137,14 +7139,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ------------------------------------------------------------ 틀
   const TABS_ADMIN = [['overview', '현황'], ['eval', '인원별 데이터'], ['att', '근태'], ['activity', '업무·면담 종합'], ['cfg', '기준 · 명단'], ['close', '마감 · 다운로드'], ['log', '수정기록']];
   const TABS_MGR = [['eval', '인원별 데이터'], ['att', '근태'], ['activity', '업무·면담 종합']];   // v29.70 : 점수 · 총평 입력 없음 (보기 전용)
-  async function render(main, tab) {
+  async function render(main, tab, entering) {
     if (!(await guard())) return;                                   // 같은 메뉴를 다시 눌러도 저장 안 한 점수 확인
     main.innerHTML = '<div class="ph"><h1>데이터 마감</h1></div><div class="muted" style="padding:30px">불러오는 중…</div>';
     const seq = ST.rseq = (ST.rseq || 0) + 1, stale = () => seq !== ST.rseq || A.S.view !== 'hr' || !document.body.contains(main);   // 기다리는 동안 다른 화면으로 옮김
     try { META = await api('hrMeta'); } catch (e) { if (!stale()) main.innerHTML = '<div class="ph"><h1>데이터 마감</h1></div><div class="warn" style="margin:20px">' + esc(e.message) + '</div>'; return; }
     if (stale()) return;
-    ST.month = ST.month || META.current || META.months[0];
-    if (!META.months.includes(ST.month) && META.months.length) ST.month = META.months[0];
+    const month = hrDefaultMonth();
+    if (!month) {
+      main.innerHTML = '<div class="ph"><h1>데이터 마감</h1></div><div class="warn" style="margin:20px">조회할 귀속월이 없습니다.</div>';
+      return;
+    }
+    if (entering || !hrMonths().includes(ST.month)) {
+      ST.month = month;
+      ST.sel = null;
+    }
     if (!ST.part || !(admin() ? META.parts.some(p => p.name === ST.part) : META.myParts.includes(ST.part))) ST.part = admin() ? (META.parts[0] || {}).name : META.myParts[0];
     { const ld = main.querySelector('.muted'); if (ld) ld.textContent = '업무데이터 반영 중…'; if((tab||ST.tab)!=='activity')await autoSync(ST.month); }   // 탭을 누르기 전에 끝냄 (매니저는 담당 파트만)
     if (stale()) return;
@@ -7167,7 +7176,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     lockChip();
     go(ST.tab);
   }
-  function monthOpts() { return (META.months || []).map(m => `<option value="${m}" ${m === ST.month ? 'selected' : ''}>${ymLab(m)}${(META.locks || {})[m] ? ' 🔒' : ''}</option>`).join(''); }
+  function monthOpts() { return hrMonths().map(m => `<option value="${m}" ${m === ST.month ? 'selected' : ''}>${ymLab(m)}${(META.locks || {})[m] ? ' 🔒' : ''}</option>`).join(''); }
   function lockChip() { const el = $('#hrLock'); if (el) el.innerHTML = (META.locks || {})[ST.month] ? '<span class="chip closed">🔒 마감</span>' : '<span class="chip open">진행중</span>'; }
   function refreshMonthSel() { const s = $('#hrMonth'); if (s) s.innerHTML = monthOpts(); lockChip(); }
 
@@ -7209,11 +7218,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const bar=window.CZFilterV4.mount($('#hrFilterHost'),{
       id:'hr',modes:['귀속월','3개월','6개월','연간'],mode:current,
       label: ST.hrRange ? ST.hrRange.from+' ~ '+ST.hrRange.to : ST.month,
-      todayLabel:'이번 달',onToday:async()=>{const m=META.current||META.months[0];if(!m||!(await guard()))return;ST.hrv4mode='귀속월';ST.hrRange=null;ST.month=m;ST.sel=null;await autoSync(m);go(ST.tab);},
+      todayLabel:'이번 달',onToday:async()=>{if(!(await guard()))return;const seq=ST.tseq;await A.refreshWorkPeriods();if(A.S.view!=='hr'||seq!==ST.tseq)return;const m=hrDefaultMonth();if(!m)return;ST.hrv4mode='귀속월';ST.hrRange=null;ST.month=m;ST.sel=null;refreshMonthSel();await autoSync(m);if(A.S.view==='hr'&&seq===ST.tseq)go(ST.tab);},
       groups: (allowAll ? [{label:'전체 그룹',value:'*'}] : []).concat(parts.map(g=>({label:g,value:g}))),selected:hrFilterPart()||(allowAll?'*':''),
       range:{type:'month',from:ST.hrRange?.from||hrAddMonth(ST.month,-2),to:ST.hrRange?.to||ST.month,note:'선택 기간의 월별 평가 데이터를 읽기 전용으로 비교합니다 (최대 12개월).'},
-      onStep:async step=>{if(ST.hrRange){const a=hrAddMonth(ST.hrRange.from,step),b=hrAddMonth(ST.hrRange.to,step);if(!META.months.includes(b))return toast('해당 평가월은 등록되지 않았습니다',true);ST.hrRange={from:a,to:b};attachHrFilter();return showHrRange();}
-        const k=META.months.indexOf(ST.month),next=hrAddMonth(ST.month,step);if(!META.months.includes(next)||k<0)return toast('해당 평가월은 등록되지 않았습니다',true);
+      onStep:async step=>{if(ST.hrRange){const a=hrAddMonth(ST.hrRange.from,step),b=hrAddMonth(ST.hrRange.to,step);if(!hrMonths().includes(b))return toast('해당 평가월은 등록되지 않았습니다',true);ST.hrRange={from:a,to:b};attachHrFilter();return showHrRange();}
+        const next=hrAddMonth(ST.month,step);if(!hrMonths().includes(next))return toast('해당 평가월은 등록되지 않았습니다',true);
         const select=$('#hrMonth');if(select){select.value=next;select.dispatchEvent(new Event('change',{bubbles:true}));}},
       onMode:async mode=>{
         if(mode==='귀속월'){if(!(await guard()))return;ST.hrRange=null;ST.hrv4mode='귀속월';go(ST.tab);return;}
@@ -7229,7 +7238,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         else ST.part=part;
         ST.sel=null;if(ST.hrRange){attachHrFilter();showHrRange();}else go(ST.tab);},
       onSearch:()=>applyHrNameSearch($('#czfHrKeyword') ? $('#czfHrKeyword').value : ST.hrv4keyword),
-      onReset:async()=>{if(!(await guard()))return;ST.hrRange=null;ST.hrv4mode='귀속월';ST.hrv4keyword='';ST.part=parts[0]||'';ST.overviewPart='';ST.attPart=admin()?'':ST.part;ST.month=META.current||META.months[0];ST.sel=null;go(ST.tab);},
+      onReset:async()=>{if(!(await guard()))return;ST.hrRange=null;ST.hrv4mode='귀속월';ST.hrv4keyword='';ST.part=parts[0]||'';ST.overviewPart='';ST.attPart=admin()?'':ST.part;ST.month=hrDefaultMonth();ST.sel=null;refreshMonthSel();go(ST.tab);},
       onDetail:(on,box)=>{if(on){box.innerHTML='<label class="muted">이름 검색 <input id="czfHrKeyword" placeholder="이름" style="margin-left:8px;width:180px" value="'+esc(ST.hrv4keyword||'')+'"></label><button id="czfHrApply" class="sm primary" style="margin-left:6px">적용</button>';
         $('#czfHrApply').onclick=()=>applyHrNameSearch($('#czfHrKeyword').value);}},
       onError:e=>toast(e.message,true)
@@ -7473,7 +7482,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
 
   // ============================================================ 관리자 — 기준 · 명단 (편집 표)
-  async function loadCfg() { CFG = await api('hrCfg', {month:ST.orderMonth||ST.month||META.current}); CFG.headers = {}; ['설정', '파트', '명단', '등급목표', '보고순서'].forEach(t => (CFG.headers[t] = H.HEADERS[t])); return CFG; }
+  async function loadCfg() { CFG = await api('hrCfg', {month:ST.orderMonth||ST.month||hrDefaultMonth()}); CFG.headers = {}; ['설정', '파트', '명단', '등급목표', '보고순서'].forEach(t => (CFG.headers[t] = H.HEADERS[t])); return CFG; }
   const COL_OPTS = { '사용': ['Y', 'N'], '직책': ['사원', '파트장'], '등급': ['', 'A', 'B', 'C', 'D'] };
   function rowHtml(table, r, opts = {}) {
     const cols = opts.cols || CFG.headers[table];
@@ -7523,7 +7532,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const cfgb = () => $('#cfgb');
   function cfgRoster() {
-    const users = new Set(), st0 = {}; (CFG['설정'] || []).forEach(r => (st0[r['항목']] = r['값']));
     cfgb().innerHTML = `
       <div class="card"><h2>명단 (파트장 · 사원)</h2>
         <div class="banner info">대상·레벨·원본이름·파트는 왼쪽 메뉴 <b>[인원 관리]</b>에서 사람별로 고칩니다. 여기서는 보기만 합니다.
@@ -7534,15 +7542,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <div class="card"><h2>파트 · 담당 매니저</h2>
         <div class="banner info">담당 매니저는 <b>업무데이터 로그인 이름과 똑같이</b> 적으세요. 그 매니저 화면에 [데이터 마감]이 생기고 이 파트 인원 데이터만 봅니다.</div>
         ${editTable('파트', CFG['파트'], { w: { 파트: 80, 담당매니저: 80, 순서: 40 } })}
-        <div class="actions"><button class="primary" id="svPart">파트 저장</button></div></div>
-      <div class="card"><h2>기본 월</h2><div class="fld"><label>매니저 화면에 기본으로 열리는 월</label><input type="month" id="stMonth" value="${esc(st0['현재평가월'] || '')}"></div><div class="actions"><button class="primary" id="svSet">저장</button></div></div>`;
+        <div class="actions"><button class="primary" id="svPart">파트 저장</button></div></div>`;
     wireTable('파트');
-    $('#svSet').onclick = async () => {
-      const m = $('#stMonth').value.trim();
-      if (!/^\d{4}-\d{2}$/.test(m)) { toast('월을 고르세요', 1); return; }
-      const rows = (CFG['설정'] || []).filter(r => r['항목'] !== '현재평가월').concat([{ 항목: '현재평가월', 값: m, 설명: '매니저 화면에 기본으로 열리는 월 (YYYY-MM)' }]);
-      if (await saveTable('설정', rows)) refreshMonthSel();
-    };
     $('#hrGoPpl').onclick = () => A.go && A.go('people');
     $('#svPart').onclick = () => saveTable('파트', readTable('파트'));
   }
@@ -7569,7 +7570,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return {start(e){stop();if(!allowed())return;active=true;move(e);document.addEventListener('dragover',move,true);document.addEventListener('drop',stop,true);document.addEventListener('dragend',stop,true);document.addEventListener('keydown',escape,true);window.addEventListener('blur',stop);frame=requestAnimationFrame(tick);},stop};
   }
   function cfgOrder() {
-    const month=CFG._orderMonth||ST.orderMonth||ST.month||META.current;
+    const month=CFG._orderMonth||ST.orderMonth||ST.month||hrDefaultMonth();
     const roster=CFG._orderRoster||CFG['명단'];
     const rows=H.orderRows(CFG['보고순서'],roster);
     const blocks=[...new Set([...rows.map(r=>r['블록']).filter(Boolean),'퇴사인원'])];
@@ -7700,14 +7701,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const lk = META.locks || {};
     body().innerHTML = `<div class="dgrid" style="grid-template-columns:1fr 1.2fr">
       <section class="card dsec"><div class="dst"><b>월 마감</b><span class="muted">마감하면 매니저 수정 불가, 업무데이터도 고정됩니다</span></div>
-        ${(() => { const ms = (META.months || []).slice().sort().reverse(), top = ms.slice(0, 2), rest = ms.slice(2);      // v28.2 : 최근 2개월만, 나머지는 접기
+        ${(() => { const ms = hrMonths(), top = ms.slice(0, 2), rest = ms.slice(2);      // v28.2 : 최근 2개월만, 나머지는 접기
           const tr = m => `<tr><td><b>${ymLab(m)}</b></td><td>${lk[m] ? '<span class="chip closed">🔒 마감</span>' : '<span class="chip open">열림</span>'}</td>
             <td class="r">${ro() ? '' : `<button class="sm ${lk[m] ? '' : 'primary'}" data-lock="${m}" data-v="${lk[m] ? 0 : 1}">${lk[m] ? '마감 해제' : '마감하기'}</button>`}</td></tr>`;
           const tb = L => `<table class="tbl"><thead><tr><th>귀속월</th><th>상태</th><th></th></tr></thead><tbody>${L.map(tr).join('')}</tbody></table>`;
           return tb(top) + (rest.length ? `<details class="hrold"><summary>이전 달 ${rest.length}개 보기 <span class="muted">(열림 ${rest.filter(m => !lk[m]).length})</span></summary>${tb(rest)}</details>` : ''); })()}</section>
       <section class="card dsec"><div class="dst"><b>보고 순서표 받기</b></div>
         <div class="banner info">그 달 보고 순서표(블록 · 직급 · 이름 · 사번 · 계약월)를 엑셀로 받습니다. 점수 · 평가 내용은 없습니다.</div>
-        <div class="row"><select id="dlMonth" style="width:auto">${(META.months || []).map(m => `<option value="${m}" ${m === ST.month ? 'selected' : ''}>${ymLab(m)}</option>`).join('')}</select>
+        <div class="row"><select id="dlMonth" style="width:auto">${hrMonths().map(m => `<option value="${m}" ${m === ST.month ? 'selected' : ''}>${ymLab(m)}</option>`).join('')}</select>
           <button class="primary" id="dlOrder">⬇ 보고 순서표</button></div></section></div>`;
     body().querySelectorAll('[data-lock]').forEach(b => (b.onclick = async () => {
       const m = b.dataset.lock, v = b.dataset.v === '1';
@@ -7770,7 +7771,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function quickAtt(nm) {       // v28.18 : 사람 카드에서 부르면 그 사람이 골라진 채로
     try {
       if (!META) META = await api('hrMeta');
-      const r = await api('hrAtt', { month: META.current || META.months[0], part: '' });
+      const r = await api('hrAtt', { month: hrDefaultMonth(), part: '' });
       if (!r.people.length) return toast('근태를 넣을 담당 파트 인원이 없습니다', 1);
       if (nm && !r.people.some(p => p.name === nm)) return toast(nm + ' 님은 근태를 넣을 수 있는 담당 인원이 아닙니다', 1);
       attModal(r, null, () => { if (A.S.view === 'hr' && ST.tab === 'att') viewAtt(); });
@@ -7781,7 +7782,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ---------- v29.41 : 통계 → [월말데이터 순위표] (엑셀 '통계' 시트와 같은 표 3개: 평균 · 점유율 · 실제평균)
   async function rankBoard(month0) {
     try { if (!META) META = await api('hrMeta'); } catch (e) { toast(e.message, 1); return; }
-    const months = (META.months || []).slice(); let month = month0 || META.current || months[0];
+    const months = hrMonths(); let month = month0 || hrDefaultMonth();
     if (!month) return toast('마감 데이터 월이 없습니다', 1);
     const f2 = v => v === null || v === undefined || !isFinite(v) ? '-' : (Math.round(v * 100) / 100).toFixed(2);
     const f1 = v => v === null || v === undefined || !isFinite(v) ? '-' : String(Math.round(v * 10) / 10);
@@ -8377,7 +8378,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.35';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.36';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8526,6 +8527,23 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const periodOf = date => S.periods.find(p => p.start <= date && (p.status === '진행' || date <= p.end)) || null;
   const curPeriod = () => S.periods.find(p => p.status === '진행') || S.periods[S.periods.length - 1] || null;
+  let workPeriodRead = null;
+  async function refreshWorkPeriods() {
+    const token = S.token;
+    if (!token || Date.now() - (S.workPeriodsAt || 0) < 30000) return;
+    if (workPeriodRead?.token === token) return workPeriodRead.promise;
+    const read = {token};
+    workPeriodRead = read;
+    read.promise = api('me').then(r => {
+      if (token !== S.token || !Array.isArray(r.periods)) return;
+      S.periods = r.periods;
+      S.today = r.today || S.today;
+      S.workPeriodsAt = Date.now();
+    }).catch(() => {}).finally(() => {
+      if (workPeriodRead === read) workPeriodRead = null;
+    });
+    return read.promise;
+  }
   const isManager = () => S.me && S.me.role !== '일반';
   // 그룹 색 (모든 화면 공통 · 행 왼쪽 띠 + 그룹 앞 점)
   const GCOL = { '1그룹': '#2563eb', '2그룹': '#059669', '3그룹': '#7c3aed', '4그룹': '#db2777', '라인': '#0891b2', '제조': '#a16207', '안정화': '#4d7c0f', '지원': '#64748b', '출력': '#c2410c', '영상': '#9333ea', '팀장': '#334155' };
@@ -9001,7 +9019,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-v]').forEach(b => (b.onclick = async () => {
       const leaveProxy = b.dataset.v === 'back' || (S.target && b.dataset.v === 'input');
       if (leaveProxy && S.target && !(await saveFirst())) return;              // 대신 입력한 내용을 먼저 저장
-      if (b.dataset.v === 'back') { if (S.target) { S.target = null; S.day = null; } return go(S.lastSide || 'dash'); }
+      if (b.dataset.v === 'back') { if (S.target) { S.target = null; S.day = null; } return go(S.lastSide || 'dash', {keepManageQuery:true}); }
       if (S.target && b.dataset.v === 'input') { S.target = null; S.day = null; }
       if (b.dataset.v === 'att') { if (window.HR && window.HR.quickAtt) window.HR.quickAtt(); return; }   // 화면 이동 없이 근태 입력 창
       go(b.dataset.v);
@@ -9113,6 +9131,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (lay === 'side' && !['input', 'month'].includes(view)) S.lastSide = view;     // 대신 입력에서 [돌아가기] = 그 전 관리 화면
     if (S.view !== view) { try { window.scrollTo(0, 0); } catch (e) { } }      // v28.21 : 화면 바꾸면 맨 위부터 (버튼 줄이 제목 뒤에 숨지 않게)
     if(view!=='pa'&&paStickyCleanup)paStickyCleanup();
+    const entering = S.view !== view;
     S.view = view; setNav();
     try { sessionStorage.setItem('lastView', view); if (!(opt && opt._pop) && (history.state || {}).v !== view) history.pushState({ v: view }, ''); } catch (e) { }
     if (view === 'input' && !S.target && wtSelf() && !isManager()) view = 'wt';                // v28.55 : 업무표 사용자는 수량 입력 대신 업무표
@@ -9131,6 +9150,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'smob') { $('#proxy').innerHTML = ''; return canSmob() ? renderSmob() : go('dash'); }   // v29.53
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
+    if (entering && (view === 'manage' || view === 'hr')) {
+      if (view === 'manage' && !opt?.keepManageQuery) {
+        S.mMode = 'month';
+        S.manageYm = null;
+      }
+      const token = S.token;
+      await refreshWorkPeriods();
+      if (S.view !== view || S.token !== token) return;
+    }
     if (view === 'manage') return renderManage();
     if (view === 'dash') return renderDash(opt && opt.date);
     if (view === 'home') return renderRoHome();
@@ -9142,7 +9170,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'ptarget') return isManager() && !isRO() ? renderPTarget() : go('dash');   // v28.51 : 개인 목표 (관리자 · 매니저)
     if (view === 'people') { $('#proxy').innerHTML = ''; return can('people') ? renderPeople(opt && opt.tab) : go('dash'); }
     if (view === 'leave') { $('#proxy').innerHTML = ''; return window.Leave.render($('#main'), opt && opt.tab); }
-    if (view === 'hr') { $('#proxy').innerHTML = ''; return window.HR.render($('#main'), opt && opt.tab); }
+    if (view === 'hr') { $('#proxy').innerHTML = ''; return window.HR.render($('#main'), opt && opt.tab, entering); }
     if (view === 'acc') { $('#proxy').innerHTML = ''; return window.ACC.render($('#main'), opt); }
     if (view === 'accpre') { $('#proxy').innerHTML = ''; $('#main').innerHTML = pageHead('선출고 목록') + `<div class="pgb"><div class="card prewip"><div class="ic">🛠</div><b>작업 중입니다</b>   
       <p>선출고 주문서 엑셀을 올려 누적하고, 기간별로 내려받아 분석하는 기능을 준비하고 있습니다.</p></div></div>`; return; }   // v28.47 : 메뉴만 먼저
@@ -10758,8 +10786,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           const t = r.today, dow = (new Date(t + 'T00:00:00').getDay() + 6) % 7;
           S.mMode = 'range'; S.mRange = m === '주간'
             ? { start: C.addDays(t, -dow), end: t, q: 'w' }
-            : { start: t.slice(0, 7) + '-01', end: t, q: '' }; go('manage'); },
-        onRange: (from, to) => { if (!ddCanRange()) return; S.mMode = 'range'; S.mRange = { start: from, end: to, q: '' }; go('manage'); },
+            : { start: t.slice(0, 7) + '-01', end: t, q: '' }; go('manage', {keepManageQuery:true}); },
+        onRange: (from, to) => { if (!ddCanRange()) return; S.mMode = 'range'; S.mRange = { start: from, end: to, q: '' }; go('manage', {keepManageQuery:true}); },
         onGroup: g => applyGroup(window.CZFilterV4.toggle(S.ddGroup, g)), onSearch: () => applyGroup(Array.isArray(S.ddGroup) ? S.ddGroup : []),
         onReset: () => { S.ddGroup = []; applyGroup([]); if (!staff && dl !== r.today) { S.ddDate = r.today; renderDash(); } },
         onError: e => toast(e.message, true), extra: goalBar(D.GY)
@@ -11063,14 +11091,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cached = S._mcache[key], reads = manageReads, preview = !!(S.pv || S.mpv);
     const recent = cached && reads.get(cached);
     if (!force && !preview && recent?.token === S.token && recent.key === key && Date.now() - recent.at < 30000) {
-      if (S.mMode === 'month') S.manageYm = ym;
       return drawManage(cached, ym, false);
     }
     if (cached) drawManage(cached, ym, true); else main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
     let r; const tk = S.token;
     try {
       r = S.mMode === 'range' && !monthRange ? await api('listUsers', { start: S.mRange.start, end: S.mRange.end }) : await api('listUsers', { ym });
-      if (S.mMode === 'month') S.manageYm = ym;
     } catch (e) {
       if (cached && S._mkey === key) { const refresh = $('#mrefresh'); if (refresh) refresh.disabled = false; const st = $('#mstale'); if (st) st.textContent = '갱신 실패 — 이전 목록'; toast(e.message, true); return; }
       main.innerHTML = '<div class="warn">' + esc(e.message) + '</div><button id="mback">돌아가기</button>';
@@ -11162,7 +11188,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const bar = window.CZFilterV4.mount($('.pgb', main), {
         id: 'manage', modes: ['귀속월', '당일', '주간', '월간', '분기', '연간'], mode: mn,
         label: current, groups: [{ label: '전체 그룹', value: '' }, ...groupChoices], selected: S.manageGroup || '',
-        todayLabel: '이번 달', onToday: () => { S.mMode = 'month'; S.manageYm = (curPeriod() || {}).ym; renderManage(); },
+        todayLabel: '이번 달', onToday: async () => { await refreshWorkPeriods(); if (!bar.isConnected || S.view !== 'manage') return; S.mMode = 'month'; S.manageYm = null; renderManage(); },
         range: { type: 'date', from: S.mRange.start, to: S.mRange.end, note: '기간 직접 조회는 실제 날짜 기준이며, 귀속월 선택은 기존 마감 기간을 따릅니다.' },
         onStep: step => { if (S.mMode === 'month' || S.mRange.q === 'm') return moveMonth(step);
           const days = Math.max(1, Math.round((new Date(S.mRange.end) - new Date(S.mRange.start)) / 86400000) + 1);
@@ -11178,7 +11204,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         onRange: (from, to) => { S.mMode = 'range'; S.mRange = { start: from, end: to, q: '' }; renderManage(); },
         onGroup: key => { S.manageGroup = window.CZFilterV4.toggle(S.manageGroup, key).join(','); const c0 = S._mcache && S._mcache[S._mkey]; if (c0 && S.view === 'manage') drawManage(c0, S._mym, false); else renderManage(); },   // v28.83 : 그룹 바꿀 때 이미 받은 목록을 다시 그림 (서버 재조회 없음)
         onSearch: () => { const k = $('#czfMKeyword'); if (k) S.manageQuery = k.value.trim(); renderManage(); },
-        onReset: () => { S.manageGroup = ''; S.manageQuery = ''; S.mMode = 'month'; S.manageYm = (curPeriod() || {}).ym; renderManage(); },
+        onReset: () => { S.manageGroup = ''; S.manageQuery = ''; S.mMode = 'month'; S.manageYm = null; renderManage(); },
         onDetail: (open, detail) => { if (open) detail.innerHTML = '<label class="muted">이름·사번 검색 <input id="czfMKeyword" placeholder="이름 / 사번" style="margin-left:8px;width:170px" value="' + esc(S.manageQuery || '') + '"></label><button id="czfMApply" class="sm primary" style="margin-left:7px">적용</button>'; if (open) { const b = $('#czfMApply'); b.onclick = () => { S.manageQuery = $('#czfMKeyword').value.trim(); renderManage(); }; } },
         onError: e => toast(e.message, true), extra: goalBar(r.period ? r.period.ym : null)
       });
@@ -19329,7 +19355,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try {
       const r = pre && pre.me ? pre : await api('me', { withDay: true });
       S.ddDate = null; S._ddDateToday = null;
-      S.me = r.me; S.periods = r.periods; S.today = r.today || S.today; S.rates = r.rates || [];
+      S.me = r.me; S.periods = r.periods; S.workPeriodsAt = Date.now(); S.today = r.today || S.today; S.rates = r.rates || [];
       attReset(); S.stCache = {}; S.stv = null;                                           // v28.53 : 로그인할 때 앞 계정 자료 비움
       try { const gc = await api('goalCfg'); S.goals = gc.goals || []; S.hw = gc.hw || []; } catch (e) { S.goals = []; S.hw = []; }   // v28.51 : SQL 전이면 기본 기준(90/80) · v28.72 휴일근무일
       hwApply();
@@ -19367,7 +19393,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   if (window.Leave) window.Leave.init({ api, modal, toast, confirmBox, esc, $, $$, S, saveBlob, go, updateBadge, isManager, gcol, gdot, ghd, colFilter, loadLib });
   if (window.EDU) window.EDU.init({api,modal,toast,confirmBox,S,loadLib,pageHead,gdot,updateBadge:()=>updateEduBadge(false)});
   if (window.ACC) window.ACC.init({ api, modal, toast, confirmBox, S, C, saveBlob, go, gdot, gcol, loadLib, pageHead, normName, peopleNames: () => ((S._ppl && S._ppl.rows) || []).map(x => x.name), updateAccBadge });
-  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter, adjOn, adjYm, adjItems, goalOf, monthlyActivityReport, monthlyPersonReport });   // v28.52 : 지원 보정
+  if (window.HR) window.HR.init({ api, modal, toast, confirmBox, S, saveBlob, C, minsYm, minsOf, dLabel, go, gcol, gdot, colFilter, adjOn, adjYm, adjItems, goalOf, curPeriod, refreshWorkPeriods, monthlyActivityReport, monthlyPersonReport });   // v28.52 : 지원 보정
   // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
   // v28.56 : 화면을 안 보고 있을 때(최소화 · 다른 탭 · 화면 꺼짐)는 알림 확인을 쉼 → 서버 호출 줄이기 · 다시 보면 바로 1번 확인
   const pollBadges = () => { S._pollAt = Date.now(); if (S.me && S.me.acc) void updateAccBadge(); if (S.me) void updateEduBadge(false); };
