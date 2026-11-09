@@ -8328,7 +8328,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.27';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.28';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16185,14 +16185,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const resume=!!LO.data.allPausedAt;
     button.disabled=true;
     try{
-      await loCall(resume?'resumeAll':'pauseAll');
+      const result=await loCall(resume?'resumeAll':'pauseAll');
       await loRefresh(LO.epoch,true);
+      if(result.idle)return toast('진행 중인 배치가 없습니다.');
       toast(resume?'라인 A·B 작업을 재개했습니다.':'라인 A·B를 모두 멈췄습니다.');
     }catch(error){toast(error.message,true);}
     finally{button.disabled=false;}
   }
   function loAllButton(r) {
-    if(!r.manage)return '';
+    if(!r.manage||!r.batches.some(b=>b.final<b.q&&(r.allPausedAt?b.paused_by_all:!b.paused_at)))return '';
     return '<button type="button" data-lo-toggle-all>'+ (r.allPausedAt?'전체 재개':'전체 멈춤') +'</button>';
   }
   function loStartButton(plan) {
