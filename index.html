@@ -3899,6 +3899,21 @@ button.lo-stage-card:hover,button.lo-stage-card:focus-visible{outline:2px solid 
 #loWork .lo-stopwatch p{margin:0;align-self:end}
 #loWork .lo-complete-card .lo-done{flex:none;min-height:clamp(72px,10vh,108px);font-size:clamp(21px,2.6vw,40px);margin:0}
 #loWork .lo-complete-card .lo-done small{margin-top:4px;font-size:clamp(12px,1.2vw,17px)}
+#loWork .lo-spec-scroll{container-type:inline-size}
+#loWork .lo-spec-scroll table{table-layout:fixed}
+#loWork .lo-spec-scroll col:nth-child(1){width:12%}
+#loWork .lo-spec-scroll col:nth-child(3){width:11%}
+#loWork .lo-spec-scroll col:nth-child(4){width:6%}
+#loWork .lo-spec-scroll th:last-child{white-space:nowrap}
+@container(max-width:600px){
+  #loWork .lo-spec-scroll col:nth-child(1){width:19%}
+  #loWork .lo-spec-scroll col:nth-child(3){width:18%}
+  #loWork .lo-spec-scroll col:nth-child(4){width:11%}
+  #loWork .lo-spec-scroll td,#loWork .lo-spec-scroll th{padding-inline:5px}
+}
+#loWork .lo-fit-part{max-width:100%;overflow-wrap:anywhere;line-height:1.2}
+#loWork .lo-part-name{display:block}
+#loWork .lo-part-kind{padding-inline:clamp(4px,0.45vw,8px)}
 #loWork .lo-work-connection[hidden]{display:none}
 @media(max-width:1100px){.lo-board .lo-lines{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:1200px){.lo-lines{grid-template-columns:1fr}.lo-work-head{gap:10px}.lo-work-head span{font-size:14px}.lo-monitor{font-size:18px}.lo-complete-card{padding:14px}.lo-work-grid{grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr)}}
@@ -8361,7 +8376,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.32';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.33';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15834,6 +15849,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return {serials:out,duplicates:[...new Set(out.filter((x,i)=>out.indexOf(x)!==i))],unknown};
   }
   function loStop(reset) {
+    loStopPartFit();
     LO.monitor?.close();
     LO.notifications?.close();LO.notifications=null;LO.notifyConnected=false;LO.notifyDirty=false;LO.syncing=null;
     clearTimeout(LO.timer);clearInterval(LO.clock);LO.epoch++;LO.online=false;LO.held.clear();
@@ -16576,6 +16592,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function loCloseWork() {
     if(LO.busy)return toast('서버 응답을 기다리고 있습니다',true);
+    loStopPartFit();
     const root=document.getElementById('loWork');if(document.fullscreenElement===root)document.exitFullscreen().catch(()=>{});
     root?.remove();LO.seat=null;clearInterval(LO.clock);document.body.classList.remove('lo-work-open');LO.held.clear();try{sessionStorage.removeItem('lineWorkSeat');}catch(e){}
   }
@@ -16605,8 +16622,41 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return {instructions:(applied?.instructions??stage?.instructions)||defaults?.instructions||'',
       caution:caution||defaults?.caution||'', defaultCaution:!caution&&!!defaults?.caution};
   }
+  function loStopPartFit() {
+    LO.partFit?.disconnect();
+    LO.partFit=null;
+  }
+  function loFitPartLabels(root) {
+    loStopPartFit();
+    const scroll=$('.lo-spec-scroll',root);
+    const items=$$('.lo-fit-part',scroll);
+    if(!items.length)return;
+    let width=-1;
+    const fit=()=>{
+      if(!scroll.isConnected||scroll.clientWidth===width)return;
+      width=scroll.clientWidth;
+      for(const label of items){
+        label.style.fontSize='';
+        label.style.whiteSpace='nowrap';
+        const base=parseFloat(getComputedStyle(label).fontSize);
+        const minimum=Math.min(base,width<460?11:14);
+        const fits=()=>label.scrollWidth<=label.clientWidth;
+        if(fits())continue;
+        label.style.fontSize=minimum+'px';
+        if(!fits()){label.style.whiteSpace='normal';continue;}
+        let low=minimum,high=base;
+        while(high-low>0.5){
+          const size=(high+low)/2;label.style.fontSize=size+'px';
+          if(fits())low=size;else high=size;
+        }
+        label.style.fontSize=low+'px';
+      }
+    };
+    fit();
+    LO.partFit=new ResizeObserver(fit);LO.partFit.observe(scroll);
+  }
   function loDrawWork() {
-    const r=LO.data,st=loCurrentSeat();if(!st){document.getElementById('loWork')?.remove();LO.seat=null;clearInterval(LO.clock);document.body.classList.remove('lo-work-open');return;}
+    const r=LO.data,st=loCurrentSeat();if(!st){loStopPartFit();document.getElementById('loWork')?.remove();LO.seat=null;clearInterval(LO.clock);document.body.classList.remove('lo-work-open');return;}
     const u=loWorkUnit(st),b=r.batches.find(x=>x.id===u?.batchId);
     const lineWaiting=u?[]:r.batches.filter(batch=>batch.line===st.line&&batch.final<batch.q);
     const next=lineWaiting.length===1?lineWaiting[0]:null;
@@ -16625,7 +16675,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let root=document.getElementById('loWork');if(!root){root=document.createElement('section');root.id='loWork';root.tabIndex=-1;document.body.append(root);}
     document.body.classList.add('lo-work-open');
     root.innerHTML=`<div class="lo-work-head"><div class="lo-work-operator">${esc(loLineName(st.line))} · ${esc(st.assignedName||'미배정')}${supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용'}</div>${pauseControl?`<div class="lo-work-admin">${pauseControl}</div>`:''}${editable&&!supervised?'<button id="loSwitchConfig">스위치 설정</button>':''}<button id="loFull">⛶ 전체화면</button><button id="loExit">나가기</button></div>
-    <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><div class="lo-model-top"><b>제조번호 ${esc(identity?.no||'—')} · ${u&&b?'현재 작업 '+u.seq+' / '+b.q:preview?'준비 '+preview.q+'대':'현재 작업 —'}</b>${meta?.code?`<div class="lo-model-code"><small>제품코드</small>${esc(meta.code)}</div>`:''}</div><div class="lo-model-identity"><h2>${esc(identity?.model||'대기 작업 없음')}</h2></div>${b?.set_data.name?`<small>${esc(loSetName(b.set_data.name))}</small>`:''}</div><h3>전체 부품 사양${focus.length?'<small>이 공정의 확인 부품을 색으로 표시</small>':''}</h3><div class="lo-spec-scroll"><table><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${focus.includes(loPartKey(x.kind))?'lo-focus':''}" style="--lo-part-hue:${loPartHue(x.kind)}"><th scope="row"><span class="lo-part-kind">${esc(x.kind)}</span></th><td>${esc(x.name)}</td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
+    <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><div class="lo-model-top"><b>제조번호 ${esc(identity?.no||'—')} · ${u&&b?'현재 작업 '+u.seq+' / '+b.q:preview?'준비 '+preview.q+'대':'현재 작업 —'}</b>${meta?.code?`<div class="lo-model-code"><small>제품코드</small>${esc(meta.code)}</div>`:''}</div><div class="lo-model-identity"><h2>${esc(identity?.model||'대기 작업 없음')}</h2></div>${b?.set_data.name?`<small>${esc(loSetName(b.set_data.name))}</small>`:''}</div><h3>전체 부품 사양${focus.length?'<small>이 공정의 확인 부품을 색으로 표시</small>':''}</h3><div class="lo-spec-scroll"><table><colgroup><col><col><col><col></colgroup><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${focus.includes(loPartKey(x.kind))?'lo-focus':''}" style="--lo-part-hue:${loPartHue(x.kind)}"><th scope="row"><span class="lo-part-kind lo-fit-part">${esc(x.kind)}</span></th><td><span class="lo-part-name lo-fit-part">${esc(x.name)}</span></td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
     <aside class="lo-complete-card"><header class="lo-work-focus"><small>${esc(seatNumber)}번 작업 · 모니터 ${esc(st.id)}</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</header><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">${['분','초','1/100초'].map((label,i)=>`${i?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div><p>${b?.paused_at?'일시정지 · 재개하면 이어서 측정':u?.readyAt?'진행 중 · 현재 제품부터 경과시간':preview?'시작 대기 · 작업이 배정되면 측정 시작':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${instructions?`<p><b>완료 기준</b> · ${esc(instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?`<button id="loDone" class="lo-done" ${u?'':'disabled'}>✓ 작업 완료<small>${supervised?'완료 시 이 자리 담당자의 실적으로 기록됩니다':'본체를 넘길 때 스위치 또는 버튼'}</small></button>`:'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="lo-work-connection" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></aside></div>
     ${caution?`<div class="lo-caution"><b>⚠ ${defaultCaution?'라인 기본 주의사항':'주의사항'}</b><span>${esc(caution)}</span></div>`:''}<div class="lo-work-foot">공정 신호 기준 · 시리얼 실물 대조 없음 · 순번은 실물을 확정 식별하지 않습니다.</div>`;
     loBindControls(root);
@@ -16634,6 +16684,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if(editable&&!supervised)$('#loSwitchConfig',root).onclick=loSwitchConfig;
     if($('#loRetry',root))$('#loRetry',root).onclick=()=>loComplete(true);
     const pause=$('[data-lo-pause]',root);if(pause)pause.onclick=()=>loToggleBatchPause(controlsBatch,pause);
+    loFitPartLabels(root);
     if(!document.querySelector('.modal-bg'))root.focus({preventScroll:true});
     loTick();loStatus();
   }
