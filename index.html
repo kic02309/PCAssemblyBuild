@@ -8300,7 +8300,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.25';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.26';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8418,6 +8418,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       }
       throw Object.assign(new Error(res.msg || '오류'), action === 'lo' ? {serverRejected:true} : {});
     }
+    if (['saveDay','deleteDay','setTarget','setTargetGroup'].includes(action)) manageReads = new WeakMap();
     if (['lvSaveLeave','lvDelLeave','lvConfirm','lvSetDuty','lvSatUndo','lvImport','lvSaveStaff','attConfirm','ddAsgSave'].includes(action) || action==='ddOff' && data && (data.kind || data.op==='del')) {
       attReset(); S._teamRows=null; S._chkC=null;
     }
@@ -8485,7 +8486,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (A.err || tk !== S.token) return A;                                              // 다른 계정으로 바뀌었으면 기억하지 않음
     return (S._att[ym] = A);
   }
-  const attReset = () => { S._att = {}; S._adj = {}; S._gm = {}; S._inAdj = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } };   // v28.53 : 입력 화면 · 통계까지
+  const attReset = () => { manageReads = new WeakMap(); S._att = {}; S._adj = {}; S._gm = {}; S._inAdj = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } };   // v28.53 : 입력 화면 · 통계까지
   // 한 사람 한 귀속월 : 원본 items → 보정 결과 (prev = 직전 귀속월 평균)
   function adjOne(name, ym, items, prev, A) {
     const n = nmKey(name);
@@ -8736,7 +8737,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!silent) { try { sessionStorage.removeItem(DRAFT_KEY); sessionStorage.removeItem('pending'); } catch (e) { } }
     S.pv = null; S.mpv = null; { const b = document.getElementById('mpvbar'); if (b) b.remove(); } S.realMe = null; S.mgD = null; S.mgPanel = false; ['mgtab', 'mgpanel'].forEach(i => { const x = document.getElementById(i); if (x) x.remove(); }); document.body.classList.remove('pvmode'); { const b = document.getElementById('pvbar'); if (b) b.remove(); }   // v28.54
     if(srPopupClose){srPopupClose();srPopupClose=null;} S.srv=null;S.sr=null;
-    S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S._gm = {}; S._pmRes = null; S._bi = null; S._pbi = {}; S._wtd = null; S._mgBI = null; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
+    S.token = ''; S.me = null; S.target = null; S.day = null; S.dirty = false; S._gm = {}; S._pmRes = null; S._bi = null; S._pbi = {}; S._wtd = null; S._mgBI = null; S.pc = {}; S._mcache = {}; S._mkey = null;
     attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;   // v28.53 : 공용 PC — 앞사람 자료 남기지 않기
     // 공용 PC : 다음 사람에게 앞사람이 보던 날짜·달·필터·창이 남지 않게
     S.date = null; S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
@@ -8790,7 +8791,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const PVN = { lead: '팀장 보기', mgr: '매니저', staff: '사원' };
   const pvBtn = () => canPv() ? `<button id="pvb" class="pvb${S.pv ? ' on' : ''}" title="다른 직급 화면 미리보기 (저장 안 됨)">👁 ${S.pv ? esc(PVN[S.pv.mode] + (S.pv.mode === 'lead' ? '' : ' · ' + S.me.name)) : (realMe().role === '매니저' ? '사원 미리보기' : '직급 보기')} ▾</button>` : '';
   function pvClear() {
-    S.target = null; S.day = null; S.dirty = false; S._gm = {}; S._pmRes = null; S._bi = null; S._pbi = {}; S._wtd = null; S._mgBI = null; S.pc = {}; S._mcache = {}; S._mpf = {}; S._mkey = null;
+    S.target = null; S.day = null; S.dirty = false; S._gm = {}; S._pmRes = null; S._bi = null; S._pbi = {}; S._wtd = null; S._mgBI = null; S.pc = {}; S._mcache = {}; S._mkey = null;
     attReset(); S.stCache = {}; S.stv = null; S._teamRows = null; S._dirtyAtt = false;
     S.monthYm = null; S.manageYm = null; S.manageGroup = ''; S.mMode = null; S.mRange = null; S.mView = null; S.mSort = null;
     S.lastSide = null; S.view = null; S.layout = null; S._roster = null; S._musers = null; S._mlist = null; S.cal = null; S.personMonth = null; S.loadSeq = (S.loadSeq || 0) + 1; S.monthSeq = (S.monthSeq || 0) + 1;
@@ -10970,7 +10971,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     S.mRange = { start: p.start, end: p.end || S.today, q: 'm', ym: p.ym };
     renderManage();
   }
-  async function renderManage() {
+  let manageReads = new WeakMap();
+  async function renderManage(force = false) {
     const main = $('#main');
     if (!S.periods.length && !S.me.period) { main.innerHTML = '<div class="warn">아직 월 기간이 없습니다.</div>'; return; }
     S.mMode = S.mMode || 'month'; S.mView = S.mView || 'list'; S.mSort = S.mSort || { k: 'group', d: 1 };
@@ -10981,25 +10983,30 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     // 직전에 본 목록을 먼저 보여주고, 뒤에서 새로 받아 바뀐 게 있으면 다시 그림
     const key = S.mMode === 'range' && !monthRange ? 'R|' + S.mRange.start + '|' + S.mRange.end : 'M|' + ym;
     S._mcache = S._mcache || {}; S._mkey = key; S._mym = ym;
-    const cached = S._mcache[key];
+    const cached = S._mcache[key], reads = manageReads, preview = !!(S.pv || S.mpv);
+    const recent = cached && reads.get(cached);
+    if (!force && !preview && recent?.token === S.token && recent.key === key && Date.now() - recent.at < 30000) {
+      if (S.mMode === 'month') S.manageYm = ym;
+      return drawManage(cached, ym, false);
+    }
     if (cached) drawManage(cached, ym, true); else main.innerHTML = '<div class="muted" style="padding:30px">불러오는 중…</div>';
     let r; const tk = S.token;
     try {
-      const pf = S.mMode !== 'range' && S._mpf && S._mpf[key];
-      r = (pf && await pf) || (S.mMode === 'range' && !monthRange ? await api('listUsers', { start: S.mRange.start, end: S.mRange.end }) : await api('listUsers', { ym }));
+      r = S.mMode === 'range' && !monthRange ? await api('listUsers', { start: S.mRange.start, end: S.mRange.end }) : await api('listUsers', { ym });
       if (S.mMode === 'month') S.manageYm = ym;
     } catch (e) {
-      if (cached && S._mkey === key) { const st = $('#mstale'); if (st) st.textContent = '갱신 실패 — 이전 목록'; toast(e.message, true); return; }
+      if (cached && S._mkey === key) { const refresh = $('#mrefresh'); if (refresh) refresh.disabled = false; const st = $('#mstale'); if (st) st.textContent = '갱신 실패 — 이전 목록'; toast(e.message, true); return; }
       main.innerHTML = '<div class="warn">' + esc(e.message) + '</div><button id="mback">돌아가기</button>';
       $('#mback').onclick = () => { S.mMode = 'month'; renderManage(); }; return;
     }
     if (tk !== S.token) return;
     const same = cached && JSON.stringify(cached) === JSON.stringify(r);
     S._mcache[key] = same ? cached : r;
+    if (!preview) reads.set(S._mcache[key], { token: tk, key, at: Date.now() });
     if (S.view !== 'manage' || S._mkey !== key) return;
     { const rg = r.range || (r.period ? { start: r.period.start, end: r.period.end || S.today } : null);          // v28.52 : 11월 귀속부터 지원 보정 준비
       if (rg && ymsIn(rg.start, rg.end).some(adjOn)) { await adjPrep(rg.start, rg.end); if (S.view !== 'manage' || S._mkey !== key) return; return drawManage(S._mcache[key], ym, false); } }
-    if (same) { const st = $('#mstale'); if (st) st.remove(); return; }
+    if (same) { const refresh = $('#mrefresh'); if (refresh) refresh.disabled = false; const st = $('#mstale'); if (st) st.remove(); return; }
     drawManage(r, ym, false);
   }
   function drawManage(r, ym, stale) {
@@ -11043,6 +11050,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
                <span class="muted manage-monthref">${xym ? '목표는 ' + ymLabel(xym) + ' 기준' : '해당 기간의 귀속월 없음'}</span></div>`
           : `<input type="date" id="rs" value="${S.mRange.start}"> ~ <input type="date" id="re" value="${S.mRange.end}"><button class="primary" id="rgo">조회</button>
              <span class="muted">${xym ? '목표는 ' + ymLabel(xym) + ' 기준' : '해당 기간의 귀속월 없음'}</span>`}
+        <button type="button" id="mrefresh" ${stale ? 'disabled' : ''}>새로고침</button>
         ${stale ? '<span class="chip" id="mstale">갱신 중…</span>' : ''}
         <span style="flex:1"></span>
         <div class="seg"><button data-mv="list" class="${S.mView === 'list' ? 'on' : ''}">인원별 목록</button><button data-mv="board" class="${S.mView === 'board' ? 'on' : ''}">일자별 현황판</button></div>
@@ -11104,6 +11112,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (r) {
       const xym = r.period ? r.period.ym : null;
       if (S.mView === 'board') renderBoard(r); else renderMList(r);
+      const refresh = $('#mrefresh');
+      if (refresh) refresh.onclick = () => renderManage(true);
       $$('[data-mm]').forEach(b => (b.onclick = () => { S.mMode = b.dataset.mm; if (S.mMode === 'range') S.mRange = Object.assign({}, S.mRange, { q: '' }); renderManage(); }));
       $$('[data-mv]').forEach(b => (b.onclick = () => { S.mView = b.dataset.mv; renderManage(); }));
       if ($('#mym')) $('#mym').onchange = e => { S.manageYm = e.target.value; renderManage(); };
@@ -11138,8 +11148,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         on = !gs.length ? [] : gs.every(g => on.includes(g)) ? on.filter(x => !gs.includes(x)) : on.concat(gs.filter(g => !on.includes(g)));
         S.manageGroup = on.join(','); renderManage();
       }));
-      if ($('#zip')) $('#zip').onclick = () => { S._zipOrig = false; xym && zipAll(xym); };
-      if ($('#zipo')) $('#zipo').onclick = () => { S._zipOrig = true; xym && zipAll(xym); };
+      if ($('#zip')) $('#zip').onclick = () => { if (xym) void zipAll(xym); };
+      if ($('#zipo')) $('#zipo').onclick = () => { if (xym) void zipAll(xym, true); };
       S._musers = r.users;
       if ($('#bimp')) $('#bimp').onclick = bulkImport;
       if ($('#gtx')) $('#gtx').onclick = () => { S.gtOpen = false; renderManage(); };
@@ -13548,22 +13558,48 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $$('[data-bkr]', bg).forEach(b => (b.onclick = async () => { b.disabled = true; try { const x = await bkDownload(b.dataset.bkr); b.textContent = '받음 ✓'; toast(ymLabel(b.dataset.bkr) + ' 백업을 받았습니다 (일일 ' + x.days.length + '건)'); } catch (e) { toast(e.message, true); b.disabled = false; } }));
     }, 'bk-reminder');
   }
-  async function zipAll(ym) {
+  let monthlyExportInProgress = false;
+  async function zipAll(ym, original = false) {
+    if (monthlyExportInProgress) return;
     if (!canMonthlyExport()) return toast('관리자만 월 업무현황 엑셀을 다운로드할 수 있습니다', true);
     const list = (S._mlist || []).filter(u => u.items.length);
     if (!list.length) return toast('받을 데이터가 없습니다', true);
-    if (!(await confirmBox(list.length + '명의 엑셀을 zip 하나로 받습니다. 몇 분 걸릴 수 있습니다.', '받기'))) return;
-    const btn = $('#zip'), pg = $('#pg'), pgt = $('#pgt'); btn.disabled = true; pg.classList.remove('hide');
-    const zip = new JSZip(); let done = 0, fails = [];
-    for (const u of list) {
-      pgt.textContent = done + '/' + list.length + ' ' + u.name;
-      try { const mr = await api('getMonth', { userId: u.id, ym }); if (S._zipOrig) zip.file(C.fileName(u.name, ym), await makeXlsxBlob(mr.user, ym, mr.target, mr.days)); else zip.file(sxName(u.name, ym), await simpleXlsxBlob(mr.user, ym, mr.target, mr.days, shareTot(u))); }
-      catch (e) { fails.push(u.name); }
-      done++; $('i', pg).style.width = (done / list.length * 100) + '%';
+    const token = S.token;
+    const buttons = [$('#zip'), $('#zipo')].filter(Boolean);
+    const pg = $('#pg'), pgt = $('#pgt'), share = shareTot();
+    const group = S.manageGroup;
+    monthlyExportInProgress = true;
+    try {
+      if (!(await confirmBox(list.length + '명의 엑셀을 zip 하나로 받습니다. 몇 분 걸릴 수 있습니다.', '받기')) || token !== S.token) return;
+      buttons.forEach(button => { button.disabled = true; });
+      pg.classList.remove('hide');
+      const zip = new JSZip(), fails = [];
+      let done = 0;
+      for (const u of list) {
+        if (token !== S.token) return;
+        pgt.textContent = done + '/' + list.length + ' ' + u.name;
+        try {
+          const mr = await api('getMonth', { userId: u.id, ym });
+          if (token !== S.token) return;
+          if (original) zip.file(C.fileName(u.name, ym), await makeXlsxBlob(mr.user, ym, mr.target, mr.days));
+          else zip.file(sxName(u.name, ym), await simpleXlsxBlob(mr.user, ym, mr.target, mr.days, share));
+        } catch (e) { fails.push(u.name); }
+        done++; $('i', pg).style.width = (done / list.length * 100) + '%';
+      }
+      pgt.textContent = '압축 중…';
+      const blob = await zip.generateAsync({ type: 'blob' });
+      if (token !== S.token) return;
+      saveBlob(blob, ymLabel(ym) + ' 업무데이터' + (group ? '_' + group.split(',').join('·') : '') + '.zip');
+      pgt.textContent = fails.length ? '실패: ' + fails.join(', ') : '완료';
+    } catch (error) {
+      if (token === S.token) {
+        pgt.textContent = '엑셀 생성 실패';
+        toast(error.message, true);
+      }
+    } finally {
+      monthlyExportInProgress = false;
+      buttons.forEach(button => { button.disabled = false; });
     }
-    pgt.textContent = '압축 중…';
-    saveBlob(await zip.generateAsync({ type: 'blob' }), ymLabel(ym) + ' 업무데이터' + (S.manageGroup ? '_' + S.manageGroup.split(',').join('·') : '') + '.zip');
-    pgt.textContent = fails.length ? '실패: ' + fails.join(', ') : '완료'; btn.disabled = false;
   }
 
   const rerender = () => (S.view === 'settings' ? renderSettings() : renderManage());
@@ -16326,7 +16362,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       timer=setInterval(()=>{
         if(!bg.isConnected){close();return;}
         if(document.hidden)return;
-        tick();if(!loading&&Date.now()-last>=12000)refresh();
+        tick();
+        // Use the existing change notification first, with a periodic safety refresh.
+        const interval=LO.notifyConnected&&LO.online&&!message.textContent?120000:12000;
+        if(!loading&&Date.now()-last>=interval)refresh();
       },1000);
       refresh();
     },'wide lo-monitor-dialog');
@@ -18762,13 +18801,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     };
   }
 
-  function prefetchManage() {
-    const ym = (curPeriod() || {}).ym; if (!ym || !isManager()) return;
-    const key = 'M|' + ym; S._mcache = S._mcache || {}; S._mpf = S._mpf || {};
-    if (S._mcache[key] || S._mpf[key]) return;
-    const tk = S.token;
-    S._mpf[key] = api('listUsers', { ym }).then(r => { if (tk !== S.token) return null; if (!S._mcache[key]) S._mcache[key] = r; return r; }).catch(() => null).finally(() => { delete S._mpf[key]; });
-  }
   // v29.92: authorized, read-only schedule reminder and attribution-month report.
   const loginScheduleRows=(D,today,me)=>(D.ev||[]).filter(e=>e.d<=today&&e.e>=today&&(e.grp==='전체'||me.role==='관리자'||(me.mg||[]).includes(e.grp)||e.owner===me.id)).sort((a,b)=>String(a.tm||'~').localeCompare(String(b.tm||'~'))||String(a.id).localeCompare(String(b.id)));
   async function loginSchedulePopup(token){
@@ -18965,7 +18997,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     srPollBusy=true;const token=S.token,uid=S.me.id;try{const r=await srApi('Notices');if(token!==S.token||S.me?.id!==uid||S.pv||S.mpv||!['input','smob'].includes(S.view)||document.querySelector('.modal-bg,.hr-ov'))return;const notice=(r.rows||[]).find(n=>{try{return Number(sessionStorage.getItem('sr94-later:'+uid+':'+n.no+':'+n.version)||0)<Date.now();}catch(e){return true;}});if(!notice)return;const ship=notice.board.ship||'',tags=Object.entries(notice.labels||{}).filter(([id])=>notice.checks[id]);
       const end=()=>{srPopupClose?.();srPopupClose=null;};srPopupClose=modal(`<style>${SR94_NOTICE_CSS}</style><div class="sr94-notice-head"><span>!</span><div><small>ORDER CHECK NOTICE</small><h2>조립 전 확인사항</h2><p>사양검토 담당자가 전달한 주문별 확인 내용입니다.</p></div></div><div class="sr94-notice-body"><div class="sr94-notice-order"><strong>${esc(notice.no)}</strong><span>${esc(srKind(notice.board))}</span><small>출력 ${esc(notice.board.slot)}</small></div>${srUrgent(ship)?`<div class="sr94-notice-rush"><b>급건 운송</b><strong>${esc(ship)}</strong></div>`:''}<div class="sr94-notice-tags">${tags.map(([,text])=>`<span>✓ ${esc(text)}</span>`).join('')}</div><section><h3>특이사항 · 전달 내용</h3><div>${esc(notice.note||'별도 특이사항이 없습니다. 주문 정보와 운송방법을 확인해 주세요.')}</div></section><div class="sr94-notice-by"><span>검토 담당 <b>${esc(notice.reviewer||'담당자')}</b></span><span>확인 대상 <b>${esc(S.me.name)}</b></span></div></div><div class="sr94-notice-footer"><button id="sr94-later">나중에 확인</button><button id="sr94-ack" class="primary">✓ 확인했습니다</button></div>`,(bg)=>{bg._lock=true;const later=()=>{try{sessionStorage.setItem('sr94-later:'+uid+':'+notice.no+':'+notice.version,String(Date.now()+5*60000));}catch(e){}end();};$('#sr94-later',bg).onclick=later;$('#sr94-ack',bg).onclick=async e=>{e.target.disabled=true;try{await srApi('Ack',{no:notice.no,version:notice.version});end();setTimeout(()=>void srPollNotices(),300);}catch(err){toast(err.message,true);e.target.disabled=false;}};bg.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();later();}if(e.key==='Tab'){const nodes=[...bg.querySelectorAll('button:not(:disabled)')];if(e.shiftKey&&document.activeElement===nodes[0]){e.preventDefault();nodes.at(-1)?.focus();}else if(!e.shiftKey&&document.activeElement===nodes.at(-1)){e.preventDefault();nodes[0]?.focus();}}};$('#sr94-ack',bg).focus();},'sr94-popup');
     }catch(e){/* A transient notice read failure must not block existing work input. */}finally{srPollBusy=false;}}
-  setInterval(()=>{if(S.view==='sr'&&S.me&&!S.pv&&!S.mpv){const P=srData();if(!P.busy&&!P.dirty&&!document.hidden){if(srActive())void srMutation('Beat').catch(()=>{});else if(!srQ('.sr-dialog'))void srFetch();}}else void srPollNotices();},25000);
+  setInterval(()=>{
+    if(S.view!=='sr'){void srPollNotices();return;}
+    if(!S.me||S.pv||S.mpv||document.hidden)return;
+    const P=srData();
+    // Keep the active review alive. Load the order list on explicit actions only.
+    if(!P.busy&&!P.dirty&&srActive())void srMutation('Beat').catch(()=>{});
+  },25000);
   window.addEventListener('beforeunload',e=>{if(S.view==='sr'&&S.srv?.dirty){srKeep();e.preventDefault();e.returnValue='';}});
 
 
@@ -19001,7 +19039,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (isRO() && S.me.role === '관리자' && !S.pv) api('mgCan').then(r => { if (r && r.can === false) { S.mgNo = true; const v = S.view || 'home'; shell(S.layout); go(v === 'mgr' ? 'home' : v); } }).catch(() => { });   // v28.70 : 이사 = 매니저 관리 숨김                 // v28.59 : 이번 주 할 일                                           // v28.56 : 월 백업 알림
       if (!pre && S.me && S.me.role === '관리자' && !isRO() && !r.mustChange) setTimeout(() => { void pendingPopup(); }, 3500);   // v29.72 : 가입 승인 대기 알림
       if (!pre && r.mustChange) changePin('임시 비밀번호이거나 쉬운 비밀번호입니다. 본인만 아는 <b>새 번호로 바꿔야</b> 쓸 수 있습니다.', true);   // 새로고침해도 다시
-      if (isManager()) setTimeout(() => { prefetchManage(); if (window.Leave) window.Leave.prefetch().then(updateBadge).catch(() => { }); }, 600);
+      if (isManager()) setTimeout(() => { if (window.Leave) window.Leave.prefetch().then(updateBadge).catch(() => { }); }, 600);
     } catch (e) { if (S.token) { toast(e.message, true); } renderLogin(); }
   }
   window.addEventListener('popstate', async e => {               // 브라우저 [뒤로] : 앱 안의 이전 화면으로
