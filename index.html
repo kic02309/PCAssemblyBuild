@@ -8361,7 +8361,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.31';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.32';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16596,6 +16596,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const key=loPartKey(kind);
     return ({cpu:210,메인보드:173,메모리:278,ssd:38,케이스:330,파워:14,'cpu쿨러':111})[key]??loStageHue(key);
   }
+  function loWorkPhrases(r,st,batch,stage,preview,meta) {
+    const applied=preview?.stageTexts?.[st.stage];
+    const setId=batch?.set_data?.id||r.cfg.lines.find(line=>line.id===st.line)?.setId;
+    const saved=(r.stagePhrases||[]).find(p=>p.line===st.line&&p.set_id===setId)?.phrases?.[st.stage];
+    const defaults=batch&&!batch.hasStageTexts&&saved?.name===stage?.name?saved:null;
+    const caution=(applied?.caution??stage?.caution)||meta?.note;
+    return {instructions:(applied?.instructions??stage?.instructions)||defaults?.instructions||'',
+      caution:caution||defaults?.caution||'', defaultCaution:!caution&&!!defaults?.caution};
+  }
   function loDrawWork() {
     const r=LO.data,st=loCurrentSeat();if(!st){document.getElementById('loWork')?.remove();LO.seat=null;clearInterval(LO.clock);document.body.classList.remove('lo-work-open');return;}
     const u=loWorkUnit(st),b=r.batches.find(x=>x.id===u?.batchId);
@@ -16604,10 +16613,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const preview=!u&&!lineWaiting.length?(r.preparedPreview||[]).find(p=>p.line===st.line):null;
     const identity=b?.snapshot||next?.snapshot||preview;
     const meta=b?.meta||next?.meta||preview?.meta;
-    const stage=b?.set_data.stages[u.stage]||loLineStages(st.line)[st.stage],focus=loWorkFocus(stage);
-    const previewPhrase=preview?.stageTexts?.[st.stage];
-    const instructions=previewPhrase?.instructions??stage?.instructions;
-    const caution=(previewPhrase?.caution??stage?.caution)||meta?.note;
+    const stage=b?.set_data.stages[u.stage]||next?.set_data?.stages?.[st.stage]||loLineStages(st.line)[st.stage],focus=loWorkFocus(stage);
+    const {instructions,caution,defaultCaution}=loWorkPhrases(r,st,b||next,stage,preview,meta);
     const editable=loCanWork(st),pendingHere=editable&&LO.pending?.station===st.id;
     const supervised=editable&&st.supervisedComplete;
     const plan=(r.prepared||[]).find(p=>p.line===st.line);
@@ -16620,7 +16627,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     root.innerHTML=`<div class="lo-work-head"><div class="lo-work-operator">${esc(loLineName(st.line))} · ${esc(st.assignedName||'미배정')}${supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용'}</div>${pauseControl?`<div class="lo-work-admin">${pauseControl}</div>`:''}${editable&&!supervised?'<button id="loSwitchConfig">스위치 설정</button>':''}<button id="loFull">⛶ 전체화면</button><button id="loExit">나가기</button></div>
     <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><div class="lo-model-top"><b>제조번호 ${esc(identity?.no||'—')} · ${u&&b?'현재 작업 '+u.seq+' / '+b.q:preview?'준비 '+preview.q+'대':'현재 작업 —'}</b>${meta?.code?`<div class="lo-model-code"><small>제품코드</small>${esc(meta.code)}</div>`:''}</div><div class="lo-model-identity"><h2>${esc(identity?.model||'대기 작업 없음')}</h2></div>${b?.set_data.name?`<small>${esc(loSetName(b.set_data.name))}</small>`:''}</div><h3>전체 부품 사양${focus.length?'<small>이 공정의 확인 부품을 색으로 표시</small>':''}</h3><div class="lo-spec-scroll"><table><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${focus.includes(loPartKey(x.kind))?'lo-focus':''}" style="--lo-part-hue:${loPartHue(x.kind)}"><th scope="row"><span class="lo-part-kind">${esc(x.kind)}</span></th><td>${esc(x.name)}</td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
     <aside class="lo-complete-card"><header class="lo-work-focus"><small>${esc(seatNumber)}번 작업 · 모니터 ${esc(st.id)}</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</header><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">${['분','초','1/100초'].map((label,i)=>`${i?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div><p>${b?.paused_at?'일시정지 · 재개하면 이어서 측정':u?.readyAt?'진행 중 · 현재 제품부터 경과시간':preview?'시작 대기 · 작업이 배정되면 측정 시작':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${instructions?`<p><b>완료 기준</b> · ${esc(instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?`<button id="loDone" class="lo-done" ${u?'':'disabled'}>✓ 작업 완료<small>${supervised?'완료 시 이 자리 담당자의 실적으로 기록됩니다':'본체를 넘길 때 스위치 또는 버튼'}</small></button>`:'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="lo-work-connection" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></aside></div>
-    ${caution?`<div class="lo-caution"><b>⚠ 주의사항</b><span>${esc(caution)}</span></div>`:''}<div class="lo-work-foot">공정 신호 기준 · 시리얼 실물 대조 없음 · 순번은 실물을 확정 식별하지 않습니다.</div>`;
+    ${caution?`<div class="lo-caution"><b>⚠ ${defaultCaution?'라인 기본 주의사항':'주의사항'}</b><span>${esc(caution)}</span></div>`:''}<div class="lo-work-foot">공정 신호 기준 · 시리얼 실물 대조 없음 · 순번은 실물을 확정 식별하지 않습니다.</div>`;
     loBindControls(root);
     $('#loExit',root).onclick=loCloseWork;$('#loFull',root).onclick=()=>root.requestFullscreen?.().catch(()=>toast('브라우저 전체화면을 열 수 없습니다',true));
     if(editable)$('#loDone',root).onclick=()=>loComplete();
