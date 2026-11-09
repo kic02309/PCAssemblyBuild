@@ -3859,6 +3859,24 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 #loWork .lo-stopwatch{container-type:inline-size;flex:1;min-height:118px;align-content:center}
 #loWork .lo-stopwatch .lo-elapsed{font-size:clamp(30px,11cqi,108px)}
 #loWork .lo-stopwatch .lo-time-part small{font-size:clamp(13px,2.8cqi,19px)}
+.lo-picked-work{display:grid;gap:4px;margin:0 0 8px;color:#dceaff}.lo-picked-work strong{font-size:clamp(17px,2vw,28px);line-height:1.25;overflow-wrap:anywhere;color:white}
+.lo-picked-work span{font-size:13px}.lo-banner-main:has(.lo-picked-work) .lo-banner-prepared .muted{display:none}
+.lo-stages .lo-stage{display:block;grid-template-rows:none;padding:0}.lo-stage-card{display:grid;gap:7px;padding:14px;width:100%;text-align:left;color:inherit;border:0;background:transparent;border-radius:9px}
+button.lo-stage-card:hover,button.lo-stage-card:focus-visible{outline:2px solid #3276dc;outline-offset:-2px}
+.lo-stage-card>strong{font-size:18px}.lo-stage-owner{font-size:13px;color:#385677}.lo-stage-tally{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lo-stage-tally span{padding:7px;background:#f9fbffbd;text-align:center;border-radius:8px;color:#345878;font-size:13px}.lo-stage-tally b{display:block;font-size:clamp(22px,3.1vw,43px);line-height:1.05;color:#1d457a}
+.lo-stage-tally span+span b{color:#896020}.lo-batch-table [data-lo-select]{cursor:pointer}.lo-batch-table [data-lo-select][aria-selected=true]>td{background:#e0eeff;color:#1e3d62}
+.lo-batch-table [data-lo-select][aria-selected=true]>td:first-child{box-shadow:inset 3px 0 #3276d7}
+.lo-batch-more{position:fixed;inset:auto;margin:0;padding:5px;background:var(--panel,#fff);color:var(--ink,#213952);border:1px solid #b6cbe7;border-radius:8px;box-shadow:0 5px 18px #21395244}
+.lo-batch-more button{display:block;width:100%;text-align:left;border:0;background:transparent;color:inherit;padding:8px 12px}.lo-batch-more button:hover{background:#e8f1fd;color:#173c70}
+.lo-guide-progress button{color:inherit;border:0;background:#edf2f9;padding:5px 9px;border-radius:6px;font-size:12px;font-weight:700}
+.lo-guide-progress button[aria-current=step]{outline:2px solid #3269b8;background:#e4efff}
+.lo-guide-titlebar{display:flex;justify-content:space-between;align-items:center;gap:10px}.lo-guide-titlebar h3{margin:0}
+.lo-source-list [data-lo-source]{display:grid;grid-template-columns:24px minmax(170px,1.5fr) minmax(180px,1fr) auto;gap:9px;align-items:center;text-align:left;border-radius:10px}
+.lo-source-list [data-lo-source] small{color:#496282}.lo-source-number{font-weight:900;color:#24538a}
+.lo-model-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.lo-model-top .lo-model-code{flex:0 0 auto}.lo-model-head .lo-model-identity h2{font-size:clamp(26px,3vw,54px);overflow-wrap:anywhere}
+@media(max-width:850px){.lo-source-list [data-lo-source]{grid-template-columns:22px 1fr}.lo-source-list [data-lo-source]>span:nth-child(3),.lo-source-list [data-lo-source]>small{grid-column:2}}
 .lo-serial-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .lo-serial-heading label{display:flex;align-items:center;gap:5px;font-weight:700;white-space:nowrap}
 .lo-meta-paste>summary{cursor:pointer;font-weight:700;color:#284d78;margin-bottom:6px}
@@ -8347,7 +8365,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.29';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.30';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15576,7 +15594,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ------------------------------------------------ 시작
   // 매니저·관리자 : 관리 목록을 뒤에서 미리 받아 둠 → [관리] 누르면 바로 보임
   // v29.98 — 라인 상황판. 기존 prCalc/prSave/prConfirm과 별개 운영 기록.
-  const LO = { data:null,date:null,seat:null,timer:null,clock:null,epoch:0,last:0,offset:0,online:false,busy:false,pending:null,autoWorkBatch:null,starting:null,held:new Set(),blockedUntil:0,sourceRows:[],stats:null,requestSeq:0,notifications:null,notifyConnected:false,notifyDirty:false,syncing:null };
+  const LO = { data:null,date:null,seat:null,timer:null,clock:null,epoch:0,last:0,offset:0,online:false,busy:false,pending:null,autoWorkBatch:null,selectedBatch:null,starting:null,held:new Set(),blockedUntil:0,sourceRows:[],stats:null,requestSeq:0,notifications:null,notifyConnected:false,notifyDirty:false,syncing:null };
   const canLine = () => canProd() || !!S.loCan;
   const loId = () => 'lo_' + (globalThis.crypto?.randomUUID?.() || (Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));
   const LO_TERMINAL_OPS = new Set(['can','get','probe','watch','complete','terminalBind','terminalUnbind']);
@@ -15825,7 +15843,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     clearTimeout(LO.timer);clearInterval(LO.clock);LO.epoch++;LO.online=false;LO.held.clear();
     if(document.fullscreenElement?.id==='loWork')document.exitFullscreen().catch(()=>{});
     document.getElementById('loWork')?.remove();document.body.classList.remove('lo-work-open');LO.seat=null;
-    if(reset){LO.date=null;LO.statsFrom=null;LO.statsTo=null;LO.data=null;LO.pending=null;LO.autoWorkBatch=null;LO.starting=null;LO.busy=false;S.loCan=false;try{sessionStorage.removeItem('linePending');sessionStorage.removeItem('lineWorkSeat');}catch(e){}}
+    if(reset){LO.date=null;LO.statsFrom=null;LO.statsTo=null;LO.data=null;LO.pending=null;LO.autoWorkBatch=null;LO.selectedBatch=null;LO.starting=null;LO.busy=false;S.loCan=false;try{sessionStorage.removeItem('linePending');sessionStorage.removeItem('lineWorkSeat');}catch(e){}}
   }
   async function renderLine() {
     loStop();LO.date=LO.date||S.today;const epoch=LO.epoch;
@@ -16017,7 +16035,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return String(index+1);
   }
   function loGuideProgress(step) {
-    return `<nav class="lo-guide-progress" aria-label="작업준비">${['공정 순서','담당자 확인','제조건 선택','최종 확인'].map((name,i)=>`<span ${i+1===step?'aria-current="step"':''}>${i+1}. ${name}</span>`).join('')}</nav>`;
+    return `<nav class="lo-guide-progress" aria-label="작업준비">${['공정 순서','담당자 확인','제조건 선택','최종 확인'].map((name,i)=>`<button type="button" data-lo-step="${i+1}" ${i+1===step?'aria-current="step"':''}>${i+1}. ${name}</button>`).join('')}</nav>`;
   }
   function loGuideSplit(guide,index) {
     const stages=loLineStages(guide.line,guide.cfg);
@@ -16087,6 +16105,74 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     guide.dirty=true;
     return true;
   }
+  const loDraftKey = () => 'lineGuideDraft:'+(S.me?.id||'');
+  function loSaveGuideDraft(guide,step) {
+    guide.step=step;
+    try{sessionStorage.setItem(loDraftKey(),JSON.stringify(guide));}catch(e){}
+  }
+  function loLoadGuideDraft() {
+    try{const saved=JSON.parse(sessionStorage.getItem(loDraftKey())||'null');if(saved?.ver===LO.data?.cfgVer)return saved;}catch(e){}
+    return null;
+  }
+  function loGuideMove(guide,step,close) {
+    if(step>2&&loMissingAssignments(guide.line,guide.cfg).length)return toast('먼저 모든 공정의 담당자를 배정하세요.',true);
+    if(step===4&&!guide.rowId)return toast('먼저 제조건을 선택하세요.',true);
+    loSaveGuideDraft(guide,step);close();
+    if(step<=2)loGuide(guide,step);
+    else loSources(guide.date||LO.date,step===4?guide.rowId:null,guide);
+  }
+  function loGuideNav(bg,guide,step,close,save) {
+    bg._lock=true;
+    $$('[data-lo-step]',bg).forEach(button=>button.onclick=()=>{const target=+button.dataset.loStep;if(target!==step&&save())loGuideMove(guide,target,close);});
+  }
+  function loGuidePhrases(guide,stages) {
+    const setId=guide.cfg.lines.find(x=>x.id===guide.line)?.setId;
+    const defaults=(LO.data.stagePhrases||[]).find(x=>x.line===guide.line&&x.set_id===setId)?.phrases||[];
+    return stages.map((stage,i)=>{
+      const saved=guide.stageTexts?.[i], preset=defaults[i];
+      const text=saved?.name===stage.name?saved:preset?.name===stage.name?preset:stage;
+      return {name:stage.name,instructions:text.instructions||'',caution:text.caution||''};
+    });
+  }
+  function loPhraseSettings(guide,phrases,bg) {
+    const current=LO.data.cfg, setId=current.lines.find(x=>x.id===guide.line)?.setId;
+    const stages=loLineStages(guide.line,current);
+    if(stages.length!==phrases.length||stages.some((stage,i)=>stage.name!==phrases[i].name)){
+      toast('공정 구조를 바꾼 경우 이번 작업으로 저장한 뒤 기본 문구를 설정하세요.',true);return;
+    }
+    const previous=(LO.data.stagePhrases||[]).find(x=>x.line===guide.line&&x.set_id===setId);
+    modal('<h3>공정 문구 설정</h3><p>현재 입력한 완료 기준과 작업 주의사항을 '+esc(loLineName(guide.line))+' 기본 문구로 저장합니다.</p><div class="acts"><button data-c>닫기</button><button data-s class="primary">기본 문구로 저장</button></div>',(box,close)=>{
+      box._lock=true;$('[data-c]',box).onclick=close;
+      $('[data-s]',box).onclick=async e=>{
+        e.target.disabled=true;
+        try{
+          const result=await loCall('saveStagePhrases',{line:guide.line,setId,version:previous?.ver||0,phrases});
+          LO.data.stagePhrases=(LO.data.stagePhrases||[]).filter(x=>x.line!==guide.line||x.set_id!==setId);
+          LO.data.stagePhrases.push({line:guide.line,set_id:setId,ver:result.version,phrases});
+          $('#loPhraseStatus',bg).textContent='기본 문구 저장 완료';
+          close();toast('공정 기본 문구를 저장했습니다.');
+        }catch(error){toast(error.message,true);e.target.disabled=false;}
+      };
+    });
+  }
+  function loSearchGuidePerson(guide,stage,seat,users,onSelect) {
+    modal('<h3>다른 담당자 이름 검색</h3><label>이름<input id="loCrewQuery" type="search" placeholder="이름을 입력하세요"></label><div id="loCrewResults" class="lo-source-list"></div><div class="acts"><button data-c>닫기</button></div>',(bg,close)=>{
+      bg._lock=true;const input=$('#loCrewQuery',bg), results=$('#loCrewResults',bg);
+      const draw=()=>{
+        const query=input.value.trim().toLowerCase();
+        const matches=query?users.filter(u=>u.name.toLowerCase().includes(query)).slice(0,25):[];
+        results.innerHTML=matches.map(u=>{
+          const assigned=guide.cfg.stations.find(st=>st.userId===u.id&&st.id!==seat);
+          return `<button type="button" data-lo-crew="${esc(u.id)}" ${assigned?'disabled':''}>${esc(u.name)} · ${esc(u.group||'')}${assigned?' · '+esc(assigned.id)+' 배정됨':''}</button>`;
+        }).join('')||(query?'<p>일치하는 이름이 없습니다.</p>':'');
+        $$('[data-lo-crew]',results).forEach(button=>button.onclick=()=>{
+          if(!loGuideAssign(guide,stage,seat,button.dataset.loCrew))return toast('이미 다른 자리에 배정됐거나 작업대 한도에 도달했습니다.',true);
+          close();onSelect();
+        });
+      };
+      input.oninput=draw;$('[data-c]',bg).onclick=close;input.focus();
+    });
+  }
   function loGuide(guide,step=1) {
     const r=LO.data;
     if(!r?.manage||LO.starting)return;
@@ -16097,25 +16183,27 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       guide={cfg,line:line.id,ver:r.cfgVer,dirty:false};
     }
     const {cfg,line}=guide,stages=loLineStages(line,cfg),locked=r.batches.some(b=>+b.final<+b.q);
+    const phrases=loGuidePhrases(guide,stages);
+    const lineUsers=new Set([...r.cfg.stations,...cfg.stations].filter(s=>s.line===line&&s.userId).map(s=>s.userId));
     const users=[...r.users].sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    const options=seat=>'<option value="">담당자 선택</option>'+users.map(u=>`<option value="${esc(u.id)}" ${u.id===seat.userId?'selected':cfg.stations.some(s=>s!==seat&&s.userId===u.id)?'disabled':''}>${esc(u.name)} · ${esc(u.group||'')}</option>`).join('');
+    const options=seat=>'<option value="">담당자 선택</option>'+users.filter(u=>lineUsers.has(u.id)).map(u=>`<option value="${esc(u.id)}" ${u.id===seat.userId?'selected':cfg.stations.some(s=>s!==seat&&s.userId===u.id)?'disabled':''}>${esc(u.name)} · ${esc(u.group||'')}</option>`).join('');
     const structure=stages.map((stage,i)=>`<div class="lo-guide-row" ${stage.groupId?'data-lo-sub':''}>
       <strong>${esc(loStageNumber(stages,i))} · ${esc(stage.groupName||stage.name)}</strong>
       <label>작업 이름<input data-lo-guide-name="${i}" maxlength="60" value="${esc(stage.name)}" ${locked?'disabled':''}></label>
-      <label>완료 기준 (선택)<input data-lo-guide-instructions="${i}" maxlength="300" value="${esc(stage.instructions||'')}" placeholder="예: 케이블을 고정한 뒤 다음 작업대로 넘기기" ${locked?'disabled':''}></label>
-      <label>작업 주의사항 (선택)<input data-lo-guide-caution="${i}" maxlength="300" value="${esc(stage.caution||'')}" placeholder="예: 케이스 전면 커넥터 손상 주의" ${locked?'disabled':''}></label>
+      <label>완료 기준 (선택)<input data-lo-guide-instructions="${i}" maxlength="300" value="${esc(phrases[i].instructions)}" placeholder="예: 케이블을 고정한 뒤 다음 작업대로 넘기기"></label>
+      <label>작업 주의사항 (선택)<input data-lo-guide-caution="${i}" maxlength="300" value="${esc(phrases[i].caution)}" placeholder="예: 케이스 전면 커넥터 손상 주의"></label>
       ${locked?'':`<div class="lo-guide-row-actions">${stages.length>=8?'':`<button type="button" data-lo-split="${i}">+ 이어서 할 세부 작업 추가</button>`}${stage.groupId?`<button type="button" class="danger" data-lo-remove="${i}" aria-label="${esc(loStageNumber(stages,i))} 세부 작업 삭제">세부 작업 삭제</button>`:''}</div>`}
     </div>`).join('');
     const assignments=stages.map((stage,i)=>{
       const seats=loStageSeats(line,i,cfg.stations);
-      return `<div class="lo-guide-row"><strong>${esc(loStageNumber(stages,i))} ${esc(stage.name)}</strong>${(seats.length?seats:[{id:'',userId:''}]).map(seat=>`<label>${seat.id?`${esc(seat.id)} · ${r.registeredStations.includes(seat.id)?'공용 PC 지정됨':'개인 로그인 가능 · 공용 PC 미지정'}`:'새 작업대 · ID 자동 부여'}<select data-lo-guide-seat="${esc(seat.id)}" data-lo-guide-stage="${i}" ${locked&&!seat.id?'disabled':''}>${options(seat)}</select></label>`).join('')}</div>`;
+      return `<div class="lo-guide-row"><strong>${esc(loStageNumber(stages,i))} ${esc(stage.name)}</strong>${(seats.length?seats:[{id:'',userId:''}]).map(seat=>`<label>${seat.id?`${esc(seat.id)} · ${r.registeredStations.includes(seat.id)?'공용 PC 지정됨':'개인 로그인 가능 · 공용 PC 미지정'}`:'새 작업대 · ID 자동 부여'}<select data-lo-guide-seat="${esc(seat.id)}" data-lo-guide-stage="${i}" ${locked&&!seat.id?'disabled':''}>${options(seat)}</select></label><button type="button" data-lo-name-search="${i}" data-lo-search-seat="${esc(seat.id)}" ${locked&&!seat.id?'disabled':''}>이름 검색</button>`).join('')}</div>`;
     }).join('');
-    modal(`<div class="lo-guide-head"><h3 id="loGuideTitle">작업준비</h3>${loGuideProgress(step)}</div>
+    modal(`<div class="lo-guide-head"><div class="lo-guide-titlebar"><h3 id="loGuideTitle">작업준비</h3>${step===1?'<button id="loPhraseSettings" type="button">공정 문구 설정</button>':''}</div>${loGuideProgress(step)}</div>
       <div class="lo-guide-body">
       ${step===1?`<label>작업할 라인 <select id="loGuideLine" ${guide.dirty?'disabled':''}>${cfg.lines.map(x=>`<option value="${esc(x.id)}" ${x.id===line?'selected':''}>${esc(loLineName(x.id))}</option>`).join('')}</select></label>
         <p class="lo-guide-summary">${locked?'진행 중인 배치가 있어 공정 순서는 현재 설정을 사용합니다.':'현재 설정을 불러왔습니다. 본체를 다음 사람에게 넘기는 지점에서만 세부 작업을 추가하세요. 최대 8개 작업을 설정할 수 있습니다.'}</p>
         <div class="lo-guide-tools"><button id="loGuideConfig" type="button" ${guide.dirty?'disabled':''}>자리 · 작업 세트 설정</button><small>세트를 바꾸거나 자리 구조를 관리할 때만 사용합니다.</small></div>
-        <div class="lo-guide-rows">${structure}</div>`:`<p class="lo-guide-summary">${esc(loLineName(line))} · 오늘 작업할 사람을 순서대로 확인하세요.</p>
+        <p class="lo-meta-help" id="loPhraseStatus">입력한 문구는 이번 작업에 적용됩니다. [공정 문구 설정]에서 기본값으로 저장할 수 있습니다.</p><div class="lo-guide-rows">${structure}</div>`:`<p class="lo-guide-summary">${esc(loLineName(line))} · 오늘 작업할 사람을 순서대로 확인하세요.</p>
         <div class="lo-guide-tools">${r.admin?'<button id="loGuideTerminal" type="button">이 PC 작업대 지정</button>':''}<small>공용 PC 지정은 사용할 PC에서 합니다. 새 작업대는 설정이 적용된 뒤 지정할 수 있습니다.</small></div>
         <div class="lo-guide-rows">${assignments}</div>`}
       </div>
@@ -16127,24 +16215,26 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       dialog.setAttribute('aria-modal','true');
       dialog.setAttribute('aria-labelledby','loGuideTitle');
       const next=$('#loGuideNext',bg);
-      const go=page=>{close();loGuide(guide,page);};
+      const go=page=>loGuideMove(guide,page,close);
       const collect=(allowBlank=false)=>{
-        if(locked)return true;
+        if(step!==1)return true;
         const names=$$('[data-lo-guide-name]',bg).map(x=>x.value.trim());
         const notes=$$('[data-lo-guide-instructions]',bg).map(x=>x.value.trim());
         const cautions=$$('[data-lo-guide-caution]',bg).map(x=>x.value.trim());
         if(!allowBlank&&names.some(name=>!name)){toast('작업 이름을 입력하세요.',true);return false;}
-        if(names.some((name,i)=>name!==stages[i].name||notes[i]!==String(stages[i].instructions||'')||cautions[i]!==String(stages[i].caution||''))){
+        if(!locked&&names.some((name,i)=>name!==stages[i].name)){
           if(!loGuideEditStages(guide))return false;
-          loLineStages(line,cfg).forEach((stage,i)=>{stage.name=names[i];stage.instructions=notes[i];stage.caution=cautions[i];});
-          guide.dirty=true;
+          loLineStages(line,cfg).forEach((stage,i)=>{stage.name=names[i];});guide.dirty=true;
         }
+        guide.stageTexts=names.map((name,i)=>({name,instructions:notes[i],caution:cautions[i]}));
         return true;
       };
-      $('[data-c]',bg).onclick=close;
+      loGuideNav(bg,guide,step,close,collect);
+      $('[data-c]',bg).onclick=()=>{if(collect(true)){loSaveGuideDraft(guide,step);close();}};
       if(step===1){
+        $('#loPhraseSettings',bg).onclick=()=>{if(collect())loPhraseSettings(guide,guide.stageTexts,bg);};
         const select=$('#loGuideLine',bg);
-        select.onchange=()=>{if(collect()&&!guide.dirty){guide.line=select.value;go(1);}else{select.value=line;if(guide.dirty)toast('현재 라인에 변경한 설정이 있습니다. 라인을 바꾸려면 창을 닫고 다시 열어 주세요.');}};
+        select.onchange=()=>{if(collect()&&!guide.dirty){guide.line=select.value;guide.stageTexts=null;guide.rowId=null;guide.finalDraft=null;go(1);}else{select.value=line;if(guide.dirty)toast('현재 라인에 변경한 설정이 있습니다. 라인을 바꾸려면 창을 닫고 다시 열어 주세요.');}};
         $('#loGuideConfig',bg).onclick=()=>{
           if(!collect())return;
           if(guide.dirty)return toast('이 화면에 변경한 설정이 있습니다. 먼저 준비를 마치거나 창을 닫아 주세요.');
@@ -16159,6 +16249,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         });
         next.onclick=()=>{if(collect())go(2);};
       }else{
+        $$('[data-lo-name-search]',bg).forEach(button=>button.onclick=()=>loSearchGuidePerson(guide,+button.dataset.loNameSearch,button.dataset.loSearchSeat,users,()=>go(2)));
         const terminal=$('#loGuideTerminal',bg);
         if(terminal)terminal.onclick=()=>loTerminalSettings(()=>go(2),line);
         const missing=loMissingAssignments(line,cfg);
@@ -16170,7 +16261,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           go(2);
         });
         $('#loGuideBack',bg).onclick=()=>go(1);
-        next.onclick=()=>{if(!loMissingAssignments(line,cfg).length){close();loSources(guide.date||LO.date,null,guide);}};
+        next.onclick=()=>go(3);
       }
     },'wide lo-guide-dialog');
   }
@@ -16284,16 +16375,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if(clear)clear.onclick=()=>update('');
     });
   }
-  function loStageCard(line,stage,index,batches) {
-    const seats=loStageSeats(line,index);
-    return `<div class="lo-stage lo-stage-tint" style="--lo-stage-hue:${loStageHue(stage.name)}">
-      <h3><span class="lo-stage-caption">${esc(loStageNumber(loLineStages(line),index))} ${esc(stage.name)}${stage.groupName?`<small>${esc(stage.groupName)}</small>`:''}</span>${seats.length?`<button type="button" class="lo-stage-open" data-lo-stage-open="${index}" data-lo-line="${esc(line)}" aria-label="${esc(loLineName(line))} ${esc(loStageNumber(loLineStages(line),index))}번 ${esc(stage.name)} 조회 화면 열기">조회 화면 열기</button>`:''}</h3>
-      ${seats.map(st=>{const batch=batches.find(b=>b.id===st.current?.batchId);
-        const content=`<b>${seats.length>1?`${esc(loSeatLabel(st))} · `:''}${esc(st.assignedName||'미배정')} <small>${esc(st.id)}</small></b><span>${batch?esc(batch.snapshot.model||batch.snapshot.no):'대기 작업 없음'}</span><small>${batch?'제조 '+esc(batch.snapshot.no)+' · '+st.current.seq+'/'+batch.q:'앞 공정 대기'}</small>${batch?.sourceChanged?'<strong class="lo-error">원본 변경 확인 필요</strong>':''}`;
-        return st.canComplete
-          ?`<button type="button" class="lo-seat${st.supervisedComplete?'':' lo-mine'}" data-lo-seat="${esc(st.id)}">${content}<span class="lo-seat-open">작업 화면 열기</span></button>`
-          :`<div class="lo-seat">${content}<small class="lo-seat-view-only">조회 전용</small></div>`;
-      }).join('')||'<div class="lo-empty">자리 미설정</div>'}</div>`;
+  function loStageCard(line,stage,index,focus) {
+    const seats=loStageSeats(line,index),count=focus?.counts?.[index];
+    const title=`<strong>${esc(loStageNumber(loLineStages(line),index))} · ${esc(stage.name)}</strong>`;
+    const tally=`<div class="lo-stage-tally"><span>완료<b>${count?.done??0}</b></span><span>대기<b>${count?.waiting??0}</b></span></div>`;
+    const owner=st=>`<span class="lo-stage-owner">${esc(st.assignedName||'미배정')} · ${esc(st.id)}</span>`;
+    const card=seats.length===1?`<button type="button" class="lo-stage-card" data-lo-seat="${esc(seats[0].id)}">${title}${owner(seats[0])}${tally}</button>`
+      :`<div class="lo-stage-card">${title}${tally}${seats.map(st=>`<button type="button" data-lo-seat="${esc(st.id)}">${owner(st)}</button>`).join('')||'<small>자리 미설정</small>'}</div>`;
+    return `<div class="lo-stage lo-stage-tint" style="--lo-stage-hue:${loStageHue(stage.name)}">${card}</div>`;
   }
   function loBatchProgress(batch,expanded) {
     const counts=batch.counts||[];
@@ -16302,47 +16391,85 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const idle=counts.flatMap((c,i)=>+c.done||+c.waiting?[]:[render(c,i)]);
     return `${active.length?`<div class="lo-batch-chips">${active.join('')}</div>`:'<span class="muted">진행 수량 없음</span>'}${idle.length?`<details class="lo-batch-all" data-lo-progress="${esc(batch.id)}" ${expanded?'open':''}><summary>미진행 공정 ${idle.length}개</summary><div class="lo-batch-chips">${idle.join('')}</div></details>`:''}`;
   }
-  function loBoardLines(lines,batches,openIdle) {
+  function loBoardLines(lines,batches,openIdle,previews,selected) {
     const panels=lines.map(line=>{
       const stages=loLineStages(line.id),name=esc(loLineName(line.id));
       const batch=batches.filter(b=>b.line===line.id);
       const plan=loSum(batch,'q'),done=loSum(batch,'final'),remaining=plan-done;
-      const rows=Math.max(1,...stages.map((_,i)=>loStageSeats(line.id,i).length));
+      const ready=previews.find(p=>p.line===line.id);
+      const focus=selected?.line===line.id?selected:batch.find(x=>x.final<x.q)||ready;
       const progress=`계획 ${plan} · 최종 완료 ${done} · 미완료 ${remaining}`;
-      const cards=`<div class="lo-stages" style="--lo-stages:${stages.length||4};--lo-seat-rows:${rows};--lo-stage-rows:${rows+1}">${stages.map((stage,i)=>loStageCard(line.id,stage,i,batch)).join('')}</div>`;
-      return {running:remaining>0,html:remaining>0
-        ?`<section class="lo-line"><h2>${name} <small>${progress}</small></h2>${cards}</section>`
+      const cards=`<div class="lo-stages" style="--lo-stages:${stages.length||4};--lo-seat-rows:1;--lo-stage-rows:1">${stages.map((stage,i)=>loStageCard(line.id,stage,i,focus)).join('')}</div>`;
+      return {running:remaining>0||!!ready,html:remaining>0||ready
+        ?`<section class="lo-line"><h2>${name} <small>${remaining?progress:'준비 완료 · 시작 대기 '+ready.q+'대'}</small></h2>${cards}</section>`
         :`<details class="lo-line lo-line-idle" data-lo-idle="${esc(line.id)}" ${openIdle.has(line.id)?'open':''}><summary><b>${name}</b> ${plan?progress:'배치 없음'} · 작업대 보기</summary>${cards}</details>`};
     });
     const running=panels.filter(panel=>panel.running),idle=panels.filter(panel=>!panel.running);
     return `<div class="lo-lines${running.length>1?' lo-lines-pair':''}">${[...running,...idle].map(panel=>panel.html).join('')}</div>`;
   }
+  function loBatchTools(r,b) {
+    const id=esc(b.id);
+    const detail=r.monitor?`<button type="button" class="lo-monitor-open" data-lo-monitor="${id}">상세 현황</button>`:'';
+    const more=r.manage?`<button type="button" data-lo-more="${id}" aria-label="배치 도구 더 보기">⋯</button><div class="lo-batch-more" popover id="lo-more-${id}">
+      <button type="button" data-lo-meta="${id}">사양·시리얼 확인</button>
+      ${b.canOrder?`<button type="button" data-lo-order="${id}">순서 변경</button>`:''}
+      ${b.sourceChanged?`<button type="button" data-lo-ack="${id}">기존 배치 유지 확인</button>`:''}
+      ${loPauseButton(b)}
+      ${b.canCancel?`<button type="button" data-lo-cancel="${id}">작업 취소</button>`:''}
+      ${b.canDelete?`<button type="button" class="danger" data-lo-delete="${id}">작업 삭제</button>`:''}</div>`:'';
+    return `<div class="lo-batch-actions">${detail}${more}</div>`;
+  }
+  function loBatchPopover(button) {
+    const pop=document.getElementById('lo-more-'+button.dataset.loMore);
+    if(pop.matches(':popover-open')){pop.hidePopover();return;}
+    pop.showPopover();const rect=button.getBoundingClientRect();
+    pop.style.left=Math.max(8,rect.right-pop.offsetWidth)+'px';
+    pop.style.top=(rect.bottom+pop.offsetHeight+8<innerHeight?rect.bottom+5:Math.max(8,rect.top-pop.offsetHeight-5))+'px';
+  }
+  async function loViewBatchSerials(id) {
+    try{
+      const data=await loCall('batchSerials',{batchId:id});
+      const parts=(data.meta?.specs||[]).map(p=>`<li>${esc(p.kind)} · ${esc(p.name)} · ${esc(p.code||'—')}</li>`).join('');
+      const list=(data.serials||[]).map(sn=>`<li>${esc(sn)}</li>`).join('');
+      modal(`<h3>사양·시리얼 확인</h3><p>${esc(data.no||'')} · ${esc(data.model||'')}</p><h4>부품 사양</h4><ul>${parts||'<li>사양 없음</li>'}</ul><h4>${data.reference?'원본 참고 시리얼':'배정 시리얼'}</h4><ol>${list||'<li>시리얼 없음</li>'}</ol><div class="acts"><button data-c>닫기</button></div>`,(bg,close)=>{$('[data-c]',bg).onclick=close;},'wide');
+    }catch(error){toast(error.message,true);}
+  }
   function loDrawBoard() {
     const r=LO.data;if(!r||S.view!=='line')return;
-    const bs=r.batches||[],plan=loSum(bs,'q'),done=loSum(bs,'final'),prepared=r.prepared||[];
+    const bs=r.batches||[],prepared=r.prepared||[];
     const showTools=r.manage||r.monitor;
     const previews=r.preparedPreview||[];
+    const all=[...bs,...previews];
+    const selected=all.find(b=>b.id===LO.selectedBatch)||bs.find(b=>b.final<b.q)||previews[0]||bs[0];
+    LO.selectedBatch=selected?.id||null;
+    const isReady=!!selected&&selected.final==null;
+    const plan=isReady?0:selected?.q||0,done=isReady?0:selected?.final||0;
     const openProgress=new Set($$('.lo-batch-all[open]').map(el=>el.dataset.loProgress));
     const openIdle=new Set($$('.lo-line-idle[open]').map(el=>el.dataset.loIdle));
     $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>`)+`<div class="pgb lo-board">
-    <div class="lo-banner"><div class="lo-banner-main">${r.manage?`<div class="lo-prepared lo-banner-prepared">${prepared.length?prepared.map(p=>`<div><b class="lo-status-badge ready">준비 완료 · 시작 대기</b> ${esc(p.request.date)} · ${esc(p.label)} · ${esc(loLineName(p.line))} · ${p.request.q}대 ${loStartButton(p)} <button data-lo-edit-prepared="${esc(p.id)}">준비 수정</button> <button data-lo-discard="${esc(p.id)}">준비 해제</button></div>`).join(''):'<span class="muted">상단 [작업준비]에서 새 제조건을 준비하세요.</span>'}</div>`:''}</div>${loAllButton(r)}${r.allPausedAt?'<strong class="lo-error">전체 멈춤</strong>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><span class="lo-connection-badge" data-lo-status></span></div>
-    ${loBoardLines(r.cfg.lines,bs,openIdle)}
-    <section class="card lo-batches"><h3>준비·배치 제조건</h3><div class="lo-scroll"><table class="list lo-batch-table"><colgroup><col><col><col><col><col>${showTools?'<col>':''}</colgroup><thead><tr><th>원본 일자 / 순서</th><th>제조번호 · 모델</th><th>라인 · 작업 세트</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${showTools?'<th>배치 도구</th>':''}</tr></thead><tbody>${previews.map(p=>`<tr><td>${esc(p.date)}<br><small>순서 ${p.rank}</small></td><td><b>${esc(p.no)}</b><br>${esc(p.model||'—')}</td><td><b>${esc(loLineName(p.line))}</b><br><span class="lo-status-badge ready">준비 완료 · 시작 대기</span></td><td>준비 <b>${p.q}</b>대</td><td>작업 시작 대기</td>${showTools?'<td>—</td>':''}</tr>`).join('')}${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr><td>${esc(b.d)}<br><small>순서 ${b.rank}</small></td><td><b>${esc(b.snapshot.no)}</b><br>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td><b>${esc(loLineName(b.line))}</b> · ${esc(loSetName(b.set_data.name))}<br><span class="lo-status-badge ${b.final>=b.q?'done':b.paused_at?'paused':'running'}">${b.final>=b.q?'작업 완료':b.paused_at?'일시정지':'진행 중'}</span></td><td><div class="lo-count-pills"><span>계획 <b>${b.q}</b></span><span>완료 <b>${b.final}</b></span><span>미완료 <b>${b.q-b.final}</b></span></div></td><td class="lo-batch-progress">${loBatchProgress(b,openProgress.has(b.id))}</td>${showTools?`<td><div class="lo-batch-actions">${r.monitor?`<button type="button" class="lo-monitor-open" data-lo-monitor="${esc(b.id)}">모니터링</button>`:""}${r.manage?`<button data-lo-meta="${esc(b.id)}">사양·시리얼 목록</button> <button data-lo-order="${esc(b.id)}">순서</button>${b.sourceChanged?` <button data-lo-ack="${esc(b.id)}">기존 배치 유지 확인</button>`:''} ${loPauseButton(b)}${b.canDelete?` <button type="button" class="danger" data-lo-delete="${esc(b.id)}">작업 삭제</button>`:b.canCancel?` <button type="button" class="danger" data-lo-cancel="${esc(b.id)}">작업 취소</button>`:''}`:''}</div></td>`:''}</tr>`) .join('')||(previews.length?'':`<tr><td colspan="${showTools?6:5}">준비하거나 배치한 제조건이 없습니다.</td></tr>`)}</tbody></table></div></section>
+    <div class="lo-banner"><div class="lo-banner-main">${selected?`<div class="lo-picked-work"><span>선택 작업 · ${esc(loLineName(selected.line))} · ${isReady?'시작 대기':selected.final>=selected.q?'작업 완료':selected.paused_at?'일시정지':'진행 중'}</span><strong>${esc(selected.snapshot?.model||selected.model||'—')}</strong><span>제조번호 ${esc(selected.snapshot?.no||selected.no||'—')} · ${selected.q}대</span></div>`:''}${r.manage?`<div class="lo-prepared lo-banner-prepared">${prepared.length?prepared.map(p=>`<div><b class="lo-status-badge ready">준비 완료 · 시작 대기</b> ${esc(p.request.date)} · ${esc(p.label)} · ${esc(loLineName(p.line))} · ${p.request.q}대 ${loStartButton(p)} <button data-lo-edit-prepared="${esc(p.id)}">준비 수정</button> <button data-lo-discard="${esc(p.id)}">준비 해제</button></div>`).join(''):'<span class="muted">상단 [작업준비]에서 새 제조건을 준비하세요.</span>'}</div>`:''}</div>${loAllButton(r)}${r.allPausedAt?'<strong class="lo-error">전체 멈춤</strong>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><span class="lo-connection-badge" data-lo-status></span></div>
+    ${loBoardLines(r.cfg.lines,bs,openIdle,previews,selected)}
+    <section class="card lo-batches"><h3>준비·배치 제조건</h3><div class="lo-scroll"><table class="list lo-batch-table"><colgroup><col><col><col><col><col><col><col>${showTools?'<col>':''}</colgroup><thead><tr><th>작업 순서</th><th>원본 일자</th><th>제조번호</th><th>모델명</th><th>라인 · 상태</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${showTools?'<th>배치 도구</th>':''}</tr></thead><tbody>${previews.map(p=>`<tr data-lo-select="${esc(p.id)}" tabindex="0" aria-selected="${p.id===LO.selectedBatch}"><td>${p.rank}</td><td>${esc(p.date)}</td><td><b>${esc(p.no)}</b></td><td>${esc(p.model||'—')}</td><td><b>${esc(loLineName(p.line))}</b><br><span class="lo-status-badge ready">준비 완료 · 시작 대기</span></td><td>준비 <b>${p.q}</b>대</td><td>작업 시작 대기</td>${showTools?'<td>—</td>':''}</tr>`).join('')}${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr data-lo-select="${esc(b.id)}" tabindex="0" aria-selected="${b.id===LO.selectedBatch}"><td>${b.rank}</td><td>${esc(b.d)}</td><td><b>${esc(b.snapshot.no)}</b></td><td>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td><b>${esc(loLineName(b.line))}</b> · ${esc(loSetName(b.set_data.name))}<br><span class="lo-status-badge ${b.final>=b.q?'done':b.paused_at?'paused':'running'}">${b.final>=b.q?'작업 완료':b.paused_at?'일시정지':'진행 중'}</span></td><td><div class="lo-count-pills"><span>계획 <b>${b.q}</b></span><span>완료 <b>${b.final}</b></span><span>미완료 <b>${b.q-b.final}</b></span></div></td><td class="lo-batch-progress">${loBatchProgress(b,openProgress.has(b.id))}</td>${showTools?`<td>${loBatchTools(r,b)}</td>`:''}</tr>`) .join('')||(previews.length?'':`<tr><td colspan="${showTools?8:7}">준비하거나 배치한 제조건이 없습니다.</td></tr>`)}</tbody></table></div></section>
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
     $('#loDate').onchange=async e=>{LO.date=e.target.value;await loRefresh(LO.epoch,true);};$('#loReload').onclick=()=>loRefresh(LO.epoch,true);
-    if($('#loMainStart'))$('#loMainStart').onclick=()=>loGuide();
+    if($('#loMainStart'))$('#loMainStart').onclick=()=>{const saved=loLoadGuideDraft();if(saved)loGuideMove(saved,saved.step||1,()=>{});else loGuide();};
     loBindControls($('#main'));
-    $$('[data-lo-edit-prepared]').forEach(button=>button.onclick=()=>{const p=prepared.find(x=>x.id===button.dataset.loEditPrepared);if(p)loSources(p.request.date,p.request.rowId,{cfg:structuredClone(r.cfg),line:p.line,ver:r.cfgVer,dirty:false,preparation:p});});
+    $$('[data-lo-edit-prepared]').forEach(button=>button.onclick=()=>{const p=prepared.find(x=>x.id===button.dataset.loEditPrepared);if(p)loSources(p.request.date,p.request.rowId,{cfg:structuredClone(r.cfg),line:p.line,ver:r.cfgVer,dirty:false,preparation:p,rowId:p.request.rowId,stageTexts:p.request.stageTexts});});
     $$('[data-lo-discard]').forEach(button=>button.onclick=async()=>{if(!await confirmBox('시작 대기 작업과 선택 시리얼 배정을 해제할까요?','준비 해제'))return;try{await loCall('discardPreparation',{batchId:button.dataset.loDiscard});await loRefresh(LO.epoch,true);}catch(error){toast(error.message,true);}});
-    $$('[data-lo-stage-open]').forEach(b=>b.onclick=()=>loOpenStage(b.dataset.loLine,+b.dataset.loStageOpen));
-    $$('[data-lo-seat]').forEach(b=>b.onclick=()=>loOpen(b.dataset.loSeat,'work'));
+    $$('[data-lo-select]').forEach(row=>{
+      const choose=()=>{if(LO.selectedBatch!==row.dataset.loSelect){LO.selectedBatch=row.dataset.loSelect;loDrawBoard();$('#main').querySelector('[aria-selected=true]')?.focus({preventScroll:true});}};
+      row.onclick=e=>{if(!e.target.closest('button,summary,details,[popover]'))choose();};
+      row.onkeydown=e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();choose();}};
+    });
+    $$('[data-lo-seat]').forEach(b=>b.onclick=()=>{const id=b.dataset.loSeat,seat=r.stations.find(s=>s.id===id);loOpen(id,seat?.canComplete?'work':'view');});
     $$('[data-lo-monitor]').forEach(button=>button.onclick=()=>loMonitor(button.dataset.loMonitor));
-    $$('[data-lo-meta]').forEach(x=>x.onclick=()=>{const b=bs.find(b=>b.id===x.dataset.loMeta);loSources(b.d,b.row_id);});
-    $$('[data-lo-order]').forEach(x=>x.onclick=()=>loBatchAction('order',bs.find(b=>b.id===x.dataset.loOrder)));
-    $$('[data-lo-ack]').forEach(x=>x.onclick=()=>loBatchAction('ack',bs.find(b=>b.id===x.dataset.loAck)));
-    $$('[data-lo-cancel]').forEach(button=>button.onclick=()=>loCancelBatch(bs.find(b=>b.id===button.dataset.loCancel),button));
-    $$('[data-lo-delete]').forEach(button=>button.onclick=()=>loDeleteBatch(bs.find(b=>b.id===button.dataset.loDelete),button));
-    $$('[data-lo-pause]').forEach(button=>button.onclick=()=>loToggleBatchPause(bs.find(b=>b.id===button.dataset.loPause),button));
+    $$('[data-lo-more]').forEach(button=>button.onclick=()=>loBatchPopover(button));
+    $$('[data-lo-meta]').forEach(x=>x.onclick=()=>{x.closest('[popover]')?.hidePopover();loViewBatchSerials(x.dataset.loMeta);});
+    $$('[data-lo-order]').forEach(x=>x.onclick=()=>{x.closest('[popover]')?.hidePopover();loBatchAction('order',bs.find(b=>b.id===x.dataset.loOrder));});
+    $$('[data-lo-ack]').forEach(x=>x.onclick=()=>{x.closest('[popover]')?.hidePopover();loBatchAction('ack',bs.find(b=>b.id===x.dataset.loAck));});
+    $$('[data-lo-cancel]').forEach(button=>button.onclick=()=>{button.closest('[popover]')?.hidePopover();loCancelBatch(bs.find(b=>b.id===button.dataset.loCancel),button);});
+    $$('[data-lo-delete]').forEach(button=>button.onclick=()=>{button.closest('[popover]')?.hidePopover();loDeleteBatch(bs.find(b=>b.id===button.dataset.loDelete),button);});
+    $$('[data-lo-pause]').forEach(button=>button.onclick=()=>{button.closest('[popover]')?.hidePopover();loToggleBatchPause(bs.find(b=>b.id===button.dataset.loPause),button);});
     loStatus();
   }
   function loMonitorTime(milliseconds) {
@@ -16482,7 +16609,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const identity=b?.snapshot||next?.snapshot||preview;
     const meta=b?.meta||next?.meta||preview?.meta;
     const stage=b?.set_data.stages[u.stage]||loLineStages(st.line)[st.stage],focus=loWorkFocus(stage);
-    const caution=stage?.caution||meta?.note;
+    const previewPhrase=preview?.stageTexts?.[st.stage];
+    const instructions=previewPhrase?.instructions??stage?.instructions;
+    const caution=(previewPhrase?.caution??stage?.caution)||meta?.note;
     const editable=loCanWork(st),pendingHere=editable&&LO.pending?.station===st.id;
     const supervised=editable&&st.supervisedComplete;
     const plan=(r.prepared||[]).find(p=>p.line===st.line);
@@ -16493,8 +16622,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let root=document.getElementById('loWork');if(!root){root=document.createElement('section');root.id='loWork';root.tabIndex=-1;document.body.append(root);}
     document.body.classList.add('lo-work-open');
     root.innerHTML=`<div class="lo-work-head"><div class="lo-work-operator">${esc(loLineName(st.line))} · ${esc(st.assignedName||'미배정')}${supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용'}</div>${pauseControl?`<div class="lo-work-admin">${pauseControl}</div>`:''}${editable&&!supervised?'<button id="loSwitchConfig">스위치 설정</button>':''}<button id="loFull">⛶ 전체화면</button><button id="loExit">나가기</button></div>
-    <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><b>제조번호 ${esc(identity?.no||'—')} · ${u&&b?'현재 작업 '+u.seq+' / '+b.q:preview?'준비 '+preview.q+'대':'현재 작업 —'}</b><div class="lo-model-identity"><h2>${esc(identity?.model||'대기 작업 없음')}</h2>${meta?.code?`<div class="lo-model-code"><small>제품코드</small>${esc(meta.code)}</div>`:''}</div>${b?.set_data.name?`<small>${esc(loSetName(b.set_data.name))}</small>`:''}</div><h3>전체 부품 사양${focus.length?'<small>이 공정의 확인 부품을 색으로 표시</small>':''}</h3><div class="lo-spec-scroll"><table><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${focus.includes(loPartKey(x.kind))?'lo-focus':''}" style="--lo-part-hue:${loPartHue(x.kind)}"><th scope="row"><span class="lo-part-kind">${esc(x.kind)}</span></th><td>${esc(x.name)}</td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
-    <aside class="lo-complete-card"><header class="lo-work-focus"><small>${esc(seatNumber)}번 작업 · 모니터 ${esc(st.id)}</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</header><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">${['분','초','1/100초'].map((label,i)=>`${i?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div><p>${b?.paused_at?'일시정지 · 재개하면 이어서 측정':u?.readyAt?'진행 중 · 현재 제품부터 경과시간':preview?'시작 대기 · 작업이 배정되면 측정 시작':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${stage?.instructions?`<p><b>완료 기준</b> · ${esc(stage.instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?`<button id="loDone" class="lo-done" ${u?'':'disabled'}>✓ 작업 완료<small>${supervised?'완료 시 이 자리 담당자의 실적으로 기록됩니다':'본체를 넘길 때 스위치 또는 버튼'}</small></button>`:'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="lo-work-connection" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></aside></div>
+    <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><div class="lo-model-top"><b>제조번호 ${esc(identity?.no||'—')} · ${u&&b?'현재 작업 '+u.seq+' / '+b.q:preview?'준비 '+preview.q+'대':'현재 작업 —'}</b>${meta?.code?`<div class="lo-model-code"><small>제품코드</small>${esc(meta.code)}</div>`:''}</div><div class="lo-model-identity"><h2>${esc(identity?.model||'대기 작업 없음')}</h2></div>${b?.set_data.name?`<small>${esc(loSetName(b.set_data.name))}</small>`:''}</div><h3>전체 부품 사양${focus.length?'<small>이 공정의 확인 부품을 색으로 표시</small>':''}</h3><div class="lo-spec-scroll"><table><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${focus.includes(loPartKey(x.kind))?'lo-focus':''}" style="--lo-part-hue:${loPartHue(x.kind)}"><th scope="row"><span class="lo-part-kind">${esc(x.kind)}</span></th><td>${esc(x.name)}</td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
+    <aside class="lo-complete-card"><header class="lo-work-focus"><small>${esc(seatNumber)}번 작업 · 모니터 ${esc(st.id)}</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</header><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">${['분','초','1/100초'].map((label,i)=>`${i?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div><p>${b?.paused_at?'일시정지 · 재개하면 이어서 측정':u?.readyAt?'진행 중 · 현재 제품부터 경과시간':preview?'시작 대기 · 작업이 배정되면 측정 시작':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${instructions?`<p><b>완료 기준</b> · ${esc(instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?`<button id="loDone" class="lo-done" ${u?'':'disabled'}>✓ 작업 완료<small>${supervised?'완료 시 이 자리 담당자의 실적으로 기록됩니다':'본체를 넘길 때 스위치 또는 버튼'}</small></button>`:'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="lo-work-connection" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></aside></div>
     ${caution?`<div class="lo-caution"><b>⚠ 주의사항</b><span>${esc(caution)}</span></div>`:''}<div class="lo-work-foot">공정 신호 기준 · 시리얼 실물 대조 없음 · 순번은 실물을 확정 식별하지 않습니다.</div>`;
     loBindControls(root);
     $('#loExit',root).onclick=loCloseWork;$('#loFull',root).onclick=()=>root.requestFullscreen?.().catch(()=>toast('브라우저 전체화면을 열 수 없습니다',true));
@@ -16590,14 +16719,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const dt=date||LO.date,r=await loCall('sources',{date:dt});LO.sourceRows=r.rows;
       if(guide)guide.date=dt;
       if(rowId){const row=r.rows.find(x=>x.item.id===rowId);return row?loMeta(dt,row,guide):toast('사양을 편집할 원본 제조건을 찾을 수 없습니다.',true);}
-      modal(`<div class="lo-guide-head"><h3 id="loSourceTitle">${guide?'제조건 선택':'저장된 제조건 준비'}</h3>${guide?loGuideProgress(3):''}</div><div class="lo-guide-body"><div class="note">${guide?`${esc(loLineName(guide.line))}에 배치할 제조건을 선택하세요.`:'기존 라인생산에서 저장한 제조건을 고르고 사양과 배치 조건을 확인하세요. 준비 완료 후 상황판에서 작업을 시작할 수 있습니다.'} 실적 저장·확정과 별개입니다.</div><label>원본 일자 <input type="date" id="loSrcDate" value="${esc(dt)}"></label><div id="loSrcRows" class="lo-source-list">${r.rows.map((x,i)=>`<button data-lo-source="${i}"><b>${esc(x.item.no||'제조번호 없음')} · ${esc(x.item.model||'모델명 없음')}</b><span>원본 ${esc(x.item.q)} · 배치 ${x.allocated} · 잔여 ${Math.max(0,(+x.item.q||0)-x.allocated)} · ${loSourceSpecLabel(x)}</span></button>`).join('')||'<p>이 일자에 저장된 제조건이 없습니다.</p>'}</div></div><div class="lo-guide-foot"><div class="acts"><button data-c>${guide?'이전 · 담당자 확인':'닫기'}</button></div></div>`,(bg,close)=>{
-        $('#loSrcDate',bg).onchange=e=>{const d=e.target.value;close();loSources(d,null,guide);};$$('[data-lo-source]',bg).forEach(b=>b.onclick=()=>{const x=r.rows[+b.dataset.loSource];close();loMeta(dt,x,guide);});$('[data-c]',bg).onclick=()=>{close();if(guide)loGuide(guide,2);};
+      modal(`<div class="lo-guide-head"><h3 id="loSourceTitle">${guide?'제조건 선택':'저장된 제조건 준비'}</h3>${guide?loGuideProgress(3):''}</div><div class="lo-guide-body"><div class="note">${guide?`${esc(loLineName(guide.line))}에 배치할 제조건을 선택하세요.`:'기존 라인생산에서 저장한 제조건을 고르고 사양과 배치 조건을 확인하세요. 준비 완료 후 상황판에서 작업을 시작할 수 있습니다.'} 실적 저장·확정과 별개입니다.</div><label>원본 일자 <input type="date" id="loSrcDate" value="${esc(dt)}"></label><div id="loSrcRows" class="lo-source-list">${r.rows.map((x,i)=>`<button data-lo-source="${i}"><span class="lo-source-number">${i+1}</span><b>${esc(x.item.no||'제조번호 없음')} · ${esc(x.item.model||'모델명 없음')}</b><span>원본 ${esc(x.item.q)} · 배치 ${x.allocated} · 잔여 ${Math.max(0,(+x.item.q||0)-x.allocated)} · ${loSourceSpecLabel(x)}</span><small>${x.registeredAt?esc(loStamp(x.registeredAt))+' ('+esc(x.registeredBy||'—')+')':'등록 정보 없음'}</small></button>`).join('')||'<p>이 일자에 저장된 제조건이 없습니다.</p>'}</div></div><div class="lo-guide-foot"><div class="acts"><button data-c>${guide?'이전 · 담당자 확인':'닫기'}</button>${guide?'<button type="button" id="loSourceClose">닫기</button>':''}</div></div>`,(bg,close)=>{
+        bg._lock=true;
+        if(guide)loGuideNav(bg,guide,3,close,()=>true);
+        $('#loSrcDate',bg).onchange=e=>{const d=e.target.value;if(guide){guide.date=d;guide.rowId=null;guide.finalDraft=null;loSaveGuideDraft(guide,3);}close();loSources(d,null,guide);};
+        $$('[data-lo-source]',bg).forEach(b=>b.onclick=()=>{const x=r.rows[+b.dataset.loSource];if(guide){if(guide.rowId!==x.item.id)guide.finalDraft=null;guide.rowId=x.item.id;loSaveGuideDraft(guide,4);}close();loMeta(dt,x,guide);});
+        $('[data-c]',bg).onclick=()=>{if(guide)loGuideMove(guide,2,close);else close();};
+        if(guide)$('#loSourceClose',bg).onclick=()=>{loSaveGuideDraft(guide,3);close();};
       },'wide lo-guide-dialog');
     }catch(e){toast(e.message,true);}
   }
   function loMeta(dt, row, guide) {
     const item = row.item;
-    const initial = loSourceSpec(row);
+    if(guide){guide.rowId=item.id;guide.date=dt;}
+    const draft=guide?.finalDraft?.rowId===item.id&&guide.finalDraft.date===dt?guide.finalDraft:null;
+    const initial = draft?.meta||loSourceSpec(row);
     const baseParts = initial.specs.length ? [] : loSourceBaseParts(item);
     const meta = JSON.parse(JSON.stringify(initial));
     const remaining = Math.max(0, (+item.q || 0) - row.allocated);
@@ -16648,8 +16784,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ${guide?`<h4>3. 시작할 라인 · 수량 · 순서</h4>
         <div class="lo-meta-deploy">
           <label>작업할 라인<input value="${esc(loLineName(launchLine.id))}" readonly></label>
-          <label>이번에 시작할 수량<input type="number" min="1" max="${remaining}" id="loBatchQty" value="${guide.preparation?.request.q??remaining}"></label>
-          <label>작업 순서 (작을수록 먼저)<input type="number" min="1" id="loBatchRank" value="${guide.preparation?.request.rank??nextRank}"></label>
+          <label>이번에 시작할 수량<input type="number" min="1" max="${remaining}" id="loBatchQty" value="${esc(draft?.q??guide.preparation?.request.q??remaining)}"></label>
+          <label>작업 순서 (작을수록 먼저)<input type="number" min="1" id="loBatchRank" value="${esc(draft?.rank??guide.preparation?.request.rank??nextRank)}"></label>
           <button id="loBatchPrepare" class="primary" disabled>저장 후 닫기</button>
         </div>
         <p id="loBatchAssignmentStatus" class="lo-meta-help" aria-live="polite"></p>`:''}
@@ -16679,9 +16815,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let saved = !!meta.specs.length && meta.specs.length === row.meta?.specs?.length && meta.code === (row.meta.code || '');
       let metaVer = row.meta?.ver || 0;
       let busy = false;
-      serialInput.value = (meta.serials || []).join('\n');
-      const selected = new Set(guide?.preparation?.serials || []);
-      const preparationId=guide?.preparation?.id||loId();
+      serialInput.value = draft?.serialText??(meta.serials || []).join('\n');
+      const selected = new Set(draft?.selected||guide?.preparation?.serials||[]);
+      const preparationId=draft?.id||guide?.preparation?.id||loId();
       let serialPage = 0;
       const serialPageSize = 40;
       let serialState = loParseSerials(serialInput.value);
@@ -16755,6 +16891,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       draw();
       readSerials();
       updateControls();
+      if(draft)raw.value=draft.raw||'';
       editor.addEventListener('input', markUnsaved);
       codeInput.oninput=markUnsaved;
       serialInput.oninput=()=>{serialPage=0;readSerials();updateControls();};
@@ -16829,12 +16966,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         busy=bg._lock=true;updateControls();
         try{
           await loCall('prepare',{date:dt,rowId:item.id,sourceHash:row.sourceHash,batchId:preparationId,line:guide.line,q:+qty.value,rank:+rank.value,metaVer,
-            cfgVer:guide.ver,...(guide.dirty?{cfg:guide.cfg}:{}),meta:{...meta,serials:parsed.serials},selectedSerials:chosen});
+            cfgVer:guide.ver,...(guide.dirty?{cfg:guide.cfg}:{}),stageTexts:loGuidePhrases(guide,loLineStages(guide.line,guide.cfg)),meta:{...meta,serials:parsed.serials},selectedSerials:chosen});
+          try{sessionStorage.removeItem(loDraftKey());}catch(e){}
           close();await loRefresh(LO.epoch,true);toast('작업준비를 저장했습니다. 시작 대기 중입니다.');
         }catch(error){toast(error.message,true);}
-        finally{busy=bg._lock=false;updateControls();}
+        finally{busy=false;bg._lock=!!guide;updateControls();}
       };
-      $('[data-c]', bg).onclick = ()=>{close();if(guide)loSources(dt,null,guide);};
+      const stash=()=>{if(busy)return false;collect();guide.finalDraft={rowId:item.id,date:dt,id:preparationId,q:qty.value,rank:rank.value,selected:[...selected],raw:raw.value,meta:{...meta,serials:loParseSerials(serialInput.value).serials},serialText:serialInput.value};return true;};
+      if(guide)loGuideNav(bg,guide,4,close,stash);
+      $('[data-c]', bg).onclick = ()=>{if(!guide)close();else if(stash())loGuideMove(guide,3,close);};
     }, 'wide lo-meta-modal');
   }
   async function loCancelBatch(batch,button) {
