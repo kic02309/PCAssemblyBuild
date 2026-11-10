@@ -1849,7 +1849,7 @@ html[data-theme=dark] .ddgc-v5 .ddpr-v5 .ddcounts .m b{color:#c4a8f7}
    V7 / 일일 업무현황 압축 요약 + 그룹 평균/체크 통합
    Only the daily dashboard is affected; no data calculation changes.
    ======================================================= */
-#main:has(.ddkpis-v7) > .ph{background:var(--panel)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 1px 0 var(--line),0 3px 12px rgba(17,24,39,.035);z-index:42;min-height:68px;height:auto;padding:10px 30px;gap:9px;flex-wrap:wrap}
+#main:has(.ddkpis-v7) > .ph{background:var(--panel)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 1px 0 var(--line),0 3px 12px rgba(17,24,39,.035);z-index:28;min-height:68px;height:auto;padding:10px 30px;gap:9px;flex-wrap:wrap}
 #main:has(.ddkpis-v7) > .ph h1{font-size:24px;line-height:1.2;max-width:100%;}
 #main:has(.ddkpis-v7) .pgb{padding-top:8px}
 #main:has(.ddkpis-v7) .czf-v4[data-view=dash]{z-index:25;isolation:auto;background:var(--panel)}
@@ -2126,7 +2126,7 @@ table.m2t td.m2who,table.m2t th.m2who{min-width:320px;max-width:520px;text-align
 </style>
 <style>
 /* Unified compact search — 2026-10-21; visual only, zero effect on existing grid widths. */
-.czf-v4{position:relative;z-index:100;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:8px 10px;box-shadow:0 1px 2px rgba(17,24,39,.025);font-size:12px;isolation:isolate}
+.czf-v4{position:relative;z-index:10;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:8px 10px;box-shadow:0 1px 2px rgba(17,24,39,.025);font-size:12px;isolation:isolate}
 .czf-v4 .czf-line{display:flex;gap:5px;align-items:center;min-height:33px;max-width:100%;white-space:nowrap}
 .czf-v4 .czf-line+.czf-line{border-top:1px solid var(--line2);margin-top:5px;padding-top:5px}
 .czf-v4 .czf-caption{font-size:11.5px;font-weight:700;color:var(--sub);margin:0 7px 0 2px;flex-shrink:0}
@@ -2314,8 +2314,7 @@ html[data-theme=dark] .rh2-card.big{box-shadow:0 8px 20px #0007}
 .pill{display:inline-flex;align-items:center;gap:2px}.pill.on .gdot{box-shadow:0 0 0 2px #fff}
 /* v28.51 : 목표 기준 · 달성 기준 · 팀 줄 · 목표 화면 */
 .czf-v4 .czf-extra{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-#main:has(>.pgb>.czf-v4:is([data-view="manage"],[data-view="acc"]))>.ph{position:static}
-#main .czf-v4:is([data-view="manage"],[data-view="acc"]){z-index:10}
+#main:has(.czf-v4:is([data-view="manage"],[data-view="acc"],[data-view="stats"],[data-view="mfg"]))>.ph{position:static}
 #main .czf-v4[data-view="manage"] .czf-line:first-child{flex-wrap:wrap;white-space:normal}
 #main .czf-v4[data-view="manage"] .czf-line>.czf-extra{flex:0 1 auto;margin:0 0 0 auto;padding:0;border:0;min-width:0}
 @media(max-width:1100px){#main .czf-v4[data-view="manage"] .czf-line>.czf-extra{flex-basis:100%;margin-left:0}}
@@ -3148,7 +3147,7 @@ body > .hr-ov{z-index:1200}body:has(> .hr-ov){overflow:hidden}body:has(> .hr-ov)
 #main:has(#hrb)>.ph{position:static;min-height:42px;height:auto;padding:7px 22px;gap:8px;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
 #main:has(#hrb)>.ph h1{font-size:22px;line-height:1.25}
 #hrFilterHost{padding:0 22px 7px;position:relative;z-index:10}
-#hrFilterHost .czf-v4{z-index:auto;isolation:auto;margin:0;padding:5px 9px}
+#hrFilterHost .czf-v4{margin:0;padding:5px 9px}
 #hrFilterHost .czf-line{min-height:29px}
 #hrFilterHost .czf-line+.czf-line{margin-top:3px;padding-top:3px}
 #hrb.pgb{padding:0 22px 12px}
@@ -8451,7 +8450,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.40';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.41';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
