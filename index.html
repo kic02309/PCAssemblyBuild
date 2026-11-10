@@ -3710,11 +3710,6 @@ html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 
 .lo-guide-head .lo-guide-progress{margin:8px 0 0}
 @media(max-width:480px){.lo-guide-head,.lo-guide-body,.lo-guide-foot{padding:8px 10px}}
 .lo-guide-progress{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
-.lo-guide-progress span{--lo-guide-step-color:#3979db;padding:5px 9px;border-radius:6px;background:color-mix(in srgb,var(--lo-guide-step-color) 12%,var(--panel));color:var(--ink);font-size:12px;border-inline-start:3px solid var(--lo-guide-step-color)}
-.lo-guide-progress span:nth-child(2){--lo-guide-step-color:#16846e}
-.lo-guide-progress span:nth-child(3){--lo-guide-step-color:#a86c14}
-.lo-guide-progress span:nth-child(4){--lo-guide-step-color:#8054bb}
-.lo-guide-progress [aria-current]{background:color-mix(in srgb,var(--lo-guide-step-color) 26%,var(--panel));font-weight:700;box-shadow:inset 0 0 0 1px var(--lo-guide-step-color)}
 .lo-guide-rows{display:grid;gap:8px;margin:10px 0}
 .lo-guide-row{border:1px solid var(--line);border-radius:8px;padding:10px}
 .lo-guide-row label{display:grid;gap:4px;margin:5px 0}.lo-guide-row button{margin-top:5px}
@@ -3907,8 +3902,20 @@ button.lo-stage-card:hover,button.lo-stage-card:focus-visible{outline:2px solid 
 .lo-batch-table [data-lo-select][aria-selected=true]>td:first-child{box-shadow:inset 3px 0 #3276d7}
 .lo-batch-more{position:fixed;inset:auto;margin:0;padding:5px;background:var(--panel,#fff);color:var(--ink,#213952);border:1px solid #b6cbe7;border-radius:8px;box-shadow:0 5px 18px #21395244}
 .lo-batch-more button{display:block;width:100%;text-align:left;border:0;background:transparent;color:inherit;padding:8px 12px}.lo-batch-more button:hover{background:#e8f1fd;color:#173c70}
-.lo-guide-progress button{color:inherit;border:0;background:#edf2f9;padding:5px 9px;border-radius:6px;font-size:12px;font-weight:700}
-.lo-guide-progress button[aria-current=step]{outline:2px solid #3269b8;background:#e4efff}
+.lo-guide-progress button{display:inline-flex;align-items:center;gap:6px;color:var(--sub);border:1px solid var(--line);background:var(--head);padding:6px 9px;border-radius:8px;font-size:12px;font-weight:700}
+.lo-guide-progress .lo-step-mark{min-width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;background:var(--panel);color:var(--sub)}
+.lo-guide-progress button[data-step-state=done]{color:var(--ink);background:color-mix(in srgb,#15835b 18%,var(--panel));border-color:#15835b}
+.lo-guide-progress button[data-step-state=done] .lo-step-mark{background:#15724f;color:white}
+.lo-guide-progress button[aria-current=step]{background:#175bcc;color:white;border-color:#175bcc}
+.lo-guide-progress button[aria-current=step] .lo-step-mark{background:white;color:#175bcc}
+.lo-guide-row .lo-guide-criteria,.lo-guide-row .lo-guide-caution{border-inline-start:3px solid #2470cd;padding-inline-start:7px}
+.lo-guide-row .lo-guide-caution{border-inline-start-color:#c47a14}
+.lo-guide-eta input{max-width:150px}
+.lo-guide-review>summary,.lo-reference-serials>summary{cursor:pointer;font-weight:700;padding:9px 0}
+#loWork .lo-stopwatch[data-overdue=true]{border-color:#ff7179}
+#loWork .lo-stopwatch[data-overdue=true] .lo-elapsed,#loWork .lo-stopwatch[data-overdue=true] .lo-expected{color:#ff9aa1}
+.lo-stopwatch .lo-expected{margin-inline-start:7px;font-size:.7em}
+
 .lo-guide-titlebar{display:flex;justify-content:space-between;align-items:center;gap:10px}.lo-guide-titlebar h3{margin:0}
 .lo-source-list [data-lo-source]{display:grid;grid-template-columns:24px minmax(170px,1.5fr) minmax(180px,1fr) auto;gap:9px;align-items:center;text-align:left;border-radius:10px}
 .lo-source-list [data-lo-source] small{color:#496282}.lo-source-number{font-weight:900;color:#24538a}
@@ -8450,7 +8457,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.41';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.42';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15965,7 +15972,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       s=String(s||'').trim().toUpperCase();
       if(/^[A-Z0-9][A-Z0-9._/-]{3,79}$/.test(s))out.push(s);else unknown.push(l);
     }
-    return {serials:out,duplicates:[...new Set(out.filter((x,i)=>out.indexOf(x)!==i))],unknown};
+    const seen=new Set(),duplicates=new Set();
+    for(const value of out){if(seen.has(value))duplicates.add(value);else seen.add(value);}
+    return {serials:out,duplicates:[...duplicates],unknown};
   }
   function loStop(reset) {
     loStopPartFit();
@@ -16166,7 +16175,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return String(index+1);
   }
   function loGuideProgress(step) {
-    return `<nav class="lo-guide-progress" aria-label="작업준비">${['공정 순서','담당자 확인','제조건 선택','최종 확인'].map((name,i)=>`<button type="button" data-lo-step="${i+1}" ${i+1===step?'aria-current="step"':''}>${i+1}. ${name}</button>`).join('')}</nav>`;
+    return `<nav class="lo-guide-progress" aria-label="작업준비">${['공정 순서','담당자 확인','제조건 선택','최종 확인'].map((name,i)=>`<button type="button" data-lo-step="${i+1}" data-step-state="${i+1<step?'done':i+1===step?'current':'next'}" ${i+1===step?'aria-current="step"':''}><span class="lo-step-mark" aria-hidden="true">${i+1<step?'✓':i+1}</span><span>${name}</span></button>`).join('')}</nav>`;
   }
   function loGuideSplit(guide,index) {
     const stages=loLineStages(guide.line,guide.cfg);
@@ -16262,7 +16271,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return stages.map((stage,i)=>{
       const saved=guide.stageTexts?.[i], preset=defaults[i];
       const text=saved?.name===stage.name?saved:preset?.name===stage.name?preset:stage;
-      return {name:stage.name,instructions:text.instructions||'',caution:text.caution||''};
+      return {name:stage.name,instructions:text.instructions||'',caution:text.caution||'',expectedSeconds:text.expectedSeconds??null};
     });
   }
   function loPhraseSettings(guide,phrases,bg) {
@@ -16272,7 +16281,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       toast('공정 구조를 바꾼 경우 이번 작업으로 저장한 뒤 기본 문구를 설정하세요.',true);return;
     }
     const previous=(LO.data.stagePhrases||[]).find(x=>x.line===guide.line&&x.set_id===setId);
-    modal('<h3>공정 문구 설정</h3><p>현재 입력한 완료 기준과 작업 주의사항을 '+esc(loLineName(guide.line))+' 기본 문구로 저장합니다.</p><div class="acts"><button data-c>닫기</button><button data-s class="primary">기본 문구로 저장</button></div>',(box,close)=>{
+    modal('<h3>공정 문구 설정</h3><p>현재 입력한 완료 기준, 주의사항, 예상시간을 '+esc(loLineName(guide.line))+' 기본 문구로 저장합니다.</p><div class="acts"><button data-c>닫기</button><button data-s class="primary">기본 문구로 저장</button></div>',(box,close)=>{
       box._lock=true;$('[data-c]',box).onclick=close;
       $('[data-s]',box).onclick=async e=>{
         e.target.disabled=true;
@@ -16321,8 +16330,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const structure=stages.map((stage,i)=>`<div class="lo-guide-row" ${stage.groupId?'data-lo-sub':''}>
       <strong>${esc(loStageNumber(stages,i))} · ${esc(stage.groupName||stage.name)}</strong>
       <label>작업 이름<input data-lo-guide-name="${i}" maxlength="60" value="${esc(stage.name)}" ${locked?'disabled':''}></label>
-      <label>완료 기준 (선택)<input data-lo-guide-instructions="${i}" maxlength="300" value="${esc(phrases[i].instructions)}" placeholder="예: 케이블을 고정한 뒤 다음 작업대로 넘기기"></label>
-      <label>작업 주의사항 (선택)<input data-lo-guide-caution="${i}" maxlength="300" value="${esc(phrases[i].caution)}" placeholder="예: 케이스 전면 커넥터 손상 주의"></label>
+      <label class="lo-guide-criteria">완료 기준 (선택)<input data-lo-guide-instructions="${i}" maxlength="300" value="${esc(phrases[i].instructions)}" placeholder="예: 케이블을 고정한 뒤 다음 작업대로 넘기기"></label>
+      <label class="lo-guide-caution">작업 주의사항 (선택)<input data-lo-guide-caution="${i}" maxlength="300" value="${esc(phrases[i].caution)}" placeholder="예: 케이스 전면 커넥터 손상 주의"></label>
+      <label class="lo-guide-eta">한 대 예상시간 (초, 선택)<input type="number" min="1" max="9999" step="1" inputmode="numeric" data-lo-guide-expected value="${esc(phrases[i].expectedSeconds??'')}" placeholder="예: 90"></label>
       ${locked?'':`<div class="lo-guide-row-actions">${stages.length>=8?'':`<button type="button" data-lo-split="${i}">+ 이어서 할 세부 작업 추가</button>`}${stage.groupId?`<button type="button" class="danger" data-lo-remove="${i}" aria-label="${esc(loStageNumber(stages,i))} 세부 작업 삭제">세부 작업 삭제</button>`:''}</div>`}
     </div>`).join('');
     const assignments=stages.map((stage,i)=>{
@@ -16334,7 +16344,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ${step===1?`<label>작업할 라인 <select id="loGuideLine" ${guide.dirty?'disabled':''}>${cfg.lines.map(x=>`<option value="${esc(x.id)}" ${x.id===line?'selected':''}>${esc(loLineName(x.id))}</option>`).join('')}</select></label>
         <p class="lo-guide-summary">${locked?'진행 중인 배치가 있어 공정 순서는 현재 설정을 사용합니다.':'현재 설정을 불러왔습니다. 본체를 다음 사람에게 넘기는 지점에서만 세부 작업을 추가하세요. 최대 8개 작업을 설정할 수 있습니다.'}</p>
         <div class="lo-guide-tools"><button id="loGuideConfig" type="button" ${guide.dirty?'disabled':''}>자리 · 작업 세트 설정</button><small>세트를 바꾸거나 자리 구조를 관리할 때만 사용합니다.</small></div>
-        <p class="lo-meta-help" id="loPhraseStatus">입력한 문구는 이번 작업에 적용됩니다. [공정 문구 설정]에서 기본값으로 저장할 수 있습니다.</p><div class="lo-guide-rows">${structure}</div>`:`<p class="lo-guide-summary">${esc(loLineName(line))} · 오늘 작업할 사람을 순서대로 확인하세요.</p>
+        <p class="lo-meta-help" id="loPhraseStatus">문구와 예상시간은 이번 작업에 적용됩니다. [공정 문구 설정]에서 라인별 기본값으로 저장할 수 있습니다.</p><div class="lo-guide-rows">${structure}</div>`:`<p class="lo-guide-summary">${esc(loLineName(line))} · 오늘 작업할 사람을 순서대로 확인하세요.</p>
         <div class="lo-guide-tools">${r.admin?'<button id="loGuideTerminal" type="button">이 PC 작업대 지정</button>':''}<small>공용 PC 지정은 사용할 PC에서 합니다. 새 작업대는 설정이 적용된 뒤 지정할 수 있습니다.</small></div>
         <div class="lo-guide-rows">${assignments}</div>`}
       </div>
@@ -16352,12 +16362,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const names=$$('[data-lo-guide-name]',bg).map(x=>x.value.trim());
         const notes=$$('[data-lo-guide-instructions]',bg).map(x=>x.value.trim());
         const cautions=$$('[data-lo-guide-caution]',bg).map(x=>x.value.trim());
+        const expected=$$('[data-lo-guide-expected]',bg).map(x=>x.value===''?null:Number(x.value));
+        if(expected.some(value=>value!==null&&(!Number.isInteger(value)||value<1||value>9999))){
+          toast('한 대 예상시간은 공정별로 1~9999초 사이로 입력하세요.',true);return false;
+        }
         if(!allowBlank&&names.some(name=>!name)){toast('작업 이름을 입력하세요.',true);return false;}
         if(!locked&&names.some((name,i)=>name!==stages[i].name)){
           if(!loGuideEditStages(guide))return false;
           loLineStages(line,cfg).forEach((stage,i)=>{stage.name=names[i];});guide.dirty=true;
         }
-        guide.stageTexts=names.map((name,i)=>({name,instructions:notes[i],caution:cautions[i]}));
+        guide.stageTexts=names.map((name,i)=>({name,instructions:notes[i],caution:cautions[i],expectedSeconds:expected[i]}));
         return true;
       };
       loGuideNav(bg,guide,step,close,collect);
@@ -16561,8 +16575,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try{
       const data=await loCall('batchSerials',{batchId:id});
       const parts=(data.meta?.specs||[]).map(p=>`<li>${esc(p.kind)} · ${esc(p.name)} · ${esc(p.code||'—')}</li>`).join('');
-      const list=(data.serials||[]).map(sn=>`<li>${esc(sn)}</li>`).join('');
-      modal(`<h3>사양·시리얼 확인</h3><p>${esc(data.no||'')} · ${esc(data.model||'')}</p><h4>부품 사양</h4><ul>${parts||'<li>사양 없음</li>'}</ul><h4>${data.reference?'원본 참고 시리얼':'배정 시리얼'}</h4><ol>${list||'<li>시리얼 없음</li>'}</ol><div class="acts"><button data-c>닫기</button></div>`,(bg,close)=>{$('[data-c]',bg).onclick=close;},'wide');
+      const serials=data.serials||[];
+      const counts=new Map();
+      serials.forEach(sn=>counts.set(sn,(counts.get(sn)||0)+1));
+      const list=serials.map(sn=>'<li>'+esc(sn)+(counts.get(sn)>1?' <small>· 목록 내 중복</small>':'')+'</li>').join('');
+      modal(`<h3>사양·시리얼 확인</h3><p>${esc(data.no||'')} · ${esc(data.model||'')}</p><h4>부품 사양</h4><ul>${parts||'<li>사양 없음</li>'}</ul><details class="lo-reference-serials"><summary>${data.reference?'원본 참고 시리얼':'배정 시리얼'} · ${serials.length}개</summary>${data.registeredAt?`<p>원본 등록 ${esc(loStamp(data.registeredAt))} · ${esc(data.registeredBy||'—')}</p>`:''}<ol>${list||'<li>시리얼 없음</li>'}</ol></details><div class="acts"><button data-c>닫기</button></div>`,(bg,close)=>{$('[data-c]',bg).onclick=close;},'wide');
     }catch(error){toast(error.message,true);}
   }
   function loDrawBoard() {
@@ -16784,6 +16801,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const meta=b?.meta||next?.meta||preview?.meta;
     const stage=b?.set_data.stages[u.stage]||next?.set_data?.stages?.[st.stage]||loLineStages(st.line)[st.stage],focus=loWorkFocus(stage);
     const {instructions,caution,defaultCaution}=loWorkPhrases(r,st,b||next,stage,preview,meta);
+    const expectedSeconds=Number(stage?.expectedSeconds||preview?.stageTexts?.[st.stage]?.expectedSeconds||0);
     const editable=loCanWork(st),pendingHere=editable&&LO.pending?.station===st.id;
     const supervised=editable&&st.supervisedComplete;
     const plan=(r.prepared||[]).find(p=>p.line===st.line);
@@ -16795,7 +16813,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     document.body.classList.add('lo-work-open');
     root.innerHTML=`<div class="lo-work-head"><div class="lo-work-operator">${esc(loLineName(st.line))} · ${esc(st.assignedName||'미배정')}${supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용'}</div>${pauseControl?`<div class="lo-work-admin">${pauseControl}</div>`:''}${editable&&!supervised?'<button id="loSwitchConfig">스위치 설정</button>':''}<button id="loFull">⛶ 전체화면</button><button id="loExit">나가기</button></div>
     <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><div class="lo-model-top"><b>제조번호 ${esc(identity?.no||'—')} · ${u&&b?'현재 작업 '+u.seq+' / '+b.q:preview?'준비 '+preview.q+'대':'현재 작업 —'}</b>${meta?.code?`<div class="lo-model-code"><small>제품코드</small>${esc(meta.code)}</div>`:''}</div><div class="lo-model-identity"><h2>${esc(identity?.model||'대기 작업 없음')}</h2></div>${b?.set_data.name?`<small>${esc(loSetName(b.set_data.name))}</small>`:''}</div><h3>전체 부품 사양${focus.length?'<small>이 공정의 확인 부품을 색으로 표시</small>':''}</h3><div class="lo-spec-scroll"><table><colgroup><col><col><col><col></colgroup><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${focus.includes(loPartKey(x.kind))?'lo-focus':''}" style="--lo-part-hue:${loPartHue(x.kind)}"><th scope="row"><span class="lo-part-kind lo-fit-part">${esc(x.kind)}</span></th><td><span class="lo-part-name lo-fit-part">${esc(x.name)}</span></td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
-    <aside class="lo-complete-card"><header class="lo-work-focus"><small>${esc(seatNumber)}번 작업 · 모니터 ${esc(st.id)}</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</header><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">${['분','초','1/100초'].map((label,i)=>`${i?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div><p>${b?.paused_at?'일시정지 · 재개하면 이어서 측정':u?.readyAt?'진행 중 · 현재 제품부터 경과시간':preview?'시작 대기 · 작업이 배정되면 측정 시작':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${instructions?`<p><b>완료 기준</b> · ${esc(instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?`<button id="loDone" class="lo-done" ${u?'':'disabled'}>✓ 작업 완료<small>${supervised?'완료 시 이 자리 담당자의 실적으로 기록됩니다':'본체를 넘길 때 스위치 또는 버튼'}</small></button>`:'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="lo-work-connection" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></aside></div>
+    <aside class="lo-complete-card"><header class="lo-work-focus"><small>${esc(seatNumber)}번 작업 · 모니터 ${esc(st.id)}</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</header><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치${expectedSeconds>0?`<span id="loExpected" class="lo-expected" data-seconds="${expectedSeconds}">기준 ${expectedSeconds}초</span>`:''}</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">${['분','초','1/100초'].map((label,i)=>`${i?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div><p>${b?.paused_at?'일시정지 · 재개하면 이어서 측정':u?.readyAt?'진행 중 · 현재 제품부터 경과시간':preview?'시작 대기 · 작업이 배정되면 측정 시작':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${instructions?`<p><b>완료 기준</b> · ${esc(instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?`<button id="loDone" class="lo-done" ${u?'':'disabled'}>✓ 작업 완료<small>${supervised?'완료 시 이 자리 담당자의 실적으로 기록됩니다':'본체를 넘길 때 스위치 또는 버튼'}</small></button>`:'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="lo-work-connection" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></aside></div>
     ${caution?`<div class="lo-caution"><b>⚠ ${defaultCaution?'라인 기본 주의사항':'주의사항'}</b><span>${esc(caution)}</span></div>`:''}<div class="lo-work-foot">공정 신호 기준 · 시리얼 실물 대조 없음 · 순번은 실물을 확정 식별하지 않습니다.</div>`;
     loBindControls(root);
     $('#loExit',root).onclick=loCloseWork;$('#loFull',root).onclick=()=>root.requestFullscreen?.().catch(()=>toast('브라우저 전체화면을 열 수 없습니다',true));
@@ -16815,6 +16833,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const pausedAt=Date.parse(batch?batch.paused_at:unit?.pausedAt);
     const until=Number.isFinite(pausedAt)?pausedAt:Date.now()+LO.offset;
     const centiseconds=Number.isFinite(activeAt)?Math.max(0,Math.floor((until-activeAt)/10)):0;
+    const expected=document.getElementById('loExpected');
+    if(expected){
+      const seconds=Number(expected.dataset.seconds),overdue=centiseconds>seconds*100;
+      const stopwatch=el.closest('.lo-stopwatch'),state=String(overdue);
+      if(stopwatch.dataset.overdue!==state){
+        stopwatch.dataset.overdue=state;
+        expected.textContent=overdue?'기준 시간 초과 · '+seconds+'초':'기준 '+seconds+'초';
+      }
+    }
     const parts=[Math.floor(centiseconds/6000),Math.floor(centiseconds/100)%60,centiseconds%100];
     el.querySelectorAll('[data-lo-time]').forEach((field,i)=>{
       const display=String(parts[i]).padStart(2,'0');
@@ -16923,8 +16950,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <div class="lo-meta-body">
         ${guide?`<div class="lo-guide-summary"><b>작업 순서 · 담당자</b><br>${loLineStages(guide.line,cfg).map((stage,i)=>`${esc(loStageNumber(loLineStages(guide.line,cfg),i))} ${esc(stage.name)} · ${loStageSeats(guide.line,i,cfg.stations).filter(st=>st.userId).map(st=>esc(LO.data.users.find(u=>u.id===st.userId)?.name||'기존 담당자')).join(', ')}`).join(' → ')}</div>`:''}
         <fieldset class="lo-meta-edit">
-          <section class="lo-meta-section">
-            <h4>1. 부품 사양 확인</h4>
+          <details class="lo-meta-section lo-guide-review" ${!guide||!initial.specs.length?'open':''}>
+            <summary>부품 사양 확인 ${initial.specs.length?'· '+initial.specs.length+'개':'· 입력 필요'}</summary>
             ${baseParts.length ? `<div class="lo-meta-original"><b>라인생산에 저장된 부품</b><ul>${baseParts.map(part => `<li><b>${part.kind}</b> ${esc(part.name)}</li>`).join('')}</ul><p>위 항목은 참고용입니다. 전체 사양표는 관리툴에서 붙여넣으세요.</p></div>` : ''}
             <details class="lo-meta-paste" ${!initial.specs.length||!initial.serials.length?'open':''}>
               <summary>사양 보완·교체</summary>
@@ -16937,16 +16964,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
               <tbody id="loSpecEdit"></tbody>
             </table></div>
             <button class="lo-meta-add" id="loSpecAdd">+ 부품 행 추가</button>
-          </section>
-          <section class="lo-meta-section">
-            <div class="lo-serial-heading"><h4>2. 전산 시리얼 목록</h4>${guide?'<label><input type="checkbox" id="loSerialAll"> 전체 선택</label>':''}</div>
+          </details>
+          <details class="lo-meta-section lo-reference-serials">
+            <summary>전표 시리얼 참고 목록 <span id="loSerialCount"></span></summary>
+            <p class="lo-meta-help">라인 배정이나 공정 완료에는 쓰지 않으며, 원본 전표 검수에 사용합니다.</p>
+            ${row.registeredAt?'<p class="lo-meta-help">원본 등록 '+esc(loStamp(row.registeredAt))+' · '+esc(row.registeredBy||'—')+'</p>':''}
             <div class="lo-meta-serial-tools">
               <p id="loSerialMsg" class="lo-meta-help" aria-live="polite"></p>
               <div id="loSerialNav" class="lo-meta-serial-nav" hidden><button type="button" id="loSerialPrev">이전</button><span id="loSerialRange" aria-live="polite"></span><button type="button" id="loSerialNext">다음</button></div>
             </div>
-            <ol id="loSerialGrid" class="lo-meta-serial-grid" aria-label="전산 시리얼"></ol>
-            <details class="lo-meta-serial-editor"><summary>시리얼 목록 편집</summary><label><span class="lo-meta-help">시리얼은 한 줄에 하나씩 입력하세요.</span><textarea id="loSerialRaw" rows="5"></textarea></label></details>
-          </section>
+            <ol id="loSerialGrid" class="lo-meta-serial-grid" aria-label="전표 시리얼"></ol>
+            <details class="lo-meta-serial-editor" ${guide?'hidden':''}><summary>참고 목록 편집</summary><label><span class="lo-meta-help">시리얼은 한 줄에 하나씩 입력하세요.</span><textarea id="loSerialRaw" rows="5"></textarea></label></details>
+          </details>
         </fieldset>
       </div>
       <div class="lo-meta-footer">
@@ -16954,10 +16983,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <p id="loMetaStatus" class="lo-meta-status" aria-live="polite"></p>
           <button data-c>${guide?'이전 · 제조건 선택':'닫기'}</button>${guide?'':'<button id="loMetaSave" class="primary">사양 · 목록 저장</button>'}
         </div>
-        ${guide?`<h4>3. 시작할 라인 · 수량 · 순서</h4>
+        ${guide?`<h4>실제 라인 투입 수량</h4>
         <div class="lo-meta-deploy">
           <label>작업할 라인<input value="${esc(loLineName(launchLine.id))}" readonly></label>
-          <label>이번에 시작할 수량<input type="number" min="1" max="${remaining}" id="loBatchQty" value="${esc(draft?.q??guide.preparation?.request.q??remaining)}"></label>
+          <label>이번에 투입할 수량<input type="number" min="1" max="${Math.min(5000,remaining)}" id="loBatchQty" value="${esc(draft?.q??guide.preparation?.request.q??'')}" placeholder="직접 입력" inputmode="numeric"></label>
           <label>작업 순서 (작을수록 먼저)<input type="number" min="1" id="loBatchRank" value="${esc(draft?.rank??guide.preparation?.request.rank??nextRank)}"></label>
           <button id="loBatchPrepare" class="primary" disabled>저장 후 닫기</button>
         </div>
@@ -16974,7 +17003,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const pasteStatus = $('#loSpecReadStatus', bg);
       const serialInput = $('#loSerialRaw', bg);
       const serialGrid = $('#loSerialGrid', bg);
-      const serialAll = $('#loSerialAll', bg);
       const serialNav = $('#loSerialNav', bg);
       const serialPrev = $('#loSerialPrev', bg);
       const serialNext = $('#loSerialNext', bg);
@@ -16989,11 +17017,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let metaVer = row.meta?.ver || 0;
       let busy = false;
       serialInput.value = draft?.serialText??(meta.serials || []).join('\n');
-      const selected = new Set(draft?.selected||guide?.preparation?.serials||[]);
       const preparationId=draft?.id||guide?.preparation?.id||loId();
       let serialPage = 0;
       const serialPageSize = 40;
-      let serialState = loParseSerials(serialInput.value);
 
       const updateControls = () => {
         editor.disabled = busy;
@@ -17001,24 +17027,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         serialInput.disabled=busy;
         if(save)save.disabled = busy;
         if(guide){
-          const validQty=Number.isInteger(+qty.value)&&+qty.value>=1&&+qty.value<=remaining;
+          const validQty=Number.isInteger(+qty.value)&&+qty.value>=1&&+qty.value<=Math.min(5000,remaining);
           const validRank=rank.value!==''&&Number.isInteger(+rank.value)&&+rank.value>=1;
           const missing=loMissingAssignments(guide.line,cfg);
           qty.disabled=rank.disabled=busy;
-          const count=serialState.serials.filter(sn=>selected.has(sn)).length;
-          const invalidSerials=!!(serialState.duplicates.length||serialState.unknown.length);
-          const mismatch=serialState.serials.length>0&&count!==+qty.value;
-          serialAll.disabled=busy||invalidSerials||!serialState.serials.length||serialState.serials.length!==+qty.value;
-          serialAll.checked=serialState.serials.length>0&&count===serialState.serials.length;
-          serialAll.indeterminate=count>0&&count<serialState.serials.length;
-          prepare.disabled=busy||!validQty||!validRank||!!missing.length||!!LO.starting||invalidSerials||mismatch;
+          prepare.disabled=busy||!validQty||!validRank||!!missing.length||!!LO.starting;
           assignmentStatus.classList.toggle('lo-error',!!missing.length);
-          assignmentStatus.textContent=missing.length?`담당자 배정 필요 · ${missing.join(', ')}`
-            :mismatch?`투입할 시리얼 ${qty.value||0}개를 선택하세요.`:`현재 배치 가능 ${remaining}대.`;
+          assignmentStatus.textContent=missing.length?'담당자 배정 필요 · '+missing.join(', ')
+            :'배치 가능 '+remaining+'대 · 이번에 실제 투입할 수량을 입력하세요.';
         }
         $('[data-c]', bg).disabled = busy;
         status.dataset.saved = String(saved);
-        status.textContent = guide?'사양과 배치 조건을 확인하세요. [저장 후 닫기]를 누르면 시작 대기로 저장됩니다.'
+        status.textContent = guide?'[저장 후 닫기]를 누르면 시작 대기로 저장됩니다.'
           : saved?'저장한 사양과 목록은 다음 배치에 적용됩니다.':'사양과 목록을 확인한 뒤 저장하세요. 저장한 변경은 다음 배치에 적용됩니다.';
       };
       const markUnsaved = () => { saved = false; updateControls(); };
@@ -17045,16 +17065,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         });
       };
       const readSerials = () => {
-        const parsed = serialState = loParseSerials(serialInput.value);
+        const parsed = loParseSerials(serialInput.value);
         const message = $('#loSerialMsg', bg);
         message.textContent = `목록 ${parsed.serials.length}개 / 원본 ${item.q}개 · 중복 ${parsed.duplicates.length}개 · 미인식 ${parsed.unknown.length}행`;
         message.classList.toggle('lo-error', !!(parsed.duplicates.length || parsed.unknown.length));
         const total=parsed.serials.length;
-        if(guide)message.textContent+=' · 라인 선택 '+parsed.serials.filter(sn=>selected.has(sn)).length+' / 투입 '+(+qty.value||0)+'대';
+        $('#loSerialCount',bg).textContent='· '+total+'개';
         serialPage=Math.max(0,Math.min(serialPage,Math.ceil(total/serialPageSize)-1));
         const start=serialPage*serialPageSize;
-        serialGrid.innerHTML=parsed.serials.slice(start,start+serialPageSize).map((serial,i)=>`<li>${guide?`<input type="checkbox" data-lo-pick="${esc(serial)}" aria-label="시리얼 ${esc(serial)} 선택" ${selected.has(serial)?'checked':''}>`:''}<small>${start+i+1}</small><code>${esc(serial)}</code></li>`).join('');
-        $$('[data-lo-pick]',serialGrid).forEach(input=>input.onchange=()=>{if(input.checked)selected.add(input.dataset.loPick);else selected.delete(input.dataset.loPick);message.textContent=message.textContent.replace(/라인 선택 \d+/, '라인 선택 '+parsed.serials.filter(sn=>selected.has(sn)).length);updateControls();});
+        serialGrid.innerHTML = parsed.serials.slice(start,start+serialPageSize).map((serial,i)=>`<li><small>${start+i+1}</small><code>${esc(serial)}</code></li>`).join('');
         serialNav.hidden=total<=serialPageSize;
         serialPrev.disabled=!serialPage;
         serialNext.disabled=start+serialPageSize>=total;
@@ -17068,10 +17087,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       editor.addEventListener('input', markUnsaved);
       codeInput.oninput=markUnsaved;
       serialInput.oninput=()=>{serialPage=0;readSerials();updateControls();};
-      if(serialAll)serialAll.onclick=()=>{const checked=serialAll.checked;selected.clear();if(checked)serialState.serials.forEach(sn=>selected.add(sn));readSerials();updateControls();};
       serialPrev.onclick=()=>{serialPage--;readSerials();};
       serialNext.onclick=()=>{serialPage++;readSerials();};
-      if(guide){qty.oninput=()=>{readSerials();updateControls();};rank.oninput=updateControls;}
+      if(guide){qty.oninput=updateControls;rank.oninput=updateControls;}
       const parseRaw = () => {
         if(!raw.value.trim())return false;
         const parsed = loParseSpecs(raw.value);
@@ -17110,12 +17128,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         collect();
         const parsed = readSerials();
         if (!meta.specs.length) return toast('전체 사양을 입력하세요', true);
-        if (parsed.unknown.length || parsed.duplicates.length) return toast('시리얼 미인식·중복을 먼저 확인하세요', true);
-        if (parsed.serials.length && parsed.serials.length !== +item.q) return toast('시리얼 개수와 원본 수량이 다릅니다', true);
+        if (parsed.unknown.length) return toast('인식되지 않은 시리얼 행을 확인하세요', true);
         busy = bg._lock = true;
         updateControls();
         try {
-          const result = await loCall('meta', { date: dt, rowId: item.id, metaVer, referenceOnly:true, meta: { ...meta, serials: parsed.serials } });
+          const result = await loCall('meta', { date: dt, rowId: item.id, metaVer, referenceOnly:true, serialMode:'reference', meta: { ...meta, serials: parsed.serials } });
           metaVer = result.metaVer;
           saved = true;
           if(!guide){
@@ -17132,20 +17149,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if(prepare.disabled||raw.value.trim()&&!parseRaw())return;
         collect();
         const parsed=readSerials();
-        const chosen=parsed.serials.filter(sn=>selected.has(sn));
         if(!meta.specs.length)return toast('전체 사양을 입력하세요',true);
-        if(parsed.unknown.length||parsed.duplicates.length)return toast('시리얼 미인식·중복을 먼저 확인하세요',true);
-        if(parsed.serials.length&&chosen.length!==+qty.value)return toast('원본 목록에서 이번 라인 수량만큼 시리얼을 선택하세요',true);
         busy=bg._lock=true;updateControls();
         try{
           await loCall('prepare',{date:dt,rowId:item.id,sourceHash:row.sourceHash,batchId:preparationId,line:guide.line,q:+qty.value,rank:+rank.value,metaVer,
-            cfgVer:guide.ver,...(guide.dirty?{cfg:guide.cfg}:{}),stageTexts:loGuidePhrases(guide,loLineStages(guide.line,guide.cfg)),meta:{...meta,serials:parsed.serials},selectedSerials:chosen});
+            cfgVer:guide.ver,...(guide.dirty?{cfg:guide.cfg}:{}),stageTexts:loGuidePhrases(guide,loLineStages(guide.line,guide.cfg)),serialMode:'reference',meta:{...meta,serials:parsed.serials}});
           try{sessionStorage.removeItem(loDraftKey());}catch(e){}
           close();await loRefresh(LO.epoch,true);toast('작업준비를 저장했습니다. 시작 대기 중입니다.');
         }catch(error){toast(error.message,true);}
         finally{busy=false;bg._lock=!!guide;updateControls();}
       };
-      const stash=()=>{if(busy)return false;collect();guide.finalDraft={rowId:item.id,date:dt,id:preparationId,q:qty.value,rank:rank.value,selected:[...selected],raw:raw.value,meta:{...meta,serials:loParseSerials(serialInput.value).serials},serialText:serialInput.value};return true;};
+      const stash=()=>{if(busy)return false;collect();guide.finalDraft={rowId:item.id,date:dt,id:preparationId,q:qty.value,rank:rank.value,raw:raw.value,meta:{...meta,serials:loParseSerials(serialInput.value).serials},serialText:serialInput.value};return true;};
       if(guide)loGuideNav(bg,guide,4,close,stash);
       $('[data-c]', bg).onclick = ()=>{if(!guide)close();else if(stash())loGuideMove(guide,3,close);};
     }, 'wide lo-meta-modal');
