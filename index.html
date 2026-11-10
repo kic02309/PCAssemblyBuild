@@ -3839,7 +3839,19 @@ html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 
 .lo-meta-save{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
 .lo-meta-save .lo-meta-status{margin-right:auto}.lo-meta-status[data-saved=true]{color:#08746b}
 html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
-.lo-meta-deploy{display:grid;grid-template-columns:minmax(92px,1fr) minmax(68px,.6fr) minmax(68px,.6fr) auto;align-items:end;gap:8px}
+.lo-meta-deploy{display:grid;grid-template-columns:minmax(92px,.9fr) minmax(160px,1.25fr) minmax(78px,.65fr) auto;align-items:end;gap:8px}
+.lo-qty-field{padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--head)}
+.lo-qty-field[data-qty-state=required]{border-color:#ce931e;background:color-mix(in srgb,#efb43b 16%,var(--panel))}
+.lo-qty-field[data-qty-state=invalid]{border-color:#da484b}
+.lo-qty-field[data-qty-state=valid]{border-color:#198754}
+.lo-qty-field .lo-qty-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lo-qty-controls input[type=number]{flex:1 1 85px;width:85px;min-width:0;background:var(--panel);border:1px solid var(--line)}
+.lo-qty-field[data-qty-state=required] input[type=number]{border-color:#ce931e}
+.lo-qty-controls .lo-qty-all{display:inline-flex;align-items:center;gap:5px;margin:0;white-space:nowrap}
+.lo-qty-controls .lo-qty-all input{width:auto;margin:0}
+.lo-qty-required{font-weight:750;color:var(--ink)}
+#loBatchAssignmentStatus{font-weight:650}
+@media(max-width:630px){.lo-meta-deploy .lo-qty-field{grid-row:1;grid-column:1/-1}}
 .lo-meta-modal button{white-space:nowrap}
 @media(max-width:630px){.lo-meta-head,.lo-meta-body,.lo-meta-footer{padding:10px}.lo-meta-grid,.lo-meta-grid.lo-meta-notes{grid-template-columns:minmax(0,1fr)}.lo-meta-deploy{grid-template-columns:repeat(3,minmax(0,1fr))}.lo-meta-deploy button{grid-column:1/-1;justify-self:end}.lo-meta-save .lo-meta-status{flex-basis:100%}}
 .lo-config .lo-config-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);margin:0}
@@ -8457,7 +8469,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.42';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.43';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16937,6 +16949,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const baseParts = initial.specs.length ? [] : loSourceBaseParts(item);
     const meta = JSON.parse(JSON.stringify(initial));
     const remaining = Math.max(0, (+item.q || 0) - row.allocated);
+    const qtyLimit = Math.min(5000,remaining);
     const nextRank = 1 + Math.max(0, ...(LO.data?.batches || []).map(batch => batch.rank));
     const cfg = guide?.cfg || LO.data.cfg;
     const launchLine = guide ? cfg.lines.find(line => line.id === guide.line) : null;
@@ -16986,7 +16999,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ${guide?`<h4>실제 라인 투입 수량</h4>
         <div class="lo-meta-deploy">
           <label>작업할 라인<input value="${esc(loLineName(launchLine.id))}" readonly></label>
-          <label>이번에 투입할 수량<input type="number" min="1" max="${Math.min(5000,remaining)}" id="loBatchQty" value="${esc(draft?.q??guide.preparation?.request.q??'')}" placeholder="직접 입력" inputmode="numeric"></label>
+          <div class="lo-qty-field"><label class="lo-qty-required" for="loBatchQty">이번에 투입할 수량 <small>필수</small></label>
+            <div class="lo-qty-controls"><input type="number" min="1" max="${qtyLimit}" id="loBatchQty" value="${esc(draft?.q??guide.preparation?.request.q??'')}" placeholder="수량 입력" inputmode="numeric" required aria-describedby="loBatchAssignmentStatus">
+            ${remaining>0&&remaining<=qtyLimit?`<label class="lo-qty-all"><input type="checkbox" id="loBatchQtyAll"> 전체 ${remaining}대 투입</label>`:''}</div></div>
           <label>작업 순서 (작을수록 먼저)<input type="number" min="1" id="loBatchRank" value="${esc(draft?.rank??guide.preparation?.request.rank??nextRank)}"></label>
           <button id="loBatchPrepare" class="primary" disabled>저장 후 닫기</button>
         </div>
@@ -17010,6 +17025,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const save = $('#loMetaSave', bg);
       const prepare = $('#loBatchPrepare', bg);
       const qty = $('#loBatchQty', bg);
+      const allQty = $('#loBatchQtyAll', bg);
       const rank = $('#loBatchRank', bg);
       const status = $('#loMetaStatus', bg);
       const assignmentStatus = $('#loBatchAssignmentStatus', bg);
@@ -17027,14 +17043,24 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         serialInput.disabled=busy;
         if(save)save.disabled = busy;
         if(guide){
-          const validQty=Number.isInteger(+qty.value)&&+qty.value>=1&&+qty.value<=Math.min(5000,remaining);
+          const qtyEmpty=qty.value===''&&!qty.validity.badInput;
+          const validQty=Number.isInteger(+qty.value)&&+qty.value>=1&&+qty.value<=qtyLimit;
           const validRank=rank.value!==''&&Number.isInteger(+rank.value)&&+rank.value>=1;
           const missing=loMissingAssignments(guide.line,cfg);
           qty.disabled=rank.disabled=busy;
           prepare.disabled=busy||!validQty||!validRank||!!missing.length||!!LO.starting;
-          assignmentStatus.classList.toggle('lo-error',!!missing.length);
+          if(allQty){
+            allQty.disabled=busy;
+            allQty.checked=validQty&&+qty.value===remaining;
+          }
+          qty.closest('.lo-qty-field').dataset.qtyState=validQty?'valid':qtyEmpty?'required':'invalid';
+          qty.setAttribute('aria-invalid',String(!validQty&&!qtyEmpty));
+          assignmentStatus.classList.toggle('lo-error',!!missing.length||(!validQty&&!qtyEmpty));
           assignmentStatus.textContent=missing.length?'담당자 배정 필요 · '+missing.join(', ')
-            :'배치 가능 '+remaining+'대 · 이번에 실제 투입할 수량을 입력하세요.';
+            :!qtyLimit?'배치 가능한 수량이 없습니다.'
+            :qtyEmpty?'이번에 투입할 수량을 입력해 주세요. (최대 '+qtyLimit+'대)'
+            :!validQty?'1~'+qtyLimit+' 사이의 정수로 입력해 주세요.'
+            :'투입 '+qty.value+'대 · 남는 수량 '+(remaining-Number(qty.value))+'대';
         }
         $('[data-c]', bg).disabled = busy;
         status.dataset.saved = String(saved);
@@ -17089,7 +17115,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       serialInput.oninput=()=>{serialPage=0;readSerials();updateControls();};
       serialPrev.onclick=()=>{serialPage--;readSerials();};
       serialNext.onclick=()=>{serialPage++;readSerials();};
-      if(guide){qty.oninput=updateControls;rank.oninput=updateControls;}
+      if(guide){
+        qty.oninput=updateControls;
+        rank.oninput=updateControls;
+        if(allQty)allQty.onchange=()=>{
+          qty.value=allQty.checked?String(remaining):'';
+          updateControls();
+        };
+      }
       const parseRaw = () => {
         if(!raw.value.trim())return false;
         const parsed = loParseSpecs(raw.value);
