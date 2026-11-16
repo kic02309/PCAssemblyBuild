@@ -4166,12 +4166,18 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     items = items.slice().sort((a, b) => a.date < b.date ? -1 : 1);
     let c4 = 0, d4 = 0; const osum = {}; OTHER.forEach(([k]) => (osum[k] = 0));
     const r10 = {}; COLS.forEach(x => (r10[x.c] = 0)); const ta = {}; EXCLUSIVE.type.forEach(c => (ta[c] = 0));
+    let supportWork = 0;
     let sumAU = 0, sumAV = 0, sumAW = 0, sumP = 0, otCount = 0, mf = 0, mq = 0, z = 0, zAV = 0, zAU = 0, hwN = 0;   // v28.18 : z = 실적 0인 날 (지원 등) — 근무일엔 넣고 평균에선 뺌
     const daily = items.map(it => {
       const s = it.sum, dow = new Date(it.date + 'T00:00:00').getDay(), hw = isHW(it.date);
       if (hw) hwN++; else if (dow === 6) d4++; else c4++;
       OTHER.forEach(([k]) => (osum[k] += num((s.o || {})[k])));
-      COLS.forEach(x => (r10[x.c] += num((s.r10 || {})[x.c])));
+      const replacedSupport = it._adj?.kind === 'support' && it._adj.base != null;
+      COLS.forEach(x => {
+        const quantity = num((s.r10 || {})[x.c]);
+        r10[x.c] += quantity;
+        if (replacedSupport && x.kind !== 'type') supportWork += quantity * M[x.c] / 30;
+      });
       { const T = s.ta || s.r10 || {}; EXCLUSIVE.type.forEach(c => (ta[c] += num(T[c]))); }   // v28.24 : 제조 줄 뺀 조립 구분 수량 (예전 기록은 r10)
       sumAU += num(s.e4); sumAV += num(s.h7); if (num(s.e4) > 0) otCount++; sumP += num(s.prod);   // v28.62 : 생산업무 배분
       const sd = sumDay(s, mins);
@@ -4186,7 +4192,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const w7 = ev ? (otherTotal / 30) / ev : 0;
     let sumH_AT = 0;
     COLS.forEach(x => { if (x.kind !== 'type') sumH_AT += r10[x.c] * M[x.c] / 30; });
-    sumH_AT += sumP;
+    sumH_AT += sumP - supportWork;
     const cd = c4 + d4, ce = Math.max(0, cd - z);
     const g4 = ce ? sumAW / ce : 0;
     const f6 = ce + (sumAV - zAV) / 60 / 8.5;
@@ -4398,7 +4404,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   // ---- v28.52 : 지원 보정 (2026년 11월 귀속부터) — 원본 요약은 그대로 두고 계산용 복사본만 만든다
   //  · 기타시간 6항목 합계 240분 이상 → 기타시간 점수 = 시간 × (전날까지 본인 평균 ÷ 8.5)  (30분당 1점 대신)
-  //  · 실적 0인 날 + 지원/교육 확인(또는 업무배정) → 그날 점수 = 전날까지 평균 (근무일 인정)
+  //  · 지원 확인은 실적이 있어도 평균 대체. 교육 확인과 업무배정만 있는 날은 실적 0일 때 대체.
   //  · 전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산
   const ADJ_START = '2026-11', ADJ_MIN = 240;
   const otherMinOf = s => OTHER.reduce((a, [k]) => a + num(((s || {}).o || {})[k]), 0);
@@ -4419,9 +4425,9 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const src2 = hasPre ? '당월 전날까지 평균' : base != null ? '직전 귀속월 평균' : '평균 자료 없음';
       const cf = conf[d] || (asg[d] ? 'support' : ''), zero = !(Math.abs(raw.e2) > 1e-9);
       let s = s0, kind = '', reason = '', support = min / 30;
-      if (!off[d] && zero && (cf === 'support' || cf === 'training')) {
+      if (!off[d] && (conf[d] === 'support' || (zero && (cf === 'support' || cf === 'training')))) {
         const lb = cf === 'training' ? '교육' : '지원';
-        if (base != null) { const dd = num(s0.d) > 0 ? num(s0.d) : 1; s = Object.assign({}, s0, { d: dd, h7: 0, t: {}, gq: 0, r10: s0.r10 || {}, o: { U7: base * dd * 30 } }); support = base * dd; kind = cf; reason = lb + ' · 평균 대체' + (asg[d] && !conf[d] ? ' (업무배정)' : ''); }
+        if (base != null) { const dd = num(s0.d) > 0 ? num(s0.d) : 1; s = Object.assign({}, s0, { d: dd, h7: 0, t: {}, gq: 0, prod: 0, r10: s0.r10 || {}, o: { U7: base * dd * 30 } }); support = base * dd; kind = cf; reason = lb + ' · 평균 대체' + (asg[d] && !conf[d] ? ' (업무배정)' : ''); }
         else { kind = cf; reason = lb + ' · 평균 자료 없음'; if (!it.sum) s = Object.assign({}, s0); }
       } else if (min >= ADJ_MIN && it.sum) {
         if (base != null) { support = min / 60 * base / 8.5; const r = support / (min / 30), oo = {}; OTHER.forEach(([k]) => { if (num((s0.o || {})[k])) oo[k] = num(s0.o[k]) * r; }); s = Object.assign({}, s0, { o: oo }); kind = 'adjusted'; reason = '지원 4시간 이상 · 평균 보정'; }
@@ -4438,7 +4444,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const result = adjustMonthLegacy(items, o);
     if (!result.on || !result.items.some(it => it._adj?.kind === 'support')) return result;
     const mins = o.mins;
-    const actual = (items || []).filter(it => it.sum && !o.off?.[it.date] && Math.abs(sumDay(it.sum, mins).e2) > 1e-9)
+    const actual = (items || []).filter(it => it.sum && !o.off?.[it.date] && o.conf?.[it.date] !== 'support' && Math.abs(sumDay(it.sum, mins).e2) > 1e-9)
       .map(it => otherMinOf(it.sum) >= ADJ_MIN ? { ...it, sum: { ...it.sum, o: {} } } : it);
     const observed = calcMonth(actual, 0, mins);
     const prior = Number.isFinite(o.prev) && o.prev > 0 ? o.prev : null;
@@ -4450,10 +4456,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const original = raw.get(it.date) || { d: 1, t: {}, r10: {}, o: {}, e2: 0, f7: 0 };
       const days = num(original.d) > 0 ? num(original.d) : 1;
       const support = base == null ? 0 : base * days;
-      const sum = base == null ? original : { ...original, d: days, h7: 0, t: {}, gq: 0, r10: original.r10 || {}, o: { U7: support * 30 } };
+      const sum = base == null ? original : { ...original, d: days, h7: 0, t: {}, gq: 0, prod: 0, r10: original.r10 || {}, o: { U7: support * 30 } };
       const day = sumDay(sum, mins);
       const reason = base == null ? '지원 · 산정 대기' : '지원 · ' + source + (o.asg?.[it.date] && !o.conf?.[it.date] ? ' (업무배정)' : '');
-      const _adj = { ...it._adj, base, source, reason, support, f7: day.f7, e2: day.e2 };
+      const _adj = { ...it._adj, base, source, reason, support, actual: sumDay(original, mins).e2, f7: day.f7, e2: day.e2 };
       result.meta[it.date] = _adj;
       return { ...it, sum, _adj };
     });
@@ -8469,7 +8475,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.47';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8784,7 +8790,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           S._dirtyAtt = true; draw(bg); } catch (e) { toast(e.message, true); b.disabled = false; } })); };
     modal(`<h3>출근 확인 <small class="muted">${ymLabel(ym)} · 담당 그룹</small></h3>
       ${reminder?'<p class="note">담당 그룹에 미확인 건이 있습니다. 지원 근무한 날은 [지원]을 눌러 확인해 주세요.</p>':''}
-      <div class="muted" style="font-size:12.5px;line-height:1.6;margin-bottom:8px">휴무 기록이 없는데 업무데이터가 없거나 실적이 0인 날입니다. <b>지원</b>은 귀속월 실제 실적 평균, <b>교육</b>은 전날까지 평균으로 채우고, <b>출근</b>은 0점으로 팀 효율에 넣습니다. <b>휴무</b>는 팀 효율에서 빼며 연차 등록은 따로 해야 합니다. 매니저의 휴무·지원 근거가 없는 평일 0점은 자동 출근으로 처리합니다.</div>
+      <div class="muted" style="font-size:12.5px;line-height:1.6;margin-bottom:8px">휴무 기록이 없는데 업무데이터가 없거나 실적이 0인 날입니다. <b>지원</b>은 해당 날짜의 실적 유무와 관계없이 귀속월 실제 실적 평균, <b>교육</b>은 전날까지 평균으로 채우고, <b>출근</b>은 0점으로 팀 효율에 넣습니다. <b>휴무</b>는 팀 효율에서 빼며 연차 등록은 따로 해야 합니다. 매니저의 휴무·지원 근거가 없는 평일 0점은 자동 출근으로 처리합니다.</div>
       <div class="row" style="justify-content:space-between;margin-bottom:8px"><b data-ck-count></b><button class="sm" data-ck-history aria-pressed="false">확인 이력 보기</button></div><div class="ckl" style="max-height:60vh;overflow:auto"></div><div class="acts"><button data-n>닫기</button></div>`, (bg, close) => {
       draw(bg);
       const dismiss = $('[data-n]', bg);
@@ -8796,12 +8802,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       }
     }, 'wide');
   }
-  const adjTag = a => a ? `<span class="adjt ${a.kind || 'none'}" title="${esc(a.reason + (a.base != null ? ' · 기준 평균 ' + f2(a.base) + ' (' + a.source + ')' : '') + ' · 실제 ' + f2(a.actual) + ' + 지원 ' + f2(a.support))}">${esc(a.kind === 'training' ? '교육' : a.kind === 'support' ? '지원' : a.kind === 'adjusted' ? '보정' : '!')}</span>` : '';
+  const adjTag = a => a ? `<span class="adjt ${a.kind || 'none'}" title="${esc(a.reason + (a.base != null ? ' · 기준 평균 ' + f2(a.base) + ' (' + a.source + ')' : '') + ' · 실제 ' + f2(a.actual) + (a.kind === 'support' ? ' · 지원 평가 ' : ' + 지원 ') + f2(a.support))}">${esc(a.kind === 'training' ? '교육' : a.kind === 'support' ? '지원' : a.kind === 'adjusted' ? '보정' : '!')}</span>` : '';
   const hmSpan = p => p.uid ? `<span class="ddhm" data-hm="${esc(p.uid)}"></span>` : '';            // 이번 달 달성일 · 미달일 (뒤에서 채움)
   const TBASE = [['all', '모든 인원'], ['nm', '매니저 제외'], ['nmp', '매니저·파트장 제외']];
   const tBase = () => { if (!S.tbase) { try { S.tbase = localStorage.getItem('tbase') || 'nm'; } catch (e) { S.tbase = 'nm'; } } return TBASE.some(x => x[0] === S.tbase) ? S.tbase : 'nm'; };
   // 팀 줄 : 목표 기준 버튼과 상관없이 항상 팀 목표로
-  const teamLine = D => { const g = goalOf(D.GY), b = tBase(), W = D.work.filter(p => b === 'all' || (p.title !== '매니저' && (b === 'nm' || p.title !== '파트장')));
+  const teamLine = D => { const g = goalOf(D.GY), b = tBase(), W = D.work.filter(TBF[b]);
     let avg = W.length ? W.reduce((a, p) => a + p.v, 0) / W.length : null, cnt = W.length, lab = '입력', pend = 0;
     const T = adjOn(D.GY) && !D.r.staff ? teamDays(D.GY, D.r.date, D.r.date) : null;          // v28.52 : 출근 인원 기준 팀 효율
     if (T) { const s = teamSum(T, b); avg = s.avg; cnt = s.n; pend = s.pend; lab = '출근'; S._teamRows = T; }
@@ -10059,9 +10065,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $('#epct').textContent = D.target ? pct(c.c8) : '-';
     $('#epct').className = 'ep ' + cls;
     $('#stats').innerHTML = `
-      ${(() => { const i6 = c.f6 - C.num(D.doc.asmOt) / 60 / 8.5 + c.e4 / 60 / 8.5, i7 = i6 ? c.e2 / i6 : 0;      // v28.17 : 실제 = 조립 야근 대신 내 실제 야근으로
+      ${(() => { const i6 = c.f6 - C.num(D.doc.asmOt) / 60 / 8.5 + c.e4 / 60 / 8.5, i7 = i6 ? (aj?.meta.kind === 'support' ? aj.meta.actual : c.e2) / i6 : 0;      // v28.17 : 실제 = 조립 야근 대신 내 실제 야근으로
         return `<div class="stat"><div class="k">평가 · <span class="real">실제</span> 평균</div><div class="v">${f2(c.f7)}<small class="real"> · ${f2(i7)}</small></div></div>`; })()}
-      <div class="stat${aj && aj.meta.kind ? ' adjs' : ''}" ${aj ? `title="${esc(aj.meta.reason + (aj.meta.base != null ? ' · 기준 평균 ' + f2(aj.meta.base) + ' (' + aj.meta.source + ')' : ''))}"` : ''}><div class="k">기본 환산${aj ? ' ' + adjTag(aj.meta) : ''}</div><div class="v">${f2(c.e2)}</div>${aj && aj.meta.kind ? `<div class="adjl">실제 ${f2(aj.meta.actual)} + 지원 ${f2(aj.meta.support)}</div>` : ''}</div>
+      <div class="stat${aj && aj.meta.kind ? ' adjs' : ''}" ${aj ? `title="${esc(aj.meta.reason + (aj.meta.base != null ? ' · 기준 평균 ' + f2(aj.meta.base) + ' (' + aj.meta.source + ')' : ''))}"` : ''}><div class="k">기본 환산${aj ? ' ' + adjTag(aj.meta) : ''}</div><div class="v">${f2(c.e2)}</div>${aj && aj.meta.kind ? `<div class="adjl">실제 ${f2(aj.meta.actual)} ${aj.meta.kind === 'support' ? '· 지원 평가' : '+ 지원'} ${f2(aj.meta.support)}</div>` : ''}</div>
       ${D.doc.prod ? `<div class="stat prs" title="생산업무 확정 배분 · ${esc(D.doc.prod.by || '')} ${esc((D.doc.prod.at || '').slice(5, 16))} · 담당자가 재확정하면 이 값만 바뀝니다"><div class="k">생산업무 배분</div><div class="v">${f2(D.doc.prod.v)}</div><div class="adjl">라인 ${f2(D.doc.prod.T)} 중 ${D.doc.prod.m}분</div></div>` : ''}
       ${(() => { const mq = D.doc.rows.filter(r => r.k === '제조' && r.q !== '' && r.q != null).reduce((a, r) => a + C.num(r.q), 0), P = C.qtyParts({ ta: C.typeCounts(D.doc), mq });      // v28.24 : 조립 / 반조 / 출고 / 제조 나눠서
         return `<div class="stat sq"><div class="k">조립수량</div><div class="v">${P.asm}</div><div class="qchips">${qtyChips(P, !lay2(D.doc))}</div></div>${P.ban ? `<div class="stat"><div class="k">반조</div><div class="v">${P.ban}</div></div>` : ''}<div class="stat"><div class="k">제조사용(출고)</div><div class="v shipv">${P.ship}</div></div>${P.mfg ? `<div class="stat"><div class="k">제조수량</div><div class="v mfgv">${P.mfg}</div></div>` : ''}`; })()}
@@ -10376,7 +10382,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     raw.forEach(x => { const L = Array.isArray(x.doc.otherR) ? x.doc.otherR : []; if (L.length) L.forEach(o => oth.push([x.date, OL[o.k] || o.k, o.r || '', C.num(o.m)])); else C.OTHER.forEach(([k, t]) => { if (C.num((x.doc.other || {})[k])) oth.push([x.date, t, '', C.num(x.doc.other[k])]); }); });
     sheet('기타시간', oth, [11, 12, 30, 8]);
     sheet('계산 안내', [['안내'], ['수식 없이 웹 화면과 같은 값으로 만든 파일입니다. 원본 양식이 필요하면 [원본 양식] 버튼을 쓰세요.'], ['2026년 11월 귀속부터 : 기타시간 6항목 합계 240분 이상이면 기타시간 점수 = 시간 × (전날까지 본인 평균 ÷ 8.5).'],
-      ['실적 0인 지원·지원 업무배정일은 같은 귀속월의 실제 실적 평균으로 대체합니다. 교육은 전날까지 평균을 사용합니다.'], ['전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산.']], [110]);
+      ['지원 확인일은 실제 실적이 있어도 평가를 같은 귀속월의 실제 실적 평균으로 대체합니다. 업무배정만 있는 경우 실적이 0일 때 대체합니다. 교육은 전날까지 평균을 사용합니다.'], ['전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산.']], [110]);
     return new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   }
   const sxName = (n, ym) => n + '_' + ym + '_업무데이터.xlsx';
@@ -10475,8 +10481,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const other=C.otherMinOf(corrected)/30/to,rawValue=C.sumDay(raw,mins).f7,value=C.sumDay(corrected,mins).f7;
     const rawWork=C.sumDay({...raw,o:{}},mins).e2,work=C.sumDay({...corrected,o:{}},mins).e2;
     if(![other,rawValue,value,rawWork,work].every(Number.isFinite)||other<0)return null;
-    // Pure support/education has no assembly/shipment/manufacturing conversion.
-    if(Math.abs(rawWork)<1e-8&&Math.abs(work)<1e-8&&!(+corrected.prod)){
+    // Replaced support scores are entirely support time, even when orders were entered.
+    if ((adjustment.kind === 'support' && adjustment.base != null) || (Math.abs(rawWork) < 1e-8 && Math.abs(work) < 1e-8)) {
       const cv={v:1,asm:0,ship:0,mfg:0,other,production:0};
       return ddConversionReady({v:value,cv})?cv:null;
     }
@@ -10562,8 +10568,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           if(DD_SPC&&s.t)o.st+=+s.t[DD_SPC]||0;                                          // v29.73 : 안정화(특수) = 안정화 건수에 합침
           if(s.t&&f6>0){const MM=C.minsMap(M),mm=c=>(+s.t[c]||0)*(MM[c]||0)/30/f6; o.osC=mm('AA')+mm('AB'); o.stC=mm('AD')+mm('AE')+(DD_SPC?mm(DD_SPC):0);} }   // v29.73 : OS · 안정화 환산 (열 기준) / v29.51 os · st / v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
-      o.kind = o.off ? 'off' : o.task ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
-      if (liveView && r._prod) ddProdPerson(o, s, r._prod, M);
+      o.kind = o.off ? 'off' : o.task && o.adj?.kind !== 'support' ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
+      if (liveView && r._prod && !(o.adj?.kind === 'support' && o.adj.base != null)) ddProdPerson(o, s, r._prod, M);
       if (saturdayDuty && !saturdayDuty.has(N(p.name)) && !o.off) {
         o.off = '토요 미배정';
         // Keep actual production visible even when the employee is outside the duty roster.
@@ -10574,7 +10580,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     // 라인 총량 : 출근한 라인 인원(휴무 · 업무지원 · 매니저 제외)에게 똑같이 나눔
     if (!(liveView && r._prod) && r.line && (r.line.conv != null || r.line.qty != null)) {
       const L = P.filter(p => p.grp === '라인' && !p.off && !p.task && !['매니저', '팀장'].includes(p.title));
-      L.forEach(p => { p.kind = 'work'; p.v = L.length ? num(r.line.conv) / L.length : 0; p.oth = 0; p.q = 0; p.mq = L.length ? Math.round(num(r.line.qty) / L.length * 10) / 10 : 0; p.lineSplit = true;   /* v29.35 : 라인 총량 = 제조 */p.cv=null; });
+      L.forEach(p => { if (p.adj?.kind === 'support' && p.adj.base != null) return; p.kind = 'work'; p.v = L.length ? num(r.line.conv) / L.length : 0; p.oth = 0; p.q = 0; p.mq = L.length ? Math.round(num(r.line.qty) / L.length * 10) / 10 : 0; p.lineSplit = true;   /* v29.35 : 라인 총량 = 제조 */p.cv=null; });
     }
     const body = P.filter(p => p.grp !== '팀장');
     const work = body.filter(p => p.kind === 'work'), tw = work.filter(p => p.target);
@@ -10621,6 +10627,20 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cv=p.cv,vals=['asm','ship','mfg','other'].map(k=>cv&&cv[k]);
     return !!cv && vals.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)
       && Number.isFinite(p.v) && Math.abs(vals.reduce((a,b)=>a+b,0)-p.v)<1e-6 && !(cv.production>1e-8);
+  }
+  function ddGroupForRole(group, role) {
+    if (role === 'all') return group;
+    const L = group.L.filter(TBF[role]);
+    const workers = L.filter(p => p.kind === 'work');
+    const targeted = workers.filter(p => p.target > 0);
+    const avg = (people, value) => people.length ? people.reduce((sum, p) => sum + value(p), 0) / people.length : null;
+    const total = key => workers.reduce((sum, p) => sum + (p[key] || 0), 0);
+    const conversionAvg = key => workers.every(p => typeof p[key] === 'number') ? avg(workers, p => p[key]) : null;
+    return { ...group, L, w: workers.length, tn: targeted.length,
+      avg: avg(workers, p => p.v), tg: avg(targeted, p => p.target),
+      q: Math.round(total('q') * 10) / 10, mq: total('mq'), ship: total('ship'),
+      os: total('os'), st: total('st'), osc: conversionAvg('osC'), stc: conversionAvg('stC'),
+      sup: L.filter(p => p.kind === 'sup').length };
   }
   function ddGroupConversion(x){
     const workers=x.L.filter(p=>p.kind==='work');
@@ -10837,7 +10857,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     </div>`;
     if (r._prodError) h += '<div class="warn">라인생산 진행 현황을 불러오지 못했습니다. 현재 화면은 확정 실적 기준입니다. 새로고침 후 확인하세요.</div>';
     // V7: 체크사항(그룹별)과 평균환산은 카드 하나에서 같은 행으로 확인. 특이사항 열 없음.
-    const activeGroups = D.G.filter(x => x.w || (x.g === '라인' && r._prod));
+    const groupRole = staff && adjOn(D.GY) ? 'all' : tBase();
+    const groups = D.G.map(group => ddGroupForRole(group, groupRole));
+    if (r._prod && groupRole !== 'all') { const line = groups.find(x => x.g === '라인'); if (line) line.mq += r._prod.qty; }
+    const activeGroups = groups.filter(x => x.w || (x.g === '라인' && r._prod));
     const groupScale=Math.max(20,...activeGroups.map(x=>x.avg||0),...activeGroups.map(x=>x.tg||0));
     h += `<div class="card ddcombo-v7 ddcombo-v28"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>검은 선 = 목표</small></h3>
       <div class="ddcombo-list">
@@ -10848,9 +10871,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <div class="ddcombo-tail"><div class="ddcombo-checks" title="체크사항은 전 근무일 기준" data-ddgrp="${esc(x.g)}"><span class="muted">체크사항 확인 중…</span></div>${x.g === '라인' && r._prod ? `<span class="ddline-state">${esc(r._prod.status)}</span>` : ''}</div>
         </div>`).join('')}
       </div>
-      ${(() => { const E = D.G.filter(x => !x.w && !(x.g === '라인' && r._prod)); if (!E.length || !D.G.length) return '';
+      ${(() => { const E = groups.filter(x => !x.w && !(x.g === '라인' && r._prod)); if (!E.length || !groups.length) return '';
         const nm = E.map(x => `<span>${gdot(x.g)}${x.sup ? `<em>지원 ${x.sup}</em>` : ''}</span>`).join('');
-        return E.length === D.G.length ? '<div class="ddnone all"><b>아직 조립 실적이 없습니다</b><span class="muted">입력이 들어오면 그룹별 막대가 생깁니다</span></div>'
+        return E.length === groups.length ? '<div class="ddnone all"><b>아직 조립 실적이 없습니다</b><span class="muted">입력이 들어오면 그룹별 막대가 생깁니다</span></div>'
           : `<div class="ddnone ddcombo-noresult"><b>실적 없음</b><div>${nm}</div></div>`; })()}
       <div id="ddchk" class="ddcombo-shared-v7">${staff ? '<span class="muted">그룹별 체크사항은 관리자·매니저에게 표시됩니다</span>' : '<span class="muted">공통 체크사항 확인 중…</span>'}</div>
     </div>`;
@@ -13738,7 +13761,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const v = C.sumDay(s, minsOf(d)).f7, rc = u.tg ? LVC[lvOf(v, u.tg, S._gym)] : 'r-no';
         const aj = byA[u.id][d];
         if (!(v > 1e-9)) return `<td class="z" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 실적 0 (${esc(aj ? aj.reason : why || '사유 없음')}) · 근무일엔 들어가고 평가평균에선 빠짐">${aj ? adjTag(aj) : why ? `<span>${esc(whyAb(why))}</span>` : '0'}</td>`;
-        return `<td class="${rc}${aj ? ' adjc' : ''}" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 평가평균 ${f2(v)}${u.tg ? ' (' + pct(v / u.tg) + ')' : ''} · 주문 ${s.n || 0}건${aj ? ' · ' + esc(aj.reason) + ' (실제 ' + f2(aj.actual) + ' + 지원 ' + f2(aj.support) + (aj.base != null ? ' · 기준 평균 ' + f2(aj.base) : '') + ')' : ''}">${(Math.round(v * 10) / 10).toFixed(1)}${aj ? adjTag(aj) : ''}</td>`;
+        return `<td class="${rc}${aj ? ' adjc' : ''}" data-d="${d}" title="${esc(u.name)} ${dLabel(d)} · 평가평균 ${f2(v)}${u.tg ? ' (' + pct(v / u.tg) + ')' : ''} · 주문 ${s.n || 0}건${aj ? ' · ' + esc(aj.reason) + ' (실제 ' + f2(aj.actual) + (aj.kind === 'support' ? ' · 지원 평가 ' : ' + 지원 ') + f2(aj.support) + (aj.base != null ? ' · 기준 평균 ' + f2(aj.base) : '') + ')' : ''}">${(Math.round(v * 10) / 10).toFixed(1)}${aj ? adjTag(aj) : ''}</td>`;
       }).join('')}<td class="bt r4">${u.items.length ? u.days : '-'}</td><td class="bt r3 t-hi"><b>${u.items.length && u.tg ? u.hit : '-'}</b></td><td class="bt r2 t-lo"><b>${u.items.length && u.tg ? u.miss : '-'}</b></td><td class="bt r1"><b>${u.items.length ? f2(u.m.f7) : '-'}</b></td><td class="bt r0 ${u.tg && u.items.length ? rateCls(u.m.c8, S._gym) + 't' : ''}">${u.tg && u.items.length ? pct(u.m.c8) : '-'}</td></tr>`).join('') || '<tr><td class="muted" style="padding:24px">표시할 인원이 없습니다</td></tr>'}
       </tbody><tfoot><tr><td class="bn">입력 인원</td>${dates.map(d => `<td>${cnt[d] || ''}</td>`).join('')}<td class="bt r0" colspan="5"></td></tr></tfoot></table></div>`;
     $$('.bd td[data-d]').forEach(td => (td.onclick = () => { const u = S._mlist.find(x => x.id === td.closest('tr').dataset.u); if (!u || u.pend) return; openUser(u, 'day', td.dataset.d); }));
