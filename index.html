@@ -8469,7 +8469,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.45';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -15747,6 +15747,78 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const canLine = () => canProd() || !!S.loCan;
   const loId = () => 'lo_' + (globalThis.crypto?.randomUUID?.() || (Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));
   const LO_TERMINAL_OPS = new Set(['can','get','probe','watch','complete','terminalBind','terminalUnbind']);
+  const loCentralSession = (() => {
+    const valid=info=>info&&(info.overview===true||(/^[A-Za-z0-9_-]{1,64}$/.test(info.id||'')&&
+      Number.isInteger(info.port)&&info.port>0&&info.port<=65535&&/^[a-f0-9]{64}$/.test(info.key||'')));
+    try {
+      const hash=new URLSearchParams(location.hash.slice(1));
+      if(hash.has('pcabStation')||hash.has('pcabOverview')){
+        const info=hash.get('pcabOverview')==='1'?{overview:true}:{
+          id:hash.get('pcabStation'),port:Number(hash.get('pcabPort')),key:hash.get('pcabKey')
+        };
+        if(!valid(info))return null;
+        history.replaceState(history.state,'',location.pathname+location.search);
+        sessionStorage.setItem('pcabLineSession',JSON.stringify(info));
+        return info;
+      }
+      const saved=JSON.parse(sessionStorage.getItem('pcabLineSession')||'null');
+      return valid(saved)?saved:null;
+    }catch(e){return null;}
+  })();
+
+  function loCentralWork(st) {
+    const cur=st?.current;
+    return cur?{BatchID:cur.batchId,Sequence:Number(cur.seq),Stage:Number(cur.stage),Version:Number(cur.ver),Config:Number(LO.data.cfgVer)}:null;
+  }
+  function loCentralSame(a,b) {
+    return !!a&&!!b&&a.BatchID===b.BatchID&&a.Sequence===b.Sequence&&a.Stage===b.Stage&&a.Version===b.Version&&a.Config===b.Config;
+  }
+  function loCentralReady(st) {
+    const id=loCentralSession?.id,btn=document.getElementById('loDone');
+    return !!id&&LO.data?.terminalStation===id&&st?.id===id&&loCanWork(st)&&!!btn&&!btn.disabled&&
+      !st.supervisedComplete&&!document.hidden&&!document.querySelector('.modal-bg')&&!!S.token&&S.view==='line';
+  }
+  function loCentralWatch(epoch) {
+    const session=loCentralSession;
+    if(!session?.id||!globalThis.crypto?.getRandomValues)return;
+    const browser=Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join('');
+    const active=()=>S.view==='line'&&epoch===LO.epoch&&!!S.token;
+    let warned=false;
+    async function local(Action,extra){
+      const response=await fetch('http://127.0.0.1:'+session.port+'/production-seat',{
+        method:'POST',mode:'cors',credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',
+        headers:{'Content-Type':'application/json','X-Line-Key':session.key},
+        body:JSON.stringify({Action,ID:session.id,Browser:browser,...extra}),signal:AbortSignal.timeout(3500)
+      });
+      if(!response.ok)throw new Error('중앙 실행기 연결 오류');
+      return response.json();
+    }
+    async function poll() {
+      if(!active())return;
+      let delay=850;
+      try{
+        const st=loCurrentSeat();
+        const linked=LO.data?.terminalStation===session.id&&!!LO.data?.stations.find(x=>x.id===session.id&&x.canComplete&&!x.supervisedComplete);
+        const {command}=await local('status',{Linked:linked,Work:loCentralReady(st)?loCentralWork(st):null});
+        warned=false;
+        if(command){
+          let outcome='rejected';
+          if(active()&&Date.now()<command.Expires&&/^lo_[a-f0-9]{64}$/.test(command.ID))
+            outcome=await loComplete(false,command);
+          await local('result',{Command:command.ID,Result:outcome});
+        }
+      }catch(e){
+        delay=4000;
+        if(active()&&!warned){
+          warned=true;
+          toast('중앙 실행기 연결을 확인하세요. Edge에서 로컬 네트워크 접근을 묻는 경우 허용해 주세요.',true);
+        }
+      }finally{
+        if(active())setTimeout(poll,delay);
+      }
+    }
+    void poll();
+  }
   const loTerminalToken = () => { try{return localStorage.getItem('lineTerminalToken');}catch(e){return null;} };
   const loCall = (op,data) => {
     const terminalToken=LO_TERMINAL_OPS.has(op)?loTerminalToken():null;
@@ -16010,6 +16082,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const st=LO.data?.stations.find(x=>x.id===remembered?.id);
       if(st)loOpen(st.id,remembered.mode==='work'&&st.canComplete?'work':'view',false);
       loWatch(epoch);
+      loCentralWatch(epoch);
     }
   }
   async function loRefresh(epoch,force) {
@@ -16500,10 +16573,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $$('[data-lo-choose-seat]',bg).forEach(button=>button.onclick=()=>{close();loOpen(button.dataset.loChooseSeat,'view');});
     });
   }
-  function loTerminalSettings(onUpdated,lineId) {
+  function loTerminalSettings(onUpdated,lineId,expectedStation) {
     const r=LO.data;
     if(!r?.admin)return;
-    const choices=r.cfg.lines.filter(line=>!lineId||line.id===lineId).flatMap(line=>r.stations.filter(st=>st.line===line.id).map(st=>{
+    const choices=r.cfg.lines.filter(line=>!lineId||line.id===lineId).flatMap(line=>r.stations.filter(st=>st.line===line.id&&(!expectedStation||st.id===expectedStation)).map(st=>{
       const group=r.cfg.sets.find(set=>set.id===line.setId)?.stages[st.stage];
       return `<option value="${esc(st.id)}" ${st.id===r.terminalStation?'selected':''}>${esc(loLineName(line.id))} · ${esc(loSeatLabel(st))} ${esc(group?.name||'공정')} · ${esc(st.assignedName||'미배정')} (${esc(st.id)})</option>`;
     })).join('');
@@ -16600,10 +16673,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function loCentralManager() {
     if(!loCentralManagerAllowed(LO.data))return;
     modal(`<h3>중앙 실행기 관리</h3>
-      <p><b>Windows 현장 시험판 v0.2.0</b></p>
-      <p>메인 PC에 설치한 뒤 중앙 실행기에서 모니터와 Arduino 버튼을 작업대에 배정하세요. 설치할 때 Windows 로그인 시 자동 시작 여부를 선택할 수 있습니다.</p>
-      <p>시험판은 모의 작업대에서 동작합니다. 현재는 운영 작업대와 연결되지 않습니다.</p>
-      <div class="acts"><button type="button" data-c>닫기</button><a id="loCentralSetupDownload" style="display:inline-flex;align-items:center;padding:7px 13px;border-radius:8px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none" href="downloads/PCAssemblyLine-Setup-v0.2.0.zip" download>Windows 시험판 다운로드</a></div>`,(bg,close)=>{
+      <p><b>Windows 운영용 중앙 실행기 v1.0.0</b></p>
+      <p>메인 PC에서 모니터와 Arduino 버튼을 운영 작업대에 배정하세요. 설치할 때 Windows 로그인 시 자동 시작을 선택할 수 있습니다.</p>
+      <p>작업대 등록과 화면 배치 후 Arduino 입력을 켜면 기존 라인생산 완료 절차에 따라 운영 실적에 기록됩니다.</p>
+      <div class="acts"><button type="button" data-c>닫기</button><a id="loCentralSetupDownload" style="display:inline-flex;align-items:center;padding:7px 13px;border-radius:8px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none" href="downloads/PCAssemblyLine-Setup-v1.0.0.zip" download>Windows 운영용 다운로드</a></div>`,(bg,close)=>{
       $('[data-c]',bg).onclick=close;
     });
   }
@@ -16626,6 +16699,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
     $('#loDate').onchange=async e=>{LO.date=e.target.value;await loRefresh(LO.epoch,true);};$('#loReload').onclick=()=>loRefresh(LO.epoch,true);
     if($('#loCentralManager'))$('#loCentralManager').onclick=loCentralManager;
+    const expected=loCentralSession?.id;
+    if(expected&&r.admin&&r.terminalStation!==expected&&r.stations.some(st=>st.id===expected)){
+      const button=document.createElement('button');
+      button.type='button';
+      button.textContent='이 창을 '+expected+' 작업대로 지정';
+      button.onclick=()=>loTerminalSettings(null,null,expected);
+      $('#loCentralManager')?.after(button);
+    }
     if($('#loMainStart'))$('#loMainStart').onclick=()=>{const saved=loLoadGuideDraft();if(saved)loGuideMove(saved,saved.step||1,()=>{});else loGuide();};
     loBindControls($('#main'));
     $$('[data-lo-edit-prepared]').forEach(button=>button.onclick=()=>{const p=prepared.find(x=>x.id===button.dataset.loEditPrepared);if(p)loSources(p.request.date,p.request.rowId,{cfg:structuredClone(r.cfg),line:p.line,ver:r.cfgVer,dirty:false,preparation:p,rowId:p.request.rowId,stageTexts:p.request.stageTexts});});
@@ -16874,25 +16955,28 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if(field.textContent!==display)field.textContent=display;
     });
   }
-  async function loComplete(retry) {
-    if(LO.busy)return;
+  async function loComplete(retry, central) {
+    if(LO.busy)return 'rejected';
     const st=loCurrentSeat();
-    if(!loCanWork(st))return;
+    if(!loCanWork(st))return 'rejected';
     const b=LO.data?.batches.find(x=>x.id===st.current?.batchId);
-    if(!retry&&(!st.current||b?.paused_at||b?.sourceChanged||LO.pending||!LO.online||navigator.onLine===false||!LO.notifyConnected||Date.now()<LO.blockedUntil))return;
-    if(retry&&LO.pending?.station!==st.id)return;
-    const req=retry?LO.pending:Object.assign({},st.current,{station:st.id,requestId:loId(),cfgVer:LO.data.cfgVer});
+    if(!retry&&(!st.current||b?.paused_at||b?.sourceChanged||LO.pending||!LO.online||navigator.onLine===false||!LO.notifyConnected||Date.now()<LO.blockedUntil))return 'rejected';
+    if(retry&&LO.pending?.station!==st.id)return 'rejected';
+    if(central&&(!loCentralReady(st)||!loCentralSame(central.Work,loCentralWork(st))))return 'rejected';
+    const req=retry?LO.pending:Object.assign({},st.current,{station:st.id,requestId:central?.ID||loId(),cfgVer:LO.data.cfgVer});
     const epoch=LO.epoch,tk=S.token,uid=S.me?.id;
     LO.pending=req;try{sessionStorage.setItem('linePending',JSON.stringify({uid,request:req}));}catch(e){}LO.busy=true;LO.blockedUntil=Date.now()+1000;loStatus();
     try {
       await loCall('complete',req);
-      if(epoch!==LO.epoch||tk!==S.token||uid!==S.me?.id)return;
+      if(epoch!==LO.epoch||tk!==S.token||uid!==S.me?.id)return 'saved';
       LO.pending=null;try{sessionStorage.removeItem('linePending');}catch(e){}
       await loRefresh(epoch,true);
-    }catch(e){if(epoch!==LO.epoch||tk!==S.token)return;LO.online=false;
+      return 'saved';
+    }catch(e){if(epoch!==LO.epoch||tk!==S.token)return e.serverRejected?'rejected':'uncertain';LO.online=false;
       if(e.serverRejected){LO.pending=null;try{sessionStorage.removeItem('linePending');}catch(e){}await loRefresh(epoch,true);}
       // A definite rejection may be discarded only after explicit user action; uncertain transport failures keep the original request.
       loDrawWork();toast(e.message,true);
+      return e.serverRejected?'rejected':'uncertain';
     }finally{if(epoch===LO.epoch&&tk===S.token){LO.busy=false;LO.blockedUntil=Date.now()+900;loDrawWork();loStatus();if(LO.notifyDirty)loSyncFromNotification(epoch);}}
   }
   function loSwitchConfig() {
@@ -19583,6 +19667,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
+      if(loCentralSession&&canLine()&&!r.mustChange)v0='line';
       S.layout = null; shell(layoutOf(v0)); go(v0, { date: d0, _pop: true }); setTimeout(() => { if(S.me) void updateEduBadge(true); },900);
       setTimeout(() => { void bkRemind(); }, 2500);
       if(!S.pv&&!S.mpv)setTimeout(()=>void srPollNotices(),2000);
