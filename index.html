@@ -284,6 +284,12 @@ html[data-theme=dark] .pmon .pdt td.r-hi{background:#202b3e;color:#b7d0f9}html[d
 .pmon .pdt tfoot td{position:sticky;bottom:0;background:#eef1f5;font-weight:800;border-top:2px solid #8792a3}
 html[data-theme=dark] .pmon .pdt tfoot td{background:#202a36}
 .pmon .pdt thead th{white-space:nowrap}
+.pmon .pdt tr.support-day{--support-row:#eff7ff;--support-cell:#e2f1ff;--support-edge:#3982bd;--support-badge:#c6e4ff;--support-ink:#075482}
+html[data-theme=dark] .pmon .pdt tr.support-day{--support-row:#192f47;--support-cell:#203c58;--support-edge:#78b9ed;--support-badge:#294e70;--support-ink:#d5efff}
+.pmon .pdt table.list tbody tr.support-day > td:not(.lvc){background:var(--support-row)}
+.pmon .pdt table.list tbody tr.support-day > td:first-child{box-shadow:inset 3px 0 var(--support-edge);font-weight:700}
+.pmon .pdt table.list tbody tr.support-day > td.support-cell{background:var(--support-cell)}
+.pmon .pdt td.support-cell .adjt.support{margin:0;padding:2px 9px;border-radius:5px;font-size:14px;line-height:1.25;vertical-align:middle;white-space:nowrap;background:var(--support-badge);color:var(--support-ink)}
 /* v28.54 : 현황판 오른쪽 합계 5칸 고정 (날짜가 길어도 잘리지 않음) */
 table.bd .bt.r0,table.bd .bt.r1,table.bd .bt.r2,table.bd .bt.r3,table.bd .bt.r4{position:sticky;z-index:1;box-sizing:border-box;width:68px;min-width:68px;max-width:68px}
 table.bd .bt.r0{right:0}table.bd .bt.r1{right:68px}table.bd .bt.r2{right:136px}table.bd .bt.r3{right:204px}table.bd .bt.r4{right:272px;border-left:2px solid #8792a3}
@@ -8476,7 +8482,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.48';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.49';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13723,10 +13729,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const s = RAW[d.date] || {}, P = C.qtyParts(s), O = oth(s), om = O.reduce((a, x) => a + x[1], 0), aj = ADJ[d.date];
       T.q += P.asm; T.ship += P.ship; T.o += om;
       const lv = tg && !d.zero && !d.hw ? lvOf(d.f7, tg, ym) : null;
-      return `<tr class="click${d.hw ? ' hwr' : ''}" data-d="${d.date}"><td class="${d.dow === 6 ? 'sat' : d.dow === 0 ? 'sun' : ''}">${dLabel(d.date)}</td><td>${d.hw ? '<span class="hwt" title="근무일에 넣지 않고 실적만 총량에 더함 · 토요 가산 없음">휴일근무</span>' : esc(d.kind || '')}</td><td class="num">${d.n - (d.mf || 0)}</td>${hasMf ? `<td class="num mfgv">${d.mf ? d.mq + '대' : ''}</td>` : ''}`
+      return `<tr class="click${d.hw ? ' hwr' : ''}${aj?.kind === 'support' ? ' support-day' : ''}" data-d="${d.date}"><td class="${d.dow === 6 ? 'sat' : d.dow === 0 ? 'sun' : ''}">${dLabel(d.date)}</td><td>${d.hw ? '<span class="hwt" title="근무일에 넣지 않고 실적만 총량에 더함 · 토요 가산 없음">휴일근무</span>' : esc(d.kind || '')}</td><td class="num">${d.n - (d.mf || 0)}</td>${hasMf ? `<td class="num mfgv">${d.mf ? d.mq + '대' : ''}</td>` : ''}`
         + `<td class="num" title="${esc(P.by.filter(x => x[1]).map(([c, n]) => C.QLAB[c] + ' ' + n).join(' · ') || '')}">${P.asm || ''}</td><td class="num shipv">${P.ship || ''}</td>`
         + `<td class="num" title="${esc(O.map(x => x[0] + ' ' + x[1] + '분').join('\n'))}">${om || ''}</td><td class="num">${d.e4 || ''}</td><td class="num">${d.h7 || ''}</td>`
-        + `<td class="num">${f2(d.e2)}</td><td class="lvc${lv ? ' ' + LVC[lv] : ''}"><b>${f2(d.f7)}</b></td>${tg ? `<td class="lvp ${lv ? LVC[lv] + 't' : ''}">${d.zero || d.hw ? '' : pct(d.f7 / tg)}</td>` : ''}<td class="num">${d.aw ? f2(d.aw) : ''}</td><td>${aj ? adjTag(aj) : ''}</td></tr>`;
+        + `<td class="num">${f2(d.e2)}</td><td class="lvc${lv ? ' ' + LVC[lv] : ''}"><b>${f2(d.f7)}</b></td>${tg ? `<td class="lvp ${lv ? LVC[lv] + 't' : ''}">${d.zero || d.hw ? '' : pct(d.f7 / tg)}</td>` : ''}<td class="num">${d.aw ? f2(d.aw) : ''}</td><td${aj?.kind === 'support' ? ' class="support-cell"' : ''}>${aj ? adjTag(aj) : ''}</td></tr>`;
     }).join('');
     const foot = m.daily.length ? `<tfoot><tr><td>합계 · 평균</td><td>${m.daily.length - (m.hw || 0)}일${m.hw ? `<small> + 휴일 ${m.hw}</small>` : ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.n - (d.mf || 0), 0)}</td>${hasMf ? `<td class="num mfgv">${m.mq}대</td>` : ''}<td class="num">${T.q}</td><td class="num shipv">${T.ship}</td><td class="num">${T.o}</td><td class="num">${m.e4 || ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.h7, 0) || ''}</td><td class="num">${f2(m.e2)}</td><td class="lvc"><b>${f2(m.f7)}</b></td>${tg ? `<td class="lvp">${m.c8 != null ? pct(m.c8) : ''}</td>` : ''}<td class="num">${m.g4 ? f2(m.g4) : ''}</td><td></td></tr></tfoot>` : '';
     return `<div class="card pdt" style="padding:0;overflow:auto;max-height:calc(100vh - 300px)"><table class="list"><thead><tr>${head}</tr></thead><tbody>${rows || `<tr><td colspan="${cols}" class="muted" style="padding:24px">입력된 날짜가 없습니다</td></tr>`}</tbody>${foot}</table></div>`;
