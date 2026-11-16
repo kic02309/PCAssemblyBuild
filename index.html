@@ -4404,9 +4404,10 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   // ---- v28.52 : 지원 보정 (2026년 11월 귀속부터) — 원본 요약은 그대로 두고 계산용 복사본만 만든다
   //  · 기타시간 6항목 합계 240분 이상 → 기타시간 점수 = 시간 × (전날까지 본인 평균 ÷ 8.5)  (30분당 1점 대신)
-  //  · 지원 확인은 실적이 있어도 평균 대체. 교육 확인과 업무배정만 있는 날은 실적 0일 때 대체.
+  //  · 지원 확인 및 업무지원 배정은 실적이 있어도 평균 대체. 별도 확인이 있으면 그 확인을 우선 적용.
   //  · 전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산
   const ADJ_START = '2026-11', ADJ_MIN = 240;
+  const isSupportDay = (conf, task) => conf === 'support' || (!conf && !!task);
   const otherMinOf = s => OTHER.reduce((a, [k]) => a + num(((s || {}).o || {})[k]), 0);
   // items : 그 귀속월의 [{date, sum}] · o : { ym, mins, prev(직전월 평균|null), conf:{date:'support'|'training'|...}, asg:{date:task}, off:{date:true} }
   function adjustMonthLegacy(items, o) {
@@ -4425,7 +4426,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       const src2 = hasPre ? '당월 전날까지 평균' : base != null ? '직전 귀속월 평균' : '평균 자료 없음';
       const cf = conf[d] || (asg[d] ? 'support' : ''), zero = !(Math.abs(raw.e2) > 1e-9);
       let s = s0, kind = '', reason = '', support = min / 30;
-      if (!off[d] && (conf[d] === 'support' || (zero && (cf === 'support' || cf === 'training')))) {
+      if (!off[d] && (isSupportDay(conf[d], asg[d]) || (zero && (cf === 'support' || cf === 'training')))) {
         const lb = cf === 'training' ? '교육' : '지원';
         if (base != null) { const dd = num(s0.d) > 0 ? num(s0.d) : 1; s = Object.assign({}, s0, { d: dd, h7: 0, t: {}, gq: 0, prod: 0, r10: s0.r10 || {}, o: { U7: base * dd * 30 } }); support = base * dd; kind = cf; reason = lb + ' · 평균 대체' + (asg[d] && !conf[d] ? ' (업무배정)' : ''); }
         else { kind = cf; reason = lb + ' · 평균 자료 없음'; if (!it.sum) s = Object.assign({}, s0); }
@@ -4444,7 +4445,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const result = adjustMonthLegacy(items, o);
     if (!result.on || !result.items.some(it => it._adj?.kind === 'support')) return result;
     const mins = o.mins;
-    const actual = (items || []).filter(it => it.sum && !o.off?.[it.date] && o.conf?.[it.date] !== 'support' && Math.abs(sumDay(it.sum, mins).e2) > 1e-9)
+    const actual = (items || []).filter(it => it.sum && !o.off?.[it.date] && !isSupportDay(o.conf?.[it.date], o.asg?.[it.date]) && Math.abs(sumDay(it.sum, mins).e2) > 1e-9)
       .map(it => otherMinOf(it.sum) >= ADJ_MIN ? { ...it, sum: { ...it.sum, o: {} } } : it);
     const observed = calcMonth(actual, 0, mins);
     const prior = Number.isFinite(o.prev) && o.prev > 0 ? o.prev : null;
@@ -8475,7 +8476,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.47';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.48';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10382,7 +10383,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     raw.forEach(x => { const L = Array.isArray(x.doc.otherR) ? x.doc.otherR : []; if (L.length) L.forEach(o => oth.push([x.date, OL[o.k] || o.k, o.r || '', C.num(o.m)])); else C.OTHER.forEach(([k, t]) => { if (C.num((x.doc.other || {})[k])) oth.push([x.date, t, '', C.num(x.doc.other[k])]); }); });
     sheet('기타시간', oth, [11, 12, 30, 8]);
     sheet('계산 안내', [['안내'], ['수식 없이 웹 화면과 같은 값으로 만든 파일입니다. 원본 양식이 필요하면 [원본 양식] 버튼을 쓰세요.'], ['2026년 11월 귀속부터 : 기타시간 6항목 합계 240분 이상이면 기타시간 점수 = 시간 × (전날까지 본인 평균 ÷ 8.5).'],
-      ['지원 확인일은 실제 실적이 있어도 평가를 같은 귀속월의 실제 실적 평균으로 대체합니다. 업무배정만 있는 경우 실적이 0일 때 대체합니다. 교육은 전날까지 평균을 사용합니다.'], ['전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산.']], [110]);
+      ['지원 확인일은 실제 실적이 있어도 평가를 같은 귀속월의 실제 실적 평균으로 대체합니다. 업무지원 배정도 업무명에 관계없이 같은 기준을 적용하며, 별도 출근 확인이 있으면 그 확인을 우선합니다. 교육은 전날까지 평균을 사용합니다.'], ['전날까지 평균 = 그 귀속월 첫날 ~ 전날 (보정된 날 포함) · 없으면 직전 귀속월 평균 · 둘 다 없으면 기존 계산.']], [110]);
     return new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   }
   const sxName = (n, ym) => n + '_' + ym + '_업무데이터.xlsx';
