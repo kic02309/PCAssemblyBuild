@@ -8482,7 +8482,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.51';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.52';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19437,41 +19437,102 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (originals.join()!==order.join()) return order;
     return dutyRotation(Object.keys(data.previous).sort(),order,data.previous,{}).queue;
   }
-const dutyDutyStyle = `
-    .duty-tools,.duty-counts,.duty-rotation-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    .duty-tools{justify-content:space-between;margin:10px 0}.duty-counts{margin:10px 0 14px}
-    .duty-counts span{padding:5px 9px;border:1px solid var(--line,#dce4ef);border-radius:6px}.duty-counts b{margin-left:5px;color:var(--blue,#2563cb)}
-    .duty-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.duty-week{text-align:center;font-size:12px;color:var(--sub)}
-    .duty-grid button{min-width:0;min-height:46px;padding:4px;display:grid;align-content:start;gap:3px;text-align:left}.duty-grid button span{overflow-wrap:anywhere;line-height:1.2}.duty-grid button[aria-pressed=true]{outline:2px solid #3277dd;outline-offset:-2px}
-    .duty-grid button.duty-offday{opacity:.65}.duty-detail,.duty-edit{margin-top:12px;padding:8px 0;border-top:1px solid var(--line,#dce4ef)}
+  const dutyDutyStyle = `
+    .duty-tools,.duty-rotation-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .duty-tools{justify-content:space-between;margin:10px 0}.duty-top{padding-bottom:5px}
+    .duty-modal{width:min(910px,94vw);max-width:94vw}.duty-modal h3{font-size:19px;margin:0 0 8px}
+    .duty-headline{font-size:13px;font-weight:750}.duty-hint{font-size:12px;color:var(--sub)}
+    .duty-counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;margin:7px 0 14px}
+    .duty-counts .duty-person{display:flex;justify-content:space-between;align-items:center;gap:4px;min-width:0;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--panel);font-size:13px;white-space:nowrap}
+    .duty-person[draggable=true]{cursor:grab}.duty-person[draggable=true]:active{cursor:grabbing}.duty-person small{font-size:12px;color:var(--sub)}.duty-person b{color:var(--blue,#2563cb);font-size:12px}
+    .duty-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.duty-week{text-align:center;font-size:12px;color:var(--sub);font-weight:750;padding:1px 0 4px}
+    .duty-grid button.duty-day{display:grid;align-content:start;gap:3px;min-width:0;min-height:64px;height:100%;padding:6px 8px;text-align:left;line-height:1.22;border:1px solid var(--line);border-radius:8px;background:var(--panel);white-space:normal}
+    .duty-grid button.duty-day:hover{border-color:var(--blue,#2563cb)}.duty-grid button.duty-day[aria-pressed=true],.duty-grid button.duty-drop{border-color:#3979dc;background:color-mix(in srgb,#4489ec 11%,var(--panel))}
+    .duty-date-label{font-size:13px;font-weight:800}.duty-today{font-size:10px;margin-left:4px;color:var(--blue,#2563cb)}
+    .duty-name{font-size:14px;font-weight:800;color:var(--blue,#2563cb);overflow-wrap:anywhere}.duty-empty{font-size:12px;color:var(--sub)}
+    .duty-leave,.duty-holiday{color:#9b3333;overflow-wrap:anywhere}.duty-leave{background:color-mix(in srgb,#e36f6f 12%,var(--panel));border-radius:4px;padding:2px 4px;font-size:11px}
+    .duty-grid button.duty-day.duty-offday{background:color-mix(in srgb,#e36868 13%,var(--panel));border-color:color-mix(in srgb,#dc6d6d 45%,var(--panel))}.duty-grid button.duty-offday[aria-pressed=true]{outline:2px solid #c45757;outline-offset:-2px}.duty-holiday{font-size:12px;font-weight:750}
+    html[data-theme=dark] .duty-leave,html[data-theme=dark] .duty-holiday{color:#ffc0c0}
+    .duty-detail,.duty-edit{margin-top:10px;padding:7px 0;border-top:1px solid var(--line)}.duty-edit details{margin-top:8px}.duty-select{min-width:160px}
     .duty-rotation-row{margin:5px 0}.duty-rotation-row span{min-width:95px}.duty-rotation-row button{padding:2px 8px}
-    .duty-modal{width:min(740px,94vw);max-width:94vw}.schedule-login-head .duty-login-button{float:right;background:#25436a;color:#fff;border-color:#7599c7;margin:3px 0 5px 10px}
-    .duty-login-reminder{padding:10px 18px;background:color-mix(in srgb,#4489ec 14%,var(--panel));font-weight:700}
+    .schedule-login-head .duty-login-button{float:right;background:#25436a;color:#fff;border-color:#7599c7;margin:3px 0 5px 10px}.duty-login-reminder{padding:10px 18px;background:color-mix(in srgb,#4489ec 14%,var(--panel));font-weight:700}
+    @media(max-width:530px){.duty-counts{grid-template-columns:repeat(3,minmax(0,1fr))}.duty-grid button.duty-day{padding:4px;min-height:62px}.duty-grid{gap:3px}.duty-name{font-size:12px}.duty-date-label{font-size:12px}.duty-today{display:none}}
   `;
+  function dutyCalendar(data) {
+    const weekday=d=>(new Date(d+'T00:00:00Z').getUTCDay()+6)%7;
+    const dates=dutyDates(data.start,data.end).filter(d=>weekday(d)<5);
+    return {dates,lead:dates.length?weekday(dates[0]):0,holiday:d=>data.holidays.includes(d)};
+  }
+  function dutyAssignError(calendar,order,off,d,id) {
+    if(!calendar.dates.includes(d)||calendar.holiday(d)) return '공휴일·휴무일에는 배정할 수 없습니다.';
+    if(id&&!order.includes(id)) return '로테이션에 등록된 매니저를 선택하세요.';
+    if(id&&(off[d]||[]).includes(id)) return '해당 날짜에 휴무인 매니저입니다.';
+    return '';
+  }
   async function openDutySchedule(initialYm = curPeriod()?.ym) {
     const periods=[...(S.periods||[])].sort((a,b)=>b.ym.localeCompare(a.ym));
     if(!periods.length){toast('등록된 귀속월이 없습니다.',true);return;}
     const token=S.token;
-    let selectedYm=periods.some(p=>p.ym===initialYm)?initialYm:periods[0].ym, data, rows, order, date, editing=false, busy=false, seq=0, dirty=false;
+    let selectedYm=periods.some(p=>p.ym===initialYm)?initialYm:periods[0].ym, data, rows, order, date, editing=false, busy=false, seq=0, dirty=false, dragged='';
     modal(`<style>${dutyDutyStyle}</style><h3>당직 스케줄</h3><div class="duty-tools"><label>귀속월 <select data-duty-month>${periods.map(p=>`<option value="${esc(p.ym)}" ${p.ym===selectedYm?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label><button data-duty-close>닫기</button></div><div data-duty-body aria-live="polite">당직표를 불러오는 중…</div>`,(bg,close)=>{
       const body=$('[data-duty-body]',bg), month=$('[data-duty-month]',bg);
       const staffName=id=>data.people.find(p=>p.id===id)?.name || '이전 담당자';
       const blocked=d=>data.off[d]||[];
-      const weekday=d=>{const n=new Date(d+'T00:00:00Z').getUTCDay();return n!==0&&n!==6&&!data.holidays.includes(d);};
       const show=()=>{
-        const dates=dutyDates(data.start,data.end), lead=(new Date(data.start+'T00:00:00Z').getUTCDay()+6)%7;
+        const calendar=dutyCalendar(data), {dates,lead}=calendar;
         if(!dates.includes(date))date=dates.includes(S.today)?S.today:dates[0];
-        const counts=data.people.map(p=>`<span>${esc(p.name)} <b>${Object.values(rows).filter(x=>x===p.id).length}회</b></span>`).join('');
+        const displayIds=[...new Set([...order,...Object.values(rows)])];
+        const counts=displayIds.map(id=>{
+          const label=`<span>${esc(staffName(id))}</span><b>${Object.values(rows).filter(x=>x===id).length}회</b>`;
+          if(editing&&order.includes(id)) return `<button type="button" draggable="true" class="duty-person" data-duty-drag="${esc(id)}" title="날짜로 끌어 배정"><small aria-hidden="true">⠿</small>${label}</button>`;
+          return `<span class="duty-person">${label}</span>`;
+        }).join('');
         const status=editing?'편집 중 · 확정 후 알림 표시':data.revision?'확정':'미등록';
-        body.innerHTML=`<div class="duty-tools"><span>${esc(dLabel(data.start))} ~ ${esc(dLabel(data.end))}${data.provisional?' · 예정 범위':''} · ${status}</span>${data.edit&&!editing?'<button data-duty-edit>배정 편집</button>':''}</div><div class="duty-counts" aria-label="귀속월 당직 횟수">${counts}</div><div class="duty-grid" aria-label="당직 달력">${['월','화','수','목','금','토','일'].map(w=>`<span class="duty-week">${w}</span>`).join('')}${'<span></span>'.repeat(lead)}${dates.map(d=>`<button data-duty-date="${d}" class="${weekday(d)?'':'duty-offday'}" aria-pressed="${d===date}" aria-label="${esc(dLabel(d))} ${rows[d]?esc(staffName(rows[d])):'미배정'}"><b>${d.slice(5).replace('-','/')}</b><span>${rows[d]?esc(staffName(rows[d])):weekday(d)?'미배정':''}</span></button>`).join('')}</div><div class="duty-detail"><b>${esc(dLabel(date))}</b> · ${rows[date]?esc(staffName(rows[date]))+' 매니저':'미배정'}</div>${editing?`<div class="duty-edit"><label>당직 매니저 <select data-duty-person><option value="">미배정</option>${order.map(id=>`<option value="${esc(id)}" ${rows[date]===id?'selected':''} ${blocked(date).includes(id)?'disabled':''}>${esc(staffName(id))}${blocked(date).includes(id)?' · 휴무':''}</option>`).join('')}</select></label>${rows[date]&&blocked(date).includes(rows[date])?' <strong>휴무 겹침 · 재배정 필요</strong>':''}<details><summary>로테이션 순서</summary>${order.map((id,i)=>`<div class="duty-rotation-row"><span>${i+1}. ${esc(staffName(id))}</span><button data-duty-rank="${i}" data-step="-1" aria-label="${esc(staffName(id))} 위로" ${i===0?'disabled':''}>↑</button><button data-duty-rank="${i}" data-step="1" aria-label="${esc(staffName(id))} 아래로" ${i===order.length-1?'disabled':''}>↓</button></div>`).join('')}</details><div class="duty-tools"><button data-duty-auto>자동 배정 초안</button><button data-duty-save class="primary">확정</button></div></div>`:''}`;
-        $$('[data-duty-date]',body).forEach(btn=>btn.onclick=()=>{date=btn.dataset.dutyDate;show();$(`[data-duty-date="${date}"]`,body)?.focus();});
+        const cards=dates.map(d=>{
+          const holiday=calendar.holiday(d);
+          const leaves=(data.leaveLabels?.[d]||[]).map(x=>`<span class="duty-leave">${esc(staffName(x.id))} · ${esc(x.kind)}</span>`).join('');
+          const assignment=rows[d]?`<span class="duty-name">${esc(staffName(rows[d]))}</span>`:!holiday?'<span class="duty-empty">미배정</span>':'';
+          const conflict=rows[d]&&blocked(d).includes(rows[d])?'<span class="duty-leave">당직자 휴무 · 재배정 필요</span>':'';
+          const closed=holiday?`<span class="duty-holiday">${esc(data.holidayLabels?.[d]||'공휴일·휴무일')}</span>`:'';
+          return `<button type="button" data-duty-date="${d}" class="duty-day${holiday?' duty-offday':''}" aria-pressed="${d===date}"><span class="duty-date-label">${d.slice(5).replace('-','/')}${d===S.today?'<span class="duty-today">오늘</span>':''}</span>${assignment}${closed}${conflict}${leaves}</button>`;
+        }).join('');
+        const selector=editing&&date?`<div class="duty-edit"><label>선택한 날짜의 당직 매니저 <select class="duty-select" data-duty-person ${calendar.holiday(date)&&!rows[date]?'disabled':''}><option value="">미배정</option>${order.map(id=>`<option value="${esc(id)}" ${rows[date]===id?'selected':''} ${blocked(date).includes(id)||calendar.holiday(date)?'disabled':''}>${esc(staffName(id))}${blocked(date).includes(id)?' · 휴무':''}</option>`).join('')}</select></label><details><summary>로테이션 순서</summary>${order.map((id,i)=>`<div class="duty-rotation-row"><span>${i+1}. ${esc(staffName(id))}</span><button data-duty-rank="${i}" data-step="-1" aria-label="${esc(staffName(id))} 위로" ${i===0?'disabled':''}>↑</button><button data-duty-rank="${i}" data-step="1" aria-label="${esc(staffName(id))} 아래로" ${i===order.length-1?'disabled':''}>↓</button></div>`).join('')}</details><div class="duty-tools"><button data-duty-auto>자동 배정 초안</button><button data-duty-save class="primary">확정</button></div></div>`:'';
+        body.innerHTML=`<div class="duty-tools duty-top"><span>${esc(dLabel(data.start))} ~ ${esc(dLabel(data.end))}${data.provisional?' · 예정 범위':''} · ${status}</span>${data.edit&&!editing?'<button data-duty-edit>배정 편집</button>':''}</div><div class="duty-tools"><b class="duty-headline">귀속월 당직 횟수</b>${editing?'<span class="duty-hint">이름을 날짜로 끌어 놓거나, 날짜를 눌러 배정</span>':''}</div><div class="duty-counts" aria-label="귀속월 당직 횟수">${counts}</div><div class="duty-grid" aria-label="당직 달력">${['월','화','수','목','금'].map(w=>`<span class="duty-week">${w}</span>`).join('')}${'<span></span>'.repeat(lead)}${cards}</div>${date?`<div class="duty-detail"><b>${esc(dLabel(date))}</b> · ${rows[date]?esc(staffName(rows[date]))+' 매니저':calendar.holiday(date)?'공휴일·휴무일':'미배정'}</div>`:'<p>표시할 평일이 없습니다.</p>'}${selector}`;
+        const focusDate=()=> $(`[data-duty-date="${date}"]`,body)?.focus({preventScroll:true});
+        function assign(d,id,focus) {
+          if(!data.edit||!editing||busy)return;
+          const error = id ? dutyAssignError(calendar,order,data.off,d,id) : '';
+          if(error){toast(error,true);return;}
+          date=d;
+          if((rows[d]||'')!==id){if(id)rows[d]=id;else delete rows[d];dirty=true;}
+          show();if(focus==='select')$('[data-duty-person]',body)?.focus();else focusDate();
+        }
+        $$('[data-duty-date]',body).forEach(btn=>{
+          const d=btn.dataset.dutyDate;
+          btn.onclick=()=>{date=d;show();focusDate();};
+          if(!editing)return;
+          btn.ondragover=e=>{
+            if(!dragged||busy)return;
+            e.preventDefault();
+            const allowed=!dutyAssignError(calendar,order,data.off,d,dragged);
+            e.dataTransfer.dropEffect=allowed?'copy':'none';
+            btn.classList.toggle('duty-drop',allowed);
+          };
+          btn.ondragleave=()=>btn.classList.remove('duty-drop');
+          btn.ondrop=e=>{e.preventDefault();btn.classList.remove('duty-drop');const id=dragged;dragged='';if(id)assign(d,id,'date');};
+        });
         const edit=$('[data-duty-edit]',body);
         if(edit)edit.onclick=()=>{editing=true;show();};
-        if(!editing)return;
-        $('[data-duty-person]',body).onchange=e=>{if(e.target.value)rows[date]=e.target.value;else delete rows[date];dirty=true;show();};
+        if(!editing||!date)return;
+        $$('[data-duty-drag]',body).forEach(chip=>{
+          chip.onclick=()=>{if(date)assign(date,chip.dataset.dutyDrag,'date');};
+          chip.ondragstart=e=>{if(busy){e.preventDefault();return;}dragged=chip.dataset.dutyDrag;e.dataTransfer.setData('text/plain',staffName(dragged));e.dataTransfer.effectAllowed='copy';};
+          chip.ondragend=()=>{dragged='';$$('.duty-drop',body).forEach(btn=>btn.classList.remove('duty-drop'));};
+        });
+        $('[data-duty-person]',body).onchange=e=>assign(date,e.target.value,'select');
         $$('[data-duty-rank]',body).forEach(btn=>btn.onclick=()=>{const i=+btn.dataset.dutyRank,j=i + +btn.dataset.step;[order[i],order[j]]=[order[j],order[i]];dirty=true;show();$('details',body).open=true;});
         $('[data-duty-auto]',body).onclick=()=>{
-          const plan=dates.filter(d=>weekday(d)||rows[d]);
+          const plan=dutyDates(data.start,data.end).filter(d=>rows[d]||(dates.includes(d)&&!calendar.holiday(d)));
           const next=dutyRotation(plan,order,rows,data.off,dutyPreviousQueue(data,order));
           const count=Object.keys(next.rows).length-Object.keys(rows).length;
           rows=next.rows;dirty ||= count>0;show();toast(count?`${count}일을 배정했습니다. 확인 후 확정하세요.`:'자동으로 배정할 빈 날짜가 없습니다.');
@@ -19489,7 +19550,7 @@ const dutyDutyStyle = `
         try {
           const loaded=await dutyApi('read',{ym:selectedYm});
           if(!bg.isConnected||token!==S.token||n!==seq)return;
-          data=loaded;rows={...data.assignments};editing=false;dirty=false;
+          data=loaded;rows={...data.assignments};editing=false;dirty=false;dragged='';
           const ids=data.people.map(p=>p.id);
           order=[...new Set(data.rotation.filter(id=>ids.includes(id)))];
           show();
