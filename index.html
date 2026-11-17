@@ -4167,6 +4167,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
 
   // ---- 월 계산 (엑셀 통계 시트와 동일) ----
   // items: [{date:'yyyy-mm-dd', sum: daySummary}]  (날짜순)
+  const dayWeight = s => num(s?.d) === 0.5 ? 0.5 : 1;
   function calcMonth(items, target, mins) {
     const M = minsMap(mins);
     items = items.slice().sort((a, b) => a.date < b.date ? -1 : 1);
@@ -4176,7 +4177,8 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     let sumAU = 0, sumAV = 0, sumAW = 0, sumP = 0, otCount = 0, mf = 0, mq = 0, z = 0, zAV = 0, zAU = 0, hwN = 0;   // v28.18 : z = 실적 0인 날 (지원 등) — 근무일엔 넣고 평균에선 뺌
     const daily = items.map(it => {
       const s = it.sum, dow = new Date(it.date + 'T00:00:00').getDay(), hw = isHW(it.date);
-      if (hw) hwN++; else if (dow === 6) d4++; else c4++;
+      const weight = dayWeight(s);
+      if (hw) hwN += weight; else if (dow === 6) d4 += weight; else c4 += weight;
       OTHER.forEach(([k]) => (osum[k] += num((s.o || {})[k])));
       const replacedSupport = it._adj?.kind === 'support' && it._adj.base != null;
       COLS.forEach(x => {
@@ -4188,11 +4190,11 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
       sumAU += num(s.e4); sumAV += num(s.h7); if (num(s.e4) > 0) otCount++; sumP += num(s.prod);   // v28.62 : 생산업무 배분
       const sd = sumDay(s, mins);
       const aw = !hw && (dow === 6 || dow === 0) && sd.e2 ? sd.e2 * 0.25 : 0;
-      const zero = !(Math.abs(sd.e2) > 1e-9); if (zero && !hw) { z++; zAV += num(s.h7); zAU += num(s.e4); }
+      const zero = !(Math.abs(sd.e2) > 1e-9); if (zero && !hw) { z += weight; zAV += num(s.h7); zAU += num(s.e4); }
       sumAW += aw; mf += num(s.mf); mq += num(s.mq);
-      return { date: it.date, dow, zero, hw, f7: sd.f7, e2: sd.e2, e4: num(s.e4), h7: num(s.h7), n: s.n || 0, mf: num(s.mf), mq: num(s.mq), kind: s.kind, aw };
+      return { date: it.date, dow, zero, hw, weight, f7: sd.f7, e2: sd.e2, e4: num(s.e4), h7: num(s.h7), n: s.n || 0, mf: num(s.mf), mq: num(s.mq), kind: s.kind, aw };
     });
-    const days = items.length;
+    const days = c4 + d4 + hwN;
     const otherTotal = OTHER.reduce((a, [k]) => a + osum[k], 0);
     const ev = Math.max(0, days - z - hwN);                             // v28.72 : 휴일근무 날은 평가 일수에서 뺌                                   // 평가에 들어가는 날
     const w7 = ev ? (otherTotal / 30) / ev : 0;
@@ -4308,7 +4310,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const sv = {};
     days.forEach((it, i) => (sv['A' + (14 + i)] = serial(it.date)));
     if (num(info.target)) sv.C2 = num(info.target);
-    { const zs = mc.daily.filter(d => d.zero && !d.hw && d.dow === 6).length, zw = mc.z - zs; sv.C4 = Math.max(0, mc.c4 - zw); sv.D4 = Math.max(0, mc.d4 - zs); }   // v28.18 : 실적 0인 날 빼고 (웹 평가평균과 같게)
+    { const zs = mc.daily.filter(d => d.zero && !d.hw && d.dow === 6).reduce((n, d) => n + d.weight, 0), zw = mc.z - zs; sv.C4 = Math.max(0, mc.c4 - zw); sv.D4 = Math.max(0, mc.d4 - zs); }   // v28.18 : 실적 0인 날 빼고 (웹 평가평균과 같게)
     OTHER.forEach(([k]) => (sv[k] = mc.osum[k]));
     sv.W7 = mc.w7;
     sheets[0].xml = fillCells(stat, sv);
@@ -4422,21 +4424,21 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     if (!o.ym || o.ym < ADJ_START) return { items: src, meta: {}, avg: src.length ? calcMonth(src, 0, o.mins).f7 : null, ev: src.length ? calcMonth(src, 0, o.mins).ev : 0, on: false };
     const conf = o.conf || {}, asg = o.asg || {}, off = o.off || {}, byDate = {};
     src.forEach(it => (byDate[it.date] = it));
-    Object.keys(conf).forEach(d => { if (['support', 'training'].includes(conf[d]) && !byDate[d] && !off[d]) byDate[d] = { date: d, sum: null, virtual: true }; });
-    Object.keys(asg).forEach(d => { if (!byDate[d] && !off[d] && !conf[d]) byDate[d] = { date: d, sum: null, virtual: true, byAsg: true }; });
+    Object.keys(conf).forEach(d => { if ((conf[d] === 'training' || (o.supportAverage !== false && conf[d] === 'support')) && !byDate[d] && !off[d]) byDate[d] = { date: d, sum: null, virtual: true }; });
+    Object.keys(asg).forEach(d => { if (o.supportAverage !== false && !byDate[d] && !off[d] && !conf[d]) byDate[d] = { date: d, sum: null, virtual: true, byAsg: true }; });
     const dates = Object.keys(byDate).sort(), out = [], meta = {};
     for (const d of dates) {
-      const it = byDate[d], s0 = it.sum || { d: 1, t: {}, r10: {}, o: {}, e2: 0, f7: 0 }, raw = sumDay(s0, o.mins), min = otherMinOf(s0);
+      const it = byDate[d], s0 = it.sum || { d: o.half?.[d] ? 0.5 : 1, t: {}, r10: {}, o: {}, e2: 0, f7: 0 }, raw = sumDay(s0, o.mins), min = otherMinOf(s0);
       const pre = out.length ? calcMonth(out, 0, o.mins) : null, hasPre = pre && pre.ev > 0;
       const base = hasPre ? pre.f7 : (o.prev != null && isFinite(o.prev) && o.prev > 0 ? +o.prev : null);
       const src2 = hasPre ? '당월 전날까지 평균' : base != null ? '직전 귀속월 평균' : '평균 자료 없음';
       const cf = conf[d] || (asg[d] ? 'support' : ''), zero = !(Math.abs(raw.e2) > 1e-9);
       let s = s0, kind = '', reason = '', support = min / 30;
-      if (!off[d] && (isSupportDay(conf[d], asg[d]) || (zero && (cf === 'support' || cf === 'training')))) {
+      if (!off[d] && ((o.supportAverage !== false && isSupportDay(conf[d], asg[d])) || (zero && cf === 'training'))) {
         const lb = cf === 'training' ? '교육' : '지원';
         if (base != null) { const dd = num(s0.d) > 0 ? num(s0.d) : 1; s = Object.assign({}, s0, { d: dd, h7: 0, t: {}, gq: 0, prod: 0, r10: s0.r10 || {}, o: { U7: base * dd * 30 } }); support = base * dd; kind = cf; reason = lb + ' · 평균 대체' + (asg[d] && !conf[d] ? ' (업무배정)' : ''); }
         else { kind = cf; reason = lb + ' · 평균 자료 없음'; if (!it.sum) s = Object.assign({}, s0); }
-      } else if (min >= ADJ_MIN && it.sum) {
+      } else if (o.supportAverage !== false && min >= ADJ_MIN && it.sum) {
         if (base != null) { support = min / 60 * base / 8.5; const r = support / (min / 30), oo = {}; OTHER.forEach(([k]) => { if (num((s0.o || {})[k])) oo[k] = num(s0.o[k]) * r; }); s = Object.assign({}, s0, { o: oo }); kind = 'adjusted'; reason = '지원 4시간 이상 · 평균 보정'; }
         else reason = '지원 4시간 이상 · 평균 자료 없음 (기존 계산)';
       }
@@ -4460,7 +4462,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     const raw = new Map((items || []).map(it => [it.date,it.sum]));
     result.items = result.items.map(it => {
       if (it._adj?.kind !== 'support') return it;
-      const original = raw.get(it.date) || { d: 1, t: {}, r10: {}, o: {}, e2: 0, f7: 0 };
+      const original = raw.get(it.date) || { d: o.half?.[it.date] ? 0.5 : 1, t: {}, r10: {}, o: {}, e2: 0, f7: 0 };
       const days = num(original.d) > 0 ? num(original.d) : 1;
       const support = base == null ? 0 : base * days;
       const sum = base == null ? original : { ...original, d: days, h7: 0, t: {}, gq: 0, prod: 0, r10: original.r10 || {}, o: { U7: support * 30 } };
@@ -8482,7 +8484,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.53';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.54';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8676,10 +8678,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     S._att = S._att || {}; if (S._att[ym] && Date.now()-S._att[ym].loadedAt<20000) return S._att[ym];
     const rg = periodRange(ym); if (!rg) return null; const tk = S.token;
     let r; try { r = await api('attList', { from: rg.from, to: rg.to }); } catch (e) { r = { conf: [], asg: [], off: [], roster: [], err: e.message }; }   // v28.53 : 실패는 기억하지 않음 (다음에 다시 조회)
-    const A = { conf: {}, asg: {}, off: {}, offk: {}, roster: {}, by: {}, rg, rosterKnown: Array.isArray(r.roster) && !r.err, loadedAt: Date.now(), err: r.err || '' };
+    const A = { conf: {}, asg: {}, off: {}, half: {}, offk: {}, roster: {}, by: {}, rg, rosterKnown: Array.isArray(r.roster) && !r.err, loadedAt: Date.now(), err: r.err || '' };
     (r.conf || []).forEach(([n, d, k, by, at]) => { n = nmKey(n); (A.conf[n] = A.conf[n] || {})[d] = k; (A.by[n] = A.by[n] || {})[d] = by + ' · ' + String(at || '').slice(5, 16); });
     (r.asg || []).forEach(([n, d, t]) => { n = nmKey(n); (A.asg[n] = A.asg[n] || {})[d] = t; });
     (r.off || []).forEach(([n, a, b, k]) => { n = nmKey(n); for (let d = a; d <= b; d = C.addDays(d, 1)) { (A.off[n] = A.off[n] || {})[d] = true; (A.offk[n] = A.offk[n] || {})[d] = k; } });
+    (r.half || []).forEach(([n, a, b]) => { n = nmKey(n); for (let d = a; d <= b; d = C.addDays(d, 1)) (A.half[n] ||= {})[d] = true; });
     (r.roster || []).forEach(([n, g, t, st, inr]) => (A.roster[nmKey(n)] = { grp: g, title: t, status: st, inr }));
     A.hol = new Set(r.hol || []);
     if (A.err || tk !== S.token) return A;                                              // 다른 계정으로 바뀌었으면 기억하지 않음
@@ -8687,9 +8690,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const attReset = () => { manageReads = new WeakMap(); S._att = {}; S._adj = {}; S._gm = {}; S._inAdj = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } };   // v28.53 : 입력 화면 · 통계까지
   // 한 사람 한 귀속월 : 원본 items → 보정 결과 (prev = 직전 귀속월 평균)
-  function adjOne(name, ym, items, prev, A) {
-    const n = nmKey(name);
-    return C.adjustMonth(items, { ym, mins: minsYm(ym), prev, conf: (A && A.conf[n]) || {}, asg: (A && A.asg[n]) || {}, off: (A && A.off[n]) || {} });
+  const usesSupportAverage = group => ['1그룹', '2그룹', '3그룹', '4그룹', '라인', '제조'].includes(String(group || '').trim());
+  function halfDaySummary(sum) {
+    if (!sum || C.num(sum.d) === 0.5) return sum;
+    const ot = C.num(sum.h7) / 60 / 8.5;
+    return { ...sum, d: 0.5, f7: sum.t ? sum.f7 : C.num(sum.e2) / (0.5 + ot) };
+  }
+  function adjOne(name, ym, items, prev, A, group) {
+    const n = nmKey(name), half = A?.half?.[n] || {};
+    const work = items.map(it => half[it.date] ? { ...it, sum: halfDaySummary(it.sum) } : it);
+    return C.adjustMonth(work, { ym, mins: minsYm(ym), prev, conf: A?.conf?.[n], asg: A?.asg?.[n], off: A?.off?.[n], half, supportAverage: usesSupportAverage(A?.roster?.[n]?.grp || group) });
   }
   // 매니저 이상 : 귀속월 전체 인원 (월 목록 자료) → { by: {이름: 결과} }
   async function adjYm(ym, depth) {
@@ -8704,7 +8714,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         q.users.forEach(u => { if (u.items.length) { const m = C.calcMonth(u.items, 0, minsYm(pv)); prevAvg[nmKey(u.name)] = m.ev > 0 ? m.f7 : null; } }); }
     }
     const by = {};
-    r.users.concat((r.pending || []).map(p => ({ name: p.name, items: [] }))).forEach(u => { const n = nmKey(u.name); by[n] = adjOne(n, ym, u.items, prevAvg[n] ?? null, A); });
+    r.users.concat((r.pending || []).map(p => ({ name: p.name, items: [] }))).forEach(u => { const n = nmKey(u.name); by[n] = adjOne(n, ym, u.items, prevAvg[n] ?? null, A, u.group); });
     const out = { src: r, by, A }; if (tk !== S.token || !A || A.err) return out;            // v28.53 : 계정 바뀜 · 확인 자료 실패면 기억 안 함
     return (S._adj[ym] = out);
   }
@@ -8718,7 +8728,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (adjOn(pv)) { const x = await adjPerson(u, pv, it, (depth || 0) + 1); prev = x ? x.avg : null; }
         else if (it.length) { const m = C.calcMonth(it, 0, minsYm(pv)); prev = m.ev > 0 ? m.f7 : null; } } catch (e) { prev = null; }
     }
-    return adjOne(u.name, ym, items, prev, await attOf(ym));
+    return adjOne(u.name, ym, items, prev, await attOf(ym), u.group || u.grp);
   }
   // 날짜 범위의 귀속월 목록 · 미리 준비
   const ymsIn = (from, to) => S.periods.filter(p => p.start <= to && (p.end || S.today) >= from).map(p => p.ym);
@@ -9398,6 +9408,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           S.pc[pcKey(u.id, r.period.ym)] = pc;
         } else pc = null;
       }
+      const att = pc && adjOn(pc.period.ym) ? await attOf(pc.period.ym) : null;
+      if (stale()) return;
       S.date = date;
       const d = pc && pc.days[date];
       const doc = d && d.doc ? JSON.parse(JSON.stringify(d.doc)) : C.emptyDay(date);
@@ -9407,6 +9419,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (asm != null && C.num(doc.asmOt) !== asm && (!isManager() || !C.num(doc.asmOt))) { doc.asmOt = asm; asmFix = !!d; }
       S.day = pc ? { doc, exists: !!d, period: pc.period, canEdit: pc.canEdit && (isManager() || date === S.today), past: !isManager() && date !== S.today, canSetTarget: pc.canSetTarget, target: pc.target, savedAt: d ? d.at : '', savedBy: d ? d.by : '', ver: d ? (d.ver == null ? null : d.ver) : '', pc }
         : { doc, exists: false, period: null, canEdit: false, canSetTarget: false, target: 0, savedAt: '', savedBy: '' };
+      S.day.attendance = att;
+      S.day.half = !!att?.half?.[nmKey(u.name)]?.[date];
       S.day.asmBase = C.num(d && d.doc && d.doc.asmOt);
       S.dirty = false;
       renderDay();
@@ -9511,10 +9525,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
   function buildTops() {
     const D = S.day, doc = D.doc, ro = !D.canEdit, dis = ro ? 'disabled' : '';
-    const sel = (id, list, v, fmt) => `<select id="${id}" ${dis}>${list.map(x => `<option value="${x}" ${String(x) === String(v) ? 'selected' : ''}>${fmt ? fmt(x) : x}</option>`).join('')}</select>`;
+    const sel = (id, list, v, fmt, locked = false) => `<select id="${id}" ${locked ? 'disabled title="확정 반차 · 0.5일"' : dis}>${list.map(x => `<option value="${x}" ${String(x) === String(v) ? 'selected' : ''}>${fmt ? fmt(x) : x}</option>`).join('')}</select>`;
     $('#tops').innerHTML = `
       <div class="fld"><label>근무 구분</label>${sel('kind', ['평일', '휴일'], doc.kind)}</div>
-      <div class="fld"><label>일수</label>${sel('days', [1, 0.5], doc.days, x => x + '일')}</div>
+      <div class="fld"><label>일수</label>${sel('days', [1, 0.5], D.half ? 0.5 : doc.days, x => x + '일', D.half)}</div>
       <div class="sep"></div>
       <div class="fld"><label>야근</label>${sel('ot', C.OT_LIST, doc.ot, x => x + '분')}</div>
       <div class="fld"><label>식사</label>${sel('meal', ['-', 'O', 'X'], doc.meal)}</div>
@@ -10054,17 +10068,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!ctx) { S._inAdj[k] = 'wait'; (async () => { let prev = null; const pv = prevYmP(ym);
         try { if (pv) { const g = await gmOf(u.id, pv), it = g.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(pv)) }));
           if (adjOn(pv)) { const x = await adjPerson(u, pv, it); prev = x ? x.avg : null; } else if (it.length) { const m = C.calcMonth(it, 0, minsYm(pv)); prev = m.ev > 0 ? m.f7 : null; } } } catch (e) { }
-        S._inAdj[k] = { prev, A: await attOf(ym) }; if (S.view === 'input' && S.day === D) refreshCalc(); })(); return null; }
+        S._inAdj[k] = { prev }; if (S.view === 'input' && S.day === D) refreshCalc(); })(); return null; }
     if (ctx === 'wait') return null;
     const pc = S.pc[pcKey(u.id, ym)] || {}, MY = minsYm(ym), items = [];
     Object.keys(pc.days || {}).forEach(d => { if (d !== S.date && pc.days[d] && pc.days[d].doc) items.push({ date: d, sum: C.daySummary(pc.days[d].doc, MY) }); });
-    items.push({ date: S.date, sum: C.daySummary(D.doc, MY) });
-    const a = adjOne(u.name, ym, items, ctx.prev, ctx.A), y = a.items.find(z => z.date === S.date);
+    items.push({ date: S.date, sum: C.daySummary(D.half ? { ...D.doc, days: 0.5 } : D.doc, MY) });
+    const a = adjOne(u.name, ym, items, ctx.prev, D.attendance, u.group || u.grp), y = a.items.find(z => z.date === S.date);
     if (!y || !y._adj || !y._adj.kind) return y && y._adj ? { meta: y._adj } : null;
     c.e2 = y._adj.e2; c.f7 = y._adj.f7; c.c8 = D.target ? c.f7 / D.target : null; c.w7 = y._adj.support; return { meta: y._adj };
   }
   function refreshCalc() {
-    const D = S.day, MN = C.minsMap(minsOf(S.date)), c = C.calcDay(D.doc, D.target, MN), aj = inputAdj(c);
+    const D = S.day, MN = C.minsMap(minsOf(S.date)), c = C.calcDay(D.half ? { ...D.doc, days: 0.5 } : D.doc, D.target, MN), aj = inputAdj(c);
     const rate = c.c8 == null ? 0 : Math.max(0, c.c8), w = Math.min(100, rate * 100);
     const fill = $('#efill'), cls = c.c8 == null ? 'none' : rateCls(rate, (periodOf(S.date) || {}).ym).slice(2);   // v28.51 : 달성 기준
     fill.style.width = w + '%'; fill.className = cls;
@@ -10216,7 +10230,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function combinePersonMonths(results) {
     const parts = results.map(r => C.calcMonth(r._items || r.days.map(d => ({ date: d.date, sum: C.daySummary(d.doc, minsYm(r.period.ym)) })), r.target, minsYm(r.period.ym)));
     const m = { daily: [], r10: {}, ta: {}, osum: {} }, seen = new Set();
-    const totals = ['days', 'c4', 'd4', 'z', 'ev', 'otherTotal', 'sumH_AT', 'f6', 'i6', 'g2', 'e4', 'f4', 'mf', 'mq'];
+    const totals = ['days', 'c4', 'd4', 'z', 'ev', 'hw', 'otherTotal', 'sumH_AT', 'f6', 'i6', 'g2', 'e4', 'f4', 'mf', 'mq'];
     totals.forEach(k => m[k] = 0);
     let weekend = 0;
     parts.forEach(p => {
@@ -10354,6 +10368,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ${daily.map(d => `<div class="mbar" title="${dLabel(d.date)} · 평가평균 ${f2(d.f7)}${target ? ' (' + pct(d.f7 / target) + ')' : ''}"><em>${(Math.round((d.f7 || 0) * 10) / 10).toFixed(1)}</em><i class="${target && lvOf(d.f7, target, (periodOf(d.date) || {}).ym) === 'ok' ? 'hi' : ''}" style="height:${Math.max(2, y(d.f7 || 0))}px"></i><small>${+d.date.slice(5, 7)}/${+d.date.slice(8)}</small></div>`).join('')}</div></div>`;
   }
   async function makeXlsxBlob(user, ym, target, days) {
+    const att = adjOn(ym) ? await attOf(ym) : null;
+    const half = att?.half?.[nmKey(user.name)] || {};
+    days = days.map(d => half[d.date] ? { ...d, doc: { ...d.doc, days: 0.5 } } : d);
     const z = await C.buildXlsx(JSZip, TEMPLATE_B64, { name: user.name, ym, target, days, mins: minsYm(ym), tips: (rateSet(ym) || {}).tips, names: (rateSet(ym) || {}).names });
     return z.generateAsync({ type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   }
@@ -10561,10 +10578,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const o = Object.assign({}, p), st = p.status || '';
       o.ptarget = +p.target || 0; o.target = effT(o.ptarget, GY);                          // v28.51 : 목표 기준 [개인 | 팀]
       o.off = off[p.name] || (st === '육아' ? '육아' : st === '병가' ? '병가' : '');
-      o.half = half[p.name] || ''; o.task = asg[p.name] || ''; o.note = notes[p.name] || null;
+      o.half = half[N(p.name)] || ''; o.task = asg[p.name] || ''; o.note = notes[p.name] || null;
       let s = p.sum && Object.keys(p.sum).length ? p.sum : null;
-      const rawSum=s;
-      { const A = !r.staff && S._adj && S._adj[GY], x = A && A.by[nmKey(p.name)], y = x && x.items.find(z => z.date === r.date);   // v28.52 : 지원 보정 (매니저 이상 화면)
+      if (o.half) s = halfDaySummary(s);
+      const rawSum = s;
+      { const A = !r.staff && S._adj && S._adj[GY], n = nmKey(p.name), x = A && A.by[n], y = x && x.items.find(z => z.date === r.date);
+        o.supportWithoutAverage = !usesSupportAverage(p.grp) && (!!o.task || A?.A?.conf?.[n]?.[r.date] === 'support');   // v28.52 : 지원 보정 (매니저 이상 화면)
         if (y && y._adj) { s = y.sum; o.adj = y._adj; } }
       if (s) {
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
@@ -10575,7 +10594,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           if(DD_SPC&&s.t)o.st+=+s.t[DD_SPC]||0;                                          // v29.73 : 안정화(특수) = 안정화 건수에 합침
           if(s.t&&f6>0){const MM=C.minsMap(M),mm=c=>(+s.t[c]||0)*(MM[c]||0)/30/f6; o.osC=mm('AA')+mm('AB'); o.stC=mm('AD')+mm('AE')+(DD_SPC?mm(DD_SPC):0);} }   // v29.73 : OS · 안정화 환산 (열 기준) / v29.51 os · st / v28.24 : 조립 / 반조 / 출고 / 제조 따로
       }
-      o.kind = o.off ? 'off' : o.task && o.adj?.kind !== 'support' ? 'sup' : s && o.v > 0 ? 'work' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
+      o.kind = o.off ? 'off' : o.task && !o.supportWithoutAverage && o.adj?.kind !== 'support' ? 'sup' : s && o.v > 0 ? 'work' : o.supportWithoutAverage ? 'sup' : ['매니저', '팀장'].includes(p.title) ? 'mgr' : s ? 'zero' : 'none';
       if (liveView && r._prod && !(o.adj?.kind === 'support' && o.adj.base != null)) ddProdPerson(o, s, r._prod, M);
       if (saturdayDuty && !saturdayDuty.has(N(p.name)) && !o.off) {
         o.off = '토요 미배정';
@@ -10895,7 +10914,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ${x.sup || (x.g === '라인' && r.line) ? `<div class="ddextra">${x.sup ? '지원 ' + x.sup + '명' : ''}${x.sup && x.g === '라인' && r.line ? ' · ' : ''}${x.g === '라인' && r.line ? '총량 배분' : ''}</div>` : ''}</div>
       ${x.L.map(p => {
         const nm = `<div class="n ${staff ? '' : 'click'}" data-nt="${esc(p.name)}">${canNote(p) ? (p.uid ? `<button class="d1" data-d1="${esc(p.name)}" title="${esc(p.disp)} ${esc(dLabel(r.date))} 입력 화면">일일</button>` : '<span class="d1 d0" title="아직 가입 안 함">일일</span>') : ''}${esc(p.disp)}${p.title === '파트장' ? '<i>장</i>' : ''}${p.half ? '<i class="hf">반차</i>' : ''}${canNote(p) && p.uid ? `<button class="oth1" data-oth="1" title="기타시간 · 주문 메모 보기 · 고치기">⏱</button>` : ''}</div>`;
-        if (p.kind === 'sup' || (!p.off && p.adj?.kind === 'support')) {
+        if (p.kind === 'sup' || (!p.off && (p.supportWithoutAverage || p.adj?.kind === 'support'))) {
           return `<div class="ddpr ddpr-v5 ddpr-status"><div class="ddrowhead">${nm}</div><span class="ddst up">지원</span></div>`;
         }
         if (p.kind === 'work') {
@@ -13701,7 +13720,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (x.hw) return `<td class="hwc" data-sd="${d}" title="${dLabel(d)} · 휴일근무 — 근무일에 넣지 않고 실적 ${f2(x.e2)}만 총량에 더함">${f2(x.e2)}<i>휴</i></td>`;   // v28.72
         const rc = tg ? LVC[lvOf(x.f7, tg, ym)] : 'r-no';
         return `<td class="${rc}${aj ? ' adjc' : ''}" data-sd="${d}" title="${dLabel(d)} · 평가평균 ${f2(x.f7)}${tg ? ' (' + pct(x.f7 / tg) + ')' : ''} · 주문 ${x.n}건">${(Math.round(x.f7 * 10) / 10).toFixed(1)}${aj ? adjTag(aj) : ''}</td>`;
-      }).join('')}<td class="bt r4">${m.daily.length || '-'}</td><td class="bt r3 t-hi"><b>${tg ? h.ok : '-'}</b></td><td class="bt r2 t-lo"><b>${tg ? h.miss : '-'}</b></td><td class="bt r1"><b>${m.daily.length ? f2(m.f7) : '-'}</b></td><td class="bt r0 ${tg && m.daily.length ? rateCls(m.c8, ym) + 't' : ''}">${tg && m.daily.length ? pct(m.c8) : '-'}</td></tr></tbody></table></div>`;
+      }).join('')}<td class="bt r4">${(m.c4 + m.d4) || '-'}</td><td class="bt r3 t-hi"><b>${tg ? h.ok : '-'}</b></td><td class="bt r2 t-lo"><b>${tg ? h.miss : '-'}</b></td><td class="bt r1"><b>${m.daily.length ? f2(m.f7) : '-'}</b></td><td class="bt r0 ${tg && m.daily.length ? rateCls(m.c8, ym) + 't' : ''}">${tg && m.daily.length ? pct(m.c8) : '-'}</td></tr></tbody></table></div>`;
   }
   // 개인 월 일자별 현황판 : 빈 날짜에 공휴일 · 연휴 · 연차 · 대체 · 휴무 · 업무배정 표시
   async function personMarks(r, ym) {
@@ -13739,7 +13758,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         + `<td class="num" title="${esc(O.map(x => x[0] + ' ' + x[1] + '분').join('\n'))}">${om || ''}</td><td class="num">${d.e4 || ''}</td><td class="num">${d.h7 || ''}</td>`
         + `<td class="num">${f2(d.e2)}</td><td class="lvc${lv ? ' ' + LVC[lv] : ''}"><b>${f2(d.f7)}</b></td>${tg ? `<td class="lvp ${lv ? LVC[lv] + 't' : ''}">${d.zero || d.hw ? '' : pct(d.f7 / tg)}</td>` : ''}<td class="num">${d.aw ? f2(d.aw) : ''}</td><td${aj?.kind === 'support' ? ' class="support-cell"' : ''}>${aj ? adjTag(aj) : ''}</td></tr>`;
     }).join('');
-    const foot = m.daily.length ? `<tfoot><tr><td>합계 · 평균</td><td>${m.daily.length - (m.hw || 0)}일${m.hw ? `<small> + 휴일 ${m.hw}</small>` : ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.n - (d.mf || 0), 0)}</td>${hasMf ? `<td class="num mfgv">${m.mq}대</td>` : ''}<td class="num">${T.q}</td><td class="num shipv">${T.ship}</td><td class="num">${T.o}</td><td class="num">${m.e4 || ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.h7, 0) || ''}</td><td class="num">${f2(m.e2)}</td><td class="lvc"><b>${f2(m.f7)}</b></td>${tg ? `<td class="lvp">${m.c8 != null ? pct(m.c8) : ''}</td>` : ''}<td class="num">${m.g4 ? f2(m.g4) : ''}</td><td></td></tr></tfoot>` : '';
+    const foot = m.daily.length ? `<tfoot><tr><td>합계 · 평균</td><td>${m.c4 + m.d4}일${m.hw ? `<small> + 휴일 ${m.hw}</small>` : ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.n - (d.mf || 0), 0)}</td>${hasMf ? `<td class="num mfgv">${m.mq}대</td>` : ''}<td class="num">${T.q}</td><td class="num shipv">${T.ship}</td><td class="num">${T.o}</td><td class="num">${m.e4 || ''}</td><td class="num">${m.daily.reduce((a, d) => a + d.h7, 0) || ''}</td><td class="num">${f2(m.e2)}</td><td class="lvc"><b>${f2(m.f7)}</b></td>${tg ? `<td class="lvp">${m.c8 != null ? pct(m.c8) : ''}</td>` : ''}<td class="num">${m.g4 ? f2(m.g4) : ''}</td><td></td></tr></tfoot>` : '';
     return `<div class="card pdt" style="padding:0;overflow:auto;max-height:calc(100vh - 300px)"><table class="list"><thead><tr>${head}</tr></thead><tbody>${rows || `<tr><td colspan="${cols}" class="muted" style="padding:24px">입력된 날짜가 없습니다</td></tr>`}</tbody>${foot}</table></div>`;
   }
   const whyAb = w => /^영상/.test(w) ? '영상' : w.length > 3 ? w.slice(0, 3) : w;   // v28.54 : 영상 업무배정 = '영상' (영상 전용 업무표는 추후)
@@ -14339,7 +14358,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     yms.forEach(ym => { const A = S._adj && S._adj[ym]; if (!A) return;
       Object.keys(A.by).forEach(n => { const uid = byName[n]; if (!uid) return;
         const raw = {}; (A.src.users.find(u => nmKey(u.name) === n) || { items: [] }).items.forEach(it => (raw[it.date] = it.sum || {}));
-        A.by[n].items.forEach(it => { const a = it._adj; if (!a || !a.kind) return;
+        A.by[n].items.forEach(it => { const a = it._adj; if (!a?.kind && C.num(it.sum?.d) !== 0.5) return;
           if (it.date < F || it.date > T) return;
           const key = uid + '|' + ym + '|' + (by === 'week' ? wkOf(it.date) : '') + '|' + dwOf(it.date);
           let i = idx[key];
@@ -14349,8 +14368,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           OT.forEach((k, j) => { const d = C.num((s1.o || {})[k]) - C.num(((s0 || {}).o || {})[k]); r[7][j] += d; dm += d; });
           if (md) r[14] += dm;
           const z0 = !s0 || !(Math.abs(C.sumDay(s0, minsYm(ym)).e2) > 1e-9), z1 = !(Math.abs(C.sumDay(s1, minsYm(ym)).e2) > 1e-9);
-          if (!s0) { r[4] += 1; if (z1) r[17] += 1; }                                         // 입력 없던 날 (확인으로 생긴 근무일)
-          else if (z0 && !z1) { r[17] -= 1; r[18] -= C.num(s0.h7); r[19] -= C.num(s0.e4); r[8] -= C.num(s0.h7) - C.num(s1.h7); }
+          const weight = C.num(s1.d) === 0.5 ? 0.5 : 1;
+          r[4] += weight - (s0 ? 1 : 0);
+          r[17] += (z1 ? weight : 0) - (s0 && z0 ? 1 : 0);
+          if (s0 && z0 && !z1) { r[18] -= C.num(s0.h7); r[19] -= C.num(s0.e4); r[8] -= C.num(s0.h7) - C.num(s1.h7); }
         }); }); });
     D.agg = rows;
   }
