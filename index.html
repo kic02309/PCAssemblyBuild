@@ -8482,7 +8482,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.52';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.53';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -12615,7 +12615,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     mgLocalActions(box, 'cal');
     if ($('#mcps', box)) $('#mcps', box).onclick = () => calPaste();
     const dutyButton = $('#manager-duty-open', box);
-    if (dutyButton) dutyButton.onclick = () => openDutySchedule((periodOf(c.sel) || curPeriod())?.ym);
+    if (dutyButton) dutyButton.onclick = () => openDutySchedule((c.sel||c.cur||S.today).slice(0,7));
     if ($('#mccat', box)) $('#mccat', box).onclick = () => calCats();
   }
   // v29.09: 보기 설정만 브라우저에 보관. 일정과 권한은 기존 API 사용.
@@ -19469,12 +19469,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if(id&&(off[d]||[]).includes(id)) return '해당 날짜에 휴무인 매니저입니다.';
     return '';
   }
-  async function openDutySchedule(initialYm = curPeriod()?.ym) {
-    const periods=[...(S.periods||[])].sort((a,b)=>b.ym.localeCompare(a.ym));
-    if(!periods.length){toast('등록된 귀속월이 없습니다.',true);return;}
+  async function openDutySchedule(initialYm = S.today.slice(0,7)) {
+    const validMonth=ym=>/^20[0-9]{2}-(0[1-9]|1[0-2])$/.test(ym);
     const token=S.token;
-    let selectedYm=periods.some(p=>p.ym===initialYm)?initialYm:periods[0].ym, data, rows, order, date, editing=false, busy=false, seq=0, dirty=false, dragged='';
-    modal(`<style>${dutyDutyStyle}</style><h3>당직 스케줄</h3><div class="duty-tools"><label>귀속월 <select data-duty-month>${periods.map(p=>`<option value="${esc(p.ym)}" ${p.ym===selectedYm?'selected':''}>${esc(ymLabel(p.ym))}</option>`).join('')}</select></label><button data-duty-close>닫기</button></div><div data-duty-body aria-live="polite">당직표를 불러오는 중…</div>`,(bg,close)=>{
+    let selectedYm=validMonth(initialYm)?initialYm:S.today.slice(0,7), data, rows, order, date, editing=false, busy=false, seq=0, dirty=false, dragged='';
+    modal(`<style>${dutyDutyStyle}</style><h3>당직 스케줄</h3><div class="duty-tools"><label>당직 월 <input type="month" min="2000-01" max="2099-12" value="${esc(selectedYm)}" data-duty-month></label><button data-duty-close>닫기</button></div><div data-duty-body aria-live="polite">당직표를 불러오는 중…</div>`,(bg,close)=>{
       const body=$('[data-duty-body]',bg), month=$('[data-duty-month]',bg);
       const staffName=id=>data.people.find(p=>p.id===id)?.name || '이전 담당자';
       const blocked=d=>data.off[d]||[];
@@ -19497,7 +19496,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           return `<button type="button" data-duty-date="${d}" class="duty-day${holiday?' duty-offday':''}" aria-pressed="${d===date}"><span class="duty-date-label">${d.slice(5).replace('-','/')}${d===S.today?'<span class="duty-today">오늘</span>':''}</span>${assignment}${closed}${conflict}${leaves}</button>`;
         }).join('');
         const selector=editing&&date?`<div class="duty-edit"><label>선택한 날짜의 당직 매니저 <select class="duty-select" data-duty-person ${calendar.holiday(date)&&!rows[date]?'disabled':''}><option value="">미배정</option>${order.map(id=>`<option value="${esc(id)}" ${rows[date]===id?'selected':''} ${blocked(date).includes(id)||calendar.holiday(date)?'disabled':''}>${esc(staffName(id))}${blocked(date).includes(id)?' · 휴무':''}</option>`).join('')}</select></label><details><summary>로테이션 순서</summary>${order.map((id,i)=>`<div class="duty-rotation-row"><span>${i+1}. ${esc(staffName(id))}</span><button data-duty-rank="${i}" data-step="-1" aria-label="${esc(staffName(id))} 위로" ${i===0?'disabled':''}>↑</button><button data-duty-rank="${i}" data-step="1" aria-label="${esc(staffName(id))} 아래로" ${i===order.length-1?'disabled':''}>↓</button></div>`).join('')}</details><div class="duty-tools"><button data-duty-auto>자동 배정 초안</button><button data-duty-save class="primary">확정</button></div></div>`:'';
-        body.innerHTML=`<div class="duty-tools duty-top"><span>${esc(dLabel(data.start))} ~ ${esc(dLabel(data.end))}${data.provisional?' · 예정 범위':''} · ${status}</span>${data.edit&&!editing?'<button data-duty-edit>배정 편집</button>':''}</div><div class="duty-tools"><b class="duty-headline">귀속월 당직 횟수</b>${editing?'<span class="duty-hint">이름을 날짜로 끌어 놓거나, 날짜를 눌러 배정</span>':''}</div><div class="duty-counts" aria-label="귀속월 당직 횟수">${counts}</div><div class="duty-grid" aria-label="당직 달력">${['월','화','수','목','금'].map(w=>`<span class="duty-week">${w}</span>`).join('')}${'<span></span>'.repeat(lead)}${cards}</div>${date?`<div class="duty-detail"><b>${esc(dLabel(date))}</b> · ${rows[date]?esc(staffName(rows[date]))+' 매니저':calendar.holiday(date)?'공휴일·휴무일':'미배정'}</div>`:'<p>표시할 평일이 없습니다.</p>'}${selector}`;
+        body.innerHTML=`<div class="duty-tools duty-top"><span>${esc(dLabel(data.start))} ~ ${esc(dLabel(data.end))} · ${status}</span>${data.edit&&!editing?'<button data-duty-edit>배정 편집</button>':''}</div><div class="duty-tools"><b class="duty-headline">월별 당직 횟수</b>${editing?'<span class="duty-hint">이름을 날짜로 끌어 놓거나, 날짜를 눌러 배정</span>':''}</div><div class="duty-counts" aria-label="월별 당직 횟수">${counts}</div><div class="duty-grid" aria-label="당직 달력">${['월','화','수','목','금'].map(w=>`<span class="duty-week">${w}</span>`).join('')}${'<span></span>'.repeat(lead)}${cards}</div>${date?`<div class="duty-detail"><b>${esc(dLabel(date))}</b> · ${rows[date]?esc(staffName(rows[date]))+' 매니저':calendar.holiday(date)?'공휴일·휴무일':'미배정'}</div>`:'<p>표시할 평일이 없습니다.</p>'}${selector}`;
         const focusDate=()=> $(`[data-duty-date="${date}"]`,body)?.focus({preventScroll:true});
         function assign(d,id,focus) {
           if(!data.edit||!editing||busy)return;
@@ -19556,7 +19555,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           show();
         } catch(err) {if(n===seq)body.textContent=err.message;}
       }
-      month.onchange=async()=>{const next=month.value;if(dirty&&!await confirmBox('확정하지 않은 변경을 취소하고 다른 귀속월을 열까요?','이동')){month.value=selectedYm;return;}selectedYm=next;date=null;await load();};
+      month.onchange=async()=>{const next=month.value;if(!validMonth(next)){month.value=selectedYm;return;}if(dirty&&!await confirmBox('확정하지 않은 변경을 취소하고 다른 달을 열까요?','이동')){month.value=selectedYm;return;}selectedYm=next;date=null;await load();};
       $('[data-duty-close]',bg).onclick=async()=>{if(!busy&&(!dirty||await confirmBox('확정하지 않은 변경을 취소할까요?','닫기')))close();};
       void load();
     },'duty-modal');
