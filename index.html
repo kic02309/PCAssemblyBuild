@@ -7977,7 +7977,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Z.ym === null) { const cur = ymOf(today); Z.ym = cur.slice(0, 4) === Z.year ? cur : ''; if (scope() === 'self') { Z.ym = ''; Z.mode = '연간'; } }
     const all = rowsOf(D), sel = all.filter(r => Z.mode === '기간 지정' && Z.range ? r.ym >= Z.range.from && r.ym <= Z.range.to : Z.mode === '월간' && Z.ym ? r.ym === Z.ym : true), q = Z.q.trim().toLowerCase(), nameQ = Z.nameQ.trim().toLowerCase();
     const summary = sel.filter(r => !Z.fg || Z.fg.split(',').includes(r.grp));
-    const rows = summary.filter(r => (!Z.fk || r.kind === Z.fk) && (!nameQ || String(r.name || '').toLowerCase().includes(nameQ)) && (!q || [r.name, r.ord, r.txt, r.act, ...(r.prods || []).flatMap(p => [p.code, p.name])].some(v => String(v || '').toLowerCase().includes(q))));
+    const rows = summary.filter(r => (!Z.fk || r.kind === Z.fk) && (!nameQ || [r.name, r.ord].some(v => String(v || '').toLowerCase().includes(nameQ))) && (!q || [r.name, r.ord, r.txt, r.act, ...(r.prods || []).flatMap(p => [p.code, p.name])].some(v => String(v || '').toLowerCase().includes(q))));
     const yms = Array.from({ length: 12 }, (_, i) => Z.year + '-' + String(i + 1).padStart(2, '0'));
     const cnt = ym => all.filter(r => r.ym === ym).length;
     const groups = Array.from(new Set(sel.map(r => r.grp).filter(Boolean))).sort((a, b) => (A.C.GROUP_LIST.indexOf(a) + 1 || 99) - (A.C.GROUP_LIST.indexOf(b) + 1 || 99));
@@ -8014,13 +8014,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <input id="acq" placeholder="${self ? '주문번호 · 내용' : '이름 · 주문번호 · 제품 · 내용'} 찾기" value="${esc(Z.q)}" autocomplete="off" style="width:230px"></div>
       </div>
       <div class="acckpi">
-        <div class="card"><span>${Z.mode === '기간 지정' && Z.range ? ymLab(Z.range.from) + ' ~ ' + ymLab(Z.range.to) : Z.mode === '전체' ? '전체 기간' : Z.mode === '월간' && Z.ym ? ymLab(Z.ym) : Z.year + '년'} 사고</span><b>${total}<small> 건</small></b><em class="acc-source">${self ? (total ? '내용을 누르면 자세히' : '사고가 없습니다 👍') : '사고 난 인원 ' + ppl + '명 · 웹 등록 ' + nWeb + '건 · 엑셀 ' + (total - nWeb) + '건'}</em></div>
+        <button type="button" class="card acc-total-reset" title="사고 구분 전체 보기" aria-label="전체 사고 보기 · 사고 구분만 해제"><span>${Z.mode === '기간 지정' && Z.range ? ymLab(Z.range.from) + ' ~ ' + ymLab(Z.range.to) : Z.mode === '전체' ? '전체 기간' : Z.mode === '월간' && Z.ym ? ymLab(Z.ym) : Z.year + '년'} 사고</span><b>${total}<small> 건</small></b><em class="acc-source">${self ? (total ? '내용을 누르면 자세히' : '사고가 없습니다 👍') : '사고 난 인원 ' + ppl + '명 · 웹 등록 ' + nWeb + '건 · 엑셀 ' + (total - nWeb) + '건'}</em></button>
         <div class="card wide"><span>구분별 <small class="acc-kind-base">전체 ${total}건 기준</small></span><div class="acckb">${KINDS.map(k => {
           const count = kc[k] || 0;
           return `<button type="button" data-acc-kind="${k}" aria-pressed="${Z.fk === k}" class="${!count ? 'acc-kind-zero' : count === highest ? 'acc-kind-high' : ''}" style="--kind:${KC[k]}" title="${k} 사고만 보기 · 다시 누르면 전체 구분"><span class="acc-kind-label"><i aria-hidden="true"></i>${k}</span><span class="acc-kind-values"><span><b>${count}</b><small>건</small></span><span class="acc-share">${share.format(total ? count / total : 0)}</span></span></button>`;
         }).join('')}</div></div>
       </div>
-      ${self ? '': `<div class="card acc-quickfilter"><div class="acc-quick-search"><label for="acc-name-q">직원 이름</label><input id="acc-name-q" type="search" placeholder="이름 검색 (예: 차민식)" value="${esc(Z.nameQ)}" autocomplete="off"><button type="button" id="acc-name-clear" ${Z.nameQ ? '' : 'disabled'}>지우기</button></div><span class="acc-quick-status" role="status">조회 결과 <b>${rows.length}</b>건 / 전체 <b>${total}</b>건${Z.fk ? ' · ' + esc(Z.fk) : ''}</span></div>`}
       <div class="card acc-table-wrap"><table class="list acctl ${self ? 'acc-self' : 'acc-team'}"><colgroup><col style="width:64px">${Z.ym || self ? '' : '<col style="width:64px">'}${self ? '' : '<col style="width:76px"><col style="width:74px">'}<col style="width:84px"><col style="width:104px">${self ? '' : '<col>'}<col><col>${self ? '' : '<col style="width:54px">'}</colgroup><thead><tr><th>출고일</th>${Z.ym || self ? '' : '<th>귀속월</th>'}${self ? '' : '<th>이름</th><th>그룹</th>'}<th>구분</th><th>주문번호</th>${self ? '' : '<th class="acc-text">제품</th>'}<th class="acc-text">증상 · 내용</th><th class="acc-text">처리</th>${self ? '' : '<th aria-label="첨부 및 출처"></th>'}</tr></thead><tbody>
         ${shown.map((r, i) => `<tr class="click" data-ai="${i}"><td class="nw">${r.d ? md(r.d) : '<span class="muted">-</span>'}</td>${Z.ym || self ? '' : `<td class="nw">${+r.ym.slice(5)}월</td>`}${self ? '' : `<td class="nw"><b>${esc(r.name)}</b></td><td class="nw">${A.gdot(r.grp)}</td>`}
           <td>${kTag(r.kind)}</td><td class="nw" title="${esc(r.ord)}">${esc(r.ord) || '<span class="muted">-</span>'}</td>
@@ -8033,20 +8032,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-am]').forEach(b => (b.onclick = () => { Z.ym = b.dataset.am; Z.mode = Z.ym ? '월간' : '연간'; Z.range = null; render(main); }));
     $$('[data-ak]').forEach(b => (b.onclick = () => { Z.fk = b.dataset.ak; render(main); }));
     $$('[data-acc-kind]',main).forEach(b => (b.onclick = () => { Z.fk = Z.fk === b.dataset.accKind ? '' : b.dataset.accKind; render(main); }));
-    const nameInput = $('#acc-name-q');
-    if (nameInput) {
-      let timer;
-      nameInput.oninput = () => {
-        clearTimeout(timer);
-        Z.nameQ = nameInput.value;
-        const pos = nameInput.selectionStart;
-        timer = setTimeout(() => render(main).then(() => {
-          const next = $('#acc-name-q');
-          if (next) { next.focus(); if (pos != null) next.setSelectionRange(pos,pos); }
-        }), 180);
-      };
-      $('#acc-name-clear').onclick = () => { Z.nameQ = ''; render(main).then(() => $('#acc-name-q')?.focus()); };
-    }
+    const totalReset = $('.acc-total-reset',main);
+    if (totalReset) totalReset.onclick = () => { Z.fk = ''; render(main); };
     if ($('#acg')) $('#acg').onchange = e => { Z.fg = e.target.value; render(main); };
     const qi = $('#acq'); let tq; qi.oninput = () => { clearTimeout(tq); tq = setTimeout(() => { Z.q = qi.value; const p = qi.selectionStart; render(main).then(() => { const n = $('#acq'); if (n) { n.focus(); n.setSelectionRange(p, p); } }); }, 250); };
     let selected = null, expanded = null;
@@ -8114,8 +8101,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         onSearch:()=>{const q=$('#acq');if(q)Z.q=q.value;render(main);},
         onReset:()=>{Z.mode='월간';Z.range=null;Z.year=today.slice(0,4);Z.ym=ymOf(today);Z.fg='';Z.fk='';Z.q='';Z.nameQ='';Z.detail=false;render(main);},
         onDetail:on=>{Z.detail=on;const orig=$('.accbar',main);if(orig)orig.classList.toggle('czf-expanded',on);},
-        actions:btns,onError:e=>A.toast(e.message,true)
+        actions:btns,
+        extra: self ? '' : `<div class="acc-top-search" role="search" aria-label="사고 이름 또는 주문번호 검색"><label for="acc-quick-q">사고 검색</label><input id="acc-quick-q" type="search" placeholder="직원 이름 또는 주문번호" value="${esc(Z.nameQ)}" autocomplete="off"><button type="button" id="acc-quick-submit">검색</button><button type="button" id="acc-quick-clear">지우기</button><span class="acc-quick-status" role="status">조회 ${rows.length}건 / 전체 ${total}건</span></div>`,
+        onError:e=>A.toast(e.message,true)
       });
+      if ($('#acadd')) bar.querySelector('[data-czf-action="0"]')?.classList.add('acc-add-emphasis');
+      const quick = $('#acc-quick-q', bar);
+      if (quick) {
+        const runQuick = () => { Z.nameQ = quick.value.trim(); render(main); };
+        $('#acc-quick-submit',bar).onclick = runQuick;
+        quick.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); runQuick(); } };
+        $('#acc-quick-clear',bar).onclick = () => { Z.nameQ = ''; render(main).then(() => $('#acc-quick-q',main)?.focus()); };
+      }
       if(Z.detail){const b=bar.querySelector('[data-czf-detail]');if(b)b.click();}
     }
   }
@@ -8502,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.61';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.62';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20536,6 +20533,21 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 /* Reserve sufficient height for the support legend before the line production detail row. */
 .ddcombo-v28 .ddcombo-row:has(.ddline-integrated){grid-template-rows:minmax(48px,auto) minmax(18px,auto)}
 }
+#main .acc .acc-total-reset{display:block;width:100%;text-align:left;color:inherit;cursor:pointer;font:inherit;border:1px solid var(--line2);background:var(--panel)}
+#main .acc .acc-total-reset:hover{border-color:var(--blue)}
+#main .acc .acc-total-reset:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+#main .czf-v4[data-view="acc"] .czf-extra{margin-left:auto;min-width:0;flex:1 1 420px;justify-content:flex-end}
+#main .czf-v4[data-view="acc"] .acc-top-search{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#main .czf-v4[data-view="acc"] .acc-top-search label{font-weight:750;font-size:12px;white-space:nowrap}
+#main .czf-v4[data-view="acc"] .acc-top-search input{width:220px;max-width:100%;min-width:150px;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:7px 10px}
+#main .czf-v4[data-view="acc"] .acc-top-search input:focus{outline:2px solid var(--blue);outline-offset:1px}
+#main .czf-v4[data-view="acc"] .acc-top-search button{border-radius:7px;padding:7px 11px;font-weight:750;cursor:pointer}
+#main .czf-v4[data-view="acc"] #acc-quick-submit{background:#2563eb;border:1px solid #1d4ed8;color:white}
+#main .czf-v4[data-view="acc"] #acc-quick-clear{background:var(--panel);border:1px solid var(--line);color:var(--ink)}
+#main .czf-v4[data-view="acc"] .acc-quick-status{font-size:11px;color:var(--sub);white-space:nowrap}
+#main .czf-v4[data-view="acc"] .acc-add-emphasis{background:#ea580c!important;border-color:#c2410c!important;color:#fff!important;font-weight:850!important;box-shadow:0 2px 6px #ea580c30}
+#main .czf-v4[data-view="acc"] .acc-add-emphasis:hover{background:#c2410c!important}
+@media(max-width:1100px){#main .czf-v4[data-view="acc"] .czf-extra{flex-basis:100%}#main .czf-v4[data-view="acc"] .acc-top-search{justify-content:flex-start}}
 </style>
 <style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style><style id="v2975-line-mobile-edit-and-range">
 /* Additive styles only; retains v29.75 layout, navy palette and original controls. */
