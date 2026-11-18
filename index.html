@@ -5863,7 +5863,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span><span class="lv sp">경조 · 병가</span><span class="sw lvx" style="cursor:default">토요 대체<i>↺</i></span>${own ? '<span class="lv me">나</span>' : ''}
       <span class="lb" style="margin-left:10px">토요근무 · 대체휴무 = 같은 주 같은 색</span>
       <span style="flex:1"></span><span class="muted">${d.canEdit ? '빈 곳을 끌어 등록 · 이름을 끌어 옮기기 · 이름 눌러 수정' : own && myStaff() ? '날짜를 끌어 신청 · 이름 눌러 보기' : '이름을 누르면 내용 보기'}</span></div>`;
-    html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = d.all && i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
+    html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
       return `<div class="${w === '토' ? 'sat' : ''}">${w}요일${cp ? `<span class="hcap">상한 ${cp}명</span>` : ''}${w === '토' ? '' : '<div class="sub"><span>연차</span><span>대체</span></div>'}</div>`; }).join('')}</div>`;
     weeks.forEach(days => {
       html += '<div class="lvwk2">';
@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.68';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.70';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
