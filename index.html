@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.63';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10704,6 +10704,51 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       os: total('os'), st: total('st'), osc: conversionAvg('osC'), stc: conversionAvg('stC'),
       sup: L.filter(p => p.kind === 'sup').length };
   }
+
+  // v30.64: Only the "group average conversion" display uses the support-excluded view.
+  // Never mutate daily users, production quantities, the source group model, or stored values.
+  function ddGroupWithoutSupport(group) {
+    const L = [];
+    let excludedCount = 0, removedSupport = 0, uncertain = false;
+    const originalWorkers = group.L.filter(p => p.kind === 'work').length;
+    for (const p of group.L) {
+      if (p.kind !== 'work') { L.push(p); continue; }
+      const ready = ddConversionReady(p);
+      const supportDay = p.adj?.kind === 'support';
+      const supportConfirmed = supportDay && p.adj.base != null;
+      const adjustedSupport = p.adj?.kind === 'adjusted';
+      const unadjustedAssignment = !!p.supportWithoutAverage && !!p.task;
+      // Unknown support values must not silently be reported as production.
+      if ((supportDay && !supportConfirmed) || (adjustedSupport && !ready) || (unadjustedAssignment && !ready)) {
+        uncertain = true;
+        L.push(p);
+        continue;
+      }
+      const support = ready ? Math.min(Math.max(0, Number(p.cv.support) || 0), Math.max(0, p.v)) : 0;
+      const production = ready ? (p.cv.asm + p.cv.ship + p.cv.mfg + p.cv.other + (p.cv.training || 0)) : null;
+      const supportOnly = supportConfirmed || (ready && support > 0 && p.v - support < 1e-6)
+        || (unadjustedAssignment && ready && production < 1e-6);
+      if (supportOnly) {
+        excludedCount++;
+        removedSupport += Math.max(0, p.v);
+        L.push({ ...p, kind: 'support-excluded' });
+      } else {
+        removedSupport += support;
+        L.push({ ...p, v: Math.max(0, p.v - support), cv: ready ? { ...p.cv, support: 0 } : p.cv });
+      }
+    }
+    // If a mixed-work support score cannot be separated, suppress the derived values.
+    if (uncertain) return { ...group, pure: true, pureUnknown: true, avg: null, tg: null,
+      originalWorkers, excludedCount, removedSupport };
+    const workers = L.filter(p => p.kind === 'work');
+    const targeted = workers.filter(p => p.target > 0);
+    const average = (people, get) => people.length ? people.reduce((a, p) => a + get(p), 0) / people.length : null;
+    const detailAvg = key => workers.every(p => typeof p[key] === 'number') ? average(workers, p => p[key]) : null;
+    return { ...group, L, pure: true, originalWorkers, excludedCount, removedSupport,
+      w: workers.length, tn: targeted.length,
+      avg: average(workers, p => p.v), tg: average(targeted, p => p.target),
+      osc: detailAvg('osC'), stc: detailAvg('stC') };
+  }
   function ddGroupConversion(x){
     const workers=x.L.filter(p=>p.kind==='work');
     if(!workers.length||!workers.every(ddConversionReady))return null;
@@ -10722,7 +10767,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
     const averages=[['support','지원'],['training','교육']].filter(([k])=>cv?.[k]>0).map(([k,label])=>'<span title="'+label+'일 평균 대체 환산"><i class="'+k+'-avg"></i>'+label+' <b>'+fmt(cv[k])+'</b></span>').join('');
     const context=`근무 실적 ${x.w}명 · 목표 설정 ${x.tn}명${x.sup?' · 지원 '+x.sup+'명':''}`;
-    return `<div class="ddcombo-graph" title="${esc(context)}">${hasAvg?ddConversionBar({v:x.avg,target:x.tg,oth:0,cv,split:x.g==='안정화'},scale):'<div class="ddconv"></div>'}${hasAvg&&cv&&x.g==='안정화'&&typeof cv.os==='number'?`<div class="ddsplit-lg" title="막대는 환산 비중 · 건수는 체크된 수량의 그룹 합계입니다 (한 대가 OS 설치·안정화에 함께 셈될 수 있어 서로 합치지 않습니다)"><span><i class="os"></i>OS 설치 <b>${x.os||0}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span><span><i class="st"></i>안정화 <b>${x.st||0}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span><span><i class="sh"></i>출고(검수)</span><span><i class="rest"></i>그 외 작업</span><span><i class="ot"></i>기타시간</span></div>`:''}${hasAvg&&!(cv&&x.g==='안정화'&&typeof cv.os==='number')&&(x.os||x.st)?`<div class="ddsplit-lg ddenv" title="건수는 그룹 합계 · 환산은 그룹 평균 (OS = O/S · D+M, 안정화 = 안정화 · 안+삭제 · 안정화(특수))">${x.os?`<span><i class="os"></i>OS 설치 <b>${x.os}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span>`:''}${x.st?`<span><i class="st"></i>안정화 <b>${x.st}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span>`:''}</div>`:''}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}${averages?'<div class="ddsplit-lg ddenv">'+averages+'</div>':''}</div>
+    const pureNote = x.pure && !x.pureUnknown
+      ? '<div class="ddcombo-pure-note">지원 전담 '+x.excludedCount+'명 제외 · 지원 환산 평균 '+fmt(x.removedSupport/(x.originalWorkers||1))+' 제외 · 생산 평가 '+x.w+'명</div>' : '';
+    const graphBody = x.pureUnknown
+      ? '<div class="ddcombo-pure-warning">지원 구분 자료 부족 · 미포함 수치 산정 보류</div>'
+      : !hasAvg && x.pure ? '<div class="ddcombo-pure-warning">지원 제외 후 생산 평가 인원 없음</div>'
+      : hasAvg ? ddConversionBar({v:x.avg,target:x.tg,oth:0,cv,split:x.g==='안정화'},scale) : '<div class="ddconv"></div>';
+    return `<div class="ddcombo-graph" title="${esc(context)}">${graphBody}${hasAvg&&cv&&x.g==='안정화'&&typeof cv.os==='number'?`<div class="ddsplit-lg" title="막대는 환산 비중 · 건수는 체크된 수량의 그룹 합계입니다 (한 대가 OS 설치·안정화에 함께 셈될 수 있어 서로 합치지 않습니다)"><span><i class="os"></i>OS 설치 <b>${x.os||0}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span><span><i class="st"></i>안정화 <b>${x.st||0}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span><span><i class="sh"></i>출고(검수)</span><span><i class="rest"></i>그 외 작업</span><span><i class="ot"></i>기타시간</span></div>`:''}${hasAvg&&!(cv&&x.g==='안정화'&&typeof cv.os==='number')&&(x.os||x.st)?`<div class="ddsplit-lg ddenv" title="건수는 그룹 합계 · 환산은 그룹 평균 (OS = O/S · D+M, 안정화 = 안정화 · 안+삭제 · 안정화(특수))">${x.os?`<span><i class="os"></i>OS 설치 <b>${x.os}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span>`:''}${x.st?`<span><i class="st"></i>안정화 <b>${x.st}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span>`:''}</div>`:''}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}${averages?'<div class="ddsplit-lg ddenv">'+averages+'</div>':''}${pureNote}</div>
       <div class="ddcombo-value" title="${esc(context)}"><span class="ddcombo-target" title="기존 목표 설정 인원의 평균 목표">목표 <b>${hasTarget?fmt(x.tg):'—'}</b></span><span class="ddcombo-current" title="기존 근무 실적 인원의 평균 환산">환산 <b>${fmt(x.avg)}</b></span><span class="ddcombo-rate" title="평균 환산 ÷ 평균 목표 × 100">${rate==null?'—':rate+'%'}</span></div>
       ${`<div class="ddcombo-qty" aria-label="그룹 수량"><span><b>${x.q??0}</b><small>조립</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span><span class="m"><b>${x.mq||0}</b><small>제조</small></span></div>`}`;
   }
@@ -10925,9 +10976,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (r._prod && groupRole !== 'all') { const line = groups.find(x => x.g === '라인'); if (line) line.mq += r._prod.qty; }
     const activeGroups = groups.filter(x => x.w || (x.g === '라인' && r._prod));
     const groupScale=Math.max(20,...activeGroups.map(x=>x.avg||0),...activeGroups.map(x=>x.tg||0));
-    h += `<div class="card ddcombo-v7 ddcombo-v28"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>검은 선 = 목표</small></h3>
+    h += `<div class="card ddcombo-v7 ddcombo-v28"><h3 class="ddh ddcombo-title">그룹별 평균 환산 <small>검은 선 = 목표</small>
+       <span class="ddsupport-toolbar" role="group" aria-label="지원업무 환산 보기 전환">
+         <button type="button" data-ddsupport="include" aria-pressed="true">지원 포함</button>
+         <button type="button" data-ddsupport="exclude" aria-pressed="false">지원업무 미포함</button>
+       </span><span class="ddsupport-help" id="ddsupport-help">지원 미포함: 전담 인원·지원 환산 제외, 생산 수량 유지</span></h3>
       <div class="ddcombo-list">
-        ${activeGroups.map(x => `<div class="ddcombo-row">
+        ${activeGroups.map(x => `<div class="ddcombo-row" data-ddcombo-group="${esc(x.g)}">
           <div class="ddcombo-name">${gdot(x.g)}</div>
           ${ddGroupDisplay(x,groupScale)}
           ${x.g === '라인' && r._prod ? `<div class="ddline-integrated" title="임시저장 완료 기준 · 월 통계·엑셀은 확정 실적 기준"><span>생산 <b>${r._prod.qty}</b></span><span>기타 <b>${r._prod.H}분</b></span><span>총환산 <b>${f2(r._prod.T)}</b></span><span>참여 <b>${r._prod.n}명</b></span>${r._prod.incomplete ? '<span class="t-lo" title="환산 가능한 입력만 계산">미완성 항목 있음</span>' : ''}</div>` : ''}
@@ -10968,6 +11023,41 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!staff) h += ddFeedbackSection(r, D);
     $('#main').innerHTML = head + '<div class="pgb">' + h + '</div>';
     bindDailyTabs();
+
+    // Purely client-side display toggle; retain check badges, production summary and API cache.
+    const updateSupportComparison = () => {
+      const exclude = !staff && S.ddSupportView === 'exclude';
+      const shown = exclude ? groups.map(ddGroupWithoutSupport) : groups;
+      const scale = Math.max(20, ...shown.map(x => x.avg || 0), ...shown.map(x => x.tg || 0));
+      $('.ddcombo-row[data-ddcombo-group]', $('#main')).forEach(row => {
+        const x = shown.find(g => g.g === row.dataset.ddcomboGroup);
+        if (!x) return;
+        const temp = document.createElement('div');
+        temp.innerHTML = ddGroupDisplay(x, scale);
+        for (const cls of ['.ddcombo-graph', '.ddcombo-value']) {
+          const old = row.querySelector(cls), next = temp.querySelector(cls);
+          if (old && next) old.replaceWith(next);
+        }
+      });
+      $('[data-ddsupport]', $('#main')).forEach(b => {
+        b.setAttribute('aria-pressed', String((b.dataset.ddsupport === 'exclude') === exclude));
+        if (staff && b.dataset.ddsupport === 'exclude') {
+          b.disabled = true;
+          b.title = '지원 확인 정보가 없는 사원 화면에서는 미포함 계산을 제공하지 않습니다';
+        }
+      });
+      const help = $('#ddsupport-help');
+      if (help) help.textContent = staff
+        ? '지원 구분은 관리자·매니저 화면에서 확인할 수 있습니다'
+        : exclude ? '전담 지원 인원·지원 환산 제외 · 생산 병행 인원과 실제 수량 유지'
+        : '지원 포함: 기존 그룹 평균·목표·달성률 그대로 표시';
+    };
+    $('[data-ddsupport]', $('#main')).forEach(b => (b.onclick = () => {
+      if (staff && b.dataset.ddsupport === 'exclude') return;
+      S.ddSupportView = b.dataset.ddsupport;
+      updateSupportComparison();
+    }));
+    if (staff || S.ddSupportView === 'exclude') updateSupportComparison();
     // v4 compact common query controls — group filtering affects group cards only.
     if (window.CZFilterV4) {
       const hd = $('#main .ddnav'); if (hd) hd.style.display = 'none';
@@ -20516,6 +20606,24 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 .ddcombo-v28 .ddcombo-graph>.ddtr{flex:0 0 100%}
 .ddcombo-v28 .ddcombo-graph>.ddsplit-lg{display:contents}
 .ddcombo-v28 .ddcombo-graph>.ddsplit-lg>span{white-space:nowrap}
+</style>
+
+<style id="ddcombo-support-view-v3064">
+/* This switch and its state affect only the group-average card. */
+.ddcombo-v28 .ddcombo-title{align-items:center;gap:9px 14px}
+.ddcombo-v28 .ddsupport-toolbar{display:inline-flex;align-items:center;gap:5px;margin-left:16px;padding:4px;border-radius:12px;background:color-mix(in srgb,#2466ed 9%,var(--panel));border:1px solid color-mix(in srgb,#2466ed 30%,var(--line2))}
+.ddcombo-v28 .ddsupport-toolbar button{appearance:none;font-size:13px;font-weight:800;line-height:1.25;font-family:inherit;white-space:nowrap;border:2px solid #a9c2ea;background:var(--panel);color:#17447d;border-radius:9px;padding:8px 13px;cursor:pointer;transition:background .12s,color .12s,box-shadow .12s}
+.ddcombo-v28 .ddsupport-toolbar button[aria-pressed="true"]{color:#fff;background:#1765e9;border-color:#1765e9;box-shadow:0 2px 7px #1765e945}
+.ddcombo-v28 .ddsupport-toolbar button:hover:not(:disabled){border-color:#1765e9}
+.ddcombo-v28 .ddsupport-toolbar button:focus-visible{outline:3px solid #e9a43a;outline-offset:2px}
+.ddcombo-v28 .ddsupport-toolbar button:disabled{opacity:.45;cursor:not-allowed}
+.ddcombo-v28 .ddsupport-help{font-size:11.5px;line-height:1.4;font-weight:600;color:var(--sub);flex:1 1 260px}
+.ddcombo-v28 .ddcombo-pure-note{flex:0 0 100%;font-size:10.5px;line-height:1.35;font-weight:700;color:#2062bd;margin-top:1px}
+.ddcombo-v28 .ddcombo-pure-warning{font-size:11px;line-height:1.5;font-weight:700;color:#ad5e0b;background:color-mix(in srgb,#f7b345 15%,var(--panel));border:1px solid #efc67b;border-radius:6px;padding:5px 8px;width:100%}
+html[data-theme="dark"] .ddcombo-v28 .ddsupport-toolbar button:not([aria-pressed="true"]){background:#253956;border-color:#536e96;color:#dceaff}
+html[data-theme="dark"] .ddcombo-v28 .ddcombo-pure-note{color:#9cc8ff}
+@media(max-width:1100px){.ddcombo-v28 .ddsupport-toolbar{margin-left:0}.ddcombo-v28 .ddsupport-help{flex-basis:100%}}
+@media(max-width:550px){.ddcombo-v28 .ddsupport-toolbar{width:100%;justify-content:stretch}.ddcombo-v28 .ddsupport-toolbar button{flex:1 1 0;padding:8px 6px;font-size:12px}}
 </style>
 <style id="v3061-accident-filters-and-line">
 #main .acc .acckb>button{appearance:none;display:block;min-width:0;padding:7px 8px;border-radius:8px;border:1px solid transparent;background:var(--head);color:inherit;text-align:left;font:inherit;cursor:pointer}
