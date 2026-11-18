@@ -8031,8 +8031,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       </tbody></table></div></div>`;
     $('#acy').onchange = e => { Z.year = e.target.value; Z.ym = ''; Z.mode = '연간'; Z.range = null; Z.fg = ''; render(main); };
     $$('[data-am]').forEach(b => (b.onclick = () => { Z.ym = b.dataset.am; Z.mode = Z.ym ? '월간' : '연간'; Z.range = null; render(main); }));
-    $('[data-ak]').forEach(b => (b.onclick = () => { Z.fk = b.dataset.ak; render(main); }));
-    $('[data-acc-kind]',main).forEach(b => (b.onclick = () => { Z.fk = Z.fk === b.dataset.accKind ? '' : b.dataset.accKind; render(main); }));
+    $$('[data-ak]').forEach(b => (b.onclick = () => { Z.fk = b.dataset.ak; render(main); }));
+    $$('[data-acc-kind]',main).forEach(b => (b.onclick = () => { Z.fk = Z.fk === b.dataset.accKind ? '' : b.dataset.accKind; render(main); }));
     const nameInput = $('#acc-name-q');
     if (nameInput) {
       let timer;
