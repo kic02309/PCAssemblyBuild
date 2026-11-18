@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.71';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.72';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -12322,6 +12322,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }, 'wide');
   }
   // ---------- 2. 파트원 면담관리
+  // v30.72: fit the selected group's table to the visible monitor area, without changing the table or data.
+  let mgMeetFitBound = false;
+  function mgMeetFitHeight() {
+    if (S.view !== 'mgr' || !S.mgv || S.mgv.tab !== 'meet') return;
+    const pane = document.querySelector('#mgbody .m2c > .m2sc');
+    if (!pane) return;
+    const remaining = window.innerHeight - pane.getBoundingClientRect().top - 48;
+    pane.style.maxHeight = Math.max(180, Math.floor(remaining)) + 'px';
+  }
   const mgCanAuto = () => !isRO() && !S.pv && (S.me.mg || []).length > 0;
   async function mgMeet(box) {
     const v = S.mgv, adm = S.me.role === '관리자', cfg = mgCfg(), G = mgGroupsOf(), range=mgQueryRange(S.mgv,'meetQuery');
@@ -12377,6 +12386,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const periodInfo=`<div class="mg-query-period mg-query-note"><b>선택 기간 면담</b><span>예정 ${periodEvents.filter(e=>e.result==='예정').length}건 · 실시 ${periodEvents.filter(e=>e.result==='실시').length}건 · 취소 ${periodEvents.filter(e=>e.result==='취소').length}건</span><button class="sm" id="mgPeriodEvents">기간 내역 보기</button><span class="muted">실시 건수는 면담 일정 기준 · 인원별 횟수는 참여 인원별 집계</span></div>`;
     box.innerHTML = mgQueryBar(v,'meetQuery',SG,v.mmg||'') + `<div class="muted mg-query-note">상태 기준일 ${S.today} · 현재 ${esc(mgPeriodLabel(curPeriod()))}<br>면담 필요·기한 초과·예약·최근 면담은 오늘 기준 / 실시 건수는 선택 기간 기준</div>` + periodInfo + kpi + body;
     mgQueryBind(box,v,'meetQuery','mmg');
+    mgMeetFitHeight();
+    if (!mgMeetFitBound) { window.addEventListener('resize', mgMeetFitHeight, {passive:true}); mgMeetFitBound = true; }
     $('#mgPeriodEvents',box).onclick=()=>mgKList('선택 기간 면담 내역',range.from+' ~ '+range.to,periodEvents.map(e=>({a:e.date+' '+(e.time||''),b:(e.people||[]).filter(n=>periodNames.has(normName(n))).join(', '),c:(e.result||'')+' · '+(e.title||''),go:()=>mgEvent(e.id)})));
     const mRow = r => { const [st] = stOf(r); return { a: r.x.name, b: r.x.group, c: `${st}${r.sch ? ' · 예약 ' + dLabel(r.sch.date) : ''}${r.lastM ? ' · 최근 면담 ' + dLabel(r.lastM) : ''}`, go: () => mgHist(r.x.name) }; };
     const KL = {
@@ -13005,24 +13016,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const lab = d => { const w = cDow(d); return `<th class="d ${HOL[d] ? 'hol' : w === 6 ? 'sat wk' : w === 0 ? 'sun wk' : ''}${d === S.today ? ' today' : ''}${wide ? ' plw' : ''}" title="${d}${HOL[d] ? ' ' + esc(HOL[d]) : ''}">${wide ? dLabel(d).replace(/\(.*/, '') : +d.slice(8)}<small>${HOL[d] ? esc(HOL[d].replace(/\(.*\)/, '').slice(0, 3)) : C.WD[w]}</small></th>`; };
     const sh = d => (d ? dLabel(d).replace(/\(.*/, '') : '');
     const OPEN = p.open, isOpen = id => OPEN[id] !== false;
-    // v30.71: The schedule bar may show the task's existing details without expanding its rows.
-    // Keep the server-provided 'full' permission boundary for other managers' plans.
+    // v30.72: Show only that day's permitted work logs. The title and schedule are already in the table.
     const plHover = (t, d) => {
-      const lines = [t.title, '기간 ' + t.start + ' ~ ' + plEnd(t)];
-      if (!t.full) return lines.concat('상세 비공개').join('\n');
-      if (t.note) lines.push('계획: ' + t.note);
-      if (t.etc) lines.push('기타: ' + t.etc);
-      const logs = lgs(t.id), onDay = logs.filter(l => l.date === d);
-      const picked = onDay.length ? onDay : logs;
-      if (picked.length) {
-        lines.push((onDay.length ? '해당 날짜 기록' : '진행 기록') + ' ' + picked.length + '건');
-        picked.slice(0, 8).forEach(l => lines.push(l.date + ' · ' + l.text));
-        if (picked.length > 8) lines.push('그 외 ' + (picked.length - 8) + '건');
-      } else if (!t.note && !t.etc) lines.push('세부 작업 기록 없음');
-      return lines.join('\n');
+      if (!t.full) return '상세 비공개';
+      const records = lgs(t.id).filter(l => l.date === d);
+      if (!records.length) return '등록된 작업 없음';
+      return records.slice(0, 8).map(l => l.text).concat(records.length > 8 ? ['그 외 ' + (records.length - 8) + '건'] : []).join('\n');
     };
     const pcell = (t, d, ld) => { const e = plEnd(t), st = plSt(t)[1], inb = d >= t.start && d <= e, ext = t.delayPlan && t.delayPlan > t.due && d > t.due && d <= e;
-      return `<td class="d pc${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}"${inb ? ` title="${esc(plHover(t, d))}"` : ''}>${inb ? `<i class="pbr ${st}${ext ? ' x' : ''}${d === t.start || d === R.from ? ' s' : ''}${d === e || d === R.to ? ' e' : ''}${d === t.start ? ' ps' : ''}${d === e ? ' pe' : ''}"></i>` : ''}${ld.has(d) ? '<b class="pdt">●</b>' : ''}</td>`; };
+      return `<td class="d pc${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}"${inb ? ` title="${esc(dLabel(d) + '\n' + plHover(t, d))}"` : ''}>${inb ? `<i class="pbr ${st}${ext ? ' x' : ''}${d === t.start || d === R.from ? ' s' : ''}${d === e || d === R.to ? ' e' : ''}${d === t.start ? ' ps' : ''}${d === e ? ' pe' : ''}"></i>` : ''}${ld.has(d) ? '<b class="pdt">●</b>' : ''}</td>`; };
     const rows = T.map(t => { const L = t.full ? lgs(t.id) : [], ld = new Set(L.map(l => l.date)), [stx, stc] = plSt(t), op = t.full && isOpen(t.id), editable = !isRO() && !S.pv && t.owner === S.me.id, ext = t.delayPlan && t.delayPlan > t.due;
       return `<tr class="pj"><td class="f f0">${sh(t.start)}</td><td class="f f1">${sh(plEnd(t))}${ext ? '<span class="plex">연장</span>' : ''}</td><td class="f f2 lk" data-plt="${t.id}"><div class="wtt2">${t.full ? `<span class="tog">${op ? '▾' : '▸'}</span>` : '<span class="tog">🔒</span>'}${plPri(t.priority)}${p.own === '*' ? `<small class="pl-owner">${esc(mgName(t.owner))}</small>` : ''}<span class="cl" title="${esc(t.title)}">${esc(t.title)}</span><span class="cnt">${t.full ? '기록 ' + (+t.nlog || mgLogs(t.id).length) + '건' : '기록 ' + (+t.nlog || 0) + '건 · 상세 비공개'}</span>${t.full && editable && t.status !== '완료' ? `<button type="button" class="pl-add-log" data-pladd="${t.id}" aria-label="${esc(t.title)} 추가 작업">＋ 추가 작업</button>` : ''}${t.full ? `<button class="sm ped" data-ple="${t.id}" title="${editable ? '계획 수정' : '계획 보기'}">${editable ? '✎' : 'ⓘ'}</button>` : ''}</div></td><td class="f f3"><span class="wst ${stc}">${stx}</span><div class="pl-progress">${pbar(t.progress)}</div></td>${days.map(d => pcell(t, d, ld)).join('')}</tr>`
         + (op && (t.note || t.etc) ? `<tr class="rc pl-note"><td class="f f0">상세</td><td class="f f1"></td><td class="f f2"><div class="cl2">${esc(t.note || '')}${t.etc ? `<br>기타: ${esc(t.etc)}` : ''}</div></td><td class="f f3"></td>${days.map(() => '<td class="d"></td>').join('')}</tr>` : '') + (op ? L.map(l => `<tr class="rc"><td class="f f0">${sh(l.date)}</td><td class="f f1"></td><td class="f f2 lk" data-pll="${l.id}" title="${esc(dLabel(l.date) + ' · ' + l.text + (l.by ? '\n작성 ' + l.by : ''))}"><div class="cl2">${esc(l.text)}</div></td><td class="f f3"></td>${days.map(d => `<td class="d${d === l.date ? ' won' : ''}${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}"${d === l.date ? ` title="${esc(dLabel(l.date) + ' · ' + l.text)}"` : ''}></td>`).join('')}</tr>`).join('') : ''); }).join('');
@@ -13739,7 +13741,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const lab = d => { const w = new Date(d + 'T00:00:00').getDay(), o = OFF[d]; return `<th class="d ${HOL[d] ? 'hol' : w === 6 ? 'sat wk' : w === 0 ? 'sun wk' : ''}${o ? ' wlvh' : ''}${d === today ? ' today' : ''}" title="${d}${HOL[d] ? ' ' + esc(HOL[d]) : ''}${o ? ' · ' + esc(o) : ''}${w % 6 === 0 ? ' · 주말 기록이 있어 생긴 칸' : ''}">${+d.slice(5, 7)}/${+d.slice(8)}<small>${HOL[d] ? esc(HOL[d].replace(/\(.*\)/, '').slice(0, 3)) : C.WD[w]}</small>${o ? `<em class="lvt">${esc(o)}</em>` : ''}</th>`; };
     const sheet = rows.length ? `<table class="wt"><thead><tr><th class="f f0">시작일</th><th class="f f1">예상완료</th><th class="f f2">업무 / 프로젝트 <button class="sm wtall" id="wtall">${rows.every(x => isOpen(x.p.id)) ? '모두 접기' : '모두 펼치기'}</button></th><th class="f f3">상태</th>${dd.map(lab).join('')}</tr></thead><tbody>${rows.map(({ p, recs }) => {
       const ds = new Set(recs.map(r => r.date)), st = wtState(p, ym), lt = wtLate(p, ym, today), op = isOpen(p.id);
-      const tipFor = d => { const items = recs.filter(r => r.date === d); return [p.title, ...items.slice(0, 8).map(r => wtText(r)), ...(items.length > 8 ? ['그 외 ' + (items.length - 8) + '건'] : [])].join('\n'); };
+      const tipFor = d => { const items = recs.filter(r => r.date === d); return [...items.slice(0, 8).map(r => wtText(r)), ...(items.length > 8 ? ['그 외 ' + (items.length - 8) + '건'] : [])].join('\n'); };
       return `<tr class="pj"><td class="f f0">${p.start ? dLabel(p.start).replace(/\(.*/, '') : ''}</td><td class="f f1">${p.due ? dLabel(p.due).replace(/\(.*/, '') : ''}</td><td class="f f2 lk" data-wt="${p.id}"><div class="wtt2"><span class="tog">${op ? '▾' : '▸'}</span><span class="cl">${esc(p.title)}</span>${p.created < ym ? `<span class="wcar">${ymLabel(p.created)}에서 이월</span>` : ''}<span class="cnt">${recs.length}건</span>${ed || true ? `<button class="sm ped" data-wp="${p.id}" title="${ed ? '프로젝트 수정' : '프로젝트 보기'}">${ed ? '✎' : 'ⓘ'}</button>` : ''}</div></td><td class="f f3"><span class="wst s${WT_ST.indexOf(st)}">${st}</span>${lt ? '<span class="wlate">기한 초과</span>' : ''}</td>${dd.map(d => cell(d, ds.has(d), true, tipFor(d))).join('')}</tr>`
         + (op ? recs.map(r => `<tr class="rc"><td class="f f0"></td><td class="f f1"></td><td class="f f2 lk" data-wr="${r.id}" title="${esc(wtText(r) + (r.by ? '\n작성 ' + r.by : ''))}"><div class="cl2">${r.kind === 'support' ? `<b class="wsup">[${esc(r.cat)} ${r.mins}분]</b> ` : ''}${esc(r.text)}</div></td><td class="f f3"></td>${dd.map(d => cell(d, d === r.date, false, d === r.date ? wtText(r) : '')).join('')}</tr>`).join('') : '');
     }).join('')}</tbody></table>` : '<div class="muted" style="padding:30px;text-align:center">이 귀속월에 표시할 프로젝트가 없습니다.' + (ed ? ' [＋ 프로젝트]로 추가하세요.' : '') + '</div>';
