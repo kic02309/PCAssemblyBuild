@@ -4440,7 +4440,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
         const lb = cf === 'training' ? '교육' : '지원';
         if (base != null) { const dd = num(s0.d) > 0 ? num(s0.d) : 1; s = Object.assign({}, s0, { d: dd, h7: 0, t: {}, gq: 0, prod: 0, r10: s0.r10 || {}, o: { U7: base * dd * 30 } }); support = base * dd; kind = cf; reason = lb + ' · 평균 대체' + (asg[d] && !conf[d] ? ' (업무배정)' : ''); }
         else { kind = cf; reason = lb + ' · 평균 자료 없음'; if (!it.sum) s = Object.assign({}, s0); }
-      } else if (o.supportAverage !== false && min >= ADJ_MIN && it.sum) {
+      } else if (o.supportAverage !== false && min >= ADJ_MIN && it.sum && o.reviews?.[d]?.decision === 'support' && JSON.stringify(OTHER.map(([k])=>num(s0.o?.[k]))) === JSON.stringify(OTHER.map(([k])=>num(o.reviews[d].snapshot.other?.[k])))) {
         if (base != null) { support = min / 60 * base / 8.5; const r = support / (min / 30), oo = {}; OTHER.forEach(([k]) => { if (num((s0.o || {})[k])) oo[k] = num(s0.o[k]) * r; }); s = Object.assign({}, s0, { o: oo }); kind = 'adjusted'; reason = '지원 4시간 이상 · 평균 보정'; }
         else reason = '지원 4시간 이상 · 평균 자료 없음 (기존 계산)';
       }
@@ -4456,7 +4456,7 @@ const SB_KEY = 'sb_publishable_5LoR30TsduFp6ivEaKNkXg_58Vbm2ur';
     if (!result.on || !result.items.some(it => it._adj?.kind === 'support')) return result;
     const mins = o.mins;
     const actual = (items || []).filter(it => it.sum && !o.off?.[it.date] && !isSupportDay(o.conf?.[it.date], o.asg?.[it.date]) && Math.abs(sumDay(it.sum, mins).e2) > 1e-9)
-      .map(it => otherMinOf(it.sum) >= ADJ_MIN ? { ...it, sum: { ...it.sum, o: {} } } : it);
+      .map(it => result.meta[it.date]?.kind === 'adjusted' ? { ...it, sum: { ...it.sum, o: {} } } : it);
     const observed = calcMonth(actual, 0, mins);
     const prior = Number.isFinite(o.prev) && o.prev > 0 ? o.prev : null;
     const base = observed.ev > 0 ? observed.f7 : prior;
@@ -8486,7 +8486,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -8680,12 +8680,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     S._att = S._att || {}; if (S._att[ym] && Date.now()-S._att[ym].loadedAt<20000) return S._att[ym];
     const rg = periodRange(ym); if (!rg) return null; const tk = S.token;
     let r; try { r = await api('attList', { from: rg.from, to: rg.to }); } catch (e) { r = { conf: [], asg: [], off: [], roster: [], err: e.message }; }   // v28.53 : 실패는 기억하지 않음 (다음에 다시 조회)
-    const A = { conf: {}, asg: {}, off: {}, half: {}, offk: {}, roster: {}, by: {}, rg, rosterKnown: Array.isArray(r.roster) && !r.err, loadedAt: Date.now(), err: r.err || '' };
+    const A = { reviews: {}, conf: {}, asg: {}, off: {}, half: {}, offk: {}, roster: {}, by: {}, rg, rosterKnown: Array.isArray(r.roster) && !r.err, loadedAt: Date.now(), err: r.err || '' };
     (r.conf || []).forEach(([n, d, k, by, at]) => { n = nmKey(n); (A.conf[n] = A.conf[n] || {})[d] = k; (A.by[n] = A.by[n] || {})[d] = by + ' · ' + String(at || '').slice(5, 16); });
     (r.asg || []).forEach(([n, d, t]) => { n = nmKey(n); (A.asg[n] = A.asg[n] || {})[d] = t; });
     (r.off || []).forEach(([n, a, b, k]) => { n = nmKey(n); for (let d = a; d <= b; d = C.addDays(d, 1)) { (A.off[n] = A.off[n] || {})[d] = true; (A.offk[n] = A.offk[n] || {})[d] = k; } });
     (r.half || []).forEach(([n, a, b]) => { n = nmKey(n); for (let d = a; d <= b; d = C.addDays(d, 1)) (A.half[n] ||= {})[d] = true; });
     (r.roster || []).forEach(([n, g, t, st, inr]) => (A.roster[nmKey(n)] = { grp: g, title: t, status: st, inr }));
+    (r.reviews || []).forEach(x=>{ const n=nmKey(x.name); (A.reviews[n] ||= {})[x.date]=x; });
     A.hol = new Set(r.hol || []);
     if (A.err || tk !== S.token) return A;                                              // 다른 계정으로 바뀌었으면 기억하지 않음
     return (S._att[ym] = A);
@@ -8701,7 +8702,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function adjOne(name, ym, items, prev, A, group) {
     const n = nmKey(name), half = A?.half?.[n] || {};
     const work = items.map(it => half[it.date] ? { ...it, sum: halfDaySummary(it.sum) } : it);
-    return C.adjustMonth(work, { ym, mins: minsYm(ym), prev, conf: A?.conf?.[n], asg: A?.asg?.[n], off: A?.off?.[n], half, supportAverage: usesSupportAverage(A?.roster?.[n]?.grp || group) });
+    return C.adjustMonth(work, { ym, mins: minsYm(ym), prev, conf: A?.conf?.[n], asg: A?.asg?.[n], off: A?.off?.[n], half, reviews: A?.reviews?.[n], supportAverage: usesSupportAverage(A?.roster?.[n]?.grp || group) });
   }
   // 매니저 이상 : 귀속월 전체 인원 (월 목록 자료) → { by: {이름: 결과} }
   async function adjYm(ym, depth) {
@@ -10507,7 +10508,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const DD_CONVERSION_KEYS = ["asm", "ship", "mfg", "other", "support", "training"];
   function ddAdjustedConversion(raw, corrected, source, adjustment, mins){
     const original=source&&source.v===1?{...source}:null;
-    if(!adjustment||!adjustment.kind)return original;
+    if(!adjustment?.kind){
+      if(!original||!raw||!corrected)return original;
+      const before=(+raw.d||0)+(+raw.h7||0)/510,after=(+corrected.d||0)+(+corrected.h7||0)/510;
+      if(!(before>0&&after>0)||before===after)return original;
+      const scaled={...original};
+      for(const k of ['asm','ship','mfg','other','production'])if(typeof scaled[k]==='number')scaled[k]*=before/after;
+      return scaled;
+    }
     if(!raw&&adjustment.virtual&&['support','training'].includes(adjustment.kind))raw={d:1,h7:0,t:{},o:{}};
     if(!['adjusted','support','training'].includes(adjustment.kind)||!raw||!corrected)return null;
     const replacement=ddReplacement(adjustment);
@@ -10522,7 +10530,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const rawWork=C.sumDay({...raw,o:{}},mins).e2,work=C.sumDay({...corrected,o:{}},mins).e2;
     if(![other,rawValue,value,rawWork,work].every(Number.isFinite)||other<0)return null;
     if (Math.abs(rawWork) < 1e-8 && Math.abs(work) < 1e-8) {
-      const cv={v:1,asm:0,ship:0,mfg:0,other,production:0};
+      const cv={v:1,asm:0,ship:0,mfg:0,other:adjustment.kind==='adjusted'?0:other,support:adjustment.kind==='adjusted'?other:0,production:0};
       return ddConversionReady({v:value,cv})?cv:null;
     }
     // Average substitution may clear work counters; do not reuse old categories.
@@ -10532,7 +10540,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ||Math.abs(values.reduce((a,b)=>a+b,0)-rawValue)>1e-6)return null;
     const production=original.production==null?0:original.production;
     if(typeof production!=='number'||!Number.isFinite(production)||production<0)return null;
-    const cv={...original,asm:original.asm*from/to,ship:original.ship*from/to,mfg:original.mfg*from/to,other,production:production*from/to};
+    const cv={...original,asm:original.asm*from/to,ship:original.ship*from/to,mfg:original.mfg*from/to,other:0,support:other,production:production*from/to};
     // Pending production is checked again after the existing live overlay.
     return ddConversionReady({v:value,cv:{...cv,production:0}})?cv:null;
   }
@@ -10595,8 +10603,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       o.off = off[p.name] || (st === '육아' ? '육아' : st === '병가' ? '병가' : '');
       o.half = half[N(p.name)] || ''; o.task = asg[p.name] || ''; o.note = notes[p.name] || null;
       let s = p.sum && Object.keys(p.sum).length ? p.sum : null;
-      if (o.half) s = halfDaySummary(s);
       const rawSum = s;
+      if (o.half) s = halfDaySummary(s);
       { const A = !r.staff && S._adj && S._adj[GY], n = nmKey(p.name), x = A && A.by[n], y = x && x.items.find(z => z.date === r.date);
         o.supportWithoutAverage = !usesSupportAverage(p.grp) && (!!o.task || A?.A?.conf?.[n]?.[r.date] === 'support');   // v28.52 : 지원 보정 (매니저 이상 화면)
         if (y && y._adj) { s = y.sum; o.adj = y._adj; } }
@@ -10604,7 +10612,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const sd = C.sumDay(s, M), f6 = num(s.d) + num(s.h7) / 60 / 8.5, r10 = s.r10 || {};
         o.cv = ddProdMfg(ddAdjustedConversion(rawSum,s,p.conversion,o.adj,M));   // v29.35 : 라인 생산분 = 제조
         if(o.grp==='안정화'&&o.cv&&!o.adj)o.cv=ddStabSplit(o.cv,s,M,f6);            // v29.68 : 안정화 파트만 OS 설치 · 안정화 구분
-        o.v = sd.f7; o.oth = f6 && !ddReplacement(o.adj) ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
+        o.v = sd.f7; o.oth = f6 && !ddReplacement(o.adj) && o.adj?.kind !== 'adjusted' ? C.OTHER.reduce((a, [k]) => a + num((s.o || {})[k]), 0) / 30 / f6 : 0;
         { const P = C.qtyParts(s); o.q = P.asm; o.ban = P.ban; o.ship = P.ship; o.mq = P.mfg; o.qp = P; o.os = P.os; o.st = P.st;
           if(DD_SPC&&s.t)o.st+=+s.t[DD_SPC]||0;                                          // v29.73 : 안정화(특수) = 안정화 건수에 합침
           if(s.t&&f6>0){const MM=C.minsMap(M),mm=c=>(+s.t[c]||0)*(MM[c]||0)/30/f6; o.osC=mm('AA')+mm('AB'); o.stC=mm('AD')+mm('AE')+(DD_SPC?mm(DD_SPC):0);} }   // v29.73 : OS · 안정화 환산 (열 기준) / v29.51 os · st / v28.24 : 조립 / 반조 / 출고 / 제조 따로
@@ -10988,6 +10996,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (ddCanRange() || (S._mcache && S._mcache['M|' + D.GY])) fillHits(D.GY, $('#main'));
     else $$('[data-hm]', $('#main')).forEach(el => { el.hidden = true; });
     ddChecks(r, D, lv);
+    void pollSupportReviews();
     const goDate = d => { if (!d) return; S.ddDate = d > r.today ? r.today : d; renderDash(); };
     $('#ddp').onclick = () => goDate(ddStep(dl, -1));
     $('#ddn').onclick = () => goDate(ddStep(dl, 1));
@@ -19937,6 +19946,78 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   setInterval(() => { if (!document.hidden && document.hasFocus && (document.hasFocus() || Date.now() - (S._pollAt || 0) > 5 * 60000)) pollBadges(); }, 90000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - (S._pollAt || 0) > 60000) pollBadges(); });
   // Read-only summary uses an initial load and the explicit refresh button only.
+
+  let supportReviewBusy = false;
+  const supportReviewSeen = new Set();
+  async function pollSupportReviews(force = false) {
+    if (supportReviewBusy || !S.me || !S.token || S.pv || S.mpv || isRO() || !['관리자','매니저'].includes(S.me.role) || document.hidden || document.querySelector('.modal-bg,.hr-ov')) return;
+    const period = periodOf(S.today);
+    if (!period || !adjOn(period.ym)) return;
+    supportReviewBusy = true;
+    const token = S.token;
+    try {
+      const response = await api('attList', { from: period.start, to: S.today });
+      if (token !== S.token) return;
+      const rows = (response.reviews || []).filter(r => !r.decision && (isAdm() || (S.me.mg || []).includes(r.group)));
+      let button = $('#support-review-open');
+      if (!button && $('#ddasg')) {
+        button = document.createElement('button');
+        button.id = 'support-review-open';
+        $('#ddasg').after(button);
+      }
+      if (button) {
+        button.textContent = '기타시간 확인 ' + rows.length + '건';
+        button.onclick = () => pollSupportReviews(true);
+      }
+      const row = rows.find(r => force || !supportReviewSeen.has(token + '|' + r.name + '|' + r.date + '|' + JSON.stringify(r.snapshot)));
+      if (!row) { if(force) toast('확인 대기 중인 기타시간이 없습니다'); return; }
+      const key = token + '|' + row.name + '|' + row.date + '|' + JSON.stringify(row.snapshot);
+      const p = periodOf(row.date);
+      const month = await api('getMonth', { userId: row.userId, ym: p.ym });
+      if (token !== S.token) return;
+      const items = month.days.map(d => ({date:d.date,sum:C.daySummary(d.doc,minsYm(p.ym))}));
+      const att = await attOf(p.ym);
+      const n = nmKey(row.name);
+      const previewAtt = { ...att, reviews: { ...att.reviews, [n]: { ...(att.reviews?.[n] || {}), [row.date]: {...row,decision:'support'} } } };
+      let previous = null;
+      const pv = prevYmP(p.ym);
+      if (pv) {
+        const before = await gmOf(row.userId,pv);
+        const prior = C.calcMonth(before.days.map(d=>({date:d.date,sum:C.daySummary(d.doc,minsYm(pv))})),0,minsYm(pv));
+        if(prior.ev>0)previous=prior.f7;
+      }
+      const result = adjOne(row.name,p.ym,items,previous,previewAtt,row.group);
+      const adjusted = result.items.find(x=>x.date===row.date);
+      const original = items.find(x=>x.date===row.date);
+      if(!original)return;
+      const raw = att.half?.[n]?.[row.date] ? halfDaySummary(original.sum) : original.sum;
+      const min = C.otherMinOf(raw), valid = adjusted?._adj?.kind==='adjusted';
+      const reasons = (row.snapshot.reasons || []).map(x=>'<div>'+esc((C.OTHER.find(([k])=>k===x.k)||[])[1]||x.k)+' · '+esc(x.m)+'분 · '+esc(x.r||'')+'</div>').join('');
+      const detail = C.OTHER.filter(([k])=>C.num(row.snapshot.other?.[k])>0).map(([k,label])=>'<div>'+esc(label)+' '+C.num(row.snapshot.other[k])+'분</div>').join('');
+      supportReviewSeen.add(key);
+      modal('<h3>기타시간 매니저 확인</h3><p><b>'+esc(row.name)+'</b> · '+esc(row.group)+' · '+esc(row.date)+' · 합계 <b>'+min+'분</b></p><div>'+detail+'</div><div class="note">'+(reasons||'작성된 사유 없음')+'</div><p>기타시간 적용 환산 <b>'+f2(C.sumDay(raw,minsYm(p.ym)).f7)+'</b> · 지원 보정 후 <b>'+(valid?f2(C.sumDay(adjusted.sum,minsYm(p.ym)).f7):'기준 평균 산정 대기')+'</b></p><p class="muted">입력된 '+min+'분에 대한 보정입니다. 처리 결과는 입력 시간·사유와 함께 기록됩니다.</p><div class="acts"><button data-edit>시간 수정</button><button data-other>기타시간 유지</button><button class="primary" data-support '+(valid?'':'disabled')+'>지원 평균 보정</button><button data-n>나중에</button></div>',
+      (bg,close)=>{
+        $('[data-n]',bg).onclick=close;
+        $('[data-edit]',bg).onclick=async()=>{close();await openUser({id:row.userId,name:row.name,group:row.group,role:'일반'},'day',row.date);};
+        const decide=async decision=>{
+          $$('button',bg).forEach(b=>b.disabled=true);
+          try{
+            await api('supportTimeReview',{name:row.name,date:row.date,decision,snapshot:row.snapshot});
+            attReset();S._mcache={};S._pmRes=null;dropPc(row.userId);close();
+            toast(row.name+' · '+(decision==='support'?'지원 평균 보정':'기타시간 유지')+' 확인 완료');
+            if(S.view==='dash')await renderDash();
+            else if(S.view==='input')await loadDay(S.date);
+          }catch(e){toast(e.message,true);$$('button',bg).forEach(b=>b.disabled=false);if(!valid)$('[data-support]',bg).disabled=true;}
+        };
+        $('[data-other]',bg).onclick=()=>decide('other');
+        $('[data-support]',bg).onclick=()=>decide('support');
+      });
+    } catch(e) { if(force)toast(e.message,true); }
+    finally { supportReviewBusy=false; }
+  }
+  setInterval(()=>pollSupportReviews(),15000);
+  window.addEventListener('focus',()=>pollSupportReviews());
+
   boot();
 })();
 </script>
