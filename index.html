@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -11029,7 +11029,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const exclude = !staff && S.ddSupportView === 'exclude';
       const shown = exclude ? groups.map(ddGroupWithoutSupport) : groups;
       const scale = Math.max(20, ...shown.map(x => x.avg || 0), ...shown.map(x => x.tg || 0));
-      $('.ddcombo-row[data-ddcombo-group]', $('#main')).forEach(row => {
+      $$('.ddcombo-row[data-ddcombo-group]', $('#main')).forEach(row => {
         const x = shown.find(g => g.g === row.dataset.ddcomboGroup);
         if (!x) return;
         const temp = document.createElement('div');
@@ -11039,7 +11039,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           if (old && next) old.replaceWith(next);
         }
       });
-      $('[data-ddsupport]', $('#main')).forEach(b => {
+      $$('[data-ddsupport]', $('#main')).forEach(b => {
         b.setAttribute('aria-pressed', String((b.dataset.ddsupport === 'exclude') === exclude));
         if (staff && b.dataset.ddsupport === 'exclude') {
           b.disabled = true;
@@ -11052,7 +11052,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         : exclude ? '전담 지원 인원·지원 환산 제외 · 생산 병행 인원과 실제 수량 유지'
         : '지원 포함: 기존 그룹 평균·목표·달성률 그대로 표시';
     };
-    $('[data-ddsupport]', $('#main')).forEach(b => (b.onclick = () => {
+    $$('[data-ddsupport]', $('#main')).forEach(b => (b.onclick = () => {
       if (staff && b.dataset.ddsupport === 'exclude') return;
       S.ddSupportView = b.dataset.ddsupport;
       updateSupportComparison();
