@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.67';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.68';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -10767,17 +10767,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
     const averages=[['support','지원'],['training','교육']].filter(([k])=>cv?.[k]>0).map(([k,label])=>'<span title="'+label+'일 평균 대체 환산"><i class="'+k+'-avg"></i>'+label+' <b>'+fmt(cv[k])+'</b></span>').join('');
     const context=`근무 실적 ${x.w}명 · 목표 설정 ${x.tn}명${x.sup?' · 지원 '+x.sup+'명':''}`;
-    // v30.67: compare the excluded view against the same day's original group values.
-    const supportBase = x.pure ? x.supportCompareBase : null;
-    const supportChange = (value, previous, suffix = '') => {
-      if (!Number.isFinite(value) || !Number.isFinite(previous)) return '—';
-      const d = Number((value - previous).toFixed(suffix ? 1 : 2));
-      return (d > 0 ? '+' : d < 0 ? '−' : '±') + Math.abs(d).toFixed(suffix ? 1 : 2) + suffix;
-    };
-    const originalRate = supportBase?.tg > 0 && Number.isFinite(supportBase.avg)
-      ? pctR(supportBase.avg, supportBase.tg) : null;
-    const compareLine = supportBase && !x.pureUnknown
-      ? '<div class="ddcombo-delta-row" title="지원 포함 기준 대비 차이입니다. 생산 수량은 동일합니다.">포함 대비  목표 <b>'+supportChange(x.tg,supportBase.tg)+'</b> · 환산 <b>'+supportChange(x.avg,supportBase.avg)+'</b> · 달성률 <b>'+supportChange(rate,originalRate,'%p')+'</b></div>' : '';
     // v30.66: concise support-exclusion label; the per-person figure uses the ORIGINAL workforce denominator.
     const pureNote = x.pure && !x.pureUnknown
       ? (x.excludedCount === 0 && x.removedSupport < 1e-6
@@ -10788,7 +10777,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       : !hasAvg && x.pure ? '<div class="ddcombo-pure-warning">지원 제외 후 생산 평가 인원 없음</div>'
       : hasAvg ? ddConversionBar({v:x.avg,target:x.tg,oth:0,cv,split:x.g==='안정화'},scale) : '<div class="ddconv"></div>';
     return `<div class="ddcombo-graph" title="${esc(context)}">${graphBody}${hasAvg&&cv&&x.g==='안정화'&&typeof cv.os==='number'?`<div class="ddsplit-lg" title="막대는 환산 비중 · 건수는 체크된 수량의 그룹 합계입니다 (한 대가 OS 설치·안정화에 함께 셈될 수 있어 서로 합치지 않습니다)"><span><i class="os"></i>OS 설치 <b>${x.os||0}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span><span><i class="st"></i>안정화 <b>${x.st||0}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span><span><i class="sh"></i>출고(검수)</span><span><i class="rest"></i>그 외 작업</span><span><i class="ot"></i>기타시간</span></div>`:''}${hasAvg&&!(cv&&x.g==='안정화'&&typeof cv.os==='number')&&(x.os||x.st)?`<div class="ddsplit-lg ddenv" title="건수는 그룹 합계 · 환산은 그룹 평균 (OS = O/S · D+M, 안정화 = 안정화 · 안+삭제 · 안정화(특수))">${x.os?`<span><i class="os"></i>OS 설치 <b>${x.os}</b>건${Number.isFinite(x.osc)?` <em>(환산 ${x.osc.toFixed(2)})</em>`:''}</span>`:''}${x.st?`<span><i class="st"></i>안정화 <b>${x.st}</b>건${Number.isFinite(x.stc)?` <em>(환산 ${x.stc.toFixed(2)})</em>`:''}</span>`:''}</div>`:''}${hasAvg&&!cv?'<small class="ddcombo-missing" title="항목별 환산 구성을 확인할 수 없어 기존 평균 합계를 표시합니다">구성 미확인 · 합계 표시</small>':''}${averages?'<div class="ddsplit-lg ddenv">'+averages+'</div>':''}${pureNote}</div>
-      <div class="ddcombo-value" title="${esc(context)}"><span class="ddcombo-target" title="기존 목표 설정 인원의 평균 목표">목표 <b>${hasTarget?fmt(x.tg):'—'}</b></span><span class="ddcombo-current" title="기존 근무 실적 인원의 평균 환산">환산 <b>${fmt(x.avg)}</b></span><span class="ddcombo-rate" title="평균 환산 ÷ 평균 목표 × 100">${rate==null?'—':rate+'%'}</span>${compareLine}</div>
+      <div class="ddcombo-value" title="${esc(context)}"><span class="ddcombo-target" title="기존 목표 설정 인원의 평균 목표">목표 <b>${hasTarget?fmt(x.tg):'—'}</b></span><span class="ddcombo-current" title="기존 근무 실적 인원의 평균 환산">환산 <b>${fmt(x.avg)}</b></span><span class="ddcombo-rate" title="평균 환산 ÷ 평균 목표 × 100">${rate==null?'—':rate+'%'}</span></div>
       ${`<div class="ddcombo-qty" aria-label="그룹 수량"><span><b>${x.q??0}</b><small>조립</small></span><span class="s"><b>${x.ship||0}</b><small>출고</small></span><span class="m"><b>${x.mq||0}</b><small>제조</small></span></div>`}`;
   }
   function ddConversionBar(p, sharedScale=0){
@@ -11041,7 +11030,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     // Purely client-side display toggle; retain check badges, production summary and API cache.
     const updateSupportComparison = () => {
       const exclude = !staff && S.ddSupportView === 'exclude';
-      const shown = exclude ? groups.map(g => ({ ...ddGroupWithoutSupport(g), supportCompareBase: g })) : groups;
+      const shown = exclude ? groups.map(ddGroupWithoutSupport) : groups;
       const scale = Math.max(20, ...shown.map(x => x.avg || 0), ...shown.map(x => x.tg || 0));
       $$('.ddcombo-row[data-ddcombo-group]', $('#main')).forEach(row => {
         const x = shown.find(g => g.g === row.dataset.ddcomboGroup);
@@ -20632,15 +20621,7 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 .ddcombo-v28 .ddsupport-toolbar button:focus-visible{outline:2px solid #d18c19;outline-offset:2px}
 .ddcombo-v28 .ddsupport-toolbar button:disabled{opacity:.48;cursor:not-allowed}
 .ddcombo-v28 .ddsupport-help{font-size:11px;line-height:1.4;font-weight:550;color:var(--sub);flex:1 1 250px}
-.ddcombo-v28 .ddcombo-pure-note{flex:0 0 100%;font-size:10.5px;line-height:1.35;font-weight:650;color:#526b8a;margin-top:1px;text-align:right;padding-right:2px}
-/* Only the excluded comparison gets a second, right-aligned delta line. */
-.ddcombo-v28 .ddcombo-value:has(.ddcombo-delta-row){grid-row:1/3;grid-template-rows:auto auto;align-self:center;row-gap:3px}
-.ddcombo-v28 .ddcombo-value .ddcombo-delta-row{grid-column:1/-1;grid-row:2;white-space:nowrap;text-align:right;background:transparent;border:0;padding:0 1px;font-size:10.5px;line-height:1.25;font-weight:600;color:#64748b;letter-spacing:-.1px}
-.ddcombo-v28 .ddcombo-value .ddcombo-delta-row b{font-size:10.5px;color:#1f67bc;font-weight:750}
-html[data-theme="dark"] .ddcombo-v28 .ddcombo-value .ddcombo-delta-row{color:#a6b8d0}
-html[data-theme="dark"] .ddcombo-v28 .ddcombo-value .ddcombo-delta-row b{color:#94c5ff}
-@media(max-width:1050px){.ddcombo-v28 .ddcombo-value .ddcombo-delta-row{font-size:9.5px;letter-spacing:-.4px}.ddcombo-v28 .ddcombo-value .ddcombo-delta-row b{font-size:9.5px}}
-@media(max-width:800px){.ddcombo-v28 .ddcombo-value:has(.ddcombo-delta-row){grid-row:2}}
+.ddcombo-v28 .ddcombo-pure-note{flex:0 0 100%;font-size:11px;line-height:1.35;font-weight:650;color:#526b8a;margin-top:1px}
 .ddcombo-v28 .ddcombo-pure-warning{font-size:11px;line-height:1.5;font-weight:700;color:#ad5e0b;background:color-mix(in srgb,#f7b345 15%,var(--panel));border:1px solid #efc67b;border-radius:6px;padding:5px 8px;width:100%}
 html[data-theme="dark"] .ddcombo-v28 .ddsupport-toolbar{background:#253044;border-color:#425169}
 html[data-theme="dark"] .ddcombo-v28 .ddsupport-toolbar button:not([aria-pressed="true"]){background:transparent;border-color:transparent;color:#c5d3e6}
