@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.62';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.63';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20533,7 +20533,7 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 /* Reserve sufficient height for the support legend before the line production detail row. */
 .ddcombo-v28 .ddcombo-row:has(.ddline-integrated){grid-template-rows:minmax(48px,auto) minmax(18px,auto)}
 }
-#main .acc .acc-total-reset{display:block;width:100%;text-align:left;color:inherit;cursor:pointer;font:inherit;border:1px solid var(--line2);background:var(--panel)}
+#main .acc .acckpi .acc-total-reset{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:4px;width:100%;text-align:left;color:inherit;cursor:pointer;font:inherit;border:1px solid var(--line2);background:var(--panel)}
 #main .acc .acc-total-reset:hover{border-color:var(--blue)}
 #main .acc .acc-total-reset:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 #main .czf-v4[data-view="acc"] .czf-extra{margin-left:auto;min-width:0;flex:1 1 420px;justify-content:flex-end}
@@ -20547,7 +20547,12 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 #main .czf-v4[data-view="acc"] .acc-quick-status{font-size:11px;color:var(--sub);white-space:nowrap}
 #main .czf-v4[data-view="acc"] .acc-add-emphasis{background:#ea580c!important;border-color:#c2410c!important;color:#fff!important;font-weight:850!important;box-shadow:0 2px 6px #ea580c30}
 #main .czf-v4[data-view="acc"] .acc-add-emphasis:hover{background:#c2410c!important}
-@media(max-width:1100px){#main .czf-v4[data-view="acc"] .czf-extra{flex-basis:100%}#main .czf-v4[data-view="acc"] .acc-top-search{justify-content:flex-start}}
+/* v30.63 accident toolbar: counter the global .czf-extra full-line rule. */
+#main .czf-v4[data-view="acc"] .czf-line:first-child{flex-wrap:wrap;white-space:normal;overflow:visible}
+#main .czf-v4[data-view="acc"] .czf-line:first-child>.czf-extra{flex:0 1 auto;flex-basis:auto;margin:0 0 0 auto;padding:0;border:0;min-width:0;margin-top:0;justify-content:flex-end}
+#main .czf-v4[data-view="acc"] .acc-top-search{flex-wrap:nowrap;white-space:nowrap}
+#main .acc .acckpi .acc-total-reset>span,#main .acc .acckpi .acc-total-reset>b,#main .acc .acckpi .acc-total-reset>em{display:block}
+@media(max-width:1250px){#main .czf-v4[data-view="acc"] .czf-line:first-child>.czf-extra{flex-basis:100%;margin-left:0;justify-content:flex-start}#main .czf-v4[data-view="acc"] .acc-top-search{justify-content:flex-start;flex-wrap:wrap}}
 </style>
 <style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style><style id="v2975-line-mobile-edit-and-range">
 /* Additive styles only; retains v29.75 layout, navy palette and original controls. */
