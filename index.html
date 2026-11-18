@@ -8486,7 +8486,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.59';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.60';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20495,6 +20495,14 @@ html[data-theme=dark]{--sxwarn:#ffb454;--sxwarnbg:#3a2c14}
 .ddgroups,.ddcombo-v28{--cv-os:#56b4aa;--cv-st:#a8cf6a;--cv-rest:#c9b7e6}
 .ddconv .ddconv-os{background:var(--cv-os)}.ddconv .ddconv-st{background:var(--cv-st)}.ddconv .ddconv-rest{background:var(--cv-rest);cursor:help}
 .ddsplit-lg{display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:4px;font-size:11.5px;color:var(--sub,#5b6574)}.ddsplit-lg b{color:var(--text,#1c2433);font-variant-numeric:tabular-nums}.ddsplit-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;background:var(--cv-ship)}.ddsplit-lg i.os{background:var(--cv-os)}.ddsplit-lg i.st{background:var(--cv-st)}.ddsplit-lg i.rest{background:var(--cv-rest)}.ddsplit-lg i.ot{background:repeating-linear-gradient(135deg,#d9dde6 0 2px,#f3f4f7 2px 4px)}
+
+/* v30.60: group conversion detail labels share one row on wide screens.
+   Small screens may wrap to prevent clipping; no values or calculations change. */
+.ddcombo-v28 .ddcombo-graph{display:flex;flex-wrap:wrap;align-content:center;gap:4px 12px}
+.ddcombo-v28 .ddcombo-graph>.ddconv,
+.ddcombo-v28 .ddcombo-graph>.ddtr{flex:0 0 100%}
+.ddcombo-v28 .ddcombo-graph>.ddsplit-lg{display:contents}
+.ddcombo-v28 .ddcombo-graph>.ddsplit-lg>span{white-space:nowrap}
 </style>
 <style id="czadm-v2957">.czu .czthm{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center}.czu .czthm svg{width:16px;height:16px}</style><style id="v2975-line-mobile-edit-and-range">
 /* Additive styles only; retains v29.75 layout, navy palette and original controls. */
