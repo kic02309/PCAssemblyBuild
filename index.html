@@ -19997,6 +19997,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       supportReviewSeen.add(key);
       modal('<h3>기타시간 매니저 확인</h3><p><b>'+esc(row.name)+'</b> · '+esc(row.group)+' · '+esc(row.date)+' · 합계 <b>'+min+'분</b></p><div>'+detail+'</div><div class="note">'+(reasons||'작성된 사유 없음')+'</div><p>기타시간 적용 환산 <b>'+f2(C.sumDay(raw,minsYm(p.ym)).f7)+'</b> · 지원 보정 후 <b>'+(valid?f2(C.sumDay(adjusted.sum,minsYm(p.ym)).f7):'기준 평균 산정 대기')+'</b></p><p class="muted">입력된 '+min+'분에 대한 보정입니다. 처리 결과는 입력 시간·사유와 함께 기록됩니다.</p><div class="acts"><button data-edit>시간 수정</button><button data-other>기타시간 유지</button><button class="primary" data-support '+(valid?'':'disabled')+'>지원 평균 보정</button><button data-n>나중에</button></div>',
       (bg,close)=>{
+        $('.modal',bg).style.width='min(620px, calc(100vw - 32px))';
+        $('.acts',bg).style.flexWrap='wrap';
         $('[data-n]',bg).onclick=close;
         $('[data-edit]',bg).onclick=async()=>{close();await openUser({id:row.userId,name:row.name,group:row.group,role:'일반'},'day',row.date);};
         const decide=async decision=>{
