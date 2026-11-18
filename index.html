@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.72';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.73';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13159,7 +13159,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <div class="fields2"><div class="fld"><label>연장 종료일 ${late ? '*' : '(연장할 때만)'}</label><input type="date" id="px" value="${t.delayPlan || ''}" ${dis}></div><div class="fld" style="grid-column:span 3"><label>연장 사유 ${late ? '*' : ''}</label><input id="pr" maxlength="500" value="${esc(t.delayReason || '')}" placeholder="예: 테스트 항목 추가 요청" ${dis}></div></div>
       ${late && t.status !== '완료' ? `<div class="warn">⚠ 적용 종료예정(${dLabel(mgEnd(t))})이 ${dGap(mgEnd(t), S.today)}일 지났습니다 — 완료로 바꾸거나 연장 종료일 · 사유를 적어 주세요</div>` : ''}
       <div class="fld"><label>기타</label><input id="pe" maxlength="1000" value="${esc(t.etc || '')}" ${dis}></div>
-      ${id ? `<div class="mgch" style="padding:8px 0 4px"><b>진행 현황 ${L.length}건</b></div><div class="mglogs">${L.map(l => `<div class="mglg"><b>${dLabel(l.date)}</b> ${esc(l.text)}${ed ? ` <button class="sm" data-dl="${l.id}" title="지우기">✕</button>` : ''}</div>`).join('') || '<div class="muted">없음</div>'}</div>` : ''}
+      ${id ? `<div class="mgch" style="padding:8px 0 4px"><b>진행 현황 ${L.length}건</b></div><div class="mglogs">${L.map(l => `<div class="mglg"><b>${dLabel(l.date)}</b> ${esc(l.text)}${ed ? ` <button class="sm" data-el="${l.id}" title="기록 수정">✎</button> <button class="sm" data-dl="${l.id}" title="지우기">✕</button>` : ''}</div>`).join('') || '<div class="muted">없음</div>'}</div>` : ''}
       <div class="muted" style="margin-top:6px">다른 매니저에게는 업무명 · 기간 · 상태 · 우선순위 · 진행률이 보입니다 · 처리내용 · 진행 현황 · 연장 사유 · 기타는 본인 · 팀장 · 관리자만</div>
       <div class="acts">${ed && id ? '<button id="pdel" style="color:var(--red);margin-right:auto">삭제</button>' : ''}<button data-c>닫기</button>${ed ? '<button class="primary" data-s>저장</button>' : ''}</div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close; if (!ed) return;
@@ -13176,17 +13176,39 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (late && st !== '완료' && b.due < S.today && !b.delayPlan) return toast('기한 지난 계획은 완료로 바꾸거나 연장 종료일 · 사유를 적어 주세요', true);
         try { await api('mgSave', b); close(); toast('저장했습니다'); await done(); } catch (e) { toast(e.message, true); }
       };
-      $$('[data-dl]', bg).forEach(x => (x.onclick = async () => { if (!(await confirmBox('이 기록을 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'logDel', id: x.dataset.dl }); close(); await done(); planForm(id); } catch (e) { toast(e.message, true); } }));
+      $('[data-el]', bg).forEach(x => (x.onclick = () => { close(); planLog(x.dataset.el); }));
+      $('[data-dl]', bg).forEach(x => (x.onclick = async () => { if (!(await confirmBox('이 기록을 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'logDel', id: x.dataset.dl }); close(); await done(); planForm(id); } catch (e) { toast(e.message, true); } }));
       if ($('#pdel', bg)) $('#pdel', bg).onclick = async () => { if (!(await confirmBox('이 계획과 진행 현황을 모두 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'taskDel', id }); close(); toast('지웠습니다'); await done(); } catch (e) { toast(e.message, true); } };
     }, 'wide');
   }
   function planLog(lid) {
     const l = ((S.mgD || {}).logs || []).find(x => String(x.id) === String(lid)); if (!l) return;
     const t = (S.mgD.tasks || []).find(x => String(x.id) === String(l.task)) || {}, ed = !isRO() && !S.pv && t.owner === S.me.id;
-    modal(`<h3>진행 현황</h3><div class="muted">${esc(t.title || '')}</div><div class="fld" style="margin-top:8px"><label>처리일자</label><b>${dLabel(l.date)}</b></div>
-      <div class="fld"><label>내용</label><div class="mcmemo" style="white-space:pre-wrap">${esc(l.text)}</div></div><div class="muted">${l.by ? '작성 ' + esc(l.by) : ''}</div>
-      <div class="acts">${ed ? '<button id="ldel" style="color:var(--red);margin-right:auto">삭제</button>' : ''}<button data-c>닫기</button></div>`, (bg, close) => {
+    let editing = false;
+    modal(`<h3>진행 현황</h3><div class="muted">${esc(t.title || '')}</div><div class="fld" style="margin-top:8px"><label>처리일자</label><input type="date" id="log-edit-date" value="${esc(l.date)}" ${ed ? 'disabled' : 'disabled'}></div>
+      <div class="fld"><label>내용</label><textarea id="log-edit-text" maxlength="1000" rows="5" disabled>${esc(l.text)}</textarea></div><div class="muted">${l.by ? '작성 ' + esc(l.by) : ''}</div>
+      <div class="acts">${ed ? '<button id="ldel" style="color:var(--red);margin-right:auto">삭제</button><button id="ledit">수정</button>' : ''}<button data-c>닫기</button>${ed ? '<button id="lsave" class="primary" style="display:none">수정 저장</button>' : ''}</div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
+      if ($('#ledit', bg)) $('#ledit', bg).onclick = () => {
+        editing = true;
+        $('#log-edit-date', bg).disabled = false;
+        $('#log-edit-text', bg).disabled = false;
+        $('#ledit', bg).style.display = 'none';
+        $('#lsave', bg).style.display = '';
+        $('#log-edit-text', bg).focus();
+      };
+      if ($('#lsave', bg)) $('#lsave', bg).onclick = async () => {
+        if (!editing) return;
+        const date = $('#log-edit-date', bg).value, text = $('#log-edit-text', bg).value.trim();
+        if (!date) return toast('날짜를 넣으세요', true);
+        if (text.length < 2) return toast('내용은 2자 이상 적으세요', true);
+        const save = $('#lsave', bg); save.disabled = true;
+        try {
+          await api('mgSave', { op: 'logEdit', id: l.id, date, text });
+          close(); toast('진행 기록을 수정했습니다');
+          await mgLoad(true); if (S.view === 'mgr') drawMgr();
+        } catch (e) { save.disabled = false; toast(e.message, true); }
+      };
       if ($('#ldel', bg)) $('#ldel', bg).onclick = async () => { if (!(await confirmBox('이 기록을 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'logDel', id: l.id }); close(); toast('지웠습니다'); await mgLoad(true); if (S.view === 'mgr') drawMgr(); } catch (e) { toast(e.message, true); } };
     });
   }
