@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.95';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.96';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9229,7 +9229,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let P; try { P = await api(admin ? 'previewAccounts' : 'previewPeople'); } catch(e) { return toast(e.message, true); }
     const A = admin ? (P.rows || []).filter(x=>x.acct && x.acct.id).map(x=>Object.assign({name:x.name},x.acct)) : (P.users || []);
     const row = (role,id,label) => `<div class="pvr pv-select-row"><b>${label}</b><label>그룹<select id="${id}g" aria-label="${label} 그룹">${pvGroups(A,role).map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('') || '<option value="">그룹 없음</option>'}</select></label><label>이름<select id="${id}" aria-label="${label} 이름"></select></label><button data-pm="${role === '일반' ? 'staff' : 'mgr'}" class="primary sm">보기</button></div>`;
-    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="mhome"><b>📱 모바일 보기 · 첫 화면 메뉴</b><small>휴대폰으로 접속하면 처음 나오는 화면</small></button><button data-mp="qc"><b>📱 모바일 보기 · 2차 검수</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
+    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="qc"><b>📱 모바일 보기 · 2차 검수</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
       const panel = $('.modal',bg); if(panel) panel.classList.add('pv-picker');
       $('[data-c]',bg).onclick=close;
       $$('[data-mp]',bg).forEach(b=>b.onclick=()=>{ close(); mpvOpen(b.dataset.mp); });
@@ -12420,7 +12420,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ? `<div class="card mtpanel"><div class="mth"><b>면담 현황 · ${TM.length}명</b><small class="muted">이번 귀속월 횟수 · 마지막 면담 후 지난 날</small>${mtLegend}</div><div class="mtcards">${TM.slice().sort(tSort).map(x => { const t = TK.get(x.u.id); return `<button class="mtc ${t.k}" data-mto="${esc(x.u.id)}"><b>${esc(x.name)}${mgHlIc(x.u.id)}</b><span>${esc(t.txt)}</span><small>${t.last ? '마지막 ' + dLabel(t.last) : '귀속월 시작부터 없음'}</small></button>`; }).join('')}</div></div>`
       : mtView === 'table'
       ? `<div class="card mtpanel"><div class="mth"><b>면담 현황 · ${TM.length}명</b><small class="muted">급한 순서 · 이름을 누르면 기록 창</small>${mtLegend}<button class="sm" id="mtfold">${v.mtOpen ? '접기 ▲' : '전체 보기 ▼'}</button></div><table class="list mttbl"><thead><tr><th class="l">이름</th><th>이번 귀속월</th><th>마지막 면담</th><th>지난 날</th><th>상태</th><th></th></tr></thead><tbody>${TM.slice().sort(tSort).filter((x, i) => v.mtOpen || i < 6 || TK.get(x.u.id).k === 'need').map(x => { const t = TK.get(x.u.id); return `<tr><td class="l"><b class="pclk" data-pc="${esc(x.name)}">${esc(x.name)}</b>${mgHlIc(x.u.id)}${x.title ? ` <small class="muted">${esc(x.title)}</small>` : ''}</td><td><span class="mtdots">${'●'.repeat(Math.min(t.cnt, t.per))}${'○'.repeat(Math.max(0, t.per - t.cnt))}</span> ${t.cnt}/${t.per}</td><td>${t.last ? dLabel(t.last) : '<span class="muted">없음</span>'}</td><td>${t.gap == null ? '-' : t.gap + '일'}</td><td>${mtPill(t)}</td><td><button class="sm${t.k === 'need' ? ' primary' : ''}" data-mto="${esc(x.u.id)}">면담 기록</button></td></tr>`; }).join('')}</tbody></table>${!v.mtOpen && TM.length > Math.max(6, tNeed.length) ? `<div class="muted mtmore">나머지 ${TM.length - Math.max(6, tNeed.length)}명은 [전체 보기]</div>` : ''}</div>`
-      : `<div class="card mtpanel mtbar"><b>면담 필요 ${tNeed.length}명</b><span>${tNeed.slice().sort(tSort).map(x => `<button class="mtc need sm1" data-mto="${esc(x.u.id)}">${esc(x.name)}${mgHlIc(x.u.id)} <small>${esc(TK.get(x.u.id).txt)}</small></button>`).join('') || '<span class="muted">없음</span>'}</span>${mtLegend}</div>`;
+      : (() => {   // v30.96 : 여러 그룹이면 그룹별 인원수만 먼저 → 누르면 그 그룹 이름
+        const nm = L => L.slice().sort(tSort).map(x => `<button class="mtc need sm1" data-mto="${esc(x.u.id)}">${esc(x.name)}${mgHlIc(x.u.id)} <small>${esc(TK.get(x.u.id).txt)}</small></button>`).join('');
+        const NG = [...new Set(tNeed.map(x => x.group))].sort((a, b) => C.GROUP_LIST.indexOf(a) - C.GROUP_LIST.indexOf(b));
+        if (NG.length < 2) return `<div class="card mtpanel mtbar"><b>면담 필요 ${tNeed.length}명</b><span>${nm(tNeed) || '<span class="muted">없음</span>'}</span>${mtLegend}</div>`;
+        if (v.mtg && !NG.includes(v.mtg)) v.mtg = '';
+        return `<div class="card mtpanel mtbar"><b>면담 필요 ${tNeed.length}명</b><span class="mtgs">${NG.map(g => `<button class="mtg${v.mtg === g ? ' on' : ''}" data-mtg="${esc(g)}" style="--gc:${gcol(g)}">${gdot(g)} <b>${tNeed.filter(x => x.group === g).length}</b>명 <i>${v.mtg === g ? '▲' : '▼'}</i></button>`).join('')}</span>${mtLegend}${v.mtg ? `<div class="mtgn"><small class="muted">${esc(v.mtg)} · 이름을 누르면 기록 창</small><span>${nm(tNeed.filter(x => x.group === v.mtg))}</span></div>` : ''}</div>`;
+      })();
     const chips = periodBar + `<div class="muted mg-query-note">미달·피드백 집계: 선택 기간의 저장된 근무 기록 · 당일 입력 기준, 업무 종료 후 최종 확인 · 미달 인원은 중복 제외, 발생·처리는 건수 기준${range.mode !== 'day' ? ' · 여러 날짜를 조회하면 같은 사람이 달성·미달성 인원에 모두 포함될 수 있습니다.' : ''}</div>`;
     let body = '';
     if (!SG.length) body = '<div class="card m2c"><div class="m2e">이 화면에서 볼 그룹이 없습니다</div></div>';
@@ -12467,6 +12473,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-mto]', box).forEach(b => (b.onclick = () => mgFbOpen(b.dataset.mto, range.mode === 'day' && range.date <= S.today ? range.date : S.today, M)));
     if ($('#hlall', box)) $('#hlall', box).onclick = () => mgHlAll(M.filter(x => sel.includes(x.group)));
     if ($('#mtfold', box)) $('#mtfold', box).onclick = () => { v.mtOpen = !v.mtOpen; drawMgr(); };
+    $$('[data-mtg]', box).forEach(b => b.onclick = () => { v.mtg = v.mtg === b.dataset.mtg ? '' : b.dataset.mtg; drawMgr(); });
   }
   // v28.79 : 요약칸을 누르면 해당 인원 목록 (이름을 누르면 상세) — rows : [{ a : 이름/제목, b : 그룹 · 구분, c : 설명, go : 누르면 실행(없으면 줄만 표시) }]
   function mgKList(title, sub, rows) {
@@ -20886,6 +20893,9 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .qr table.list td,.qr table.list th{padding:7px 8px}#main .qr table.list td.l,#main .qr table.list th.l{text-align:left!important}.qr .qr-pr{display:flex;align-items:center;gap:8px}.qr .qr-pr .qr-bar{flex:1;margin:0}.qr .qr-pr em{font-style:normal;font-weight:800;color:#1e7a3c;min-width:38px;text-align:right}.qr .qr-pr em.z{color:#c62828}
 .qr .okt,.okt{color:#1e7a3c;font-weight:800}.ngt{color:#c62828;font-weight:800}.qr .qr-log{max-height:420px;overflow:auto}
 .mfh .qf-all{margin:0 12px;font-size:13px}
+.mtbar .mtgs{display:flex;flex-wrap:wrap;gap:8px}.mtbar .mtg{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1px solid #f3c9c9;border-left:4px solid var(--gc);background:#fff5f5;font-size:13.5px;cursor:pointer}.mtbar .mtg b{color:#c62828;font-size:16px}.mtbar .mtg i{font-style:normal;font-size:10px;color:var(--sub)}.mtbar .mtg.on{background:#fde8e8;outline:2px solid #e57373}
+.mtbar .mtgn{flex-basis:100%;display:flex;flex-direction:column;gap:6px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.mtbar .mtgn>span{display:flex;flex-wrap:wrap;gap:6px}
+html[data-theme=dark] .mtbar .mtg{background:#2a1c1c;border-color:#5a2a2a}
 .grid td.o.qc2 input{color:#4f46e5!important;font-weight:800!important;text-decoration:underline dotted #a5b4fc;text-underline-offset:3px}.grid td.o.qc2{overflow:visible}.grid td.o.qc2:hover{z-index:30}.grid td.o.qc2:hover::before{content:attr(data-qt);position:absolute;left:4px;bottom:calc(100% + 2px);white-space:nowrap;background:#312e81;color:#fff;font-size:12px;font-weight:700;padding:4px 9px;border-radius:7px;box-shadow:0 4px 12px rgba(0,0,0,.18);pointer-events:none;z-index:40}html[data-theme=dark] .grid td.o.qc2 input{color:#a5b4fc!important}
 .qa-tabs{display:grid;grid-template-columns:repeat(4,minmax(150px,220px));gap:10px;margin-bottom:12px}
 .qa-t{background:var(--card,#fff);border:1px solid #e1e7f0;border-radius:12px;padding:10px 16px;text-align:left;display:flex;flex-direction:column;gap:2px;cursor:pointer;transition:.15s}
