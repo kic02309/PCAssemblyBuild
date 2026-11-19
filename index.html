@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.02';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.03';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18761,7 +18761,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const R = V.res = V.res || {}, P = V.P, ok = QC_ROWS.filter(([k]) => R[k]).length;
       const txt = k => { const x = P[k]; if (!x) return ''; return [x.brand, x.name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (x.n || 1) : ''); };
       const warn = k => { const x = P[k]; if (!x) return '못 읽음 — 주문서 확인요망!'; if ((k === 'mem' || k === 'ssd') && !x.cap) return '용량 못 읽음 — 주문서 확인요망!'; if (!x.brand) return '제조사 못 읽음 — 주문서 확인요망!'; return ''; };
-      const whoV = V.who ? `<b>${esc(V.who.name)}</b> <span class="g">${esc(V.who.group || '')}</span> <small>${V.who.auto ? '업무데이터에서 찾음' : '직접 선택'}</small>${(V.cands || []).length > 1 || !V.who.auto ? ' <button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}` : '<span class="none">-</span>';
+      const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">-</div>';
       const whoBox = V.who ? ''
         : V.ship ? '<div class="pxmsg info qc-ship"><b>제조 출고 주문건입니다.</b></div>'
         : V.other ? `<div class="pxmsg info"><b>${esc(V.other.group)} 입력 주문입니다.</b> <small>(${esc(V.other.name)} · ${esc(dLabel(V.other.date))})</small></div>`
@@ -18772,7 +18772,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="pxcard"><div class="qc-kv${V.who ? ' found' : ''}">
           <div class="kv"><span class="k">주문번호 :</span><span class="v"><input class="qc-in${V.src === 'ocr' ? ' chk' : ''}" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="주문번호 입력"></span></div>
           ${V.src === 'bar' ? '<div class="kv s"><span class="k"></span><span class="qc-src ok">바코드로 읽음 ✓</span></div>' : V.src === 'ocr' ? '<div class="kv s"><span class="k"></span><span class="qc-src">글자로 읽음 — 주문서 번호와 같은지 확인</span></div>' : V.src === 'fix' ? '<div class="kv s"><span class="k"></span><span class="qc-src ok">비슷한 번호로 고침 ✓</span></div>' : ''}
-          <div class="kv"><span class="k">조 립 자 :</span><span class="v who">${whoV}</span></div>
+          <div class="kv"><span class="k">조 립 자 :</span><span class="v who">${whoV}</span></div>${V.who ? `<div class="kv s"><span class="k"></span><span class="qc-src ok">${V.who.auto ? '업무데이터에서 찾음 ✓' : '직접 선택 ✓'}</span></div>` : ''}
         </div>${whoBox}${block}</div>
         <div class="pxcard"><div class="qc-lb">② 검수 체크 <small>CMOS와 같으면 체크</small><span class="r"><small>${ok}/4</small></span></div>
         ${QC_ROWS.map(([k, t]) => { const x = P[k] || {}, wn = warn(k), ed = V.edit === k; return `<div class="qc-ck ${R[k] ? 'ok' : ''}${wn ? ' bad' : ''}"><span class="i"><span class="l1"><span class="c">${t}</span><span class="b">${esc(x.brand || '제조사 ?')}</span><span class="q">× ${k === 'mem' || k === 'ssd' ? (x.n || 1) : 1}</span></span><span class="m" title="${esc(x.name || '')}">${esc(x.name || '제품명 ?')}</span>${wn ? `<em>${esc(wn)}</em>` : ''}${V.lineBusy === k ? '<span class="qc-busy">📷 이 줄 읽는 중…</span>' : wn && !ed ? `<span class="qc-fix"><label class="qc-fb">📷 이 줄 다시 찍기<input type="file" accept="image/*" capture="environment" data-qr="${k}" hidden></label><button type="button" class="qc-fb" data-qe="${k}">✎ 직접 입력</button></span>` : ''}${ed ? `<span class="qc-ed"><span class="r1"><input data-eb value="${esc(x.brand || '')}" placeholder="제조사"><input data-ec type="number" min="1" value="${x.n || 1}" ${k === 'mem' || k === 'ssd' ? '' : 'disabled'} title="수량"></span><input data-en value="${esc(x.name || '')}" placeholder="제품명 · 용량 (예: Optimus 5100 500GB)"><span class="r2"><button type="button" class="qc-fb" data-qx>취소</button><button type="button" class="qc-fb on" data-qs="${k}">적용</button></span></span>` : ''}</span><button type="button" class="qc-ok" data-qk="${k}">${R[k] ? '확인 ✓' : '확인'}</button></div>`; }).join('')}
@@ -20990,7 +20990,7 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .pmx .qc-kv{border:1px solid #c3cde3;border-radius:14px;padding:6px 12px;background:#fff}.pmx .qc-kv.found{border-color:#cfe8d7;background:#f6fbf7}
 .pmx .qc-kv .kv{display:grid;grid-template-columns:78px 1fr;align-items:center;gap:6px;min-height:46px}.pmx .qc-kv .kv+.kv{border-top:1px dashed #e2e8f0}.pmx .qc-kv .kv.s{min-height:0;border-top:0!important;margin-top:2px;padding-bottom:8px}
 .pmx .qc-kv .k{font-size:14px;font-weight:800;color:#475569;white-space:pre}.pmx .qc-kv .qc-in{height:42px;font-size:19px;border:1px solid #dbe2ef;background:#f8fafc}.pmx .qc-kv .qc-in.chk{border:2px solid #f59e0b;background:#fffbeb}
-.pmx .qc-kv .who b{font-size:17px}.pmx .qc-kv .who .g{color:#475569;font-size:13px}.pmx .qc-kv .who small{color:#15803d;font-weight:700;font-size:11.5px}.pmx .qc-kv .who .none{color:#94a3b8}.pmx .qc-chg{font-size:12px;color:#2c4a86;background:#eef2ff;border-radius:8px;padding:3px 8px;font-weight:700}
+.pmx .qc-kv .who b{font-size:17px}.pmx .qc-kv .who .g{color:#475569;font-size:13px}.pmx .qc-kv .who small{color:#15803d;font-weight:700;font-size:11.5px}.pmx .qc-kv .who .none{color:#94a3b8}.pmx .qc-wbox{display:flex;align-items:center;gap:8px;height:42px;border:1px solid #dbe2ef;border-radius:12px;background:#f8fafc;padding:0 12px}.pmx .qc-wbox b{font-size:19px;font-weight:800}.pmx .qc-wbox .g{color:#475569;font-size:13px}.pmx .qc-wbox .qc-chg{margin-left:auto}.pmx .qc-wbox.none{color:#94a3b8}.pmx .qc-chg{font-size:12px;color:#2c4a86;background:#eef2ff;border-radius:8px;padding:3px 8px;font-weight:700}
 .pmx .qc-ck .qc-fix{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.pmx .qc-fb{height:34px;padding:0 12px!important;border-radius:9px;border:1px solid #c7d2fe!important;background:#eef2ff!important;color:#4338ca;font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;cursor:pointer}.pmx .qc-fb.on{background:#4f46e5!important;color:#fff;border-color:#4f46e5!important}
 .pmx .qc-busy{font-size:12.5px;color:#4338ca;font-weight:800;margin-top:4px}
 .pmx .qc-ed{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed #c7d2fe}.pmx .qc-ed input{height:42px;border:1px solid #c3cde3;border-radius:10px;padding:0 10px;font-size:15px;width:100%;min-width:0}.pmx .qc-ed .r1{display:grid;grid-template-columns:1fr 72px;gap:6px}.pmx .qc-ed .r2{display:flex;gap:6px;justify-content:flex-end}
