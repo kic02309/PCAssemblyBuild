@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.99';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.00';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18746,7 +18746,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const main = $('#main'), V = S.qcv = S.qcv || { step: 'start', hist: null };
     const today = S.today;
     if (!V.hist) { try { const [h, m] = await Promise.all([api('qc', { op: 'list', date: today }), api('qc', { op: 'mine' }).catch(() => ({}))]); V.hist = h.rows || []; V.got = m.got || 0; } catch (e) { V.hist = []; } if (S.view !== 'qc') return; }
-    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 메뉴</button></span></div><div class="pxr"><div><h1>2차 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><div class="qc-cn"><div class="pxcn"><b>${V.hist.length}</b><small>내가 한 2차 검수</small></div><div class="pxcn"><b>${V.got || 0}</b><small>내 조립 2차 검수받음</small></div></div></div></div>`;
+    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 메뉴</button></span></div><div class="pxr"><div><h1>2차 검수</h1><div class="pxmeta">${dLabel(today)}<br>검수자 ${esc(S.me.name)}</div></div><div class="qc-cn"><div class="pxcn"><b>${V.hist.length}</b><small>내가 한 2차 검수</small></div><div class="pxcn"><b>${V.got || 0}</b><small>내 조립 2차 검수받음</small></div></div></div></div>`;
     const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}${h.date && h.date !== today ? ' <small class="muted">' + esc(dLabel(h.date)) + '</small>' : ''}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join('');
     const hist = `<div class="pxcard"><div class="qc-lb">검수 기록 <small>오늘 내가 한 검수 · 주문번호로 찾기</small></div><input class="qc-in sm" id="qcq" inputmode="numeric" placeholder="주문번호 검색" value="${esc(V.q || '')}" autocomplete="off"><div class="qc-hist">${V.qr ? (hl(V.qr) || '<div class="muted">검수 기록 없음</div>') : (hl(V.hist) || '<div class="muted">아직 없음</div>')}</div></div>`;
     if (V.step === 'start' || V.step === 'ocr') {
