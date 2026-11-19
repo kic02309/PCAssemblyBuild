@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.91';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9219,7 +9219,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function mpvBar() {
     let b = document.getElementById('mpvbar'); if (!S.mpv) { if (b) b.remove(); return; }
     if (!b) { b = document.createElement('div'); b.id = 'mpvbar'; document.body.appendChild(b); }
-    b.innerHTML = `<b>📱 모바일 미리보기</b><span>${S.mpv === 'smob' ? '안정화 업무' : S.mpv === 'qc' ? '조립 검수' : '라인생산 업무'} · 저장 안 됨</span><button id="mpvx" class="primary sm">닫기</button>`;
+    b.innerHTML = `<b>📱 모바일 미리보기</b><span>${S.mpv === 'smob' ? '안정화 업무' : S.mpv === 'qc' ? '조립 검수' : S.mpv === 'mhome' ? '첫 화면 메뉴' : '라인생산 업무'} · 저장 안 됨</span><button id="mpvx" class="primary sm">닫기</button>`;
     $('#mpvx', b).onclick = () => { S.mpv = null; mpvBar(); go('dash'); };
   }
   function mpvOpen(kind) { S.mpv = kind; mpvBar(); go(kind); }
@@ -9229,7 +9229,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let P; try { P = await api(admin ? 'previewAccounts' : 'previewPeople'); } catch(e) { return toast(e.message, true); }
     const A = admin ? (P.rows || []).filter(x=>x.acct && x.acct.id).map(x=>Object.assign({name:x.name},x.acct)) : (P.users || []);
     const row = (role,id,label) => `<div class="pvr pv-select-row"><b>${label}</b><label>그룹<select id="${id}g" aria-label="${label} 그룹">${pvGroups(A,role).map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('') || '<option value="">그룹 없음</option>'}</select></label><label>이름<select id="${id}" aria-label="${label} 이름"></select></label><button data-pm="${role === '일반' ? 'staff' : 'mgr'}" class="primary sm">보기</button></div>`;
-    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="qc"><b>📱 모바일 보기 · 조립 검수</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
+    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="mhome"><b>📱 모바일 보기 · 첫 화면 메뉴</b><small>휴대폰으로 접속하면 처음 나오는 화면</small></button><button data-mp="qc"><b>📱 모바일 보기 · 조립 검수</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
       const panel = $('.modal',bg); if(panel) panel.classList.add('pv-picker');
       $('[data-c]',bg).onclick=close;
       $$('[data-mp]',bg).forEach(b=>b.onclick=()=>{ close(); mpvOpen(b.dataset.mp); });
@@ -9440,7 +9440,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'df') { $('#proxy').innerHTML = ''; return dfCan() ? renderDf() : go('dash'); }    // v29.81 : 조립 불량 관리
     if (view === 'sp') { $('#proxy').innerHTML = ''; return canSp() ? renderSp() : go('dash'); }   // v29.57 : 소모품 관리
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
-    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob' || view === 'qc');
+    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob' || view === 'qc' || view === 'mhome');
     if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
     if (view === 'line') { $('#proxy').innerHTML=''; return canLine() ? renderLine() : go('dash'); }
     if (view === 'linestats') { $('#proxy').innerHTML=''; return canLine() ? renderLineStats() : go('dash'); }
@@ -9448,6 +9448,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'pmob') { $('#proxy').innerHTML = ''; return canPmob() ? renderPmob() : go('dash'); }
     if (view === 'smob') { $('#proxy').innerHTML = ''; return canSmob() ? renderSmob() : go('dash'); }   // v29.53
     if (view === 'qc') { $('#proxy').innerHTML = ''; return canQc() ? renderQc() : go('dash'); }   // v30.90 : 조립 검수
+    if (view === 'mhome') { $('#proxy').innerHTML = ''; return renderMhome(); }   // v30.91 : 휴대폰 첫 화면 메뉴
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
     if (entering && (view === 'manage' || view === 'hr')) {
@@ -9583,7 +9584,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       doc.other = doc.other || {};
       const asm = pc && pc.asm ? pc.asm[date] : null; let asmFix = false;     // v28.17 : 관리자가 정한 조립 야근 (사원 = 고정 · 매니저 = 비어 있을 때만 채움)
       if (asm != null && C.num(doc.asmOt) !== asm && (!isManager() || !C.num(doc.asmOt))) { doc.asmOt = asm; asmFix = !!d; }
-      S.day = pc ? { doc, exists: !!d, period: pc.period, canEdit: pc.canEdit && (isManager() || date === S.today), past: !isManager() && date !== S.today, canSetTarget: pc.canSetTarget, target: pc.target, savedAt: d ? d.at : '', savedBy: d ? d.by : '', ver: d ? (d.ver == null ? null : d.ver) : '', pc }
+      S.day = pc ? { doc, exists: !!d, period: pc.period, canEdit: pc.canEdit && (isManager() || date === S.today) && !(isPhone() && !isManager()), past: !isManager() && date !== S.today, canSetTarget: pc.canSetTarget, target: pc.target, savedAt: d ? d.at : '', savedBy: d ? d.by : '', ver: d ? (d.ver == null ? null : d.ver) : '', pc }
         : { doc, exists: false, period: null, canEdit: false, canSetTarget: false, target: 0, savedAt: '', savedBy: '' };
       S.day.attendance = att;
       S.day.half = !!att?.half?.[nmKey(u.name)]?.[date];
@@ -18546,7 +18547,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const k = edit ? 'asm' : S.pmv.k, cf = R.conf, mine = cf && cf.mine;
     const rowTxt = r => r.kind === 'asm' ? `${esc(r.data.no)}${r.data.model ? ' · ' + esc(r.data.model) : ''} · ${r.data.q}대 · 케이스 ${esc(r.data.cs)} / 쿨러 ${esc(r.data.cl)}` : `${esc(r.data.cat)} ${r.data.mins}분 · ${esc(r.data.reason)}`;
     const btns = (arr, id, cls) => `<div class="px${cls}" id="${id}">${arr.map(x => `<button type="button" class="pxc" data-v="${x}">${x}</button>`).join('')}</div>`;
-    main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="pmpc">PC 화면</button><button id="pmlo">로그아웃</button></span></div>
+    main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="pmpc">‹ 메뉴</button><button id="pmlo">로그아웃</button></span></div>
       <div class="pxr"><div><h1>라인생산 업무</h1><div class="pxmeta">${dLabel(R.today)} · ${esc(S.me.name)}</div></div><div class="pxcn"><b>${R.rows.length}</b><small>오늘 입력</small></div></div></div>
       <div class="pxbd">
       ${mine ? `<div class="pxcf">오늘 확정된 내 생산업무 배분 <b>${f2(mine.p)}</b> <small>(${mine.m}분 참여)</small></div>` : cf ? `<div class="pxcf wait">${cf.status === 'confirmed' ? '오늘 실적 확정됨' : '담당자가 아직 확정 전입니다'}</div>` : ''}
@@ -18571,7 +18572,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ['pmcs', 'pmcl'].forEach(id => $$('#' + id + ' button').forEach(b => { b.classList.toggle('on', b.dataset.v === (id === 'pmcs' ? edit.data.cs : edit.data.cl)); b.disabled = true; }));
       $('#pmcancel').onclick = () => { S.pmv.edit = null; renderPmob(); };
     }
-    $('#pmpc').onclick = () => go('input'); $('#pmlo').onclick = () => logout();
+    $('#pmpc').onclick = () => go('mhome'); $('#pmlo').onclick = () => logout();
     const pick = id => $$('#' + id + ' button').forEach(b => (b.onclick = () => { $$('#' + id + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); if (id === 'pmmin') $('#pmmins').value = b.dataset.v; }));
     ['pmcs', 'pmcl', 'pmcat', 'pmmin'].forEach(id => $('#' + id) && pick(id));
     $$('[data-q]').forEach(b => (b.onclick = () => { const i = $('#pmq'); i.value = Math.max(1, (+i.value || 1) + +b.dataset.q); }));
@@ -18632,6 +18633,29 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const smClean = () => { S._adj = {}; S._gm = {}; S.stCache = {}; S._mcache = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } try { dropPc(S.me.id); } catch (e) { } };
   async function smDay() { const r = await api('getDay', { userId: S.me.id, date: S.today }); return { r, doc: r.doc ? JSON.parse(JSON.stringify(r.doc)) : C.emptyDay(S.today) }; }
+  // ───────── v30.91 : 휴대폰 첫 화면 메뉴 (권한 있는 메뉴만 · 그룹 업무가 맨 위) ─────────
+  const isPhone = () => !!(window.matchMedia && matchMedia('(max-width:700px)').matches);
+  async function renderMhome() {
+    const main = $('#main'), me = S.me, mgr = isManager() && !S.mpv;
+    const card = (v, ic, bg, t, sub, main1) => `<button type="button" class="mh-card${main1 ? ' main' : ''}" data-mh="${v}"><span class="ic" style="background:${bg}">${ic}</span><span class="tx"><b>${t}</b><small>${sub}</small></span><span class="go">›</span></button>`;
+    const W = [];
+    const grp = me.group || '';
+    if (canSmob()) W.push(['smob', '🔧', '#f3eefe', '안정화 업무', '주문번호 · 작업 입력']);
+    if (canPmob()) W.push(['pmob', '🏭', '#fff4e5', '라인생산', '간편 입력']);
+    if (canQc()) W.push(['qc', '✅', '#e8eefb', '조립 검수', '주문서 찍고 4가지 체크']);
+    if (!mgr) W.push(['input', '📝', '#eef6f0', '업무데이터 보기', '오늘 입력 내용 확인 (보기 전용)']);
+    if (!mgr) W.push(['month', '📅', '#eef6f0', '이번 달 내 실적', '월 업무현황 · 달성률 (보기 전용)']);
+    if (mgr) W.push(['dash', '📊', '#e8eefb', '일일 업무현황', '그룹별 현황 · 검수 표시']);
+    const M = [];
+    main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="mhpc">PC 화면</button><button id="mhlo">로그아웃</button></span></div>
+      <div class="pxr"><div><h1>조립팀 업무데이터</h1><div class="pxmeta">${dLabel(S.today)} · ${esc(me.name)}${grp ? ' · ' + esc(grp) : ''}</div></div></div></div>
+      <div class="pxbd"><div class="mh-grid">${W.map((x, i) => card(...x, i === 0)).join('')}</div>
+      ${M.length ? `<div class="mh-sec">관리</div><div class="mh-grid">${M.map(x => card(...x)).join('')}</div>` : ''}
+      </div></div>`;
+    $$('[data-mh]', main).forEach(b => b.onclick = () => go(b.dataset.mh));
+    $('#mhpc').onclick = () => { S.pcMode = 1; go(mgr ? 'dash' : 'input'); };
+    $('#mhlo').onclick = () => logout();
+  }
   // ───────── v30.90 : 조립 검수 (휴대폰) — 주문서 사진은 글자 읽는 데만 쓰고 저장하지 않음 ─────────
   const canQc = () => !!(S.me && (!isRO() || S.mpv === 'qc'));
   const QC_ROWS = [['cpu', 'CPU'], ['mb', '메인보드'], ['mem', '메모리'], ['ssd', '저장장치']];
@@ -18679,8 +18703,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function renderQc() {
     const main = $('#main'), V = S.qcv = S.qcv || { step: 'start', hist: null };
     const today = S.today;
-    if (!V.hist) { try { V.hist = (await api('qc', { op: 'list', date: today })).rows || []; } catch (e) { V.hist = []; } if (S.view !== 'qc') return; }
-    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 나가기</button></span></div><div class="pxr"><div><h1>조립 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><div class="pxcn"><b>${V.hist.length}</b><small>오늘 내 검수</small></div></div></div>`;
+    if (!V.hist) { try { const [h, m] = await Promise.all([api('qc', { op: 'list', date: today }), api('qc', { op: 'mine' }).catch(() => ({}))]); V.hist = h.rows || []; V.got = m.got || 0; } catch (e) { V.hist = []; } if (S.view !== 'qc') return; }
+    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 메뉴</button></span></div><div class="pxr"><div><h1>조립 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><div class="qc-cn"><div class="pxcn"><b>${V.hist.length}</b><small>내가 한 검수</small></div><div class="pxcn"><b>${V.got || 0}</b><small>내 조립 검수받음</small></div></div></div></div>`;
     const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}${h.date && h.date !== today ? ' <small class="muted">' + esc(dLabel(h.date)) + '</small>' : ''}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join('');
     const hist = `<div class="pxcard"><div class="qc-lb">검수 기록 <small>오늘 내가 한 검수 · 주문번호로 찾기</small></div><input class="qc-in sm" id="qcq" inputmode="numeric" placeholder="주문번호 검색" value="${esc(V.q || '')}" autocomplete="off"><div class="qc-hist">${V.qr ? (hl(V.qr) || '<div class="muted">검수 기록 없음</div>') : (hl(V.hist) || '<div class="muted">아직 없음</div>')}</div></div>`;
     if (V.step === 'start' || V.step === 'ocr') {
@@ -18721,7 +18745,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     });
   }
   function bindQc() {
-    const V = S.qcv, b = $('#qcback'); if (b) b.onclick = () => { S.qcv = null; go(S.mpv ? 'dash' : isManager() ? 'dash' : 'input'); };
+    const V = S.qcv, b = $('#qcback'); if (b) b.onclick = () => { S.qcv = null; go('mhome'); };
     const f = $('#qcf'); if (f) f.onchange = async e => { const file = e.target.files[0]; if (!file) return; await qcRun(file); };
     if ($('#qcman')) $('#qcman').onclick = () => { V.P = {}; V.res = {}; V.order = ''; V.who = null; V.done = null; V.self = false; V.step = 'check'; renderQc(); setTimeout(() => $('#qco') && $('#qco').focus(), 50); };
     if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
@@ -18773,7 +18797,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const grid = (arr, cls) => `<div class="pxw4 ${cls || ''}">${arr.map(a => chip(a, a[1].indexOf('<br>') > 0 ? ' sm' : '')).join('')}</div>`;
     // Each option is an independent numeric task (0 = unselected). Keep the saved AJ–AM codes unchanged.
     const optionGrid = () => `<div class="smopt-grid">${SM_OP.map(([c, t]) => `<div class="smopt-card" data-opt="${c}"><button type="button" class="smopt-name" data-k="${c}" aria-pressed="false">${t}</button><div class="smopt-counter"><button type="button" data-opt-q="${c}" data-step="-1" aria-label="${t} 수량 감소">−</button><output data-opt-val="${c}" aria-label="${t} 선택 수량">0</output><button type="button" data-opt-q="${c}" data-step="1" aria-label="${t} 수량 증가">+</button></div></div>`).join('')}</div>`;
-    main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="smpc">PC 화면</button><button id="smlo">로그아웃</button></span></div>
+    main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="smpc">‹ 메뉴</button><button id="smlo">로그아웃</button></span></div>
       <div class="pxr"><div><h1>안정화 업무</h1><div class="pxmeta">${dLabel(S.today)} · ${esc(S.me.name)}</div></div><div class="pxcn"><b id="smn">0</b><small>오늘 입력</small></div></div></div>
       <div class="pxbd">
       <div class="pxcard"><div class="pxlb">주문번호 · 수량</div><div class="pxord pxvo"><input class="pxin" id="smo" inputmode="numeric" enterkeyhint="done" maxlength="30" placeholder="28972341" autocomplete="off" spellcheck="false"><span class="pxfix">출고 ✓</span></div><div class="pxvq"><div class="pxqty"><button type="button" data-q="-1">−</button><input id="smq" type="number" value="1" min="1"><button type="button" data-q="1">+</button></div></div><div id="smdup"></div></div>
@@ -18843,7 +18867,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       V.tip = `<b>${esc(lab(c))}</b> ${esc(tp[c] || '')}`;
       sync();
     }));
-    $('#smpc').onclick = () => go('input'); $('#smlo').onclick = () => logout();
+    $('#smpc').onclick = () => go('mhome'); $('#smlo').onclick = () => logout();
     $('#small').onclick = () => {
       const draw = () => rows().map(x => `<div class="pxrow"><span><b>${esc(x.o)}</b> · ${x.q}대 ${Object.keys(x.m || {}).filter(c => x.m[c]).map(c => `<em>${esc(tagOf(c))}${C.COL[c] && C.COL[c].kind === 'num' && x.m[c] > 1 ? x.m[c] : ''}</em>`).join('')}</span><button class="sm" data-d="${esc(x.o)}|${esc(JSON.stringify(x.m || {}))}">✕</button></div>`).join('') || '<div class="muted">아직 없음</div>';
       modal(`<h3>오늘 입력 ${rows().length}건</h3><div class="pmlist" id="smlist">${draw()}</div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
@@ -20498,10 +20522,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let d0 = S.today;
       try { const pend = Object.values(draftMap()).filter(x => x.owner === S.me.id && x.uid === S.me.id).sort((a, b) => b.at - a.at)[0]; if (pend) d0 = pend.date; } catch (e) { }
       const pend0 = Object.values(draftMap()).some(x => x.owner === S.me.id && x.uid === S.me.id);
-      let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
+      let v0 = isRO() ? 'home' : !pend0 && isPhone() && !S.pcMode ? 'mhome' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'qc', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'qc', 'mhome', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -20762,6 +20786,17 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 <style id="phone-v2954">
 .pmx .pxhd{padding-top:12px!important;padding-bottom:30px!important}
 /* v30.90 조립 검수 */
+/* v30.91 휴대폰 첫 화면 메뉴 */
+.pmx .qc-cn{display:flex;gap:6px}.pmx .qc-cn .pxcn small{white-space:nowrap}
+.pmx .mh-sum{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;margin-top:-6px}
+.pmx .mh-sum div{background:#fff;border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 1px 4px rgba(70,110,200,.10)}
+.pmx .mh-sum b{display:block;font-size:20px;color:#2c4a86}.pmx .mh-sum small{font-size:11.5px;color:#64748b}
+.pmx .mh-sec{font-size:12.5px;font-weight:700;color:#64748b;margin:14px 4px 6px}
+.pmx .mh-grid{display:grid;gap:10px}
+.pmx .mh-card{display:flex;align-items:center;gap:14px;background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 1px 4px rgba(70,110,200,.10);text-align:left;width:100%;border:2px solid transparent}
+.pmx .mh-card .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:23px;flex:0 0 auto}
+.pmx .mh-card .tx{flex:1;min-width:0}.pmx .mh-card b{display:block;font-size:17px;color:#0f172a}.pmx .mh-card small{color:#64748b;font-size:12.5px}
+.pmx .mh-card.main{border-color:#2c4a86}.pmx .mh-card .go{color:#94a3b8;font-size:22px}
 .pmx .qc-shot{width:100%;height:120px;border-radius:16px;border:2px dashed #9fb0d4;background:#f7f9fd;color:#2c4a86;font-size:17px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
 .pmx .qc-shot small{font-weight:500;color:#64748b;font-size:12px}
 .pmx .qc-prog{height:8px;background:#e3e8f2;border-radius:99px;overflow:hidden;margin-top:10px}.pmx .qc-prog i{display:block;height:100%;background:#2c4a86;width:0;transition:width .3s}
