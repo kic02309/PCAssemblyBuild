@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.77';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -12534,7 +12534,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const actions = [];
     if (tab === 'meet') {
       if (!isRO() && !S.pv) actions.push(['meet', '＋ 면담 등록']);
-      if (S.me.role === '관리자') actions.push(['cfg', '⚙ 면담 기준']);
+      if (S.me.role === '관리자' && !isRO()) actions.push(['cfg', '⚙ 면담 기준']);
     }
     if (tab === 'plan' && !isRO() && !S.pv) actions.push(['task', '＋ 업무 등록']);
     if (tab === 'cal') {
@@ -12607,8 +12607,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if ($('#mgauto')) { $('#mgauto').onclick = () => mgAuto(M); $('#mgedu').onclick = () => mgEvent(null, { kind: 'e', title: '그룹 교육', people: M.filter(x => !x.u.pend || true).map(x => x.name) }); }
   }
   function mgCfgModal(after) {
-    const c = mgCfg(), ok = S.me.role === '관리자';
-    if (!ok) return toast('면담 기준은 팀장 · 관리자가 정합니다', true);
+    const c = mgCfg(), ok = S.me.role === '관리자' && !isRO();
+    if (!ok) return toast('면담 기준은 관리자가 정합니다', true);
     modal(`<h3>⚙ 면담 기준 (모든 매니저 공통)</h3><div class="note">팀장 · 관리자가 정하면 모든 매니저의 '면담 필요' 판정 · 자동 배치 · 팀장 현황 실시율에 똑같이 적용됩니다.${c.by ? `<br><span class="muted">마지막 변경 : ${esc(c.by)} · ${esc(String(c.at || '').slice(0, 16))}</span>` : ''}</div>
       <div class="fields2"><div class="fld"><label>면담 주기 (일 · 직접 입력)</label><input id="cc" type="number" min="1" max="400" step="1" value="${c.cycle}" list="ccl"><datalist id="ccl">${[3, 5, 7, 10, 14, 30, 90, 180].map(n => `<option value="${n}">`).join('')}</datalist><small class="muted">1~400일 · 예) 7 = 매주 · 10 · 30 = 매달</small></div>
       <div class="fld"><label>하루 최대 면담 인원</label><select id="cp">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `<option ${n === c.perDay ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
@@ -12682,7 +12682,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const cDow = d => new Date(d + 'T00:00:00').getDay();
   const cSun = d => C.addDays(d, -cDow(d));
   const calAdm = () => !!(S.me && S.me.role === '관리자');
-  const calCanW = () => canMgr() && !S.pv;
+  const calCanW = () => canMgr() && !S.pv && !isRO();   // v30.77 : 팀장(보기 전용)은 일정 확인만
   const calCanE = e => !e.plan && calCanW() && (!calCat(e.cat).private || e.owner === S.me.id) && (calAdm() || e.owner === S.me.id);
   const calCat = id => id === 'plan' ? PLAN_CAT : ((S.cal || {}).cats || []).find(c => String(c.id) === String(id)) || { name: '?', color: '#64748b' };
   const calMine = e => e.grp === '전체' || calAdm() || (S.me.mg || []).includes(e.grp);    // 알림 대상 : 전체 일정 = 모두 · 그룹 일정 = 그 그룹 매니저 + 관리자 · 팀장
