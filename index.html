@@ -722,6 +722,7 @@ html[data-theme=dark] .hrw table.score .dq{background:#2d3a55;color:#9dbbff}
 .ovc{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel,#fff);text-align:left;cursor:pointer}
 .ovc{color:var(--ink)!important;border-left:4px solid var(--ovg,#cfd6e0)!important}.ovc:hover{border-color:#aab4c3}.ovi{font-style:normal;font-size:11.5px;font-weight:700;color:#c62828;background:#fdecec;border:1px solid #f0c4c4;border-radius:999px;padding:1px 8px}
 .ovl-sum{display:flex;flex-wrap:wrap;gap:12px;margin:-4px 0 10px;font-size:13px}.ovl-w{max-height:62vh;overflow:auto;border:1px solid var(--line);border-radius:8px}.ovl-t{width:100%}.ovl-t td,.ovl-t th{padding:7px 12px;text-align:center}.ovl-t .l{text-align:left}.ovl-gh td{background:#f3f5f8;text-align:left!important;font-weight:700;border-top:2px solid var(--line)}.ovl-d{margin:2px 2px 2px 0}
+.pl-dr{display:flex!important;align-items:center;gap:8px}.pl-dr input{flex:1 1 0;min-width:0;width:auto!important;cursor:pointer}.pl-dr span{flex:none;color:var(--sub)}
 .grp-n{display:inline-block;margin-left:6px;padding:0 7px;border-radius:999px;background:#e8f0fc;color:#1f5fbf;font-size:11px;font-weight:700;vertical-align:1px}
 .ovch{display:flex;align-items:center;gap:10px}.ovch b{font-size:15px}.ovch span{font-size:12.5px}
 .ovcb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ovcb>div{background:#f7f8fa;border-radius:8px;padding:8px 10px}
@@ -8601,7 +8602,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.84';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.85';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13328,7 +13329,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (isRO() || S.pv || !task.full || task.owner !== S.me.id || task.status === '완료') return;
     modal(`<h3>추가 작업 기록</h3><p class="pl-log-parent"><b>${esc(task.title)}</b></p>
       <form id="plAddForm">
-        <div class="fld"><label for="plAddDate">작업 기간</label><div class="row" style="gap:6px"><input type="date" id="plAddDate" value="${esc(defaultDate)}" required><span>~</span><input type="date" id="plAddEnd" value="${esc(defaultDate)}"></div><small class="muted">하루만 했으면 종료일을 그대로 두세요 · 여러 날이면 종료일을 고르세요</small></div>
+        <div class="fld"><label for="plAddDate">작업 기간</label><div class="pl-dr"><input type="date" id="plAddDate" value="${esc(defaultDate)}" required><span>~</span><input type="date" id="plAddEnd" value="${esc(defaultDate)}"></div><small class="muted">하루만 했으면 종료일을 그대로 두세요 · 여러 날이면 종료일을 고르세요</small></div>
         <div class="fld"><label for="plAddText">추가 작업 내용</label><textarea id="plAddText" maxlength="1000" rows="4" placeholder="이 업무에서 추가로 한 작업을 적으세요" required></textarea></div>
         <div class="acts"><button type="button" data-c>닫기</button><button type="submit" class="primary" id="plAddSave">추가 작업 저장</button></div>
       </form>`, (bg, close) => {
@@ -13390,10 +13391,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function planLog(lid) {
     const l = ((S.mgD || {}).logs || []).find(x => String(x.id) === String(lid)); if (!l) return;
     const t = (S.mgD.tasks || []).find(x => String(x.id) === String(l.task)) || {}, ed = !isRO() && !S.pv && t.owner === S.me.id;
-    let editing = false;
-    modal(`<h3>진행 현황</h3><div class="muted">${esc(t.title || '')}</div><div class="fld" style="margin-top:8px"><label>작업 기간</label><div class="row" style="gap:6px"><input type="date" id="log-edit-date" value="${esc(l.date)}" disabled><span>~</span><input type="date" id="log-edit-end" value="${esc(l.end || l.date)}" disabled></div></div>
-      <div class="fld"><label>내용</label><textarea id="log-edit-text" maxlength="1000" rows="5" disabled>${esc(l.text)}</textarea></div><div class="muted">${l.by ? '작성 ' + esc(l.by) : ''}</div>
-      <div class="acts">${ed ? '<button id="ldel" style="color:var(--red);margin-right:auto">삭제</button><button id="ledit">수정</button>' : ''}<button data-c>닫기</button>${ed ? '<button id="lsave" class="primary" style="display:none">수정 저장</button>' : ''}</div>`, (bg, close) => {
+    let editing = ed;   // v30.85 : 본인 기록은 바로 고치고 [수정] = 저장
+    modal(`<h3>진행 현황</h3><div class="muted">${esc(t.title || '')}</div><div class="fld" style="margin-top:8px"><label>작업 기간</label><div class="pl-dr"><input type="date" id="log-edit-date" value="${esc(l.date)}" ${ed ? '' : 'disabled'}><span>~</span><input type="date" id="log-edit-end" value="${esc(l.end || l.date)}" ${ed ? '' : 'disabled'}></div></div>
+      <div class="fld"><label>내용</label><textarea id="log-edit-text" maxlength="1000" rows="5" ${ed ? '' : 'disabled'}>${esc(l.text)}</textarea></div><div class="muted">${l.by ? '작성 ' + esc(l.by) : ''}</div>
+      <div class="acts">${ed ? '<button id="ldel" style="color:var(--red);margin-right:auto">삭제</button>' : ''}<button data-c>닫기</button>${ed ? '<button id="lsave" class="primary">수정</button>' : ''}</div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
       if ($('#ledit', bg)) $('#ledit', bg).onclick = () => {
         editing = true;
