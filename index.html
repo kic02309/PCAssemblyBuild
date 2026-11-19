@@ -3005,7 +3005,16 @@ html[data-theme=dark] .login2 .login{border-color:#647b98}html[data-theme=dark] 
 #main .acc .acc-preview-cell{display:block;width:100%;min-width:0;max-width:100%;padding:7px 8px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
 #main .acc button.acc-preview-cell{font:inherit;line-height:1.5;color:inherit;background:transparent;border:0;border-radius:0}
 #main .acc button.acc-preview-cell:hover,#main .acc button.acc-preview-cell[aria-expanded=true]{color:var(--blue);text-decoration:underline}
-#main .acc table.acctl td.acc-text .acc-preview-cell{font-size:12.5px}   /* v30.78 : 제품 · 증상 · 처리 글자 살짝 작게 */
+#main .acc table.acctl td.acc-text .acc-preview-cell{font-size:12.5px}
+#main .acc .accgrp{padding:12px 14px;margin-top:10px}#main .acc .accgh{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:8px}#main .acc .accgh b{font-size:14px}#main .acc .accgh small{font-size:12px}
+#main .acc .accgb{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:6px}
+#main .acc .accgb button{font:inherit;text-align:left;display:flex;flex-direction:column;gap:2px;padding:6px 9px;border:1px solid var(--line);border-radius:9px;background:var(--panel,#fff);color:inherit;cursor:pointer}
+#main .acc .accgb button:hover{border-color:#aab4c3}#main .acc .accgb button.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-soft)}
+#main .acc .accgb button.hi{border-color:#e7a1a1;background:#fff7f7}#main .acc .accgb button.z{opacity:.6}
+#main .acc .accgb .t{font-size:12.5px;font-weight:700}#main .acc .accgb .n{display:flex;align-items:baseline;gap:3px;font-size:12px;color:var(--sub)}#main .acc .accgb .n b{font-size:16px;color:var(--ink)}#main .acc .accgb .n em{font-style:normal;margin-left:auto;font-weight:700;color:var(--sub)}
+#main .acc .accgb .pb{height:4px;border-radius:3px;background:#eef1f5;overflow:hidden}#main .acc .accgb .pb i{display:block;height:100%;background:#c62828}
+#main .acc .accgb .p{font-size:11px;color:var(--sub)}#main .acc .accgb .t{font-size:12px}#main .acc .accgb button.all{background:#f7f8fa}#main .acc .accgb button.all.on{background:var(--blue-soft)}
+.czf-v4[data-view="acc"] .czf-line+.czf-line{display:none}#main .acc .accgb .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#main .acc .accgrp{padding:10px 12px}#main .acc .accgb .p b{color:var(--ink)}#main .acc .accgb button.hi .p b{color:#c62828}   /* v30.78 : 제품 · 증상 · 처리 글자 살짝 작게 */
 #main .acc button.acc-preview-cell:focus-visible{outline-offset:-2px}
 #main .acc table.acctl tr.acc-selected td{background:color-mix(in srgb,var(--blue) 11%,var(--panel))}
 #main .acc table.acctl tr.acc-inline-detail td{padding:0;text-align:left;background:var(--head)}
@@ -8002,7 +8011,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (A.S.view !== 'acc') return;
     const D = Z.data;
     if (Z.ym === null) { const cur = ymOf(today); Z.ym = cur.slice(0, 4) === Z.year ? cur : ''; if (scope() === 'self') { Z.ym = ''; Z.mode = '연간'; } }
-    const all = rowsOf(D), sel = all.filter(r => Z.mode === '기간 지정' && Z.range ? r.ym >= Z.range.from && r.ym <= Z.range.to : Z.mode === '월간' && Z.ym ? r.ym === Z.ym : true), q = Z.q.trim().toLowerCase(), nameQ = Z.nameQ.trim().toLowerCase();
+    // v30.79 : 사고 그룹 = 현재 조직도 명단 기준 (명단에 없으면 등록 당시 그룹)
+    const STF = new Map((D.staff || []).map(x => [String(x.name || '').replace(/\s/g, ''), x.grp])), GN = {};
+    (D.staff || []).forEach(x => { if (x.grp) GN[x.grp] = (GN[x.grp] || 0) + 1; });
+    const all = rowsOf(D).map(r => { const g = STF.get(String(r.name || '').replace(/\s/g, '')); return g && g !== r.grp ? Object.assign({}, r, { grp0: r.grp, grp: g }) : r; }), sel = all.filter(r => Z.mode === '기간 지정' && Z.range ? r.ym >= Z.range.from && r.ym <= Z.range.to : Z.mode === '월간' && Z.ym ? r.ym === Z.ym : true), q = Z.q.trim().toLowerCase(), nameQ = Z.nameQ.trim().toLowerCase();
     const summary = sel.filter(r => !Z.fg || Z.fg.split(',').includes(r.grp));
     const rows = summary.filter(r => (!Z.fk || r.kind === Z.fk) && (!nameQ || [r.name, r.ord].some(v => String(v || '').toLowerCase().includes(nameQ))) && (!q || [r.name, r.ord, r.txt, r.act, ...(r.prods || []).flatMap(p => [p.code, p.name])].some(v => String(v || '').toLowerCase().includes(q))));
     const yms = Array.from({ length: 12 }, (_, i) => Z.year + '-' + String(i + 1).padStart(2, '0'));
@@ -8047,6 +8059,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           return `<button type="button" data-acc-kind="${k}" aria-pressed="${Z.fk === k}" class="${!count ? 'acc-kind-zero' : count === highest ? 'acc-kind-high' : ''}" style="--kind:${KC[k]}" title="${k} 사고만 보기 · 다시 누르면 전체 구분"><span class="acc-kind-label"><i aria-hidden="true"></i>${k}</span><span class="acc-kind-values"><span><b>${count}</b><small>건</small></span><span class="acc-share">${share.format(total ? count / total : 0)}</span></span></button>`;
         }).join('')}</div></div>
       </div>
+      ${self || !(D.staff || []).length ? '' : (() => {
+        const GL = Array.from(new Set(Object.keys(GN).concat(sel.map(r => r.grp).filter(Boolean)))).filter(g => g !== '팀장' && (scope() === 'all' || (A.S.me.mg || []).includes(g))).sort((a, b) => (A.C.GROUP_LIST.indexOf(a) + 1 || 99) - (A.C.GROUP_LIST.indexOf(b) + 1 || 99)), FG = (Z.fg || '').split(',').filter(Boolean);
+        const gc = {}; sel.forEach(r => { if (r.grp) gc[r.grp] = (gc[r.grp] || 0) + 1; });
+        const tot = sel.length, per = g => GN[g] ? (gc[g] || 0) / GN[g] : 0, top = Math.max(0, ...GL.map(per));
+        return `<div class="card accgrp"><div class="accgh"><b>그룹별 사고</b><small class="muted">현재 조직도 명단 기준 · 점유율 = 그룹 사고 ÷ 전체 · 인당 = 그룹 사고 ÷ 인원 · 누르면 그 그룹으로 조회 (여러 개 선택 가능)</small></div><div class="accgb"><button type="button" data-acc-grp="" aria-pressed="${!FG.length}" class="all${!FG.length ? ' on' : ''}"><span class="t">전체 그룹</span><span class="n"><b>${tot}</b>건<em>100%</em></span><span class="pb"><i style="width:100%"></i></span><span class="p">${GL.reduce((a, g) => a + (GN[g] || 0), 0)}명 · 인당 <b>${(() => { const n = GL.reduce((a, g) => a + (GN[g] || 0), 0); return n ? (tot / n).toFixed(2) : '-'; })()}</b></span></button>${GL.map(g => { const n = gc[g] || 0, pp = per(g);
+          return `<button type="button" data-acc-grp="${esc(g)}" aria-pressed="${FG.includes(g)}" class="${!n ? 'z' : ''}${pp && pp === top ? ' hi' : ''}${FG.includes(g) ? ' on' : ''}"><span class="t">${A.gdot ? A.gdot(g) : esc(g)}</span><span class="n"><b>${n}</b>건<em>${tot ? Math.round(n / tot * 1000) / 10 : 0}%</em></span><span class="pb"><i style="width:${tot ? Math.round(n / tot * 100) : 0}%"></i></span><span class="p">${GN[g] || 0}명 · 인당 <b>${GN[g] ? pp.toFixed(2) : '-'}</b></span></button>`; }).join('')}</div></div>`; })()}
       <div class="card acc-table-wrap"><table class="list acctl ${self ? 'acc-self' : 'acc-team'}"><colgroup><col style="width:64px">${Z.ym || self ? '' : '<col style="width:64px">'}${self ? '' : '<col style="width:76px"><col style="width:74px">'}<col style="width:84px"><col style="width:104px">${self ? '' : '<col>'}<col><col>${self ? '' : '<col style="width:54px">'}</colgroup><thead><tr><th>출고일</th>${Z.ym || self ? '' : '<th>귀속월</th>'}${self ? '' : '<th>이름</th><th>그룹</th>'}<th>구분</th><th>주문번호</th>${self ? '' : '<th class="acc-text">제품</th>'}<th class="acc-text">증상 · 내용</th><th class="acc-text">처리</th>${self ? '' : '<th aria-label="첨부 및 출처"></th>'}</tr></thead><tbody>
         ${shown.map((r, i) => `<tr class="click" data-ai="${i}"><td class="nw">${r.d ? md(r.d) : '<span class="muted">-</span>'}</td>${Z.ym || self ? '' : `<td class="nw">${+r.ym.slice(5)}월</td>`}${self ? '' : `<td class="nw"><b>${esc(r.name)}</b></td><td class="nw">${A.gdot(r.grp)}</td>`}
           <td>${kTag(r.kind)}</td><td class="nw" title="${esc(r.ord)}">${esc(r.ord) || '<span class="muted">-</span>'}</td>
@@ -8059,6 +8077,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-am]').forEach(b => (b.onclick = () => { Z.ym = b.dataset.am; Z.mode = Z.ym ? '월간' : '연간'; Z.range = null; render(main); }));
     $$('[data-ak]').forEach(b => (b.onclick = () => { Z.fk = b.dataset.ak; render(main); }));
     $$('[data-acc-kind]',main).forEach(b => (b.onclick = () => { Z.fk = Z.fk === b.dataset.accKind ? '' : b.dataset.accKind; render(main); }));
+    $$('[data-acc-grp]',main).forEach(b => (b.onclick = () => { Z.fg = b.dataset.accGrp && window.CZFilterV4 ? window.CZFilterV4.toggle(Z.fg, b.dataset.accGrp).join(',') : ''; render(main); }));
     const totalReset = $('.acc-total-reset',main);
     if (totalReset) totalReset.onclick = () => { Z.fk = ''; render(main); };
     if ($('#acg')) $('#acg').onchange = e => { Z.fg = e.target.value; render(main); };
@@ -8110,9 +8129,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if ($('#acadd')) btns.push({label:'+ 사고 등록',click:()=>$('#acadd')?.click()});
       if ($('#acxl')) btns.push({label:'엑셀',click:()=>$('#acxl')?.click()});
       if ($('#acan')) btns.push({label:'분석용',click:()=>$('#acan')?.click()});
+      if ((D.staff || []).length) btns.push({label:Z.detail?'☷ 상세 ▴':'☷ 상세 ▾',click:()=>{Z.detail=!Z.detail;render(main);}});
       const bar = window.CZFilterV4.mount($('.pgb', main), {
         id:'acc',modes:['월간','연간','전체'],mode:Z.mode,label,
-        groups: scope() === 'self' ? [] : [{label:'전체 그룹',value:''},...choices.map(g=>({label:g,value:g}))],selected:Z.fg||'',
+        groups: scope() === 'self' || (D.staff || []).length ? [] : [{label:'전체 그룹',value:''},...choices.map(g=>({label:g,value:g}))],selected:Z.fg||'',   // v30.79 : 그룹 선택 = 아래 그룹별 카드
         todayLabel:'이번 달',onToday:()=>{Z.year=today.slice(0,4);Z.ym=ymOf(today);Z.mode='월간';Z.range=null;render(main);},
         range:{type:'month',from:Z.range?.from||Z.year+'-01',to:Z.range?.to||today.slice(0,7),note:'귀속월 기준 여러 달의 사고를 함께 조회합니다. 연도 경계도 지원합니다.'},
         onStep:step=>{
@@ -8127,7 +8147,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         onGroup:g=>{Z.fg=window.CZFilterV4.toggle(Z.fg,g).join(',');render(main);},
         onSearch:()=>{const q=$('#acq');if(q)Z.q=q.value;render(main);},
         onReset:()=>{Z.mode='월간';Z.range=null;Z.year=today.slice(0,4);Z.ym=ymOf(today);Z.fg='';Z.fk='';Z.q='';Z.nameQ='';Z.detail=false;render(main);},
-        onDetail:on=>{Z.detail=on;const orig=$('.accbar',main);if(orig)orig.classList.toggle('czf-expanded',on);},
+        onDetail:(D.staff || []).length ? null : (on=>{Z.detail=on;const orig=$('.accbar',main);if(orig)orig.classList.toggle('czf-expanded',on);}),
         actions:btns,
         extra: self ? '' : `<div class="acc-top-search" role="search" aria-label="사고 이름 또는 주문번호 검색"><label for="acc-quick-q">사고 검색</label><input id="acc-quick-q" type="search" placeholder="직원 이름 또는 주문번호" value="${esc(Z.nameQ)}" autocomplete="off"><button type="button" id="acc-quick-submit">검색</button><button type="button" id="acc-quick-clear">지우기</button><span class="acc-quick-status" role="status">조회 ${rows.length}건 / 전체 ${total}건</span></div>`,
         onError:e=>A.toast(e.message,true)
@@ -8141,6 +8161,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         $('#acc-quick-clear',bar).onclick = () => { Z.nameQ = ''; render(main).then(() => $('#acc-quick-q',main)?.focus()); };
       }
       if(Z.detail){const b=bar.querySelector('[data-czf-detail]');if(b)b.click();}
+      if(Z.detail&&(D.staff||[]).length){const orig=$('.accbar',main);if(orig)orig.classList.add('czf-expanded');}
     }
   }
   const reload = async () => { Z.at = 0; if (A.S.view === 'acc') await render(Z.main, { force: true }); };
@@ -8526,7 +8547,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.78';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.79';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
