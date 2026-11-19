@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.98';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.99';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18807,8 +18807,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-qx]').forEach(b => b.onclick = () => { V.edit = ''; renderQc(); });
     $$('[data-qs]').forEach(b => b.onclick = () => { const k = b.dataset.qs, box = b.closest('.qc-ed'), br = $('[data-eb]', box).value.trim(), nm = $('[data-en]', box).value.trim(), c = $('[data-ec]', box); V.P[k] = br || nm ? { brand: qcBrand(br) || br, name: nm, cap: (nm.match(/\d+\s?(GB|TB)/i) || [''])[0], n: Math.max(1, +(c && c.value) || 1) } : null; V.edit = ''; renderQc(); });
     $$('[data-qr]').forEach(f => f.onchange = async e => { const file = e.target.files[0], k = f.dataset.qr; if (!file) return; V.lineBusy = k; renderQc();
-      try { await qcTess(); const w = await Tesseract.createWorker('eng', 1, (window.__TESS && window.__TESS.opt) || {}); const c = await qcPrep(file), r = await w.recognize(c); await w.terminate();
-        const y = qcParseOne(r.data.text, k), o = V.P[k] || {};
+      try { let y = null; const img = await createImageBitmap(file), cv = document.createElement('canvas'), sc = Math.min(1, 2400 / Math.max(img.width, img.height)); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        try { y = qcParseOne(await qcPaddle(cv), k); } catch (e) { }
+        if (!y || !(y.cap || !(k === 'mem' || k === 'ssd')) || !y.brand) { try { const z = qcParseOne(await qcTessText(await qcPrep(file)), k); if (z) y = { brand: (y && y.brand) || z.brand, name: (y && y.name) || z.name, cap: (y && y.cap) || z.cap }; } catch (e) { } }
+        const o = V.P[k] || {};
         if (y && (y.brand || y.name || y.cap)) { V.P[k] = { brand: y.brand || o.brand || '', name: y.name || o.name || '', cap: y.cap || o.cap || '', n: o.n || 1 }; if (y.cap && V.P[k].name && !V.P[k].name.includes(y.cap)) V.P[k].name += ' ' + y.cap; toast('다시 읽었습니다 — 내용을 확인하세요'); }
         else toast('이 줄을 읽지 못했습니다 — [✎ 직접 입력]으로 적어 주세요', true);
       } catch (er) { toast(er.message || '읽지 못했습니다', true); }
@@ -18913,19 +18915,57 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     for (const r of R || []) { const t = String(r.text || '').replace(/\D/g, ''), m = t.match(/2\d{7}/) || t.match(/1\d{8}/); if (m) return m[0]; }
     return '';
   }
+  // v30.99 : 글자 인식 2개 — PaddleOCR(정확 · 한국어 모델) 먼저, 빈 칸만 Tesseract로 채움
+  function qcPaddleLoad() {
+    if (window.PPOCR) return Promise.resolve();
+    return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = (window.__PP && window.__PP.js) || 'ocr/ppocr.js?v=' + APP_VER; sc.onload = ok; sc.onerror = () => no(new Error('PaddleOCR 불러오기 실패')); document.head.appendChild(sc); });
+  }
+  async function qcPaddle(cnv, onMsg) {
+    await qcPaddleLoad();
+    if (!window.__ppSvc) {
+      PPOCR.ort.env.wasm.wasmPaths = (window.__PP && window.__PP.wasm) || 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/';
+      PPOCR.ort.env.wasm.numThreads = 1;
+      const tryInit = async model => { const sv = new PPOCR.PaddleOcrService(model ? { model } : {}); await sv.initialize(); return sv; };
+      onMsg && onMsg('정확한 글자 인식 준비 중… (처음 한 번 약 20MB 내려받기)');
+      try { window.__ppSvc = await tryInit((window.__PP && window.__PP.model) || PPOCR.V5_KOREAN_MOBILE_MODEL); }
+      catch (e) { window.__ppSvc = await tryInit(PPOCR.V5_MOBILE_MODEL); }
+    }
+    onMsg && onMsg('주문서 읽는 중… (정확한 인식)');
+    const r = await window.__ppSvc.recognize(cnv);
+    return String((r && r.text) || '');
+  }
+  async function qcTessText(cnv, onPct) {
+    await qcTess();
+    const w = await Tesseract.createWorker('eng', 1, Object.assign({ logger: m => { if (m.status === 'recognizing text' && onPct) onPct(m.progress); } }, (window.__TESS && window.__TESS.opt) || {}));
+    const r = await w.recognize(cnv); await w.terminate(); return String((r && r.data && r.data.text) || '');
+  }
+  const qcGaps = P => !P.order || QC_ROWS.some(([k]) => { const x = P[k]; return !x || !x.brand || !x.name || ((k === 'mem' || k === 'ssd') && !x.cap); });
+  function qcMerge(A, B) {   // A(Paddle) 우선 · 빈 칸만 B(Tesseract)
+    const out = { order: A.order || B.order };
+    QC_ROWS.forEach(([k]) => { const a = A[k], b = B[k]; if (!a && !b) return; if (!a) { out[k] = b; return; } if (!b) { out[k] = a; return; }
+      const o = { brand: a.brand || b.brand, name: a.name || b.name, cap: a.cap || b.cap, n: a.n || b.n || 1 }; if (o.cap && o.name && !o.name.toUpperCase().includes(o.cap)) o.name += ' ' + o.cap; out[k] = o; });
+    return out;
+  }
+  async function qcReadAll(file, onMsg, onPct) {   // → { P, src }
+    const cnv = await qcPrep(file), raw = await (async () => { const img = await createImageBitmap(file), sc = Math.min(1, 2400 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c; })();
+    let A = null, B = null;
+    try { const t = await qcPaddle(raw, onMsg); A = qcParse(t); } catch (e) { console.warn('paddle', e); }
+    if (!A || qcGaps(A)) { onMsg && onMsg(A ? '빈 칸 한 번 더 읽는 중…' : '주문서 읽는 중…'); try { B = qcParse(await qcTessText(cnv, onPct)); } catch (e) { if (!A) throw e; } }
+    return { P: A && B ? qcMerge(A, B) : (A || B), eng: A && B ? 'both' : A ? 'paddle' : 'tess' };
+  }
   async function qcRun(file) {
-    const V = S.qcv; V.step = 'ocr'; V.pct = 3; V.msg = '글자 인식 도구 준비 중… (처음 한 번은 조금 걸립니다)'; renderQc();
+    const V = S.qcv; V.step = 'ocr'; V.pct = 3; V.msg = '준비 중…'; renderQc();
     const upd = () => { const i = $('.qc-prog i'), m = $('#qcpm'); if (i) i.style.width = V.pct + '%'; if (m) m.textContent = V.msg; };
+    let tk = setInterval(() => { if (V.pct < 90) { V.pct += 2; upd(); } }, 700);
     try {
       let bar = '';   // v30.98 : 주문번호는 바코드부터 (글자보다 정확)
       try { V.msg = '바코드 찾는 중…'; upd(); bar = await qcBar(file); } catch (e) { }
-      await qcTess();
-      const w = await Tesseract.createWorker('eng', 1, Object.assign({ logger: m => { if (m.status === 'recognizing text') { V.pct = Math.round(15 + m.progress * 85); V.msg = '주문서 읽는 중… ' + V.pct + '%'; upd(); } else if (/load/.test(m.status || '')) { V.pct = Math.max(V.pct, 8); upd(); } } }, (window.__TESS && window.__TESS.opt) || {}));
-      const c = await qcPrep(file), r = await w.recognize(c); await w.terminate();
+      const R = await qcReadAll(file, m => { V.msg = m; upd(); }, p => { V.pct = Math.max(V.pct, Math.round(50 + p * 45)); upd(); });
+      clearInterval(tk);
       if (S.view !== 'qc') return;
-      V.raw = r.data.text; V.P = qcParse(r.data.text); V.res = {}; V.order = bar || V.P.order; V.src = bar ? 'bar' : V.order ? 'ocr' : '';
+      V.P = R.P || {}; V.eng = R.eng; V.res = {}; V.order = bar || V.P.order || ''; V.src = bar ? 'bar' : V.order ? 'ocr' : '';
       await qcFindWho(V); V.step = 'check'; renderQc();
-    } catch (e) { V.step = 'start'; renderQc(); toast(e.message || '주문서를 읽지 못했습니다', true); }
+    } catch (e) { clearInterval(tk); V.step = 'start'; renderQc(); toast(e.message || '주문서를 읽지 못했습니다', true); }
   }
   async function renderSmob() {
     const main = $('#main'), V = S.smv = { sel: {}, q: 1, tip: '', dups: [], own: false, off: false };
