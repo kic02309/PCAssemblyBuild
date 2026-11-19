@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.97';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.98';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18690,12 +18690,22 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     for (let i = 0; i < p.length; i += 4) { const v = (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) > 140 ? 255 : 0; p[i] = p[i + 1] = p[i + 2] = v; }
     g.putImageData(d, 0, 0); return c;
   }
+  // v30.98 : 제조사 이름 맞추기 — 글자가 조금 틀려도 가장 가까운 제조사로 (예: MIE → MSI)
+  const QC_BRANDS = ['AMD', 'Intel', 'ASUS', 'ASRock', 'MSI', 'GIGABYTE', 'BIOSTAR', 'NZXT', 'Samsung', 'SK hynix', 'Micron', 'Crucial', 'PATRIOT', 'TeamGroup', 'G.SKILL', 'Kingston', 'ADATA', 'XPG', 'Corsair', 'KLEVV', 'ESSENCORE', 'TWINMOS', 'GeIL', 'Netac', 'WD', 'Western Digital', 'SanDisk', 'Seagate', 'Lexar', 'Solidigm', 'Hanmi', 'Hikvision', 'Transcend', 'PNY', 'ZOTAC', 'GALAX', 'PALIT', 'INNO3D', 'EMTEK', 'MANLI', 'Sapphire', 'PowerColor', 'XFX', 'ASL', 'Seasonic', 'Antec', 'Thermaltake', 'Cooler Master', 'DeepCool', 'Lian Li', 'Fractal', 'be quiet!', 'Arctic', 'Noctua', '3RSYS', 'DAVEN', 'ABKO', 'Micronics', 'SuperFlower'];
+  const qcLev = (a, b) => { const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[m][n]; };
+  function qcBrand(x) {
+    const k = String(x || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (k.length < 2) return '';
+    let best = '', bd = 99;
+    QC_BRANDS.forEach(b => { const kb = b.toUpperCase().replace(/[^A-Z0-9]/g, ''), dd = qcLev(k, kb); if (dd < bd) { bd = dd; best = b; } });
+    const lim = k.length <= 3 ? 2 : Math.ceil(k.length / 3);
+    return bd === 0 || (bd <= lim && best[0].toUpperCase() === k[0]) ? best : '';
+  }
   const QC_MBW = /^(PRO(-[A-Z0-9]+)?|PRIME|TUF|GAMING|WIFI\d?|WiFi\d?|PLUS|AORUS|ELITE|EDGE|TOMAHAWK|MORTAR|STEEL|LEGEND|LIGHTNING|RIPTIDE|ROG|STRIX|MAX|AX|DS3H|UD|EAGLE|ICE|AERO|MASTER|STEALTH|CARBON|HERO|APEX|DARK|TOMAHAWK)$/;
   function qcParse(text) {
     const L = text.split('\n').map(x => x.trim()).filter(Boolean), blocks = []; let cur = null;
     const START = /[\[(]?[^\])\[(\s]{1,14}[\])]+\s*[\[(][^\])\[(]{1,14}[\])]/, CONT = /^[^\[(]*[\[(]?\s*\d+\s?(W|GB|TB)\s*[\])]/i;
     for (const ln of L) { if (START.test(ln) && !CONT.test(ln)) { cur = [ln]; blocks.push(cur); } else if (cur && cur.length < 3) cur.push(ln); }
-    const brandOf = t => (t.match(/[\[(]([A-Za-z][A-Za-z0-9 .&-]{1,14})[\])]/g) || []).map(x => x.slice(1, -1).trim()).find(x => /^[A-Z][A-Za-z]{2}/.test(x) && !/^(CPU|SSD|HDD)$/i.test(x) && !/GB|TB|W$/i.test(x)) || '';
+    const brandOf = t => { const L = (t.match(/[\[(]([A-Za-z][A-Za-z0-9 .&-]{1,14})[\])]/g) || []).map(x => x.slice(1, -1).trim()).filter(x => /^[A-Za-z]{2}/.test(x) && !/^(CPU|SSD|HDD)$/i.test(x) && !/GB|TB|\dW$/i.test(x)); for (const x of L) { const b = qcBrand(x); if (b) return b; } return ''; };
     const cap = t => { const m = t.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; };
     const out = { order: (text.match(/\b2\d{7}\b/) || [''])[0] };
     for (const bl of blocks) {
@@ -18721,6 +18731,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }
     return out;
   }
+  // v30.98 : 한 부품 줄만 가까이 찍은 사진 → 그 부품 값
+  function qcParseOne(text, k) {
+    const t = String(text || '').replace(/\s+/g, ' ').trim(); if (!t) return null;
+    const tag = { cpu: '[CPU]', mb: '[MB]', mem: '[RAM]', ssd: '[SSD]' }[k];
+    let br = ''; for (const w of (t.match(/[\[(]?[A-Za-z][A-Za-z0-9 .&!-]{1,14}[\])]?/g) || [])) { const b = qcBrand(w.replace(/[\[\]()]/g, '').trim()); if (b) { br = b; break; } }
+    const P = qcParse(`${tag} [${br || 'X'}] ${t}`), x = P[k];
+    const cap = (t.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i) || [])[0];
+    const cp = cap ? cap.replace(/[^\dGBTgbt]/g, '').toUpperCase() : '';
+    if (x) return { brand: br || (x.brand !== 'X' ? x.brand : ''), name: String(x.name || '').replace(/^(?:[a-z]{1,2}\s+)+/, ''), cap: x.cap || cp };
+    return { brand: br, name: '', cap: cp };
+  }
   async function renderQc() {
     const main = $('#main'), V = S.qcv = S.qcv || { step: 'start', hist: null };
     const today = S.today;
@@ -18739,22 +18760,25 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } else {
       const R = V.res = V.res || {}, P = V.P, ok = QC_ROWS.filter(([k]) => R[k]).length;
       const txt = k => { const x = P[k]; if (!x) return ''; return [x.brand, x.name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (x.n || 1) : ''); };
-      const warn = k => { const x = P[k]; if (!x) return '주문서에서 못 읽음 — 주문서 보고 확인'; if ((k === 'mem' || k === 'ssd') && !x.cap) return '용량을 못 읽음 — 주문서 보고 확인'; if (!x.brand) return '제조사를 못 읽음 — 주문서 보고 확인'; return ''; };
+      const warn = k => { const x = P[k]; if (!x) return '못 읽음 — 주문서 확인요망!'; if ((k === 'mem' || k === 'ssd') && !x.cap) return '용량 못 읽음 — 주문서 확인요망!'; if (!x.brand) return '제조사 못 읽음 — 주문서 확인요망!'; return ''; };
       const whoBox = V.who ? `<div class="qc-who">👤 <b>${esc(V.who.name)}</b><span>${esc(V.who.group || '')}</span><small>${V.who.auto ? '업무데이터에서 찾음' : '직접 선택'}</small>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" id="qcwho">바꾸기</button>' : ''}</div>`
-        : `<div class="pxmsg warn">${/^\d{8,9}$/.test(V.order || '') ? '업무데이터에서 이 주문번호를 입력한 조립자를 못 찾았습니다' : '주문번호를 입력하세요'}</div>${/^\d{8,9}$/.test(V.order || '') ? '<div class="qc-tools"><button type="button" id="qcwho">조립자 고르기</button></div>' : ''}`;
+        : V.ship ? '<div class="pxmsg info qc-ship"><b>제조 출고 주문건입니다.</b></div>'
+        : V.other ? `<div class="pxmsg info"><b>${esc(V.other.group)} 입력 주문입니다.</b> <small>(${esc(V.other.name)} · ${esc(dLabel(V.other.date))})</small></div>`
+        : /^\d{8,9}$/.test(V.order || '') ? `<div class="pxmsg warn">업무데이터에서 이 주문번호를 찾지 못했습니다.<br><b>번호가 잘못 읽혔을 수 있어요</b> — 위 칸에서 주문서 번호로 고친 뒤 [다시 찾기]를 누르세요.</div>${(V.near || []).length ? `<div class="qc-near"><small>혹시 이 주문인가요?</small>${V.near.map(x => `<button type="button" data-qn="${esc(x.order)}"><b>${esc(x.order)}</b> · ${esc(x.name)} <span>${esc(x.group)}</span></button>`).join('')}</div>` : ''}<div class="qc-tools"><button type="button" id="qcfind">🔍 다시 찾기</button><button type="button" id="qcwho">조립자 직접 고르기</button></div>`
+        : '<div class="pxmsg warn">주문번호를 입력하세요</div>';
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
-        <div class="pxcard"><div class="qc-lb">주문번호 · 조립자</div><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="주문번호">${whoBox}${block}</div>
+        <div class="pxcard"><div class="qc-lb">주문번호 · 조립자${V.src === 'bar' ? ' <span class="qc-src ok">바코드로 읽음 ✓</span>' : V.src === 'ocr' ? ' <span class="qc-src">글자로 읽음 — 주문서 번호와 같은지 확인</span>' : V.src === 'fix' ? ' <span class="qc-src ok">비슷한 번호로 고침 ✓</span>' : ''}</div><input class="qc-in${V.src === 'ocr' ? ' chk' : ''}" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="주문번호">${whoBox}${block}</div>
         <div class="pxcard"><div class="qc-lb">② 검수 체크 <small>CMOS와 같으면 체크</small><span class="r"><small>${ok}/4</small></span></div>
-        ${QC_ROWS.map(([k, t]) => `<button type="button" class="qc-ck ${R[k] ? 'ok' : ''}" data-qk="${k}"><span class="qc-box">${R[k] ? '✓' : ''}</span><span class="t"><small>${t}</small><b>${esc(txt(k) || '-')}</b>${warn(k) ? `<span>${esc(warn(k))}</span>` : ''}</span></button>`).join('')}
-        <div class="qc-tools"><button type="button" id="qcedit">✎ 직접 고치기</button><button type="button" id="qcre">📷 다시 찍기</button></div></div>
-        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 4 || !V.who || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>체크 ${ok}/4${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 저장</b></button></div></div>`;
+        ${QC_ROWS.map(([k, t]) => { const x = P[k] || {}, wn = warn(k), ed = V.edit === k; return `<div class="qc-ck ${R[k] ? 'ok' : ''}${wn ? ' bad' : ''}"><span class="i"><span class="l1"><span class="c">${t}</span><span class="b">${esc(x.brand || '제조사 ?')}</span><span class="q">× ${k === 'mem' || k === 'ssd' ? (x.n || 1) : 1}</span></span><span class="m" title="${esc(x.name || '')}">${esc(x.name || '제품명 ?')}</span>${wn ? `<em>${esc(wn)}</em>` : ''}${V.lineBusy === k ? '<span class="qc-busy">📷 이 줄 읽는 중…</span>' : wn && !ed ? `<span class="qc-fix"><label class="qc-fb">📷 이 줄 다시 찍기<input type="file" accept="image/*" capture="environment" data-qr="${k}" hidden></label><button type="button" class="qc-fb" data-qe="${k}">✎ 직접 입력</button></span>` : ''}${ed ? `<span class="qc-ed"><span class="r1"><input data-eb value="${esc(x.brand || '')}" placeholder="제조사"><input data-ec type="number" min="1" value="${x.n || 1}" ${k === 'mem' || k === 'ssd' ? '' : 'disabled'} title="수량"></span><input data-en value="${esc(x.name || '')}" placeholder="제품명 · 용량 (예: Optimus 5100 500GB)"><span class="r2"><button type="button" class="qc-fb" data-qx>취소</button><button type="button" class="qc-fb on" data-qs="${k}">적용</button></span></span>` : ''}</span><button type="button" class="qc-ok" data-qk="${k}">${R[k] ? '확인 ✓' : '확인'}</button></div>`; }).join('')}
+        <div class="qc-tools"><button type="button" id="qcre">📷 주문서 전체 다시 찍기</button></div></div>
+        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 4 || !V.who || V.self || V.other && !V.who || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>체크 ${ok}/4${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 저장</b></button></div></div>`;
     }
     bindQc();
   }
   async function qcFindWho(V) {
-    V.who = null; V.self = false; V.done = null; V.cands = []; if (!/^\d{8,9}$/.test(V.order || '')) return;
-    try { const r = await api('qc', { op: 'find', order: V.order }); V.cands = (r.rows || []).filter(x => x.id !== S.me.id || (r.rows || []).length === 1); V.done = r.done || null; if (V.cands.length) V.who = Object.assign({ auto: true }, V.cands[0]); V.self = !!(V.who && V.who.id === S.me.id); } catch (e) { }
+    V.who = null; V.self = false; V.done = null; V.other = null; V.ship = false; V.near = []; V.cands = []; V.focused = 0; if (!/^\d{8,9}$/.test(V.order || '')) return;
+    try { const r = await api('qc', { op: 'find', order: V.order }); V.cands = (r.rows || []).filter(x => x.id !== S.me.id || (r.rows || []).length === 1); V.done = r.done || null; V.other = r.other || null; V.ship = !!r.ship; if (!V.cands.length && !V.ship) { try { V.near = (await api('qc', { op: 'near', order: V.order })).rows || []; } catch (e) { } } if (V.cands.length) V.who = Object.assign({ auto: true }, V.cands[0]); V.self = !!(V.who && V.who.id === S.me.id); } catch (e) { }
   }
   async function qcPickWho(V) {
     let A = V.cands && V.cands.length > 1 ? V.cands.map(x => ({ id: x.id, name: x.name, group: x.group })) : null;
@@ -18772,15 +18796,23 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
     if ($('#qcre')) $('#qcre').onclick = () => { V.step = 'start'; renderQc(); };
     const q = $('#qcq'); if (q) { let tm = 0; q.oninput = () => { clearTimeout(tm); tm = setTimeout(async () => { V.q = q.value.replace(/\D/g, ''); if (V.q.length < 4) { V.qr = null; } else { try { V.qr = (await api('qc', { op: 'list', order: V.q })).rows || []; } catch (e) { V.qr = []; } } const pos = q.selectionStart; renderQc(); const q2 = $('#qcq'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) { } } }, 400); }; }
-    $$('[data-qk]').forEach(x => x.onclick = () => { const k = x.dataset.qk; V.res[k] = V.res[k] ? undefined : 'ok'; renderQc(); });
-    const o = $('#qco'); if (o) o.onchange = async () => { V.order = C.normOrder(o.value); await qcFindWho(V); renderQc(); };
+    $$('[data-qk]').forEach(x => x.onclick = () => { const k = x.dataset.qk; V.res[k] = V.res[k] ? undefined : 'ok'; renderQc(); });   // [확인] 버튼
+    const o = $('#qco'); if (o) o.onchange = async () => { V.order = C.normOrder(o.value); V.src = ''; await qcFindWho(V); renderQc(); };
     if ($('#qcwho')) $('#qcwho').onclick = () => qcPickWho(V);
-    if ($('#qcedit')) $('#qcedit').onclick = () => {
-      modal(`<h3>읽은 값 고치기</h3>${QC_ROWS.map(([k, t]) => { const x = V.P[k] || {}; return `<div class="fld"><label>${t}</label><div class="row" style="gap:6px"><input data-eb="${k}" value="${esc(x.brand || '')}" placeholder="제조사" style="width:34%"><input data-en="${k}" value="${esc(x.name || '')}" placeholder="제품명 · 용량" style="flex:1">${k === 'mem' || k === 'ssd' ? `<input data-ec="${k}" type="number" min="1" value="${x.n || 1}" style="width:56px" title="수량">` : ''}</div></div>`; }).join('')}<div class="acts"><button data-c>취소</button><button class="primary" data-s>적용</button></div>`, (bg, close) => {
-        $('[data-c]', bg).onclick = close;
-        $('[data-s]', bg).onclick = () => { QC_ROWS.forEach(([k]) => { const br = $(`[data-eb="${k}"]`, bg).value.trim(), nm = $(`[data-en="${k}"]`, bg).value.trim(), c = $(`[data-ec="${k}"]`, bg); V.P[k] = br || nm ? { brand: br, name: nm, cap: (nm.match(/\d+\s?(GB|TB)/i) || [''])[0], n: c ? Math.max(1, +c.value || 1) : 1 } : null; }); close(); renderQc(); };
-      });
-    };
+    if ($('#qcfind')) $('#qcfind').onclick = async () => { V.order = C.normOrder($('#qco').value); V.src = ''; await qcFindWho(V); renderQc(); };
+    $$('[data-qn]').forEach(b => b.onclick = async () => { V.order = b.dataset.qn; V.src = 'fix'; await qcFindWho(V); renderQc(); });
+    if ($('#qcfind') && $('#qco') && !V.focused) { V.focused = 1; setTimeout(() => { const o2 = $('#qco'); if (o2) { o2.focus(); o2.select(); } }, 60); }
+    // v30.98 : 빨간 줄만 — 그 줄 가까이 다시 찍기 / 2줄 칸에 직접 입력
+    $$('[data-qe]').forEach(b => b.onclick = () => { V.edit = b.dataset.qe; renderQc(); setTimeout(() => { const i = $('.qc-ed [data-en]'); if (i) i.focus(); }, 50); });
+    $$('[data-qx]').forEach(b => b.onclick = () => { V.edit = ''; renderQc(); });
+    $$('[data-qs]').forEach(b => b.onclick = () => { const k = b.dataset.qs, box = b.closest('.qc-ed'), br = $('[data-eb]', box).value.trim(), nm = $('[data-en]', box).value.trim(), c = $('[data-ec]', box); V.P[k] = br || nm ? { brand: qcBrand(br) || br, name: nm, cap: (nm.match(/\d+\s?(GB|TB)/i) || [''])[0], n: Math.max(1, +(c && c.value) || 1) } : null; V.edit = ''; renderQc(); });
+    $$('[data-qr]').forEach(f => f.onchange = async e => { const file = e.target.files[0], k = f.dataset.qr; if (!file) return; V.lineBusy = k; renderQc();
+      try { await qcTess(); const w = await Tesseract.createWorker('eng', 1, (window.__TESS && window.__TESS.opt) || {}); const c = await qcPrep(file), r = await w.recognize(c); await w.terminate();
+        const y = qcParseOne(r.data.text, k), o = V.P[k] || {};
+        if (y && (y.brand || y.name || y.cap)) { V.P[k] = { brand: y.brand || o.brand || '', name: y.name || o.name || '', cap: y.cap || o.cap || '', n: o.n || 1 }; if (y.cap && V.P[k].name && !V.P[k].name.includes(y.cap)) V.P[k].name += ' ' + y.cap; toast('다시 읽었습니다 — 내용을 확인하세요'); }
+        else toast('이 줄을 읽지 못했습니다 — [✎ 직접 입력]으로 적어 주세요', true);
+      } catch (er) { toast(er.message || '읽지 못했습니다', true); }
+      V.lineBusy = ''; if (S.view === 'qc') renderQc(); });
     if ($('#qcs')) $('#qcs').onclick = async () => {
       if (S.mpv || S.pv) return toast('미리보기에서는 저장되지 않습니다', true);
       const items = QC_ROWS.map(([k, t]) => ({ k, t, v: V.P[k] ? [V.P[k].brand, V.P[k].name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (V.P[k].n || 1) : '') : '' }));
@@ -18870,15 +18902,28 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       });
     }
   }
+  function qcZx() {
+    if (window.ZXingWASM) return Promise.resolve();
+    return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = (window.__ZX && window.__ZX.js) || 'https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.7/dist/iife/reader/index.js'; sc.onload = ok; sc.onerror = () => no(new Error('바코드 도구를 불러오지 못했습니다')); document.head.appendChild(sc); });
+  }
+  async function qcBar(file) {   // 주문서 바코드 (예: 1 29087241 0000) → 주문번호
+    await qcZx();
+    if (window.__ZX && window.__ZX.wasm && !qcBar.ov) { qcBar.ov = 1; ZXingWASM.setZXingModuleOverrides({ locateFile: (p, pre) => p.endsWith('.wasm') ? window.__ZX.wasm : pre + p }); }
+    const R = await ZXingWASM.readBarcodes(file, { formats: ['EAN-13', 'EAN-8', 'Code128', 'Code39', 'ITF', 'UPC-A'], tryHarder: true, maxNumberOfSymbols: 4 });
+    for (const r of R || []) { const t = String(r.text || '').replace(/\D/g, ''), m = t.match(/2\d{7}/) || t.match(/1\d{8}/); if (m) return m[0]; }
+    return '';
+  }
   async function qcRun(file) {
     const V = S.qcv; V.step = 'ocr'; V.pct = 3; V.msg = '글자 인식 도구 준비 중… (처음 한 번은 조금 걸립니다)'; renderQc();
     const upd = () => { const i = $('.qc-prog i'), m = $('#qcpm'); if (i) i.style.width = V.pct + '%'; if (m) m.textContent = V.msg; };
     try {
+      let bar = '';   // v30.98 : 주문번호는 바코드부터 (글자보다 정확)
+      try { V.msg = '바코드 찾는 중…'; upd(); bar = await qcBar(file); } catch (e) { }
       await qcTess();
       const w = await Tesseract.createWorker('eng', 1, Object.assign({ logger: m => { if (m.status === 'recognizing text') { V.pct = Math.round(15 + m.progress * 85); V.msg = '주문서 읽는 중… ' + V.pct + '%'; upd(); } else if (/load/.test(m.status || '')) { V.pct = Math.max(V.pct, 8); upd(); } } }, (window.__TESS && window.__TESS.opt) || {}));
       const c = await qcPrep(file), r = await w.recognize(c); await w.terminate();
       if (S.view !== 'qc') return;
-      V.raw = r.data.text; V.P = qcParse(r.data.text); V.res = {}; V.order = V.P.order;
+      V.raw = r.data.text; V.P = qcParse(r.data.text); V.res = {}; V.order = bar || V.P.order; V.src = bar ? 'bar' : V.order ? 'ocr' : '';
       await qcFindWho(V); V.step = 'check'; renderQc();
     } catch (e) { V.step = 'start'; renderQc(); toast(e.message || '주문서를 읽지 못했습니다', true); }
   }
@@ -20893,6 +20938,19 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .qr table.list td,.qr table.list th{padding:7px 8px}#main .qr table.list td.l,#main .qr table.list th.l{text-align:left!important}.qr .qr-pr{display:flex;align-items:center;gap:8px}.qr .qr-pr .qr-bar{flex:1;margin:0}.qr .qr-pr em{font-style:normal;font-weight:800;color:#1e7a3c;min-width:38px;text-align:right}.qr .qr-pr em.z{color:#c62828}
 .qr .okt,.okt{color:#1e7a3c;font-weight:800}.ngt{color:#c62828;font-weight:800}.qr .qr-log{max-height:420px;overflow:auto}
 .mfh .qf-all{margin:0 12px;font-size:13px}
+.pmx .qc-ck{display:flex!important;align-items:center;gap:10px}.pmx .qc-ck .i{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.pmx .qc-ck .l1{display:flex;align-items:center;gap:8px}.pmx .qc-ck .l1 .q{margin-left:auto;font-size:12.5px;color:#64748b;font-weight:800}
+.pmx .qc-ck .c{display:inline-block;font-size:11.5px!important;padding:2px 8px;border-radius:6px;background:#e8eefb}.pmx .qc-ck .m{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14.5px!important;font-weight:700!important}.pmx .qc-ck em{font-style:normal;font-size:12.5px;color:#dc2626;font-weight:800}
+.pmx .qc-near{display:flex;flex-direction:column;gap:6px;margin-top:8px}.pmx .qc-near small{color:#64748b;font-weight:700}.pmx .qc-near button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #c7d2fe;background:#eef2ff;font-size:14px}.pmx .qc-near button b{color:#4f46e5;font-size:16px}.pmx .qc-near button span{color:#64748b;font-size:12px}
+.pmx .qc-ship b{font-size:15px}
+.pmx .qc-ck .qc-fix{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.pmx .qc-fb{height:34px;padding:0 12px!important;border-radius:9px;border:1px solid #c7d2fe!important;background:#eef2ff!important;color:#4338ca;font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;cursor:pointer}.pmx .qc-fb.on{background:#4f46e5!important;color:#fff;border-color:#4f46e5!important}
+.pmx .qc-busy{font-size:12.5px;color:#4338ca;font-weight:800;margin-top:4px}
+.pmx .qc-ed{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed #c7d2fe}.pmx .qc-ed input{height:42px;border:1px solid #c3cde3;border-radius:10px;padding:0 10px;font-size:15px;width:100%;min-width:0}.pmx .qc-ed .r1{display:grid;grid-template-columns:1fr 72px;gap:6px}.pmx .qc-ed .r2{display:flex;gap:6px;justify-content:flex-end}
+.pmx .qc-ck{cursor:default}.pmx .qc-ok{cursor:pointer}
+.pmx .qc-ok{flex:0 0 auto;min-width:68px;height:44px;border-radius:12px;border:2px solid #c7d2fe;background:#fff;color:#4f46e5;font-size:15px;font-weight:800;display:grid;place-items:center;transition:.12s}.pmx .qc-ck.ok .qc-ok{background:#4f46e5;border-color:#4f46e5;color:#fff;box-shadow:0 3px 10px rgba(79,70,229,.35)}.pmx .qc-ck.ok{background:#f5f7ff!important}
+.pmx .qc-th{font-size:11px;font-weight:700;color:#94a3b8;padding:0 2px 4px;border-bottom:1px solid #eef1f7}.pmx .qc-th span:nth-child(4),.pmx .qc-th span:nth-child(5){text-align:center}
+.pmx .qc-ck .c{font-size:12.5px;font-weight:800;color:#2c4a86}.pmx .qc-ck .b{font-size:13px;font-weight:800;color:#0f172a;word-break:break-all}.pmx .qc-ck .m{font-size:13.5px;font-weight:600;color:#1f2937;word-break:break-all;line-height:1.3}.pmx .qc-ck .m em{display:block;font-style:normal;font-size:11.5px;color:#b45309;font-weight:500;margin-top:2px}.pmx .qc-ck .q{text-align:center;font-weight:800}
+.pmx .qc-ck.ok .b,.pmx .qc-ck.ok .m{color:#4f46e5}.pmx .qc-ck .qc-box{justify-self:end}.pmx .qc-ck.ok .qc-box{background:#4f46e5!important;border-color:#4f46e5!important}
+.pmx .qc-src{font-size:11.5px;font-weight:700;color:#b45309;margin-left:4px}.pmx .qc-src.ok{color:#15803d}.pmx .qc-in.chk{border:2px solid #f59e0b;background:#fffbeb}
 @media (max-width:700px){#pvb{display:none!important}}   /* v30.97 : 휴대폰에서는 직급 보기 숨김 */
 .mtbar .mtgs{display:flex;flex-wrap:wrap;gap:8px}.mtbar .mtg{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1px solid #f3c9c9;border-left:4px solid var(--gc);background:#fff5f5;font-size:13.5px;cursor:pointer}.mtbar .mtg b{color:#c62828;font-size:16px}.mtbar .mtg i{font-style:normal;font-size:10px;color:var(--sub)}.mtbar .mtg.on{background:#fde8e8;outline:2px solid #e57373}
 .mtbar .mtgn{flex-basis:100%;display:flex;flex-direction:column;gap:6px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.mtbar .mtgn>span{display:flex;flex-wrap:wrap;gap:6px}
