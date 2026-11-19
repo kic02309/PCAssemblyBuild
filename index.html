@@ -8582,7 +8582,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.81';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.82';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9205,7 +9205,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       canSp() && ['sp', 'sp', spTitle(), IC.spi],   // v29.57 : 소모품 관리 (조직도 밑)
       m.acc && ['acc', 'acc', ordered ? '사고 현황' : m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>'],
       m.hr && ['hr', 'hr', '데이터 마감', IC.hr],
-      canSettings() && ['adm', canHub() ? 'admin' : 'settings', '운영 설정', IC.gear]
+      canSettings() && (ADM_MENU().filter(x => x[2]).map(x => x[0]).join() === 'stats' ? ['adm', 'stats', '통계', IC.chart] : ['adm', canHub() ? 'admin' : 'settings', '운영 설정', IC.gear])   // v30.82 : 통계 권한만 있으면 메뉴 이름 = 통계
     ].filter(Boolean);
     if (!ordered) return items;
     const order = ['work', 'mgr', 'acc', 'leave', 'prod', 'video', 'education', 'org', 'sp', 'hr', 'adm'];
