@@ -720,7 +720,9 @@ html[data-theme=dark] .hrw table.score .dq{background:#2d3a55;color:#9dbbff}
 .ovk.red{border-color:#f0c4c4;background:#fff7f7}.ovk.red b{color:#c62828}.ovk.amber{border-color:#f1d9a8;background:#fffaf0}.ovk.amber b{color:#a15c00}
 .ovcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:10px;margin-bottom:12px}
 .ovc{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel,#fff);text-align:left;cursor:pointer}
-.ovc{color:var(--ink)!important}.ovc:hover{border-color:#aab4c3}.ovc.iss{border-left:4px solid #c62828}
+.ovc{color:var(--ink)!important;border-left:4px solid var(--ovg,#cfd6e0)!important}.ovc:hover{border-color:#aab4c3}.ovi{font-style:normal;font-size:11.5px;font-weight:700;color:#c62828;background:#fdecec;border:1px solid #f0c4c4;border-radius:999px;padding:1px 8px}
+.ovl-sum{display:flex;flex-wrap:wrap;gap:12px;margin:-4px 0 10px;font-size:13px}.ovl-w{max-height:62vh;overflow:auto;border:1px solid var(--line);border-radius:8px}.ovl-t{width:100%}.ovl-t td,.ovl-t th{padding:7px 12px;text-align:center}.ovl-t .l{text-align:left}.ovl-gh td{background:#f3f5f8;text-align:left!important;font-weight:700;border-top:2px solid var(--line)}.ovl-d{margin:2px 2px 2px 0}
+.grp-n{display:inline-block;margin-left:6px;padding:0 7px;border-radius:999px;background:#e8f0fc;color:#1f5fbf;font-size:11px;font-weight:700;vertical-align:1px}
 .ovch{display:flex;align-items:center;gap:10px}.ovch b{font-size:15px}.ovch span{font-size:12.5px}
 .ovcb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ovcb>div{background:#f7f8fa;border-radius:8px;padding:8px 10px}
 .ovcb small{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:4px}.ovcb p{display:flex;justify-content:space-between;gap:6px;margin:3px 0;font-size:12.5px;line-height:1.45;color:var(--sub)}.ovcb p b{font-size:13px;color:var(--ink);white-space:nowrap}.ovcb p span{white-space:nowrap}.ovct{border-top:1px dashed var(--line);padding-top:7px}.ovct small{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:3px}.ovct p{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12.5px}.ovct .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}.ovct .mgbar{width:70px;flex:none}.ovct em{font-style:normal;color:var(--sub);width:34px;text-align:right}.ovct b{width:96px;text-align:right;font-size:12px;color:var(--sub)}.ovct b.t-lo{color:#c62828}.ovct b.soon{color:#a15c00}.ovct p.more{color:var(--sub);font-size:12px}.ovcb p b.t-lo{color:#c62828}
@@ -8599,7 +8601,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.83';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.84';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -12186,6 +12188,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const mgScope = () => (S.me.mg || []).length ? S.me.mg : S.me.role === '관리자' ? mgAllG() : [];
   const mgCanEditFb = g => !isRO() && !S.pv && (S.me.role === '관리자' || (S.me.mg || []).includes(g));
   const mgFbOf = (uid, d) => ((S.mgD || {}).fb || []).find(f => f.userId === uid && f.date === d);
+  // v30.84 : 같은 내용 기록은 한 줄로 (날짜 칸만 늘어남) — 월간·주간계획 · 영상업무 공통
+  const sameTxt = t => String(t || '').replace(/\s+/g, ' ').trim();
+  const dayList = (a, b) => { const L = []; let d = a; for (let i = 0; d && d <= (b || a) && i < 400; i++) { L.push(d); d = C.addDays(d, 1); } return L; };
+  function groupRecs(recs, txt, from, to) {
+    const M = new Map();
+    recs.forEach(r => { const k = sameTxt(txt(r)); let g = M.get(k); if (!g) M.set(k, g = { text: txt(r), recs: [], days: new Set() }); g.recs.push(r); dayList(from(r), to(r)).forEach(d => g.days.add(d)); });
+    return [...M.values()].map(g => { const ds = [...g.days].sort(); g.first = ds[0]; g.last = ds[ds.length - 1]; g.latest = g.recs.slice().sort((a, b) => (from(b) || '').localeCompare(from(a) || '') || (+b.id || 0) - (+a.id || 0))[0]; g.byDay = d => g.recs.find(r => d >= from(r) && d <= (to(r) || from(r))); return g; }).sort((a, b) => a.first.localeCompare(b.first));
+  }
+  const grpTag = g => g.recs.length > 1 ? `<span class="grp-n" title="같은 내용 ${g.recs.length}번 기록">${g.recs.length}일</span>` : '';
   // v30.78 : 면담 = 기록 창 '면담 내용' 10자 이상(그날 1회) + 예전 면담관리 '실시' · 귀속월 2회 · 마지막 면담 후 12일 곧 · 15일 필요
   const MT_CFG = () => Object.assign({ per: 2, gap: 15, soon: 12 }, ((S.mgD || {}).talkCfg) || {});
   const mtCnt = s => String(s || '').replace(/\s/g, '').length;
@@ -12632,7 +12643,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const talks = (D.fb || []).filter(f => f.owner === r.o.id && inRange(f.date) && mtCnt(f.talk) >= 10).length + r.meet.filter(e => e.result === '실시').length;
       const last = [...(D.logs || []).filter(l => (D.tasks || []).some(t => t.owner === r.o.id && String(t.id) === String(l.task))).map(l => l.date), ...(D.fb || []).filter(f => f.owner === r.o.id).map(f => f.date), ...(D.events || []).filter(e => e.owner === r.o.id && e.date <= S.today).map(e => e.date)].sort().pop() || '';
       const score = r.todo.length * 3 + need + r.late.length * 2, red = n => n ? ` class="t-lo"` : '';
-      return { score, html: `<button class="ovc${score ? ' iss' : ''}" data-ovperson="${esc(r.o.id)}"><div class="ovch"><b>${esc(r.o.name)}</b><span>${(r.o.mg || []).map(g => gdot(g)).join(' ') || '<span class="muted">담당 그룹 없음</span>'}</span></div>
+      return { score, html: `<button class="ovc" style="--ovg:${gcol((r.o.mg || [])[0] || '')}" data-ovperson="${esc(r.o.id)}"><div class="ovch"><b>${esc(r.o.name)}</b>${score ? `<em class="ovi">확인 필요 ${r.todo.length + need + r.late.length}</em>` : ''}<span>${(r.o.mg || []).map(g => gdot(g)).join(' ') || '<span class="muted">담당 그룹 없음</span>'}</span></div>
         <div class="ovcb"><div><small>파트원 관리</small><p><span>미달</span><b>${r.M.length}건</b></p><p><span>피드백 미작성</span><b${red(r.todo.length)}>${r.todo.length}건</b></p><p><span>면담 완료</span><b>${done} / ${mem.length}명</b></p><p><span>면담 필요</span><b${red(need)}>${need}명</b></p></div>
         <div><small>업무</small><p><span>진행 중</span><b>${act.length}건</b></p><p><span>기한 지남</span><b${red(r.late.length)}>${r.late.length}건</b></p><p><span>이번 주 마감</span><b>${wk}건</b></p><p><span>평균 진행률</span><b>${avg == null ? '-' : avg + '%'}</b></p></div>
         <div><small>활동</small><p><span>교육</span><b>${r.edu.length}건</b></p><p><span>면담 기록</span><b>${talks}건</b></p><p><span>마지막 기록</span><b${!last || dGap(last, S.today) > 7 ? ' class="t-lo"' : ''}>${last ? dLabel(last) : '없음'}</b></p></div></div><div class="ovct"><small>지금 하고 있는 업무</small>${act.length ? act.slice().sort((x, y) => mgEnd(x).localeCompare(mgEnd(y))).slice(0, 3).map(t => { const lt = mgEnd(t) < ref, dd = dGap(ref, mgEnd(t)); return `<p><span class="tt">${esc(t.title)}</span><span class="mgbar"><i style="width:${+t.progress || 0}%"></i></span><em>${+t.progress || 0}%</em><b class="${lt ? 't-lo' : dd <= 2 ? 'soon' : ''}">${lt ? '기한 ' + (-dd) + '일 지남' : dd === 0 ? '오늘 마감' : 'D-' + dd}</b></p>`; }).join('') + (act.length > 3 ? `<p class="more">+ ${act.length - 3}건 더</p>` : '') : '<p class="muted">진행 중인 업무 없음</p>'}</div></button>` }; };
@@ -12662,13 +12673,38 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-ovperson]',box).forEach(b => b.onclick = () => { q.owner = b.dataset.ovperson; redraw(); });
     $$('[data-ovsection]',box).forEach(b => b.onclick = () => $('#ov-' + b.dataset.ovsection,box)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     $$('[data-ovsec]',box).forEach(b => b.onclick = () => { v.ovSec = b.dataset.ovsec; redraw(); });
-    $$('[data-ovk]',box).forEach(b => b.onclick = () => { const k = b.dataset.ovk; if (k === 'need') return mgKList('면담 필요', '마지막 면담 ' + MT_CFG().gap + '일 이상 · 기록 없음', needAll.map(x => ({ a: x.name, b: x.group, c: mgTalk(x.u.id, x.name).txt, go: () => mgFbOpen(x.u.id, S.today) }))); if (k === 'todo') return mgKList('피드백 미작성', '미달성 기록', todo.map(r => ({ a: r.x.name, b: r.x.group, c: dLabel(r.d), go: () => mgFbOpen(r.x.u.id, r.d) }))); v.ovSec = k === 'late' ? 'tasks' : k; redraw(); });
+    $$('[data-ovk]',box).forEach(b => b.onclick = () => { const k = b.dataset.ovk; if (k === 'need') return ovNeedList(needAll); if (k === 'todo') return ovTodoList(todo); if (k === 'late') return ovLateList(late, ref); v.ovSec = k; redraw(); });
     $$('[data-ovtask]',box).forEach(b => b.onclick = () => planForm(b.dataset.ovtask));
     $$('[data-ovlog]',box).forEach(b => b.onclick = () => planLog(b.dataset.ovlog));
     $$('[data-ovevent]',box).forEach(b => b.onclick = () => mgEvent(b.dataset.ovevent));
     $$('[data-ovfb]',box).forEach(b => b.onclick = () => { const [u,d] = b.dataset.ovfb.split('|'); mgFbOpen(u,d); });
     $$('[data-ovcal]',box).forEach(b => b.onclick = () => { const e = schedules.find(e => String(e.id) === b.dataset.ovcal); if (!e) return; v.c = { view:'m', cur:e.d, sel:e.d, ev:e.id, list:false, off:[], grp:'전체', mine:false }; v.tab='cal'; drawMgr(); });
     $('#ovdaily',box).onclick = () => go('dash',{ date });
+  }
+  // v30.84 : 현황 목록 창 — 그룹별 묶음
+  const ovGroups = A => [...new Set(A)].sort((a, b) => (mgAllG().indexOf(a) + 1 || 99) - (mgAllG().indexOf(b) + 1 || 99));
+  function ovListModal(title, sub, sumHtml, bodyHtml, bind) {
+    modal(`<h3>${esc(title)} <small class="muted">${esc(sub)}</small></h3>${sumHtml ? `<div class="ovl-sum">${sumHtml}</div>` : ''}<div class="ovl-w">${bodyHtml || '<div class="muted" style="padding:20px">없습니다</div>'}</div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => { $('[data-c]', bg).onclick = close; bind(bg, close); }, 'wide');
+  }
+  function ovNeedList(L) {
+    const G = ovGroups(L.map(x => x.group)), T = new Map(L.map(x => [x.u.id, mgTalk(x.u.id, x.name)]));
+    const ord = x => { const t = T.get(x.u.id); return t.gap == null ? 9999 : t.gap; };
+    ovListModal('면담 필요', `마지막 면담 ${MT_CFG().gap}일 이상 · 기록 없음 · ${L.length}명`, G.map(g => `<span>${gdot(g)} <b>${L.filter(x => x.group === g).length}</b></span>`).join(''),
+      `<table class="list ovl-t"><thead><tr><th class="l">이름</th><th>이번 귀속월</th><th>마지막 면담</th><th>지난 날</th></tr></thead><tbody>${G.map(g => `<tr class="ovl-gh"><td colspan="4">${gdot(g)} · ${L.filter(x => x.group === g).length}명</td></tr>` + L.filter(x => x.group === g).sort((a, b) => ord(b) - ord(a)).map(x => { const t = T.get(x.u.id); return `<tr class="click" data-ovn="${esc(x.u.id)}"><td class="l"><b>${esc(x.name)}</b></td><td>${t.cnt}/${t.per}</td><td>${t.last ? dLabel(t.last) : '<span class="muted">없음</span>'}</td><td class="${t.gap == null || t.gap >= MT_CFG().gap ? 't-lo' : ''}">${t.gap == null ? '기록 없음' : t.gap + '일'}</td></tr>`; }).join('')).join('')}</tbody></table>`,
+      (bg, close) => $$('[data-ovn]', bg).forEach(b => (b.onclick = () => { close(); mgFbOpen(b.dataset.ovn, S.today); })));
+  }
+  function ovTodoList(rows) {
+    const P = new Map(); rows.forEach(r => { let o = P.get(r.x.u.id); if (!o) P.set(r.x.u.id, o = { x: r.x, d: [] }); o.d.push(r.d); });
+    const L = [...P.values()], G = ovGroups(L.map(o => o.x.group));
+    ovListModal('피드백 미작성', `미달성 기록 중 미작성 · ${rows.length}건 · ${L.length}명`, G.map(g => `<span>${gdot(g)} <b>${L.filter(o => o.x.group === g).reduce((a, o) => a + o.d.length, 0)}</b>건</span>`).join(''),
+      `<table class="list ovl-t"><thead><tr><th class="l">이름</th><th>건수</th><th class="l">날짜 (누르면 기록 창)</th></tr></thead><tbody>${G.map(g => `<tr class="ovl-gh"><td colspan="3">${gdot(g)} · ${L.filter(o => o.x.group === g).length}명 · ${L.filter(o => o.x.group === g).reduce((a, o) => a + o.d.length, 0)}건</td></tr>` + L.filter(o => o.x.group === g).sort((a, b) => b.d.length - a.d.length).map(o => `<tr><td class="l"><b>${esc(o.x.name)}</b></td><td><b class="${o.d.length >= 3 ? 't-lo' : ''}">${o.d.length}</b></td><td class="l">${o.d.sort().map(d => `<button class="sm ovl-d" data-ovt="${esc(o.x.u.id)}|${d}">${dLabel(d)}</button>`).join(' ')}</td></tr>`).join('')).join('')}</tbody></table>`,
+      (bg, close) => $$('[data-ovt]', bg).forEach(b => (b.onclick = () => { const [u, d] = b.dataset.ovt.split('|'); close(); mgFbOpen(u, d); })));
+  }
+  function ovLateList(T, ref) {
+    const O = ovGroups([]), L = T.slice().sort((a, b) => mgEnd(a).localeCompare(mgEnd(b)));
+    ovListModal('기한 지난 업무', `${ref} 기준 미완료 · ${L.length}건`, '',
+      L.length ? `<table class="list ovl-t"><thead><tr><th class="l">업무</th><th>담당 매니저</th><th>마감일</th><th>지난 날</th><th>진행률</th></tr></thead><tbody>${L.map(t => `<tr class="click" data-ovlt="${t.id}"><td class="l"><b>${esc(t.title)}</b></td><td>${esc(mgName(t.owner))}</td><td>${dLabel(mgEnd(t))}</td><td class="t-lo">${dGap(mgEnd(t), ref)}일</td><td>${+t.progress || 0}%</td></tr>`).join('')}</tbody></table>` : '',
+      (bg, close) => $$('[data-ovlt]', bg).forEach(b => (b.onclick = () => { close(); planForm(b.dataset.ovlt); })));
   }
   // ---------- 화면
   async function renderMgr(opt) {
@@ -13187,15 +13223,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     // v30.72: Show only that day's permitted work logs. The title and schedule are already in the table.
     const plHover = (t, d) => {
       if (!t.full) return '상세 비공개';
-      const records = lgs(t.id).filter(l => l.date === d);
+      const records = lgs(t.id).filter(l => d >= l.date && d <= (l.end || l.date));
       if (!records.length) return '등록된 작업 없음';
       return records.slice(0, 8).map(l => l.text).concat(records.length > 8 ? ['그 외 ' + (records.length - 8) + '건'] : []).join('\n');
     };
     const pcell = (t, d, ld) => { const e = plEnd(t), st = plSt(t)[1], inb = d >= t.start && d <= e, ext = t.delayPlan && t.delayPlan > t.due && d > t.due && d <= e;
       return `<td class="d pc${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}"${inb ? ` title="${esc(dLabel(d) + '\n' + plHover(t, d))}"` : ''}>${inb ? `<i class="pbr ${st}${ext ? ' x' : ''}${d === t.start || d === R.from ? ' s' : ''}${d === e || d === R.to ? ' e' : ''}${d === t.start ? ' ps' : ''}${d === e ? ' pe' : ''}"></i>` : ''}${ld.has(d) ? '<b class="pdt">●</b>' : ''}</td>`; };
-    const rows = T.map(t => { const L = t.full ? lgs(t.id) : [], ld = new Set(L.map(l => l.date)), [stx, stc] = plSt(t), op = t.full && isOpen(t.id), editable = !isRO() && !S.pv && t.owner === S.me.id, ext = t.delayPlan && t.delayPlan > t.due;
+    const rows = T.map(t => { const L = t.full ? lgs(t.id) : [], ld = new Set(L.flatMap(l => dayList(l.date, l.end || l.date))), [stx, stc] = plSt(t), op = t.full && isOpen(t.id), editable = !isRO() && !S.pv && t.owner === S.me.id, ext = t.delayPlan && t.delayPlan > t.due;
       return `<tr class="pj"><td class="f f0">${sh(t.start)}</td><td class="f f1">${sh(plEnd(t))}${ext ? '<span class="plex">연장</span>' : ''}</td><td class="f f2 lk" data-plt="${t.id}"><div class="wtt2">${t.full ? `<span class="tog">${op ? '▾' : '▸'}</span>` : '<span class="tog">🔒</span>'}${plPri(t.priority)}${p.own === '*' ? `<small class="pl-owner">${esc(mgName(t.owner))}</small>` : ''}<span class="cl" title="${esc(t.title)}">${esc(t.title)}</span><span class="cnt">${t.full ? '기록 ' + (+t.nlog || mgLogs(t.id).length) + '건' : '기록 ' + (+t.nlog || 0) + '건 · 상세 비공개'}</span>${t.full && editable && t.status !== '완료' ? `<button type="button" class="pl-add-log" data-pladd="${t.id}" aria-label="${esc(t.title)} 추가 작업">＋ 추가 작업</button>` : ''}${t.full ? `<button class="sm ped" data-ple="${t.id}" title="${editable ? '계획 수정' : '계획 보기'}">${editable ? '✎' : 'ⓘ'}</button>` : ''}</div></td><td class="f f3"><span class="wst ${stc}">${stx}</span><div class="pl-progress">${pbar(t.progress)}</div></td>${days.map(d => pcell(t, d, ld)).join('')}</tr>`
-        + (op && (t.note || t.etc) ? `<tr class="rc pl-note"><td class="f f0">상세</td><td class="f f1"></td><td class="f f2"><div class="cl2">${esc(t.note || '')}${t.etc ? `<br>기타: ${esc(t.etc)}` : ''}</div></td><td class="f f3"></td>${days.map(() => '<td class="d"></td>').join('')}</tr>` : '') + (op ? L.map(l => `<tr class="rc"><td class="f f0">${sh(l.date)}</td><td class="f f1"></td><td class="f f2 lk" data-pll="${l.id}" title="${esc(dLabel(l.date) + ' · ' + l.text + (l.by ? '\n작성 ' + l.by : ''))}"><div class="cl2">${esc(l.text)}</div></td><td class="f f3"></td>${days.map(d => `<td class="d${d === l.date ? ' won' : ''}${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}"${d === l.date ? ` title="${esc(dLabel(l.date) + ' · ' + l.text)}"` : ''}></td>`).join('')}</tr>`).join('') : ''); }).join('');
+        + (op && (t.note || t.etc) ? `<tr class="rc pl-note"><td class="f f0">상세</td><td class="f f1"></td><td class="f f2"><div class="cl2">${esc(t.note || '')}${t.etc ? `<br>기타: ${esc(t.etc)}` : ''}</div></td><td class="f f3"></td>${days.map(() => '<td class="d"></td>').join('')}</tr>` : '') + (op ? groupRecs(L, l => l.text, l => l.date, l => l.end || l.date).map(g => `<tr class="rc"><td class="f f0">${sh(g.first)}</td><td class="f f1">${g.last !== g.first ? sh(g.last) : ''}</td><td class="f f2 lk" data-pll="${g.latest.id}" title="${esc(g.text + '\n' + g.recs.map(l => dLabel(l.date) + (l.end && l.end !== l.date ? ' ~ ' + dLabel(l.end) : '')).join(', '))}"><div class="cl2">${esc(g.text)}${grpTag(g)}</div></td><td class="f f3"></td>${days.map(d => { const on = g.days.has(d), r = on && g.byDay(d); return `<td class="d${on ? ' won lk' : ''}${d === S.today ? ' today' : ''}${cDow(d) % 6 === 0 ? ' wkd' : ''}${wide ? ' plw' : ''}"${on ? ` data-pll="${r ? r.id : g.latest.id}" title="${esc(dLabel(d) + ' · ' + g.text)}"` : ''}></td>`; }).join('')}</tr>`).join('') : ''); }).join('');
     const sheet = T.length ? `<table class="wt plt"><thead><tr><th class="f f0">시작일</th><th class="f f1">종료예정</th><th class="f f2">업무 ${T.some(t => t.full) ? `<button class="sm wtall" id="plall">${T.filter(t => t.full).every(t => isOpen(t.id)) ? '모두 접기' : '모두 펼치기'}</button>` : ''}</th><th class="f f3">상태 · 진행률</th>${days.map(lab).join('')}</tr></thead><tbody>${rows}</tbody></table>`
       : `<div class="muted" style="padding:30px;text-align:center">${p.mode === 'w' ? '이번 주' : '이 달'}에 표시할 계획이 없습니다.${mine ? ' [＋ 업무 등록]으로 추가하세요.' : ''}</div>`;
     const late = T.filter(t => plSt(t)[0] === '기한 지남').length, nrec = T.reduce((s, t) => s + (t.full ? lgs(t.id).length : 0), 0);
@@ -13265,7 +13301,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       }
     };
   }
-  async function planSaveLog({task,date,text}, button, onSaved) {
+  async function planSaveLog({task,date,date2,text}, button, onSaved) {
     if (button.disabled) return;
     if (!task) return toast('기록할 업무를 고르세요', true);
     if (!date) return toast('처리일자를 고르세요', true);
@@ -13273,7 +13309,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (text.length < 2) return toast('내용을 2자 이상 적으세요', true);
     button.disabled = true;
     try {
-      await api('mgSave', {op:'log',task,date,text});
+      await api('mgSave', {op:'log',task,date,date2:date2||'',text});
     } catch (error) {
       button.disabled = false;
       return toast(error.message, true);
@@ -13292,7 +13328,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (isRO() || S.pv || !task.full || task.owner !== S.me.id || task.status === '완료') return;
     modal(`<h3>추가 작업 기록</h3><p class="pl-log-parent"><b>${esc(task.title)}</b></p>
       <form id="plAddForm">
-        <div class="fld"><label for="plAddDate">처리일자</label><input type="date" id="plAddDate" value="${esc(defaultDate)}" required></div>
+        <div class="fld"><label for="plAddDate">작업 기간</label><div class="row" style="gap:6px"><input type="date" id="plAddDate" value="${esc(defaultDate)}" required><span>~</span><input type="date" id="plAddEnd" value="${esc(defaultDate)}"></div><small class="muted">하루만 했으면 종료일을 그대로 두세요 · 여러 날이면 종료일을 고르세요</small></div>
         <div class="fld"><label for="plAddText">추가 작업 내용</label><textarea id="plAddText" maxlength="1000" rows="4" placeholder="이 업무에서 추가로 한 작업을 적으세요" required></textarea></div>
         <div class="acts"><button type="button" data-c>닫기</button><button type="submit" class="primary" id="plAddSave">추가 작업 저장</button></div>
       </form>`, (bg, close) => {
@@ -13301,7 +13337,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $('#plAddForm', bg).onsubmit = event => {
         event.preventDefault();
         const date = dateInput.value;
-        return planSaveLog({task:String(task.id),date,text:textInput.value}, $('#plAddSave', bg), () => {
+        const date2 = $('#plAddEnd', bg).value;
+        if (date2 && date2 < date) return toast('종료일은 시작일 이후로', true);
+        return planSaveLog({task:String(task.id),date,date2:date2 && date2 !== date ? date2 : '',text:textInput.value}, $('#plAddSave', bg), () => {
           plan.open[task.id] = true;
           const range = plRange(plan);
           if (date < range.from || date > range.to) {
@@ -13353,13 +13391,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const l = ((S.mgD || {}).logs || []).find(x => String(x.id) === String(lid)); if (!l) return;
     const t = (S.mgD.tasks || []).find(x => String(x.id) === String(l.task)) || {}, ed = !isRO() && !S.pv && t.owner === S.me.id;
     let editing = false;
-    modal(`<h3>진행 현황</h3><div class="muted">${esc(t.title || '')}</div><div class="fld" style="margin-top:8px"><label>처리일자</label><input type="date" id="log-edit-date" value="${esc(l.date)}" ${ed ? 'disabled' : 'disabled'}></div>
+    modal(`<h3>진행 현황</h3><div class="muted">${esc(t.title || '')}</div><div class="fld" style="margin-top:8px"><label>작업 기간</label><div class="row" style="gap:6px"><input type="date" id="log-edit-date" value="${esc(l.date)}" disabled><span>~</span><input type="date" id="log-edit-end" value="${esc(l.end || l.date)}" disabled></div></div>
       <div class="fld"><label>내용</label><textarea id="log-edit-text" maxlength="1000" rows="5" disabled>${esc(l.text)}</textarea></div><div class="muted">${l.by ? '작성 ' + esc(l.by) : ''}</div>
       <div class="acts">${ed ? '<button id="ldel" style="color:var(--red);margin-right:auto">삭제</button><button id="ledit">수정</button>' : ''}<button data-c>닫기</button>${ed ? '<button id="lsave" class="primary" style="display:none">수정 저장</button>' : ''}</div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
       if ($('#ledit', bg)) $('#ledit', bg).onclick = () => {
         editing = true;
-        $('#log-edit-date', bg).disabled = false;
+        $('#log-edit-date', bg).disabled = false; $('#log-edit-end', bg).disabled = false;
         $('#log-edit-text', bg).disabled = false;
         $('#ledit', bg).style.display = 'none';
         $('#lsave', bg).style.display = '';
@@ -13367,12 +13405,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       };
       if ($('#lsave', bg)) $('#lsave', bg).onclick = async () => {
         if (!editing) return;
-        const date = $('#log-edit-date', bg).value, text = $('#log-edit-text', bg).value.trim();
+        const date = $('#log-edit-date', bg).value, end = $('#log-edit-end', bg).value, text = $('#log-edit-text', bg).value.trim();
+        if (end && end < date) return toast('종료일은 시작일 이후로', true);
         if (!date) return toast('날짜를 넣으세요', true);
         if (text.length < 2) return toast('내용은 2자 이상 적으세요', true);
         const save = $('#lsave', bg); save.disabled = true;
         try {
-          await api('mgSave', { op: 'logEdit', id: l.id, date, text });
+          await api('mgSave', { op: 'logEdit', id: l.id, date, date2: end && end !== date ? end : '', text });
           close(); toast('진행 기록을 수정했습니다');
           await mgLoad(true); if (S.view === 'mgr') drawMgr();
         } catch (e) { save.disabled = false; toast(e.message, true); }
@@ -13933,7 +13972,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const ds = new Set(recs.map(r => r.date)), st = wtState(p, ym), lt = wtLate(p, ym, today), op = isOpen(p.id);
       const tipFor = d => { const items = recs.filter(r => r.date === d); return [...items.slice(0, 8).map(r => wtText(r)), ...(items.length > 8 ? ['그 외 ' + (items.length - 8) + '건'] : [])].join('\n'); };
       return `<tr class="pj"><td class="f f0">${p.start ? dLabel(p.start).replace(/\(.*/, '') : ''}</td><td class="f f1">${p.due ? dLabel(p.due).replace(/\(.*/, '') : ''}</td><td class="f f2 lk" data-wt="${p.id}"><div class="wtt2"><span class="tog">${op ? '▾' : '▸'}</span><span class="cl">${esc(p.title)}</span>${p.created < ym ? `<span class="wcar">${ymLabel(p.created)}에서 이월</span>` : ''}<span class="cnt">${recs.length}건</span>${ed || true ? `<button class="sm ped" data-wp="${p.id}" title="${ed ? '프로젝트 수정' : '프로젝트 보기'}">${ed ? '✎' : 'ⓘ'}</button>` : ''}</div></td><td class="f f3"><span class="wst s${WT_ST.indexOf(st)}">${st}</span>${lt ? '<span class="wlate">기한 초과</span>' : ''}</td>${dd.map(d => cell(d, ds.has(d), true, tipFor(d))).join('')}</tr>`
-        + (op ? recs.map(r => `<tr class="rc"><td class="f f0"></td><td class="f f1"></td><td class="f f2 lk" data-wr="${r.id}" title="${esc(wtText(r) + (r.by ? '\n작성 ' + r.by : ''))}"><div class="cl2">${r.kind === 'support' ? `<b class="wsup">[${esc(r.cat)} ${r.mins}분]</b> ` : ''}${esc(r.text)}</div></td><td class="f f3"></td>${dd.map(d => cell(d, d === r.date, false, d === r.date ? wtText(r) : '')).join('')}</tr>`).join('') : '');
+        + (op ? groupRecs(recs, r => wtText(r), r => r.date, r => r.date).map(g => { const r = g.latest; return `<tr class="rc"><td class="f f0">${dLabel(g.first).replace(/\(.*/, '')}</td><td class="f f1">${g.last !== g.first ? dLabel(g.last).replace(/\(.*/, '') : ''}</td><td class="f f2 lk" data-wr="${r.id}" title="${esc(g.text + '\n' + g.recs.map(x => dLabel(x.date)).join(', ') + (r.by ? '\n작성 ' + r.by : ''))}"><div class="cl2">${r.kind === 'support' ? `<b class="wsup">[${esc(r.cat)} ${r.mins}분]</b> ` : ''}${esc(r.text)}${grpTag(g)}</div></td><td class="f f3"></td>${dd.map(d => cell(d, g.days.has(d), false, g.days.has(d) ? g.text : '')).join('')}</tr>`; }).join('') : '');
     }).join('')}</tbody></table>` : '<div class="muted" style="padding:30px;text-align:center">이 귀속월에 표시할 프로젝트가 없습니다.' + (ed ? ' [＋ 프로젝트]로 추가하세요.' : '') + '</div>';
     const pOpts = ps.filter(p => wtState(p, ym) !== '완료' || true).map(p => `<option value="${p.id}">${esc(p.title)} · ${wtState(p, ym)}</option>`).join('');
     const defD = today >= D.period.start && today <= D.period.end ? today : D.period.end < today ? D.period.end : D.period.start;
