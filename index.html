@@ -6241,22 +6241,19 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (d.canEdit && c.swaps) todo.push(`<button data-gt="cal" class="sm">토요 바꾸기 요청 <b>${c.swaps}</b>건 →</button>`);
     if (c.partWait) todo.push(`<button data-gt="part" class="sm">우리 파트 확인 전 <b>${c.partWait}</b>건 →</button>`);
     const ttl = (t, sub) => `<div class="st">${t}${sub ? `<span class="muted">${sub}</span>` : ''}</div>`;
-    return `<div class="lvsum">
+    // v31.13 : 요약 4칸 간결하게 (처리할 것 = 첫 칸 아래 · 상한 넘은 날 = 작은 칩)
+    return `<div class="lvsum lvs3">
       <div class="card">${ttl(ymLab(ym) + ' 연차', L.part ? A.esc(L.part) : '전체')}
         <div class="big"><b>${fmt(days(ok))}</b>일 <span class="muted">확정 ${ok.length}건</span></div>
-        <div class="row"><span class="lv req">파트 확인 전</span><span><b>${req.length}</b>건</span><span class="muted">${fmt(days(req))}일</span></div>
-        <div class="row"><span class="lv mgr">관리자 확정 대기</span><span><b>${mg.length}</b>건</span><span class="muted">${fmt(days(mg))}일</span></div></div>
+        <div class="chips"><span class="lv req">파트 확인 전 <b>${req.length}</b></span><span class="lv mgr">확정 대기 <b>${mg.length}</b></span></div>
+        <div class="todo3">${todo.length ? `<div class="todo2">${todo.join('')}</div>` : '<span class="okl">✓ 처리할 것 없음</span>'}${isClosed(ym) ? '<span class="muted">🔒 마감됨</span>' : ''}</div></div>
       <div class="card">${ttl('파트별 사용', '확정 · 일')}
-        ${byP.map(([p, n]) => `<div class="pbar${L.part === p ? ' on' : ''}" data-sp="${L.part === p ? '' : p}" title="누르면 ${L.part === p ? '전체' : p} 보기"><span>${p}</span><i><em style="width:${n / mx * 100}%"></em></i><b>${fmt(n)}</b></div>`).join('')}</div>
-      <div class="card">${ttl('토요근무', '주별 인원')}
-        ${sats.map((x, i) => `<div class="row"><span class="sw ${satColor(x.sd)}">${mdw(x.sd)}</span><span><b>${x.n}</b>명</span>${x.noAlt ? `<span class="muted">대체 미정 ${x.noAlt}</span>` : ''}</div>`).join('') || '<div class="muted">토요일 없음</div>'}
-        ${noAlt ? `<div class="warnl">대체휴무 미정 ${noAlt}명</div>` : '<div class="okl">✓ 대체휴무 모두 정해짐</div>'}</div>
-      <div class="card">${ttl('주의할 날', L.part ? '' : '상한 넘는 날')}
-        ${L.part ? '' : over.length ? over.map(x => `<div class="row"><b class="red">${mdw(x.x)}</b><span>휴무 ${x.n}/${x.cap}</span></div>`).join('') : '<div class="okl">✓ 상한 넘는 날 없음</div>'}
-        <div class="sub">휴무 많은 날</div>${top.map(x => `<div class="row"><b>${mdw(x.x)}</b><span>${x.n}명</span></div>`).join('') || '<div class="muted">없음</div>'}</div>
-      <div class="card">${ttl('처리할 것')}
-        ${todo.length ? `<div class="todo2">${todo.join('')}</div>` : '<div class="okl">✓ 처리할 것이 없습니다</div>'}
-        ${isClosed(ym) ? '<div class="muted" style="margin-top:8px">🔒 ' + ymLab(ym) + ' 마감됨</div>' : ''}</div>
+        <div class="pbars">${byP.map(([p, n]) => `<div class="pbar${L.part === p ? ' on' : ''}" data-sp="${L.part === p ? '' : p}" title="누르면 ${L.part === p ? '전체' : p} 보기"><span>${p}</span><i><em style="width:${n / mx * 100}%"></em></i><b>${fmt(n)}</b></div>`).join('')}</div></div>
+      <div class="card">${ttl('토요근무', noAlt ? `<span class="warnt">대체 미정 ${noAlt}명</span>` : '✓ 대체 모두 정함')}
+        ${sats.map(x => `<div class="row"><span class="sw ${satColor(x.sd)}">${mdw(x.sd)}</span><span><b>${x.n}</b>명</span>${x.noAlt ? `<span class="nalt">미정 ${x.noAlt}</span>` : ''}</div>`).join('') || '<div class="muted">토요일 없음</div>'}</div>
+      <div class="card">${ttl(L.part ? '휴무 많은 날' : '상한 넘은 날', L.part ? '' : over.length ? over.length + '일' : '')}
+        ${L.part ? '' : over.length ? `<div class="ovs">${over.map(x => `<span class="lvov">${md(x.x)}<b>${x.n}/${x.cap}</b></span>`).join('')}</div>` : '<span class="okl">✓ 상한 넘는 날 없음</span>'}
+        ${top.length ? `<div class="topl"><span class="muted">휴무 많은 날</span>${top.map(x => `<b>${md(x.x)}</b> ${x.n}명`).join(' · ')}</div>` : ''}</div>
     </div>`;
   }
   // 토요일 명단 (달력에서 토요일을 누르면)
@@ -8662,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.12';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.13';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -12749,7 +12746,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const talks = (D.fb || []).filter(f => f.owner === r.o.id && inRange(f.date) && mtCnt(f.talk) >= 10).length + r.meet.filter(e => e.result === '실시').length;
       const last = [...(D.logs || []).filter(l => (D.tasks || []).some(t => t.owner === r.o.id && String(t.id) === String(l.task))).map(l => l.date), ...(D.fb || []).filter(f => f.owner === r.o.id).map(f => f.date), ...(D.events || []).filter(e => e.owner === r.o.id && e.date <= S.today).map(e => e.date)].sort().pop() || '';
       const score = r.todo.length * 3 + need + r.late.length * 2, red = n => n ? ` class="t-lo"` : '';
-      return { score, html: `<button class="ovc" style="--ovg:${gcol((r.o.mg || [])[0] || '')}" data-ovperson="${esc(r.o.id)}"><div class="ovch"><b>${esc(r.o.name)}</b>${score ? `<em class="ovi">확인 필요 ${r.todo.length + need + r.late.length}</em>` : ''}<span>${(r.o.mg || []).map(g => gdot(g)).join(' ') || '<span class="muted">담당 그룹 없음</span>'}</span></div>
+      return { score, html: `<button class="lvov" style="--ovg:${gcol((r.o.mg || [])[0] || '')}" data-ovperson="${esc(r.o.id)}"><div class="ovch"><b>${esc(r.o.name)}</b>${score ? `<em class="ovi">확인 필요 ${r.todo.length + need + r.late.length}</em>` : ''}<span>${(r.o.mg || []).map(g => gdot(g)).join(' ') || '<span class="muted">담당 그룹 없음</span>'}</span></div>
         <div class="ovcb"><div><small>파트원 관리</small><p><span>미달</span><b>${r.M.length}건</b></p><p><span>피드백 미작성</span><b${red(r.todo.length)}>${r.todo.length}건</b></p><p><span>면담 완료</span><b>${done} / ${mem.length}명</b></p><p><span>면담 필요</span><b${red(need)}>${need}명</b></p></div>
         <div><small>업무</small><p><span>진행 중</span><b>${act.length}건</b></p><p><span>기한 지남</span><b${red(r.late.length)}>${r.late.length}건</b></p><p><span>이번 주 마감</span><b>${wk}건</b></p><p><span>평균 진행률</span><b>${avg == null ? '-' : avg + '%'}</b></p></div>
         <div><small>활동</small><p><span>교육</span><b>${r.edu.length}건</b></p><p><span>면담 기록</span><b>${talks}건</b></p><p><span>마지막 기록</span><b${!last || dGap(last, S.today) > 7 ? ' class="t-lo"' : ''}>${last ? dLabel(last) : '없음'}</b></p></div></div><div class="ovct"><small>지금 하고 있는 업무</small>${act.length ? act.slice().sort((x, y) => mgEnd(x).localeCompare(mgEnd(y))).slice(0, 3).map(t => { const lt = mgEnd(t) < ref, dd = dGap(ref, mgEnd(t)); return `<p><span class="tt">${esc(t.title)}</span><span class="mgbar"><i style="width:${+t.progress || 0}%"></i></span><em>${+t.progress || 0}%</em><b class="${lt ? 't-lo' : dd <= 2 ? 'soon' : ''}">${lt ? '기한 ' + (-dd) + '일 지남' : dd === 0 ? '오늘 마감' : 'D-' + dd}</b></p>`; }).join('') + (act.length > 3 ? `<p class="more">+ ${act.length - 3}건 더</p>` : '') : '<p class="muted">진행 중인 업무 없음</p>'}</div></button>` }; };
@@ -21856,12 +21853,32 @@ html[data-theme=dark] .lvcal2 .lvlb{color:#e5e8eb}html[data-theme=dark] .lvcal2 
 .lvd2 .dbody .rw.ar::before{content:'대체';top:8px;color:#b45309;background:#fff1e0}
 .lvd2 .dbody .rw:first-child.ar,.lvd2 .dbody .rw:empty+.rw.ar{border-top:0!important;padding-top:0!important}
 .lvd2 .dbody .rw:empty+.rw.ar::before{top:3px}
-.lvcal2 .lv::before{display:none}.lvcal2 .lv.tr::before{display:block}
+.lvcal2 .lv::before,.lvcal2 .lv.tr::before{display:none!important}.lvcal2 .lv.tr{background:#e3f4e7!important;color:#1d5a2e}.lvcal2 .sw:not([class*="wk"]){background:#f1f4f9}html[data-theme=dark] .lvcal2 .sw:not([class*="wk"]){background:#243044}
 .lvcal2 .lv{background:#f1f4f9}
 .lvcal2 .lvd2 .n.red{background:#e5484d!important;color:#fff!important}
 .lvd2.sat .rw{gap:3px}.lvd2.sat .sw{font-size:12px;padding:0 6px}
 html[data-theme=dark] .lvlong{background:#221a30;border-color:#3a2a55}html[data-theme=dark] .lvlg{background:#1b2334;border-color:#3a2a55;color:#e5e8eb}html[data-theme=dark] .lvlg em{background:#3a2552;color:#e9d5ff}html[data-theme=dark] .lvlong .lb{color:#d8b4fe}
 html[data-theme=dark] .lvd2 .dbody .rw.ar{border-top-color:#2c3846!important}
+</style>
+<style id="v3113-lvsum">
+/* v31.13 : 연차 요약 간결하게 */
+.lvsum.lvs3{grid-template-columns:1fr 1.3fr 1fr 1.6fr!important;align-items:start}
+@media (max-width:1300px){.lvsum.lvs3{grid-template-columns:repeat(2,1fr)!important}}
+.lvs3 .card{gap:7px!important}
+.lvs3 .st{background:none!important;padding:0!important;margin:0 0 2px!important;font-size:13.5px}
+.lvs3 .big b{font-size:26px}
+.lvs3 .chips{display:flex;gap:6px;flex-wrap:wrap}.lvs3 .chips .lv{font-size:11.5px;height:22px;padding:0 8px;cursor:default}.lvs3 .chips .lv b{margin-left:3px}
+.lvs3 .todo3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed #e2e8f0;padding-top:7px;font-size:12px}
+.lvs3 .pbars{display:grid;grid-template-columns:1fr 1fr;gap:3px 16px}
+.lvs3 .pbar{font-size:12px}
+.lvs3 .row{font-size:12.5px;min-height:22px}.lvs3 .row .sw{font-size:11.5px;padding:1px 7px}
+.lvs3 .nalt{margin-left:auto;font-size:11px;font-weight:700;color:#b45309;background:#fff1e0;border-radius:6px;padding:1px 7px}
+.lvs3 .warnt{color:#b45309!important;font-weight:800}
+.lvs3 .ovs{display:flex;flex-wrap:wrap;gap:4px}
+.lvs3 .lvov{white-space:nowrap;flex:0 0 auto;flex-direction:row;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;border-radius:6px;background:#fdecec;color:#b42318;font-size:11.5px;font-weight:700}
+.lvs3 .lvov b{color:#7a1212;font-weight:800}
+.lvs3 .topl{font-size:12px;color:#334155;border-top:1px dashed #e2e8f0;padding-top:7px}.lvs3 .topl .muted{margin-right:8px;font-size:11.5px}
+html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-theme=dark] .lvs3 .lvov b{color:#ffd0cc}html[data-theme=dark] .lvs3 .nalt{background:#3a2a14;color:#f6b26b}html[data-theme=dark] .lvs3 .topl{color:#cbd5e1}
 </style>
 </body>
 </html>
