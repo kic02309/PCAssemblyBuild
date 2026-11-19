@@ -8650,7 +8650,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.04';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.05';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9361,7 +9361,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (cat === 'work' && dfCan()) it = it.concat([['df', '조립 불량 관리']]); // v29.81 : 사전안내 바로 오른쪽
       if (cat === 'work' && srCan()) it = it.concat([['sr','주문 사양검토']]);
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
-      if (cat === 'work' && canQc()) it = it.concat([['qc', '✅ 2차 검수']]);   // v30.90
+      if (cat === 'work' && canQc() && isPhone()) it = it.concat([['qc', '✅ 2차 검수']]);   // v30.90
 
       $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : k === 'line' && v === 'linestats' ? 'lo-parent-on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
