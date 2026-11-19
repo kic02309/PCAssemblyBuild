@@ -8662,7 +8662,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.11';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.12';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21847,11 +21847,19 @@ html[data-theme=dark] .lvcal2 .lvlb{color:#e5e8eb}html[data-theme=dark] .lvcal2 
 .lvlg.me{background:#1f2a3a;color:#fff;border-color:#1f2a3a}.lvlg.me small{color:#cbd5e1}
 .lvlgd{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.lvlgd button{padding:6px 10px}
 .lvhd2 .sub{display:none!important}
+.lvhd2,.lvwk2{grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,.72fr)!important}
 .lvd2 .dbody{display:flex!important;flex-direction:column;gap:5px!important}
-.lvd2 .dbody .rw{padding:0!important}
-.lvd2 .dbody .rw.ar{border:0!important;border-top:1px dashed #d4dae3!important;border-radius:0!important;background:none!important;padding:5px 0 0!important;align-items:center}
-.lvd2 .dbody .rw.ar:empty{display:none}
-.lvd2 .dbody .rw.ar::before{content:'대체';font-size:10.5px;font-weight:800;color:#64748b;margin-right:3px}
+.lvd2 .dbody .rw{position:relative;padding:0 0 0 32px!important;min-height:22px;border:0!important;border-radius:0!important;background:none!important;align-content:flex-start}
+.lvd2 .dbody .rw:empty{display:none}
+.lvd2 .dbody .rw::before{content:'연차';position:absolute;left:0;top:3px;width:28px;text-align:center;font-size:10.5px;font-weight:800;line-height:16px;border-radius:4px;color:#1d4ed8;background:#e8effc}
+.lvd2 .dbody .rw.ar{padding-top:5px!important;border-top:1px dashed #d4dae3!important}
+.lvd2 .dbody .rw.ar::before{content:'대체';top:8px;color:#b45309;background:#fff1e0}
+.lvd2 .dbody .rw:first-child.ar,.lvd2 .dbody .rw:empty+.rw.ar{border-top:0!important;padding-top:0!important}
+.lvd2 .dbody .rw:empty+.rw.ar::before{top:3px}
+.lvcal2 .lv::before{display:none}.lvcal2 .lv.tr::before{display:block}
+.lvcal2 .lv{background:#f1f4f9}
+.lvcal2 .lvd2 .n.red{background:#e5484d!important;color:#fff!important}
+.lvd2.sat .rw{gap:3px}.lvd2.sat .sw{font-size:12px;padding:0 6px}
 html[data-theme=dark] .lvlong{background:#221a30;border-color:#3a2a55}html[data-theme=dark] .lvlg{background:#1b2334;border-color:#3a2a55;color:#e5e8eb}html[data-theme=dark] .lvlg em{background:#3a2552;color:#e9d5ff}html[data-theme=dark] .lvlong .lb{color:#d8b4fe}
 html[data-theme=dark] .lvd2 .dbody .rw.ar{border-top-color:#2c3846!important}
 </style>
