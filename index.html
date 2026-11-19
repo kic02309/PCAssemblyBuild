@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.94';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.95';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18795,7 +18795,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const L = Rw.filter(r => (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!F.by || r.by === F.by) && (!fno || r.o.includes(fno)));
     const done = L.filter(r => r.by).length, pc = L.length ? Math.round(done / L.length * 100) : 0, pp = (c, n) => n ? Math.round(c / n * 100) : 0;
     const LG = Rw.filter(r => (!F.who || r.name === F.who) && (!F.by || r.by === F.by) && (!fno || r.o.includes(fno)));   // 그룹 카드는 그룹 조건 빼고
-    const GS = [...new Set(LG.map(r => r.g).filter(Boolean))].sort((a, b) => C.GROUP_LIST.indexOf(a) - C.GROUP_LIST.indexOf(b)).map(g => { const x = LG.filter(r => r.g === g); return { g, n: x.length, c: x.filter(r => r.by).length }; });
+    const ST = F.data.staff || {}, GS = [...new Set(LG.map(r => r.g).concat(Object.keys(ST)).filter(Boolean))].sort((a, b) => C.GROUP_LIST.indexOf(a) - C.GROUP_LIST.indexOf(b)).map(g => { const x = LG.filter(r => r.g === g); return { g, n: x.length, c: x.filter(r => r.by).length, ppl: new Set(x.map(r => r.name)).size, st: ST[g] || 0 }; });
     const LB = Rw.filter(r => r.by && (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!fno || r.o.includes(fno)));
     const BS = Object.values(LB.reduce((m, r) => { const x = m[r.by] = m[r.by] || { name: r.by, n: 0, p: {} }; x.n++; x.p[r.name] = 1; return m; }, {})).sort((a, b) => b.n - a.n);
     const names = [...new Set(Rw.map(r => r.name))].sort((a, b) => a.localeCompare(b, 'ko')), bys = [...new Set(Rw.map(r => r.by).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
@@ -18806,21 +18806,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const tab = F.tab = F.tab || 'done';
     const L0 = Rw.filter(r => (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!fno || r.o.includes(fno))), T0 = { n: L0.length, c: L0.filter(r => r.by).length };   // 위 4칸은 검수자 조건 빼고
     const listT = (rows, empty) => `<table class="list mft2"><thead><tr><th class="num">No</th><th>조립일</th><th>그룹</th><th>조립자</th><th>주문번호</th><th>2차 검수자</th><th>검수 시간</th></tr></thead><tbody>${rows.length ? rows.slice(0, 1500).map((r, i) => `<tr><td class="num">${i + 1}</td><td>${esc(mdl(r.d))}</td><td>${gdot(r.g)}</td><td><b>${esc(r.name)}</b></td><td><b class="${r.by ? 'qc2t' : ''}">${esc(r.o)}</b></td><td>${r.by ? `<span class="qc2t">✓ ${esc(r.by)}</span>` : '<span class="muted">본인 검수</span>'}</td><td class="muted">${esc(String(r.at).slice(5, 16))}</td></tr>`).join('') + (rows.length > 1500 ? `<tr><td colspan="7" class="muted">${rows.length - 1500}줄 더 있음 — 기간이나 조건을 좁혀 주세요</td></tr>` : '') : `<tr><td colspan="7" class="muted" style="padding:30px">${empty}</td></tr>`}</tbody></table>`;
-    const srt = rows => rows.slice().sort((a, b) => (a.by ? 0 : 1) - (b.by ? 0 : 1) || String(b.at).localeCompare(String(a.at)) || b.d.localeCompare(a.d) || a.g.localeCompare(b.g, 'ko', { numeric: true }) || a.name.localeCompare(b.name, 'ko') || a.o.localeCompare(b.o));
+    const gix = g => { const i = C.GROUP_LIST.indexOf(g); return i < 0 ? 99 : i; }, srt = rows => rows.slice().sort((a, b) => gix(a.g) - gix(b.g) || a.name.localeCompare(b.name, 'ko') || b.d.localeCompare(a.d) || a.o.localeCompare(b.o));   // v30.95 : 그룹 순 → 이름 순
     let body, head = '';
-    if (tab === 'all') { head = `전체 처리 주문 ${L.length}건 <small>2차 검수 ${done}건이 위에</small>`; body = listT(srt(L), '해당하는 주문이 없습니다'); }
-    else if (tab === 'done') { head = `2차 검수한 주문 ${done}건 <small>최근 검수 순</small>`; body = listT(srt(L.filter(r => r.by)), '2차 검수한 주문이 없습니다'); }
+    if (tab === 'all') { head = `전체 처리 주문 ${L.length}건 <small>그룹 · 이름 순</small>`; body = listT(srt(L), '해당하는 주문이 없습니다'); }
+    else if (tab === 'done') { head = `2차 검수한 주문 ${done}건 <small>그룹 · 이름 순</small>`; body = listT(srt(L.filter(r => r.by)), '2차 검수한 주문이 없습니다'); }
     else if (tab === 'grp') {
       const P = {}; L.forEach(r => { const k = r.g + '|' + r.name, x = P[k] = P[k] || { g: r.g, name: r.name, n: 0, c: 0 }; x.n++; if (r.by) x.c++; });
       const gi = g => { const i = C.GROUP_LIST.indexOf(g); return i < 0 ? 99 : i; }, pl = Object.values(P).sort((a, b) => gi(a.g) - gi(b.g) || a.name.localeCompare(b.name, 'ko'));   // v30.94 : 그룹 순 → 이름 순
       head = `그룹별 2차 검수율 <small>그룹을 누르면 그 그룹 조립자만 · 조립자를 누르면 주문 목록</small>`;
-      body = `<div class="qa-row qa-in">${GS.map(x => `<button class="qa-c${F.grp.split(',').includes(x.g) ? ' on' : ''}" data-qag="${esc(x.g)}" style="--gc:${gcol(x.g)}"><span class="t">${gdot(x.g)}</span><b>${pp(x.c, x.n)}<small>%</small></b><span class="s">2차 ${x.c} / 처리 ${x.n}건</span><i class="bar"><u style="width:${pp(x.c, x.n)}%"></u></i></button>`).join('')}</div>
+      body = `<div class="qa-row qa-in">${GS.map(x => `<button class="qa-c${F.grp.split(',').includes(x.g) ? ' on' : ''}" data-qag="${esc(x.g)}" style="--gc:${gcol(x.g)}"><span class="t">${gdot(x.g)}</span><b>${pp(x.c, x.n)}<small>%</small></b><span class="s">2차 ${x.c} / 처리 ${x.n}건</span><span class="s ppl">👤 입력 ${x.ppl}${x.st ? ' / ' + x.st : ''}명</span><i class="bar"><u style="width:${pp(x.c, x.n)}%"></u></i></button>`).join('')}</div>
         <table class="list mft2"><thead><tr><th>그룹</th><th>조립자</th><th class="num">처리 주문</th><th class="num">2차 검수</th><th class="num">2차 검수율</th></tr></thead><tbody>${pl.length ? pl.map(x => `<tr class="click" data-qw="${esc(x.name)}"><td>${gdot(x.g)}</td><td><b>${esc(x.name)}</b></td><td class="num">${x.n}</td><td class="num"><b class="${x.c ? 'qc2t' : 'muted'}">${x.c}</b></td><td class="num"><b class="${x.c ? 'qc2t' : 'muted'}">${pp(x.c, x.n)}%</b></td></tr>`).join('') : '<tr><td colspan="5" class="muted" style="padding:30px">해당하는 주문이 없습니다</td></tr>'}</tbody></table>`;
     } else {
       head = `2차 검수자별 <small>누가 몇 건 · 이름을 누르면 그 사람이 검수한 주문</small>`;
       body = `<div class="qa-row qa-in">${BS.map(x => `<button class="qa-c by${F.by === x.name ? ' on' : ''}" data-qab="${esc(x.name)}"><span class="t">${esc(x.name)}</span><b>${x.n}<small>건</small></b><span class="s">조립자 ${Object.keys(x.p).length}명 · 전체의 ${pp(x.n, LB.length)}%</span></button>`).join('') || '<div class="muted" style="padding:20px">2차 검수 기록이 없습니다</div>'}</div>${F.by ? listT(srt(L.filter(r => r.by)), '없음') : ''}`;
     }
-    main.innerHTML = admHead('검수 내역', 'qcr', `<span class="muted" style="font-size:13px">업무데이터에 입력한 주문번호 기준 (조립한 날) · 안정화 제외</span>`) + `<div class="pgb">
+    main.innerHTML = admHead('검수 내역', 'qcr', `<span class="muted" style="font-size:13px">1그룹~4그룹 · 업무데이터에 입력한 주문번호 기준 (조립한 날)</span>`) + `<div class="pgb">
       <div class="card mff">
         <div class="r"><b>날짜</b><input type="date" id="qfF" value="${F.from}" max="${S.today}"> ~ <input type="date" id="qfT" value="${F.to}" max="${S.today}">
           <span class="seg">${[[0, '오늘'], [-1, '어제'], ['w', '이번 주'], ['p', '이번 달']].map(([k, t]) => `<button data-rg="${k}" class="${range(k)[0] === F.from && range(k)[1] === F.to ? 'on' : ''}">${t}</button>`).join('')}</span>
@@ -20895,7 +20895,7 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .qc2t{color:#4f46e5;font-weight:800}html[data-theme=dark] .qc2t{color:#a5b4fc}html[data-theme=dark] .qa-t{background:#1d2026;border-color:#2c313a}html[data-theme=dark] .qa-t.on{background:#25244a}
 .qa-sec{margin-bottom:12px}.qa-h{font-size:13px;font-weight:800;color:#4a5670;margin:0 0 6px 2px}.qa-h small{font-weight:500;color:var(--sub);margin-left:6px}
 .qa-row{display:flex;gap:8px;flex-wrap:wrap}.qa-c{background:var(--card,#fff);border:1px solid #e1e7f0;border-left:4px solid var(--gc,#1e7a3c);border-radius:12px;padding:9px 14px;min-width:150px;text-align:left;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;cursor:pointer}
-.qa-c .t{font-weight:800;font-size:13.5px}.qa-c b{font-size:22px;color:var(--gc,#4f46e5);grid-row:1/3;grid-column:2;text-align:right}.qa-c b small{font-size:12px;margin-left:1px}.qa-c .s{font-size:12px;color:var(--sub)}.qa-c .bar{grid-column:1/3;display:block;height:6px;border-radius:9px;background:#e8edf3;overflow:hidden}.qa-c .bar u{display:block;height:100%;background:var(--gc,#1e7a3c)}
+.qa-c .t{font-weight:800;font-size:13.5px}.qa-c .s.ppl{grid-column:1}.qa-c b{font-size:22px;color:var(--gc,#4f46e5);grid-row:1/3;grid-column:2;text-align:right}.qa-c b small{font-size:12px;margin-left:1px}.qa-c .s{font-size:12px;color:var(--sub)}.qa-c .bar{grid-column:1/3;display:block;height:6px;border-radius:9px;background:#e8edf3;overflow:hidden}.qa-c .bar u{display:block;height:100%;background:var(--gc,#1e7a3c)}
 .qa-c.by{border-left-color:#4f46e5}.qa-c.by b{color:#4f46e5}.qa-c.on{outline:2px solid var(--blue);background:#f2f6ff}
 html[data-theme=dark] .qa-c{background:#1d2026;border-color:#2c313a}.qr-mode{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-right:8px}.qr-mode button{padding:7px 14px;background:var(--panel,#fff);border:0;font-weight:700;color:var(--sub)}.qr-mode button.on{background:var(--blue);color:#fff}
 @media(max-width:1100px){.qr .qr-2{grid-template-columns:1fr}.qr .qr-k{grid-template-columns:repeat(2,1fr)}}
