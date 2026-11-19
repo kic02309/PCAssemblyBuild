@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.93';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.94';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18812,7 +18812,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     else if (tab === 'done') { head = `2차 검수한 주문 ${done}건 <small>최근 검수 순</small>`; body = listT(srt(L.filter(r => r.by)), '2차 검수한 주문이 없습니다'); }
     else if (tab === 'grp') {
       const P = {}; L.forEach(r => { const k = r.g + '|' + r.name, x = P[k] = P[k] || { g: r.g, name: r.name, n: 0, c: 0 }; x.n++; if (r.by) x.c++; });
-      const pl = Object.values(P).sort((a, b) => a.c / a.n - b.c / b.n || b.n - a.n);
+      const gi = g => { const i = C.GROUP_LIST.indexOf(g); return i < 0 ? 99 : i; }, pl = Object.values(P).sort((a, b) => gi(a.g) - gi(b.g) || a.name.localeCompare(b.name, 'ko'));   // v30.94 : 그룹 순 → 이름 순
       head = `그룹별 2차 검수율 <small>그룹을 누르면 그 그룹 조립자만 · 조립자를 누르면 주문 목록</small>`;
       body = `<div class="qa-row qa-in">${GS.map(x => `<button class="qa-c${F.grp.split(',').includes(x.g) ? ' on' : ''}" data-qag="${esc(x.g)}" style="--gc:${gcol(x.g)}"><span class="t">${gdot(x.g)}</span><b>${pp(x.c, x.n)}<small>%</small></b><span class="s">2차 ${x.c} / 처리 ${x.n}건</span><i class="bar"><u style="width:${pp(x.c, x.n)}%"></u></i></button>`).join('')}</div>
         <table class="list mft2"><thead><tr><th>그룹</th><th>조립자</th><th class="num">처리 주문</th><th class="num">2차 검수</th><th class="num">2차 검수율</th></tr></thead><tbody>${pl.length ? pl.map(x => `<tr class="click" data-qw="${esc(x.name)}"><td>${gdot(x.g)}</td><td><b>${esc(x.name)}</b></td><td class="num">${x.n}</td><td class="num"><b class="${x.c ? 'qc2t' : 'muted'}">${x.c}</b></td><td class="num"><b class="${x.c ? 'qc2t' : 'muted'}">${pp(x.c, x.n)}%</b></td></tr>`).join('') : '<tr><td colspan="5" class="muted" style="padding:30px">해당하는 주문이 없습니다</td></tr>'}</tbody></table>`;
