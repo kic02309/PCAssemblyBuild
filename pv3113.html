@@ -6252,7 +6252,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <div class="card">${ttl('토요근무', noAlt ? `<span class="warnt">대체 미정 ${noAlt}명</span>` : '✓ 대체 모두 정함')}
         ${sats.map(x => `<div class="row"><span class="sw ${satColor(x.sd)}">${mdw(x.sd)}</span><span><b>${x.n}</b>명</span>${x.noAlt ? `<span class="nalt">미정 ${x.noAlt}</span>` : ''}</div>`).join('') || '<div class="muted">토요일 없음</div>'}</div>
       <div class="card">${ttl(L.part ? '휴무 많은 날' : '상한 넘은 날', L.part ? '' : over.length ? over.length + '일' : '')}
-        ${L.part ? '' : over.length ? `<div class="ovs">${over.map(x => `<span class="ovc">${md(x.x)}<b>${x.n}/${x.cap}</b></span>`).join('')}</div>` : '<span class="okl">✓ 상한 넘는 날 없음</span>'}
+        ${L.part ? '' : over.length ? `<div class="ovs">${over.map(x => `<span class="lvov">${md(x.x)}<b>${x.n}/${x.cap}</b></span>`).join('')}</div>` : '<span class="okl">✓ 상한 넘는 날 없음</span>'}
         ${top.length ? `<div class="topl"><span class="muted">휴무 많은 날</span>${top.map(x => `<b>${md(x.x)}</b> ${x.n}명`).join(' · ')}</div>` : ''}</div>
     </div>`;
   }
@@ -12746,7 +12746,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const talks = (D.fb || []).filter(f => f.owner === r.o.id && inRange(f.date) && mtCnt(f.talk) >= 10).length + r.meet.filter(e => e.result === '실시').length;
       const last = [...(D.logs || []).filter(l => (D.tasks || []).some(t => t.owner === r.o.id && String(t.id) === String(l.task))).map(l => l.date), ...(D.fb || []).filter(f => f.owner === r.o.id).map(f => f.date), ...(D.events || []).filter(e => e.owner === r.o.id && e.date <= S.today).map(e => e.date)].sort().pop() || '';
       const score = r.todo.length * 3 + need + r.late.length * 2, red = n => n ? ` class="t-lo"` : '';
-      return { score, html: `<button class="ovc" style="--ovg:${gcol((r.o.mg || [])[0] || '')}" data-ovperson="${esc(r.o.id)}"><div class="ovch"><b>${esc(r.o.name)}</b>${score ? `<em class="ovi">확인 필요 ${r.todo.length + need + r.late.length}</em>` : ''}<span>${(r.o.mg || []).map(g => gdot(g)).join(' ') || '<span class="muted">담당 그룹 없음</span>'}</span></div>
+      return { score, html: `<button class="lvov" style="--ovg:${gcol((r.o.mg || [])[0] || '')}" data-ovperson="${esc(r.o.id)}"><div class="ovch"><b>${esc(r.o.name)}</b>${score ? `<em class="ovi">확인 필요 ${r.todo.length + need + r.late.length}</em>` : ''}<span>${(r.o.mg || []).map(g => gdot(g)).join(' ') || '<span class="muted">담당 그룹 없음</span>'}</span></div>
         <div class="ovcb"><div><small>파트원 관리</small><p><span>미달</span><b>${r.M.length}건</b></p><p><span>피드백 미작성</span><b${red(r.todo.length)}>${r.todo.length}건</b></p><p><span>면담 완료</span><b>${done} / ${mem.length}명</b></p><p><span>면담 필요</span><b${red(need)}>${need}명</b></p></div>
         <div><small>업무</small><p><span>진행 중</span><b>${act.length}건</b></p><p><span>기한 지남</span><b${red(r.late.length)}>${r.late.length}건</b></p><p><span>이번 주 마감</span><b>${wk}건</b></p><p><span>평균 진행률</span><b>${avg == null ? '-' : avg + '%'}</b></p></div>
         <div><small>활동</small><p><span>교육</span><b>${r.edu.length}건</b></p><p><span>면담 기록</span><b>${talks}건</b></p><p><span>마지막 기록</span><b${!last || dGap(last, S.today) > 7 ? ' class="t-lo"' : ''}>${last ? dLabel(last) : '없음'}</b></p></div></div><div class="ovct"><small>지금 하고 있는 업무</small>${act.length ? act.slice().sort((x, y) => mgEnd(x).localeCompare(mgEnd(y))).slice(0, 3).map(t => { const lt = mgEnd(t) < ref, dd = dGap(ref, mgEnd(t)); return `<p><span class="tt">${esc(t.title)}</span><span class="mgbar"><i style="width:${+t.progress || 0}%"></i></span><em>${+t.progress || 0}%</em><b class="${lt ? 't-lo' : dd <= 2 ? 'soon' : ''}">${lt ? '기한 ' + (-dd) + '일 지남' : dd === 0 ? '오늘 마감' : 'D-' + dd}</b></p>`; }).join('') + (act.length > 3 ? `<p class="more">+ ${act.length - 3}건 더</p>` : '') : '<p class="muted">진행 중인 업무 없음</p>'}</div></button>` }; };
@@ -21875,10 +21875,10 @@ html[data-theme=dark] .lvd2 .dbody .rw.ar{border-top-color:#2c3846!important}
 .lvs3 .nalt{margin-left:auto;font-size:11px;font-weight:700;color:#b45309;background:#fff1e0;border-radius:6px;padding:1px 7px}
 .lvs3 .warnt{color:#b45309!important;font-weight:800}
 .lvs3 .ovs{display:flex;flex-wrap:wrap;gap:4px}
-.lvs3 .ovc{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;border-radius:6px;background:#fdecec;color:#b42318;font-size:11.5px;font-weight:700}
-.lvs3 .ovc b{color:#7a1212;font-weight:800}
+.lvs3 .lvov{white-space:nowrap;flex:0 0 auto;flex-direction:row;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;border-radius:6px;background:#fdecec;color:#b42318;font-size:11.5px;font-weight:700}
+.lvs3 .lvov b{color:#7a1212;font-weight:800}
 .lvs3 .topl{font-size:12px;color:#334155;border-top:1px dashed #e2e8f0;padding-top:7px}.lvs3 .topl .muted{margin-right:8px;font-size:11.5px}
-html[data-theme=dark] .lvs3 .ovc{background:#3a1d1d;color:#f4a9a4}html[data-theme=dark] .lvs3 .ovc b{color:#ffd0cc}html[data-theme=dark] .lvs3 .nalt{background:#3a2a14;color:#f6b26b}html[data-theme=dark] .lvs3 .topl{color:#cbd5e1}
+html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-theme=dark] .lvs3 .lvov b{color:#ffd0cc}html[data-theme=dark] .lvs3 .nalt{background:#3a2a14;color:#f6b26b}html[data-theme=dark] .lvs3 .topl{color:#cbd5e1}
 </style>
 </body>
 </html>
