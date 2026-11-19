@@ -2839,6 +2839,17 @@ body:has(#main):not(:has(#main .hrw, #main table.grid)) .czn>button { flex:0 0 a
 .edu-wrap .edu-board { grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px; }
 .edu-wrap .edu-actions { gap:8px; }
 .edu-wrap .edu-note { font-size:12px;line-height:1.7; }
+/* v31.04 : 교육일정 한 화면 보기 — 공통 내용 1줄 · 인원 1줄 · 넓은 화면 6칸 */
+.edu-common{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:11px 16px;margin:0 0 10px;font-size:15px;font-weight:700;color:var(--ink)}.edu-common i{font-style:normal;color:#94a3b8}.edu-ctag{font-size:11.5px;font-weight:800;color:#2c4a86;background:#eef2ff;border-radius:6px;padding:3px 8px}
+.edu-wrap .edu-dif{padding:5px 11px;font-size:12px;color:#b45309;background:#fffbeb}
+.edu-wrap .edu-session-head{padding:7px 10px 6px}.edu-wrap .edu-edit{min-width:30px;padding:3px 8px!important}
+.edu-wrap .edu-board .edu-person{grid-template-columns:14px minmax(0,1fr) auto auto auto 22px;grid-template-rows:auto;gap:6px;padding:3px 4px;min-height:30px}
+.edu-wrap .edu-board .edu-person>*{grid-row:1!important}
+.edu-wrap .edu-board .edu-grip{grid-column:1}.edu-wrap .edu-board .edu-nm{grid-column:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.edu-wrap .edu-board .edu-grp{grid-column:3;white-space:nowrap;font-size:11.5px}.edu-wrap .edu-board .edu-role{grid-column:4;font-size:10.5px;padding:1px 5px}
+.edu-wrap .edu-board :is(.edu-hit,.edu-ok){grid-column:5}.edu-wrap .edu-board .edu-ok{width:0;padding:0}.edu-wrap .edu-board .edu-del{grid-column:6;width:22px;height:22px}
+.edu-wrap .edu-members{max-height:none}
+@media(min-width:1500px){.edu-wrap .edu-board{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}}
 /* Production: scroll the table, do not squeeze live input controls. */
 #main .prpg table.prt { min-width:640px; }
 #main .prpg .prc:first-of-type table.prt { min-width:1120px; }
@@ -5688,7 +5699,9 @@ async function load(host){try{const r=await A.api('eduList');E.batches=r.batches
  }catch(ex){host.innerHTML=`<div class="card">교육일정 데이터 연결을 확인해 주세요. <b>${esc(ex.message)}</b><div class="muted" style="margin-top:10px">V8 SQL 패치가 아직 실행되지 않았다면 교육일정 API를 먼저 설치해야 합니다.</div></div>`;}}
 function chooseBatch(id){if(E.changed){A.toast('변경사항을 먼저 저장하세요',true);return;}E.active=E.batches.find(x=>x.id===+id)||null;E.unmatched=[];if(E.active?.sessions?.length&&!E.active.sessions.some(x=>x.date?.startsWith(eduMonth())))E.month=E.active.sessions[0].date.slice(0,7);draw();}
 function memberRow(p,si,pi,s){const cs=hits(p,s.date),hit=cs.length;const role=p.title||'사원';return `<div class="edu-person${hit?' conflict':''}" draggable="${editor()}" data-si="${si}" data-pi="${pi}" title="${hit?'휴무 충돌 · 클릭해서 확인':'이름을 옆 회차로 드래그 이동'}"><span class="edu-grip">${editor()?'⠿':''}</span><span class="edu-role">${esc(role)}</span><b class="edu-nm">${esc(p.name)}</b><span class="edu-grp">${A.gdot?A.gdot(p.grp):esc(p.grp)}</span>${hit?`<button class="edu-hit" data-hit="${si}:${pi}">휴무 충돌</button>`:'<span class="edu-ok"> </span>'}${editor()?`<button class="edu-del" data-del="${si}:${pi}" title="인원 제거">×</button>`:''}</div>`;}
-function sessionCard(s,i){return `<section class="edu-session" data-session="${i}"><div class="edu-session-head"><div><b>${fmtDate(s)}</b><span>${count(s)}명</span></div>${editor()?`<button class="sm" data-edit="${i}" title="교육 날짜·시간·내용·장소 수정">✎ 수정</button>`:''}</div><div class="edu-details">${esc(s.start)}~${esc(s.end)} · ${esc(s.topic||E.active.title)}<small>${esc(s.place||'장소 미정')}</small></div><div class="edu-members">${(s.staff||[]).map((p,j)=>memberRow(p,i,j,s)).join('')||'<div class="edu-empty">배정 인원 없음 · 여기로 드래그</div>'}</div>${editor()?`<button class="edu-add" data-add="${i}">+ 인원 추가</button>`:''}</section>`;}
+function eduInfo(s){return {t:`${s.start||''}~${s.end||''}`,c:s.topic||E.active?.title||'',p:s.place||'장소 미정'};}
+function eduCommon(list){if(!list.length)return null;const a=list.map(eduInfo),f=a[0];const same=k=>a.every(x=>x[k]===f[k]);return {t:same('t')?f.t:null,c:same('c')?f.c:null,p:same('p')?f.p:null};}
+function sessionCard(s,i,cm){const x=eduInfo(s),dif=cm?[cm.t?'':x.t,cm.c?'':x.c,cm.p?'':x.p].filter(Boolean):null;const det=!cm?`<div class="edu-details">${esc(s.start)}~${esc(s.end)} · ${esc(s.topic||E.active.title)}<small>${esc(s.place||'장소 미정')}</small></div>`:(dif.length?`<div class="edu-details edu-dif">${dif.map(esc).join(' · ')}</div>`:'');return `<section class="edu-session" data-session="${i}"><div class="edu-session-head"><div><b>${fmtDate(s)}</b><span>${count(s)}명</span></div>${editor()?`<button class="sm edu-edit" data-edit="${i}" title="교육 날짜·시간·내용·장소 수정">✎</button>`:''}</div>${det}<div class="edu-members">${(s.staff||[]).map((p,j)=>memberRow(p,i,j,s)).join('')||'<div class="edu-empty">배정 인원 없음 · 여기로 드래그</div>'}</div>${editor()?`<button class="edu-add" data-add="${i}">+ 인원 추가</button>`:''}</section>`;}
 function draw(){const host=$('#main');if(!host||A.S.view!=='education')return;
  const month=eduMonth(),monthly=sessions().map((s,i)=>({s,i})).filter(v=>v.s.date?.startsWith(month));
  const n=allCount(),monthlyCount=monthly.reduce((t,v)=>t+count(v.s),0),all=sessions();
@@ -5701,7 +5714,8 @@ function draw(){const host=$('#main');if(!host||A.S.view!=='education')return;
  <div class="controls"><button id="edu-prev" aria-label="이전 달" title="이전 달">〈</button><input id="edu-month" type="month" value="${month}" aria-label="교육일정 연월 선택"><button id="edu-next" aria-label="다음 달" title="다음 달">〉</button><button id="edu-today" title="현재 월로 이동">이번 달</button></div>
  <span class="monthsum">${+month.slice(5)}월 교육 ${monthly.length}회 · 대상 ${monthlyCount}명</span></div>
  ${E.unmatched.length?`<div class="edu-warning"><b>확인 필요 ${unresolved()}명</b> · 기존 직원명과 일치하지 않습니다. 아래에서 수정하거나 제외한 후 저장·확정하세요. <button id="edu-unresolved">명단 확인</button></div>`:''}
- <div class="edu-board">${monthly.map(({s,i})=>sessionCard(s,i)).join('')||`<div class="card edu-empty-month"><b>${month.replace('-','년 ')}월 교육일정이 없습니다.</b>${editor()?'[+ 회차]를 누르면 선택한 월에 교육일정을 등록할 수 있습니다.':'다른 월을 선택하거나 교육 목록을 변경해 주세요.'}</div>`}</div>
+ ${(()=>{const cm=eduCommon(monthly.map(v=>v.s));if(!cm||!(cm.t||cm.c||cm.p))return '';return `<div class="edu-common card"><span class="edu-ctag">교육 내용</span>${[cm.t,cm.c,cm.p].filter(Boolean).map(esc).join('<i>·</i>')}</div>`;})()}
+ <div class="edu-board">${(()=>{const cm=eduCommon(monthly.map(v=>v.s));return monthly.map(({s,i})=>sessionCard(s,i,cm&&(cm.t||cm.c||cm.p)?cm:null)).join('');})()||`<div class="card edu-empty-month"><b>${month.replace('-','년 ')}월 교육일정이 없습니다.</b>${editor()?'[+ 회차]를 누르면 선택한 월에 교육일정을 등록할 수 있습니다.':'다른 월을 선택하거나 교육 목록을 변경해 주세요.'}</div>`}</div>
  ${editor()?'<div class="edu-note">⠿ 직원을 잡고 다른 날짜로 드래그해 이동 · 다른 달 일정은 월 이동 버튼으로 조회 · 수정 후 저장·최종 확정 시 알림 배포</div>':'<div class="edu-note">확정된 교육 일정만 표시됩니다. 알림은 교육 하루 전부터 나타납니다.</div>'}</div>`;
  status();
  $('#edu-prev').onclick=()=>eduSelectMonth(eduMonthShift(-1));
@@ -8636,7 +8650,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.03';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.04';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
