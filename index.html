@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.13';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.14';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18974,6 +18974,52 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const o = { brand: a.brand || b.brand, name: a.name || b.name, cap: a.cap || b.cap, n: a.n || b.n || 1 }; if (o.cap && o.name && !o.name.toUpperCase().includes(o.cap)) o.name += ' ' + o.cap; out[k] = o; });
     return out;
   }
+  // v31.14 : 문서 스캔처럼 — 종이 테두리 찾아 반듯하게 펴고, 그림자 지우고 글씨 진하게 (사진은 저장 안 함 · 실패하면 원본 그대로)
+  function qcCv() {
+    if (window.cv && window.cv.Mat) return Promise.resolve(window.cv);
+    if (!qcCv.p) qcCv.p = new Promise((ok, no) => {
+      const sc = document.createElement('script'); sc.async = true;
+      sc.src = (window.__CV && window.__CV.js) || 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js';
+      sc.onload = async () => { try { let m = window.cv; if (m && typeof m.then === 'function' && !m.Mat) { m = await new Promise(r => m.then(x => { delete x.then; r(x); })); window.cv = m; } if (m && !m.Mat) await new Promise(r => { m.onRuntimeInitialized = r; }); ok(window.cv); } catch (e) { no(e); } };
+      sc.onerror = () => { qcCv.p = null; no(new Error('스캔 도구 불러오기 실패')); }; document.head.appendChild(sc);
+    });
+    return qcCv.p;
+  }
+  async function qcScan(file, onMsg) {
+    let cv; try { onMsg && onMsg('주문서 반듯하게 펴는 중… (처음 한 번 스캔 도구 내려받기)'); cv = await Promise.race([qcCv(), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 30000))]); } catch (e) { console.warn('scan', e); return file; }
+    const img = await createImageBitmap(file), sc0 = Math.min(1, 2600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.round(img.width * sc0); c.height = Math.round(img.height * sc0); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const del = []; const M = x => (del.push(x), x);
+    try {
+      const src = M(cv.imread(c)), s = 900 / Math.max(c.width, c.height), sm = M(new cv.Mat()), g = M(new cv.Mat()), ed = M(new cv.Mat());
+      cv.resize(src, sm, new cv.Size(Math.round(c.width * s), Math.round(c.height * s)), 0, 0, cv.INTER_AREA);
+      cv.cvtColor(sm, g, cv.COLOR_RGBA2GRAY); cv.GaussianBlur(g, g, new cv.Size(5, 5), 0); cv.Canny(g, ed, 50, 150);
+      const k3 = M(cv.Mat.ones(3, 3, cv.CV_8U)); cv.dilate(ed, ed, k3, new cv.Point(-1, -1), 2);
+      const cs = M(new cv.MatVector()), hi = M(new cv.Mat()); cv.findContours(ed, cs, hi, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+      const minA = sm.rows * sm.cols * 0.25; let best = null, bestA = 0;
+      for (let i = 0; i < cs.size(); i++) { const ct = cs.get(i), a = cv.contourArea(ct); if (a > minA && a > bestA) { const ap = new cv.Mat(); cv.approxPolyDP(ct, ap, 0.02 * cv.arcLength(ct, true), true); if (ap.rows === 4 && cv.isContourConvex(ap)) { if (best) best.delete(); best = ap; bestA = a; } else ap.delete(); } ct.delete(); }
+      let work = src;
+      if (best) { del.push(best);
+        const P = []; for (let i = 0; i < 4; i++) P.push({ x: best.data32S[i * 2] / s, y: best.data32S[i * 2 + 1] / s });
+        const sum = P.map(q => q.x + q.y), dif = P.map(q => q.y - q.x), tl = P[sum.indexOf(Math.min(...sum))], br = P[sum.indexOf(Math.max(...sum))], tr = P[dif.indexOf(Math.min(...dif))], bl = P[dif.indexOf(Math.max(...dif))];
+        const dd = (a, b) => Math.hypot(a.x - b.x, a.y - b.y), W = Math.round(Math.max(dd(tl, tr), dd(bl, br))), H = Math.round(Math.max(dd(tl, bl), dd(tr, br)));
+        const ang = (p, q, r) => { const v1x = p.x - q.x, v1y = p.y - q.y, v2x = r.x - q.x, v2y = r.y - q.y; return Math.acos((v1x * v2x + v1y * v2y) / (Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y) || 1)) * 180 / Math.PI; };
+        const sq = [ang(bl, tl, tr), ang(tl, tr, br), ang(tr, br, bl), ang(br, bl, tl)].every(x => x > 65 && x < 115);   // 네 모서리가 대략 직각일 때만
+        const edge = [tl, tr, br, bl].filter(q => q.x < c.width * 0.02 || q.y < c.height * 0.02 || q.x > c.width * 0.98 || q.y > c.height * 0.98).length;   // 사진 테두리에 붙은 네모 = 종이 아님
+        if (sq && edge < 2 && W > 300 && H > 300 && H / W > 0.3 && H / W < 4) {
+          const from = M(cv.matFromArray(4, 1, cv.CV_32FC2, [tl.x, tl.y, tr.x, tr.y, br.x, br.y, bl.x, bl.y])), to = M(cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, W, 0, W, H, 0, H]));
+          const T = M(cv.getPerspectiveTransform(from, to)); work = M(new cv.Mat()); cv.warpPerspective(src, work, T, new cv.Size(W, H), cv.INTER_LINEAR, cv.BORDER_REPLICATE, new cv.Scalar());
+        }
+      }
+      // 그림자 지우기 : 바탕(글씨 지운 밝기)으로 나눠 종이는 하얗게, 글씨는 진하게
+      const gr = M(new cv.Mat()), bg = M(new cv.Mat()), out = M(new cv.Mat()); cv.cvtColor(work, gr, cv.COLOR_RGBA2GRAY);
+      const k7 = M(cv.Mat.ones(7, 7, cv.CV_8U)); cv.dilate(gr, bg, k7); cv.medianBlur(bg, bg, 21);
+      cv.divide(gr, bg, out, 255); cv.normalize(out, out, 0, 255, cv.NORM_MINMAX);
+      const oc = document.createElement('canvas'); cv.imshow(oc, out);
+      return await new Promise(r => oc.toBlob(b => r(b || file), 'image/jpeg', 0.95));
+    } catch (e) { console.warn('scan', e); return file; }
+    finally { del.forEach(x => { try { x.delete(); } catch (_) { } }); }
+  }
   async function qcReadAll(file, onMsg, onPct) {   // → { P, src }
     const cnv = await qcPrep(file), raw = await (async () => { const img = await createImageBitmap(file), sc = Math.min(1, 2400 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c; })();
     let A = null, B = null;
@@ -18988,7 +19034,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try {
       let bar = '';   // v30.98 : 주문번호는 바코드부터 (글자보다 정확)
       try { V.msg = '바코드 찾는 중…'; upd(); bar = await qcBar(file); } catch (e) { }
-      const R = await qcReadAll(file, m => { V.msg = m; upd(); }, p => { V.pct = Math.max(V.pct, Math.round(50 + p * 45)); upd(); });
+      const sf = await qcScan(file, m => { V.msg = m; upd(); });   // v31.14 : 스캔 보정
+      if (!bar && sf !== file) { try { bar = await qcBar(sf); } catch (e) { } }
+      const R = await qcReadAll(sf, m => { V.msg = m; upd(); }, p => { V.pct = Math.max(V.pct, Math.round(50 + p * 45)); upd(); });
       clearInterval(tk);
       if (S.view !== 'qc') return;
       V.P = R.P || {}; V.eng = R.eng; V.res = {}; V.order = bar || V.P.order || ''; V.src = bar ? 'bar' : V.order ? 'ocr' : '';
