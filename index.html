@@ -723,6 +723,8 @@ html[data-theme=dark] .hrw table.score .dq{background:#2d3a55;color:#9dbbff}
 .ovc{color:var(--ink)!important;border-left:4px solid var(--ovg,#cfd6e0)!important}.ovc:hover{border-color:#aab4c3}.ovi{font-style:normal;font-size:11.5px;font-weight:700;color:#c62828;background:#fdecec;border:1px solid #f0c4c4;border-radius:999px;padding:1px 8px}
 .ovl-sum{display:flex;flex-wrap:wrap;gap:12px;margin:-4px 0 10px;font-size:13px}.ovl-w{max-height:62vh;overflow:auto;border:1px solid var(--line);border-radius:8px}.ovl-t{width:100%}.ovl-t td,.ovl-t th{padding:7px 12px;text-align:center}.ovl-t .l{text-align:left}.ovl-gh td{background:#f3f5f8;text-align:left!important;font-weight:700;border-top:2px solid var(--line)}.ovl-d{margin:2px 2px 2px 0}
 .pl-dr{display:flex!important;align-items:center;gap:8px}.pl-dr input{flex:1 1 0;min-width:0;width:auto!important;cursor:pointer}.pl-dr span{flex:none;color:var(--sub)}
+.pl-filters .plg i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--pg);margin-right:5px;vertical-align:0}.pl-filters .plg.on{border-color:var(--pg)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--pg) 25%,transparent)}
+.plmg .plmc{border-left:4px solid var(--pg,#cfd6e0)!important}.plmg .plmc small i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:0}
 .grp-n{display:inline-block;margin-left:6px;padding:0 7px;border-radius:999px;background:#e8f0fc;color:#1f5fbf;font-size:11px;font-weight:700;vertical-align:1px}
 .ovch{display:flex;align-items:center;gap:10px}.ovch b{font-size:15px}.ovch span{font-size:12.5px}
 .ovcb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ovcb>div{background:#f7f8fa;border-radius:8px;padding:8px 10px}
@@ -8602,7 +8604,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.86';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.87';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13251,8 +13253,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const title = p.mode === 'w' ? `${dLabel(R.from)} ~ ${dLabel(R.to)}` : ymLabel(p.ym);
     box.innerHTML = `<div class="plbar"><div class="seg">${[['m', '월간 계획'], ['w', '주간 업무 목표']].map(([k, t]) => `<button data-plm="${k}" class="${p.mode === k ? 'on' : ''}">${t}</button>`).join('')}</div>
         <div class="mcnav"><button id="plprev" title="이전">‹</button><b>${title}</b><button id="plnext" title="다음">›</button></div><button id="pltd">${p.mode === 'w' ? '이번 주' : '이번 달'}</button><span style="flex:1"></span><span class="muted">달력월 기준 · 귀속월과 무관</span></div>
-      <div class="pl-filters"><b>그룹</b>${[...new Set(OW.flatMap(o => (o.mg || []).length ? o.mg : [o.group]).filter(Boolean))].map(g => `<button class="sm ${p.groups.includes(g) ? 'on' : ''}" data-plgroup="${esc(g)}" aria-pressed="${p.groups.includes(g)}">${esc(g)}</button>`).join('')}<button class="sm" id="plclear">그룹 선택 해제</button><form id="plsearchform"><input id="plsearch" value="${esc(p.search)}" placeholder="전체 검색 · 업무명 / 담당자" aria-label="전체 업무 검색"><button>전체 검색</button></form></div>
-      <div class="plmg"><button class="plmc ${p.own === '*' ? 'on' : ''}" data-plo="*"><b>전체 매니저</b><small>선택 그룹 기준</small></button>${owners.map(o => `<button class="plmc ${o.id === p.own ? 'on' : ''}" data-plo="${o.id}"><b>${esc(o.name)}</b>${o.gl ? `<small>${esc(o.gl)}</small>` : ''}<em>기록 ${cntOf(o.id)}</em></button>`).join('') || '<span class="muted">매니저가 없습니다</span>'}</div>
+      <div class="pl-filters"><b>그룹</b>${[...new Set(OW.flatMap(o => (o.mg || []).length ? o.mg : [o.group]).filter(Boolean))].map(g => `<button class="sm plg ${p.groups.includes(g) ? 'on' : ''}" style="--pg:${gcol(g)}" data-plgroup="${esc(g)}" aria-pressed="${p.groups.includes(g)}"><i></i>${esc(g)}</button>`).join('')}<button class="sm" id="plclear">그룹 선택 해제</button><form id="plsearchform"><input id="plsearch" value="${esc(p.search)}" placeholder="전체 검색 · 업무명 / 담당자" aria-label="전체 업무 검색"><button>전체 검색</button></form></div>
+      <div class="plmg"><button class="plmc ${p.own === '*' ? 'on' : ''}" data-plo="*"><b>전체 매니저</b><small>선택 그룹 기준</small></button>${owners.map(o => { const gs = (o.mg || []).length ? o.mg : [o.group].filter(Boolean); return `<button class="plmc ${o.id === p.own ? 'on' : ''}" style="--pg:${gcol(gs[0] || '')}" data-plo="${o.id}"><b>${esc(o.name)}</b>${gs.length ? `<small>${gs.map(g => `<i style="background:${gcol(g)}"></i>${esc(g)}`).join(' ')}</small>` : ''}<em>기록 ${cntOf(o.id)}</em></button>`; }).join('') || '<span class="muted">매니저가 없습니다</span>'}</div>
       ${ent}
       <div class="card wtc"><div class="wth"><b>${p.mode === 'w' ? '주간 업무 목표' : (+p.ym.slice(5)) + '월 월간 계획'}</b><span class="muted">담당 : ${p.own === '*' ? '전체 매니저' : esc(own.name)}${own.gl ? ' · ' + esc(own.gl) : ''} · ${title}</span>${!mine && T.some(t => !t.full) ? '<span class="chip none">🔒 다른 매니저 계획 = 제목 · 기간 · 진행률 공개 (상세는 작성자 · 팀장 · 관리자)</span>' : ''}${anyEditable && p.own === '*' ? '<span class="chip none">본인 업무 줄에서 추가 작업 기록 가능</span>' : !anyEditable ? '<span class="chip none">보기 전용</span>' : ''}</div>
         <div class="wsw pl-table-scroll">${sheet}</div>
