@@ -5995,6 +5995,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     html += `<div class="lvlegend"><span class="lv">확정</span><span class="lv req">파트 확인 전</span><span class="lv mgr">관리자 확정 대기</span><span class="lv tr">훈련</span><span class="lv sp">경조 · 병가</span><span class="sw lvx" style="cursor:default">토요 대체<i>↺</i></span>${own ? '<span class="lv me">나</span>' : ''}
       <span class="lb" style="margin-left:10px">토요근무 · 대체휴무 = 같은 주 같은 색</span>
       <span style="flex:1"></span><span class="muted">${d.canEdit ? '빈 곳을 끌어 등록 · 이름을 끌어 옮기기 · 이름 눌러 수정' : own && myStaff() ? '날짜를 끌어 신청 · 이름 눌러 보기' : '이름을 누르면 내용 보기'}</span></div>`;
+    // v31.11 : 병가 · 경조 · 출산 등 (연차 아닌 휴가) = 달력 위 한 줄로 따로 (날짜 칸에서는 빠짐 · 휴무 인원 숫자에는 그대로 포함)
+    const LT = {}; weeks.forEach(days => days.forEach((dd, i) => { if (i > 4 || LC.ymOf(dd) !== ym) return; LC.dayCell(L.calIx, dd).lv.filter(x => pf(x.s) && LC.leaveKind(x.l)).forEach(x => { const kd = LC.leaveKind(x.l), k = x.l.s + '|' + kd; (LT[k] = LT[k] || { x, kd, ds: [] }).ds.push({ d: dd, l: x.l }); }); }));
+    const dgap = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
+    const LTR = []; Object.values(LT).forEach(o => { o.ds.sort((p, q) => p.d < q.d ? -1 : 1); let run = []; o.ds.forEach(e => { if (run.length && (e.d === run[run.length - 1].d)) return; if (run.length && dgap(run[run.length - 1].d, e.d) > 4) { LTR.push({ x: o.x, kd: o.kd, ds: run }); run = []; } run.push(e); }); if (run.length) LTR.push({ x: o.x, kd: o.kd, ds: run }); });
+    LTR.sort((p, q) => (p.ds[0].d < q.ds[0].d ? -1 : p.ds[0].d > q.ds[0].d ? 1 : 0) || lvGk(p.x.s) - lvGk(q.x.s));
+    if (LTR.length) html += `<div class="lvlong"><span class="lb">병가 · 경조 등</span>${LTR.map((r, k) => { const a = r.ds[0].d, b = r.ds[r.ds.length - 1].d, st = stOf(r.ds[0].l), me = own && myStaff() && r.x.l.s === myStaff().id;
+      return `<button type="button" class="lvlg${st === '신청' ? ' req' : st === '파트확인' ? ' mgr' : ''}${me ? ' me' : ''}${isMgr(r.x.s.name) ? ' mg' : ''}" data-lg="${k}" title="${A.esc(r.x.s.name + ' · ' + r.kd + ' · ' + r.ds.length + '일' + (r.x.l.r ? ' · ' + r.x.l.r : ''))}"><b>${A.esc(r.x.s.name)}</b><em>${A.esc(r.kd)}</em><small>${md(a)}${b !== a ? ' ~ ' + md(b) : ''} · ${r.ds.length}일</small></button>`; }).join('')}</div>`;
     html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
       return `<div class="${w === '토' ? 'sat' : ''}">${w}요일${cp ? `<span class="hcap">상한 ${cp}명</span>` : ''}${w === '토' ? '' : '<div class="sub"><span>연차</span><span>대체</span></div>'}</div>`; }).join('')}</div>`;
     weeks.forEach(days => {
@@ -6008,7 +6015,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           return;
         }
         const c = LC.dayCell(L.calIx, dd), cap = d.all ? capOf(dd) : 0, over = cap && c.off > cap;
-        const lv = c.lv.filter(x => pf(x.s)).sort(lvSrt), al = c.al.filter(x => pf(x.s)).sort(lvSrt);
+        const lv = c.lv.filter(x => pf(x.s) && !(LC.ymOf(dd) === ym && LC.leaveKind(x.l))).sort(lvSrt), al = c.al.filter(x => pf(x.s)).sort(lvSrt);
         html += `<div class="lvd2${other ? ' other' : ''}${hol ? ' hol' : ''}${over ? ' over' : ''}${dd === A.S.today ? ' today' : dd < A.S.today ? ' past' : ''}" data-d="${dd}">
           <div class="hd"><b class="dn">${md(dd)}</b>${hol ? `<span class="hn">${A.esc(hol)}</span>` : ''}${d.all && L.part ? (lv.length + al.length ? `<span class="n">휴무 ${lv.length + al.length}</span>` : '') : d.all && (c.off || cap) ? `<span class="n${over ? ' red' : cap && c.off === cap ? ' full' : ''}"${over && d.canEdit ? ` data-ov="${dd}" title="누르면 토요 대체로 정리"` : ''}>휴무 ${c.off}${cap ? '/' + cap : ''}${over && d.canEdit ? ' ↺' : ''}</span>` : ''}</div>
           <div class="dbody"><div class="rw">${lv.map(x => chipHtml(x, own)).join('')}</div>
@@ -6030,6 +6037,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (A.$('#lvrec')) drawRec(A.$('#lvrec'));
     A.$$('[data-pt]').forEach(b => (b.onclick = () => { ptPick(b.dataset.pt); drawCal(); }));
     if (A.$('#lvsp')) A.$('#lvsp').onchange = e => { L.showPend = e.target.checked; reindex(); drawCal(); };
+    A.$$('[data-lg]').forEach(el => (el.onclick = () => { const r = LTR[+el.dataset.lg]; if (!r) return; if (r.ds.length === 1) return leaveModal({ edit: r.ds[0].l });
+      A.modal(`<h3>${A.esc(r.x.s.name)} · ${A.esc(r.kd)} <span class="muted" style="font-size:13px;font-weight:500">${r.ds.length}일</span></h3><p class="muted">수정할 날짜를 누르세요.</p><div class="lvlgd">${r.ds.map((e, j) => `<button type="button" data-lgd="${j}">${mdw(e.d)}</button>`).join('')}</div><div class="acts"><button data-n>닫기</button></div>`, (bg, close) => {
+        A.$('[data-n]', bg).onclick = close; A.$$('[data-lgd]', bg).forEach(b => (b.onclick = () => { close(); leaveModal({ edit: r.ds[+b.dataset.lgd].l }); })); }); }));
     A.$$('.lvcal2 [data-l]').forEach(el => (el.onclick = ev => { ev.stopPropagation(); const l = d.leaves.find(x => x.id === el.dataset.l); if (l) leaveModal({ edit: l }); }));
     A.$$('.lvcal2 [data-u]').forEach(el => (el.onclick = ev => { ev.stopPropagation(); const [sd, sid] = el.dataset.u.split('|'); if (conv[el.dataset.u]) return altInfo(conv[el.dataset.u]); A.toast((staffById(sid) || {}).name + ' : ' + mdw(sd) + ' 토요근무 → ' + mdw(el.closest('[data-d]').dataset.d) + ' 대체휴무'); }));
     A.$$('.lvcal2 [data-sw].lvx').forEach(el => (el.onclick = ev => { ev.stopPropagation(); altInfo(conv[el.dataset.sw]); }));
@@ -8652,7 +8662,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.10';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.11';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21823,6 +21833,27 @@ html[data-theme=dark] .lvcal2 .lv.req,html[data-theme=dark] .lvcal2 .lv.mgr{back
 html[data-theme=dark] .lvd2 .dbody .rw.ar{background:#182131;border-left-color:#2c3846}
 html[data-theme=dark] .lvcal2 .lvlb{background:#22324d}html[data-theme=dark] .lvcal2 .lvlb.sp{background:#33224a}html[data-theme=dark] .lvcal2 .lvlb.tr{background:#1d3524}
 html[data-theme=dark] .lvcal2 .lvlb{color:#e5e8eb}html[data-theme=dark] .lvcal2 .lvlb .lbr{color:#9aa7b8}
+</style>
+<style id="v3111-leave">
+/* v31.11 : 연차 달력 — 병가·경조 등 위 한 줄 · 칸 안 위(연차)/아래(대체) */
+.lvlong{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;padding:9px 12px;background:#faf7ff;border:1px solid #e9ddfb;border-radius:12px}
+.lvlong .lb{font-size:12px;font-weight:800;color:#5b2a86;margin-right:4px}
+.lvlg{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;background:#fff;border:1px solid #e2d4f7;color:#1e293b;font-size:13px;cursor:pointer}
+.lvlg:hover{border-color:#9b6bdf}
+.lvlg b{font-weight:700}.lvlg.mg b{font-weight:900}
+.lvlg em{font-style:normal;font-size:11px;font-weight:800;color:#6d3fb0;background:#f3e8ff;border-radius:5px;padding:1px 6px}
+.lvlg small{font-size:11.5px;color:#64748b;font-weight:600}
+.lvlg.req{border-style:dashed;border-color:#64748b}.lvlg.mgr{border-style:dashed;border-color:#d9922e}
+.lvlg.me{background:#1f2a3a;color:#fff;border-color:#1f2a3a}.lvlg.me small{color:#cbd5e1}
+.lvlgd{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.lvlgd button{padding:6px 10px}
+.lvhd2 .sub{display:none!important}
+.lvd2 .dbody{display:flex!important;flex-direction:column;gap:5px!important}
+.lvd2 .dbody .rw{padding:0!important}
+.lvd2 .dbody .rw.ar{border:0!important;border-top:1px dashed #d4dae3!important;border-radius:0!important;background:none!important;padding:5px 0 0!important;align-items:center}
+.lvd2 .dbody .rw.ar:empty{display:none}
+.lvd2 .dbody .rw.ar::before{content:'대체';font-size:10.5px;font-weight:800;color:#64748b;margin-right:3px}
+html[data-theme=dark] .lvlong{background:#221a30;border-color:#3a2a55}html[data-theme=dark] .lvlg{background:#1b2334;border-color:#3a2a55;color:#e5e8eb}html[data-theme=dark] .lvlg em{background:#3a2552;color:#e9d5ff}html[data-theme=dark] .lvlong .lb{color:#d8b4fe}
+html[data-theme=dark] .lvd2 .dbody .rw.ar{border-top-color:#2c3846!important}
 </style>
 </body>
 </html>
