@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.91';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.92';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9159,11 +9159,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>',
   };
-  const SIDE_VIEWS = ['education', 'dash', 'manage', 'people', 'leave', 'hr', 'settings', 'admin', 'stats', 'mfg', 'acc', 'goal', 'ptarget', 'setperiod', 'setrates', 'setbackup', 'setimport'];
+  const SIDE_VIEWS = ['education', 'dash', 'manage', 'people', 'leave', 'hr', 'settings', 'admin', 'stats', 'mfg', 'acc', 'goal', 'ptarget', 'setperiod', 'setrates', 'setbackup', 'setimport', 'qcr'];
   // v30.81 : 운영 설정 = 인원 현황/관리 · 월 기간·마감 · 목표 · 항목별 분 · 백업·보관함 · 엑셀 가져오기 · 통계
   const SET_SECS = () => [['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()]];
   const isSetView = v => v === 'settings' || ['setperiod', 'setrates', 'setbackup', 'setimport'].includes(v);
-  const ADM_MENU = () => [['people', '인원 현황/관리', can('people')], ['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['goal', '목표', isAdm0() && !isRO()], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()], ['stats', '통계', can('stats')]];
+  const ADM_MENU = () => [['people', '인원 현황/관리', can('people')], ['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['goal', '목표', isAdm0() && !isRO()], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()], ['stats', '통계', can('stats')], ['qcr', '검수 내역', canQcr()]];
   // v28 : 관리자 · 보기 전용 관리자 · 추가 권한 받은 매니저
   const isAdm0 = () => !!(S.me && S.me.role === '관리자');
   const isRO = () => !!(S.me && S.me.ro);
@@ -9259,7 +9259,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       canSp() && ['sp', 'sp', spTitle(), IC.spi],   // v29.57 : 소모품 관리 (조직도 밑)
       m.acc && ['acc', 'acc', ordered ? '사고 현황' : m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>'],
       m.hr && ['hr', 'hr', '데이터 마감', IC.hr],
-      canSettings() && (ADM_MENU().filter(x => x[2]).map(x => x[0]).join() === 'stats' ? ['adm', 'stats', '통계', IC.chart] : ['adm', canHub() ? 'admin' : 'settings', '운영 설정', IC.gear])   // v30.82 : 통계 권한만 있으면 메뉴 이름 = 통계
+      (canSettings() || canQcr()) && (ADM_MENU().filter(x => x[2]).every(x => ['stats', 'qcr'].includes(x[0])) ? ['adm', 'stats', '통계', IC.chart] : ['adm', canHub() ? 'admin' : 'settings', '운영 설정', IC.gear])   // v30.82 : 통계 권한만 있으면 메뉴 이름 = 통계
     ].filter(Boolean);
     if (!ordered) return items;
     const order = ['work', 'mgr', 'acc', 'leave', 'prod', 'video', 'education', 'org', 'sp', 'hr', 'adm'];
@@ -9336,7 +9336,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cur = S.view;     // v28.10 : 보기 전용의 [조직도] = 인원 화면의 조직도 탭
     $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === cur || (b.dataset.v === 'line' && cur === 'linestats') || (b.dataset.v === 'dash' && S.view === 'manage') || (b.dataset.v === 'admin' && (isSetView(S.view) || S.view === 'people' || S.view === 'stats' || S.view === 'goal'))) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
     if ($('.czn')) {                                                      // v28.17 : 분류 켜짐 + 위 막대 세부 메뉴
-      const v = S.view, cat = v === 'sp' ? 'sp' : v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'line', 'linestats', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(v) ? 'adm' : 'work';
+      const v = S.view, cat = v === 'sp' ? 'sp' : v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'line', 'linestats', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'qcr', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(v) ? 'adm' : 'work';
       $$('.czr [data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
       let it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
@@ -9348,6 +9348,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (cat === 'work' && srCan()) it = it.concat([['sr','주문 사양검토']]);
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
       if (cat === 'work' && canQc()) it = it.concat([['qc', '✅ 조립 검수']]);   // v30.90
+
       $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : k === 'line' && v === 'linestats' ? 'lo-parent-on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
     const p = $('#proxy'); if (!p) return;
@@ -9417,14 +9418,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       opt = opt || {};
       if (view === 'people' && !opt.tab && !opt._pop) opt.tab = 'list';
       if (view === 'people' && opt.tab) S.pTab = opt.tab;                  // 위쪽 막대 [인원 현황] / [조직도] 켜짐이 바로 맞게
-      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp'].includes(view) && !(view === 'df' && dfStatCan()) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
+      if (!['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp', 'qcr'].includes(view) && !(view === 'df' && dfStatCan()) && !(S.target && ['input', 'month'].includes(view))) view = 'home';
     }
     if (view === 'admin' && canHub()) {                                    // v28.8 : 고르기 화면 없이 바로 (마지막에 본 탭 → 인원 → 설정 → 통계)
       const ok = k => { const m = ADM_MENU().find(x => x[0] === k); return !!(m && m[2]); };
       view = [S.admLast, ...ADM_MENU().map(x => x[0])].find(k => k && ok(k)) || 'settings';
     }
     if (view === 'settings') view = (SET_SECS().find(x => x[2]) || ['setperiod'])[0];   // v30.81 : 예전 '기간 · 백업 · 설정' 주소 → 첫 세부 메뉴
-    if (['people', 'stats', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(view)) S.admLast = view;
+    if (['people', 'stats', 'qcr', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(view)) S.admLast = view;
     const lay = layoutOf(view);
     if (lay !== S.layout) shell(lay);
     if (lay === 'side' && !['input', 'month'].includes(view)) S.lastSide = view;     // 대신 입력에서 [돌아가기] = 그 전 관리 화면
@@ -9449,6 +9450,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'smob') { $('#proxy').innerHTML = ''; return canSmob() ? renderSmob() : go('dash'); }   // v29.53
     if (view === 'qc') { $('#proxy').innerHTML = ''; return canQc() ? renderQc() : go('dash'); }   // v30.90 : 조립 검수
     if (view === 'mhome') { $('#proxy').innerHTML = ''; return renderMhome(); }   // v30.91 : 휴대폰 첫 화면 메뉴
+    if (view === 'qcr') { $('#proxy').innerHTML = ''; return canQcr() ? renderQcr() : go('dash'); }   // v30.92 : 검수 현황
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
     if (entering && (view === 'manage' || view === 'hr')) {
@@ -11251,7 +11253,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const goDate = d => { if (!d) return; S.ddDate = d > r.today ? r.today : d; renderDash(); };
     $('#ddp').onclick = () => goDate(ddStep(dl, -1));
     $('#ddn').onclick = () => goDate(ddStep(dl, 1));
-    qcDash(dl);   // v30.90
     $('#ddd').onchange = e => /^\d{4}-\d{2}-\d{2}$/.test(e.target.value) && goDate(e.target.value);
     if ($('#ddprev')) $('#ddprev').onclick = () => goDate(r.prevWork);
     // v28.21 : 업무배정 · 조립 야근 = 항상 오늘 날짜로 열림 (창 안에서 날짜 바꾸기)
@@ -18645,7 +18646,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (canQc()) W.push(['qc', '✅', '#e8eefb', '조립 검수', '주문서 찍고 4가지 체크']);
     if (!mgr) W.push(['input', '📝', '#eef6f0', '업무데이터 보기', '오늘 입력 내용 확인 (보기 전용)']);
     if (!mgr) W.push(['month', '📅', '#eef6f0', '이번 달 내 실적', '월 업무현황 · 달성률 (보기 전용)']);
-    if (mgr) W.push(['dash', '📊', '#e8eefb', '일일 업무현황', '그룹별 현황 · 검수 표시']);
+    if (mgr) W.push(['qcr', '📋', '#eef6f0', '검수 내역', '주문별 · 조립자별 검수']);
+    if (mgr) W.push(['dash', '📊', '#e8eefb', '일일 업무현황', '그룹별 현황']);
     const M = [];
     main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="mhpc">PC 화면</button><button id="mhlo">로그아웃</button></span></div>
       <div class="pxr"><div><h1>조립팀 업무데이터</h1><div class="pxmeta">${dLabel(S.today)} · ${esc(me.name)}${grp ? ' · ' + esc(grp) : ''}</div></div></div></div>
@@ -18710,7 +18712,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (V.step === 'start' || V.step === 'ocr') {
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
         <div class="pxcard"><div class="qc-lb">① 주문서 촬영 <small>제품 목록이 화면에 꽉 차게</small></div>
-        <label class="qc-shot">📷 주문서 찍기<small>사진은 목록 읽는 데만 쓰고 저장하지 않습니다</small><input type="file" accept="image/*" capture="environment" id="qcf" hidden></label>
+        <div class="qc-shots"><label class="qc-shot">📷 사진 찍기<small>카메라 바로 열기</small><input type="file" accept="image/*" capture="environment" class="qcf" hidden></label><label class="qc-shot alt">🖼 앨범에서 고르기<small>찍어둔 사진 올리기</small><input type="file" accept="image/*" class="qcf" hidden></label></div><div class="qc-note">사진은 목록 읽는 데만 쓰고 저장하지 않습니다</div>
         ${V.step === 'ocr' ? `<div class="qc-prog"><i style="width:${V.pct || 3}%"></i></div><div class="pxmsg info" id="qcpm">${esc(V.msg || '준비 중…')}</div>` : ''}
         <div class="qc-tools"><button type="button" id="qcman">주문번호만 입력</button></div></div>${hist}</div></div>`;
     } else if (V.step === 'done') {
@@ -18746,7 +18748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function bindQc() {
     const V = S.qcv, b = $('#qcback'); if (b) b.onclick = () => { S.qcv = null; go('mhome'); };
-    const f = $('#qcf'); if (f) f.onchange = async e => { const file = e.target.files[0]; if (!file) return; await qcRun(file); };
+    $$('.qcf').forEach(f => f.onchange = async e => { const file = e.target.files[0]; if (!file) return; await qcRun(file); });
     if ($('#qcman')) $('#qcman').onclick = () => { V.P = {}; V.res = {}; V.order = ''; V.who = null; V.done = null; V.self = false; V.step = 'check'; renderQc(); setTimeout(() => $('#qco') && $('#qco').focus(), 50); };
     if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
     if ($('#qcre')) $('#qcre').onclick = () => { V.step = 'start'; renderQc(); };
@@ -18767,11 +18769,71 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       try { await api('qc', { op: 'save', order: V.order, assembler: V.who.id, items }); V.hist = [{ order: V.order, who: V.who.name, by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
     };
   }
-  // v30.90 : 일일 업무현황 이름 옆 '검수 n' (그날 검수받은 건수)
-  async function qcDash(date) {
-    let by; try { by = (await api('qc', { op: 'stat', date })).by || {}; } catch (e) { return; }
-    if (S.view !== 'dash') return;
-    $$('#main .ddpr .n[data-nt]').forEach(n => { const k = n.dataset.nt, c = by[k]; if (c && !n.querySelector('.qcb')) n.insertAdjacentHTML('beforeend', `<span class="qcb" title="오늘 검수받은 주문 ${c}건">검수 ${c}</span>`); });
+  // ───────── v30.92 : 검수 현황 (매니저 · 팀장 · 관리자) — 처리 = 각자 입력한 주문번호(조립한 날 기준) · 검수 = 그중 검수된 주문 ─────────
+  const canQcr = () => !!(S.me && (isManager() || isRO()));
+  async function renderQcr(reload) {
+    const main = $('#main'), F = S.qf = Object.assign({ from: S.today, to: S.today, grp: '', who: '', by: '', no: '', miss: 0, mode: 'list', data: null, queryMode: '당일' }, S.qf || {});
+    if (!F.data || reload) {
+      main.innerHTML = admHead('검수 내역', 'qcr') + '<div class="pgb"><div class="card muted" style="padding:30px">불러오는 중…</div></div>';
+      try { F.data = await api('qc', { op: 'detail', from: F.from, to: F.to }); } catch (e) { main.innerHTML = admHead('검수 내역', 'qcr') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
+      if (S.view !== 'qcr') return;
+    }
+    const Rw = (F.data.rows || []).map(x => ({ d: x[0], name: x[1], g: x[2], o: x[3], by: x[4] || '', at: x[5] || '' }));
+    const fno = F.no.replace(/\D/g, '');
+    const L = Rw.filter(r => (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!F.by || r.by === F.by) && (!fno || r.o.includes(fno)) && (!F.miss || !r.by));
+    const done = L.filter(r => r.by).length, pc = L.length ? Math.round(done / L.length * 100) : 0;
+    const names = [...new Set(Rw.map(r => r.name))].sort((a, b) => a.localeCompare(b, 'ko')), bys = [...new Set(Rw.map(r => r.by).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
+    const range = d => { const t = S.today; if (d === 'w') { const x = new Date(t + 'T00:00:00'), k = (x.getDay() + 6) % 7; return [C.addDays(t, -k), t]; } if (d === 'p') { const p = curPeriod(); return p ? [p.start, t] : [t, t]; } return [C.addDays(t, d), C.addDays(t, d)]; };
+    const tile = (l, v, cls, sub) => `<div class="mft ${cls || ''}"><span>${l}</span><b>${v}</b>${sub ? `<em>${sub}</em>` : ''}</div>`;
+    const mdl = d => dLabel(d);
+    let body;
+    if (F.mode === 'list') {
+      const rows = L.slice().sort((a, b) => (a.by ? 1 : 0) - (b.by ? 1 : 0) || b.d.localeCompare(a.d) || a.g.localeCompare(b.g, 'ko', { numeric: true }) || a.name.localeCompare(b.name, 'ko') || a.o.localeCompare(b.o));
+      body = `<table class="list mft2"><thead><tr><th class="num">No</th><th>조립일</th><th>그룹</th><th>조립자</th><th>주문번호</th><th>검수</th><th>검수자</th><th>검수 시간</th></tr></thead><tbody>${rows.length ? rows.slice(0, 1500).map((r, i) => `<tr><td class="num">${i + 1}</td><td>${esc(mdl(r.d))}</td><td>${gdot(r.g)}</td><td><b>${esc(r.name)}</b></td><td><b>${esc(r.o)}</b></td><td>${r.by ? '<span class="okt">✓ 검수</span>' : '<span class="ngt">미검수</span>'}</td><td>${esc(r.by)}</td><td class="muted">${esc(String(r.at).slice(5, 16))}</td></tr>`).join('') + (rows.length > 1500 ? `<tr><td colspan="8" class="muted">${rows.length - 1500}줄 더 있음 — 기간이나 조건을 좁혀 주세요</td></tr>` : '') : '<tr><td colspan="8" class="muted" style="padding:30px">해당하는 주문이 없습니다</td></tr>'}</tbody></table>`;
+    } else {
+      const P = {}; L.forEach(r => { const k = r.g + '|' + r.name, x = P[k] = P[k] || { g: r.g, name: r.name, n: 0, c: 0 }; x.n++; if (r.by) x.c++; });
+      const pl = Object.values(P).sort((a, b) => a.c / a.n - b.c / b.n || b.n - a.n);
+      body = `<table class="list mft2"><thead><tr><th>그룹</th><th>조립자</th><th class="num">처리</th><th class="num">검수</th><th class="num">미검수</th><th class="num">검수율</th></tr></thead><tbody>${pl.length ? pl.map(x => `<tr class="click" data-qw="${esc(x.name)}"><td>${gdot(x.g)}</td><td><b>${esc(x.name)}</b></td><td class="num">${x.n}</td><td class="num"><b class="${x.c ? 'okt' : ''}">${x.c}</b></td><td class="num"><b class="${x.n - x.c ? 'ngt' : ''}">${x.n - x.c}</b></td><td class="num"><b class="${x.c ? 'okt' : 'ngt'}">${Math.round(x.c / x.n * 100)}%</b></td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="padding:30px">해당하는 주문이 없습니다</td></tr>'}</tbody></table>`;
+    }
+    main.innerHTML = admHead('검수 내역', 'qcr', `<span class="muted" style="font-size:13px">업무데이터에 입력한 주문번호 기준 (조립한 날) · 안정화 제외</span>`) + `<div class="pgb">
+      <div class="card mff">
+        <div class="r"><b>날짜</b><input type="date" id="qfF" value="${F.from}" max="${S.today}"> ~ <input type="date" id="qfT" value="${F.to}" max="${S.today}">
+          <span class="seg">${[[0, '오늘'], [-1, '어제'], ['w', '이번 주'], ['p', '이번 달']].map(([k, t]) => `<button data-rg="${k}" class="${range(k)[0] === F.from && range(k)[1] === F.to ? 'on' : ''}">${t}</button>`).join('')}</span>
+          <button class="primary" id="qfGo">검색</button></div>
+        <div class="r"><b>조립자</b><select id="qfW"><option value="">전체</option>${names.map(n => `<option ${n === F.who ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+          <b>검수자</b><select id="qfB"><option value="">전체</option>${bys.map(n => `<option ${n === F.by ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+          <b>주문번호</b><input id="qfN" value="${esc(F.no)}" placeholder="일부만 써도 됨" style="width:130px">
+          <label class="ck"><input type="checkbox" id="qfM" ${F.miss ? 'checked' : ''}> 미검수만</label></div>
+      </div>
+      <div class="mfts">${tile('처리 주문', L.length + '<small>건</small>', 'tot')}${tile('검수', done + '<small>건</small>', 'a')}${tile('미검수', (L.length - done) + '<small>건</small>', L.length - done ? 'dup' : '')}${tile('검수율', pc + '<small>%</small>', 'b')}</div>
+      <div class="card" style="padding:0;overflow:auto">
+        <div class="mfh"><span class="seg"><button data-md="list" class="${F.mode === 'list' ? 'on' : ''}">주문 목록</button><button data-md="who" class="${F.mode === 'who' ? 'on' : ''}">조립자별</button></span><span class="muted">${L.length}건 · ${esc(mdl(F.from))}${F.from !== F.to ? ' ~ ' + esc(mdl(F.to)) : ''}</span></div>
+        ${body}</div></div>`;
+    const setF = () => { F.who = $('#qfW').value; F.by = $('#qfB').value; F.no = $('#qfN').value; F.miss = $('#qfM').checked ? 1 : 0; };
+    $('#qfGo').onclick = () => { const a = $('#qfF').value, b = $('#qfT').value; if (!a || !b || a > b) return toast('날짜를 확인하세요', true); setF(); F.from = a; F.to = b; renderQcr(true); };
+    $$('[data-rg]', main).forEach(b => (b.onclick = () => { const [a, c] = range(b.dataset.rg === 'w' || b.dataset.rg === 'p' ? b.dataset.rg : +b.dataset.rg); setF(); F.from = a; F.to = c; renderQcr(true); }));
+    ['#qfW', '#qfB', '#qfM'].forEach(id => $(id).onchange = () => { setF(); renderQcr(); });
+    const n = $('#qfN'); n.onkeydown = e => { if (e.key === 'Enter') { setF(); renderQcr().then(() => { const x = $('#qfN'); x.focus(); x.setSelectionRange(x.value.length, x.value.length); }); } }; n.onchange = () => { setF(); renderQcr(); };
+    $$('[data-md]', main).forEach(b => (b.onclick = () => { F.mode = b.dataset.md; setF(); renderQcr(); }));
+    $$('[data-qw]', main).forEach(tr => tr.onclick = () => { setF(); F.who = tr.dataset.qw; F.mode = 'list'; renderQcr(); });
+    if (window.CZFilterV4) {
+      const gs = [...new Set(Rw.map(r => r.g).filter(Boolean))].sort((a, b) => C.GROUP_LIST.indexOf(a) - C.GROUP_LIST.indexOf(b));
+      window.CZFilterV4.mount($('.pgb', main), {
+        id: 'qcr', modes: ['당일', '주간', '월간'], mode: F.queryMode || '당일',
+        label: F.from === F.to ? F.from : F.from + ' ~ ' + F.to,
+        groups: [{ label: '전체 그룹', value: '' }, ...gs.map(g => ({ label: g, value: g }))], selected: F.grp || '',
+        todayLabel: '오늘', onToday: () => { F.from = F.to = S.today; F.queryMode = '당일'; renderQcr(true); },
+        range: { type: 'date', from: F.from, to: F.to, note: '시작일~종료일 사이에 조립한 주문의 검수 내역을 봅니다.' },
+        onStep: step => { const span = Math.round((new Date(F.to) - new Date(F.from)) / 86400000) + 1; const a = C.addDays(F.from, span * step), b = C.addDays(F.to, span * step); if (b > S.today) return toast('미래 날짜는 조회할 수 없습니다', true); setF(); F.from = a; F.to = b; renderQcr(true); },
+        onMode: m => { setF(); const [a, b] = m === '주간' ? range('w') : m === '월간' ? range('p') : [S.today, S.today]; F.from = a; F.to = b; F.queryMode = m; renderQcr(true); },
+        onRange: (a, b) => { setF(); F.from = a; F.to = b; F.queryMode = '기간 지정'; renderQcr(true); },
+        onGroup: g => { setF(); F.grp = window.CZFilterV4.toggle(F.grp, g).join(','); renderQcr(); },
+        onSearch: () => { setF(); renderQcr(true); },
+        onReset: () => { S.qf = null; renderQcr(true); },
+        onDetail: on => { const o = $('.mff', main); if (o) o.classList.toggle('czf-expanded', on); },
+        onError: e => toast(e.message, true)
+      });
+    }
   }
   async function qcRun(file) {
     const V = S.qcv; V.step = 'ocr'; V.pct = 3; V.msg = '글자 인식 도구 준비 중… (처음 한 번은 조금 걸립니다)'; renderQc();
@@ -20525,7 +20587,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let v0 = isRO() ? 'home' : !pend0 && isPhone() && !S.pcMode ? 'mhome' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'qc', 'mhome', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp', 'qcr'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'qc', 'mhome', 'qcr', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -20786,6 +20848,17 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 <style id="phone-v2954">
 .pmx .pxhd{padding-top:12px!important;padding-bottom:30px!important}
 /* v30.90 조립 검수 */
+/* v30.92 검수 현황 */
+.qr .qr-k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}.qr .qr-k>div{background:var(--panel,#fff);border:1px solid var(--line);border-radius:12px;padding:12px 16px}.qr .qr-k small{display:block;color:var(--sub);font-weight:700;font-size:12.5px}.qr .qr-k b{font-size:26px}.qr .qr-k b em{font-style:normal;font-size:13px;color:var(--sub);margin-left:2px}.qr .ok{color:#1e7a3c}.qr .ng{color:#c62828}
+.qr-bar{display:block;height:7px;border-radius:9px;background:#e8edf3;overflow:hidden;margin-top:6px}.qr-bar i{display:block;height:100%;background:#1e7a3c}
+.qr .qr-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:12px}
+.qr .qr-gc{text-align:left;background:var(--panel,#fff);border:1px solid var(--line);border-left:4px solid var(--gc,#94a3b8);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}.qr .qr-gc b{font-size:14px}.qr .qr-gc span{font-size:12.5px;color:var(--sub);grid-column:1}.qr .qr-gc em{font-style:normal;font-weight:800;color:#1e7a3c;font-size:18px;grid-row:1/3;grid-column:2}.qr .qr-gc .qr-bar{grid-column:1/3}.qr .qr-gc.on{outline:2px solid var(--blue);background:#f2f6ff}
+.qr .qr-2{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;align-items:start}.qr .qr-side{display:grid;gap:12px}
+.qr .qr-t{padding:12px 14px}.qr .qr-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}.qr .qr-h b{font-size:15px}.qr .qr-h input{margin-left:auto;height:30px;border-radius:999px;padding:0 12px;width:190px}
+.qr table.list td,.qr table.list th{padding:7px 8px}#main .qr table.list td.l,#main .qr table.list th.l{text-align:left!important}.qr .qr-pr{display:flex;align-items:center;gap:8px}.qr .qr-pr .qr-bar{flex:1;margin:0}.qr .qr-pr em{font-style:normal;font-weight:800;color:#1e7a3c;min-width:38px;text-align:right}.qr .qr-pr em.z{color:#c62828}
+.qr .okt,.okt{color:#1e7a3c;font-weight:800}.ngt{color:#c62828;font-weight:800}.qr .qr-log{max-height:420px;overflow:auto}
+.qr-mode{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-right:8px}.qr-mode button{padding:7px 14px;background:var(--panel,#fff);border:0;font-weight:700;color:var(--sub)}.qr-mode button.on{background:var(--blue);color:#fff}
+@media(max-width:1100px){.qr .qr-2{grid-template-columns:1fr}.qr .qr-k{grid-template-columns:repeat(2,1fr)}}
 /* v30.91 휴대폰 첫 화면 메뉴 */
 .pmx .qc-cn{display:flex;gap:6px}.pmx .qc-cn .pxcn small{white-space:nowrap}
 .pmx .mh-sum{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;margin-top:-6px}
@@ -20808,7 +20881,8 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .pmx .qc-box{width:42px;height:42px;border-radius:10px;border:2px solid #9fb0d4;background:#fff;font-size:24px;font-weight:900;color:#fff;flex:0 0 auto;display:grid;place-items:center}
 .pmx .qc-in.sm{height:40px;font-size:15px;margin-bottom:6px}
 .qc-pick>div{margin-bottom:10px}.qc-pick b{display:block;font-size:13px;color:var(--sub);margin-bottom:4px}.qc-pick span{display:flex;flex-wrap:wrap;gap:6px}.qc-pick button{padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel,#fff);font-weight:700}
-.qcb{margin-left:4px;font-size:10.5px;font-weight:800;color:#1e7a3c;background:#eaf6ee;border:1px solid #cfe8d7;border-radius:6px;padding:0 5px;white-space:nowrap}
+.qcb{margin-left:4px;font-size:10.5px;font-weight:800;color:#1e7a3c;background:#eaf6ee;border:1px solid #cfe8d7;border-radius:6px;padding:0 5px;white-space:nowrap;cursor:pointer}.qcb.z{color:#94a3b8;background:#f4f6f9;border-color:#e3e8f0}
+.pmx .qc-shots{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pmx .qc-shots .qc-shot{height:104px;font-size:15.5px}.pmx .qc-shot.alt{border-color:#c3cde3;background:#fff}.pmx .qc-note{font-size:12px;color:#64748b;text-align:center;margin-top:8px}
 .pmx .qc-ck.ok .qc-box{background:#1e7a3c;border-color:#1e7a3c}.pmx .qc-ck.ng .qc-box{background:#c62828;border-color:#c62828}
 .pmx .qc-ck .t{flex:1;min-width:0;display:block}.pmx .qc-ck .t small{display:block;font-size:12px;color:#64748b;font-weight:700}.pmx .qc-ck .t b{font-size:16px;display:block;margin-top:1px;word-break:break-all}.pmx .qc-ck .t span{display:block;font-size:12px;color:#b45309;margin-top:2px}
 .pmx .qc-ck.ok .t b{color:#1e7a3c}.pmx .qc-ck.ng .t b{color:#c62828}
