@@ -5998,10 +5998,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
       return `<div class="${w === '토' ? 'sat' : ''}">${w}요일${cp ? `<span class="hcap">상한 ${cp}명</span>` : ''}${w === '토' ? '' : '<div class="sub"><span>연차</span><span>대체</span></div>'}</div>`; }).join('')}</div>`;
     weeks.forEach(days => {
-      // v31.09 : 같은 주 3일 이상 이어지는 휴무 = 주 단위 막대 1줄
-      const LBm = {}; days.forEach((dd, i) => { if (i > 4) return; LC.dayCell(L.calIx, dd).lv.filter(x => pf(x.s)).forEach(x => { if (x.l.h) return; (LBm[x.l.id] = LBm[x.l.id] || { x, c: [] }).c.push(i); }); });
-      const LB = Object.values(LBm).filter(o => o.c.length >= 3).map(o => ({ x: o.x, a: Math.min(...o.c), b: Math.max(...o.c) })).sort((p, q) => lvGk(p.x.s) - lvGk(q.x.s) || p.a - q.a || String(p.x.s.name).localeCompare(q.x.s.name, 'ko'));
-      const LBrow = [], LBid = new Set(LB.map(o => o.x.l.id)); LB.forEach(o => { let r = LBrow.findIndex(e => e < o.a); if (r < 0) { r = LBrow.length; LBrow.push(-1); } LBrow[r] = o.b; o.r = r; });
+      // v31.09 : 같은 사람 · 같은 종류가 같은 주 3일 이상 이어지면 = 주 단위 막대 1줄 (날짜별 기록은 막대 칸을 눌러 그대로 수정)
+      const LBm = {}; days.forEach((dd, i) => { if (i > 4) return; LC.dayCell(L.calIx, dd).lv.filter(x => pf(x.s)).forEach(x => { if (x.l.h) return; const k = x.l.s + '|' + (LC.leaveKind(x.l) || '') + '|' + (x.l.t ? 1 : 0) + '|' + stOf(x.l); (LBm[k] = LBm[k] || []).push({ i, x }); }); });
+      const LB = []; Object.values(LBm).forEach(arr => { arr.sort((p, q) => p.i - q.i); let run = [arr[0]]; for (let j = 1; j <= arr.length; j++) { const e = arr[j]; if (e && e.i === run[run.length - 1].i + 1) { run.push(e); continue; } if (e && e.i === run[run.length - 1].i) continue; if (run.length >= 3) LB.push({ x: run[0].x, a: run[0].i, b: run[run.length - 1].i, segs: run }); run = e ? [e] : []; } });
+      LB.sort((p, q) => lvGk(p.x.s) - lvGk(q.x.s) || p.a - q.a || String(p.x.s.name).localeCompare(q.x.s.name, 'ko'));
+      const LBrow = [], LBid = new Set(); LB.forEach(o => { o.segs.forEach(g => LBid.add(g.i + '|' + g.x.l.id)); let r = LBrow.findIndex(e => e < o.a); if (r < 0) { r = LBrow.length; LBrow.push(-1); } LBrow[r] = o.b; o.r = r; });
       const LBn = LBrow.length;
       html += '<div class="lvwk2">';
       days.forEach((dd, i) => {
@@ -6013,13 +6014,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           return;
         }
         const c = LC.dayCell(L.calIx, dd), cap = d.all ? capOf(dd) : 0, over = cap && c.off > cap;
-        const lv = c.lv.filter(x => pf(x.s) && !LBid.has(x.l.id)).sort(lvSrt), al = c.al.filter(x => pf(x.s)).sort(lvSrt);
+        const lv = c.lv.filter(x => pf(x.s) && !LBid.has(i + '|' + x.l.id)).sort(lvSrt), al = c.al.filter(x => pf(x.s)).sort(lvSrt);
         html += `<div class="lvd2${other ? ' other' : ''}${hol ? ' hol' : ''}${over ? ' over' : ''}${dd === A.S.today ? ' today' : dd < A.S.today ? ' past' : ''}" data-d="${dd}">
           <div class="hd"><b class="dn">${md(dd)}</b>${hol ? `<span class="hn">${A.esc(hol)}</span>` : ''}${d.all && L.part ? (lv.length + al.length ? `<span class="n">휴무 ${lv.length + al.length}</span>` : '') : d.all && (c.off || cap) ? `<span class="n${over ? ' red' : cap && c.off === cap ? ' full' : ''}"${over && d.canEdit ? ` data-ov="${dd}" title="누르면 토요 대체로 정리"` : ''}>휴무 ${c.off}${cap ? '/' + cap : ''}${over && d.canEdit ? ' ↺' : ''}</span>` : ''}</div>
           ${LBn ? `<div class="lbsp" style="height:${LBn * 25}px"></div>` : ''}<div class="dbody"><div class="rw">${lv.map(x => chipHtml(x, own)).join('')}</div>
           <div class="rw ar">${al.map(x => { if(x.u.actualLeave)return `<span class="sw${isMgr(x.name)?' lv-manager':''}" data-l="${A.esc(x.u.actualLeave)}" title="실제 대체휴무">${A.esc(x.name)}${isMgr(x.name)?'<small class="lv-manager-badge">매니저</small>':''}</span>`; const cv = conv[x.u.d + '|' + x.u.s]; return `<span class="sw ${satColor(x.u.d)}${own && myStaff() && x.u.s === myStaff().id ? ' me' : ''}${cv ? ' lvx' : ''}${isMgr(x.name)?' lv-manager':''}" data-u="${x.u.d}|${x.u.s}" title="${A.esc(x.name)} · ${md(x.u.d)} 토요근무의 대체휴무${cv ? ' (원래 연차 신청 → 토요 대체)' : ''}">${A.esc(x.name)}${isMgr(x.name)?'<small class="lv-manager-badge">매니저</small>':''}${cv ? '<i>↺</i>' : ''}</span>`; }).join('')}</div></div></div>`;
       });
-      html += LB.map(o => { const l = o.x.l, kd = LC.leaveKind(l); return `<div class="lvlb${kd ? ' sp' : l.t ? ' tr' : ''}" style="top:calc(31px + ${o.r * 25}px);left:calc(${o.a} * 100% / 6.05);width:calc(${o.b - o.a + 1} * 100% / 6.05 - 12px)">${chipHtml(o.x, own)}<span class="lbr">${md(l.d1)}${l.d2 !== l.d1 ? ' ~ ' + md(l.d2) : ''}</span></div>`; }).join('');
+      html += LB.map(o => { const l = o.x.l, s = o.x.s, kd = LC.leaveKind(l), st = stOf(l), n = o.b - o.a + 1;
+        const cls = 'lvlb' + (kd ? ' sp' : l.t ? ' tr' : '') + (st === '신청' ? ' req' : st === '파트확인' ? ' mgr' : '') + (isMgr(s.name) ? ' mg' : '') + (own && myStaff() && l.s === myStaff().id ? ' me' : '');
+        return `<div class="${cls}" style="top:calc(31px + ${o.r * 25}px);left:calc(${o.a} * 100% / 6.05);width:calc(${n} * 100% / 6.05 - 12px)"><span class="lbnm">${A.esc(s.name || '?')}${l.t ? '(훈)' : ''}${kd ? '(' + kd + ')' : ''}</span><span class="lbr">${md(days[o.a])} ~ ${md(days[o.b])}</span><div class="lbsegs" style="grid-template-columns:repeat(${n},1fr)">${o.segs.map(g => `<span class="lbseg" data-l="${g.x.l.id}" title="${A.esc((s.name || '') + ' ' + mdw(days[g.i]) + ' · ' + ST[st][1] + (g.x.l.r ? ' · ' + g.x.l.r : '') + ' — 눌러서 이 날 보기·수정')}"></span>`).join('')}</div></div>`; }).join('');
       html += '</div>';
     });
     html += '</div>';
@@ -21809,20 +21812,26 @@ html[data-theme=dark] .pa-left #pa-q,html[data-theme=dark] .df-listpanel #df-sea
 .lvd2 .dbody .rw.ar{border-left:1px solid #e2e8f0;background:#f8fafc;border-radius:0 6px 6px 0;padding:3px 4px 3px 6px}
 .lvd2 .dbody .rw{align-content:flex-start;gap:3px}
 .lvcal2 .lvd2.today{box-shadow:inset 0 0 0 2px #2563eb}.lvcal2 .lvd2.today .dn{color:#2563eb}
-.lvcal2 .lvd2.past:not(.other) .dbody{opacity:.75}
+.lvcal2 .lvd2.past:not(.other) .dbody{opacity:.85}
 .lvcal2 .lvwk2{position:relative}
 .lvcal2 .lbsp{flex:0 0 auto}
-.lvcal2 .lvlb{position:absolute;height:22px;display:flex;align-items:center;gap:6px;padding:0 8px 0 2px;margin-left:6px;border-radius:6px;background:#e3ebfb;pointer-events:none;overflow:hidden;box-sizing:border-box;z-index:1}
-.lvcal2 .lvlb.sp{background:#efe5fc}.lvcal2 .lvlb.tr{background:#dff2e4}
-.lvcal2 .lvlb .lv{background:transparent!important;pointer-events:auto;border-color:transparent}
-.lvcal2 .lvlb .lv.req{border:1px dashed #64748b}.lvcal2 .lvlb .lv.mgr{border:1px dashed #d9922e}
+.lvcal2 .lvlb{position:absolute;height:22px;display:flex;align-items:center;gap:6px;padding:0 8px;margin-left:6px;border-radius:6px;background:#e3ebfb;color:#1e293b;pointer-events:none;box-sizing:border-box;z-index:1;font-size:12.5px;border:1px solid transparent}
+.lvcal2 .lvlb::before{content:'';width:6px;height:6px;border-radius:50%;background:#5b8def;flex:0 0 6px}
+.lvcal2 .lvlb.sp{background:#efe5fc;color:#4c2a7a}.lvcal2 .lvlb.sp::before{background:#9b6bdf}
+.lvcal2 .lvlb.tr{background:#dff2e4;color:#1d5a2e}.lvcal2 .lvlb.tr::before{background:#2f9e55}
+.lvcal2 .lvlb.req{background:#fff;border:1px dashed #64748b}.lvcal2 .lvlb.mgr{background:#fff;border:1px dashed #d9922e}
+.lvcal2 .lvlb.me{background:#1f2a3a;color:#fff}.lvcal2 .lvlb.me .lbr{color:#cbd5e1}
+.lvcal2 .lvlb.mg .lbnm{font-weight:800}
+.lvcal2 .lvlb .lbnm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .lvcal2 .lvlb .lbr{font-size:11px;color:#64748b;font-weight:700;margin-left:auto;white-space:nowrap}
+.lvcal2 .lvlb .lbsegs{position:absolute;inset:0;display:grid;pointer-events:auto}
+.lvcal2 .lvlb .lbseg{cursor:pointer;border-radius:5px}.lvcal2 .lvlb .lbseg:hover{background:rgba(15,23,42,.08)}
 .lvlegend .lv-manager-badge{display:none}
 html[data-theme=dark] .lvcal2 .lv{background:#243044;color:#e5e8eb}html[data-theme=dark] .lvcal2 .lv.sp{background:#3a2552;color:#e9d5ff}html[data-theme=dark] .lvcal2 .lv.tr{background:#1e3a25;color:#d1f2da}
 html[data-theme=dark] .lvcal2 .lv.req,html[data-theme=dark] .lvcal2 .lv.mgr{background:transparent;color:#e5e8eb}
 html[data-theme=dark] .lvd2 .dbody .rw.ar{background:#182131;border-left-color:#2c3846}
 html[data-theme=dark] .lvcal2 .lvlb{background:#22324d}html[data-theme=dark] .lvcal2 .lvlb.sp{background:#33224a}html[data-theme=dark] .lvcal2 .lvlb.tr{background:#1d3524}
-html[data-theme=dark] .lvcal2 .lvlb .lbr{color:#9aa7b8}
+html[data-theme=dark] .lvcal2 .lvlb{color:#e5e8eb}html[data-theme=dark] .lvcal2 .lvlb .lbr{color:#9aa7b8}
 </style>
 </body>
 </html>
