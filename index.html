@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.75';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20030,7 +20030,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const end=()=>{srPopupClose?.();srPopupClose=null;};srPopupClose=modal(`<style>${SR94_NOTICE_CSS}</style><div class="sr94-notice-head"><span>!</span><div><small>ORDER CHECK NOTICE</small><h2>조립 전 확인사항</h2><p>사양검토 담당자가 전달한 주문별 확인 내용입니다.</p></div></div><div class="sr94-notice-body"><div class="sr94-notice-order"><strong>${esc(notice.no)}</strong><span>${esc(srKind(notice.board))}</span><small>출력 ${esc(notice.board.slot)}</small></div>${srUrgent(ship)?`<div class="sr94-notice-rush"><b>급건 운송</b><strong>${esc(ship)}</strong></div>`:''}<div class="sr94-notice-tags">${tags.map(([,text])=>`<span>✓ ${esc(text)}</span>`).join('')}</div><section><h3>특이사항 · 전달 내용</h3><div>${esc(notice.note||'별도 특이사항이 없습니다. 주문 정보와 운송방법을 확인해 주세요.')}</div></section><div class="sr94-notice-by"><span>검토 담당 <b>${esc(notice.reviewer||'담당자')}</b></span><span>확인 대상 <b>${esc(S.me.name)}</b></span></div></div><div class="sr94-notice-footer"><button id="sr94-later">나중에 확인</button><button id="sr94-ack" class="primary">✓ 확인했습니다</button></div>`,(bg)=>{bg._lock=true;const later=()=>{try{sessionStorage.setItem('sr94-later:'+uid+':'+notice.no+':'+notice.version,String(Date.now()+5*60000));}catch(e){}end();};$('#sr94-later',bg).onclick=later;$('#sr94-ack',bg).onclick=async e=>{e.target.disabled=true;try{await srApi('Ack',{no:notice.no,version:notice.version});end();setTimeout(()=>void srPollNotices(),300);}catch(err){toast(err.message,true);e.target.disabled=false;}};bg.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();later();}if(e.key==='Tab'){const nodes=[...bg.querySelectorAll('button:not(:disabled)')];if(e.shiftKey&&document.activeElement===nodes[0]){e.preventDefault();nodes.at(-1)?.focus();}else if(!e.shiftKey&&document.activeElement===nodes.at(-1)){e.preventDefault();nodes[0]?.focus();}}};$('#sr94-ack',bg).focus();},'sr94-popup');
     }catch(e){/* A transient notice read failure must not block existing work input. */}finally{srPollBusy=false;}}
   setInterval(()=>{
-    if(S.view!=='sr'){void srPollNotices();return;}
+    if(S.view!=='sr'){if(Date.now()-(srPollNotices._at||0)>=55000){srPollNotices._at=Date.now();void srPollNotices();}return;}   // v30.76 : 확인사항 조회 25초 → 약 1분 (API 호출 줄이기)
     if(!S.me||document.hidden)return;
     if(srAdvanceDay()){void srFetch();return;}
     if(S.pv||S.mpv)return;
@@ -20039,6 +20039,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if(!P.busy&&!P.dirty&&srActive())void srMutation('Beat').catch(()=>{});
   },25000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.view==='sr'&&S.me&&srAdvanceDay())void srFetch();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.view!=='sr'&&S.me&&Date.now()-(srPollNotices._at||0)>=20000){srPollNotices._at=Date.now();void srPollNotices();}});
   window.addEventListener('beforeunload',e=>{if(S.view==='sr'&&S.srv?.dirty){srKeep();e.preventDefault();e.returnValue='';}});
 
 
@@ -20090,7 +20091,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // 열린 화면을 오래 유지할 때 날짜가 바뀌어도 전날 알림이 남지 않도록 주기적 갱신.
   // v28.56 : 화면을 안 보고 있을 때(최소화 · 다른 탭 · 화면 꺼짐)는 알림 확인을 쉼 → 서버 호출 줄이기 · 다시 보면 바로 1번 확인
   const pollBadges = () => { S._pollAt = Date.now(); if (S.me && S.me.acc) void updateAccBadge(); if (S.me) void updateEduBadge(false); };
-  setInterval(() => { if (!document.hidden && document.hasFocus && (document.hasFocus() || Date.now() - (S._pollAt || 0) > 5 * 60000)) pollBadges(); }, 90000);
+  setInterval(() => { if (!document.hidden && document.hasFocus && (document.hasFocus() || Date.now() - (S._pollAt || 0) > 5 * 60000)) pollBadges(); }, 180000);   // v30.76 : 90초 → 3분
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - (S._pollAt || 0) > 60000) pollBadges(); });
   // Read-only summary uses an initial load and the explicit refresh button only.
 
@@ -20181,7 +20182,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } catch(e) { if(force)toast(e.message,true); }
     finally { supportReviewBusy=false; }
   }
-  setInterval(()=>pollSupportReviews(),15000);
+  setInterval(()=>pollSupportReviews(),60000);   // v30.76 : 15초 → 1분 (창을 다시 누르면 바로 확인)
   window.addEventListener('focus',()=>pollSupportReviews());
 
   boot();
