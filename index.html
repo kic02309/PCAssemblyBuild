@@ -8499,7 +8499,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.74';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.75';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -13177,7 +13177,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         try { await api('mgSave', b); close(); toast('저장했습니다'); await done(); } catch (e) { toast(e.message, true); }
       };
       $$('[data-el]', bg).forEach(x => (x.onclick = () => { close(); planLog(x.dataset.el); }));
-      $('[data-dl]', bg).forEach(x => (x.onclick = async () => { if (!(await confirmBox('이 기록을 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'logDel', id: x.dataset.dl }); close(); await done(); planForm(id); } catch (e) { toast(e.message, true); } }));
+      $$('[data-dl]', bg).forEach(x => (x.onclick = async () => { if (!(await confirmBox('이 기록을 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'logDel', id: x.dataset.dl }); close(); await done(); planForm(id); } catch (e) { toast(e.message, true); } }));
       if ($('#pdel', bg)) $('#pdel', bg).onclick = async () => { if (!(await confirmBox('이 계획과 진행 현황을 모두 지울까요?', '삭제'))) return; try { await api('mgSave', { op: 'taskDel', id }); close(); toast('지웠습니다'); await done(); } catch (e) { toast(e.message, true); } };
     }, 'wide');
   }
