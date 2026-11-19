@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.92';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.93';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9219,7 +9219,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function mpvBar() {
     let b = document.getElementById('mpvbar'); if (!S.mpv) { if (b) b.remove(); return; }
     if (!b) { b = document.createElement('div'); b.id = 'mpvbar'; document.body.appendChild(b); }
-    b.innerHTML = `<b>📱 모바일 미리보기</b><span>${S.mpv === 'smob' ? '안정화 업무' : S.mpv === 'qc' ? '조립 검수' : S.mpv === 'mhome' ? '첫 화면 메뉴' : '라인생산 업무'} · 저장 안 됨</span><button id="mpvx" class="primary sm">닫기</button>`;
+    b.innerHTML = `<b>📱 모바일 미리보기</b><span>${S.mpv === 'smob' ? '안정화 업무' : S.mpv === 'qc' ? '2차 검수' : S.mpv === 'mhome' ? '첫 화면 메뉴' : '라인생산 업무'} · 저장 안 됨</span><button id="mpvx" class="primary sm">닫기</button>`;
     $('#mpvx', b).onclick = () => { S.mpv = null; mpvBar(); go('dash'); };
   }
   function mpvOpen(kind) { S.mpv = kind; mpvBar(); go(kind); }
@@ -9229,7 +9229,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let P; try { P = await api(admin ? 'previewAccounts' : 'previewPeople'); } catch(e) { return toast(e.message, true); }
     const A = admin ? (P.rows || []).filter(x=>x.acct && x.acct.id).map(x=>Object.assign({name:x.name},x.acct)) : (P.users || []);
     const row = (role,id,label) => `<div class="pvr pv-select-row"><b>${label}</b><label>그룹<select id="${id}g" aria-label="${label} 그룹">${pvGroups(A,role).map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('') || '<option value="">그룹 없음</option>'}</select></label><label>이름<select id="${id}" aria-label="${label} 이름"></select></label><button data-pm="${role === '일반' ? 'staff' : 'mgr'}" class="primary sm">보기</button></div>`;
-    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="mhome"><b>📱 모바일 보기 · 첫 화면 메뉴</b><small>휴대폰으로 접속하면 처음 나오는 화면</small></button><button data-mp="qc"><b>📱 모바일 보기 · 조립 검수</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
+    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="mhome"><b>📱 모바일 보기 · 첫 화면 메뉴</b><small>휴대폰으로 접속하면 처음 나오는 화면</small></button><button data-mp="qc"><b>📱 모바일 보기 · 2차 검수</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
       const panel = $('.modal',bg); if(panel) panel.classList.add('pv-picker');
       $('[data-c]',bg).onclick=close;
       $$('[data-mp]',bg).forEach(b=>b.onclick=()=>{ close(); mpvOpen(b.dataset.mp); });
@@ -9347,7 +9347,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (cat === 'work' && dfCan()) it = it.concat([['df', '조립 불량 관리']]); // v29.81 : 사전안내 바로 오른쪽
       if (cat === 'work' && srCan()) it = it.concat([['sr','주문 사양검토']]);
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
-      if (cat === 'work' && canQc()) it = it.concat([['qc', '✅ 조립 검수']]);   // v30.90
+      if (cat === 'work' && canQc()) it = it.concat([['qc', '✅ 2차 검수']]);   // v30.90
 
       $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : k === 'line' && v === 'linestats' ? 'lo-parent-on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
@@ -9759,7 +9759,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     f1 += '<td class="gs"></td></tr>'; f2r += '<td class="gs"></td></tr>';
     const g = $('#grid');
     g.classList.toggle('pad', !ro);
-    g.innerHTML = '<thead>' + h1 + h2 + h3 + f1 + f2r + '</thead><tbody>' + body + '</tbody>';     // v28.18 : 합계 · 환산 줄을 위로 (스크롤해도 보임)
+    g.innerHTML = '<thead>' + h1 + h2 + h3 + f1 + f2r + '</thead><tbody>' + body + '</tbody>';
+    qcMarkGrid();   // v30.93 : 2차 검수된 주문번호 색 표시     // v28.18 : 합계 · 환산 줄을 위로 (스크롤해도 보임)
     $$('td.mk[data-c]', g).forEach(td => syncSpecialCell(td, td.dataset.c, doc.rows[+td.closest('tr').dataset.i].m[td.dataset.c]));
     $('#rowinfo').textContent = doc.rows.length + ' / ' + C.MAX_ROWS + '줄';
     { const n = $('#mfgn'), mf = doc.rows.filter(r => r.k === '제조' && r.q !== '' && r.q != null); if (n) n.innerHTML = mf.length ? `오늘 제조 <b>${mf.length}</b>건 · <b>${mf.reduce((a, r) => a + C.num(r.q), 0)}</b>대` : ''; }
@@ -18643,10 +18644,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const grp = me.group || '';
     if (canSmob()) W.push(['smob', '🔧', '#f3eefe', '안정화 업무', '주문번호 · 작업 입력']);
     if (canPmob()) W.push(['pmob', '🏭', '#fff4e5', '라인생산', '간편 입력']);
-    if (canQc()) W.push(['qc', '✅', '#e8eefb', '조립 검수', '주문서 찍고 4가지 체크']);
+    if (canQc()) W.push(['qc', '✅', '#e8eefb', '2차 검수', '주문서 찍고 4가지 체크']);
     if (!mgr) W.push(['input', '📝', '#eef6f0', '업무데이터 보기', '오늘 입력 내용 확인 (보기 전용)']);
     if (!mgr) W.push(['month', '📅', '#eef6f0', '이번 달 내 실적', '월 업무현황 · 달성률 (보기 전용)']);
-    if (mgr) W.push(['qcr', '📋', '#eef6f0', '검수 내역', '주문별 · 조립자별 검수']);
+    if (mgr) W.push(['qcr', '📋', '#eef6f0', '검수 내역', '2차 검수율 · 그룹별 · 검수자별']);
     if (mgr) W.push(['dash', '📊', '#e8eefb', '일일 업무현황', '그룹별 현황']);
     const M = [];
     main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="mhpc">PC 화면</button><button id="mhlo">로그아웃</button></span></div>
@@ -18657,6 +18658,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-mh]', main).forEach(b => b.onclick = () => go(b.dataset.mh));
     $('#mhpc').onclick = () => { S.pcMode = 1; go(mgr ? 'dash' : 'input'); };
     $('#mhlo').onclick = () => logout();
+  }
+  // v30.93 : 업무데이터 입력표 — 2차 검수된 주문번호는 초록 글씨 · 마우스 올리면 2차 검수자 · 시간
+  async function qcMarkGrid() {
+    const doc = S.day && S.day.doc; if (!doc || !$('#grid')) return;
+    const ords = [...new Set((doc.rows || []).map(r => String(r.o || '').replace(/\D/g, '')).filter(x => x.length >= 8))];
+    if (!ords.length) return;
+    const key = (S.day.userId || '') + '|' + (doc.date || S.day.date || '') + '|' + ords.join(',');
+    const C0 = S.qcMk || {};
+    if (C0.key !== key || Date.now() - (C0.t || 0) > 60000) { try { const r = await api('qc', { op: 'marks', orders: ords }); S.qcMk = { key, t: Date.now(), map: r.map || {} }; } catch (e) { return; } }
+    const M = (S.qcMk || {}).map || {};
+    $$('#grid input[data-f="o"]').forEach(inp => { const k = String(inp.value || '').replace(/\D/g, ''), x = M[k], td = inp.closest('td'); if (!td) return; td.classList.toggle('qc2', !!x); if (x) td.dataset.qt = `✓ 2차 검수 ${x.by} · ${String(x.at).slice(5, 16).replace('-', '/')}`; else delete td.dataset.qt; });
   }
   // ───────── v30.90 : 조립 검수 (휴대폰) — 주문서 사진은 글자 읽는 데만 쓰고 저장하지 않음 ─────────
   const canQc = () => !!(S.me && (!isRO() || S.mpv === 'qc'));
@@ -18706,7 +18718,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const main = $('#main'), V = S.qcv = S.qcv || { step: 'start', hist: null };
     const today = S.today;
     if (!V.hist) { try { const [h, m] = await Promise.all([api('qc', { op: 'list', date: today }), api('qc', { op: 'mine' }).catch(() => ({}))]); V.hist = h.rows || []; V.got = m.got || 0; } catch (e) { V.hist = []; } if (S.view !== 'qc') return; }
-    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 메뉴</button></span></div><div class="pxr"><div><h1>조립 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><div class="qc-cn"><div class="pxcn"><b>${V.hist.length}</b><small>내가 한 검수</small></div><div class="pxcn"><b>${V.got || 0}</b><small>내 조립 검수받음</small></div></div></div></div>`;
+    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 메뉴</button></span></div><div class="pxr"><div><h1>2차 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><div class="qc-cn"><div class="pxcn"><b>${V.hist.length}</b><small>내가 한 2차 검수</small></div><div class="pxcn"><b>${V.got || 0}</b><small>내 조립 2차 검수받음</small></div></div></div></div>`;
     const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}${h.date && h.date !== today ? ' <small class="muted">' + esc(dLabel(h.date)) + '</small>' : ''}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join('');
     const hist = `<div class="pxcard"><div class="qc-lb">검수 기록 <small>오늘 내가 한 검수 · 주문번호로 찾기</small></div><input class="qc-in sm" id="qcq" inputmode="numeric" placeholder="주문번호 검색" value="${esc(V.q || '')}" autocomplete="off"><div class="qc-hist">${V.qr ? (hl(V.qr) || '<div class="muted">검수 기록 없음</div>') : (hl(V.hist) || '<div class="muted">아직 없음</div>')}</div></div>`;
     if (V.step === 'start' || V.step === 'ocr') {
@@ -18716,7 +18728,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         ${V.step === 'ocr' ? `<div class="qc-prog"><i style="width:${V.pct || 3}%"></i></div><div class="pxmsg info" id="qcpm">${esc(V.msg || '준비 중…')}</div>` : ''}
         <div class="qc-tools"><button type="button" id="qcman">주문번호만 입력</button></div></div>${hist}</div></div>`;
     } else if (V.step === 'done') {
-      main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>검수 완료</b><div class="muted">${esc(V.order)} · 조립자 ${esc(V.who.name)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
+      main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>2차 검수 완료</b><div class="muted">${esc(V.order)} · 조립자 ${esc(V.who.name)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
     } else {
       const R = V.res = V.res || {}, P = V.P, ok = QC_ROWS.filter(([k]) => R[k]).length;
       const txt = k => { const x = P[k]; if (!x) return ''; return [x.brand, x.name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (x.n || 1) : ''); };
@@ -18772,7 +18784,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ───────── v30.92 : 검수 현황 (매니저 · 팀장 · 관리자) — 처리 = 각자 입력한 주문번호(조립한 날 기준) · 검수 = 그중 검수된 주문 ─────────
   const canQcr = () => !!(S.me && (isManager() || isRO()));
   async function renderQcr(reload) {
-    const main = $('#main'), F = S.qf = Object.assign({ from: S.today, to: S.today, grp: '', who: '', by: '', no: '', miss: 0, mode: 'list', data: null, queryMode: '당일' }, S.qf || {});
+    const main = $('#main'), F = S.qf = Object.assign({ from: S.today, to: S.today, grp: '', who: '', by: '', no: '', tab: 'done', data: null, queryMode: '당일' }, S.qf || {});
     if (!F.data || reload) {
       main.innerHTML = admHead('검수 내역', 'qcr') + '<div class="pgb"><div class="card muted" style="padding:30px">불러오는 중…</div></div>';
       try { F.data = await api('qc', { op: 'detail', from: F.from, to: F.to }); } catch (e) { main.innerHTML = admHead('검수 내역', 'qcr') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
@@ -18780,20 +18792,33 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }
     const Rw = (F.data.rows || []).map(x => ({ d: x[0], name: x[1], g: x[2], o: x[3], by: x[4] || '', at: x[5] || '' }));
     const fno = F.no.replace(/\D/g, '');
-    const L = Rw.filter(r => (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!F.by || r.by === F.by) && (!fno || r.o.includes(fno)) && (!F.miss || !r.by));
-    const done = L.filter(r => r.by).length, pc = L.length ? Math.round(done / L.length * 100) : 0;
+    const L = Rw.filter(r => (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!F.by || r.by === F.by) && (!fno || r.o.includes(fno)));
+    const done = L.filter(r => r.by).length, pc = L.length ? Math.round(done / L.length * 100) : 0, pp = (c, n) => n ? Math.round(c / n * 100) : 0;
+    const LG = Rw.filter(r => (!F.who || r.name === F.who) && (!F.by || r.by === F.by) && (!fno || r.o.includes(fno)));   // 그룹 카드는 그룹 조건 빼고
+    const GS = [...new Set(LG.map(r => r.g).filter(Boolean))].sort((a, b) => C.GROUP_LIST.indexOf(a) - C.GROUP_LIST.indexOf(b)).map(g => { const x = LG.filter(r => r.g === g); return { g, n: x.length, c: x.filter(r => r.by).length }; });
+    const LB = Rw.filter(r => r.by && (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!fno || r.o.includes(fno)));
+    const BS = Object.values(LB.reduce((m, r) => { const x = m[r.by] = m[r.by] || { name: r.by, n: 0, p: {} }; x.n++; x.p[r.name] = 1; return m; }, {})).sort((a, b) => b.n - a.n);
     const names = [...new Set(Rw.map(r => r.name))].sort((a, b) => a.localeCompare(b, 'ko')), bys = [...new Set(Rw.map(r => r.by).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
     const range = d => { const t = S.today; if (d === 'w') { const x = new Date(t + 'T00:00:00'), k = (x.getDay() + 6) % 7; return [C.addDays(t, -k), t]; } if (d === 'p') { const p = curPeriod(); return p ? [p.start, t] : [t, t]; } return [C.addDays(t, d), C.addDays(t, d)]; };
     const tile = (l, v, cls, sub) => `<div class="mft ${cls || ''}"><span>${l}</span><b>${v}</b>${sub ? `<em>${sub}</em>` : ''}</div>`;
     const mdl = d => dLabel(d);
-    let body;
-    if (F.mode === 'list') {
-      const rows = L.slice().sort((a, b) => (a.by ? 1 : 0) - (b.by ? 1 : 0) || b.d.localeCompare(a.d) || a.g.localeCompare(b.g, 'ko', { numeric: true }) || a.name.localeCompare(b.name, 'ko') || a.o.localeCompare(b.o));
-      body = `<table class="list mft2"><thead><tr><th class="num">No</th><th>조립일</th><th>그룹</th><th>조립자</th><th>주문번호</th><th>검수</th><th>검수자</th><th>검수 시간</th></tr></thead><tbody>${rows.length ? rows.slice(0, 1500).map((r, i) => `<tr><td class="num">${i + 1}</td><td>${esc(mdl(r.d))}</td><td>${gdot(r.g)}</td><td><b>${esc(r.name)}</b></td><td><b>${esc(r.o)}</b></td><td>${r.by ? '<span class="okt">✓ 검수</span>' : '<span class="ngt">미검수</span>'}</td><td>${esc(r.by)}</td><td class="muted">${esc(String(r.at).slice(5, 16))}</td></tr>`).join('') + (rows.length > 1500 ? `<tr><td colspan="8" class="muted">${rows.length - 1500}줄 더 있음 — 기간이나 조건을 좁혀 주세요</td></tr>` : '') : '<tr><td colspan="8" class="muted" style="padding:30px">해당하는 주문이 없습니다</td></tr>'}</tbody></table>`;
-    } else {
+    // v30.93 : 위 4칸 = 메뉴 버튼 · 누른 칸에 맞는 내용만 아래에
+    const tab = F.tab = F.tab || 'done';
+    const L0 = Rw.filter(r => (!F.grp || F.grp.split(',').includes(r.g)) && (!F.who || r.name === F.who) && (!fno || r.o.includes(fno))), T0 = { n: L0.length, c: L0.filter(r => r.by).length };   // 위 4칸은 검수자 조건 빼고
+    const listT = (rows, empty) => `<table class="list mft2"><thead><tr><th class="num">No</th><th>조립일</th><th>그룹</th><th>조립자</th><th>주문번호</th><th>2차 검수자</th><th>검수 시간</th></tr></thead><tbody>${rows.length ? rows.slice(0, 1500).map((r, i) => `<tr><td class="num">${i + 1}</td><td>${esc(mdl(r.d))}</td><td>${gdot(r.g)}</td><td><b>${esc(r.name)}</b></td><td><b class="${r.by ? 'qc2t' : ''}">${esc(r.o)}</b></td><td>${r.by ? `<span class="qc2t">✓ ${esc(r.by)}</span>` : '<span class="muted">본인 검수</span>'}</td><td class="muted">${esc(String(r.at).slice(5, 16))}</td></tr>`).join('') + (rows.length > 1500 ? `<tr><td colspan="7" class="muted">${rows.length - 1500}줄 더 있음 — 기간이나 조건을 좁혀 주세요</td></tr>` : '') : `<tr><td colspan="7" class="muted" style="padding:30px">${empty}</td></tr>`}</tbody></table>`;
+    const srt = rows => rows.slice().sort((a, b) => (a.by ? 0 : 1) - (b.by ? 0 : 1) || String(b.at).localeCompare(String(a.at)) || b.d.localeCompare(a.d) || a.g.localeCompare(b.g, 'ko', { numeric: true }) || a.name.localeCompare(b.name, 'ko') || a.o.localeCompare(b.o));
+    let body, head = '';
+    if (tab === 'all') { head = `전체 처리 주문 ${L.length}건 <small>2차 검수 ${done}건이 위에</small>`; body = listT(srt(L), '해당하는 주문이 없습니다'); }
+    else if (tab === 'done') { head = `2차 검수한 주문 ${done}건 <small>최근 검수 순</small>`; body = listT(srt(L.filter(r => r.by)), '2차 검수한 주문이 없습니다'); }
+    else if (tab === 'grp') {
       const P = {}; L.forEach(r => { const k = r.g + '|' + r.name, x = P[k] = P[k] || { g: r.g, name: r.name, n: 0, c: 0 }; x.n++; if (r.by) x.c++; });
       const pl = Object.values(P).sort((a, b) => a.c / a.n - b.c / b.n || b.n - a.n);
-      body = `<table class="list mft2"><thead><tr><th>그룹</th><th>조립자</th><th class="num">처리</th><th class="num">검수</th><th class="num">미검수</th><th class="num">검수율</th></tr></thead><tbody>${pl.length ? pl.map(x => `<tr class="click" data-qw="${esc(x.name)}"><td>${gdot(x.g)}</td><td><b>${esc(x.name)}</b></td><td class="num">${x.n}</td><td class="num"><b class="${x.c ? 'okt' : ''}">${x.c}</b></td><td class="num"><b class="${x.n - x.c ? 'ngt' : ''}">${x.n - x.c}</b></td><td class="num"><b class="${x.c ? 'okt' : 'ngt'}">${Math.round(x.c / x.n * 100)}%</b></td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="padding:30px">해당하는 주문이 없습니다</td></tr>'}</tbody></table>`;
+      head = `그룹별 2차 검수율 <small>그룹을 누르면 그 그룹 조립자만 · 조립자를 누르면 주문 목록</small>`;
+      body = `<div class="qa-row qa-in">${GS.map(x => `<button class="qa-c${F.grp.split(',').includes(x.g) ? ' on' : ''}" data-qag="${esc(x.g)}" style="--gc:${gcol(x.g)}"><span class="t">${gdot(x.g)}</span><b>${pp(x.c, x.n)}<small>%</small></b><span class="s">2차 ${x.c} / 처리 ${x.n}건</span><i class="bar"><u style="width:${pp(x.c, x.n)}%"></u></i></button>`).join('')}</div>
+        <table class="list mft2"><thead><tr><th>그룹</th><th>조립자</th><th class="num">처리 주문</th><th class="num">2차 검수</th><th class="num">2차 검수율</th></tr></thead><tbody>${pl.length ? pl.map(x => `<tr class="click" data-qw="${esc(x.name)}"><td>${gdot(x.g)}</td><td><b>${esc(x.name)}</b></td><td class="num">${x.n}</td><td class="num"><b class="${x.c ? 'qc2t' : 'muted'}">${x.c}</b></td><td class="num"><b class="${x.c ? 'qc2t' : 'muted'}">${pp(x.c, x.n)}%</b></td></tr>`).join('') : '<tr><td colspan="5" class="muted" style="padding:30px">해당하는 주문이 없습니다</td></tr>'}</tbody></table>`;
+    } else {
+      head = `2차 검수자별 <small>누가 몇 건 · 이름을 누르면 그 사람이 검수한 주문</small>`;
+      body = `<div class="qa-row qa-in">${BS.map(x => `<button class="qa-c by${F.by === x.name ? ' on' : ''}" data-qab="${esc(x.name)}"><span class="t">${esc(x.name)}</span><b>${x.n}<small>건</small></b><span class="s">조립자 ${Object.keys(x.p).length}명 · 전체의 ${pp(x.n, LB.length)}%</span></button>`).join('') || '<div class="muted" style="padding:20px">2차 검수 기록이 없습니다</div>'}</div>${F.by ? listT(srt(L.filter(r => r.by)), '없음') : ''}`;
     }
     main.innerHTML = admHead('검수 내역', 'qcr', `<span class="muted" style="font-size:13px">업무데이터에 입력한 주문번호 기준 (조립한 날) · 안정화 제외</span>`) + `<div class="pgb">
       <div class="card mff">
@@ -18801,21 +18826,24 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <span class="seg">${[[0, '오늘'], [-1, '어제'], ['w', '이번 주'], ['p', '이번 달']].map(([k, t]) => `<button data-rg="${k}" class="${range(k)[0] === F.from && range(k)[1] === F.to ? 'on' : ''}">${t}</button>`).join('')}</span>
           <button class="primary" id="qfGo">검색</button></div>
         <div class="r"><b>조립자</b><select id="qfW"><option value="">전체</option>${names.map(n => `<option ${n === F.who ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
-          <b>검수자</b><select id="qfB"><option value="">전체</option>${bys.map(n => `<option ${n === F.by ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+          <b>2차 검수자</b><select id="qfB"><option value="">전체</option>${bys.map(n => `<option ${n === F.by ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
           <b>주문번호</b><input id="qfN" value="${esc(F.no)}" placeholder="일부만 써도 됨" style="width:130px">
-          <label class="ck"><input type="checkbox" id="qfM" ${F.miss ? 'checked' : ''}> 미검수만</label></div>
+          </div>
       </div>
-      <div class="mfts">${tile('처리 주문', L.length + '<small>건</small>', 'tot')}${tile('검수', done + '<small>건</small>', 'a')}${tile('미검수', (L.length - done) + '<small>건</small>', L.length - done ? 'dup' : '')}${tile('검수율', pc + '<small>%</small>', 'b')}</div>
-      <div class="card" style="padding:0;overflow:auto">
-        <div class="mfh"><span class="seg"><button data-md="list" class="${F.mode === 'list' ? 'on' : ''}">주문 목록</button><button data-md="who" class="${F.mode === 'who' ? 'on' : ''}">조립자별</button></span><span class="muted">${L.length}건 · ${esc(mdl(F.from))}${F.from !== F.to ? ' ~ ' + esc(mdl(F.to)) : ''}</span></div>
+      <div class="qa-tabs">${[['all', '처리 주문', T0.n + '<small>건</small>', '본인 검수 포함'], ['done', '2차 검수', T0.c + '<small>건</small>', '앱으로 추가 검수'], ['grp', '그룹별', pp(T0.c, T0.n) + '<small>%</small>', '처리 주문 대비 2차 검수율'], ['by', '2차 검수자별', BS.length + '<small>명</small>', '누가 몇 건']].map(([k, t, v, s2]) => `<button class="qa-t${tab === k ? ' on' : ''}" data-qt="${k}"><span>${t}</span><b>${v}</b><em>${s2}</em></button>`).join('')}</div>
+      <div class="card qa-body" style="padding:0;overflow:auto">
+        <div class="mfh"><b class="qa-hd">${head}</b><span style="flex:1"></span>${F.grp || F.who || F.by || fno ? `<button class="sm" id="qfClr">조건 지우기</button>` : ''}<span class="muted">${esc(mdl(F.from))}${F.from !== F.to ? ' ~ ' + esc(mdl(F.to)) : ''}</span></div>
         ${body}</div></div>`;
-    const setF = () => { F.who = $('#qfW').value; F.by = $('#qfB').value; F.no = $('#qfN').value; F.miss = $('#qfM').checked ? 1 : 0; };
+    const setF = () => { F.who = $('#qfW').value; F.by = $('#qfB').value; F.no = $('#qfN').value; };
     $('#qfGo').onclick = () => { const a = $('#qfF').value, b = $('#qfT').value; if (!a || !b || a > b) return toast('날짜를 확인하세요', true); setF(); F.from = a; F.to = b; renderQcr(true); };
     $$('[data-rg]', main).forEach(b => (b.onclick = () => { const [a, c] = range(b.dataset.rg === 'w' || b.dataset.rg === 'p' ? b.dataset.rg : +b.dataset.rg); setF(); F.from = a; F.to = c; renderQcr(true); }));
-    ['#qfW', '#qfB', '#qfM'].forEach(id => $(id).onchange = () => { setF(); renderQcr(); });
+    ['#qfW', '#qfB'].forEach(id => $(id).onchange = () => { setF(); renderQcr(); });
+    $$('[data-qt]', main).forEach(b => b.onclick = () => { setF(); F.tab = b.dataset.qt; if (F.tab !== 'by') F.by = ''; renderQcr(); });
+    if ($('#qfClr')) $('#qfClr').onclick = () => { F.grp = F.who = F.by = F.no = ''; renderQcr(); };
+    $$('[data-qag]', main).forEach(b => b.onclick = () => { setF(); F.grp = F.grp === b.dataset.qag ? '' : b.dataset.qag; renderQcr(); });
+    $$('[data-qab]', main).forEach(b => b.onclick = () => { setF(); F.by = F.by === b.dataset.qab ? '' : b.dataset.qab; renderQcr(); });
     const n = $('#qfN'); n.onkeydown = e => { if (e.key === 'Enter') { setF(); renderQcr().then(() => { const x = $('#qfN'); x.focus(); x.setSelectionRange(x.value.length, x.value.length); }); } }; n.onchange = () => { setF(); renderQcr(); };
-    $$('[data-md]', main).forEach(b => (b.onclick = () => { F.mode = b.dataset.md; setF(); renderQcr(); }));
-    $$('[data-qw]', main).forEach(tr => tr.onclick = () => { setF(); F.who = tr.dataset.qw; F.mode = 'list'; renderQcr(); });
+    $$('[data-qw]', main).forEach(tr => tr.onclick = () => { setF(); F.who = tr.dataset.qw; F.tab = 'all'; renderQcr(); });
     if (window.CZFilterV4) {
       const gs = [...new Set(Rw.map(r => r.g).filter(Boolean))].sort((a, b) => C.GROUP_LIST.indexOf(a) - C.GROUP_LIST.indexOf(b));
       window.CZFilterV4.mount($('.pgb', main), {
@@ -20857,7 +20885,19 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 .qr .qr-t{padding:12px 14px}.qr .qr-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}.qr .qr-h b{font-size:15px}.qr .qr-h input{margin-left:auto;height:30px;border-radius:999px;padding:0 12px;width:190px}
 .qr table.list td,.qr table.list th{padding:7px 8px}#main .qr table.list td.l,#main .qr table.list th.l{text-align:left!important}.qr .qr-pr{display:flex;align-items:center;gap:8px}.qr .qr-pr .qr-bar{flex:1;margin:0}.qr .qr-pr em{font-style:normal;font-weight:800;color:#1e7a3c;min-width:38px;text-align:right}.qr .qr-pr em.z{color:#c62828}
 .qr .okt,.okt{color:#1e7a3c;font-weight:800}.ngt{color:#c62828;font-weight:800}.qr .qr-log{max-height:420px;overflow:auto}
-.qr-mode{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-right:8px}.qr-mode button{padding:7px 14px;background:var(--panel,#fff);border:0;font-weight:700;color:var(--sub)}.qr-mode button.on{background:var(--blue);color:#fff}
+.mfh .qf-all{margin:0 12px;font-size:13px}
+.grid td.o.qc2 input{color:#4f46e5!important;font-weight:800!important;text-decoration:underline dotted #a5b4fc;text-underline-offset:3px}.grid td.o.qc2{overflow:visible}.grid td.o.qc2:hover{z-index:30}.grid td.o.qc2:hover::before{content:attr(data-qt);position:absolute;left:4px;bottom:calc(100% + 2px);white-space:nowrap;background:#312e81;color:#fff;font-size:12px;font-weight:700;padding:4px 9px;border-radius:7px;box-shadow:0 4px 12px rgba(0,0,0,.18);pointer-events:none;z-index:40}html[data-theme=dark] .grid td.o.qc2 input{color:#a5b4fc!important}
+.qa-tabs{display:grid;grid-template-columns:repeat(4,minmax(150px,220px));gap:10px;margin-bottom:12px}
+.qa-t{background:var(--card,#fff);border:1px solid #e1e7f0;border-radius:12px;padding:10px 16px;text-align:left;display:flex;flex-direction:column;gap:2px;cursor:pointer;transition:.15s}
+.qa-t span{font-size:12.5px;font-weight:700;color:#4a5670}.qa-t b{font-size:26px;color:#1f2937}.qa-t b small{font-size:13px;color:var(--sub);margin-left:2px}.qa-t em{font-style:normal;font-size:11.5px;color:var(--sub)}
+.qa-t:hover{border-color:#a5b4fc}.qa-t.on{border:2px solid #4f46e5;background:#eef2ff}.qa-t.on b{color:#4f46e5}
+.qa-body .mfh{padding:12px 16px}.qa-hd{font-size:14.5px}.qa-hd small{font-weight:500;color:var(--sub);margin-left:6px;font-size:12px}.qa-in{padding:0 16px 14px}
+.qc2t{color:#4f46e5;font-weight:800}html[data-theme=dark] .qc2t{color:#a5b4fc}html[data-theme=dark] .qa-t{background:#1d2026;border-color:#2c313a}html[data-theme=dark] .qa-t.on{background:#25244a}
+.qa-sec{margin-bottom:12px}.qa-h{font-size:13px;font-weight:800;color:#4a5670;margin:0 0 6px 2px}.qa-h small{font-weight:500;color:var(--sub);margin-left:6px}
+.qa-row{display:flex;gap:8px;flex-wrap:wrap}.qa-c{background:var(--card,#fff);border:1px solid #e1e7f0;border-left:4px solid var(--gc,#1e7a3c);border-radius:12px;padding:9px 14px;min-width:150px;text-align:left;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;cursor:pointer}
+.qa-c .t{font-weight:800;font-size:13.5px}.qa-c b{font-size:22px;color:var(--gc,#4f46e5);grid-row:1/3;grid-column:2;text-align:right}.qa-c b small{font-size:12px;margin-left:1px}.qa-c .s{font-size:12px;color:var(--sub)}.qa-c .bar{grid-column:1/3;display:block;height:6px;border-radius:9px;background:#e8edf3;overflow:hidden}.qa-c .bar u{display:block;height:100%;background:var(--gc,#1e7a3c)}
+.qa-c.by{border-left-color:#4f46e5}.qa-c.by b{color:#4f46e5}.qa-c.on{outline:2px solid var(--blue);background:#f2f6ff}
+html[data-theme=dark] .qa-c{background:#1d2026;border-color:#2c313a}.qr-mode{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-right:8px}.qr-mode button{padding:7px 14px;background:var(--panel,#fff);border:0;font-weight:700;color:var(--sub)}.qr-mode button.on{background:var(--blue);color:#fff}
 @media(max-width:1100px){.qr .qr-2{grid-template-columns:1fr}.qr .qr-k{grid-template-columns:repeat(2,1fr)}}
 /* v30.91 휴대폰 첫 화면 메뉴 */
 .pmx .qc-cn{display:flex;gap:6px}.pmx .qc-cn .pxcn small{white-space:nowrap}
