@@ -5998,12 +5998,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     html += `<div class="lvcal2"><div class="lvhd2">${['월', '화', '수', '목', '금', '토'].map((w, i) => { const cp = i < 5 ? +((kv().caps || {})[i + 1] || 0) : 0;
       return `<div class="${w === '토' ? 'sat' : ''}">${w}요일${cp ? `<span class="hcap">상한 ${cp}명</span>` : ''}${w === '토' ? '' : '<div class="sub"><span>연차</span><span>대체</span></div>'}</div>`; }).join('')}</div>`;
     weeks.forEach(days => {
-      // v31.09 : 같은 사람 · 같은 종류가 같은 주 3일 이상 이어지면 = 주 단위 막대 1줄 (날짜별 기록은 막대 칸을 눌러 그대로 수정)
-      const LBm = {}; days.forEach((dd, i) => { if (i > 4) return; LC.dayCell(L.calIx, dd).lv.filter(x => pf(x.s)).forEach(x => { if (x.l.h) return; const k = x.l.s + '|' + (LC.leaveKind(x.l) || '') + '|' + (x.l.t ? 1 : 0) + '|' + stOf(x.l); (LBm[k] = LBm[k] || []).push({ i, x }); }); });
-      const LB = []; Object.values(LBm).forEach(arr => { arr.sort((p, q) => p.i - q.i); let run = [arr[0]]; for (let j = 1; j <= arr.length; j++) { const e = arr[j]; if (e && e.i === run[run.length - 1].i + 1) { run.push(e); continue; } if (e && e.i === run[run.length - 1].i) continue; if (run.length >= 3) LB.push({ x: run[0].x, a: run[0].i, b: run[run.length - 1].i, segs: run }); run = e ? [e] : []; } });
-      LB.sort((p, q) => lvGk(p.x.s) - lvGk(q.x.s) || p.a - q.a || String(p.x.s.name).localeCompare(q.x.s.name, 'ko'));
-      const LBrow = [], LBid = new Set(); LB.forEach(o => { o.segs.forEach(g => LBid.add(g.i + '|' + g.x.l.id)); let r = LBrow.findIndex(e => e < o.a); if (r < 0) { r = LBrow.length; LBrow.push(-1); } LBrow[r] = o.b; o.r = r; });
-      const LBn = LBrow.length;
       html += '<div class="lvwk2">';
       days.forEach((dd, i) => {
         const other = LC.ymOf(dd) !== ym, hol = H[dd];
@@ -6014,15 +6008,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           return;
         }
         const c = LC.dayCell(L.calIx, dd), cap = d.all ? capOf(dd) : 0, over = cap && c.off > cap;
-        const lv = c.lv.filter(x => pf(x.s) && !LBid.has(i + '|' + x.l.id)).sort(lvSrt), al = c.al.filter(x => pf(x.s)).sort(lvSrt);
+        const lv = c.lv.filter(x => pf(x.s)).sort(lvSrt), al = c.al.filter(x => pf(x.s)).sort(lvSrt);
         html += `<div class="lvd2${other ? ' other' : ''}${hol ? ' hol' : ''}${over ? ' over' : ''}${dd === A.S.today ? ' today' : dd < A.S.today ? ' past' : ''}" data-d="${dd}">
           <div class="hd"><b class="dn">${md(dd)}</b>${hol ? `<span class="hn">${A.esc(hol)}</span>` : ''}${d.all && L.part ? (lv.length + al.length ? `<span class="n">휴무 ${lv.length + al.length}</span>` : '') : d.all && (c.off || cap) ? `<span class="n${over ? ' red' : cap && c.off === cap ? ' full' : ''}"${over && d.canEdit ? ` data-ov="${dd}" title="누르면 토요 대체로 정리"` : ''}>휴무 ${c.off}${cap ? '/' + cap : ''}${over && d.canEdit ? ' ↺' : ''}</span>` : ''}</div>
-          ${LBn ? `<div class="lbsp" style="height:${LBn * 25}px"></div>` : ''}<div class="dbody"><div class="rw">${lv.map(x => chipHtml(x, own)).join('')}</div>
+          <div class="dbody"><div class="rw">${lv.map(x => chipHtml(x, own)).join('')}</div>
           <div class="rw ar">${al.map(x => { if(x.u.actualLeave)return `<span class="sw${isMgr(x.name)?' lv-manager':''}" data-l="${A.esc(x.u.actualLeave)}" title="실제 대체휴무">${A.esc(x.name)}${isMgr(x.name)?'<small class="lv-manager-badge">매니저</small>':''}</span>`; const cv = conv[x.u.d + '|' + x.u.s]; return `<span class="sw ${satColor(x.u.d)}${own && myStaff() && x.u.s === myStaff().id ? ' me' : ''}${cv ? ' lvx' : ''}${isMgr(x.name)?' lv-manager':''}" data-u="${x.u.d}|${x.u.s}" title="${A.esc(x.name)} · ${md(x.u.d)} 토요근무의 대체휴무${cv ? ' (원래 연차 신청 → 토요 대체)' : ''}">${A.esc(x.name)}${isMgr(x.name)?'<small class="lv-manager-badge">매니저</small>':''}${cv ? '<i>↺</i>' : ''}</span>`; }).join('')}</div></div></div>`;
       });
-      html += LB.map(o => { const l = o.x.l, s = o.x.s, kd = LC.leaveKind(l), st = stOf(l), n = o.b - o.a + 1;
-        const cls = 'lvlb' + (kd ? ' sp' : l.t ? ' tr' : '') + (st === '신청' ? ' req' : st === '파트확인' ? ' mgr' : '') + (isMgr(s.name) ? ' mg' : '') + (own && myStaff() && l.s === myStaff().id ? ' me' : '');
-        return `<div class="${cls}" style="top:calc(31px + ${o.r * 25}px);left:calc(${o.a} * 100% / 6.05);width:calc(${n} * 100% / 6.05 - 12px)"><span class="lbnm">${A.esc(s.name || '?')}${l.t ? '(훈)' : ''}${kd ? '(' + kd + ')' : ''}</span><span class="lbr">${md(days[o.a])} ~ ${md(days[o.b])}</span><div class="lbsegs" style="grid-template-columns:repeat(${n},1fr)">${o.segs.map(g => `<span class="lbseg" data-l="${g.x.l.id}" title="${A.esc((s.name || '') + ' ' + mdw(days[g.i]) + ' · ' + ST[st][1] + (g.x.l.r ? ' · ' + g.x.l.r : '') + ' — 눌러서 이 날 보기·수정')}"></span>`).join('')}</div></div>`; }).join('');
       html += '</div>';
     });
     html += '</div>';
@@ -8661,7 +8652,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.09';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.10';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
