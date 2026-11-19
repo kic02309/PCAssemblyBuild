@@ -8636,7 +8636,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v30.89';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v30.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9219,7 +9219,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function mpvBar() {
     let b = document.getElementById('mpvbar'); if (!S.mpv) { if (b) b.remove(); return; }
     if (!b) { b = document.createElement('div'); b.id = 'mpvbar'; document.body.appendChild(b); }
-    b.innerHTML = `<b>📱 모바일 미리보기</b><span>${S.mpv === 'smob' ? '안정화 업무' : '라인생산 업무'} · 저장 안 됨</span><button id="mpvx" class="primary sm">닫기</button>`;
+    b.innerHTML = `<b>📱 모바일 미리보기</b><span>${S.mpv === 'smob' ? '안정화 업무' : S.mpv === 'qc' ? '조립 검수' : '라인생산 업무'} · 저장 안 됨</span><button id="mpvx" class="primary sm">닫기</button>`;
     $('#mpvx', b).onclick = () => { S.mpv = null; mpvBar(); go('dash'); };
   }
   function mpvOpen(kind) { S.mpv = kind; mpvBar(); go(kind); }
@@ -9229,7 +9229,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let P; try { P = await api(admin ? 'previewAccounts' : 'previewPeople'); } catch(e) { return toast(e.message, true); }
     const A = admin ? (P.rows || []).filter(x=>x.acct && x.acct.id).map(x=>Object.assign({name:x.name},x.acct)) : (P.users || []);
     const row = (role,id,label) => `<div class="pvr pv-select-row"><b>${label}</b><label>그룹<select id="${id}g" aria-label="${label} 그룹">${pvGroups(A,role).map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('') || '<option value="">그룹 없음</option>'}</select></label><label>이름<select id="${id}" aria-label="${label} 이름"></select></label><button data-pm="${role === '일반' ? 'staff' : 'mgr'}" class="primary sm">보기</button></div>`;
-    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
+    modal(`<h3>${admin ? '직급별 화면' : '사원 화면'} 미리보기</h3><div class="note">${admin ? '팀장·매니저·사원' : '담당 여부와 관계없이 전체 그룹 사원'} 화면을 선택합니다. <b>미리보기에서는 저장·수정·삭제할 수 없습니다.</b></div><div class="pvl">${admin ? '<button data-pm="lead"><b>팀장 보기</b><small>보기 전용 관리자 화면</small></button>' + row('매니저','pvm','매니저') : ''}${row('일반','pvs','사원')}${S.pv ? '<button data-pm="">내 화면으로 돌아가기</button>' : ''}<button data-mp="smob"><b>📱 모바일 보기 · 안정화 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="pmob"><b>📱 모바일 보기 · 라인생산 업무</b><small>폰 화면 그대로 · 저장 안 됨</small></button><button data-mp="qc"><b>📱 모바일 보기 · 조립 검수</b><small>폰 화면 그대로 · 저장 안 됨</small></button></div><div class="acts"><button data-c>닫기</button></div>`, (bg,close)=>{
       const panel = $('.modal',bg); if(panel) panel.classList.add('pv-picker');
       $('[data-c]',bg).onclick=close;
       $$('[data-mp]',bg).forEach(b=>b.onclick=()=>{ close(); mpvOpen(b.dataset.mp); });
@@ -9347,6 +9347,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (cat === 'work' && dfCan()) it = it.concat([['df', '조립 불량 관리']]); // v29.81 : 사전안내 바로 오른쪽
       if (cat === 'work' && srCan()) it = it.concat([['sr','주문 사양검토']]);
       if (cat === 'work' && canSmob()) it = it.concat([['smob', '📱 안정화 업무']]);   // v29.53
+      if (cat === 'work' && canQc()) it = it.concat([['qc', '✅ 조립 검수']]);   // v30.90
       $('.czn').innerHTML = cat === 'mgr' ? mgTabs().map(([k, t]) => `<button data-mgt="${k}" class="${((S.mgv || {}).tab || 'fb') === k ? 'on' : ''}">${t}${k === 'cal' ? `<i class="mgtn${calAlerts().length ? '' : ' hide'}">${calAlerts().length}</i>` : ''}</button>`).join('') : it.map(([k, t]) => `<button data-go="${k}" class="${k === v ? 'on' : k === 'line' && v === 'linestats' ? 'lo-parent-on' : ''}${k === 'pa' ? ' pa-tab' : ''}">${t}${k === 'pa' && paNew() ? '<i class="pa-new">NEW</i>' : ''}</button>`).join('');
     }
     const p = $('#proxy'); if (!p) return;
@@ -9439,13 +9440,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'df') { $('#proxy').innerHTML = ''; return dfCan() ? renderDf() : go('dash'); }    // v29.81 : 조립 불량 관리
     if (view === 'sp') { $('#proxy').innerHTML = ''; return canSp() ? renderSp() : go('dash'); }   // v29.57 : 소모품 관리
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
-    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob');
+    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob' || view === 'qc');
     if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
     if (view === 'line') { $('#proxy').innerHTML=''; return canLine() ? renderLine() : go('dash'); }
     if (view === 'linestats') { $('#proxy').innerHTML=''; return canLine() ? renderLineStats() : go('dash'); }
     if (view === 'prod') { $('#proxy').innerHTML = ''; return canProd() ? renderProd(opt) : go('dash'); }   // v28.63 : 생산업무
     if (view === 'pmob') { $('#proxy').innerHTML = ''; return canPmob() ? renderPmob() : go('dash'); }
     if (view === 'smob') { $('#proxy').innerHTML = ''; return canSmob() ? renderSmob() : go('dash'); }   // v29.53
+    if (view === 'qc') { $('#proxy').innerHTML = ''; return canQc() ? renderQc() : go('dash'); }   // v30.90 : 조립 검수
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
     if (entering && (view === 'manage' || view === 'hr')) {
@@ -11248,6 +11250,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const goDate = d => { if (!d) return; S.ddDate = d > r.today ? r.today : d; renderDash(); };
     $('#ddp').onclick = () => goDate(ddStep(dl, -1));
     $('#ddn').onclick = () => goDate(ddStep(dl, 1));
+    qcDash(dl);   // v30.90
     $('#ddd').onchange = e => /^\d{4}-\d{2}-\d{2}$/.test(e.target.value) && goDate(e.target.value);
     if ($('#ddprev')) $('#ddprev').onclick = () => goDate(r.prevWork);
     // v28.21 : 업무배정 · 조립 야근 = 항상 오늘 날짜로 열림 (창 안에서 날짜 바꾸기)
@@ -18629,6 +18632,135 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const smClean = () => { S._adj = {}; S._gm = {}; S.stCache = {}; S._mcache = {}; if (S.stv) { S.stv.key = ''; S.stv.data = null; } try { dropPc(S.me.id); } catch (e) { } };
   async function smDay() { const r = await api('getDay', { userId: S.me.id, date: S.today }); return { r, doc: r.doc ? JSON.parse(JSON.stringify(r.doc)) : C.emptyDay(S.today) }; }
+  // ───────── v30.90 : 조립 검수 (휴대폰) — 주문서 사진은 글자 읽는 데만 쓰고 저장하지 않음 ─────────
+  const canQc = () => !!(S.me && (!isRO() || S.mpv === 'qc'));
+  const QC_ROWS = [['cpu', 'CPU'], ['mb', '메인보드'], ['mem', '메모리'], ['ssd', '저장장치']];
+  function qcTess() {
+    if (window.Tesseract) return Promise.resolve();
+    return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = (window.__TESS && window.__TESS.js) || 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js'; sc.onload = ok; sc.onerror = () => no(new Error('글자 인식 도구를 불러오지 못했습니다 (인터넷 연결 확인)')); document.head.appendChild(sc); });
+  }
+  async function qcPrep(file) {            // 흑백 · 확대 · 대비 → 글자가 잘 읽히게
+    const img = await createImageBitmap(file), sc = Math.min(2, 2600 / img.width), c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height); const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) { const v = (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) > 140 ? 255 : 0; p[i] = p[i + 1] = p[i + 2] = v; }
+    g.putImageData(d, 0, 0); return c;
+  }
+  const QC_MBW = /^(PRO(-[A-Z0-9]+)?|PRIME|TUF|GAMING|WIFI\d?|WiFi\d?|PLUS|AORUS|ELITE|EDGE|TOMAHAWK|MORTAR|STEEL|LEGEND|LIGHTNING|RIPTIDE|ROG|STRIX|MAX|AX|DS3H|UD|EAGLE|ICE|AERO|MASTER|STEALTH|CARBON|HERO|APEX|DARK|TOMAHAWK)$/;
+  function qcParse(text) {
+    const L = text.split('\n').map(x => x.trim()).filter(Boolean), blocks = []; let cur = null;
+    const START = /[\[(]?[^\])\[(\s]{1,14}[\])]+\s*[\[(][^\])\[(]{1,14}[\])]/, CONT = /^[^\[(]*[\[(]?\s*\d+\s?(W|GB|TB)\s*[\])]/i;
+    for (const ln of L) { if (START.test(ln) && !CONT.test(ln)) { cur = [ln]; blocks.push(cur); } else if (cur && cur.length < 3) cur.push(ln); }
+    const brandOf = t => (t.match(/[\[(]([A-Za-z][A-Za-z0-9 .&-]{1,14})[\])]/g) || []).map(x => x.slice(1, -1).trim()).find(x => /^[A-Z][A-Za-z]{2}/.test(x) && !/^(CPU|SSD|HDD)$/i.test(x) && !/GB|TB|W$/i.test(x)) || '';
+    const cap = t => { const m = t.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; };
+    const out = { order: (text.match(/\b2\d{7}\b/) || [''])[0] };
+    for (const bl of blocks) {
+      const t = bl.join(' ').replace(/\s+/g, ' ');
+      if (/PICK|PC_R|_R\d{3}/i.test(t)) continue;
+      const br = brandOf(t), W = t.split(' ');
+      if (!out.mem && /DDR[45]/i.test(t)) {
+        const ddr = (t.match(/DDR[45]/i) || [''])[0].toUpperCase(), pc = t.match(/PC[45]-(\d{5})/i), sp = pc ? Math.round(+pc[1] / 8) : ((t.match(/\((\d{4})/) || [])[1] || '');
+        out.mem = { brand: br, name: [ddr + (sp ? '-' + sp : ''), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 };
+      } else if (/DDR[45]/i.test(t) && out.mem) out.mem.n++;
+      else if (!out.ssd && /NVMe|M\.2\b|\[SS[DP]\]|SATA/i.test(t)) {
+        const i = W.findIndex(w => w.includes(br) && br), j = W.findIndex(w => /NVMe|SATA/i.test(w));
+        out.ssd = { brand: br, name: [W.slice(i + 1, j >= 0 ? j + 1 : i + 5).filter(w => /^[A-Za-z0-9.+\-]{2,}$/.test(w)).join(' '), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 };
+      } else if (/NVMe|M\.2\b|\[SS[DP]\]/i.test(t) && out.ssd) out.ssd.n++;
+      else if (!out.cpu && /\[c?pu\]|ryzen|core\s?i\d|ultra\s?\d/i.test(t) && !/RTX|DDR|CV-\d|쿨러/i.test(t)) {
+        const m = t.match(/\bi[3579]-\d{4,5}[A-Z]{0,2}\b|Ultra\s?[3579]\s?\d{3}[A-Z]{0,2}|\b\d{4,5}X3D\b|\b\d{4,5}[A-Z]{0,2}\b(?!\s*[\d,])/i);
+        out.cpu = { brand: br, name: m ? m[0] : '' };
+      } else if (!out.mb && /\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/RTX|DDR|NVMe/i.test(t)) {
+        const i = W.findIndex(w => /^[ABZHXW]\d{3}[ME]?$/.test(w)), name = [W[i]];
+        for (let k = i + 1; k < W.length && name.length < 4; k++) { let w = W[k].replace(/^Gen[b5S]*5?$/, 'Gen5'); if (/^[A-Z0-9][A-Za-z0-9+\-]{1,11}$/.test(w) && (/\d|-/.test(w) || QC_MBW.test(w))) name.push(w); else break; }
+        out.mb = { brand: br, name: name.join(' ') };
+      }
+    }
+    return out;
+  }
+  async function renderQc() {
+    const main = $('#main'), V = S.qcv = S.qcv || { step: 'start', hist: null };
+    const today = S.today;
+    if (!V.hist) { try { V.hist = (await api('qc', { op: 'list', date: today })).rows || []; } catch (e) { V.hist = []; } if (S.view !== 'qc') return; }
+    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 나가기</button></span></div><div class="pxr"><div><h1>조립 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><div class="pxcn"><b>${V.hist.length}</b><small>오늘 내 검수</small></div></div></div>`;
+    const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}${h.date && h.date !== today ? ' <small class="muted">' + esc(dLabel(h.date)) + '</small>' : ''}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join('');
+    const hist = `<div class="pxcard"><div class="qc-lb">검수 기록 <small>오늘 내가 한 검수 · 주문번호로 찾기</small></div><input class="qc-in sm" id="qcq" inputmode="numeric" placeholder="주문번호 검색" value="${esc(V.q || '')}" autocomplete="off"><div class="qc-hist">${V.qr ? (hl(V.qr) || '<div class="muted">검수 기록 없음</div>') : (hl(V.hist) || '<div class="muted">아직 없음</div>')}</div></div>`;
+    if (V.step === 'start' || V.step === 'ocr') {
+      main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
+        <div class="pxcard"><div class="qc-lb">① 주문서 촬영 <small>제품 목록이 화면에 꽉 차게</small></div>
+        <label class="qc-shot">📷 주문서 찍기<small>사진은 목록 읽는 데만 쓰고 저장하지 않습니다</small><input type="file" accept="image/*" capture="environment" id="qcf" hidden></label>
+        ${V.step === 'ocr' ? `<div class="qc-prog"><i style="width:${V.pct || 3}%"></i></div><div class="pxmsg info" id="qcpm">${esc(V.msg || '준비 중…')}</div>` : ''}
+        <div class="qc-tools"><button type="button" id="qcman">주문번호만 입력</button></div></div>${hist}</div></div>`;
+    } else if (V.step === 'done') {
+      main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>검수 완료</b><div class="muted">${esc(V.order)} · 조립자 ${esc(V.who.name)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
+    } else {
+      const R = V.res = V.res || {}, P = V.P, ok = QC_ROWS.filter(([k]) => R[k]).length;
+      const txt = k => { const x = P[k]; if (!x) return ''; return [x.brand, x.name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (x.n || 1) : ''); };
+      const warn = k => { const x = P[k]; if (!x) return '주문서에서 못 읽음 — 주문서 보고 확인'; if ((k === 'mem' || k === 'ssd') && !x.cap) return '용량을 못 읽음 — 주문서 보고 확인'; if (!x.brand) return '제조사를 못 읽음 — 주문서 보고 확인'; return ''; };
+      const whoBox = V.who ? `<div class="qc-who">👤 <b>${esc(V.who.name)}</b><span>${esc(V.who.group || '')}</span><small>${V.who.auto ? '업무데이터에서 찾음' : '직접 선택'}</small>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" id="qcwho">바꾸기</button>' : ''}</div>`
+        : `<div class="pxmsg warn">${/^\d{8,9}$/.test(V.order || '') ? '업무데이터에서 이 주문번호를 입력한 조립자를 못 찾았습니다' : '주문번호를 입력하세요'}</div>${/^\d{8,9}$/.test(V.order || '') ? '<div class="qc-tools"><button type="button" id="qcwho">조립자 고르기</button></div>' : ''}`;
+      const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
+      main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
+        <div class="pxcard"><div class="qc-lb">주문번호 · 조립자</div><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="주문번호">${whoBox}${block}</div>
+        <div class="pxcard"><div class="qc-lb">② 검수 체크 <small>CMOS와 같으면 체크</small><span class="r"><small>${ok}/4</small></span></div>
+        ${QC_ROWS.map(([k, t]) => `<button type="button" class="qc-ck ${R[k] ? 'ok' : ''}" data-qk="${k}"><span class="qc-box">${R[k] ? '✓' : ''}</span><span class="t"><small>${t}</small><b>${esc(txt(k) || '-')}</b>${warn(k) ? `<span>${esc(warn(k))}</span>` : ''}</span></button>`).join('')}
+        <div class="qc-tools"><button type="button" id="qcedit">✎ 직접 고치기</button><button type="button" id="qcre">📷 다시 찍기</button></div></div>
+        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 4 || !V.who || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>체크 ${ok}/4${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 저장</b></button></div></div>`;
+    }
+    bindQc();
+  }
+  async function qcFindWho(V) {
+    V.who = null; V.self = false; V.done = null; V.cands = []; if (!/^\d{8,9}$/.test(V.order || '')) return;
+    try { const r = await api('qc', { op: 'find', order: V.order }); V.cands = (r.rows || []).filter(x => x.id !== S.me.id || (r.rows || []).length === 1); V.done = r.done || null; if (V.cands.length) V.who = Object.assign({ auto: true }, V.cands[0]); V.self = !!(V.who && V.who.id === S.me.id); } catch (e) { }
+  }
+  async function qcPickWho(V) {
+    let A = V.cands && V.cands.length > 1 ? V.cands.map(x => ({ id: x.id, name: x.name, group: x.group })) : null;
+    if (!A) { try { A = (await api('qc', { op: 'people' })).rows || []; } catch (e) { return toast(e.message, true); } }
+    const G = [...new Set(A.map(x => x.group || '미지정'))].sort((a, b) => a.localeCompare(b, 'ko', { numeric: true }));
+    modal(`<h3>조립자 고르기</h3><div class="qc-pick">${G.map(g => `<div><b>${esc(g)}</b><span>${A.filter(x => (x.group || '미지정') === g).sort((a, b) => a.name.localeCompare(b.name, 'ko')).map(x => `<button type="button" data-pu="${esc(x.id)}">${esc(x.name)}</button>`).join('')}</span></div>`).join('')}</div><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      $$('[data-pu]', bg).forEach(b => b.onclick = () => { const x = A.find(y => y.id === b.dataset.pu); V.who = Object.assign({ auto: false }, x); V.self = x.id === S.me.id; close(); renderQc(); });
+    });
+  }
+  function bindQc() {
+    const V = S.qcv, b = $('#qcback'); if (b) b.onclick = () => { S.qcv = null; go(S.mpv ? 'dash' : isManager() ? 'dash' : 'input'); };
+    const f = $('#qcf'); if (f) f.onchange = async e => { const file = e.target.files[0]; if (!file) return; await qcRun(file); };
+    if ($('#qcman')) $('#qcman').onclick = () => { V.P = {}; V.res = {}; V.order = ''; V.who = null; V.done = null; V.self = false; V.step = 'check'; renderQc(); setTimeout(() => $('#qco') && $('#qco').focus(), 50); };
+    if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
+    if ($('#qcre')) $('#qcre').onclick = () => { V.step = 'start'; renderQc(); };
+    const q = $('#qcq'); if (q) { let tm = 0; q.oninput = () => { clearTimeout(tm); tm = setTimeout(async () => { V.q = q.value.replace(/\D/g, ''); if (V.q.length < 4) { V.qr = null; } else { try { V.qr = (await api('qc', { op: 'list', order: V.q })).rows || []; } catch (e) { V.qr = []; } } const pos = q.selectionStart; renderQc(); const q2 = $('#qcq'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) { } } }, 400); }; }
+    $$('[data-qk]').forEach(x => x.onclick = () => { const k = x.dataset.qk; V.res[k] = V.res[k] ? undefined : 'ok'; renderQc(); });
+    const o = $('#qco'); if (o) o.onchange = async () => { V.order = C.normOrder(o.value); await qcFindWho(V); renderQc(); };
+    if ($('#qcwho')) $('#qcwho').onclick = () => qcPickWho(V);
+    if ($('#qcedit')) $('#qcedit').onclick = () => {
+      modal(`<h3>읽은 값 고치기</h3>${QC_ROWS.map(([k, t]) => { const x = V.P[k] || {}; return `<div class="fld"><label>${t}</label><div class="row" style="gap:6px"><input data-eb="${k}" value="${esc(x.brand || '')}" placeholder="제조사" style="width:34%"><input data-en="${k}" value="${esc(x.name || '')}" placeholder="제품명 · 용량" style="flex:1">${k === 'mem' || k === 'ssd' ? `<input data-ec="${k}" type="number" min="1" value="${x.n || 1}" style="width:56px" title="수량">` : ''}</div></div>`; }).join('')}<div class="acts"><button data-c>취소</button><button class="primary" data-s>적용</button></div>`, (bg, close) => {
+        $('[data-c]', bg).onclick = close;
+        $('[data-s]', bg).onclick = () => { QC_ROWS.forEach(([k]) => { const br = $(`[data-eb="${k}"]`, bg).value.trim(), nm = $(`[data-en="${k}"]`, bg).value.trim(), c = $(`[data-ec="${k}"]`, bg); V.P[k] = br || nm ? { brand: br, name: nm, cap: (nm.match(/\d+\s?(GB|TB)/i) || [''])[0], n: c ? Math.max(1, +c.value || 1) : 1 } : null; }); close(); renderQc(); };
+      });
+    };
+    if ($('#qcs')) $('#qcs').onclick = async () => {
+      if (S.mpv || S.pv) return toast('미리보기에서는 저장되지 않습니다', true);
+      const items = QC_ROWS.map(([k, t]) => ({ k, t, v: V.P[k] ? [V.P[k].brand, V.P[k].name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (V.P[k].n || 1) : '') : '' }));
+      const btn = $('#qcs'); btn.disabled = true;
+      try { await api('qc', { op: 'save', order: V.order, assembler: V.who.id, items }); V.hist = [{ order: V.order, who: V.who.name, by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
+    };
+  }
+  // v30.90 : 일일 업무현황 이름 옆 '검수 n' (그날 검수받은 건수)
+  async function qcDash(date) {
+    let by; try { by = (await api('qc', { op: 'stat', date })).by || {}; } catch (e) { return; }
+    if (S.view !== 'dash') return;
+    $$('#main .ddpr .n[data-nt]').forEach(n => { const k = n.dataset.nt, c = by[k]; if (c && !n.querySelector('.qcb')) n.insertAdjacentHTML('beforeend', `<span class="qcb" title="오늘 검수받은 주문 ${c}건">검수 ${c}</span>`); });
+  }
+  async function qcRun(file) {
+    const V = S.qcv; V.step = 'ocr'; V.pct = 3; V.msg = '글자 인식 도구 준비 중… (처음 한 번은 조금 걸립니다)'; renderQc();
+    const upd = () => { const i = $('.qc-prog i'), m = $('#qcpm'); if (i) i.style.width = V.pct + '%'; if (m) m.textContent = V.msg; };
+    try {
+      await qcTess();
+      const w = await Tesseract.createWorker('eng', 1, Object.assign({ logger: m => { if (m.status === 'recognizing text') { V.pct = Math.round(15 + m.progress * 85); V.msg = '주문서 읽는 중… ' + V.pct + '%'; upd(); } else if (/load/.test(m.status || '')) { V.pct = Math.max(V.pct, 8); upd(); } } }, (window.__TESS && window.__TESS.opt) || {}));
+      const c = await qcPrep(file), r = await w.recognize(c); await w.terminate();
+      if (S.view !== 'qc') return;
+      V.raw = r.data.text; V.P = qcParse(r.data.text); V.res = {}; V.order = V.P.order;
+      await qcFindWho(V); V.step = 'check'; renderQc();
+    } catch (e) { V.step = 'start'; renderQc(); toast(e.message || '주문서를 읽지 못했습니다', true); }
+  }
   async function renderSmob() {
     const main = $('#main'), V = S.smv = { sel: {}, q: 1, tip: '', dups: [], own: false, off: false };
     let D; try { D = await smDay(); } catch (e) { main.innerHTML = `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
@@ -20369,7 +20501,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let v0 = isRO() ? 'home' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'qc', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -20629,6 +20761,29 @@ html[data-theme=dark] #main .pa .pa-q span{color:#9cc0ff}
 </style>
 <style id="phone-v2954">
 .pmx .pxhd{padding-top:12px!important;padding-bottom:30px!important}
+/* v30.90 조립 검수 */
+.pmx .qc-shot{width:100%;height:120px;border-radius:16px;border:2px dashed #9fb0d4;background:#f7f9fd;color:#2c4a86;font-size:17px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.pmx .qc-shot small{font-weight:500;color:#64748b;font-size:12px}
+.pmx .qc-prog{height:8px;background:#e3e8f2;border-radius:99px;overflow:hidden;margin-top:10px}.pmx .qc-prog i{display:block;height:100%;background:#2c4a86;width:0;transition:width .3s}
+.pmx .qc-lb{font-size:12.5px;font-weight:800;color:#2c4a86;margin-bottom:8px;display:flex;align-items:center;gap:6px}.pmx .qc-lb small{font-weight:500;color:#64748b}.pmx .qc-lb .r{margin-left:auto}
+.pmx .qc-in{width:100%;height:46px;border:1px solid #c3cde3;border-radius:12px;padding:0 12px;font-size:19px;font-weight:800;letter-spacing:.5px}
+.pmx .qc-who{display:flex;align-items:center;gap:8px;background:#eef6f0;border:1px solid #cfe8d7;border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px}
+.pmx .qc-who b{font-size:16px}.pmx .qc-who small{color:#1e7a3c;font-weight:700}.pmx .qc-who button{margin-left:auto;font-size:12.5px;color:#2c4a86;background:none;font-weight:700}
+.pmx .qc-ck{display:flex;align-items:center;gap:12px;padding:12px 2px;border:0!important;border-top:1px solid #eef1f7!important;border-radius:0!important;box-shadow:none!important;width:100%;background:none!important;text-align:left;color:inherit}.pmx .qc-ck:first-of-type{border-top:0!important}.pmx .qc-ck:first-of-type{border-top:0}
+.pmx .qc-box{width:42px;height:42px;border-radius:10px;border:2px solid #9fb0d4;background:#fff;font-size:24px;font-weight:900;color:#fff;flex:0 0 auto;display:grid;place-items:center}
+.pmx .qc-in.sm{height:40px;font-size:15px;margin-bottom:6px}
+.qc-pick>div{margin-bottom:10px}.qc-pick b{display:block;font-size:13px;color:var(--sub);margin-bottom:4px}.qc-pick span{display:flex;flex-wrap:wrap;gap:6px}.qc-pick button{padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel,#fff);font-weight:700}
+.qcb{margin-left:4px;font-size:10.5px;font-weight:800;color:#1e7a3c;background:#eaf6ee;border:1px solid #cfe8d7;border-radius:6px;padding:0 5px;white-space:nowrap}
+.pmx .qc-ck.ok .qc-box{background:#1e7a3c;border-color:#1e7a3c}.pmx .qc-ck.ng .qc-box{background:#c62828;border-color:#c62828}
+.pmx .qc-ck .t{flex:1;min-width:0;display:block}.pmx .qc-ck .t small{display:block;font-size:12px;color:#64748b;font-weight:700}.pmx .qc-ck .t b{font-size:16px;display:block;margin-top:1px;word-break:break-all}.pmx .qc-ck .t span{display:block;font-size:12px;color:#b45309;margin-top:2px}
+.pmx .qc-ck.ok .t b{color:#1e7a3c}.pmx .qc-ck.ng .t b{color:#c62828}
+.pmx .qc-ng{height:36px;padding:0 10px;border-radius:9px;background:#fff;border:1px solid #f0c4c4;color:#c62828;font-size:12.5px;font-weight:800;flex:0 0 auto}.pmx .qc-ck.ng .qc-ng{background:#c62828;color:#fff}
+.pmx .qc-tools{display:flex;gap:8px;margin-top:8px}.pmx .qc-tools button{flex:1;height:40px;border-radius:10px;background:#eef1f7;color:#2c4a86;font-weight:800;font-size:13px}
+.pmx .qc-memo{width:100%;min-height:60px;border:1px solid #c3cde3;border-radius:12px;padding:10px;font:inherit;font-size:14px}
+.pmx .qc-done{text-align:center;padding:26px 10px}.pmx .qc-done .big{font-size:52px}.pmx .qc-done b{display:block;font-size:20px;margin:6px 0}
+.pmx .qc-hist>div{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #eef1f7;font-size:13.5px}.pmx .qc-hist>div:first-child{border-top:0}
+.pmx .ok-t{color:#1e7a3c;font-weight:800}.pmx .ng-t{color:#c62828;font-weight:800}
+.pmx .pxbar .pxs small{display:block;font-size:12px;opacity:.85;margin-bottom:2px}
 .pmx .pxr h1{font-size:25px!important}
 .pxvo{position:relative;display:block!important}
 .pxvo .pxin{width:100%!important;box-sizing:border-box;height:52px!important;font-size:24px!important;padding-right:96px!important}
