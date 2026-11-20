@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.52';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.53';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19016,7 +19016,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
         <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력"><button type="button" id="qcre">↺ 초기화</button></div>${block}</div>
-        <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === NQ ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${V.rt ? `<i class="qc-rt">읽기 ${V.rt.s}초${V.rt.ep ? ' · ' + V.rt.ep : ''}</i>` : ''}${ok}/${NQ}</span></div>
+        <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === NQ ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/${NQ}</span></div>${V.rt ? `<div class="qc-rt">읽기 ${V.rt.s}초</div>` : ''}
         ${Q.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="hd"><span class="c">${t}</span>${ref(k)}</span><span class="ln">${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
 </div>
         <div class="pxcard qc-st1 s2"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>요청사항 확인</b><small>고객요청 · 특이사항 · 운송방법</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
@@ -19331,7 +19331,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       onMsg && onMsg('정확한 글자 인식 준비 중… (처음 한 번 약 20MB 내려받기)');
       const M = (window.__PP && window.__PP.model) || PPOCR.V5_KOREAN_MOBILE_MODEL;
       window.__ppEP = 'CPU';
-      if (navigator.gpu && !window.__ppNoGpu) { try { const ad = await navigator.gpu.requestAdapter(); if (ad) { window.__ppSvc = await tryInit(M, true); window.__ppEP = 'GPU'; } } catch (e) { console.warn('ocr gpu', e); window.__ppSvc = null; } }   // v31.52 : 폰 그래픽칩(WebGPU) 먼저 · 안 되면 CPU
+      if (window.__ppTryGpu && navigator.gpu && !window.__ppNoGpu) { try { const ad = await navigator.gpu.requestAdapter(); if (ad) { window.__ppSvc = await tryInit(M, true); window.__ppEP = 'GPU'; } } catch (e) { console.warn('ocr gpu', e); window.__ppSvc = null; } }   // v31.52 : 폰 그래픽칩(WebGPU) 먼저 · 안 되면 CPU
       if (!window.__ppSvc) { try { window.__ppSvc = await tryInit(M); } catch (e) { window.__ppSvc = await tryInit(PPOCR.V5_MOBILE_MODEL); } window.__ppEP = 'CPU'; }
     }
     onMsg && onMsg('주문서 읽는 중… (정확한 인식)');
@@ -22460,7 +22460,7 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-ck3.v2 .rf .cd{color:#047857;background:#d1fae5;border:1px solid #a7f3d0;font-weight:800;font-size:11px;letter-spacing:.02em}
 .pmx .qc-ord .qc-in{font-size:20px!important}
 .pmx .qc-ck3.v2 .rf em.add{background:#7c3aed}
-.pmx .qc-sh .qc-rt{font-style:normal;font-weight:700;font-size:11px;color:#64748b;background:#fff;border:1px solid #dbe6fb;border-radius:99px;padding:1px 7px;margin-right:6px}
+.pmx .qc-st .qc-rt{font-weight:700;font-size:11px;color:#64748b;text-align:right;margin:-2px 0 2px}
 </style>
 </body>
 </html>
