@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.58';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18876,7 +18876,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function qcStripParse(text) {
     if (!QCP || !QCP.size) return null;
     const occ = [];   // 위에서 아래 순서
-    String(text || '').split('\n').forEach(ln => { if (/[\[【(]\s*\d{6,7}/.test(ln) && !/\d{6,7}\s*$/.test(ln.replace(/[\]】)\s]+$/, ''))) return; for (const x of (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || [])) { if (new RegExp('[\\[【(]\\s*' + x).test(ln)) continue; const r = QCP.get(x); if (r) occ.push(r); } });
+    const LL = String(text || '').split('\n');
+    LL.forEach((ln, i) => { if (/[\[【(]\s*\d{6,7}/.test(ln) && !/\d{6,7}\s*$/.test(ln.replace(/[\]】)\s]+$/, ''))) return; for (const x of (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || [])) { if (new RegExp('[\\[【(]\\s*' + x).test(ln)) continue; const r = QCP.get(x); if (r) occ.push(Object.assign({ ex: /추가\s*장착|장착\s*◀/.test(LL.slice(Math.max(0, i - 2), i + 3).join(' ')) }, r)); } });   // v31.58 : 근처에 '추가 장착'
     const out = { tags: qcTags(text) };
     ['cpu', 'mem', 'ssd', 'hdd'].forEach(k => {
       const O = occ.filter(r => r.k === k); if (!O.length) return;
@@ -18885,6 +18886,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const top = U.length > 1 ? O[O.length - 1] : O[0], n = cnt(top.c), o = qcpObj(top, ''); o.n = n;
       if (U.length > 1) { const gone = U.filter(c => c !== top.c).map(c => { const r = QCP.get(c); return [qcpBrand(r), qcpShort(r), qcpCap(r)].filter(Boolean).join(' '); }); o.chg = '변경된 부품 · 빠짐 ' + gone.join(', '); o.n = Math.max(1, n); }
       else if (n > 1) o.chg = `추가 +${n - 1} (총 ${n}개)`;
+      else if (k === 'hdd') o.chg = '추가 장착 (새 부품)';   // v31.58 : 조립 PC 기본 구성에 HDD는 거의 없음 → HDD가 보이면 추가 장착
       out[k] = o;
     });
     return out;
