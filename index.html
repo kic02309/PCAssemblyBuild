@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.23';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.24';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18819,6 +18819,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const qcFixTok = w => /\d/.test(w) && /^[A-Za-z0-9oO.+\-]{3,}$/.test(w) ? w.replace(/(?<=\d)[oO]|[oO](?=\d)/g, '0').replace(/[oO](?=0)|(?<=0)[oO]/g, '0').toUpperCase().replace(/NVME/, 'NVMe').replace(/^I([3579]-)/, 'i$1') : w;
   function qcGuess(o, t) { if (!o || o.brand) return; for (const [re, b] of QC_BYNAME) if (re.test(t)) { o.brand = b; return; } }
   function qcParse(text) {
+    text = text.replace(/[【［〔]/g, '[').replace(/[】］〕]/g, ']').replace(/（/g, '(').replace(/）/g, ')').replace(/：/g, ':');   // v31.24 : 전각 괄호
     QC_KO.forEach(([re, en]) => { text = text.replace(re, en); });
     text = text.replace(/(\d)\s*([GT])\s*\]?\s*(?:\d{6,7})?\s*\n\s*(?:\d+\s*개\s*)?\[?\s*B\b/gi, '$1$2B');   // [1T ↵ B] → 1TB
     const L = text.split('\n').map(x => x.trim()).filter(Boolean), blocks = []; let cur = null;
@@ -18828,7 +18829,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const isPkg = t => /조립\s?PC|PC_[A-Z]?\d|PICK|_R\d{3}/i.test(t);
     const PKG = new Set(); blocks.forEach(bl => { const t = bl.join(' '); if (isPkg(t)) { const c = (bl[0].match(/\d{6,7}/) || t.match(/\d{6,7}/) || [])[0]; if (c) PKG.add(c.slice(-6)); } });   // v31.22 : 세트 줄 자기 코드 1개만   // 세트(PC) 상품코드 (앞자리가 잘려도 뒤 6자리)
     const brandOf = t => { const L = (t.match(/[\[(]([A-Za-z][A-Za-z0-9 .&-]{1,14})[\])]/g) || []).map(x => x.slice(1, -1).trim()).filter(x => /^[A-Za-z]{2}/.test(x) && !/^(CPU|SSD|HDD)$/i.test(x) && !/GB|TB|\dW$/i.test(x)); for (const x of L) { const b = qcBrand(x); if (b) return b; } return ''; };
-    const cap = t => { t = t.replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = t.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; };
+    const cap = t => { t = t.replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); { const h = t.match(/\[\s*(\d{1,4})\s*([GT])(?!B)/i); if (h && /\bB\s*\]/.test(t) && !/\d\s?[GT]B/i.test(t)) return (h[1] + h[2] + 'B').toUpperCase(); } const m = t.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; };
     const out = { order: (text.match(/\b2\d{7}\b/) || [''])[0] };
     // v31.17 : 사양변경 — ⓟ 줄 = 끝에 [세트 상품코드]가 붙은 줄 · -1개 = 빠짐 · 1개 = 추가/교체
     const items = [];
@@ -18842,8 +18843,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const code = (t.match(/(?:^|\s)\d{6,7}(?=\s|$)/g) || []).map(x => x.trim()).pop() || '';
       let k = '', o = null;
       const br = brandOf(t), W = t.split(' ');
-      if (/DDR[45]/i.test(t) && !(/\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/PC[45]-|\d\s?GB/i.test(t))) {
-        const ddr = (t.match(/DDR[45]/i) || [''])[0].toUpperCase(), pc = t.match(/PC[45]-(\d{5})/i), sp = pc ? Math.round(+pc[1] / 8) : ((t.match(/\((\d{4})/) || [])[1] || '');
+      const memX = /\bPC[45]\s?-+\s?\d{5}(?!\d)|(?<!\d)(17000|19200|21300|25600|28800|38400|41600|44800|48000|51200|54400)(?!\d)|CL\s?\d{2}(?!\d)|\[메모리\]|KLEVV|파인인포/i.test(t) && /\d{1,3}\s?GB/i.test(t);   // v31.24 : DDR 글자를 못 읽어도 메모리
+      if ((/DDR\s?[45]/i.test(t) || memX) && !/NVMe|M\.2\b|\[SS[DP]\]|RTX|GTX|RX\s?\d/i.test(t) && !(/\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/PC[45]-|\d\s?GB/i.test(t))) {
+        const pc = t.match(/(?<!\d)()(17000|19200|21300|25600|28800|38400|41600|44800|48000|51200|54400)(?!\d)/) || t.match(/PC([45])\s?-+\s?(\d{5})(?!\d)/i), sp = pc ? Math.round(+pc[2] / 8) : ((t.match(/\((\d{4})\)?/) || [])[1] || '');
+        const ddr = ((t.match(/DDR\s?[45]/i) || [''])[0].replace(/\s/g, '').toUpperCase()) || (pc && pc[1] ? 'DDR' + pc[1] : sp ? (+sp >= 4800 ? 'DDR5' : 'DDR4') : 'DDR');
         k = 'mem'; o = { brand: br, name: [ddr + (sp ? '-' + sp : ''), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 }; qcGuess(o, t);
       } else if (/NVMe|M\.2\b|\[SS[DP]\]|SATA/i.test(t)) {
         const i = W.findIndex(w => w.includes(br) && br), j = W.findIndex(w => /NVMe|SATA/i.test(w));
@@ -18870,8 +18873,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       });
       if (!L.length) return;
       out[k] = L[0].o; if (notes.length) out[k].chg = [out[k].chg, notes.join(' · ')].filter(Boolean).join(' · ');
-      if (L.length > 1) out[k].extra = L.slice(1).map(z => lab(z.o) + ((z.o.n || 1) > 1 ? ' ×' + z.o.n : ''));
+      if (L.length > 1) out[k].extra = L.slice(1).map(z => lab(z.o) + ((z.o.n || 1) > 1 ? ' ×' + z.o.n : ''));
     });
+    // v31.24 : 줄 구분이 깨져도 전체 글자에서 한 번 더 (CPU 모델 · 메모리 용량/속도) — 수량은 모르면 ?
+    const all = text.replace(/\s+/g, ' ');
+    if (!out.cpu) { const m = all.match(/(?:라이젠|Ryzen|AMD)[^\[\]]{0,30}?\b(\d{4,5}X3D|\d{4,5}[A-Z]{0,2})\b/i) || all.match(/\b(i[3579]-\d{4,5}[A-Z]{0,2})\b/i) || all.match(/\((\d{4,5}X3D|\d{4,5}[A-Z]?|i[3579]-?\d{4,5}[A-Z]?)\s*\/\s*\d{4}/i); if (m) out.cpu = { brand: /^i\d/i.test(m[1]) || /intel|인텔/i.test(all) && !/AMD|라이젠/i.test(all) ? 'Intel' : 'AMD', name: qcFixTok(m[1]) }; }
+    if (!out.mem) { const m = all.match(/\[?\s*(\d{1,3})\s?GB\s*\]?\s*\(\s*(2133|2400|2666|3200|3600|4800|5200|5600|6000|6400|6800|7200)\s*\)?/i); if (m) { const sp = +m[2]; const pre = all.slice(Math.max(0, m.index - 60), m.index), qm = pre.match(/(?:^|\s)([1-4])\s*(?:개|7H|7I|7\b)?\s+(?:\d{4,7}\s*)?(?:17000|19200|21300|25600|28800|38400|41600|44800|48000|51200|54400)/); out.mem = { brand: '', name: (sp >= 4800 ? 'DDR5-' : 'DDR4-') + sp + ' ' + m[1] + 'GB', cap: m[1] + 'GB', n: qm ? +qm[1] : 0 }; } }
     return out;
   }
   // v30.98 : 한 부품 줄만 가까이 찍은 사진 → 그 부품 값
@@ -18905,7 +18912,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } else {
       const R = V.res = V.res || {}, P = V.P || {}, ok = QC3.filter(([k]) => R[k]).length;
       const ref = k => { if (V.ref === 'busy') return '<span class="rf busy">부품 숫자 읽는 중…</span>'; if (!V.ref) return ''; const x = P[k]; let t = '';
-        if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' ') + (x.cap ? ' × ' + (x.n || 1) : ''); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
+        if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' ') + (x.cap ? ' × ' + (x.n === 0 ? '?' : (x.n || 1)) : ''); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
         return `<span class="rf">${t ? '참고 · ' + esc(t) : '참고 · ?'}</span>${x && x.chg ? '<span class="rf chg">ⓟ 사양변경 보임</span>' : ''}`; };
       const chgSeen = V.ref === 'ok' && QC3.some(([k]) => P[k] && P[k].chg);
       const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">아래에서 고르세요</div>';
