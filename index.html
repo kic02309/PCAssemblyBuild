@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.36';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.37';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18825,7 +18825,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function qcpLoad(force) {
     if (QCPP && !force) return QCPP;
     if (!QCP) { try { const c = JSON.parse(localStorage.getItem('qcParts') || 'null'); if (c && c.rows) qcpSet(c.rows); } catch (e) { } }
-    QCPP = api('qc', { op: 'parts' }).then(r => { qcpSet(r.rows || []); try { localStorage.setItem('qcParts', JSON.stringify({ ver: r.ver, rows: r.rows || [] })); } catch (e) { } return QCP; }).catch(() => QCP);
+    let ver = ''; try { ver = (JSON.parse(localStorage.getItem('qcParts') || 'null') || {}).ver || ''; } catch (e) { }
+    QCPP = api('qc', { op: 'parts', ver: QCP ? ver : '' }).then(r => { if (r.same) return QCP; qcpSet(r.rows || []); try { localStorage.setItem('qcParts', JSON.stringify({ ver: r.ver, rows: r.rows || [] })); } catch (e) { } return QCP; }).catch(() => QCP);
     return QCPP;
   }
   function qcpFind(t) {   // 줄 안의 6~8자리 숫자 → 목록 코드 (그대로 · 앞자리 잘림 · 숫자 1개 틀림)
@@ -18839,17 +18840,20 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }
     return null;
   }
+  const qcpCap = r => { const m = String(r.n || '').match(/\[\s*(\d{1,4})\s?(GB?|TB?)\s*\]/i); return m ? (m[1] + m[2].toUpperCase().replace(/^([GT])$/, '$1B')) : ''; };   // 목록 이름 안 [16GB] · [1TB]
+  const qcpBr = r => { const m = String(r.n || '').match(/^\s*\[([^\]]{1,20})\]/); return m && !/병행|정품|벌크/.test(m[1]) ? m[1].trim() : ''; };
   function qcpShort(r) {   // 목록 이름 → 짧은 모델명
-    const nm = String(r.n || '').replace(/\[[^\]]*\]/g, ' ').split('(')[0].replace(/\s+/g, ' ').trim(), W = nm.split(' ');
+    const nm = String(r.n || '').replace(/\[[^\]]*\]/g, ' ').replace(/▶[^◀]*◀/g, ' ').split('(')[0].replace(/\s+/g, ' ').trim(), W = nm.split(' ');
     if (r.k === 'cpu') { const out = []; W.forEach((w, i) => { if (/[가-힣]/.test(w)) return; if (/^\d$/.test(w) && W[i - 1] !== 'Ultra') return; out.push(w); }); return out.slice(0, 4).join(' ') || nm; }
-    if (r.k === 'mem') { const ko = W[0] && /[가-힣]/.test(W[0]) && !/노트북/.test(W[0]) ? W[0] : ''; const ddr = (nm.match(/DDR\d/i) || [''])[0].toUpperCase(), pc = nm.match(/PC\d-(\d{5})|DDR\d-(\d{5})/i), sp = pc ? Math.round(+(pc[1] || pc[2]) / 8) : ''; const key = ko || (W.find(w => /^[A-Z][A-Za-z\-]{2,}$/.test(w) && !/^(DDR\d|PC\d|CL\d+)$/i.test(w)) || ''); return [key, ddr + (sp ? '-' + sp : '')].filter(Boolean).join(' '); }
-    const i = W.findIndex(w => /^M\.2$|^NVMe$|^SATA/i.test(w)); return (i > 0 ? W.slice(0, i) : W.slice(0, 3)).filter(w => !/[가-힣]/.test(w)).join(' ');
+    if (r.k === 'mem') { const ko = W[0] && /[가-힣]/.test(W[0]) && !/노트북/.test(W[0]) ? W[0] : ''; const ddr = (nm.match(/DDR\d/i) || [''])[0].toUpperCase(), pc = nm.match(/PC\d-(\d{5})|DDR\d-(\d{5})/i), sp = pc ? Math.round(+(pc[1] || pc[2]) / 8) : ''; const key = ko || qcpBr(r) || (W.find(w => /^[A-Z][A-Za-z\-]{2,}$/.test(w) && !/^(DDR\d|PC\d|CL\d+)$/i.test(w)) || ''); return [key, ddr + (sp ? '-' + sp : '')].filter(Boolean).join(' '); }
+    const i = W.findIndex(w => /^M\.2$|^NVMe$|^SATA/i.test(w)), md = (i > 0 ? W.slice(0, i) : W.slice(0, 3)).filter(w => !/[가-힣]/.test(w)).join(' '), b = qcpBr(r);
+    return (b && !md.toUpperCase().startsWith(b.toUpperCase()) && !/[가-힣]/.test(b) ? b + ' ' : '') + md;
   }
   function qcpObj(r, t, br) {
     const cp = (() => { const s = String(t || '').replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = s.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; })();
     const brand = r.k === 'cpu' ? (/라이젠|애슬론|EPYC|ryzen/i.test(r.n) ? 'AMD' : 'Intel') : '';
-    let name = qcpShort(r); if (r.k === 'mem' && br && !/[가-힣]/.test(name.split(' ')[0])) name = br + ' ' + name.replace(/^[A-Z][A-Za-z\-]{2,}\s+(?=DDR)/, '');   // 목록 이름에 제조사가 없으면 주문서 제조사
-    return { brand, name, cap: r.k === 'cpu' ? '' : cp, n: 1, code: r.c, byCode: true };
+    let name = qcpShort(r); if (r.k === 'mem' && br && !qcpBr(r) && !/[가-힣]/.test(name.split(' ')[0])) name = br + ' ' + name.replace(/^[A-Z][A-Za-z\-]{2,}\s+(?=DDR)/, '');   // 목록 이름에 제조사가 없으면 주문서 제조사
+    return { brand, name, cap: r.k === 'cpu' ? '' : (qcpCap(r) || cp), n: 1, code: r.c, byCode: true };
   }
   function qcParse(text, noCode) {
     text = text.replace(/[【［〔]/g, '[').replace(/[】］〕]/g, ']').replace(/（/g, '(').replace(/）/g, ')').replace(/：/g, ':');   // v31.24 : 전각 괄호
@@ -19121,26 +19125,33 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ───────── v31.36 : 제품코드 목록 (관리자) — CPU · 메모리 · SSD 코드 : 제품명 · 파일 / 붙여넣기로 추가 ─────────
   const QCP_K = [['cpu', 'CPU'], ['mem', '메모리'], ['ssd', 'SSD']];
   const qcpCat = s => { s = String(s || '').replace(/\s/g, '').toUpperCase(); return s === 'CPU' ? 'cpu' : /메모리|RAM|MEM/.test(s) ? 'mem' : /SSD|저장|NVME/.test(s) ? 'ssd' : ''; };
-  function qcpRowsFrom(AOA, src, defK) {   // 표(행 배열) → [{c,k,n,s}] · 카테고리 칸이 비면 위 줄 카테고리 이어받기
-    const out = []; let cat = '';
+  function qcpRowsFrom(AOA, src, defK) {   // 표(행 배열) → [{c,k,n,s}] · 머리줄(제품코드 · 상품명/제품명 · 분류/카테고리)이 있으면 그 칸 · 카테고리 칸이 비면 위 줄 이어받기
+    const out = []; let cat = '', H = null;
     AOA.forEach(r => {
       const cells = (r || []).map(x => String(x == null ? '' : x).trim()); if (!cells.some(Boolean)) return;
-      const ci = cells.findIndex(x => /^\d{6,8}(\.0+)?$/.test(x)); if (ci < 0) { const k0 = qcpCat(cells[0]); if (k0) cat = k0; else if (cells[0] && !/카테고리|제품코드/.test(cells.join(''))) cat = 'x'; return; }
-      if (ci > 0) { const k0 = qcpCat(cells[0]); cat = k0 || (cells[0] ? 'x' : cat); }
-      const k = ci > 0 ? cat : (defK || cat), n = cells[ci + 1] || '';
+      const hc = cells.findIndex(x => /^제품\s?코드$|^상품\s?코드$|^코드$/.test(x));
+      if (hc >= 0) { H = { c: hc, n: cells.findIndex(x => /^(상품명|제품명|품명)$/.test(x)), k: cells.findIndex(x => /^(분류|카테고리|구분)$/.test(x)) }; if (H.n < 0) H.n = hc + 1; return; }
+      let ci, ni, kv;
+      if (H) { ci = H.c; ni = H.n; kv = H.k >= 0 ? cells[H.k] : ''; if (!/^\d{6,8}(\.0+)?$/.test(cells[ci] || '')) return; }
+      else { ci = cells.findIndex(x => /^\d{6,8}(\.0+)?$/.test(x)); if (ci < 0) { const k0 = qcpCat(cells[0]); if (k0) cat = k0; else if (cells[0] && cells[0].length < 12) cat = 'x'; return; } ni = ci + 1; kv = ci > 0 ? cells[0] : ''; }
+      if (kv) { const k0 = kv.length <= 12 ? qcpCat(kv) : ''; cat = k0 || 'x'; }
+      const k = kv || (H && H.k >= 0) || ci > 0 ? cat : (defK || cat), n = cells[ni] || '';
       if (!['cpu', 'mem', 'ssd'].includes(k) || !n) return;
       out.push({ c: cells[ci].replace(/\.0+$/, ''), k, n, s: src });
     });
     return out;
   }
   async function renderQcp() {
-    const main = $('#main'), V = S.qcpv = S.qcpv || { q: '' };
+    const main = $('#main'), V = S.qcpv = S.qcpv || { q: '', k: 'cpu' };
     main.innerHTML = admHead('제품코드 목록', 'qcp') + '<div class="pgb"><div class="card muted" style="padding:30px">불러오는 중…</div></div>';
     let rows = []; try { rows = (await api('qc', { op: 'parts' })).rows || []; qcpSet(rows); } catch (e) { main.innerHTML = admHead('제품코드 목록', 'qcp') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
     if (S.view !== 'qcp') return;
     const draw = () => {
       const q = V.q.trim().toLowerCase(), hit = r => !q || r.c.includes(q) || r.n.toLowerCase().includes(q);
-      $('#qcpBody').innerHTML = QCP_K.map(([k, tt]) => { const L = rows.filter(r => r.k === k && hit(r)); return `<div class="card qcp-col"><div class="qcp-h"><b>${tt}</b><span class="muted">${L.length}${q ? ' / ' + rows.filter(r => r.k === k).length : ''}개</span></div><div class="qcp-list">${L.map(r => `<div class="qcp-r"><code>${esc(r.c)}</code><span title="${esc(r.n)}${r.s ? ' · ' + esc(r.s) : ''}">${esc(r.n)}</span><button type="button" data-qpd="${esc(r.c)}" title="삭제">✕</button></div>`).join('') || '<div class="muted" style="padding:10px">없음</div>'}</div></div>`; }).join('');
+      const L = rows.filter(r => r.k === V.k && hit(r));   // v31.37 : 분류 버튼을 누르면 그 목록만
+      $('#qcpBody').innerHTML = `<div class="seg qcp-tab">${QCP_K.map(([k, tt]) => { const n = rows.filter(r => r.k === k && hit(r)).length; return `<button type="button" data-qpk="${k}" class="${V.k === k ? 'on' : ''}">${tt} <small>${n}</small></button>`; }).join('')}</div>
+        <div class="card qcp-col"><div class="qcp-list">${L.map(r => `<div class="qcp-r"><code>${esc(r.c)}</code><span title="${esc(r.n)}${r.s ? ' · ' + esc(r.s) : ''}">${esc(r.n)}</span><button type="button" data-qpd="${esc(r.c)}" title="삭제">✕</button></div>`).join('') || '<div class="muted" style="padding:10px">없음</div>'}</div></div>`;
+      $$('[data-qpk]', main).forEach(b => b.onclick = () => { V.k = b.dataset.qpk; draw(); });
       $$('[data-qpd]', main).forEach(b => b.onclick = async () => { const r = rows.find(x => x.c === b.dataset.qpd); if (!(await confirmBox(`<b>${esc(r.c)}</b> ${esc(r.n)}<br>목록에서 지울까요?`, '삭제'))) return; try { await api('qc', { op: 'partsDel', code: r.c }); rows = rows.filter(x => x !== r); qcpSet(rows); try { localStorage.removeItem('qcParts'); } catch (e) { } draw(); } catch (e) { toast(e.message, true); } });
     };
     main.innerHTML = admHead('제품코드 목록', 'qcp', `<span class="muted">2차 검수에서 주문서 코드로 CPU · 메모리 · SSD 이름을 찾습니다 · 총 ${rows.length}개</span>`, `<input id="qcpQ" placeholder="코드 · 제품명 검색" value="${esc(V.q)}" style="width:200px"><input type="file" id="qcpF" accept=".xls,.xlsx,.csv" multiple hidden><button id="qcpFile">📄 파일 올리기</button><button id="qcpPaste">📋 붙여넣기</button>`) + '<div class="pgb"><div class="qcp-grid" id="qcpBody"></div></div>';
@@ -22384,6 +22395,11 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .qcp-pv div{display:flex;gap:8px;align-items:center;padding:3px 0}.qcp-pv em{font-style:normal;font-size:11px;font-weight:800;border-radius:5px;padding:1px 6px;color:#fff}.qcp-pv em.n{background:#16a34a}.qcp-pv em.u{background:#ea580c}
 .qcp-pv b{min-width:48px}.qcp-pv code{font-weight:800;color:#1e40af}
 .pmx .qc-ck3.v2 .rf .cd{font-style:normal;font-size:10.5px;font-weight:800;color:#15803d;background:#dcfce7;border-radius:5px;padding:0 5px;margin-left:5px;vertical-align:2px}
+.qcp-grid{display:block!important}
+.qcp-tab{margin-bottom:10px}.qcp-tab button small{opacity:.7;font-weight:600;margin-left:3px}
+.qcp-col{padding:6px 10px}
+.qcp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:18px;max-height:calc(100vh - 220px)}
+.qcp-r{font-size:12px;padding:3px 2px}.qcp-r code{font-size:11.5px;padding:0 5px}.qcp-r button{font-size:11px;padding:0 4px}
 </style>
 </body>
 </html>
