@@ -8662,7 +8662,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.66';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17355,6 +17355,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const LO_MON={wins:{}};
   function loMonMap(){try{return JSON.parse(localStorage.getItem('loMonMap')||'{}')||{};}catch(e){return {};}}
   function loMonStations(r){const ord=(r?.cfg?.lines||[]).map(l=>l.id);return [...(r?.stations||[])].sort((a,b)=>(ord.indexOf(a.line)-ord.indexOf(b.line))||(+a.stage-+b.stage)||String(a.id).localeCompare(String(b.id)));}
+  function loMonBlocked(){   // v31.66 : 팝업 차단 안내 (토스트 대신 창으로)
+    modal(`<h3>⚠ 브라우저가 창을 막았습니다</h3><p>모니터마다 창을 띄우려면 이 사이트의 <b>팝업</b>을 한 번 허용해야 합니다.</p>
+      <ol style="line-height:1.9;padding-left:20px"><li>주소창 <b>왼쪽 아이콘</b>(자물쇠 또는 조절 모양)을 누릅니다.</li><li><b>사이트 설정</b>을 누릅니다.</li><li><b>팝업 및 리디렉션 → 허용</b>, <b>창 관리 → 허용</b>으로 바꿉니다.</li><li>이 화면으로 돌아와 <b>F5(새로고침)</b> 후 다시 [모니터 맞추기]를 누릅니다.</li></ol>
+      <p class="muted">주소창 오른쪽에 팝업 차단 표시가 보이면 눌러서 <b>항상 허용</b>을 골라도 됩니다.</p><div class="acts"><button class="primary" data-c>확인</button></div>`,(bg,close)=>{$('[data-c]',bg).onclick=close;});
+  }
   function loMonOpenOne(s,seat,n){
     const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+n+'&x='+s.availLeft+'&y='+s.availTop+'&w='+s.availWidth+'&h='+s.availHeight;
     const old=LO_MON.wins[n];let w=null;
@@ -17392,7 +17397,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     };
     for(let i=0;i<screens.length;i++){
       const s=screens[i],w=window.open('about:blank','loMon'+(i+1),`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);
-      if(!w){wins.forEach(x=>{try{x.close();}catch(e){}});return toast('브라우저가 창을 막았습니다. 주소창 오른쪽 팝업 차단 표시 → 항상 허용 후 다시 눌러 주세요.',true);}
+      if(!w){wins.forEach(x=>{try{x.close();}catch(e){}});return loMonBlocked();}
       try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}
       setTimeout(()=>{try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}},400);
       w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>모니터 ${i+1} 맞추기</title><style>${css}</style></head><body></body></html>`);w.document.close();
