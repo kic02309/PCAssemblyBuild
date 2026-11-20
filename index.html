@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.40';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.41';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19138,7 +19138,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (hc >= 0) { H = { c: hc, n: cells.findIndex(x => /^(상품명|제품명|품명)$/.test(x)), k: cells.findIndex(x => /^(분류|카테고리|구분)$/.test(x)) }; if (H.n < 0) H.n = hc + 1; return; }
       let ci, ni, kv;
       if (H) { ci = H.c; ni = H.n; kv = H.k >= 0 ? cells[H.k] : ''; if (!/^\d{6,8}(\.0+)?$/.test(cells[ci] || '')) return; }
-      else { ci = cells.findIndex(x => /^\d{6,8}(\.0+)?$/.test(x)); if (ci < 0) { const k0 = qcpCat(cells[0]); if (k0) cat = k0; else if (cells[0] && cells[0].length < 12) cat = 'x'; return; } ni = ci + 1; kv = ci > 0 ? cells[0] : ''; }
+      else { ci = cells.findIndex(x => /^\d{6,8}(\.0+)?$/.test(x)); if (ci < 0) { const k0 = qcpCat(cells[0]); if (k0) cat = k0; else if (cells[0] && cells[0].length < 12) cat = 'x'; return; } ni = ci + 1; kv = ci > 0 ? cells[0] : (cells.slice(ni + 1).find(x => x && x.length <= 12 && qcpCat(x)) || ''); }
       if (kv) { const k0 = kv.length <= 12 ? qcpCat(kv) : ''; cat = k0 || 'x'; }
       const k = kv || (H && H.k >= 0) || ci > 0 ? cat : (defK || cat), n = cells[ni] || '';
       if (!['cpu', 'mem', 'ssd', 'hdd'].includes(k) || !n) return;
@@ -19146,33 +19146,25 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     });
     return out;
   }
-  async function renderQcp() {
-    const main = $('#main'), V = S.qcpv = S.qcpv || { q: '', k: 'cpu' };
+  async function renderQcp() {   // v31.41 : 분류별 개수만 · 파일/붙여넣기로 없는 코드만 추가 (목록은 안 보임)
+    const main = $('#main');
     main.innerHTML = admHead('제품코드 목록', 'qcp') + '<div class="pgb"><div class="card muted" style="padding:30px">불러오는 중…</div></div>';
-    let rows = []; try { rows = (await api('qc', { op: 'parts' })).rows || []; qcpSet(rows); } catch (e) { main.innerHTML = admHead('제품코드 목록', 'qcp') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
+    let rows = [], last = null; try { const r = await api('qc', { op: 'parts' }); rows = r.rows || []; last = r.last || null; qcpSet(rows); } catch (e) { main.innerHTML = admHead('제품코드 목록', 'qcp') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
     if (S.view !== 'qcp') return;
-    const draw = () => {
-      const q = V.q.trim().toLowerCase(), hit = r => !q || r.c.includes(q) || r.n.toLowerCase().includes(q);
-      const L = rows.filter(r => r.k === V.k && hit(r));   // v31.37 : 분류 버튼을 누르면 그 목록만
-      $('#qcpBody').innerHTML = `<div class="seg qcp-tab">${QCP_K.map(([k, tt]) => { const n = rows.filter(r => r.k === k && hit(r)).length; return `<button type="button" data-qpk="${k}" class="${V.k === k ? 'on' : ''}">${tt} <small>${n}</small></button>`; }).join('')}</div>
-        <div class="card qcp-col"><div class="qcp-list">${L.map(r => `<div class="qcp-r"><code>${esc(r.c)}</code><span title="${esc(r.n)}${r.s ? ' · ' + esc(r.s) : ''}">${esc(r.n)}</span><button type="button" data-qpd="${esc(r.c)}" title="삭제">✕</button></div>`).join('') || '<div class="muted" style="padding:10px">없음</div>'}</div></div>`;
-      $$('[data-qpk]', main).forEach(b => b.onclick = () => { V.k = b.dataset.qpk; draw(); });
-      $$('[data-qpd]', main).forEach(b => b.onclick = async () => { const r = rows.find(x => x.c === b.dataset.qpd); if (!(await confirmBox(`<b>${esc(r.c)}</b> ${esc(r.n)}<br>목록에서 지울까요?`, '삭제'))) return; try { await api('qc', { op: 'partsDel', code: r.c }); rows = rows.filter(x => x !== r); qcpSet(rows); try { localStorage.removeItem('qcParts'); } catch (e) { } draw(); } catch (e) { toast(e.message, true); } });
-    };
-    main.innerHTML = admHead('제품코드 목록', 'qcp', `<span class="muted">2차 검수에서 주문서 코드로 CPU · 메모리 · SSD 이름을 찾습니다 · 총 ${rows.length}개</span>`, `<input id="qcpQ" placeholder="코드 · 제품명 검색" value="${esc(V.q)}" style="width:200px"><input type="file" id="qcpF" accept=".xls,.xlsx,.csv" multiple hidden><button id="qcpFile">📄 파일 올리기</button><button id="qcpPaste">📋 붙여넣기</button>`) + '<div class="pgb"><div class="qcp-grid" id="qcpBody"></div></div>';
-    draw();
-    $('#qcpQ').oninput = e => { V.q = e.target.value; draw(); };
-    const preview = add => {   // 등록 전 미리보기 → 등록
-      const M = new Map(); add.forEach(r => M.set(r.c, r)); const L = [...M.values()], old = new Map(rows.map(r => [r.c, r]));
-      const nw = L.filter(r => !old.has(r.c)), up = L.filter(r => old.has(r.c) && (old.get(r.c).n !== r.n || old.get(r.c).k !== r.k));
-      if (!L.length) return toast('CPU · 메모리 · SSD · HDD 줄을 찾지 못했습니다 (제품코드 · 제품명 칸 확인)', true);
-      const cnt = k => L.filter(r => r.k === k).length;
-      modal(`<h3>제품코드 등록 미리보기</h3><p>읽은 줄 <b>${L.length}</b>개 · CPU ${cnt('cpu')} · 메모리 ${cnt('mem')} · SSD ${cnt('ssd')} · HDD ${cnt('hdd')}<br><b style="color:#16a34a">새로 추가 ${nw.length}</b> · <b style="color:#c2410c">이름 바뀜 ${up.length}</b> · 그대로 ${L.length - nw.length - up.length} <span class="muted">(기존 목록은 지우지 않습니다)</span></p>
-        <div class="qcp-pv">${nw.concat(up).slice(0, 200).map(r => `<div><em class="${old.has(r.c) ? 'u' : 'n'}">${old.has(r.c) ? '변경' : '추가'}</em><b>${QCP_K.find(x => x[0] === r.k)[1]}</b><code>${esc(r.c)}</code><span>${esc(r.n)}</span></div>`).join('') || '<div class="muted">바뀌는 내용이 없습니다</div>'}</div>
-        <div class="acts"><button data-c>취소</button><button class="primary" data-s ${nw.length + up.length ? '' : 'disabled'}>등록</button></div>`, (bg, close) => {
+    const cnt = k => rows.filter(r => r.k === k).length;
+    main.innerHTML = admHead('제품코드 목록', 'qcp', `<span class="muted">2차 검수에서 주문서 제품코드로 부품 이름을 찾습니다</span>`, `<input type="file" id="qcpF" accept=".xls,.xlsx,.csv" multiple hidden><button id="qcpFile" class="primary">📄 파일로 추가</button><button id="qcpPaste">📋 붙여넣기</button>`) +
+      `<div class="pgb"><div class="qcp-kpi">${QCP_K.map(([k, tt]) => `<div class="card"><small>${tt}</small><b>${cnt(k).toLocaleString()}</b><span>개</span></div>`).join('')}<div class="card tot"><small>합계</small><b>${rows.length.toLocaleString()}</b><span>개</span></div></div>
+      <div class="card qcp-note">${last ? `마지막 등록 <b>${esc(last.at)}</b> · ${esc(last.by)}` : rows.length ? '' : '아직 등록된 코드가 없습니다'}<br><span class="muted">새 엑셀을 올리면 <b>목록에 없는 코드만</b> 추가합니다 (이미 있는 코드는 그대로) · 분류 칸이 CPU · 메모리 · SSD · HDD인 줄만 씁니다</span></div></div>`;
+    const preview = add => {   // 없는 코드만 → 등록
+      const M = new Map(); add.forEach(r => { if (!M.has(r.c)) M.set(r.c, r); }); const old = new Set(rows.map(r => r.c));
+      const L = [...M.values()], nw = L.filter(r => !old.has(r.c)), c = k => nw.filter(r => r.k === k).length;
+      if (!L.length) return toast('CPU · 메모리 · SSD · HDD 줄을 찾지 못했습니다 (제품코드 · 상품명 · 분류 칸 확인)', true);
+      modal(`<h3>제품코드 추가</h3><p>읽은 코드 <b>${L.length.toLocaleString()}</b>개 중 이미 있는 코드 ${(L.length - nw.length).toLocaleString()}개는 건너뜁니다.</p>
+        <div class="qcp-kpi sm">${QCP_K.map(([k, tt]) => `<div class="card"><small>${tt}</small><b style="color:${c(k) ? '#16a34a' : 'inherit'}">+${c(k)}</b></div>`).join('')}</div>
+        <div class="acts"><button data-c>취소</button><button class="primary" data-s ${nw.length ? '' : 'disabled'}>${nw.length ? `새 코드 ${nw.length.toLocaleString()}개 추가` : '추가할 코드 없음'}</button></div>`, (bg, close) => {
         $('[data-c]', bg).onclick = close;
-        $('[data-s]', bg).onclick = async () => { try { const r = await api('qc', { op: 'partsSave', rows: nw.concat(up) }); close(); toast(`등록했습니다 · 추가 ${r.new} · 변경 ${r.upd}`); try { localStorage.removeItem('qcParts'); } catch (e) { } QCPP = null; renderQcp(); } catch (e) { toast(e.message, true); } };
-      }, 'wide');
+        $('[data-s]', bg).onclick = async () => { const b = $('[data-s]', bg); b.disabled = true; b.textContent = '추가 중…'; try { const r = await api('qc', { op: 'partsSave', rows: nw }); close(); toast(`새 코드 ${r.new}개를 추가했습니다`); try { localStorage.removeItem('qcParts'); } catch (e) { } QCPP = null; renderQcp(); } catch (e) { b.disabled = false; b.textContent = '다시 시도'; toast(e.message, true); } };
+      });
     };
     $('#qcpFile').onclick = () => $('#qcpF').click();
     $('#qcpF').onchange = async e => {
@@ -19181,10 +19173,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let add = []; for (const f of F) { try { const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' }); wb.SheetNames.forEach(sn => { add = add.concat(qcpRowsFrom(XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: false, defval: '' }), f.name.replace(/\.[^.]+$/, '').slice(0, 30))); }); } catch (x) { toast(f.name + ' : 읽기 실패', true); } }
       preview(add);
     };
-    $('#qcpPaste').onclick = () => modal(`<h3>📋 붙여넣기로 추가</h3><p class="muted">엑셀에서 줄을 복사해 붙여넣으세요. <b>카테고리 · 제품코드 · 제품명</b> 3칸이면 자동 분류, <b>제품코드 · 제품명</b> 2칸이면 아래에서 분류를 고르세요.</p>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><span>분류 (2칸일 때)</span><select id="qpK">${QCP_K.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div>
-      <textarea id="qpT" style="width:100%;min-height:220px;font-family:monospace" placeholder="CPU&#9;1013843&#9;라이젠7 라파엘 7800X3D ...&#10;1087288&#9;삼성 DDR5 PC5-44800"></textarea>
-      <div class="acts"><button data-c>취소</button><button class="primary" data-s>미리보기</button></div>`, (bg, close) => {
+    $('#qcpPaste').onclick = () => modal(`<h3>📋 붙여넣기로 추가</h3><p class="muted">엑셀에서 줄을 복사해 붙여넣으세요. <b>제품코드 · 상품명 · 분류</b>가 있으면 자동 분류, <b>제품코드 · 상품명</b>만 있으면 아래에서 분류를 고르세요.</p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><span>분류 (분류 칸이 없을 때)</span><select id="qpK">${QCP_K.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div>
+      <textarea id="qpT" style="width:100%;min-height:200px;font-family:monospace" placeholder="1013843&#9;[AMD] 라이젠7 라파엘 7800X3D ...&#9;CPU"></textarea>
+      <div class="acts"><button data-c>취소</button><button class="primary" data-s>확인</button></div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
       $('[data-s]', bg).onclick = () => { const A = $('#qpT', bg).value.split(/\r?\n/).map(l => l.split(/\t|\s{2,}|,(?=\s*\d{6,8}\b)/)); const add = qcpRowsFrom(A, '붙여넣기', $('#qpK', bg).value); close(); preview(add); };
     }, 'wide');
@@ -22405,6 +22397,11 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .qcp-col{padding:6px 10px}
 .qcp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:18px;max-height:calc(100vh - 220px)}
 .qcp-r{font-size:12px;padding:3px 2px}.qcp-r code{font-size:11.5px;padding:0 5px}.qcp-r button{font-size:11px;padding:0 4px}
+.qcp-kpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.qcp-kpi .card{padding:14px 16px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.qcp-kpi small{flex-basis:100%;font-weight:800;color:var(--sub,#64748b);font-size:13px}
+.qcp-kpi b{font-size:28px;font-weight:900}.qcp-kpi span{color:var(--sub,#64748b)}.qcp-kpi .tot b{color:#1d4ed8}
+.qcp-kpi.sm{grid-template-columns:repeat(4,minmax(0,1fr))}.qcp-kpi.sm b{font-size:22px}
+.qcp-note{padding:12px 16px;line-height:1.7}
 </style>
 </body>
 </html>
