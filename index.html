@@ -8663,7 +8663,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.67';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.68';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16982,6 +16982,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         $$('[data-lo-start-prepared]',box).forEach(b=>b.onclick=()=>{close();loStartPrepared(b.dataset.loStartPrepared);});
         const run=async start=>{
           const lines=active().filter(l=>problems(l)==='');if(!lines.length||Q.busy)return;
+          if(start){const mo=loMonAutoOpen();if(mo)toast(`모니터 창 ${mo}개를 같이 열었습니다 · 각 모니터를 한 번씩 클릭하면 전체화면`);}
           Q.busy=true;draw();
           try{localStorage.setItem('loQuickLast',JSON.stringify({mode:Q.mode,single:Q.single}));}catch(e){}
           const ids=[];let ver=Q.ver;
@@ -17179,6 +17180,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   async function loStartPrepared(id) {
     if(!loCanStart())return;
+    const mo=loMonAutoOpen();if(mo)toast(`모니터 창 ${mo}개를 같이 열었습니다 · 각 모니터를 한 번씩 클릭하면 전체화면`);
     LO.starting=id;loStatus();
     const token=S.token;
     try{
@@ -17362,6 +17364,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <ol style="line-height:1.9;padding-left:20px"><li>주소창 <b>왼쪽 아이콘</b>(자물쇠 또는 조절 모양)을 누릅니다.</li><li><b>사이트 설정</b>을 누릅니다.</li><li><b>팝업 및 리디렉션 → 허용</b>, <b>창 관리 → 허용</b>으로 바꿉니다.</li><li>이 화면으로 돌아와 <b>F5(새로고침)</b> 후 다시 [모니터 맞추기]를 누릅니다.</li></ol>
       <p class="muted">주소창 오른쪽에 팝업 차단 표시가 보이면 눌러서 <b>항상 허용</b>을 골라도 됩니다.</p><div class="acts"><button class="primary" data-c>확인</button></div>`,(bg,close)=>{$('[data-c]',bg).onclick=close;});
   }
+  function loMonSaveRects(screens){try{const o={};screens.forEach((s,i)=>{o[i+1]=[s.availLeft,s.availTop,s.availWidth,s.availHeight];});localStorage.setItem('loMonRects',JSON.stringify(o));}catch(e){}}
+  function loMonAutoOpen(){   // v31.68 : 상황판 PC에서 [시작]을 누를 때, 닫혀 있는 모니터 창을 같이 엶 (클릭 순간에 바로 호출해야 함)
+    if(loMonSeat||isPhone())return 0;
+    let map={},rects={};try{map=JSON.parse(localStorage.getItem('loMonMap')||'{}')||{};rects=JSON.parse(localStorage.getItem('loMonRects')||'{}')||{};}catch(e){return 0;}
+    let opened=0;
+    Object.entries(map).forEach(([n,seat])=>{
+      const rc=rects[n];if(!seat||!rc)return;
+      const old=LO_MON.wins[n];if(old&&!old.closed)return;
+      let w=null;try{w=window.open('','loMon'+n,`popup=yes,left=${rc[0]},top=${rc[1]},width=${rc[2]},height=${rc[3]}`);}catch(e){}
+      if(!w)return;LO_MON.wins[n]=w;
+      let blank=true;try{blank=!w.location.href||w.location.href==='about:blank';}catch(e){blank=false;}
+      if(blank){loMonOpenOne({availLeft:rc[0],availTop:rc[1],availWidth:rc[2],availHeight:rc[3]},seat,+n);opened++;}
+    });
+    return opened;
+  }
   function loMonOpenOne(s,seat,n){
     const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+n+'&x='+s.availLeft+'&y='+s.availTop+'&w='+s.availWidth+'&h='+s.availHeight;
     const old=LO_MON.wins[n];let w=null;
@@ -17393,7 +17410,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const finish=()=>{
       const o={};screens.forEach((s,i)=>{o[i+1]=res[i]||'';});
       try{localStorage.setItem('loMonMap',JSON.stringify(o));}catch(e){}
-      stop(false);
+      loMonSaveRects(screens);stop(false);
       screens.forEach((s,i)=>{if(o[i+1])loMonOpenOne(s,o[i+1],i+1);else{try{wins[i].close();}catch(e){}}});
       toast('모니터 맞추기 완료 · 각 모니터에 작업 화면을 열었습니다');
     };
@@ -17472,7 +17489,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <p id="loMonMsg" class="lo-error" role="status"></p>
       <div class="acts"><button data-c style="margin-right:auto">닫기</button><button data-mx>열린 창 모두 닫기</button><button data-ms>배정 저장</button><button class="primary" data-mo>화면 열기</button></div>`,(bg,close)=>{
       $('[data-c]',bg).onclick=close;
-      const collect=()=>{const o={};$$('[data-lo-mon]',bg).forEach(x=>{o[x.dataset.loMon]=x.value;});try{localStorage.setItem('loMonMap',JSON.stringify(o));}catch(e){}return o;};
+      const collect=()=>{const o={};$$('[data-lo-mon]',bg).forEach(x=>{o[x.dataset.loMon]=x.value;});try{localStorage.setItem('loMonMap',JSON.stringify(o));}catch(e){}loMonSaveRects(screens);return o;};
       $('[data-ms]',bg).onclick=()=>{collect();toast('모니터 배정을 저장했습니다 (이 PC)');};
       $('[data-mc]',bg).onclick=()=>{if(!HUB.on)toast('스위치가 연결되어 있지 않아 마우스 클릭으로 맞춥니다. 각 모니터에서 자리를 눌러 주세요.');close();loMonCalibrate(screens,sts,map);};
       $('[data-mx]',bg).onclick=()=>{Object.values(LO_MON.wins).forEach(w=>{try{w.close();}catch(e){}});LO_MON.wins={};toast('열린 작업 화면 창을 닫았습니다');};
