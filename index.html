@@ -8663,7 +8663,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.68';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.69';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16293,7 +16293,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const canLine = () => canProd() || !!S.loCan;
   const loId = () => 'lo_' + (globalThis.crypto?.randomUUID?.() || (Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));
   const LO_TERMINAL_OPS = new Set(['can','get','probe','watch','complete','terminalBind','terminalUnbind']);
-  const loMonSeat = (() => {   // v31.62 : 화면 뿌리기로 열린 모니터 창 — #loMon=자리ID
+  const loMonSeat = (() => {   // v31.62 : 화면 연동 설정로 열린 모니터 창 — #loMon=자리ID
     try {
       const h=new URLSearchParams(location.hash.slice(1)),id=h.get('loMon');
       if(id&&/^[A-Za-z0-9_-]{1,64}$/.test(id)){
@@ -16644,7 +16644,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if(loMonSeat&&!LO.monShown){LO.monShown=true;   // v31.62 : 모니터 창 — 큰 번호로 어느 모니터인지 표시 · 한 번 클릭하면 전체화면
         const n=sessionStorage.getItem('loMonN')||'',ms=LO.data?.stations.find(x=>x.id===loMonSeat);
         document.title=`모니터 ${n} · ${loMonSeat}`;
-        const bd=document.createElement('div');bd.className='lo-mon-badge';bd.innerHTML=`<b>${esc(n)}</b><span>${ms?esc(loMonSeat+' · '+loLineName(ms.line)+' '+(+ms.stage+1)+'공정'+(ms.assignedName?' · '+ms.assignedName:'')):esc(loMonSeat)+' · 자리 없음 — 화면 뿌리기에서 다시 배정하세요'}</span>`;
+        const bd=document.createElement('div');bd.className='lo-mon-badge';bd.innerHTML=`<b>${esc(n)}</b><span>${ms?esc(loMonSeat+' · '+loLineName(ms.line)+' '+(+ms.stage+1)+'공정'+(ms.assignedName?' · '+ms.assignedName:'')):esc(loMonSeat)+' · 자리 없음 — 화면 연동 설정에서 다시 배정하세요'}</span>`;
         document.body.appendChild(bd);setTimeout(()=>bd.remove(),7000);
         document.addEventListener('pointerdown',e=>{if(e.target.closest?.('.lo-snd-chip'))return;sndInit();if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});},{once:true});
         const chip=document.createElement('button');chip.type='button';chip.className='lo-snd-chip';chip.textContent='🔊 소리';chip.onclick=()=>{sndInit();sndSettings();};document.body.appendChild(chip);
@@ -17355,7 +17355,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const HUB = { port: null, reader: null, on: false, stop: false, last: {}, q: [], busy: false, log: [], test: true, cnt: {}, raw: [] };
   try { HUB.test = localStorage.getItem('loHubTest') !== '0'; } catch (e) { }   // v31.61 : 테스트/운영 모드도 이 PC에 기억
   const hubOk = () => !!(navigator.serial && window.isSecureContext);
-  // v31.62 : 화면 뿌리기 — 연결된 모니터를 읽어 모니터마다 자리 작업 화면 창을 띄움 (이 PC에 배정 저장)
+  // v31.62 : 화면 연동 설정 — 연결된 모니터를 읽어 모니터마다 자리 작업 화면 창을 띄움 (이 PC에 배정 저장)
   const LO_MON={wins:{}};
   function loMonMap(){try{return JSON.parse(localStorage.getItem('loMonMap')||'{}')||{};}catch(e){return {};}}
   function loMonStations(r){const ord=(r?.cfg?.lines||[]).map(l=>l.id);return [...(r?.stations||[])].sort((a,b)=>(ord.indexOf(a.line)-ord.indexOf(b.line))||(+a.stage-+b.stage)||String(a.id).localeCompare(String(b.id)));}
@@ -17481,7 +17481,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const sts=loMonStations(r),map=loMonMap();
     const seatName=st=>`${st.id} · ${loLineName(st.line)} ${+st.stage+1}공정${st.assignedName?' · '+st.assignedName:''}`;
     const opts=cur=>'<option value="">사용 안 함</option>'+sts.map(st=>`<option value="${esc(st.id)}" ${st.id===cur?'selected':''}>${esc(seatName(st))}</option>`).join('');
-    modal(`<h3>🖥 화면 뿌리기</h3>
+    modal(`<h3>🖥 화면 연동 설정</h3>
       <div class="lo-mon-easy"><b>처음이거나 화면이 엉뚱한 모니터에 뜨면</b> → <button type="button" class="primary" data-mc>🎯 모니터 맞추기</button>
         <ol><li>모든 모니터에 큰 번호가 뜨고, <b>노란 화면</b>이 차례로 넘어갑니다.</li><li>노란 화면이 된 모니터 앞의 <b>스위치를 누르세요</b>. <small>스위치가 없으면 그 모니터에서 자리를 마우스로 클릭</small></li><li>모두 끝나면 자동으로 작업 화면이 열리고, 다음부터는 <b>[화면 열기]</b> 한 번이면 됩니다.</li></ol></div>
       <details class="lo-mon-manual"><summary>직접 고르기 (모니터 ${screens.length}대)</summary>
@@ -17604,7 +17604,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const plan=isReady?0:selected?.q||0,done=isReady?0:selected?.final||0;
     const openProgress=new Set($$('.lo-batch-all[open]').map(el=>el.dataset.loProgress));
     const openIdle=new Set($$('.lo-line-idle[open]').map(el=>el.dataset.loIdle));
-    $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>${r.manage?'<button type="button" id="loHub">🔌 스위치 연결</button><span id="loHubSt" class="lo-hub-st"></span><button type="button" id="loMonBtn">🖥 화면 뿌리기</button>':''}`)+`<div class="pgb lo-board">
+    $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>${r.manage?'<button type="button" id="loHub">🔌 스위치 연결</button><span id="loHubSt" class="lo-hub-st"></span><button type="button" id="loMonBtn">🖥 화면 연동 설정</button>':''}`)+`<div class="pgb lo-board">
     <div class="lo-banner"><div class="lo-banner-main">${selected?`<div class="lo-picked-work"><span>선택 작업 · ${esc(loLineName(selected.line))} · ${isReady?'시작 대기':selected.final>=selected.q?'작업 완료':selected.paused_at?'일시정지':'진행 중'}</span><strong>${esc(selected.snapshot?.model||selected.model||'—')}</strong><span>제조번호 ${esc(selected.snapshot?.no||selected.no||'—')} · ${selected.q}대</span></div>`:''}${r.manage?`<div class="lo-prepared lo-banner-prepared">${prepared.length?prepared.map(p=>`<div><b class="lo-status-badge ready">준비 완료 · 시작 대기</b> ${esc(p.request.date)} · ${esc(p.label)} · ${esc(loLineName(p.line))} · ${p.request.q}대 ${loStartButton(p)} <button data-lo-edit-prepared="${esc(p.id)}">준비 수정</button> <button data-lo-discard="${esc(p.id)}">준비 해제</button></div>`).join(''):'<span class="muted">상단 [작업준비]에서 새 제조건을 준비하세요.</span>'}</div>`:''}</div>${loAllButton(r)}${r.allPausedAt?'<strong class="lo-error">전체 멈춤</strong>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><span class="lo-connection-badge" data-lo-status></span></div>
     ${loBoardLines(r.cfg.lines,bs,openIdle,previews,selected)}
     <section class="card lo-batches"><h3>준비·배치 제조건</h3><div class="lo-scroll"><table class="list lo-batch-table"><colgroup><col><col><col><col><col><col><col>${showTools?'<col>':''}</colgroup><thead><tr><th>작업 순서</th><th>원본 일자</th><th>제조번호</th><th>모델명</th><th>라인 · 상태</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${showTools?'<th>배치 도구</th>':''}</tr></thead><tbody>${previews.map(p=>`<tr data-lo-select="${esc(p.id)}" tabindex="0" aria-selected="${p.id===LO.selectedBatch}"><td>${p.rank}</td><td>${esc(p.date)}</td><td><b>${esc(p.no)}</b></td><td>${esc(p.model||'—')}</td><td><b>${esc(loLineName(p.line))}</b><br><span class="lo-status-badge ready">준비 완료 · 시작 대기</span></td><td>준비 <b>${p.q}</b>대</td><td>작업 시작 대기</td>${showTools?'<td>—</td>':''}</tr>`).join('')}${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr data-lo-select="${esc(b.id)}" tabindex="0" aria-selected="${b.id===LO.selectedBatch}"><td>${b.rank}</td><td>${esc(b.d)}</td><td><b>${esc(b.snapshot.no)}</b></td><td>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td><b>${esc(loLineName(b.line))}</b> · ${esc(loSetName(b.set_data.name))}<br><span class="lo-status-badge ${b.final>=b.q?'done':b.paused_at?'paused':'running'}">${b.final>=b.q?'작업 완료':b.paused_at?'일시정지':'진행 중'}</span></td><td><div class="lo-count-pills"><span>계획 <b>${b.q}</b></span><span>완료 <b>${b.final}</b></span><span>미완료 <b>${b.q-b.final}</b></span></div></td><td class="lo-batch-progress">${loBatchProgress(b,openProgress.has(b.id))}</td>${showTools?`<td>${loBatchTools(r,b)}</td>`:''}</tr>`) .join('')||(previews.length?'':`<tr><td colspan="${showTools?8:7}">준비하거나 배치한 제조건이 없습니다.</td></tr>`)}</tbody></table></div></section>
