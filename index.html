@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.33';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.34';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18922,13 +18922,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         : `${(V.near || []).length ? `<div class="qc-near"><small>혹시 이 주문인가요?</small>${V.near.map(x => `<button type="button" data-qn="${esc(x.order)}"><b>${esc(x.order)}</b> · ${esc(x.name)} <span>${esc(x.group)}</span></button>`).join('')}</div>` : ''}<div class="qc-ppl">${(V.ppl || []).map(x => `<button type="button" data-pu2="${esc(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="muted">고를 인원이 없습니다</span>'}</div>`;
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
-        <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력">${V.src === 'bar' ? '<span class="s">✓ 바코드</span>' : V.src === 'fix' ? '<span class="s">✓ 고침</span>' : ''}<button type="button" id="qcre">📷 다시</button></div>${block}</div>
+        <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력">${V.src === 'bar' ? '<span class="s">✓ 바코드</span>' : V.src === 'fix' ? '<span class="s">✓ 고침</span>' : ''}<button type="button" id="qcre">↺ 초기화</button></div>${block}</div>
         <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === 3 ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/3</span></div>
         ${QC3.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="hd"><span class="c">${t}</span>${ref(k)}</span><span class="ln">${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
 </div>
-        <div class="pxcard qc-st1"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>전산 요청사항 확인</b><small>주문서 요청사항 · 메모</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
-        <div class="pxcard qc-st1"><span class="n${V.s3 ? ' d' : ''}">3</span><span class="tx"><b>조립 상태 확인</b><small>선정리 · 고정 · 외관 육안 확인</small></span><button type="button" class="qc-ok3${V.s3 ? ' on' : ''}" data-qs="s3">${V.s3 ? '확인 ✓' : '확인'}</button></div>
-        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 3 || !V.s2 || !V.s3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>제품 ${ok}/3 · 전산 ${V.s2 ? '✓' : '–'} · 조립 ${V.s3 ? '✓' : '–'}${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 완료</b></button></div></div>`;
+        <div class="pxcard qc-st1"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>요청사항 확인</b><small>고객요청 · 특이사항 · 운송방법</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
+        <div class="pxcard qc-st1"><span class="n${V.s3 ? ' d' : ''}">3</span><span class="tx"><b>조립상태 확인</b><small>내부 선정리 · 나사 · 케이스 외관</small></span><button type="button" class="qc-ok3${V.s3 ? ' on' : ''}" data-qs="s3">${V.s3 ? '확인 ✓' : '확인'}</button></div>
+        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 3 || !V.s2 || !V.s3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>제품 ${ok}/3 · 요청 ${V.s2 ? '✓' : '–'} · 조립 ${V.s3 ? '✓' : '–'}${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 완료</b></button></div></div>`;
     }
     bindQc();
   }
@@ -19020,7 +19020,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } catch (e) { console.warn('qc ref', e); }
     if (!S.qcv || (ord && S.qcv.order !== ord)) return;
     V.P = P || {}; V.ref = P ? 'ok' : 'fail';
-    const miss = QC3.map(([k]) => k).filter(k => !V.P[k] || (k !== 'cpu' && V.P[k].n === 0));
+    const miss = [];   // v31.34 : 3조각 다시 읽기는 오히려 인식률이 떨어져서 끔 (못 읽으면 부품 줄 📷로 다시 찍기)
     if (miss.length) V.busyS = miss;
     if (S.view === 'qc' && V.step === 'check') renderQc();
     if (!miss.length) return;
@@ -19052,8 +19052,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const manual = async () => { const x = $('#qcmo'); const o = C.normOrder(x ? x.value : ''); if (!/^\d{8,9}$/.test(o)) return toast('주문번호 8~9자리를 입력하세요', true); qcCamStop(); Object.assign(V, { order: o, src: '', res: {}, P: {}, chg: false, chgTouched: false, s2: false, s3: false, ref: '' }); await qcFindWho(V); V.step = 'check'; renderQc(); };
     if ($('#qcmg')) $('#qcmg').onclick = manual;
     if ($('#qcmo')) $('#qcmo').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); manual(); } };
-    if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); qcCamOpen(); };
-    if ($('#qcre')) $('#qcre').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); qcCamOpen(); };
+    if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
+    if ($('#qcre')) $('#qcre').onclick = async () => {   // v31.34 : 초기화 = 첫 화면으로 (카메라 안 켬)
+      if ((QC3.some(([k]) => (V.res || {})[k]) || V.s2 || V.s3) && !(await confirmBox('체크한 내용을 지우고 처음으로 돌아갈까요?', '초기화'))) return;
+      qcCamClose(); S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
     const q = $('#qcq'); if (q) { let tm = 0; q.oninput = () => { clearTimeout(tm); tm = setTimeout(async () => { V.q = q.value.replace(/\D/g, ''); if (V.q.length < 4) { V.qr = null; } else { try { V.qr = (await api('qc', { op: 'list', order: V.q })).rows || []; } catch (e) { V.qr = []; } } const box = $('.qc-hist'); if (box) { const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join(''); box.innerHTML = V.qr ? (hl(V.qr) || '<div class="muted">검수 기록 없음</div>') : (hl(V.hist) || '<div class="muted">아직 없음</div>'); } }, 400); }; }
     $$('[data-qk3]').forEach(x => x.onclick = () => { const k = x.dataset.qk3; V.res[k] = V.res[k] ? undefined : 'ok'; renderQc(); });
     if ($('#qccnt')) $('#qccnt').onclick = async () => {   // v31.29 : 검수 수량 → 첫 화면(검수 기록)
@@ -19066,7 +19068,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if ($('#qcs')) $('#qcs').onclick = async () => {
       if (S.mpv || S.pv) return toast('미리보기에서는 저장되지 않습니다', true);
       const P = V.P || {}, rt = k => { const x = P[k]; if (!x || V.ref !== 'ok') return ''; return [x.brand, x.name].filter(Boolean).join(' ') + (k !== 'cpu' ? ' × ' + (x.n || 1) : ''); };
-      const items = QC3.map(([k, t]) => ({ k, t, v: '확인' + (rt(k) ? ' (참고: ' + rt(k) + ')' : '') })).concat([{ k: 'chg', t: '사양변경', v: qcChgNames(V) ? '있음 (' + qcChgNames(V) + ')' : '없음' }, { k: 'req', t: '전산 요청사항', v: '확인' }, { k: 'asm', t: '조립 상태', v: '확인' }]);
+      const items = QC3.map(([k, t]) => ({ k, t, v: '확인' + (rt(k) ? ' (참고: ' + rt(k) + ')' : '') })).concat([{ k: 'chg', t: '사양변경', v: qcChgNames(V) ? '있음 (' + qcChgNames(V) + ')' : '없음' }, { k: 'req', t: '요청사항', v: '확인' }, { k: 'asm', t: '조립상태', v: '확인' }]);
       const btn = $('#qcs'); btn.disabled = true;
       try { await api('qc', { op: 'save', order: V.order, assembler: V.who ? V.who.id : '', items }); V.hist = [{ order: V.order, who: V.who ? V.who.name : '', by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
     };
