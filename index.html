@@ -8666,7 +8666,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.71';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.72';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16389,6 +16389,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   };
   const loStamp = x => x ? new Date(x).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false}) : '—';
   const loLineName = id => id==='front'?'라인A':id==='back'?'라인B':LO.data?.cfg.lines.find(x=>x.id===id)?.name||id;
+  const loLineLabel = (id,cfg) => {   // v31.72 : "라인A (상단)" — 라인에 걸린 작업 세트 이름을 같이 표시
+    const c=cfg||LO.data?.cfg,set=c?.sets?.find(s=>s.id===c?.lines?.find(l=>l.id===id)?.setId);
+    const sh=set?String(set.name||'').replace(/앞\s*라인|[뒷뒤]\s*라인/g,'').replace(/\s*조립\s*$/,'').trim():'';
+    return loLineName(id)+(sh?` (${sh})`:'');
+  };
   const loSetName = name => String(name||'').replace(/앞\s*라인/g,'라인A').replace(/[뒷뒤]\s*라인/g,'라인B');
   const loSum = (rows,k) => rows.reduce((n,x)=>n+(+x[k]||0),0);
   function loSpecKind(s) {
@@ -16933,7 +16938,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const rowOf=line=>Q.rows.find(x=>x.item.id===Q.pick[line]);
     const lineHtml=line=>{
       const prep=prepOf(line),bn=btnRange(line);
-      const head=`<div class="loq-hd"><b>${esc(loLineName(line))}</b>${bn?`<span class="loq-tg">모니터 · 버튼 ${bn}</span>`:''}</div>`;
+      const head=`<div class="loq-hd"><b>${esc(loLineLabel(line,Q.cfg))}</b>${bn?`<span class="loq-tg">모니터 · 버튼 ${bn}</span>`:''}</div>`;
       if(prep)return `<section class="loq-line">${head}<div class="loq-ready">준비 완료 · 시작 대기 — ${esc(prep.label)} · ${prep.request.q}대 <button type="button" data-loq-discard="${esc(prep.id)}">준비 해제</button></div></section>`;
       const stages=loLineStages(line,Q.cfg),setId=Q.cfg.lines.find(l=>l.id===line)?.setId,miss=loMissingAssignments(line,Q.cfg);
       const seats=stages.map((stage,i)=>({stage,i,seats:loStageSeats(line,i,Q.cfg.stations)}));
@@ -16962,8 +16967,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const draw=()=>{
         const lines=active(),todo=lines.filter(l=>problems(l)==='').length,blocked=lines.some(l=>{const p=problems(l);return p&&p!=='제조건';});
         box.innerHTML=`<div class="loq-top"><h3>작업준비 · ${esc(Q.date.slice(5).replace('-','/'))}</h3><button type="button" id="loqDetail">자세히 (단계별)</button></div>
-          <div class="loq-seg"><button type="button" data-loq-mode="one" aria-pressed="${Q.mode==='one'}">하나로</button><button type="button" data-loq-mode="split" aria-pressed="${Q.mode==='split'}" ${Q.cfg.lines.length<2?'disabled':''}>라인A + 라인B 나눠서</button></div>
-          ${Q.mode==='one'?`<label class="loq-pickline">작업할 라인 <select id="loqSingle">${Q.cfg.lines.map(l=>`<option value="${esc(l.id)}" ${l.id===Q.single?'selected':''}>${esc(loLineName(l.id))}</option>`).join('')}</select></label>`:''}
+          <div class="loq-seg"><button type="button" data-loq-mode="one" aria-pressed="${Q.mode==='one'}">하나로</button><button type="button" data-loq-mode="split" aria-pressed="${Q.mode==='split'}" ${Q.cfg.lines.length<2?'disabled':''}>${esc(Q.cfg.lines.map(l=>loLineLabel(l.id,Q.cfg)).join(' + '))} 나눠서</button></div>
+          ${Q.mode==='one'?`<label class="loq-pickline">작업할 라인 <select id="loqSingle">${Q.cfg.lines.map(l=>`<option value="${esc(l.id)}" ${l.id===Q.single?'selected':''}>${esc(loLineLabel(l.id,Q.cfg))}</option>`).join('')}</select></label>`:''}
           ${lines.map(lineHtml).join('')}
           <p class="loq-msg ${blocked?'loq-bad':''}">${blocked?'빨간 항목을 채우면 준비할 수 있습니다.':todo?`${todo}개 라인 준비 가능${todo<lines.filter(l=>!prepOf(l)).length?' · 제조건을 고른 라인만 준비합니다':''}`:'제조건을 고르세요.'}</p>
           <div class="acts"><button type="button" data-c>닫기</button><button type="button" class="primary" id="loqSave" ${todo&&!blocked&&!Q.busy?'':'disabled'}>준비 완료</button></div>`;
@@ -17498,7 +17503,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try{sd=await window.getScreenDetails();}catch(e){return toast('[창 관리] 권한을 허용해야 모니터를 읽을 수 있습니다. 주소창 왼쪽 자물쇠 → 사이트 설정 → 창 관리 → 허용',true);}
     const screens=[...sd.screens].sort((a,b)=>(a.top-b.top)||(a.left-b.left));
     const sts=loMonStations(r),map=loMonMap();
-    const seatName=st=>`${st.id} · ${loLineName(st.line)} ${+st.stage+1}공정${st.assignedName?' · '+st.assignedName:''}`;
+    const seatName=st=>`${st.id} · ${loLineLabel(st.line)} ${+st.stage+1}공정${st.assignedName?' · '+st.assignedName:''}`;
     const opts=cur=>'<option value="">사용 안 함</option>'+sts.map(st=>`<option value="${esc(st.id)}" ${st.id===cur?'selected':''}>${esc(seatName(st))}</option>`).join('');
     modal(`<h3>🖥 모니터 연동</h3>
       <div class="lo-mon-easy"><b>처음이거나 화면이 엉뚱한 모니터에 뜨면</b> → <button type="button" class="primary" data-mc>🎯 모니터 맞추기</button>
@@ -17593,7 +17598,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function hubModal() {
     const r = LO.data; if (!r) return;
     if (!hubOk()) { modal(`<h3>🔌 버튼 연결</h3><p>이 브라우저는 USB 버튼(아두이노) 연결을 지원하지 않습니다.<br><b>Edge</b> 또는 <b>크롬</b>에서 열어 주세요.</p><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => { $('[data-c]', bg).onclick = close; }); return; }
-    const m = hubMap(r), sName = x => `${loLineName(x.line)} ${+x.stage + 1}공정 ${loLineStages(x.line)[x.stage]?.name || ''} · ${x.assignedName || '담당 없음'} (${x.id})`, opts = id => `<option value="">연결 안 함</option>` + loMonStations(r).map(x => `<option value="${esc(x.id)}"${x.id === id ? ' selected' : ''}>${esc(sName(x))}</option>`).join('');
+    const m = hubMap(r), sName = x => `${loLineLabel(x.line)} ${+x.stage + 1}공정 ${loLineStages(x.line)[x.stage]?.name || ''} · ${x.assignedName || '담당 없음'} (${x.id})`, opts = id => `<option value="">연결 안 함</option>` + loMonStations(r).map(x => `<option value="${esc(x.id)}"${x.id === id ? ' selected' : ''}>${esc(sName(x))}</option>`).join('');
     modal(`<h3>🔌 스위치 연결 <span class="muted" style="font-size:13px;font-weight:500">${HUB.on ? '● 연결됨' : '○ 연결 안 됨'}</span></h3>
       <ol class="lo-hubsteps"><li><b>[아두이노 연결]</b>을 누릅니다. <small>처음 한 번만 · 다음부터 자동 연결</small></li><li>스위치를 하나 눌러 보고, <b>불이 켜진 번호</b>를 확인합니다.</li><li>아래 그 번호 줄에서 <b>그 스위치가 있는 자리</b>를 고르고 <b>[저장]</b>합니다.</li></ol>
       <div class="lo-hubtest"><label><input type="checkbox" id="loHubTest"${HUB.test ? ' checked' : ''}> <b>연습 모드</b> — 켜 두면 스위치를 눌러도 <b>작업 완료가 안 됩니다</b>. 확인이 끝나면 꺼 주세요.</label>
