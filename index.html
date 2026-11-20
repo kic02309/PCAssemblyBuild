@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.53';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.54';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18865,6 +18865,29 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cp = (() => { const s = String(t || '').replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = s.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; })();
     return { brand: qcpBrand(r) || br || '', name: qcpShort(r), cap: r.k === 'cpu' ? '' : (qcpCap(r) || cp), n: 1, code: r.c, byCode: true };
   }
+  // v31.54 : 주문서 오른쪽 코드 칸만 읽기 — 코드 순서 · 반복 횟수로 부품 · 수량 · 변경 (전체 글자 읽기보다 2~3배 빠름)
+  function qcStripParse(text) {
+    if (!QCP || !QCP.size) return null;
+    const occ = [];   // 위에서 아래 순서
+    String(text || '').split('\n').forEach(ln => { if (/[\[【(]\s*\d{6,7}/.test(ln) && !/\d{6,7}\s*$/.test(ln.replace(/[\]】)\s]+$/, ''))) return; for (const x of (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || [])) { if (new RegExp('[\\[【(]\\s*' + x).test(ln)) continue; const r = QCP.get(x); if (r) occ.push(r); } });
+    const out = {};
+    ['cpu', 'mem', 'ssd', 'hdd'].forEach(k => {
+      const O = occ.filter(r => r.k === k); if (!O.length) return;
+      if (k === 'cpu') { out.cpu = qcpObj(O[0], ''); return; }
+      const U = [...new Set(O.map(r => r.c))], cnt = c => O.filter(r => r.c === c).length;
+      const top = U.length > 1 ? O[O.length - 1] : O[0], n = cnt(top.c), o = qcpObj(top, ''); o.n = n;
+      if (U.length > 1) { const gone = U.filter(c => c !== top.c).map(c => { const r = QCP.get(c); return [qcpBrand(r), qcpShort(r), qcpCap(r)].filter(Boolean).join(' '); }); o.chg = '변경된 부품 · 빠짐 ' + gone.join(', '); o.n = Math.max(1, n); }
+      else if (n > 1) o.chg = `추가 +${n - 1} (총 ${n}개)`;
+      out[k] = o;
+    });
+    return out;
+  }
+  async function qcStripRead(src) {   // 사진 오른쪽 45%만 잘라 읽기
+    let img = src; if (src instanceof Blob) img = await createImageBitmap(src);
+    const W = img.width, H = img.height, fx = 0.55, sc = Math.min(1, 2400 / H), c = document.createElement('canvas');
+    c.width = Math.round(W * (1 - fx) * sc); c.height = Math.round(H * sc); c.getContext('2d').drawImage(img, W * fx, 0, W * (1 - fx), H, 0, 0, c.width, c.height);
+    return qcPaddle(c);
+  }
   function qcCodeAdjust(L, PKG, out) {   // 메모리 · SSD · HDD : 같은 코드가 몇 번 · 어느 줄이 ⓟ(세트 코드 · [0] · 추가 장착)인지 보고 수량 · 변경을 다시 계산
     const occ = new Map();   // code → { r, base, add, rem, ctx }
     PKG = new Set(PKG); L.forEach(ln => { if (/조립\s?PC|PC_[A-Za-z]?\d|_[RIi]\d{3}|아이웍스|추천|품\s?1\s?개/i.test(ln)) (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { if (!QCP.has(c)) PKG.add(c.slice(-6)); }); });   // 세트(PC) 코드 = 묶음 줄의 코드
@@ -19007,7 +19030,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         else if (x) { if (k === 'cpu') t = x.name || ''; else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = x.cap || ''; }
         const th = t ? (x && x.cap && k !== 'cpu' ? esc(t.slice(0, t.lastIndexOf(x.cap))) + '<b class="cap">' + esc(x.cap) + '</b>' : esc(t)) : '?';   // v31.32 : 용량 강조
         return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? (/^추가/.test(x.chg) ? '<em class="add">추가</em>' : '<em>변경</em>') : ''}${bh}${th}${x && x.byCode ? '<i class="cd" title="제품코드">' + esc(x.code) + '</i>' : ''}</span>`; };
-      const qty = k => { if (k === 'cpu') return '<span class="qn x"></span>'; if (V.ref !== 'ok' || V.busyK === k || !P[k] || ((V.busyS || []).includes(k) && P[k].n === 0)) return '<span class="qn u">–</span>'; const x = P[k]; const n = x.n === 0 ? 0 : (x.n || 1); return `<span class="qn${n > 1 ? ' m' : !n ? ' u' : ''}">${n ? n : '?'}개</span>`; };
+      const qty = k => { if (k === 'cpu') return '<span class="qn x"></span>'; if (V.ref !== 'ok' || V.busyK === k || !P[k] || ((V.busyS || []).includes(k) && P[k].n === 0)) return '<span class="qn u">–</span>'; const x = P[k]; const n = x.n === 0 ? 0 : (x.n || 1); return `<span class="qn${n > 1 ? ' m' : !n ? ' u' : ''}${V.qpend ? ' pend' : ''}">${n ? n : '?'}개</span>`; };
       const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">아래에서 고르세요</div>';
       const whoBox = V.who ? ''
         : V.ship ? '<div class="pxmsg info qc-ship"><b>제조 출고 주문건입니다.</b></div>'
@@ -19016,7 +19039,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
         <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력"><button type="button" id="qcre">↺ 초기화</button></div>${block}</div>
-        <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === NQ ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/${NQ}</span></div>${V.rt ? `<div class="qc-rt">읽기 ${V.rt.s}초</div>` : ''}
+        <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === NQ ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/${NQ}</span></div>${V.rt ? `<div class="qc-rt">${V.rt.more ? `부품 ${V.rt.s}초 · 수량 확인 중…` : V.rt.all ? `부품 ${V.rt.s}초 · 수량 ${V.rt.all}초` : `읽기 ${V.rt.s}초`}</div>` : ''}
         ${Q.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="hd"><span class="c">${t}</span>${ref(k)}</span><span class="ln">${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
 </div>
         <div class="pxcard qc-st1 s2"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>요청사항 확인</b><small>고객요청 · 특이사항 · 운송방법</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
@@ -19089,8 +19112,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let fc = null; if (!shot) { fc = document.createElement('canvas'); fc.width = v.videoWidth; fc.height = v.videoHeight; fc.getContext('2d').drawImage(v, 0, 0); }
     qcCamClose(); try { navigator.vibrate && navigator.vibrate(80); } catch (e) { }
     const V = S.qcv; Object.assign(V, { order: o, src: o ? 'bar' : '', res: {}, P: {}, chg: false, chgTouched: false, s2: false, s3: false, ref: 'busy', edit: '', rt: null, rt0: 0 });
-    await qcFindWho(V); V.step = 'check'; if (S.view === 'qc') renderQc();
+    V.step = 'check'; if (S.view === 'qc') renderQc();   // v31.54 : 화면 먼저 · 읽기와 주문 확인은 동시에
     qcRefRead(shot || fc, o); if (!o) setTimeout(() => { const x = $('#qco'); if (x) x.focus(); }, 80);
+    await qcFindWho(V); if (S.view === 'qc' && S.qcv === V && V.step === 'check') renderQc();
   }
   async function qcPartShot(k, v) {   // v31.28 : 한 부품 줄만 크게 찍어 다시 읽기 (사진은 저장 안 함)
     let shot = null; try { if (window.ImageCapture && QCC.st) shot = await new ImageCapture(QCC.st.getVideoTracks()[0]).takePhoto(); } catch (e) { }
@@ -19110,12 +19134,28 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const V = S.qcv; let P = null;
     try { await Promise.race([qcpLoad(), new Promise(r => setTimeout(r, 4000))]); } catch (e) { }
     const t0 = V.rt0 = performance.now();
+    try {   // v31.54 : 1) 오른쪽 코드 칸만 먼저 — CPU · 메모리 · 저장장치가 다 나오면 여기서 끝
+      const S1 = qcStripParse(await qcStripRead(src));
+      if (!S.qcv || (ord && S.qcv.order !== ord)) return;
+      if (S1 && (S1.cpu || S1.mem || S1.ssd)) {   // 먼저 보여 주고 · 수량은 전체 읽기로 한 번 더
+        V.S1 = S1; V.P = Object.assign({}, S1); V.ref = 'ok'; V.qpend = 1; V.rt = { s: ((performance.now() - t0) / 1000).toFixed(1), more: 1 }; if (S.view === 'qc' && V.step === 'check') renderQc();
+      }
+    } catch (e) { console.warn('qc strip', e); }
     try {
       let cv = src; if (src instanceof Blob) { const img = await createImageBitmap(src), sc = Math.min(1, 2400 / Math.max(img.width, img.height)); cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); }
       P = qcParse(await qcPaddle(cv));
     } catch (e) { console.warn('qc ref', e); }
     if (!S.qcv || (ord && S.qcv.order !== ord)) return;
-    V.P = P || {}; V.ref = P ? 'ok' : 'fail'; V.rt = { s: ((performance.now() - t0) / 1000).toFixed(1), ep: window.__ppEP || '' };   // v31.52 : 읽기 시간 표시
+    const s1 = V.S1, rt1 = V.rt;
+    if (P && s1) ['cpu', 'mem', 'ssd', 'hdd'].forEach(k => {   // 2) 코드 칸(이름 · 변경) + 전체 읽기(줄 앞 수량 · ⓟ) 합치기
+      const a = s1[k], b = P[k]; if (!a) return;
+      if (!b || !b.byCode) { P[k] = a; return; }
+      if (b.code === a.code) { const o = Object.assign({}, a); if ((b.n || 1) > (o.n || 1)) { o.n = b.n; if (b.chg) o.chg = b.chg; } P[k] = o; return; }
+      if (a.chg && /^변경/.test(a.chg)) P[k] = a;   // 코드 칸에서 새 부품을 봤으면 그쪽
+    });
+    if (!P && s1) P = s1;
+    V.S1 = null; V.qpend = 0;
+    V.P = P || {}; V.ref = P ? 'ok' : 'fail'; V.rt = rt1 && s1 ? { s: rt1.s, all: ((performance.now() - t0) / 1000).toFixed(1) } : { s: ((performance.now() - t0) / 1000).toFixed(1) };   // v31.54 : 읽기 시간
     const miss = [];   // v31.34 : 3조각 다시 읽기는 오히려 인식률이 떨어져서 끔 (못 읽으면 부품 줄 📷로 다시 찍기)
     if (miss.length) V.busyS = miss;
     if (S.view === 'qc' && V.step === 'check') renderQc();
@@ -22461,6 +22501,7 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-ord .qc-in{font-size:20px!important}
 .pmx .qc-ck3.v2 .rf em.add{background:#7c3aed}
 .pmx .qc-st .qc-rt{font-weight:700;font-size:11px;color:#64748b;text-align:right;margin:-2px 0 2px}
+.pmx .qc-ck3.v2 .qn.pend{opacity:.55;position:relative}.pmx .qc-ck3.v2 .qn.pend::after{content:'확인 중';position:absolute;bottom:2px;font-size:9px;font-weight:700}
 </style>
 </body>
 </html>
