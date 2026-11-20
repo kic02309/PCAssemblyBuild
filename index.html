@@ -306,7 +306,8 @@ table.bd td.e{background:#fff}
 table.bd tfoot td{position:sticky;bottom:0;background:#e9edf2;font-weight:700;border-top:2px solid #8792a3}
 table.bd tfoot .bn{z-index:3;background:#dfe5ec}
 details.pp{margin-top:12px}details.pp>summary{cursor:pointer;font-size:15px;font-weight:700;padding:8px 2px;list-style:revert}details.pp>.card{margin-top:6px}
-.modal.wide{width:min(900px,94vw)}.modal.md{width:min(480px,94vw)}.modal .acts button{white-space:nowrap}
+.modal.wide{width:min(900px,94vw)}
+.modal.loq-modal{width:min(760px,96vw);max-height:calc(100dvh - 32px);overflow:auto}.loq-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.loq-top h3{margin:0}.loq-top button{font-size:13px}.loq-seg{display:grid;grid-template-columns:1fr 1fr;margin:12px 0 4px;border:1px solid var(--line);border-radius:9px;overflow:hidden}.loq-seg button{border:0;border-radius:0;padding:9px;font-weight:700;background:transparent}.loq-seg button[aria-pressed=true]{background:#1e3a64;color:#fff}.loq-pickline{display:flex;align-items:center;gap:8px;margin:8px 0 0}.loq-pickline select{width:auto}.loq-line{border:1px solid var(--line);border-radius:11px;padding:10px 14px;margin-top:10px;background:var(--card,#fff)}.loq-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.loq-hd b{font-size:16px}.loq-tg{font-size:12px;padding:2px 8px;border-radius:6px;background:#e6f1fb;color:#0c447c;font-weight:700}.loq-r{display:grid;grid-template-columns:80px minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.loq-l{color:var(--sub);font-size:13px}.loq-r select{width:100%}.loq-r input[type=number]{width:90px}.loq-sub{display:block;color:var(--sub);font-size:12px;margin-top:3px}.loq-ok{color:#11643d}.loq-bad{color:#b42318}.loq-seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;padding:8px 0;border-top:1px solid var(--line)}.loq-seats>div{display:flex;flex-direction:column;gap:4px;font-size:13px}.loq-seats label{font-size:12px;color:var(--sub)}.loq-ready{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;font-weight:700}.loq-msg{margin:12px 0 0;font-size:13px;color:var(--sub)}.loq-msg.loq-bad{color:#b42318}.modal.md{width:min(480px,94vw)}.modal .acts button{white-space:nowrap}
 table.imp td{padding:5px 10px}table.imp input[type=date]{padding:3px 5px}
 .ist.ok{color:var(--green);font-weight:700}.ist.warn{color:#a15c00;font-weight:700}.ist.bad{color:var(--red);font-weight:700}
 .energy .tgv{font-size:15px;padding:3px 10px;background:#eef1f5;border-radius:6px}
@@ -8659,7 +8660,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.58';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.59';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16881,6 +16882,101 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try{const saved=JSON.parse(sessionStorage.getItem(loDraftKey())||'null');if(saved?.ver===LO.data?.cfgVer)return saved;}catch(e){}
     return null;
   }
+  // v31.59 : 빠른 작업준비 — 한 화면에서 라인(1~8 하나로 / 나눠서) · 작업 세트 · 담당자 · 제조건 · 수량 → 준비 저장 / 바로 시작
+  async function loQuick() {
+    const r=LO.data;
+    if(!r?.manage||LO.starting)return;
+    if(!Array.isArray(r.registeredStations))return toast('서버 반영 후 작업준비를 사용할 수 있습니다.',true);
+    let src;
+    try{src=await loCall('sources',{date:LO.date});LO.sourceRows=src.rows;}catch(e){return toast(e.message,true);}
+    let last={};try{last=JSON.parse(localStorage.getItem('loQuickLast')||'{}')||{};}catch(e){}
+    const Q={cfg:structuredClone(r.cfg),ver:r.cfgVer,dirty:false,date:LO.date,rows:src.rows,
+      mode:last.mode==='one'||last.mode==='split'?last.mode:(r.cfg.lines.length>1?'split':'one'),
+      single:r.cfg.lines.some(l=>l.id===last.single)?last.single:r.cfg.lines[0].id,pick:{},qty:{},open:{},busy:false};
+    const users=[...r.users].sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+    const uname=id=>r.users.find(u=>u.id===id)?.name||'기존 담당자';
+    const prepOf=line=>(r.prepared||[]).find(p=>p.line===line);
+    const active=()=>Q.mode==='split'?Q.cfg.lines.map(l=>l.id):[Q.single];
+    const btnRange=line=>{const m=hubMap(r),ns=Object.keys(m).filter(n=>r.stations.find(s=>s.id===m[n])?.line===line).map(Number).sort((a,b)=>a-b);
+      return ns.length?(ns.length>1&&ns.at(-1)-ns[0]===ns.length-1?ns[0]+'~'+ns.at(-1):ns.join('·')):'';};
+    const remain=row=>Math.max(0,(+row.item.q||0)-(+row.allocated||0)-Object.entries(Q.pick).filter(([l,id])=>id===row.item.id&&active().includes(l)).reduce((n,[l])=>n+(+Q.qty[l]||0),0));
+    const rowOf=line=>Q.rows.find(x=>x.item.id===Q.pick[line]);
+    const lineHtml=line=>{
+      const prep=prepOf(line),bn=btnRange(line);
+      const head=`<div class="loq-hd"><b>${esc(loLineName(line))}</b>${bn?`<span class="loq-tg">모니터 · 버튼 ${bn}</span>`:''}</div>`;
+      if(prep)return `<section class="loq-line">${head}<div class="loq-ready">준비 완료 · 시작 대기 — ${esc(prep.label)} · ${prep.request.q}대 ${loStartButton(prep)} <button type="button" data-loq-discard="${esc(prep.id)}">준비 해제</button></div></section>`;
+      const stages=loLineStages(line,Q.cfg),setId=Q.cfg.lines.find(l=>l.id===line)?.setId,miss=loMissingAssignments(line,Q.cfg);
+      const seats=stages.map((stage,i)=>({stage,i,seats:loStageSeats(line,i,Q.cfg.stations)}));
+      const row=rowOf(line),spec=row?loSourceSpec(row):null,own=row?(+Q.qty[line]||0):0,left=row?remain(row)+own:0;
+      const rowOpts='<option value="">제조건 고르기</option>'+Q.rows.map(x=>{const rest=remain(x)+(x.item.id===Q.pick[line]?own:0);const n=loSourceSpec(x).specs.length;
+        return `<option value="${esc(x.item.id)}" ${x.item.id===Q.pick[line]?'selected':''} ${rest<1&&x.item.id!==Q.pick[line]?'disabled':''}>${esc(x.item.no||'')} · ${esc(x.item.model||'모델명 없음')} · 남은 ${rest}대${n?'':' · 사양 없음'}</option>`;}).join('');
+      return `<section class="loq-line" data-loq-line="${esc(line)}">${head}
+        <div class="loq-r"><span class="loq-l">작업 세트</span><span><select data-loq-set="${esc(line)}">${Q.cfg.sets.map(s=>`<option value="${esc(s.id)}" ${s.id===setId?'selected':''}>${esc(loSetName(s.name))} · ${s.stages.length}공정</option>`).join('')}</select><small class="loq-sub">${stages.map(s=>esc(s.name)).join(' → ')}</small></span></div>
+        <div class="loq-r"><span class="loq-l">담당자</span><span>${miss.length?`<b class="loq-bad">${esc(miss.join(', '))} 비어 있음</b>`:`<b class="loq-ok">${seats.reduce((n,x)=>n+x.seats.filter(s=>s.userId).length,0)}명 지정 ✓</b>`} <button type="button" data-loq-who="${esc(line)}">${Q.open[line]?'접기':'수정'}</button></span></div>
+        ${Q.open[line]?`<div class="loq-seats">${seats.map(x=>`<div><b>${esc(loStageNumber(stages,x.i))} ${esc(x.stage.name)}</b>${x.seats.length?x.seats.map(st=>`<label>${esc(st.id)}<select data-loq-seat="${esc(st.id)}"><option value="">담당자 선택</option>${users.map(u=>`<option value="${esc(u.id)}" ${u.id===st.userId?'selected':Q.cfg.stations.some(s=>s!==st&&s.userId===u.id)?'disabled':''}>${esc(u.name)} · ${esc(u.group||'')}</option>`).join('')}</select></label>`).join(''):'<small class="loq-bad">자리 없음 — [자리 · 세트 설정]에서 자리를 만드세요</small>'}</div>`).join('')}</div>`:''}
+        <div class="loq-r"><span class="loq-l">제조건</span><span><select data-loq-row="${esc(line)}">${rowOpts}</select></span></div>
+        ${row?`<div class="loq-r"><span class="loq-l">수량</span><span><input type="number" min="1" max="${Math.min(5000,left)}" step="1" inputmode="numeric" data-loq-qty="${esc(line)}" value="${esc(Q.qty[line]||'')}"> 대 <small class="loq-sub">남은 ${left}대</small></span></div>
+        <div class="loq-r"><span class="loq-l">사양</span><span>${spec.specs.length?`<b class="loq-ok">사양 ${spec.specs.length}개${spec.serials.length?' · 시리얼 '+spec.serials.length+'개':''} 불러옴 ✓</b>`:`<b class="loq-bad">사양 없음</b> <button type="button" data-loq-spec="${esc(line)}">사양 붙여넣기</button>`}</span></div>`:''}
+      </section>`;
+    };
+    const problems=line=>{
+      if(prepOf(line))return null;
+      const row=rowOf(line);if(!row)return '제조건';
+      if(loMissingAssignments(line,Q.cfg).length)return '담당자';
+      const q=+Q.qty[line];if(!Number.isInteger(q)||q<1||q>Math.min(5000,remain(row)+q))return '수량';
+      if(!loSourceSpec(row).specs.length)return '사양';
+      return '';
+    };
+    modal('<div id="loQuickBox"></div>',(bg,close)=>{
+      bg._lock=true;const box=$('#loQuickBox',bg);
+      const draw=()=>{
+        const lines=active(),todo=lines.filter(l=>problems(l)==='').length,blocked=lines.some(l=>{const p=problems(l);return p&&p!=='제조건';});
+        box.innerHTML=`<div class="loq-top"><h3>작업준비 · ${esc(Q.date.slice(5).replace('-','/'))}</h3><button type="button" id="loqDetail">자세히 (단계별)</button></div>
+          <div class="loq-seg"><button type="button" data-loq-mode="one" aria-pressed="${Q.mode==='one'}">하나로</button><button type="button" data-loq-mode="split" aria-pressed="${Q.mode==='split'}" ${Q.cfg.lines.length<2?'disabled':''}>라인A + 라인B 나눠서</button></div>
+          ${Q.mode==='one'?`<label class="loq-pickline">작업할 라인 <select id="loqSingle">${Q.cfg.lines.map(l=>`<option value="${esc(l.id)}" ${l.id===Q.single?'selected':''}>${esc(loLineName(l.id))}</option>`).join('')}</select></label>`:''}
+          ${lines.map(lineHtml).join('')}
+          <p class="loq-msg ${blocked?'loq-bad':''}">${blocked?'빨간 항목을 채우면 준비할 수 있습니다.':todo?`${todo}개 라인 준비 가능${todo<lines.filter(l=>!prepOf(l)).length?' · 제조건을 고른 라인만 준비합니다':''}`:'제조건을 고르세요.'}</p>
+          <div class="acts"><button type="button" data-c>닫기</button><button type="button" id="loqSave" ${todo&&!blocked&&!Q.busy?'':'disabled'}>준비만 저장</button><button type="button" class="primary" id="loqGo" ${todo&&!blocked&&!Q.busy&&loCanStart()?'':'disabled'} title="${loCanStart()?'':'실시간 연결 후 시작할 수 있습니다'}">준비 완료 · 바로 시작</button></div>`;
+        $('[data-c]',box).onclick=close;
+        $('#loqDetail',box).onclick=async()=>{if(Q.dirty&&!await confirmBox('이 화면에서 바꾼 담당자 · 세트는 저장되지 않습니다.<br>단계별 화면으로 갈까요?','단계별로'))return;close();const saved=loLoadGuideDraft();if(saved)loGuideMove(saved,saved.step||1,()=>{});else loGuide();};
+        $$('[data-loq-mode]',box).forEach(b=>b.onclick=()=>{Q.mode=b.dataset.loqMode;draw();});
+        if($('#loqSingle',box))$('#loqSingle',box).onchange=e=>{Q.single=e.target.value;draw();};
+        $$('[data-loq-set]',box).forEach(s=>s.onchange=()=>{const ln=Q.cfg.lines.find(l=>l.id===s.dataset.loqSet);if(r.batches.some(b=>b.line===ln.id&&+b.final<+b.q)){toast('진행 중인 배치가 있어 세트를 바꿀 수 없습니다.',true);return draw();}ln.setId=s.value;Q.dirty=true;draw();});
+        $$('[data-loq-who]',box).forEach(b=>b.onclick=()=>{Q.open[b.dataset.loqWho]=!Q.open[b.dataset.loqWho];draw();});
+        $$('[data-loq-seat]',box).forEach(s=>s.onchange=()=>{const st=Q.cfg.stations.find(x=>x.id===s.dataset.loqSeat);if(st){st.userId=s.value;Q.dirty=true;}draw();});
+        $$('[data-loq-row]',box).forEach(s=>s.onchange=()=>{const line=s.dataset.loqRow;Q.pick[line]=s.value||undefined;Q.qty[line]='';const row=rowOf(line);if(row)Q.qty[line]=String(Math.min(5000,remain(row)));draw();});
+        $$('[data-loq-qty]',box).forEach(i=>i.onchange=()=>{Q.qty[i.dataset.loqQty]=i.value;draw();});
+        $$('[data-loq-spec]',box).forEach(b=>b.onclick=()=>{const row=rowOf(b.dataset.loqSpec);close();loMeta(Q.date,row,null);});
+        $$('[data-loq-discard]',box).forEach(b=>b.onclick=async()=>{b.disabled=true;try{await loCall('discardPreparation',{batchId:b.dataset.loqDiscard});await loRefresh(LO.epoch,true);r.prepared=LO.data.prepared;draw();}catch(e){toast(e.message,true);b.disabled=false;}});
+        $$('[data-lo-start-prepared]',box).forEach(b=>b.onclick=()=>{close();loStartPrepared(b.dataset.loStartPrepared);});
+        const run=async start=>{
+          const lines=active().filter(l=>problems(l)==='');if(!lines.length||Q.busy)return;
+          Q.busy=true;draw();
+          try{localStorage.setItem('loQuickLast',JSON.stringify({mode:Q.mode,single:Q.single}));}catch(e){}
+          const ids=[];let ver=Q.ver;
+          try{
+            if(Q.dirty){const c=await loCall('config',{ver,cfg:Q.cfg});await loRefresh(LO.epoch,true);ver=LO.data.cfgVer;Q.dirty=false;void c;}
+            let rank=1+Math.max(0,...(LO.data?.batches||[]).map(b=>+b.rank||0));
+            for(const line of lines){
+              const row=rowOf(line),spec=loSourceSpec(row),id=loId();
+              await loCall('prepare',{date:Q.date,rowId:row.item.id,sourceHash:row.sourceHash,batchId:id,line,q:+Q.qty[line],rank:rank++,metaVer:row.meta?.ver||0,
+                cfgVer:ver,stageTexts:loGuidePhrases({cfg:Q.cfg,line},loLineStages(line,Q.cfg)),serialMode:'reference',meta:{...spec,serials:spec.serials}});
+              ids.push(id);
+            }
+            if(start)for(const id of ids)await loCall('startPrepared',{batchId:id});
+            close();await loRefresh(LO.epoch,true);
+            toast(start?`${ids.length}개 라인 작업을 시작했습니다.`:`${ids.length}개 라인 준비를 저장했습니다. 시작 대기 중입니다.`);
+          }catch(e){
+            toast(e.message,true);Q.busy=false;
+            if(ids.length){close();await loRefresh(LO.epoch,true);toast('일부 라인은 준비됐습니다. 상황판에서 확인하세요.',true);}else draw();
+          }
+        };
+        $('#loqSave',box).onclick=()=>run(false);
+        $('#loqGo',box).onclick=()=>run(true);
+      };
+      draw();
+    },'wide loq-modal');
+  }
   function loGuideMove(guide,step,close) {
     if(step>2&&loMissingAssignments(guide.line,guide.cfg).length)return toast('먼저 모든 공정의 담당자를 배정하세요.',true);
     if(step===4&&!guide.rowId)return toast('먼저 제조건을 선택하세요.',true);
@@ -17338,7 +17434,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       button.onclick=()=>loTerminalSettings(null,null,expected);
       $('#loCentralManager')?.after(button);
     }
-    if($('#loMainStart'))$('#loMainStart').onclick=()=>{const saved=loLoadGuideDraft();if(saved)loGuideMove(saved,saved.step||1,()=>{});else loGuide();};
+    if($('#loMainStart'))$('#loMainStart').onclick=()=>loQuick();
     loBindControls($('#main'));
     $$('[data-lo-edit-prepared]').forEach(button=>button.onclick=()=>{const p=prepared.find(x=>x.id===button.dataset.loEditPrepared);if(p)loSources(p.request.date,p.request.rowId,{cfg:structuredClone(r.cfg),line:p.line,ver:r.cfgVer,dirty:false,preparation:p,rowId:p.request.rowId,stageTexts:p.request.stageTexts});});
     $$('[data-lo-discard]').forEach(button=>button.onclick=async()=>{if(!await confirmBox('시작 대기 작업과 선택 시리얼 배정을 해제할까요?','준비 해제'))return;try{await loCall('discardPreparation',{batchId:button.dataset.loDiscard});await loRefresh(LO.epoch,true);}catch(error){toast(error.message,true);}});
