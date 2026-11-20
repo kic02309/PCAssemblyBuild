@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.16';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.17';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18803,7 +18803,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     g.putImageData(d, 0, 0); return c;
   }
   // v30.98 : 제조사 이름 맞추기 — 글자가 조금 틀려도 가장 가까운 제조사로 (예: MIE → MSI)
-  const QC_BRANDS = ['AMD', 'Intel', 'ASUS', 'ASRock', 'MSI', 'GIGABYTE', 'BIOSTAR', 'NZXT', 'Samsung', 'SK hynix', 'Micron', 'Crucial', 'PATRIOT', 'TeamGroup', 'G.SKILL', 'Kingston', 'ADATA', 'XPG', 'Corsair', 'KLEVV', 'ESSENCORE', 'TWINMOS', 'GeIL', 'Netac', 'WD', 'Western Digital', 'SanDisk', 'Seagate', 'Lexar', 'Solidigm', 'Hanmi', 'Hikvision', 'Transcend', 'PNY', 'ZOTAC', 'GALAX', 'PALIT', 'INNO3D', 'EMTEK', 'MANLI', 'Sapphire', 'PowerColor', 'XFX', 'ASL', 'Seasonic', 'Antec', 'Thermaltake', 'Cooler Master', 'DeepCool', 'Lian Li', 'Fractal', 'be quiet!', 'Arctic', 'Noctua', '3RSYS', 'DAVEN', 'ABKO', 'Micronics', 'SuperFlower'];
+  const QC_BRANDS = ['AMD', 'Intel', 'ASUS', 'ASRock', 'MSI', 'GIGABYTE', 'BIOSTAR', 'NZXT', 'Samsung', 'SK hynix', 'Micron', 'Crucial', 'PATRIOT', 'TeamGroup', 'G.SKILL', 'Kingston', 'ADATA', 'XPG', 'Corsair', 'KLEVV', 'ESSENCORE', 'TWINMOS', 'GeIL', 'Netac', 'KIOXIA', 'WD', 'Western Digital', 'SanDisk', 'Seagate', 'Lexar', 'Solidigm', 'Hanmi', 'Hikvision', 'Transcend', 'PNY', 'ZOTAC', 'GALAX', 'PALIT', 'INNO3D', 'EMTEK', 'MANLI', 'Sapphire', 'PowerColor', 'XFX', 'ASL', 'Seasonic', 'Antec', 'Thermaltake', 'Cooler Master', 'DeepCool', 'Lian Li', 'Fractal', 'be quiet!', 'Arctic', 'Noctua', '3RSYS', 'DAVEN', 'ABKO', 'Micronics', 'SuperFlower'];
   const qcLev = (a, b) => { const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[m][n]; };
   function qcBrand(x) {
     const k = String(x || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (k.length < 2) return '';
@@ -18814,9 +18814,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const QC_MBW = /^(PRO(-[A-Z0-9]+)?|PRIME|TUF|GAMING|WIFI\d?|WiFi\d?|PLUS|AORUS|ELITE|EDGE|TOMAHAWK|MORTAR|STEEL|LEGEND|LIGHTNING|RIPTIDE|ROG|STRIX|MAX|AX|DS3H|UD|EAGLE|ICE|AERO|MASTER|STEALTH|CARBON|HERO|APEX|DARK|TOMAHAWK)$/;
   // v31.16 : 실제 주문서 맞춤 — 한글 제조사 이름 · 제품명으로 제조사 추정 · 숫자 사이 o→0 · 줄 넘어간 용량(1T / B]) · 앞 군더더기(5.)
-  const QC_KO = [[/에센코어|에센 코어/g, 'ESSENCORE'], [/삼성전자|삼성/g, 'Samsung'], [/마이크론/g, 'Micron'], [/크루셜/g, 'Crucial'], [/팀그룹/g, 'TeamGroup'], [/지스킬|지.스킬/g, 'G.SKILL'], [/킹스톤/g, 'Kingston'], [/웨스턴\s?디지털/g, 'WD'], [/씨게이트/g, 'Seagate'], [/샌디스크/g, 'SanDisk'], [/렉사/g, 'Lexar'], [/솔리다임/g, 'Solidigm'], [/하이닉스|SK\s?하이닉스/g, 'SK hynix'], [/패트리어트|패트리엇/g, 'PATRIOT'], [/커세어/g, 'Corsair'], [/트윈모스/g, 'TWINMOS'], [/게일/g, 'GeIL'], [/넷악|넷탁/g, 'Netac'], [/인텔/g, 'Intel'], [/에이엠디/g, 'AMD'], [/기가바이트/g, 'GIGABYTE'], [/애즈락|에즈락/g, 'ASRock'], [/에이수스|아수스/g, 'ASUS'], [/바이오스타/g, 'BIOSTAR'], [/앱코/g, 'ABKO'], [/마이크로닉스/g, 'Micronics'], [/다크플래쉬/g, 'darkFlash'], [/한미마이크로닉스/g, 'Micronics']];
+  const QC_KO = [[/에센코어|에센 코어/g, 'ESSENCORE'], [/키오시아/g, 'KIOXIA'], [/대원씨티에스/g, ''], [/삼성전자|삼성/g, 'Samsung'], [/마이크론/g, 'Micron'], [/크루셜/g, 'Crucial'], [/팀그룹/g, 'TeamGroup'], [/지스킬|지.스킬/g, 'G.SKILL'], [/킹스톤/g, 'Kingston'], [/웨스턴\s?디지털/g, 'WD'], [/씨게이트/g, 'Seagate'], [/샌디스크/g, 'SanDisk'], [/렉사/g, 'Lexar'], [/솔리다임/g, 'Solidigm'], [/하이닉스|SK\s?하이닉스/g, 'SK hynix'], [/패트리어트|패트리엇/g, 'PATRIOT'], [/커세어/g, 'Corsair'], [/트윈모스/g, 'TWINMOS'], [/게일/g, 'GeIL'], [/넷악|넷탁/g, 'Netac'], [/인텔/g, 'Intel'], [/에이엠디/g, 'AMD'], [/기가바이트/g, 'GIGABYTE'], [/애즈락|에즈락/g, 'ASRock'], [/에이수스|아수스/g, 'ASUS'], [/바이오스타/g, 'BIOSTAR'], [/앱코/g, 'ABKO'], [/마이크로닉스/g, 'Micronics'], [/다크플래쉬/g, 'darkFlash'], [/한미마이크로닉스/g, 'Micronics']];
   const QC_BYNAME = [[/\bKC\d{4}|\bNV[123]\b|FURY|\bA2000|RENEGADE/i, 'Kingston'], [/KLEVV|CRAS\b|\bGENUINE\b/i, 'ESSENCORE'], [/\bSN\d{3,4}|WD_?BLACK|WD\s?BLUE|WD\s?GREEN/i, 'WD'], [/\b9[0-9]0\s?(PRO|EVO)|\b9100\b|\bPM9|MAGICIAN/i, 'Samsung'], [/\bP3\s?PLUS|\bP3\b|\bP5\b|\bT500|\bT700|\bT705/i, 'Crucial'], [/OPTIMUS|ULTRA\s?PLUS|SANDISK/i, 'SanDisk'], [/\bMP600|\bMP700|VENGEANCE|DOMINATOR/i, 'Corsair'], [/TRIDENT|RIPJAWS|FLARE\s?X/i, 'G.SKILL'], [/T-?FORCE|\bDELTA\b|XTREEM|\bMP44|\bG70|\bG50/i, 'TeamGroup'], [/\bVIPER|\bSIGNATURE|\bP300|\bP400/i, 'PATRIOT'], [/\bROG\b|\bTUF\b|\bPRIME\b|\bPROART/i, 'ASUS'], [/\bMAG\b|\bMPG\b|\bMEG\b|TOMAHAWK|박격포|MORTAR|\bPRO\s?[ABZ]\d{3}/i, 'MSI'], [/AORUS|\bEAGLE\b|GAMING\s?X\b|\bAERO\b/i, 'GIGABYTE'], [/STEEL\s?LEGEND|PHANTOM|\bPRO\s?RS|RIPTIDE|\bLIVEMIXER/i, 'ASRock'], [/RYZEN|라이젠|\bX3D\b|\d{4}X3D|\bTHREADRIPPER/i, 'AMD'], [/\bCORE\s?(I\d|ULTRA)|\bI[3579]-\d{4,5}|ULTRA\s?[3579]\s?\d{3}|코어\s?(i|울트라)/i, 'Intel']];
-  const qcFixTok = w => /\d/.test(w) && /^[A-Za-z0-9oO.+\-]{3,}$/.test(w) ? w.replace(/(?<=\d)[oO]|[oO](?=\d)/g, '0').replace(/[oO](?=0)|(?<=0)[oO]/g, '0').toUpperCase().replace(/NVME/, 'NVMe') : w;
+  const qcFixTok = w => /\d/.test(w) && /^[A-Za-z0-9oO.+\-]{3,}$/.test(w) ? w.replace(/(?<=\d)[oO]|[oO](?=\d)/g, '0').replace(/[oO](?=0)|(?<=0)[oO]/g, '0').toUpperCase().replace(/NVME/, 'NVMe').replace(/^I([3579]-)/, 'i$1') : w;
   function qcGuess(o, t) { if (!o || o.brand) return; for (const [re, b] of QC_BYNAME) if (re.test(t)) { o.brand = b; return; } }
   function qcParse(text) {
     QC_KO.forEach(([re, en]) => { text = text.replace(re, en); });
@@ -18827,27 +18827,44 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const brandOf = t => { const L = (t.match(/[\[(]([A-Za-z][A-Za-z0-9 .&-]{1,14})[\])]/g) || []).map(x => x.slice(1, -1).trim()).filter(x => /^[A-Za-z]{2}/.test(x) && !/^(CPU|SSD|HDD)$/i.test(x) && !/GB|TB|\dW$/i.test(x)); for (const x of L) { const b = qcBrand(x); if (b) return b; } return ''; };
     const cap = t => { t = t.replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = t.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; };
     const out = { order: (text.match(/\b2\d{7}\b/) || [''])[0] };
+    // v31.17 : 사양변경 — ⓟ 줄 = 끝에 [세트 상품코드]가 붙은 줄 · -1개 = 빠짐 · 1개 = 추가/교체
+    const items = [];
     for (const bl of blocks) {
-      const t = bl.join(' ').replace(/\s+/g, ' ');
-      if (/PICK|PC_R|_R\d{3}/i.test(t)) continue;
+      const t0 = bl.join(' ').replace(/\s+/g, ' ');
+      if (/PICK|PC_R|_R\d{3}/i.test(t0)) continue;
+      const refm = t0.match(/\[\s*(\d[\d ]{5,9}\d)\s*\]/), ref = refm && /^\d{6,7}$/.test(refm[1].replace(/\D/g, '')) ? refm[1].replace(/\D/g, '') : '';
+      const t = ref ? t0.replace(refm[0], ' ') : t0, neg = /(?:^|\s)[-−–~]\s*1\s*개|[ⓟ®Pp]\s*[-−–~]\s*\d/.test(t0);
+      const code = (t.match(/(?:^|\s)\d{6,7}(?=\s|$)/g) || []).map(x => x.trim()).pop() || '';
+      let k = '', o = null;
       const br = brandOf(t), W = t.split(' ');
-      if (!out.mem && /DDR[45]/i.test(t)) {
+      if (/DDR[45]/i.test(t) && !(/\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/PC[45]-|\d\s?GB/i.test(t))) {
         const ddr = (t.match(/DDR[45]/i) || [''])[0].toUpperCase(), pc = t.match(/PC[45]-(\d{5})/i), sp = pc ? Math.round(+pc[1] / 8) : ((t.match(/\((\d{4})/) || [])[1] || '');
-        out.mem = { brand: br, name: [ddr + (sp ? '-' + sp : ''), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 }; qcGuess(out.mem, t);
-      } else if (/DDR[45]/i.test(t) && out.mem) out.mem.n++;
-      else if (!out.ssd && /NVMe|M\.2\b|\[SS[DP]\]|SATA/i.test(t)) {
+        k = 'mem'; o = { brand: br, name: [ddr + (sp ? '-' + sp : ''), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 }; qcGuess(o, t);
+      } else if (/NVMe|M\.2\b|\[SS[DP]\]|SATA/i.test(t)) {
         const i = W.findIndex(w => w.includes(br) && br), j = W.findIndex(w => /NVMe|SATA/i.test(w));
-        out.ssd = { brand: br, name: [W.slice(i + 1, j >= 0 ? j + 1 : i + 5).filter(w => /^[A-Za-z0-9.+\-]{2,}$/.test(w) && !/^\d+\.$|^\d{6,}$/.test(w)).map(qcFixTok).join(' '), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 }; qcGuess(out.ssd, t);
-      } else if (/NVMe|M\.2\b|\[SS[DP]\]/i.test(t) && out.ssd) out.ssd.n++;
-      else if (!out.cpu && (/\[c?pu\]|ryzen|라이젠|core\s?i\d|코어\s?i|ultra\s?\d|울트라/i.test(t) || /\[(AMD|Intel)\]/i.test(t) && /\b\d{4,5}(X3D|[A-Z]{0,2})\b/.test(t)) && !/RTX|DDR|CV-\d|^\S*\s*\[?쿨러|\/\s?\d{4}\s?Ti|PC\]/i.test(t)) {
+        k = 'ssd'; o = { brand: br, name: [W.slice(i + 1, j >= 0 ? j + 1 : i + 5).filter(w => /^[A-Za-z0-9.+\-]{2,}$/.test(w) && !/^\d+\.$|^\d{6,}$/.test(w)).map(qcFixTok).join(' '), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 }; qcGuess(o, t);
+      } else if ((/\[c?pu\]|ryzen|라이젠|core\s?i\d|코어\s?i|ultra\s?\d|울트라/i.test(t) || /\[(AMD|Intel)\]/i.test(t) && /\b\d{4,5}(X3D|[A-Z]{0,2})\b/.test(t)) && !/RTX|DDR|CV-\d|^\S*\s*\[?쿨러|\/\s?\d{4}\s?Ti|PC\]/i.test(t)) {
         const m = t.match(/\bi[3579]-\d{4,5}[A-Z]{0,2}\b|Ultra\s?[3579]\s?\d{3}[A-Z]{0,2}|\b\d{4,5}X3D\b|\b\d{4,5}[A-Z]{0,2}\b(?!\s*[\d,])/i);
-        out.cpu = { brand: br, name: m ? qcFixTok(m[0]) : '' }; qcGuess(out.cpu, t);
-      } else if (!out.mb && /\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/RTX|DDR|NVMe/i.test(t)) {
-        const i = W.findIndex(w => /^[ABZHXW]\d{3}[ME]?$/.test(w)), name = [W[i]];
+        k = 'cpu'; o = { brand: br, name: m ? qcFixTok(m[0]) : '' }; qcGuess(o, t);
+      } else if (/\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/RTX|NVMe|PC[45]-|\d\s?GB/i.test(t)) {
+        const i = W.findIndex(w => /^[ABZHXW]\d{3}[ME]?(-[A-Z0-9]{1,4})?$/.test(w)), name = [W[i]];
         for (let k = i + 1; k < W.length && name.length < 4; k++) { let w = W[k].replace(/^Gen[b5S]*5?$/, 'Gen5'); if (/^[A-Z0-9][A-Za-z0-9+\-]{1,11}$/.test(w) && (/\d|-/.test(w) || QC_MBW.test(w))) name.push(w); else break; }
-        out.mb = { brand: br, name: name.join(' ') }; qcGuess(out.mb, t);
+        k = 'mb'; o = { brand: br, name: name.join(' ') }; qcGuess(o, t);
       }
+      if (k) items.push({ k, o, ref, neg, code });
     }
+    const lab = o => [o.brand, o.name].filter(Boolean).join(' ');
+    ['cpu', 'mb', 'mem', 'ssd'].forEach(k => {
+      const L = [], notes = [];
+      items.filter(x => x.k === k && !x.ref).forEach(x => { const y = L.find(z => x.code && z.code === x.code); if (y) y.o.n = (y.o.n || 1) + 1; else L.push({ code: x.code, o: x.o }); });
+      items.filter(x => x.k === k && x.ref).forEach(x => {
+        if (x.neg) { let j = L.findIndex(z => x.code && z.code === x.code); if (j < 0) j = L.findIndex(z => !z.o.chg); if (j >= 0) { const z = L[j]; notes.push('빠짐 ' + lab(z.o)); if ((z.o.n || 1) > 1) z.o.n--; else L.splice(j, 1); } }
+        else { const y = L.find(z => x.code && z.code === x.code); if (y) { y.o.n = (y.o.n || 1) + 1; y.o.chg = '추가 +1 (총 ' + y.o.n + '개)'; } else { x.o.chg = '변경된 부품'; L.unshift({ code: x.code, o: x.o }); } }
+      });
+      if (!L.length) return;
+      out[k] = L[0].o; if (notes.length) out[k].chg = [out[k].chg, notes.join(' · ')].filter(Boolean).join(' · ');
+      if (L.length > 1) out[k].extra = L.slice(1).map(z => lab(z.o) + ((z.o.n || 1) > 1 ? ' ×' + z.o.n : ''));
+    });
     return out;
   }
   // v30.98 : 한 부품 줄만 가까이 찍은 사진 → 그 부품 값
@@ -18895,7 +18912,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <div class="kv"><span class="k">조 립 자 :</span><span class="v who">${whoV}</span></div>${V.who ? `<div class="kv s"><span class="k"></span><span class="qc-src ok">${V.who.auto ? '업무데이터에서 찾음 ✓' : '직접 선택 ✓'}</span></div>` : ''}
         </div>${whoBox}${block}</div>
         <div class="pxcard"><div class="qc-lb">② 검수 체크 <small>CMOS와 같으면 체크</small><span class="r"><small>${ok}/4</small></span></div>
-        ${QC_ROWS.map(([k, t]) => { const x = P[k] || {}, wn = warn(k), ed = V.edit === k; return `<div class="qc-ck ${R[k] ? 'ok' : ''}${wn ? ' bad' : ''}"><span class="i"><span class="l1"><span class="c">${t}</span><span class="b">${esc(x.brand || '제조사 ?')}</span><span class="q">× ${k === 'mem' || k === 'ssd' ? (x.n || 1) : 1}</span></span><span class="m" title="${esc(x.name || '')}">${esc(x.name || '제품명 ?')}</span>${wn ? `<em>${esc(wn)}</em>` : ''}${V.lineBusy === k ? '<span class="qc-busy">📷 이 줄 읽는 중…</span>' : wn && !ed ? `<span class="qc-fix"><label class="qc-fb">📷 이 줄 다시 찍기<input type="file" accept="image/*" capture="environment" data-qr="${k}" hidden></label><button type="button" class="qc-fb" data-qe="${k}">✎ 직접 입력</button></span>` : ''}${ed ? `<span class="qc-ed"><span class="r1"><input data-eb value="${esc(x.brand || '')}" placeholder="제조사"><input data-ec type="number" min="1" value="${x.n || 1}" ${k === 'mem' || k === 'ssd' ? '' : 'disabled'} title="수량"></span><input data-en value="${esc(x.name || '')}" placeholder="제품명 · 용량 (예: Optimus 5100 500GB)"><span class="r2"><button type="button" class="qc-fb" data-qx>취소</button><button type="button" class="qc-fb on" data-qs="${k}">적용</button></span></span>` : ''}</span><button type="button" class="qc-ok" data-qk="${k}">${R[k] ? '확인 ✓' : '확인'}</button></div>`; }).join('')}
+        ${QC_ROWS.map(([k, t]) => { const x = P[k] || {}, wn = warn(k), ed = V.edit === k; return `<div class="qc-ck ${R[k] ? 'ok' : ''}${wn ? ' bad' : ''}${x.chg || (x.extra && x.extra.length) ? ' chg' : ''}"><span class="i"><span class="l1"><span class="c">${t}</span><span class="b">${esc(x.brand || '제조사 ?')}</span><span class="q">× ${k === 'mem' || k === 'ssd' ? (x.n || 1) : 1}</span></span><span class="m" title="${esc(x.name || '')}">${esc(x.name || '제품명 ?')}</span>${x.chg ? `<span class="qc-chg2"><b>사양변경</b>${esc(x.chg)}</span>` : ''}${x.extra && x.extra.length ? `<span class="qc-chg2 ex"><b>추가 부품</b>${esc(x.extra.join(', '))}</span>` : ''}${wn ? `<em>${esc(wn)}</em>` : ''}${V.lineBusy === k ? '<span class="qc-busy">📷 이 줄 읽는 중…</span>' : wn && !ed ? `<span class="qc-fix"><label class="qc-fb">📷 이 줄 다시 찍기<input type="file" accept="image/*" capture="environment" data-qr="${k}" hidden></label><button type="button" class="qc-fb" data-qe="${k}">✎ 직접 입력</button></span>` : ''}${ed ? `<span class="qc-ed"><span class="r1"><input data-eb value="${esc(x.brand || '')}" placeholder="제조사"><input data-ec type="number" min="1" value="${x.n || 1}" ${k === 'mem' || k === 'ssd' ? '' : 'disabled'} title="수량"></span><input data-en value="${esc(x.name || '')}" placeholder="제품명 · 용량 (예: Optimus 5100 500GB)"><span class="r2"><button type="button" class="qc-fb" data-qx>취소</button><button type="button" class="qc-fb on" data-qs="${k}">적용</button></span></span>` : ''}</span><button type="button" class="qc-ok" data-qk="${k}">${R[k] ? '확인 ✓' : '확인'}</button></div>`; }).join('')}
         <div class="qc-tools"><button type="button" id="qcre">📷 주문서 전체 다시 찍기</button></div></div>
         </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 4 || !V.who || V.self || V.other && !V.who || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>체크 ${ok}/4${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 저장</b></button></div></div>`;
     }
@@ -18942,7 +18959,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       V.lineBusy = ''; if (S.view === 'qc') renderQc(); });
     if ($('#qcs')) $('#qcs').onclick = async () => {
       if (S.mpv || S.pv) return toast('미리보기에서는 저장되지 않습니다', true);
-      const items = QC_ROWS.map(([k, t]) => ({ k, t, v: V.P[k] ? [V.P[k].brand, V.P[k].name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (V.P[k].n || 1) : '') : '' }));
+      const items = QC_ROWS.map(([k, t]) => ({ k, t, v: V.P[k] ? [V.P[k].brand, V.P[k].name].filter(Boolean).join(' ') + ((k === 'mem' || k === 'ssd') ? ' × ' + (V.P[k].n || 1) : '') + (V.P[k].chg ? ' [사양변경: ' + V.P[k].chg + ']' : '') + (V.P[k].extra && V.P[k].extra.length ? ' [추가: ' + V.P[k].extra.join(', ') + ']' : '') : '' }));
       const btn = $('#qcs'); btn.disabled = true;
       try { await api('qc', { op: 'save', order: V.order, assembler: V.who.id, items }); V.hist = [{ order: V.order, who: V.who.name, by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
     };
@@ -19068,7 +19085,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function qcMerge(A, B) {   // A(Paddle) 우선 · 빈 칸만 B(Tesseract)
     const out = { order: A.order || B.order };
     QC_ROWS.forEach(([k]) => { const a = A[k], b = B[k]; if (!a && !b) return; if (!a) { out[k] = b; return; } if (!b) { out[k] = a; return; }
-      const o = { brand: a.brand || b.brand, name: a.name || b.name, cap: a.cap || b.cap, n: a.n || b.n || 1 }; if (o.cap && o.name && !o.name.toUpperCase().includes(o.cap)) o.name += ' ' + o.cap; out[k] = o; });
+      const o = { brand: a.brand || b.brand, name: a.name || b.name, cap: a.cap || b.cap, n: a.n || b.n || 1, chg: a.chg || b.chg, extra: a.extra || b.extra }; if (o.cap && o.name && !o.name.toUpperCase().includes(o.cap)) o.name += ' ' + o.cap; out[k] = o; });
     return out;
   }
   // v31.14 : 문서 스캔처럼 — 종이 테두리 찾아 반듯하게 펴고, 그림자 지우고 글씨 진하게 (사진은 저장 안 함 · 실패하면 원본 그대로)
@@ -22037,6 +22054,12 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 #loHubRaw{margin:0;padding:6px 8px;background:#0f172a;color:#a7f3d0;border-radius:8px;font-size:12px;min-height:40px;max-height:140px;overflow:auto;white-space:pre}
 .lo-hubmap td{padding:5px 8px}.lo-hubmap select{width:100%}
 .lo-hublog ul{max-height:200px;overflow:auto;margin:6px 0 0;padding-left:18px;font-size:12.5px}
+</style>
+<style id="v3117-qc">
+.pmx .qc-chg2{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;font-size:12.5px;font-weight:600;color:#9a3412}
+.pmx .qc-chg2 b{font-size:11.5px;font-weight:800;color:#fff;background:#ea580c;border-radius:6px;padding:2px 7px}
+.pmx .qc-chg2.ex b{background:#7c3aed}.pmx .qc-chg2.ex{color:#5b21b6}
+.pmx .qc-ck.chg{box-shadow:inset 3px 0 0 #ea580c}
 </style>
 </body>
 </html>
