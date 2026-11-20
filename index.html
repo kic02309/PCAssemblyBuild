@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.18';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.19';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18823,7 +18823,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     text = text.replace(/(\d)\s*([GT])\s*\]?\s*(?:\d{6,7})?\s*\n\s*(?:\d+\s*개\s*)?\[?\s*B\b/gi, '$1$2B');   // [1T ↵ B] → 1TB
     const L = text.split('\n').map(x => x.trim()).filter(Boolean), blocks = []; let cur = null;
     const START = /[\[(]?[^\])\[(\s]{1,14}[\])]+\s*[\[(][^\])\[(]{1,14}[\])]/, CONT = /^[^\[(]*[\[(]?\s*\d+\s?(W|GB|TB)\s*[\])]/i;
-    for (const ln of L) { if (START.test(ln) && !CONT.test(ln)) { cur = [ln]; blocks.push(cur); } else if (cur && cur.length < 3) cur.push(ln); }
+    const START2 = /\[(AMD|INTEL)\]|(?:CPU|메인보드|메모리|SSD|그래픽카드|쿨러|케이스|파워|조립비|운영체제|조립PC)\s*[\])]/i;   // v31.19 : 괄호가 깨져도 새 줄로
+    for (const ln of L) { if ((START.test(ln) || START2.test(ln)) && !CONT.test(ln)) { cur = [ln]; blocks.push(cur); } else if (cur && cur.length < 3) cur.push(ln); }
+    const isPkg = t => /조립\s?PC|PC_[A-Z]?\d|PICK|_R\d{3}/i.test(t);
+    const PKG = new Set(); blocks.forEach(bl => { const t = bl.join(' '); if (isPkg(t)) (t.match(/\d{6,7}/g) || []).forEach(c => PKG.add(c.slice(-6))); });   // 세트(PC) 상품코드 (앞자리가 잘려도 뒤 6자리)
     const brandOf = t => { const L = (t.match(/[\[(]([A-Za-z][A-Za-z0-9 .&-]{1,14})[\])]/g) || []).map(x => x.slice(1, -1).trim()).filter(x => /^[A-Za-z]{2}/.test(x) && !/^(CPU|SSD|HDD)$/i.test(x) && !/GB|TB|\dW$/i.test(x)); for (const x of L) { const b = qcBrand(x); if (b) return b; } return ''; };
     const cap = t => { t = t.replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = t.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; };
     const out = { order: (text.match(/\b2\d{7}\b/) || [''])[0] };
@@ -18831,9 +18834,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const items = [];
     for (const bl of blocks) {
       const t0 = bl.join(' ').replace(/\s+/g, ' ');
-      if (/PICK|PC_R|_R\d{3}/i.test(t0)) continue;
-      const refm = t0.match(/\[\s*(\d[\d ]{5,9}\d)\s*\]/), ref = refm && /^\d{6,7}$/.test(refm[1].replace(/\D/g, '')) ? refm[1].replace(/\D/g, '') : '';
-      const t = ref ? t0.replace(refm[0], ' ') : t0, neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test(t0);
+      if (isPkg(t0)) continue;
+      const refm = t0.match(/\[\s*(\d[\d ]{5,9}\d)\s*\]/); let ref = refm && /^\d{6,7}$/.test(refm[1].replace(/\D/g, '')) ? refm[1].replace(/\D/g, '') : '';
+      let t = ref ? t0.replace(refm[0], ' ') : t0; if (!ref) for (const c of PKG) if (t0.includes(c)) { ref = c; t = t.split(c).join(' '); break; }   // ⓟ 줄 = 세트 상품코드가 같이 적힌 줄 (괄호가 깨져도)
+      const neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test(t0);
       const code = (t.match(/(?:^|\s)\d{6,7}(?=\s|$)/g) || []).map(x => x.trim()).pop() || '';
       let k = '', o = null;
       const br = brandOf(t), W = t.split(' ');
@@ -18856,7 +18860,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const lab = o => [o.brand, o.name].filter(Boolean).join(' ');
     ['cpu', 'mb', 'mem', 'ssd'].forEach(k => {
       const L = [], notes = [];
-      items.filter(x => x.k === k && !x.ref).forEach(x => { const y = L.find(z => x.code && z.code === x.code); if (y) y.o.n = (y.o.n || 1) + 1; else L.push({ code: x.code, o: x.o }); });
+      items.filter(x => x.k === k && !x.ref).forEach(x => { if (k !== 'mem' && L.some(z => lab(z.o) === lab(x.o))) { x.ref = 'dup'; x.neg = true; return; } const y = L.find(z => x.code && z.code === x.code); if (y) y.o.n = (y.o.n || 1) + 1; else L.push({ code: x.code, o: x.o }); });
       const pr = items.filter(x => x.k === k && x.ref && !x.neg);   // -1개를 못 읽었어도 : 원래 부품과 같은 이름 + 다른 변경 부품이 있으면 = 빠지는 줄
       pr.forEach(x => { if (L.some(z => lab(z.o) === lab(x.o)) && pr.some(y => y !== x && lab(y.o) !== lab(x.o))) x.neg = true; });
       items.filter(x => x.k === k && x.ref).forEach(x => {
@@ -19056,7 +19060,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     await qcZx();
     if (window.__ZX && window.__ZX.wasm && !qcBar.ov) { qcBar.ov = 1; ZXingWASM.setZXingModuleOverrides({ locateFile: (p, pre) => p.endsWith('.wasm') ? window.__ZX.wasm : pre + p }); }
     const R = await ZXingWASM.readBarcodes(file, { formats: ['EAN-13', 'EAN-8', 'Code128', 'Code39', 'ITF', 'UPC-A'], tryHarder: true, maxNumberOfSymbols: 4 });
-    for (const r of R || []) { const t = String(r.text || '').replace(/\D/g, ''), m = t.match(/2\d{7}/) || t.match(/1\d{8}/); if (m) return m[0]; }
+    for (const r of R || []) { const t = String(r.text || '').replace(/\D/g, ''), m = t.match(/^1(2\d{7})\d{4}$/) || t.match(/^2(1\d{8})\d{3}$/) || t.match(/^(2\d{7})$/) || t.match(/^(1\d{8})$/); if (m) return m[1]; }   // v31.19 : 형식이 맞는 바코드만 (잘못 읽은 바코드 버림)
     return '';
   }
   // v30.99 : 글자 인식 2개 — PaddleOCR(정확 · 한국어 모델) 먼저, 빈 칸만 Tesseract로 채움
