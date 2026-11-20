@@ -307,6 +307,7 @@ table.bd tfoot td{position:sticky;bottom:0;background:#e9edf2;font-weight:700;bo
 table.bd tfoot .bn{z-index:3;background:#dfe5ec}
 details.pp{margin-top:12px}details.pp>summary{cursor:pointer;font-size:15px;font-weight:700;padding:8px 2px;list-style:revert}details.pp>.card{margin-top:6px}
 .modal.wide{width:min(900px,94vw)}
+.modal.lo-mon-modal{width:min(720px,96vw)}.lo-mon-list{display:flex;flex-direction:column;gap:8px}.lo-mon-row{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.lo-mon-no{width:36px;height:36px;border-radius:50%;background:#1e3a64;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800}.lo-mon-info small{display:block;color:var(--sub);font-size:12px}.lo-mon-badge{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:99999;background:rgba(15,35,64,.92);color:#fff;border-radius:24px;padding:28px 56px;text-align:center;pointer-events:none;font-weight:800}.lo-mon-badge b{display:block;font-size:120px;line-height:1}.lo-mon-badge span{font-size:26px}
 .modal.loq-modal{width:min(760px,96vw);max-height:calc(100dvh - 32px);overflow:auto}.loq-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.loq-top h3{margin:0}.loq-top button{font-size:13px}.loq-seg{display:grid;grid-template-columns:1fr 1fr;margin:12px 0 4px;border:1px solid var(--line);border-radius:9px;overflow:hidden}.loq-seg button{border:0;border-radius:0;padding:9px;font-weight:700;background:transparent}.loq-seg button[aria-pressed=true]{background:#1e3a64;color:#fff}.loq-pickline{display:flex;align-items:center;gap:8px;margin:8px 0 0}.loq-pickline select{width:auto}.loq-line{border:1px solid var(--line);border-radius:11px;padding:10px 14px;margin-top:10px;background:var(--card,#fff)}.loq-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.loq-hd b{font-size:16px}.loq-tg{font-size:12px;padding:2px 8px;border-radius:6px;background:#e6f1fb;color:#0c447c;font-weight:700}.loq-r{display:grid;grid-template-columns:80px minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.loq-l{color:var(--sub);font-size:13px}.loq-r select{width:100%}.loq-r input[type=number]{width:90px}.loq-sub{display:block;color:var(--sub);font-size:12px;margin-top:3px}.loq-ok{color:#11643d}.loq-bad{color:#b42318}.loq-seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;padding:8px 0;border-top:1px solid var(--line)}.loq-seats>div{display:flex;flex-direction:column;gap:4px;font-size:13px}.loq-seats label{font-size:12px;color:var(--sub)}.loq-ready{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;font-weight:700}.loq-msg{margin:12px 0 0;font-size:13px;color:var(--sub)}.loq-msg.loq-bad{color:#b42318}.modal.md{width:min(480px,94vw)}.modal .acts button{white-space:nowrap}
 table.imp td{padding:5px 10px}table.imp input[type=date]{padding:3px 5px}
 .ist.ok{color:var(--green);font-weight:700}.ist.warn{color:#a15c00;font-weight:700}.ist.bad{color:var(--red);font-weight:700}
@@ -8660,7 +8661,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.61';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.62';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16290,6 +16291,17 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const canLine = () => canProd() || !!S.loCan;
   const loId = () => 'lo_' + (globalThis.crypto?.randomUUID?.() || (Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));
   const LO_TERMINAL_OPS = new Set(['can','get','probe','watch','complete','terminalBind','terminalUnbind']);
+  const loMonSeat = (() => {   // v31.62 : 화면 뿌리기로 열린 모니터 창 — #loMon=자리ID
+    try {
+      const h=new URLSearchParams(location.hash.slice(1)),id=h.get('loMon');
+      if(id&&/^[A-Za-z0-9_-]{1,64}$/.test(id)){
+        sessionStorage.setItem('lineWorkSeat',JSON.stringify({id,mode:'work'}));sessionStorage.setItem('lastView','line');
+        sessionStorage.setItem('loMonSeat',id);sessionStorage.setItem('loMonN',h.get('loMonN')||'');
+        history.replaceState(history.state,'',location.pathname+location.search);
+      }
+      return sessionStorage.getItem('loMonSeat')||'';
+    }catch(e){return '';}
+  })();
   const loCentralSession = (() => {
     const valid=info=>info&&(info.overview===true||(/^[A-Za-z0-9_-]{1,64}$/.test(info.id||'')&&
       Number.isInteger(info.port)&&info.port>0&&info.port<=65535&&/^[a-f0-9]{64}$/.test(info.key||'')));
@@ -16624,6 +16636,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       try{remembered=JSON.parse(raw);}catch(e){remembered={id:raw,mode:'view'};}
       const st=LO.data?.stations.find(x=>x.id===remembered?.id);
       if(st)loOpen(st.id,remembered.mode==='work'&&st.canComplete?'work':'view',false);
+      if(loMonSeat&&!LO.monShown){LO.monShown=true;   // v31.62 : 모니터 창 — 큰 번호로 어느 모니터인지 표시 · 한 번 클릭하면 전체화면
+        const n=sessionStorage.getItem('loMonN')||'',ms=LO.data?.stations.find(x=>x.id===loMonSeat);
+        document.title=`모니터 ${n} · ${loMonSeat}`;
+        const bd=document.createElement('div');bd.className='lo-mon-badge';bd.innerHTML=`<b>${esc(n)}</b><span>${ms?esc(loMonSeat+' · '+loLineName(ms.line)+' '+(+ms.stage+1)+'공정'+(ms.assignedName?' · '+ms.assignedName:'')):esc(loMonSeat)+' · 자리 없음 — 화면 뿌리기에서 다시 배정하세요'}</span>`;
+        document.body.appendChild(bd);setTimeout(()=>bd.remove(),7000);
+        document.addEventListener('pointerdown',()=>{if(!document.fullscreenElement)(document.getElementById('loWork')||document.documentElement).requestFullscreen?.().catch(()=>{});},{once:true});
+      }
       loWatch(epoch);
       hubAuto();   // v31.15 : 중앙 실행기 대신 버튼 직접 연결
     }
@@ -17328,6 +17347,45 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const HUB = { port: null, reader: null, on: false, stop: false, last: {}, q: [], busy: false, log: [], test: true, cnt: {}, raw: [] };
   try { HUB.test = localStorage.getItem('loHubTest') !== '0'; } catch (e) { }   // v31.61 : 테스트/운영 모드도 이 PC에 기억
   const hubOk = () => !!(navigator.serial && window.isSecureContext);
+  // v31.62 : 화면 뿌리기 — 연결된 모니터를 읽어 모니터마다 자리 작업 화면 창을 띄움 (이 PC에 배정 저장)
+  const LO_MON={wins:{}};
+  function loMonMap(){try{return JSON.parse(localStorage.getItem('loMonMap')||'{}')||{};}catch(e){return {};}}
+  function loMonStations(r){const ord=(r?.cfg?.lines||[]).map(l=>l.id);return [...(r?.stations||[])].sort((a,b)=>(ord.indexOf(a.line)-ord.indexOf(b.line))||(+a.stage-+b.stage)||String(a.id).localeCompare(String(b.id)));}
+  function loMonOpenOne(s,seat,n){
+    const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+n;
+    const w=window.open(url,'loMon'+n,`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);
+    if(w){LO_MON.wins[n]=w;try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}}
+    return !!w;
+  }
+  async function loMonitors(){
+    const r=LO.data;if(!r?.manage)return;
+    if(!('getScreenDetails' in window))return toast('이 브라우저는 여러 모니터 창 배치를 지원하지 않습니다. 크롬 또는 엣지 최신 버전을 사용하세요.',true);
+    let sd;
+    try{sd=await window.getScreenDetails();}catch(e){return toast('[창 관리] 권한을 허용해야 모니터를 읽을 수 있습니다. 주소창 왼쪽 자물쇠 → 사이트 설정 → 창 관리 → 허용',true);}
+    const screens=[...sd.screens].sort((a,b)=>(a.top-b.top)||(a.left-b.left));
+    const sts=loMonStations(r),map=loMonMap();
+    const seatName=st=>`${st.id} · ${loLineName(st.line)} ${+st.stage+1}공정${st.assignedName?' · '+st.assignedName:''}`;
+    const opts=cur=>'<option value="">사용 안 함</option>'+sts.map(st=>`<option value="${esc(st.id)}" ${st.id===cur?'selected':''}>${esc(seatName(st))}</option>`).join('');
+    modal(`<h3>🖥 화면 뿌리기</h3>
+      <p class="muted" style="margin:4px 0 10px">이 PC에 연결된 모니터 <b>${screens.length}대</b>를 찾았습니다. 모니터마다 띄울 자리를 고르고 [화면 열기]를 누르세요. 배정은 <b>이 PC에만</b> 저장됩니다.<br>처음엔 [화면 열기] 후 각 모니터에 뜨는 <b>큰 번호</b>를 보고 자리를 맞추면 됩니다.</p>
+      <div class="lo-mon-list">${screens.map((s,i)=>`<label class="lo-mon-row"><span class="lo-mon-no">${i+1}</span><span class="lo-mon-info">${s.isPrimary?'<b>주 모니터</b> · ':''}${esc(s.label||'모니터')}<small>위치 ${s.left}, ${s.top} · ${s.width}×${s.height}</small></span><select data-lo-mon="${i+1}">${opts(map[i+1]??(s===sd.currentScreen?'':(sts[i-(screens.indexOf(sd.currentScreen)>=0&&screens.indexOf(sd.currentScreen)<i?1:0)]?.id||'')))}</select></label>`).join('')}</div>
+      <p id="loMonMsg" class="lo-error" role="status"></p>
+      <div class="acts"><button data-c style="margin-right:auto">닫기</button><button data-mx>열린 창 모두 닫기</button><button data-ms>배정 저장</button><button class="primary" data-mo>화면 열기</button></div>`,(bg,close)=>{
+      $('[data-c]',bg).onclick=close;
+      const collect=()=>{const o={};$$('[data-lo-mon]',bg).forEach(x=>{o[x.dataset.loMon]=x.value;});try{localStorage.setItem('loMonMap',JSON.stringify(o));}catch(e){}return o;};
+      $('[data-ms]',bg).onclick=()=>{collect();toast('모니터 배정을 저장했습니다 (이 PC)');};
+      $('[data-mx]',bg).onclick=()=>{Object.values(LO_MON.wins).forEach(w=>{try{w.close();}catch(e){}});LO_MON.wins={};toast('열린 작업 화면 창을 닫았습니다');};
+      $('[data-mo]',bg).onclick=()=>{
+        const o=collect(),fail=[];
+        screens.forEach((s,i)=>{const seat=o[i+1];if(seat&&!loMonOpenOne(s,seat,i+1))fail.push(i+1);});
+        if(!Object.values(o).some(Boolean))return toast('띄울 자리를 하나 이상 고르세요',true);
+        if(fail.length){
+          $('#loMonMsg',bg).innerHTML=`브라우저가 창 ${fail.length}개를 막았습니다. 주소창 오른쪽 <b>팝업 차단 표시 → 항상 허용</b> 후 다시 누르거나, 아래 버튼으로 하나씩 여세요.<br>${fail.map(n=>`<button type="button" data-mone="${n}">모니터 ${n} 열기</button>`).join(' ')}`;
+          $$('[data-mone]',bg).forEach(b=>b.onclick=()=>{const n=+b.dataset.mone;if(loMonOpenOne(screens[n-1],o[n],n))b.remove();});
+        } else {close();toast(`모니터 ${Object.values(o).filter(Boolean).length}대에 작업 화면을 열었습니다`);}
+      };
+    },'lo-mon-modal');
+  }
   function hubDefaultMap(r) {
     const ord = (r?.cfg?.lines || []).map(l => l.id);
     const st = [...(r?.stations || [])].sort((a, b) => (ord.indexOf(a.line) - ord.indexOf(b.line)) || (+a.stage - +b.stage) || String(a.id).localeCompare(String(b.id)));
@@ -17389,7 +17447,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   async function hubClose() { HUB.stop = true; try { localStorage.removeItem('loHub'); } catch (e) { } try { await HUB.reader?.cancel(); } catch (e) { } }
   async function hubAuto() {   // 이 창에서 한 번 연결했으면 새로고침 · USB 다시 꽂을 때 자동으로 다시 연결
-    if (!hubOk() || HUB.on) return; let want = false; try { want = localStorage.getItem('loHub') === '1' || sessionStorage.getItem('loHub') === '1'; } catch (e) { } if (!want) return;
+    if (!hubOk() || HUB.on || loMonSeat) return; let want = false; try { want = localStorage.getItem('loHub') === '1' || sessionStorage.getItem('loHub') === '1'; } catch (e) { } if (!want) return;
     try { const ps = await navigator.serial.getPorts(); if (ps[0]) { await hubOpen(ps[0]); toast('버튼(아두이노) 자동 연결됨 · ' + (HUB.test ? '테스트 모드 (완료 안 됨)' : '운영 모드'), HUB.test); } } catch (e) { console.warn('hub auto', e); }
   }
   if (navigator.serial) navigator.serial.addEventListener('connect', () => setTimeout(hubAuto, 1500));
@@ -17425,13 +17483,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const plan=isReady?0:selected?.q||0,done=isReady?0:selected?.final||0;
     const openProgress=new Set($$('.lo-batch-all[open]').map(el=>el.dataset.loProgress));
     const openIdle=new Set($$('.lo-line-idle[open]').map(el=>el.dataset.loIdle));
-    $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>${r.manage?'<button type="button" id="loHub">🔌 버튼 연결</button><span id="loHubSt" class="lo-hub-st"></span>':''}`)+`<div class="pgb lo-board">
+    $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>${r.manage?'<button type="button" id="loHub">🔌 버튼 연결</button><span id="loHubSt" class="lo-hub-st"></span><button type="button" id="loMonBtn">🖥 화면 뿌리기</button>':''}`)+`<div class="pgb lo-board">
     <div class="lo-banner"><div class="lo-banner-main">${selected?`<div class="lo-picked-work"><span>선택 작업 · ${esc(loLineName(selected.line))} · ${isReady?'시작 대기':selected.final>=selected.q?'작업 완료':selected.paused_at?'일시정지':'진행 중'}</span><strong>${esc(selected.snapshot?.model||selected.model||'—')}</strong><span>제조번호 ${esc(selected.snapshot?.no||selected.no||'—')} · ${selected.q}대</span></div>`:''}${r.manage?`<div class="lo-prepared lo-banner-prepared">${prepared.length?prepared.map(p=>`<div><b class="lo-status-badge ready">준비 완료 · 시작 대기</b> ${esc(p.request.date)} · ${esc(p.label)} · ${esc(loLineName(p.line))} · ${p.request.q}대 ${loStartButton(p)} <button data-lo-edit-prepared="${esc(p.id)}">준비 수정</button> <button data-lo-discard="${esc(p.id)}">준비 해제</button></div>`).join(''):'<span class="muted">상단 [작업준비]에서 새 제조건을 준비하세요.</span>'}</div>`:''}</div>${loAllButton(r)}${r.allPausedAt?'<strong class="lo-error">전체 멈춤</strong>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><span class="lo-connection-badge" data-lo-status></span></div>
     ${loBoardLines(r.cfg.lines,bs,openIdle,previews,selected)}
     <section class="card lo-batches"><h3>준비·배치 제조건</h3><div class="lo-scroll"><table class="list lo-batch-table"><colgroup><col><col><col><col><col><col><col>${showTools?'<col>':''}</colgroup><thead><tr><th>작업 순서</th><th>원본 일자</th><th>제조번호</th><th>모델명</th><th>라인 · 상태</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${showTools?'<th>배치 도구</th>':''}</tr></thead><tbody>${previews.map(p=>`<tr data-lo-select="${esc(p.id)}" tabindex="0" aria-selected="${p.id===LO.selectedBatch}"><td>${p.rank}</td><td>${esc(p.date)}</td><td><b>${esc(p.no)}</b></td><td>${esc(p.model||'—')}</td><td><b>${esc(loLineName(p.line))}</b><br><span class="lo-status-badge ready">준비 완료 · 시작 대기</span></td><td>준비 <b>${p.q}</b>대</td><td>작업 시작 대기</td>${showTools?'<td>—</td>':''}</tr>`).join('')}${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr data-lo-select="${esc(b.id)}" tabindex="0" aria-selected="${b.id===LO.selectedBatch}"><td>${b.rank}</td><td>${esc(b.d)}</td><td><b>${esc(b.snapshot.no)}</b></td><td>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td><b>${esc(loLineName(b.line))}</b> · ${esc(loSetName(b.set_data.name))}<br><span class="lo-status-badge ${b.final>=b.q?'done':b.paused_at?'paused':'running'}">${b.final>=b.q?'작업 완료':b.paused_at?'일시정지':'진행 중'}</span></td><td><div class="lo-count-pills"><span>계획 <b>${b.q}</b></span><span>완료 <b>${b.final}</b></span><span>미완료 <b>${b.q-b.final}</b></span></div></td><td class="lo-batch-progress">${loBatchProgress(b,openProgress.has(b.id))}</td>${showTools?`<td>${loBatchTools(r,b)}</td>`:''}</tr>`) .join('')||(previews.length?'':`<tr><td colspan="${showTools?8:7}">준비하거나 배치한 제조건이 없습니다.</td></tr>`)}</tbody></table></div></section>
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
     $('#loDate').onchange=async e=>{LO.date=e.target.value;await loRefresh(LO.epoch,true);};$('#loReload').onclick=()=>loRefresh(LO.epoch,true);
     if($('#loHub')){$('#loHub').onclick=hubModal;hubPaint();}
+    if($('#loMonBtn'))$('#loMonBtn').onclick=loMonitors;
     const expected=loCentralSession?.id;
     if(expected&&r.admin&&r.terminalStation!==expected&&r.stations.some(st=>st.id===expected)){
       const button=document.createElement('button');
@@ -21317,7 +21376,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
-      if(loCentralSession&&canLine()&&!r.mustChange)v0='line';
+      if((loCentralSession||loMonSeat)&&canLine()&&!r.mustChange)v0='line';
       S.layout = null; shell(layoutOf(v0)); go(v0, { date: d0, _pop: true }); setTimeout(() => { if(S.me) void updateEduBadge(true); },900);
       setTimeout(() => { void bkRemind(); }, 2500);
       if(!S.pv&&!S.mpv)setTimeout(()=>void srPollNotices(),2000);
