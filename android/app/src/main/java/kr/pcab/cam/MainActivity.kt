@@ -14,6 +14,8 @@ import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Size
 import android.view.MotionEvent
+import android.view.OrientationEventListener
+import android.view.Surface
 import android.view.View
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
@@ -88,6 +90,18 @@ class MainActivity : AppCompatActivity() {
     private var provider: ProcessCameraProvider? = null
     private var camera: Camera? = null
     private var capture: ImageCapture? = null
+    private var analysisUse: ImageAnalysis? = null
+    @Volatile private var rot = Surface.ROTATION_0
+    // 화면은 세로 고정 · 휴대폰을 옆으로 눕혀 찍어도(CMOS 가로 모니터) 글자가 바로 서도록 인식 방향을 맞춤
+    private val orient by lazy {
+        object : OrientationEventListener(this) {
+            override fun onOrientationChanged(d: Int) {
+                if (d == ORIENTATION_UNKNOWN) return
+                val r = when (d) { in 45 until 135 -> Surface.ROTATION_270; in 135 until 225 -> Surface.ROTATION_180; in 225 until 315 -> Surface.ROTATION_90; else -> Surface.ROTATION_0 }
+                if (r != rot) { rot = r; analysisUse?.targetRotation = r; capture?.targetRotation = r }
+            }
+        }
+    }
     private val camExec: ExecutorService = Executors.newSingleThreadExecutor()
 
     private val textRec: TextRecognizer by lazy { TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build()) }
@@ -172,6 +186,9 @@ class MainActivity : AppCompatActivity() {
         web.saveState(outState)
     }
 
+    override fun onResume() { super.onResume(); if (orient.canDetectOrientation()) orient.enable() }
+    override fun onPause() { orient.disable(); super.onPause() }
+
     override fun onDestroy() {
         try { provider?.unbindAll() } catch (_: Exception) {}
         camExec.shutdown()
@@ -218,10 +235,12 @@ class MainActivity : AppCompatActivity() {
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                 analysis.setAnalyzer(camExec) { proxy -> analyze(proxy) }
+                analysis.targetRotation = rot; analysisUse = analysis
                 val cap = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
                     .setResolutionSelector(ResolutionSelector.Builder().setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY).build())
                     .build()
+                cap.targetRotation = rot
                 capture = cap
                 p.unbindAll()
                 camera = try {
