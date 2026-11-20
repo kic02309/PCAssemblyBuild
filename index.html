@@ -308,6 +308,8 @@ table.bd tfoot .bn{z-index:3;background:#dfe5ec}
 details.pp{margin-top:12px}details.pp>summary{cursor:pointer;font-size:15px;font-weight:700;padding:8px 2px;list-style:revert}details.pp>.card{margin-top:6px}
 .modal.wide{width:min(900px,94vw)}
 .lo-mon-easy{background:#eef5ff;border:1px solid #c7d8fb;border-radius:12px;padding:12px 14px;margin:6px 0 10px}.lo-mon-easy ol{margin:8px 0 0;padding-left:20px;line-height:1.8;font-size:14px}.lo-mon-easy small{color:var(--sub);font-size:12px}.lo-mon-manual summary{cursor:pointer;font-weight:700;margin:4px 0 8px}
+.lo-go-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.lo-go-row button{font-size:16px;font-weight:800;padding:10px 18px;border-radius:10px;border:0}.lo-go-scr{background:#fff;color:#1e3a64}.lo-go-start{background:#22c55e;color:#fff}.lo-go-start:disabled{opacity:.5}.lo-go-row small{color:#c9dcf6;font-size:12px}
+.lo-mon-prep{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99997;display:flex;align-items:center;gap:18px;background:rgba(20,83,45,.95);color:#fff;border:2px solid #4ade80;border-radius:16px;padding:12px 18px;font-size:16px;box-shadow:0 8px 24px rgba(0,0,0,.35)}.lo-mon-prep button{font-size:20px;font-weight:900;padding:12px 22px;border-radius:12px;border:0;background:#22c55e;color:#fff}.lo-mon-prep button:disabled{opacity:.5}
 .lo-snd-chip{position:fixed;left:10px;bottom:10px;z-index:99998;font-size:12px;padding:4px 10px;border-radius:14px;background:rgba(30,58,100,.75);color:#dbeafe;border:1px solid #3b5b8a;opacity:.55}.lo-snd-chip:hover{opacity:1}
 .lo-setwrap{position:relative;display:inline-flex}.lo-setpop{position:fixed;inset:auto;margin:0;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--card,#fff);box-shadow:0 8px 24px rgba(15,23,42,.14);min-width:250px}.lo-setpop button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;background:transparent;padding:9px 12px;border-radius:8px}.lo-setpop button:hover{background:#eef3fb}.lo-setpop b{font-size:14px}.lo-setpop small{font-size:12px;color:var(--sub);font-weight:500}
 .modal.lo-mon-modal{width:min(720px,96vw)}.lo-mon-list{display:flex;flex-direction:column;gap:8px}.lo-mon-row{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.lo-mon-no{width:36px;height:36px;border-radius:50%;background:#1e3a64;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800}.lo-mon-info small{display:block;color:var(--sub);font-size:12px}.lo-mon-badge{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:99999;background:rgba(15,35,64,.92);color:#fff;border-radius:24px;padding:28px 56px;text-align:center;pointer-events:none;font-weight:800}.lo-mon-badge b{display:block;font-size:120px;line-height:1}.lo-mon-badge span{font-size:26px}
@@ -8664,7 +8666,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.70';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.71';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16660,7 +16662,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try {
       const r=await loCall('get',{date:LO.date,pendingBatchId:LO.pending?.batchId});
       if(epoch!==LO.epoch||token!==S.token||seq!==LO.requestSeq||S.view!=='line')return;
-      LO.data=r;LO.last=Date.now();LO.offset=new Date(r.serverAt).getTime()-LO.last;LO.online=true;if(loMonSeat)sndCheck(r);
+      LO.data=r;LO.last=Date.now();LO.offset=new Date(r.serverAt).getTime()-LO.last;LO.online=true;if(loMonSeat){sndCheck(r);loMonPrepBar(r);}
       loDrawBoard();if(LO.seat)loDrawWork();else loFollowTerminal(r);LO.monitor?.refresh();
     }catch(e){if(epoch!==LO.epoch||token!==S.token)return;LO.online=false;loStatus();if(!LO.data)$('#main').innerHTML=pageHead('상황판')+`<div class="pgb"><div class="warn">${esc(e.message)} <button id="loTry">다시 불러오기</button></div></div>`;if($('#loTry'))$('#loTry').onclick=()=>loRefresh(LO.epoch,true);}
   }
@@ -16932,7 +16934,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const lineHtml=line=>{
       const prep=prepOf(line),bn=btnRange(line);
       const head=`<div class="loq-hd"><b>${esc(loLineName(line))}</b>${bn?`<span class="loq-tg">모니터 · 버튼 ${bn}</span>`:''}</div>`;
-      if(prep)return `<section class="loq-line">${head}<div class="loq-ready">준비 완료 · 시작 대기 — ${esc(prep.label)} · ${prep.request.q}대 ${loStartButton(prep)} <button type="button" data-loq-discard="${esc(prep.id)}">준비 해제</button></div></section>`;
+      if(prep)return `<section class="loq-line">${head}<div class="loq-ready">준비 완료 · 시작 대기 — ${esc(prep.label)} · ${prep.request.q}대 <button type="button" data-loq-discard="${esc(prep.id)}">준비 해제</button></div></section>`;
       const stages=loLineStages(line,Q.cfg),setId=Q.cfg.lines.find(l=>l.id===line)?.setId,miss=loMissingAssignments(line,Q.cfg);
       const seats=stages.map((stage,i)=>({stage,i,seats:loStageSeats(line,i,Q.cfg.stations)}));
       const row=rowOf(line),spec=row?loSourceSpec(row):null,own=row?(+Q.qty[line]||0):0,left=row?remain(row)+own:0;
@@ -16964,7 +16966,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           ${Q.mode==='one'?`<label class="loq-pickline">작업할 라인 <select id="loqSingle">${Q.cfg.lines.map(l=>`<option value="${esc(l.id)}" ${l.id===Q.single?'selected':''}>${esc(loLineName(l.id))}</option>`).join('')}</select></label>`:''}
           ${lines.map(lineHtml).join('')}
           <p class="loq-msg ${blocked?'loq-bad':''}">${blocked?'빨간 항목을 채우면 준비할 수 있습니다.':todo?`${todo}개 라인 준비 가능${todo<lines.filter(l=>!prepOf(l)).length?' · 제조건을 고른 라인만 준비합니다':''}`:'제조건을 고르세요.'}</p>
-          <div class="acts"><button type="button" data-c>닫기</button><button type="button" id="loqSave" ${todo&&!blocked&&!Q.busy?'':'disabled'}>준비만 저장</button><button type="button" class="primary" id="loqGo" ${todo&&!blocked&&!Q.busy&&loCanStart()?'':'disabled'} title="${loCanStart()?'':'실시간 연결 후 시작할 수 있습니다'}">준비 완료 · 바로 시작</button></div>`;
+          <div class="acts"><button type="button" data-c>닫기</button><button type="button" class="primary" id="loqSave" ${todo&&!blocked&&!Q.busy?'':'disabled'}>준비 완료</button></div>`;
         $('[data-c]',box).onclick=close;
         $('#loqDetail',box).onclick=async()=>{if(Q.dirty&&!await confirmBox('이 화면에서 바꾼 담당자 · 세트는 저장되지 않습니다.<br>단계별 화면으로 갈까요?','단계별로'))return;close();const saved=loLoadGuideDraft();if(saved)loGuideMove(saved,saved.step||1,()=>{});else loGuide();};
         $$('[data-loq-mode]',box).forEach(b=>b.onclick=()=>{Q.mode=b.dataset.loqMode;draw();});
@@ -16998,14 +17000,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
             }
             if(start)for(const id of ids)await loCall('startPrepared',{batchId:id});
             close();await loRefresh(LO.epoch,true);
-            toast(start?`${ids.length}개 라인 작업을 시작했습니다.`:`${ids.length}개 라인 준비를 저장했습니다. 시작 대기 중입니다.`);
+            toast(start?`${ids.length}개 라인 작업을 시작했습니다.`:`${ids.length}개 라인 준비 완료 · 상황판에서 [작업 화면 열기] → [작업 시작]`);
           }catch(e){
             toast(e.message,true);Q.busy=false;
             if(ids.length){close();await loRefresh(LO.epoch,true);toast('일부 라인은 준비됐습니다. 상황판에서 확인하세요.',true);}else draw();
           }
         };
         $('#loqSave',box).onclick=()=>run(false);
-        $('#loqGo',box).onclick=()=>run(true);
       };
       draw();
     },'wide loq-modal');
@@ -17178,6 +17179,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function loCanStart() {
     return !!LO.data?.manage&&!LO.data.allPausedAt&&!LO.starting&&LO.online&&LO.notifyConnected&&navigator.onLine!==false;
+  }
+  async function loStartAll(btn) {   // v31.71 : 준비된 라인 모두 한 번에 시작
+    const list=[...(LO.data?.prepared||[])].sort((a,b)=>(+a.request.rank||0)-(+b.request.rank||0));
+    if(!list.length)return toast('준비된 작업이 없습니다',true);
+    if(!loCanStart())return toast('실시간 연결 후 시작할 수 있습니다. 잠시 뒤 다시 눌러 주세요.',true);
+    if(btn)btn.disabled=true;LO.starting='all';loStatus();
+    let ok=0;
+    try{for(const p of list){await loCall('startPrepared',{batchId:p.id});ok++;}toast(`${ok}개 라인 작업을 시작했습니다`);}
+    catch(e){toast(e.message,true);}
+    finally{LO.starting=null;loStatus();await loRefresh(LO.epoch,true);if(btn)btn.disabled=false;}
   }
   async function loStartPrepared(id) {
     if(!loCanStart())return;
@@ -17450,6 +17461,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const m=hubMap(r);let n=+Object.keys(m).find(k=>m[k]===loMonSeat)||+sndMonN()||1;return 'ABCD'[(n-1)%4];
   }
   async function sndPlay(letter){const ac=await sndInit();if(!ac||ac.state!=='running')return;SND_KIND[letter]?.(ac.currentTime+0.02);}
+  function loMonPrepBar(r){   // v31.71 : 모니터 창 — 준비된 작업이 있으면 위에 [▶ 작업 시작] (관리자 · 라인 담당자)
+    let bar=document.getElementById('loMonPrep');const list=r?.manage?(r.prepared||[]):[];
+    if(!list.length){bar?.remove();return;}
+    if(!bar){bar=document.createElement('div');bar.id='loMonPrep';bar.className='lo-mon-prep';document.body.appendChild(bar);}
+    bar.innerHTML=`<span><b>준비됨</b> ${list.map(p=>esc(loLineName(p.line)+' · '+p.label+' · '+p.request.q+'대')).join('<br>')}</span><button type="button" ${loCanStart()?'':'disabled'}>▶ 작업 시작</button>`;
+    bar.querySelector('button').onclick=e=>loStartAll(e.currentTarget);
+  }
   function sndCheck(r){   // 자기 자리에 새 작업(본체)이 도착하면 시작 소리
     const st=r?.stations?.find(x=>x.id===loMonSeat),c=st?.current,k=c&&!c.pausedAt?`${c.batchId}:${c.seq}:${c.stage}`:'';
     if(LO.sndKey!==undefined&&k&&k!==LO.sndKey)sndPlay(sndLetter(r));
@@ -17606,7 +17624,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const openProgress=new Set($$('.lo-batch-all[open]').map(el=>el.dataset.loProgress));
     const openIdle=new Set($$('.lo-line-idle[open]').map(el=>el.dataset.loIdle));
     $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>${r.manage?'<span id="loHubSt" class="lo-hub-st"></span><span class="lo-setwrap"><button type="button" id="loSetBtn" aria-haspopup="menu">⚙ 설정 ▾</button><div class="lo-setpop" popover id="loSetPop" role="menu"><button type="button" role="menuitem" id="loHub"><b>🔌 스위치 연결</b><small>스위치 번호 ↔ 자리 · 연습/실제 모드</small></button><button type="button" role="menuitem" id="loMonBtn"><b>🖥 모니터 연동</b><small>모니터 ↔ 자리 · 소리</small></button></div></span>':''}`)+`<div class="pgb lo-board">
-    <div class="lo-banner"><div class="lo-banner-main">${selected?`<div class="lo-picked-work"><span>선택 작업 · ${esc(loLineName(selected.line))} · ${isReady?'시작 대기':selected.final>=selected.q?'작업 완료':selected.paused_at?'일시정지':'진행 중'}</span><strong>${esc(selected.snapshot?.model||selected.model||'—')}</strong><span>제조번호 ${esc(selected.snapshot?.no||selected.no||'—')} · ${selected.q}대</span></div>`:''}${r.manage?`<div class="lo-prepared lo-banner-prepared">${prepared.length?prepared.map(p=>`<div><b class="lo-status-badge ready">준비 완료 · 시작 대기</b> ${esc(p.request.date)} · ${esc(p.label)} · ${esc(loLineName(p.line))} · ${p.request.q}대 ${loStartButton(p)} <button data-lo-edit-prepared="${esc(p.id)}">준비 수정</button> <button data-lo-discard="${esc(p.id)}">준비 해제</button></div>`).join(''):'<span class="muted">상단 [작업준비]에서 새 제조건을 준비하세요.</span>'}</div>`:''}</div>${loAllButton(r)}${r.allPausedAt?'<strong class="lo-error">전체 멈춤</strong>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><span class="lo-connection-badge" data-lo-status></span></div>
+    <div class="lo-banner"><div class="lo-banner-main">${selected?`<div class="lo-picked-work"><span>선택 작업 · ${esc(loLineName(selected.line))} · ${isReady?'시작 대기':selected.final>=selected.q?'작업 완료':selected.paused_at?'일시정지':'진행 중'}</span><strong>${esc(selected.snapshot?.model||selected.model||'—')}</strong><span>제조번호 ${esc(selected.snapshot?.no||selected.no||'—')} · ${selected.q}대</span></div>`:''}${r.manage?`<div class="lo-prepared lo-banner-prepared">${prepared.length?prepared.map(p=>`<div><b class="lo-status-badge ready">준비 완료 · 시작 대기</b> ${esc(p.request.date)} · ${esc(p.label)} · ${esc(loLineName(p.line))} · ${p.request.q}대 <button data-lo-edit-prepared="${esc(p.id)}">준비 수정</button> <button data-lo-discard="${esc(p.id)}">준비 해제</button></div>`).join('')+`<div class="lo-go-row"><button type="button" class="lo-go-scr" data-lo-openmon>🖥 작업 화면 열기</button><button type="button" class="lo-go-start" data-lo-startall ${loCanStart()?'':'disabled'}>▶ 작업 시작</button><small>화면을 확인한 뒤 시작 · 시작한 순간부터 시간 기록</small></div>`:'<span class="muted">상단 [작업준비]에서 새 제조건을 준비하세요.</span>'}</div>`:''}</div>${loAllButton(r)}${r.allPausedAt?'<strong class="lo-error">전체 멈춤</strong>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><span class="lo-connection-badge" data-lo-status></span></div>
     ${loBoardLines(r.cfg.lines,bs,openIdle,previews,selected)}
     <section class="card lo-batches"><h3>준비·배치 제조건</h3><div class="lo-scroll"><table class="list lo-batch-table"><colgroup><col><col><col><col><col><col><col>${showTools?'<col>':''}</colgroup><thead><tr><th>작업 순서</th><th>원본 일자</th><th>제조번호</th><th>모델명</th><th>라인 · 상태</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${showTools?'<th>배치 도구</th>':''}</tr></thead><tbody>${previews.map(p=>`<tr data-lo-select="${esc(p.id)}" tabindex="0" aria-selected="${p.id===LO.selectedBatch}"><td>${p.rank}</td><td>${esc(p.date)}</td><td><b>${esc(p.no)}</b></td><td>${esc(p.model||'—')}</td><td><b>${esc(loLineName(p.line))}</b><br><span class="lo-status-badge ready">준비 완료 · 시작 대기</span></td><td>준비 <b>${p.q}</b>대</td><td>작업 시작 대기</td>${showTools?'<td>—</td>':''}</tr>`).join('')}${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr data-lo-select="${esc(b.id)}" tabindex="0" aria-selected="${b.id===LO.selectedBatch}"><td>${b.rank}</td><td>${esc(b.d)}</td><td><b>${esc(b.snapshot.no)}</b></td><td>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td><b>${esc(loLineName(b.line))}</b> · ${esc(loSetName(b.set_data.name))}<br><span class="lo-status-badge ${b.final>=b.q?'done':b.paused_at?'paused':'running'}">${b.final>=b.q?'작업 완료':b.paused_at?'일시정지':'진행 중'}</span></td><td><div class="lo-count-pills"><span>계획 <b>${b.q}</b></span><span>완료 <b>${b.final}</b></span><span>미완료 <b>${b.q-b.final}</b></span></div></td><td class="lo-batch-progress">${loBatchProgress(b,openProgress.has(b.id))}</td>${showTools?`<td>${loBatchTools(r,b)}</td>`:''}</tr>`) .join('')||(previews.length?'':`<tr><td colspan="${showTools?8:7}">준비하거나 배치한 제조건이 없습니다.</td></tr>`)}</tbody></table></div></section>
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
@@ -17624,6 +17642,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $('#loCentralManager')?.after(button);
     }
     if($('#loMainStart'))$('#loMainStart').onclick=()=>loQuick();
+    $$('[data-lo-openmon]').forEach(b=>b.onclick=()=>{const n=loMonAutoOpen();if(n)toast(`모니터 창 ${n}개를 열었습니다 · 각 모니터를 한 번씩 클릭하면 전체화면`);else{let has=false;try{has=Object.values(JSON.parse(localStorage.getItem('loMonMap')||'{}')).some(Boolean)&&!!localStorage.getItem('loMonRects');}catch(e){}if(has)toast('모니터 창이 이미 열려 있습니다');else loMonitors();}});
+    $$('[data-lo-startall]').forEach(b=>b.onclick=()=>loStartAll(b));
     loBindControls($('#main'));
     $$('[data-lo-edit-prepared]').forEach(button=>button.onclick=()=>{const p=prepared.find(x=>x.id===button.dataset.loEditPrepared);if(p)loSources(p.request.date,p.request.rowId,{cfg:structuredClone(r.cfg),line:p.line,ver:r.cfgVer,dirty:false,preparation:p,rowId:p.request.rowId,stageTexts:p.request.stageTexts});});
     $$('[data-lo-discard]').forEach(button=>button.onclick=async()=>{if(!await confirmBox('시작 대기 작업과 선택 시리얼 배정을 해제할까요?','준비 해제'))return;try{await loCall('discardPreparation',{batchId:button.dataset.loDiscard});await loRefresh(LO.epoch,true);}catch(error){toast(error.message,true);}});
