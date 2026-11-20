@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.47';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18885,6 +18885,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const t0 = bl.join(' ').replace(/\s+/g, ' ');
       if (isPkg(t0) || /표준거래|운송료|택배무료|할인/.test(t0)) continue;
       const refm = t0.match(/\[\s*(\d[\d ]{5,9}\d)\s*\]/); let ref = refm && /^\d{6,7}$/.test(refm[1].replace(/\D/g, '')) ? refm[1].replace(/\D/g, '') : '';
+      if (ref && !noCode && QCP && QCP.has(ref)) ref = '';   // v31.47 : [1347330]처럼 괄호 안에 읽힌 게 부품 자기 코드면 ⓟ(세트 코드) 아님
       let t = ref ? t0.replace(refm[0], ' ') : t0; if (!ref) for (const c of PKG) if (t0.includes(c)) { ref = c; t = t.split(c).join(' '); break; }   // ⓟ 줄 = 세트 상품코드가 같이 적힌 줄 (괄호가 깨져도)
       const neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test(t0);
       const qn = +((t0.match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1);   // v31.22 : 2개 = 수량 2
@@ -18914,10 +18915,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const lab = o => [o.brand, o.name].filter(Boolean).join(' ');
     ['cpu', 'mb', 'mem', 'ssd', 'hdd'].forEach(k => {
       const L = [], notes = [];
-      items.filter(x => x.k === k && !x.ref).forEach(x => { if (k !== 'mem' && L.some(z => lab(z.o) === lab(x.o))) { x.ref = 'dup'; x.neg = true; return; } const y = L.find(z => x.code && z.code === x.code); if (y) y.o.n = (y.o.n || 1) + 1; else L.push({ code: x.code, o: x.o }); });
-      const pr = items.filter(x => x.k === k && x.ref && !x.neg);   // -1개를 못 읽었어도 : 원래 부품과 같은 이름 + 다른 변경 부품이 있으면 = 빠지는 줄
+      items.filter(x => x.k === k && !x.ref).forEach(x => { if (x.o && x.o.byCode && L.some(z => z.code === x.code)) { x.ref = 'skip'; return; }   // v31.47 : 같은 제품코드가 두 번 읽힘 = 같은 줄 (변경 아님)
+        if (k !== 'mem' && L.some(z => lab(z.o) === lab(x.o))) { x.ref = 'dup'; x.neg = true; return; } const y = L.find(z => x.code && z.code === x.code); if (y) y.o.n = (y.o.n || 1) + 1; else L.push({ code: x.code, o: x.o }); });
+      const pr = items.filter(x => x.k === k && x.ref && x.ref !== 'skip' && !x.neg);   // -1개를 못 읽었어도 : 원래 부품과 같은 이름 + 다른 변경 부품이 있으면 = 빠지는 줄
       pr.forEach(x => { if (L.some(z => lab(z.o) === lab(x.o)) && pr.some(y => y !== x && lab(y.o) !== lab(x.o))) x.neg = true; });
-      items.filter(x => x.k === k && x.ref).forEach(x => {
+      items.filter(x => x.k === k && x.ref && x.ref !== 'skip').forEach(x => {
         if (x.neg) { let j = L.findIndex(z => x.code && z.code === x.code); if (j < 0) j = L.findIndex(z => !z.o.chg); if (j >= 0) { const z = L[j]; notes.push('빠짐 ' + lab(z.o)); if ((z.o.n || 1) > 1) z.o.n--; else L.splice(j, 1); } }
         else { const y = L.find(z => x.code && z.code === x.code); if (y) { y.o.n = (y.o.n || 1) + 1; y.o.chg = '추가 +1 (총 ' + y.o.n + '개)'; } else { x.o.chg = '변경된 부품'; L.unshift({ code: x.code, o: x.o }); } }
       });
