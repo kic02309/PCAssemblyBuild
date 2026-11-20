@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.43';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.44';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18972,7 +18972,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (x && x.byCode) t = k === 'cpu' ? x.name : x.name + (x.cap ? ' ' + x.cap : ' · 용량 ?');
         else if (x) { if (k === 'cpu') t = x.name || ''; else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = x.cap || ''; }
         const th = t ? (x && x.cap && k !== 'cpu' ? esc(t.slice(0, t.lastIndexOf(x.cap))) + '<b class="cap">' + esc(x.cap) + '</b>' : esc(t)) : '?';   // v31.32 : 용량 강조
-        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? '<em>변경</em>' : ''}${bh}${th}${x && x.byCode ? '<i class="cd" title="제품코드 ' + esc(x.code) + '">코드</i>' : ''}</span>`; };
+        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? '<em>변경</em>' : ''}${bh}${th}${x && x.byCode ? '<i class="cd" title="제품코드">' + esc(x.code) + '</i>' : ''}</span>`; };
       const qty = k => { if (k === 'cpu') return '<span class="qn x"></span>'; if (V.ref !== 'ok' || V.busyK === k || !P[k] || ((V.busyS || []).includes(k) && P[k].n === 0)) return '<span class="qn u">–</span>'; const x = P[k]; const n = x.n === 0 ? 0 : (x.n || 1); return `<span class="qn${n > 1 ? ' m' : !n ? ' u' : ''}">${n ? n : '?'}개</span>`; };
       const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">아래에서 고르세요</div>';
       const whoBox = V.who ? ''
@@ -18981,7 +18981,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         : `${(V.near || []).length ? `<div class="qc-near"><small>혹시 이 주문인가요?</small>${V.near.map(x => `<button type="button" data-qn="${esc(x.order)}"><b>${esc(x.order)}</b> · ${esc(x.name)} <span>${esc(x.group)}</span></button>`).join('')}</div>` : ''}<div class="qc-ppl">${(V.ppl || []).map(x => `<button type="button" data-pu2="${esc(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="muted">고를 인원이 없습니다</span>'}</div>`;
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
-        <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력">${V.src === 'bar' ? '<span class="s">✓ 바코드</span>' : V.src === 'fix' ? '<span class="s">✓ 고침</span>' : ''}<button type="button" id="qcre">↺ 초기화</button></div>${block}</div>
+        <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력"><button type="button" id="qcre">↺ 초기화</button></div>${block}</div>
         <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === NQ ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/${NQ}</span></div>
         ${Q.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="hd"><span class="c">${t}</span>${ref(k)}</span><span class="ln">${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
 </div>
@@ -22418,6 +22418,8 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-st .n.d,.pmx .qc-st1 .n.d{box-shadow:0 0 0 3px #fff,0 0 0 5px #16a34a;background:#16a34a}
 .pmx .qc-st .qc-cam1,.pmx .qc-st .qn{background:#fff!important}
 .pmx .qc-ord .qc-in{font-size:17px!important;letter-spacing:0;min-width:0}
+.pmx .qc-ck3.v2 .rf .cd{color:#64748b;background:#eef1f6;font-weight:700;font-size:11px;letter-spacing:.02em}
+.pmx .qc-ord .qc-in{font-size:20px!important}
 </style>
 </body>
 </html>
