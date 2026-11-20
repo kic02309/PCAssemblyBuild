@@ -8662,7 +8662,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16298,8 +16298,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if(id&&/^[A-Za-z0-9_-]{1,64}$/.test(id)){
         sessionStorage.setItem('lineWorkSeat',JSON.stringify({id,mode:'work'}));sessionStorage.setItem('lastView','line');
         sessionStorage.setItem('loMonSeat',id);sessionStorage.setItem('loMonN',h.get('loMonN')||'');
+        if(h.has('x'))sessionStorage.setItem('loMonRect',JSON.stringify([+h.get('x'),+h.get('y'),+h.get('w'),+h.get('h')]));
         history.replaceState(history.state,'',location.pathname+location.search);
       }
+      const rc=JSON.parse(sessionStorage.getItem('loMonRect')||'null');
+      if(rc&&sessionStorage.getItem('loMonSeat')){const mv=()=>{try{window.moveTo(rc[0],rc[1]);window.resizeTo(rc[2],rc[3]);}catch(e){}};mv();setTimeout(mv,600);setTimeout(mv,2000);}   // v31.65 : 창이 스스로 자기 모니터로 이동
       return sessionStorage.getItem('loMonSeat')||'';
     }catch(e){return '';}
   })();
@@ -17353,8 +17356,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function loMonMap(){try{return JSON.parse(localStorage.getItem('loMonMap')||'{}')||{};}catch(e){return {};}}
   function loMonStations(r){const ord=(r?.cfg?.lines||[]).map(l=>l.id);return [...(r?.stations||[])].sort((a,b)=>(ord.indexOf(a.line)-ord.indexOf(b.line))||(+a.stage-+b.stage)||String(a.id).localeCompare(String(b.id)));}
   function loMonOpenOne(s,seat,n){
-    const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+n;
-    const w=window.open(url,'loMon'+n,`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);
+    const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+n+'&x='+s.availLeft+'&y='+s.availTop+'&w='+s.availWidth+'&h='+s.availHeight;
+    const old=LO_MON.wins[n];let w=null;
+    if(old&&!old.closed){try{old.location.replace(url);w=old;}catch(e){w=null;}}   // v31.65 : 이미 열린 창은 주소만 바꿈 (팝업 차단 안 걸림)
+    if(!w)w=window.open(url,'loMon'+n,`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);
     if(w){LO_MON.wins[n]=w;try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}}
     return !!w;
   }
@@ -17389,6 +17394,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const s=screens[i],w=window.open('about:blank','loMon'+(i+1),`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);
       if(!w){wins.forEach(x=>{try{x.close();}catch(e){}});return toast('브라우저가 창을 막았습니다. 주소창 오른쪽 팝업 차단 표시 → 항상 허용 후 다시 눌러 주세요.',true);}
       try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}
+      setTimeout(()=>{try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}},400);
       w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>모니터 ${i+1} 맞추기</title><style>${css}</style></head><body></body></html>`);w.document.close();
       wins.push(w);LO_MON.wins[i+1]=w;
     }
