@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.14';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.15';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16622,7 +16622,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const st=LO.data?.stations.find(x=>x.id===remembered?.id);
       if(st)loOpen(st.id,remembered.mode==='work'&&st.canComplete?'work':'view',false);
       loWatch(epoch);
-      loCentralWatch(epoch);
+      hubAuto();   // v31.15 : 중앙 실행기 대신 버튼 직접 연결
     }
   }
   async function loRefresh(epoch,force) {
@@ -17220,6 +17220,95 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $('[data-c]',bg).onclick=close;
     });
   }
+  // v31.15 : 상황판 버튼 연결 — 아두이노(LINE1~LINE8 · 9600)를 Edge/크롬이 직접 읽어 N번 자리 완료 (중앙 실행기 없이)
+  const HUB = { port: null, reader: null, on: false, stop: false, last: {}, q: [], busy: false, log: [], test: true, cnt: {}, raw: [] };
+  try { HUB.test = sessionStorage.getItem('loHubTest') !== '0'; } catch (e) { }
+  const hubOk = () => !!(navigator.serial && window.isSecureContext);
+  function hubDefaultMap(r) {
+    const ord = (r?.cfg?.lines || []).map(l => l.id);
+    const st = [...(r?.stations || [])].sort((a, b) => (ord.indexOf(a.line) - ord.indexOf(b.line)) || (+a.stage - +b.stage) || String(a.id).localeCompare(String(b.id)));
+    const m = {}; st.slice(0, 8).forEach((x, i) => { m[i + 1] = x.id; }); return m;
+  }
+  function hubMap(r) { let m = null; try { m = JSON.parse(localStorage.getItem('loHubMap') || 'null'); } catch (e) { } return m && typeof m === 'object' ? m : hubDefaultMap(r); }
+  function hubStName(r, id) { const st = r?.stations?.find(x => x.id === id); return st ? `${loLineName(st.line)} ${+st.stage + 1}공정 · ${st.assignedName || '담당 없음'}` : ''; }
+  function hubPaint() {
+    const el = document.getElementById('loHubSt'); if (!el) return;
+    const l = HUB.log[0];
+    el.className = 'lo-hub-st' + (HUB.on ? ' on' : '');
+    el.className += HUB.on && HUB.test ? ' test' : '';
+    el.innerHTML = HUB.on ? `● 버튼 연결됨${HUB.test ? ' · 테스트 모드' : ''}${l ? ` · ${esc(l.t)} ${l.n}번 ${esc(HUB.test ? '신호' : l.ok ? '완료' : l.msg)}` : ' · 대기 중'}` : '○ 버튼 미연결';
+  }
+  function hubAdd(n, ok, msg, st) {
+    HUB.log.unshift({ n, ok, msg, st: st?.id || '', t: new Date().toLocaleTimeString('ko-KR', { hour12: false }) }); HUB.log.length = Math.min(HUB.log.length, 30);
+    hubPaint(); if (ok) toast(`${n}번 버튼 · ${st?.id || ''} 완료`); else toast(`${n}번 버튼 · ${msg}`, true);
+  }
+  async function hubDo(n, again) {
+    const r = LO.data; if (!r) return;
+    const sid = hubMap(r)[n], st = r.stations?.find(x => x.id === sid);
+    if (!sid || !st) return hubAdd(n, false, '연결된 자리가 없습니다');
+    if (!st.current) return hubAdd(n, false, `${st.id} 진행 중인 작업 없음`);
+    try {
+      await loCall('complete', Object.assign({}, st.current, { station: st.id, requestId: 'btn_' + loId(), cfgVer: r.cfgVer, hub: '1' }));
+      hubAdd(n, true, '', st);
+    } catch (e) {
+      if (!again && /충돌/.test(e.message || '')) { await loRefresh(LO.epoch, true); return hubDo(n, true); }
+      hubAdd(n, false, e.message || '완료 실패');
+    } finally { await loRefresh(LO.epoch, true); }
+  }
+  async function hubPump() { if (HUB.busy) return; HUB.busy = true; try { while (HUB.q.length) await hubDo(HUB.q.shift()); } finally { HUB.busy = false; } }
+  function hubLamp(n) {
+    const el = document.querySelector(`.lo-hublamp [data-lp="${n}"]`); if (el) { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); const c = el.querySelector('em'); if (c) c.textContent = HUB.cnt[n] || 0; }
+    const rw = document.getElementById('loHubRaw'); if (rw) rw.textContent = HUB.raw.slice(0, 8).join('\n') || '(아직 받은 신호 없음)';
+  }
+  function hubHit(n) {
+    HUB.cnt[n] = (HUB.cnt[n] || 0) + 1; hubLamp(n);
+    if (HUB.test) { HUB.log.unshift({ n, ok: true, msg: '', st: '테스트', t: new Date().toLocaleTimeString('ko-KR', { hour12: false }) }); HUB.log.length = Math.min(HUB.log.length, 30); hubPaint(); return; }   // 테스트 모드 = 완료 안 함
+    const now = Date.now(); if (now - (HUB.last[n] || 0) < 1200) return; HUB.last[n] = now;   // 같은 버튼 1.2초 안 = 무시
+    if (S.view !== 'line' || !LO.data?.manage) { hubAdd(n, false, '상황판 화면이 아니라 무시했습니다'); return; }
+    HUB.q.push(n); hubPump();
+  }
+  async function hubRead() {
+    const port = HUB.port, dec = new TextDecoderStream(), closed = port.readable.pipeTo(dec.writable).catch(() => { });
+    const rd = dec.readable.getReader(); HUB.reader = rd; let buf = '';
+    try {
+      for (;;) { const { value, done } = await rd.read(); if (done) break; buf += value; let i;
+        while ((i = buf.indexOf('\n')) >= 0) { const ln = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (ln) { HUB.raw.unshift(new Date().toLocaleTimeString('ko-KR', { hour12: false }) + '  ' + ln.slice(0, 40)); HUB.raw.length = Math.min(HUB.raw.length, 20); const rw = document.getElementById('loHubRaw'); if (rw) rw.textContent = HUB.raw.slice(0, 8).join('\n'); } const m = ln.match(/^LINE\s*([1-8])$/i); if (m) hubHit(+m[1]); }
+        if (buf.length > 200) buf = ''; }
+    } catch (e) { console.warn('hub', e); }
+    finally { try { rd.releaseLock(); } catch (e) { } await closed; try { await port.close(); } catch (e) { } HUB.on = false; HUB.reader = null; hubPaint(); if (!HUB.stop) toast('버튼(아두이노) 연결이 끊겼습니다. USB를 확인하세요', true); HUB.stop = false; }
+  }
+  async function hubOpen(port) {
+    if (HUB.on) return;
+    await port.open({ baudRate: 9600 }); HUB.port = port; HUB.on = true; HUB.stop = false; HUB.last = {};
+    try { sessionStorage.setItem('loHub', '1'); } catch (e) { }
+    hubPaint(); hubRead();
+  }
+  async function hubClose() { HUB.stop = true; try { sessionStorage.removeItem('loHub'); } catch (e) { } try { await HUB.reader?.cancel(); } catch (e) { } }
+  async function hubAuto() {   // 이 창에서 한 번 연결했으면 새로고침 · USB 다시 꽂을 때 자동으로 다시 연결
+    if (!hubOk() || HUB.on) return; let want = false; try { want = sessionStorage.getItem('loHub') === '1'; } catch (e) { } if (!want) return;
+    try { const ps = await navigator.serial.getPorts(); if (ps[0]) await hubOpen(ps[0]); } catch (e) { console.warn('hub auto', e); }
+  }
+  if (navigator.serial) navigator.serial.addEventListener('connect', () => setTimeout(hubAuto, 1500));
+  function hubModal() {
+    const r = LO.data; if (!r) return;
+    if (!hubOk()) { modal(`<h3>🔌 버튼 연결</h3><p>이 브라우저는 USB 버튼(아두이노) 연결을 지원하지 않습니다.<br><b>Edge</b> 또는 <b>크롬</b>에서 열어 주세요.</p><div class="acts"><button data-c>닫기</button></div>`, (bg, close) => { $('[data-c]', bg).onclick = close; }); return; }
+    const m = hubMap(r), opts = id => `<option value="">— 사용 안 함 —</option>` + r.stations.map(x => `<option value="${esc(x.id)}"${x.id === id ? ' selected' : ''}>${esc(x.id)} · ${esc(hubStName(r, x.id))}</option>`).join('');
+    modal(`<h3>🔌 버튼 연결 <span class="muted" style="font-size:13px;font-weight:500">${HUB.on ? '● 연결됨' : '○ 미연결'}</span></h3>
+      <p class="muted">아두이노 버튼 1~8번 신호(LINE1~LINE8)를 받아 아래 자리를 바로 완료합니다. 이 PC에서 상황판 창 하나만 연결하세요.</p>
+      <div class="lo-hubtest"><label><input type="checkbox" id="loHubTest"${HUB.test ? ' checked' : ''}> <b>테스트 모드</b> — 버튼을 눌러도 완료하지 않고 아래 불만 켜집니다</label>
+        <div class="lo-hublamp">${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<div data-lp="${n}"><b>${n}</b><em>${HUB.cnt[n] || 0}</em></div>`).join('')}</div>
+        <div class="muted" style="font-size:12px;margin:6px 0 2px">아두이노에서 받은 글자 (최근 8개)</div><pre id="loHubRaw">${esc(HUB.raw.slice(0, 8).join('\n') || '(아직 받은 신호 없음)')}</pre></div>
+      <table class="list lo-hubmap"><thead><tr><th>버튼</th><th>완료할 자리</th></tr></thead><tbody>${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<tr><td><b>${n}번</b></td><td><select data-hb="${n}">${opts(m[n])}</select></td></tr>`).join('')}</tbody></table>
+      ${HUB.log.length ? `<details class="lo-hublog"><summary>최근 버튼 기록 ${HUB.log.length}건</summary><ul>${HUB.log.map(l => `<li>${esc(l.t)} · ${l.n}번 · ${l.ok ? '✓ ' + esc(l.st) + ' 완료' : '✕ ' + esc(l.msg)}</li>`).join('')}</ul></details>` : ''}
+      <div class="acts"><button data-c>닫기</button><button data-hr>자리 배정 기본값</button><button data-hs>배정 저장</button>${HUB.on ? '<button data-hx>연결 끊기</button>' : '<button class="primary" data-ho>아두이노 연결</button>'}</div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      $('#loHubTest', bg).onchange = e => { HUB.test = e.target.checked; try { sessionStorage.setItem('loHubTest', HUB.test ? '1' : '0'); } catch (x) { } hubPaint(); toast(HUB.test ? '테스트 모드 : 버튼을 눌러도 완료되지 않습니다' : '운영 모드 : 버튼을 누르면 해당 자리가 완료됩니다', !HUB.test); };
+      $('[data-hs]', bg).onclick = () => { const o = {}; $$('[data-hb]', bg).forEach(x => { if (x.value) o[x.dataset.hb] = x.value; }); localStorage.setItem('loHubMap', JSON.stringify(o)); toast('버튼 배정을 저장했습니다 (이 PC)'); close(); };
+      $('[data-hr]', bg).onclick = () => { localStorage.removeItem('loHubMap'); close(); hubModal(); };
+      if ($('[data-hx]', bg)) $('[data-hx]', bg).onclick = async () => { await hubClose(); close(); };
+      if ($('[data-ho]', bg)) $('[data-ho]', bg).onclick = async () => { try { const port = await navigator.serial.requestPort(); await hubOpen(port); toast('버튼 연결됨 · 1~8번을 눌러 확인하세요'); close(); hubModal(); } catch (e) { if (e && e.name !== 'NotFoundError') toast('연결 실패: ' + (e.message || e), true); } };
+    });
+  }
   function loDrawBoard() {
     const r=LO.data;if(!r||S.view!=='line')return;
     const bs=r.batches||[],prepared=r.prepared||[];
@@ -17232,13 +17321,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const plan=isReady?0:selected?.q||0,done=isReady?0:selected?.final||0;
     const openProgress=new Set($$('.lo-batch-all[open]').map(el=>el.dataset.loProgress));
     const openIdle=new Set($$('.lo-line-idle[open]').map(el=>el.dataset.loIdle));
-    $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>${loCentralManagerAllowed(r)?'<button type="button" id="loCentralManager">중앙 실행기 관리</button>':''}`)+`<div class="pgb lo-board">
+    $('#main').innerHTML=pageHead('라인 상황판',`<input id="loDate" type="date" value="${esc(LO.date)}">`,`${r.manage?'<button id="loMainStart" type="button" class="primary">작업준비</button>':''}${loPageLinks('line')}<button id="loReload">새로고침</button>${r.manage?'<button type="button" id="loHub">🔌 버튼 연결</button><span id="loHubSt" class="lo-hub-st"></span>':''}`)+`<div class="pgb lo-board">
     <div class="lo-banner"><div class="lo-banner-main">${selected?`<div class="lo-picked-work"><span>선택 작업 · ${esc(loLineName(selected.line))} · ${isReady?'시작 대기':selected.final>=selected.q?'작업 완료':selected.paused_at?'일시정지':'진행 중'}</span><strong>${esc(selected.snapshot?.model||selected.model||'—')}</strong><span>제조번호 ${esc(selected.snapshot?.no||selected.no||'—')} · ${selected.q}대</span></div>`:''}${r.manage?`<div class="lo-prepared lo-banner-prepared">${prepared.length?prepared.map(p=>`<div><b class="lo-status-badge ready">준비 완료 · 시작 대기</b> ${esc(p.request.date)} · ${esc(p.label)} · ${esc(loLineName(p.line))} · ${p.request.q}대 ${loStartButton(p)} <button data-lo-edit-prepared="${esc(p.id)}">준비 수정</button> <button data-lo-discard="${esc(p.id)}">준비 해제</button></div>`).join(''):'<span class="muted">상단 [작업준비]에서 새 제조건을 준비하세요.</span>'}</div>`:''}</div>${loAllButton(r)}${r.allPausedAt?'<strong class="lo-error">전체 멈춤</strong>':''}<div class="lo-metric lo-metric-plan">계획<b>${plan}</b></div><div class="lo-metric lo-metric-done">최종 완료<b>${done}</b></div><div class="lo-metric lo-metric-pending">미완료<b>${plan-done}</b></div><span class="lo-connection-badge" data-lo-status></span></div>
     ${loBoardLines(r.cfg.lines,bs,openIdle,previews,selected)}
     <section class="card lo-batches"><h3>준비·배치 제조건</h3><div class="lo-scroll"><table class="list lo-batch-table"><colgroup><col><col><col><col><col><col><col>${showTools?'<col>':''}</colgroup><thead><tr><th>작업 순서</th><th>원본 일자</th><th>제조번호</th><th>모델명</th><th>라인 · 상태</th><th>계획 / 완료 / 미완료</th><th>공정별 완료 · 대기</th>${showTools?'<th>배치 도구</th>':''}</tr></thead><tbody>${previews.map(p=>`<tr data-lo-select="${esc(p.id)}" tabindex="0" aria-selected="${p.id===LO.selectedBatch}"><td>${p.rank}</td><td>${esc(p.date)}</td><td><b>${esc(p.no)}</b></td><td>${esc(p.model||'—')}</td><td><b>${esc(loLineName(p.line))}</b><br><span class="lo-status-badge ready">준비 완료 · 시작 대기</span></td><td>준비 <b>${p.q}</b>대</td><td>작업 시작 대기</td>${showTools?'<td>—</td>':''}</tr>`).join('')}${bs.sort((a,b)=>a.rank-b.rank||a.at.localeCompare(b.at)).map(b=>`<tr data-lo-select="${esc(b.id)}" tabindex="0" aria-selected="${b.id===LO.selectedBatch}"><td>${b.rank}</td><td>${esc(b.d)}</td><td><b>${esc(b.snapshot.no)}</b></td><td>${esc(b.snapshot.model)}${b.sourceChanged?'<div class="lo-error">원본 변경·삭제 · 기존 배치 사양·수량 유지 중</div>':''}</td><td><b>${esc(loLineName(b.line))}</b> · ${esc(loSetName(b.set_data.name))}<br><span class="lo-status-badge ${b.final>=b.q?'done':b.paused_at?'paused':'running'}">${b.final>=b.q?'작업 완료':b.paused_at?'일시정지':'진행 중'}</span></td><td><div class="lo-count-pills"><span>계획 <b>${b.q}</b></span><span>완료 <b>${b.final}</b></span><span>미완료 <b>${b.q-b.final}</b></span></div></td><td class="lo-batch-progress">${loBatchProgress(b,openProgress.has(b.id))}</td>${showTools?`<td>${loBatchTools(r,b)}</td>`:''}</tr>`) .join('')||(previews.length?'':`<tr><td colspan="${showTools?8:7}">준비하거나 배치한 제조건이 없습니다.</td></tr>`)}</tbody></table></div></section>
     <p class="lo-foot">FIFO 공정 기록입니다. 순번은 실물 시리얼을 식별하지 않습니다. 중간 제외 수량은 자동 보정하지 않으며 마지막 공정에서만 생산 1대로 집계합니다.</p></div>`;
     $('#loDate').onchange=async e=>{LO.date=e.target.value;await loRefresh(LO.epoch,true);};$('#loReload').onclick=()=>loRefresh(LO.epoch,true);
-    if($('#loCentralManager'))$('#loCentralManager').onclick=loCentralManager;
+    if($('#loHub')){$('#loHub').onclick=hubModal;hubPaint();}
     const expected=loCentralSession?.id;
     if(expected&&r.admin&&r.terminalStation!==expected&&r.stations.some(st=>st.id===expected)){
       const button=document.createElement('button');
@@ -21927,6 +22016,19 @@ html[data-theme=dark] .lvd2 .dbody .rw.ar{border-top-color:#2c3846!important}
 .lvs3 .lvov b{color:#7a1212;font-weight:800}
 .lvs3 .topl{font-size:12px;color:#334155;border-top:1px dashed #e2e8f0;padding-top:7px}.lvs3 .topl .muted{margin-right:8px;font-size:11.5px}
 html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-theme=dark] .lvs3 .lvov b{color:#ffd0cc}html[data-theme=dark] .lvs3 .nalt{background:#3a2a14;color:#f6b26b}html[data-theme=dark] .lvs3 .topl{color:#cbd5e1}
+</style>
+<style id="v3115-hub">
+.lo-hub-st{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:8px;font-size:12.5px;font-weight:700;color:#64748b;background:#f1f4f9;white-space:nowrap}
+.lo-hub-st.on{color:#15803d;background:#e7f6ec}.lo-hub-st.on.test{color:#b45309;background:#fff1e0}
+.lo-hubtest{border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:8px 0 10px;background:#fafbfd}
+.lo-hublamp{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px}
+.lo-hublamp div{display:flex;flex-direction:column;align-items:center;justify-content:center;height:58px;border-radius:10px;background:#e9edf3;color:#475569;transition:background .6s,color .6s}
+.lo-hublamp b{font-size:20px;font-weight:900}.lo-hublamp em{font-style:normal;font-size:11px;font-weight:700}
+.lo-hublamp div.hit{animation:hublp 1.2s ease-out}
+@keyframes hublp{0%{background:#16a34a;color:#fff;transform:scale(1.06)}100%{background:#e9edf3;color:#475569;transform:none}}
+#loHubRaw{margin:0;padding:6px 8px;background:#0f172a;color:#a7f3d0;border-radius:8px;font-size:12px;min-height:40px;max-height:140px;overflow:auto;white-space:pre}
+.lo-hubmap td{padding:5px 8px}.lo-hubmap select{width:100%}
+.lo-hublog ul{max-height:200px;overflow:auto;margin:6px 0 0;padding-left:18px;font-size:12.5px}
 </style>
 </body>
 </html>
