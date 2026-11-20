@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18863,7 +18863,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function qcpObj(r, t, br) {
     const cp = (() => { const s = String(t || '').replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = s.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; })();
-    return { brand: qcpBrand(r) || br || '', name: qcpShort(r), cap: r.k === 'cpu' ? '' : (qcpCap(r) || cp), n: 1, code: r.c, byCode: true };
+    const n = String(r.n || ''), tag = r.k === 'cpu' ? (/정품\s*박스|\[박스\]|박스\s*\(/.test(n) ? '정품박스' : /정품\s*벌크/.test(n) ? '정품벌크' : /멀티팩/.test(n) ? '멀티팩' : /벌크/.test(n) ? (/병행/.test(n) ? '병행 벌크' : '벌크') : /병행/.test(n) ? '병행' : /대리점\s*정품|정품/.test(n) ? '정품' : '') : (r.k === 'ssd' || r.k === 'hdd') && /방열판/.test(n) ? '방열판' : '';   // v31.57 : CPU 포장 · SSD 방열판
+    return { brand: qcpBrand(r) || br || '', name: qcpShort(r), cap: r.k === 'cpu' ? '' : (qcpCap(r) || cp), n: 1, code: r.c, byCode: true, tag };
   }
   // v31.55 : OS · 안정화 표시 (코드 먼저 · 안 읽히면 글자)
   const QC_TAG = { os: ['844013', '1186025', '843186', '209219'], st: ['1222544', '1348051'] };
@@ -19036,7 +19037,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (x && x.byCode) t = k === 'cpu' ? x.name : x.name + (x.cap ? ' ' + x.cap : ' · 용량 ?');
         else if (x) { if (k === 'cpu') t = x.name || ''; else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = x.cap || ''; }
         const th = t ? (x && x.cap && k !== 'cpu' ? esc(t.slice(0, t.lastIndexOf(x.cap))) + '<b class="cap">' + esc(x.cap) + '</b>' : esc(t)) : '?';   // v31.32 : 용량 강조
-        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? (/^추가/.test(x.chg) ? '<em class="add">추가</em>' : '<em>변경</em>') : ''}${bh}${th}${x && x.byCode ? '<i class="cd" title="제품코드">' + esc(x.code) + '</i>' : ''}</span>`; };
+        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? (/^추가/.test(x.chg) ? '<em class="add">추가</em>' : '<em>변경</em>') : ''}${bh}${th}${x && x.tag ? `<i class="tg">${esc(x.tag)}</i>` : ''}${x && x.byCode ? '<i class="cd" title="제품코드">' + esc(x.code) + '</i>' : ''}</span>`; };
       const qty = k => { if (k === 'cpu') return '<span class="qn x"></span>'; if (V.ref !== 'ok' || V.busyK === k || !P[k] || ((V.busyS || []).includes(k) && P[k].n === 0)) return '<span class="qn u">–</span>'; const x = P[k]; const n = x.n === 0 ? 0 : (x.n || 1); return `<span class="qn${n > 1 ? ' m' : !n ? ' u' : ''}${V.qpend ? ' pend' : ''}">${n ? n : '?'}개</span>`; };
       const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">아래에서 고르세요</div>';
       const whoBox = V.who ? ''
@@ -22512,6 +22513,7 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-ck3.v2 .qn.pend{opacity:.55;position:relative}.pmx .qc-ck3.v2 .qn.pend::after{content:'확인 중';position:absolute;bottom:2px;font-size:9px;font-weight:700}
 .pmx .qc-tags{display:flex;gap:6px;margin-top:6px}.pmx .qc-tags span{font-size:13px;font-weight:900;border-radius:8px;padding:3px 10px;color:#fff}
 .pmx .qc-tags .os{background:#2563eb}.pmx .qc-tags .st{background:#7c3aed}
+.pmx .qc-ck3.v2 .rf .tg{font-style:normal;font-size:11.5px;font-weight:800;color:#334155;background:#fff;border:1.5px solid #94a3b8;border-radius:5px;padding:0 5px;margin-left:5px;vertical-align:1px}
 </style>
 </body>
 </html>
