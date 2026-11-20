@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
 
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#0B1220"))
+            setBackgroundColor(Color.parseColor("#0F1E3D"))
         }
         previewView = PreviewView(this).apply {
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE
