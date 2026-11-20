@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.55';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18908,7 +18908,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const isRef = /[\[【(]\s*0\s*[\]】)]/.test(ctx) || /추가\s*장착/.test(ctx) || [...PKG].some(c => c && ctx.replace(x, ' ').includes(c));
         const neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test((L[i - 1] || '') + ' ' + ln);
         const o = occ.get(x) || { r, base: 0, add: 0, rem: 0, ctx: ln + ' ' + (L[i + 1] || '') }; occ.set(x, o);
-        if (isRef) { if (neg) o.rem++; else o.add++; } else o.base++;
+        if (isRef) { if (neg) o.rem++; else o.add++; if (/추가\s*장착/.test(ctx)) o.extra = 1; } else o.base++;
       }
     });
     ['mem', 'ssd', 'hdd'].forEach(k => {
@@ -18920,7 +18920,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const o = qcpObj(top.r, top.ctx); o.n = top.base && top.add ? n : Math.max(n, q > 1 ? q : 1);
       const gone = C.filter(z => z !== top && z.rem && !net(z)).map(z => [qcpBrand(z.r), qcpShort(z.r), qcpCap(z.r)].filter(Boolean).join(' '));
       if (top.base && top.add) o.chg = `추가 +${top.add} (총 ${o.n}개)`;
-      else if (top.add) o.chg = !C.some(z => z !== top && z.base) ? '추가 장착 (새 부품)' : ['변경된 부품', gone.length ? '빠짐 ' + gone.join(', ') : ''].filter(Boolean).join(' · ');   // v31.50 : 원래 없던 분류(HDD 등)에 새로 들어오면 추가
+      else if (top.add) o.chg = top.extra || (k === 'hdd' && !C.some(z => z !== top && z.base)) ? '추가 장착 (새 부품)' : ['변경된 부품', gone.length ? '빠짐 ' + gone.join(', ') : ''].filter(Boolean).join(' · ');   // v31.56 : 메모리 · SSD에 새 코드가 ⓟ로 오면 변경 (주문서에 '추가 장착'이 적힌 경우만 추가)   // v31.50 : 원래 없던 분류(HDD 등)에 새로 들어오면 추가
       if (!cur || !cur.byCode || cur.code !== o.code || (cur.n || 1) !== o.n || !!cur.chg !== !!o.chg) out[k] = o;
       if (live.length > 1) out[k].extra = live.slice(1).map(z => qcpShort(z.r) + (net(z) > 1 ? ' ×' + net(z) : ''));
     });
@@ -19157,7 +19157,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (P && s1) ['cpu', 'mem', 'ssd', 'hdd'].forEach(k => {   // 2) 코드 칸(이름 · 변경) + 전체 읽기(줄 앞 수량 · ⓟ) 합치기
       const a = s1[k], b = P[k]; if (!a) return;
       if (!b || !b.byCode) { P[k] = a; return; }
-      if (b.code === a.code) { const o = Object.assign({}, a); if ((b.n || 1) > (o.n || 1)) { o.n = b.n; if (b.chg) o.chg = b.chg; } P[k] = o; return; }
+      if (b.code === a.code) { const o = Object.assign({}, a); if ((b.n || 1) > (o.n || 1)) { o.n = b.n; if (b.chg) o.chg = b.chg; } if (b.chg && !o.chg) o.chg = b.chg; P[k] = o; return; }   // v31.56 : 전체 읽기에서 찾은 변경 · 추가도 살림
       if (a.chg && /^변경/.test(a.chg)) P[k] = a;   // 코드 칸에서 새 부품을 봤으면 그쪽
     });
     if (!P && s1) P = s1;
