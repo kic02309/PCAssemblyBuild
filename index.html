@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.42';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.43';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18830,14 +18830,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     QCPP = api('qc', { op: 'parts', ver: QCP ? ver : '' }).then(r => { if (r.same) return QCP; qcpSet(r.rows || []); try { localStorage.setItem('qcParts', JSON.stringify({ ver: r.ver, rows: r.rows || [] })); } catch (e) { } return QCP; }).catch(() => QCP);
     return QCPP;
   }
-  function qcpFind(t) {   // 줄 안의 6~8자리 숫자 → 목록 코드 (그대로 · 앞자리 잘림 · 숫자 1개 틀림)
+  const QCP_KW = { cpu: /\[\s*CPU\s*\]|라이젠|ryzen|코어\s?i\d|core\s?i\d|ultra\s?\d|애슬론|EPYC|\[(AMD|INTEL)\]/i, mem: /메모리|DDR\s?[345]|PC[345]\s?-|\[RAM\]/i, ssd: /\[\s*SSD\s*\]|NVMe|M\.2\b|SSD/i, hdd: /HDD|하드|\[\s*HDD\s*\]|7200\s?RPM|5400\s?RPM|IRONWOLF|BarraCuda|WD\s?(BLUE|PURPLE|RED)/i };
+  function qcpFind(t) {   // 줄 안의 6~8자리 숫자 → 목록 코드 · 그대로 맞으면 바로 · 잘림/숫자 1개 틀림은 줄 안에 그 분류 글자가 있을 때만 (v31.43)
     if (!QCP || !QCP.size) return null;
-    const T = String(t || '').match(/(?<!\d)\d{6,8}(?!\d)/g) || [];
+    const s = String(t || ''), T = s.match(/(?<!\d)\d{6,8}(?!\d)/g) || [], ok = r => r && QCP_KW[r.k] && QCP_KW[r.k].test(s) ? r : null;
     for (const x of T) { if (QCP.has(x)) return QCP.get(x); }
     for (const x of T) {
-      if (x.length === 8) { for (const s of [x.slice(0, 7), x.slice(1)]) if (QCP.has(s)) return QCP.get(s); }
-      if (x.length === 6 && QCP6.get(x)) return QCP6.get(x);
-      if (x.length === 7) { let hit = null, n = 0; QCP.forEach((r, c) => { if (c.length !== 7) return; let d = 0; for (let i = 0; i < 7 && d < 2; i++) if (c[i] !== x[i]) d++; if (d === 1) { hit = r; n++; } }); if (n === 1) return hit; }
+      if (x.length === 8) { for (const y of [x.slice(0, 7), x.slice(1)]) if (ok(QCP.get(y))) return QCP.get(y); }
+      if (x.length === 6 && ok(QCP6.get(x))) return QCP6.get(x);
+      if (x.length === 7) { let hit = null, n = 0; QCP.forEach((r, c) => { if (c.length !== 7) return; let d = 0; for (let i = 0; i < 7 && d < 2; i++) if (c[i] !== x[i]) d++; if (d === 1 && ok(r)) { hit = r; n++; } }); if (n === 1) return hit; }
     }
     return null;
   }
@@ -22416,6 +22417,7 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-st1.s3{background:#fff7ec;border:1.5px solid #f9d9a8}.pmx .qc-st1.s3 .n{background:#c2410c}
 .pmx .qc-st .n.d,.pmx .qc-st1 .n.d{box-shadow:0 0 0 3px #fff,0 0 0 5px #16a34a;background:#16a34a}
 .pmx .qc-st .qc-cam1,.pmx .qc-st .qn{background:#fff!important}
+.pmx .qc-ord .qc-in{font-size:17px!important;letter-spacing:0;min-width:0}
 </style>
 </body>
 </html>
