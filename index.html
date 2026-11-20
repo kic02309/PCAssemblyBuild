@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.17';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.18';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18833,7 +18833,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const t0 = bl.join(' ').replace(/\s+/g, ' ');
       if (/PICK|PC_R|_R\d{3}/i.test(t0)) continue;
       const refm = t0.match(/\[\s*(\d[\d ]{5,9}\d)\s*\]/), ref = refm && /^\d{6,7}$/.test(refm[1].replace(/\D/g, '')) ? refm[1].replace(/\D/g, '') : '';
-      const t = ref ? t0.replace(refm[0], ' ') : t0, neg = /(?:^|\s)[-−–~]\s*1\s*개|[ⓟ®Pp]\s*[-−–~]\s*\d/.test(t0);
+      const t = ref ? t0.replace(refm[0], ' ') : t0, neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test(t0);
       const code = (t.match(/(?:^|\s)\d{6,7}(?=\s|$)/g) || []).map(x => x.trim()).pop() || '';
       let k = '', o = null;
       const br = brandOf(t), W = t.split(' ');
@@ -18857,6 +18857,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     ['cpu', 'mb', 'mem', 'ssd'].forEach(k => {
       const L = [], notes = [];
       items.filter(x => x.k === k && !x.ref).forEach(x => { const y = L.find(z => x.code && z.code === x.code); if (y) y.o.n = (y.o.n || 1) + 1; else L.push({ code: x.code, o: x.o }); });
+      const pr = items.filter(x => x.k === k && x.ref && !x.neg);   // -1개를 못 읽었어도 : 원래 부품과 같은 이름 + 다른 변경 부품이 있으면 = 빠지는 줄
+      pr.forEach(x => { if (L.some(z => lab(z.o) === lab(x.o)) && pr.some(y => y !== x && lab(y.o) !== lab(x.o))) x.neg = true; });
       items.filter(x => x.k === k && x.ref).forEach(x => {
         if (x.neg) { let j = L.findIndex(z => x.code && z.code === x.code); if (j < 0) j = L.findIndex(z => !z.o.chg); if (j >= 0) { const z = L[j]; notes.push('빠짐 ' + lab(z.o)); if ((z.o.n || 1) > 1) z.o.n--; else L.splice(j, 1); } }
         else { const y = L.find(z => x.code && z.code === x.code); if (y) { y.o.n = (y.o.n || 1) + 1; y.o.chg = '추가 +1 (총 ' + y.o.n + '개)'; } else { x.o.chg = '변경된 부품'; L.unshift({ code: x.code, o: x.o }); } }
