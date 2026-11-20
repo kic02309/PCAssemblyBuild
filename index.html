@@ -8666,7 +8666,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.72';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.73';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18332,7 +18332,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         };
         const unresolved=lineSeats.filter(s=>!stagesFor(seatLine)[s.stage]);
         const box=$('#loCfgSeats',bg);
-        box.innerHTML=`<div class="lo-seat-tabs">${cfg.lines.map(l=>`<button data-lo-seat-tab="${esc(l.id)}" aria-pressed="${l.id===seatLine}">${esc(loLineName(l.id))}</button>`).join('')}</div>
+        box.innerHTML=`<div class="lo-seat-tabs">${cfg.lines.map(l=>`<button data-lo-seat-tab="${esc(l.id)}" aria-pressed="${l.id===seatLine}">${esc(loLineLabel(l.id,cfg))}</button>`).join('')}</div>
           <p class="lo-seat-set-name">${esc(set?.name||'세트 미지정')} <small>${set?.stages.length||0}공정</small></p>
           ${unresolved.length?`<section class="lo-seat-group"><strong>공정을 다시 지정할 자리</strong>${unresolved.map(renderSeat).join('')}</section>`:''}
           ${(set?.stages||[]).map((stage,i)=>`<section class="lo-seat-group lo-stage-tint" style="--lo-stage-hue:${loStageHue(stage.name)}" data-lo-seat-group="${i}"><div class="lo-seat-group-head"><strong><span class="lo-seat-stage-number">${esc(loStageNumber(set.stages,i))}</span> ${esc(stage.name)}</strong><button data-lo-add-worker="${i}" aria-expanded="false" aria-label="${i+1} ${esc(stage.name)} 인원 추가" ${locked||cfg.stations.length>=40?'disabled':''}>+ 인원 추가</button></div>${loStageSeats(seatLine,i,cfg.stations).map(renderSeat).join('')}</section>`).join('')}`;
@@ -18404,7 +18404,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const clearDrop=()=>$$('.lo-drop-before,.lo-drop-after',bg).forEach(x=>x.classList.remove('lo-drop-before','lo-drop-after'));
       const draw=()=>{
         $('#loCfgSets',bg).innerHTML=cfg.sets.map(s=>`<details class="lo-set-edit" data-lo-set="${esc(s.id)}" ${openSets.has(s.id)?'open':''}><summary>${esc(loSetName(s.name)||'이름 없는 세트')} <small>${s.stages.length}공정</small></summary><label>세트명<input class="lo-set-name" value="${esc(loSetName(s.name))}" ${lock}></label><div>${s.stages.map((g,i)=>`<div data-lo-stage="${i}" class="lo-config-row"><span class="lo-config-step" ${locked?'':`draggable="true" title="${i+1}번 공정 끌어 옮기기"`}><span aria-hidden="true">⠿</span>${i+1}</span><input class="lo-stage-name" value="${esc(g.name)}" aria-label="공정명" ${lock}><input class="lo-stage-focus" value="${esc(g.focus.join(','))}" placeholder="강조 부품: CPU,메인보드" aria-label="강조 부품" ${lock}><span class="lo-stage-tools"><button data-lo-move="-1" title="위로 이동" aria-label="${i+1}번 공정 위로" ${locked||i===0?'disabled':''}>↑</button><button data-lo-move="1" title="아래로 이동" aria-label="${i+1}번 공정 아래로" ${locked||i===s.stages.length-1?'disabled':''}>↓</button><button data-lo-stage-del="${esc(s.id)}:${i}" ${lock}>삭제</button></span></div>`).join('')}</div><div class="lo-config-buttons"><button data-lo-stage-add="${esc(s.id)}" ${locked||s.stages.length>=8?'disabled':''}>+ 공정 추가</button><button data-lo-set-del="${esc(s.id)}" ${locked||cfg.sets.length<=1?'disabled':''}>세트 삭제</button></div></details>`).join('');
-        $('#loCfgLines',bg).innerHTML=cfg.lines.map(l=>`<label>${esc(loLineName(l.id))} 세트<select data-lo-line="${esc(l.id)}" ${lock}>${cfg.sets.map(s=>`<option value="${esc(s.id)}" ${l.setId===s.id?'selected':''}>${esc(loSetName(s.name))}</option>`).join('')}</select></label>`).join('');
+        $('#loCfgLines',bg).innerHTML=cfg.lines.map(l=>`<label>${esc(loLineName(l.id))} 세트 <small class="muted" data-lo-line-now="${esc(l.id)}">→ ${esc(loLineLabel(l.id,cfg))}</small><select data-lo-line="${esc(l.id)}" ${lock}>${cfg.sets.map(s=>`<option value="${esc(s.id)}" ${l.setId===s.id?'selected':''}>${esc(loSetName(s.name))}</option>`).join('')}</select></label>`).join('');
         if(!cfg.sets.some(s=>s.id===copySource))copySource=cfg.sets[0].id;
         $('#loSetSource',bg).innerHTML=cfg.sets.map(s=>`<option value="${esc(s.id)}" ${s.id===copySource?'selected':''}>${esc(loSetName(s.name))} · ${s.stages.length}공정</option>`).join('');
         drawSeats();
@@ -18429,6 +18429,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           const line=cfg.lines.find(l=>l.id===select.dataset.loLine);
           const oldStages=stagesFor(line.id);
           line.setId=select.value;
+          $$('[data-lo-line-now]',bg).forEach(x=>{x.textContent='→ '+loLineLabel(x.dataset.loLineNow,cfg);});$$('[data-lo-seat-tab]',bg).forEach(b=>{b.textContent=loLineLabel(b.dataset.loSeatTab,cfg);});   // v31.73 : 세트 바꾸면 라인 이름도 바로
           const newStages=stagesFor(line.id);
           cfg.stations.filter(s=>s.line===line.id).forEach(seat=>{
             const name=oldStages[seat.stage]?.name||previousStage.get(seat);
