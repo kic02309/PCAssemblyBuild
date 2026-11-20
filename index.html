@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.25';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.26';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9464,7 +9464,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'df') { $('#proxy').innerHTML = ''; return dfCan() ? renderDf() : go('dash'); }    // v29.81 : 조립 불량 관리
     if (view === 'sp') { $('#proxy').innerHTML = ''; return canSp() ? renderSp() : go('dash'); }   // v29.57 : 소모품 관리
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
-    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob' || view === 'qc' || view === 'mhome');
+    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob' || view === 'qc' || view === 'mhome'); document.body.classList.toggle('qcm', view === 'qc'); if (view !== 'qc') { try { qcCamClose(); } catch (e) { } }
     if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
     if (view === 'line') { $('#proxy').innerHTML=''; return canLine() ? renderLine() : go('dash'); }
     if (view === 'linestats') { $('#proxy').innerHTML=''; return canLine() ? renderLineStats() : go('dash'); }
@@ -18873,7 +18873,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       });
       if (!L.length) return;
       out[k] = L[0].o; if (notes.length) out[k].chg = [out[k].chg, notes.join(' · ')].filter(Boolean).join(' · ');
-      if (L.length > 1) out[k].extra = L.slice(1).map(z => lab(z.o) + ((z.o.n || 1) > 1 ? ' ×' + z.o.n : ''));
+      if (L.length > 1) out[k].extra = L.slice(1).map(z => lab(z.o) + ((z.o.n || 1) > 1 ? ' ×' + z.o.n : ''));
+
     });
     // v31.24 : 줄 구분이 깨져도 전체 글자에서 한 번 더 (CPU 모델 · 메모리 용량/속도) — 수량은 모르면 ?
     const all = text.replace(/\s+/g, ' ');
@@ -18896,17 +18897,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const main = $('#main'), V = S.qcv = S.qcv || { step: 'start', hist: null };
     const today = S.today;
     if (!V.hist) { try { const [h, m] = await Promise.all([api('qc', { op: 'list', date: today }), api('qc', { op: 'mine' }).catch(() => ({}))]); V.hist = h.rows || []; V.got = m.got || 0; } catch (e) { V.hist = []; } if (S.view !== 'qc') return; }
-    const head = `<div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="qcback">‹ 메뉴</button></span></div><div class="pxr"><div><h1>2차 검수</h1><div class="pxmeta">${dLabel(today)}<br>검수자 ${esc(S.me.name)}</div></div><div class="qc-cn"><div class="pxcn"><b>${V.hist.length}</b><small>2차 검수 수량</small></div></div></div></div>`;
+    const head = `<div class="pxhd qch"><button id="qcback" class="bk" aria-label="메뉴">‹</button><div class="tt"><h1>2차 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><div class="pxcn"><b>${V.hist.length}</b><small>검수 수량</small></div><button id="qclo" class="lo">로그아웃</button></div>`;
     const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}${h.date && h.date !== today ? ' <small class="muted">' + esc(dLabel(h.date)) + '</small>' : ''}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join('');
     const hist = `<div class="pxcard"><div class="qc-lb">검수 기록 <small>오늘 내가 한 검수 · 주문번호로 찾기</small></div><input class="qc-in sm" id="qcq" inputmode="numeric" placeholder="주문번호 검색" value="${esc(V.q || '')}" autocomplete="off"><div class="qc-hist">${V.qr ? (hl(V.qr) || '<div class="muted">검수 기록 없음</div>') : (hl(V.hist) || '<div class="muted">아직 없음</div>')}</div></div>`;
     // v31.20 : 사진 대신 카메라로 바코드 자동 인식 + 부품 숫자만 참고로 읽기 · 체크 3줄(CPU·메모리·저장장치) + 사양변경
     if (V.step === 'start' || V.step === 'ocr') {
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
-        <div class="pxcard"><div class="qc-lb">① 주문서 찍기 <small>주문서 전체가 화면에 들어오게</small></div>
-        <div class="qc-cam full"><video id="qcvid" playsinline muted autoplay></video><span class="live" id="qccs">카메라 켜는 중…</span><span class="bar" id="qcbs"></span><button type="button" class="shut" id="qcshot" aria-label="찍기"><i></i></button></div>
-        <div class="qc-or"><input class="qc-in" id="qcmo" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="또는 주문번호 입력"><button type="button" id="qcmg">찾기</button></div>
-        <div class="qc-note">사진은 저장하지 않습니다 · 주문번호와 부품 숫자만 읽고 버립니다</div></div>${hist}</div></div>`;
-      bindQc(); qcCamStart(); return;
+        <div class="pxcard"><div class="qc-go"><button type="button" class="shoot" id="qcopen">📷 찍기</button><input class="qc-in" id="qcmo" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="또는 주문번호"><button type="button" class="fd" id="qcmg">찾기</button></div>
+        <div class="qc-note">사진은 저장하지 않고 주문번호 · 부품 숫자만 읽습니다</div></div>${hist}</div></div>`;
+      bindQc(); return;
     } else if (V.step === 'done') {
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>2차 검수 완료</b><div class="muted">${esc(V.order)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
     } else {
@@ -18922,15 +18921,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         : `${(V.near || []).length ? `<div class="qc-near"><small>혹시 이 주문인가요?</small>${V.near.map(x => `<button type="button" data-qn="${esc(x.order)}"><b>${esc(x.order)}</b> · ${esc(x.name)} <span>${esc(x.group)}</span></button>`).join('')}</div>` : ''}<div class="qc-ppl">${(V.ppl || []).map(x => `<button type="button" data-pu2="${esc(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="muted">고를 인원이 없습니다</span>'}</div>`;
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
-        <div class="pxcard"><div class="qc-kv found">
-          <div class="kv"><span class="k">주문번호 :</span><span class="v"><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="주문번호 입력"></span></div>
-          ${V.src === 'bar' ? '<div class="kv s"><span class="k"></span><span class="qc-src ok">바코드로 읽음 ✓</span></div>' : V.src === 'fix' ? '<div class="kv s"><span class="k"></span><span class="qc-src ok">비슷한 번호로 고침 ✓</span></div>' : ''}
-        </div>${block}</div>
-        <div class="pxcard"><div class="qc-lb">② 검수 체크 <small>주문서와 CMOS 비교</small><span class="r"><small>${ok}/3</small></span></div>
+        <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력">${V.src === 'bar' ? '<span class="s">✓ 바코드</span>' : V.src === 'fix' ? '<span class="s">✓ 고침</span>' : ''}<button type="button" id="qcre">📷 다시</button></div>${block}</div>
+        <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === 3 ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/3</span></div>
         ${QC3.map(([k, t]) => `<div class="qc-ck3${R[k] ? ' on' : ''}"><span class="i"><span class="c">${t}</span>${ref(k)}</span><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></div>`).join('')}
-        <div class="qc-chg3${V.chg ? ' on' : ''}"><em>ⓟ</em><span>사양변경<small>${chgSeen && !V.chg ? '주문서에 ⓟ 줄이 보여요 — 확인하세요' : '주문서에 ⓟ 줄이 있을 때만'}</small></span><button type="button" id="qcchg">${V.chg ? '있음 ✓' : '있음'}</button></div>
-        <div class="qc-tools"><button type="button" id="qcre">📷 다른 주문 검수</button></div></div>
-        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>체크 ${ok}/3${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 저장</b></button></div></div>`;
+        <div class="qc-chg3${V.chg ? ' on' : ''}"><em>ⓟ</em><span>${chgSeen && !V.chg ? 'ⓟ 줄이 보여요 — 사양변경 확인' : '사양변경 있을 때만'}</span><button type="button" id="qcchg">${V.chg ? '있음 ✓' : '있음'}</button></div></div>
+        <div class="pxcard qc-st1"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>전산 요청사항 확인</b><small>주문서 요청사항 · 메모</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
+        <div class="pxcard qc-st1"><span class="n${V.s3 ? ' d' : ''}">3</span><span class="tx"><b>조립 상태 확인</b><small>선정리 · 고정 · 외관 육안 확인</small></span><button type="button" class="qc-ok3${V.s3 ? ' on' : ''}" data-qs="s3">${V.s3 ? '확인 ✓' : '확인'}</button></div>
+        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 3 || !V.s2 || !V.s3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>제품 ${ok}/3 · 전산 ${V.s2 ? '✓' : '–'} · 조립 ${V.s3 ? '✓' : '–'}${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 완료</b></button></div></div>`;
     }
     bindQc();
   }
@@ -18956,10 +18953,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const say = t => { const l = lab(); if (l) l.textContent = t; };
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return say('카메라를 쓸 수 없습니다 · 번호를 입력하세요');
     let st; try { st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); } catch (e) { return say('카메라 권한을 허용해 주세요 · 또는 번호 입력'); }
-    if (S.view !== 'qc' || !document.body.contains(v)) { st.getTracks().forEach(t => t.stop()); return; }
+    if (S.view !== 'qc' || !document.body.contains(v)) { st.getTracks().forEach(t => t.stop()); return; }   // 닫기를 먼저 눌렀으면 끔
     QCC.st = st; v.srcObject = st; try { await v.play(); } catch (e) { }
     try { const tr = st.getVideoTracks()[0], cp = tr.getCapabilities ? tr.getCapabilities() : {}; if (cp.focusMode && cp.focusMode.includes('continuous')) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) { }
-    say('카메라 켜짐'); try { const cam = v.closest('.pxcard'); if (cam) cam.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { }   // v31.25 : 찍기 버튼까지 한 화면에
+    say('주문서 전체가 들어오게');
     try { await qcZx(); if (window.__ZX && window.__ZX.wasm && !qcBar.ov) { qcBar.ov = 1; ZXingWASM.setZXingModuleOverrides({ locateFile: (p, pre) => p.endsWith('.wasm') ? window.__ZX.wasm : pre + p }); } } catch (e) { return say('바코드 도구를 못 불러왔습니다 · 번호를 입력하세요'); }
     if (!window.__qcWarm) { window.__qcWarm = 1; setTimeout(async () => { try { const c = document.createElement('canvas'); c.width = c.height = 64; await qcPaddle(c); } catch (e) { } }, 1500); }   // 부품 숫자 읽기 도구 미리 준비
     const c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true });
@@ -18973,6 +18970,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     };
     tick();
   }
+  function qcCamOpen() {   // v31.26 : 찍기 버튼 → 전체 화면 카메라
+    qcCamClose(); const d = document.createElement('div'); d.className = 'qc-ov'; d.id = 'qcov';
+    d.innerHTML = '<video id="qcvid" playsinline muted autoplay></video><span class="live" id="qccs">카메라 켜는 중…</span><button type="button" class="x" id="qcx">✕ 닫기</button><span class="bar" id="qcbs"></span><button type="button" class="shut" id="qcshot" aria-label="찍기"><i></i></button>';
+    document.body.appendChild(d); $('#qcx').onclick = qcCamClose; $('#qcshot').onclick = qcShoot; qcCamStart();
+  }
+  function qcCamClose() { qcCamStop(); const d = $('#qcov'); if (d) d.remove(); }
   async function qcShoot() {   // v31.23 : 주문서 전체를 찍고 → 주문번호 · 부품 숫자만 읽고 사진은 버림
     const v = $('#qcvid'); if (!v || !QCC.st || !v.videoWidth) return toast('카메라가 아직 준비되지 않았습니다', true);
     const b = $('#qcshot'); if (b) b.disabled = true;
@@ -18984,8 +18987,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function qcCamHit(o, v, pre) {
     let shot = pre || null; try { if (window.ImageCapture && QCC.st) shot = await new ImageCapture(QCC.st.getVideoTracks()[0]).takePhoto(); } catch (e) { }   // 고화질 한 장 (메모리에서만 · 저장 안 함)
     let fc = null; if (!shot) { fc = document.createElement('canvas'); fc.width = v.videoWidth; fc.height = v.videoHeight; fc.getContext('2d').drawImage(v, 0, 0); }
-    qcCamStop(); try { navigator.vibrate && navigator.vibrate(80); } catch (e) { }
-    const V = S.qcv; Object.assign(V, { order: o, src: o ? 'bar' : '', res: {}, P: {}, chg: false, ref: 'busy', edit: '' });
+    qcCamClose(); try { navigator.vibrate && navigator.vibrate(80); } catch (e) { }
+    const V = S.qcv; Object.assign(V, { order: o, src: o ? 'bar' : '', res: {}, P: {}, chg: false, s2: false, s3: false, ref: 'busy', edit: '' });
     await qcFindWho(V); V.step = 'check'; if (S.view === 'qc') renderQc();
     qcRefRead(shot || fc, o); if (!o) setTimeout(() => { const x = $('#qco'); if (x) x.focus(); }, 80);
   }
@@ -18999,13 +19002,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     V.P = P || {}; V.ref = P ? 'ok' : 'fail'; if (S.view === 'qc' && V.step === 'check') renderQc();
   }
   function bindQc() {
-    const V = S.qcv, b = $('#qcback'); if (b) b.onclick = () => { qcCamStop(); S.qcv = null; go('mhome'); };
-    const manual = async () => { const x = $('#qcmo'); const o = C.normOrder(x ? x.value : ''); if (!/^\d{8,9}$/.test(o)) return toast('주문번호 8~9자리를 입력하세요', true); qcCamStop(); Object.assign(V, { order: o, src: '', res: {}, P: {}, chg: false, ref: '' }); await qcFindWho(V); V.step = 'check'; renderQc(); };
+    const V = S.qcv, b = $('#qcback'); if (b) b.onclick = () => { qcCamClose(); S.qcv = null; go('mhome'); };
+    if ($('#qclo')) $('#qclo').onclick = () => { qcCamClose(); logout(); };
+    if ($('#qcopen')) $('#qcopen').onclick = qcCamOpen;
+    $$('[data-qs]').forEach(x => x.onclick = () => { const k = x.dataset.qs; V[k] = !V[k]; renderQc(); });
+    const manual = async () => { const x = $('#qcmo'); const o = C.normOrder(x ? x.value : ''); if (!/^\d{8,9}$/.test(o)) return toast('주문번호 8~9자리를 입력하세요', true); qcCamStop(); Object.assign(V, { order: o, src: '', res: {}, P: {}, chg: false, s2: false, s3: false, ref: '' }); await qcFindWho(V); V.step = 'check'; renderQc(); };
     if ($('#qcmg')) $('#qcmg').onclick = manual;
-    if ($('#qcshot')) $('#qcshot').onclick = qcShoot;
     if ($('#qcmo')) $('#qcmo').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); manual(); } };
-    if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
-    if ($('#qcre')) $('#qcre').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); };
+    if ($('#qcnext')) $('#qcnext').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); qcCamOpen(); };
+    if ($('#qcre')) $('#qcre').onclick = () => { S.qcv = { step: 'start', hist: V.hist }; renderQc(); qcCamOpen(); };
     const q = $('#qcq'); if (q) { let tm = 0; q.oninput = () => { clearTimeout(tm); tm = setTimeout(async () => { V.q = q.value.replace(/\D/g, ''); if (V.q.length < 4) { V.qr = null; } else { try { V.qr = (await api('qc', { op: 'list', order: V.q })).rows || []; } catch (e) { V.qr = []; } } const box = $('.qc-hist'); if (box) { const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join(''); box.innerHTML = V.qr ? (hl(V.qr) || '<div class="muted">검수 기록 없음</div>') : (hl(V.hist) || '<div class="muted">아직 없음</div>'); } }, 400); }; }
     $$('[data-qk3]').forEach(x => x.onclick = () => { const k = x.dataset.qk3; V.res[k] = V.res[k] ? undefined : 'ok'; renderQc(); });
     if ($('#qcchg')) $('#qcchg').onclick = () => { V.chg = !V.chg; renderQc(); };
@@ -19016,7 +19021,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if ($('#qcs')) $('#qcs').onclick = async () => {
       if (S.mpv || S.pv) return toast('미리보기에서는 저장되지 않습니다', true);
       const P = V.P || {}, rt = k => { const x = P[k]; if (!x || V.ref !== 'ok') return ''; return [x.brand, x.name].filter(Boolean).join(' ') + (k !== 'cpu' ? ' × ' + (x.n || 1) : ''); };
-      const items = QC3.map(([k, t]) => ({ k, t, v: '확인' + (rt(k) ? ' (참고: ' + rt(k) + ')' : '') })).concat([{ k: 'chg', t: '사양변경', v: V.chg ? '있음' : '없음' }]);
+      const items = QC3.map(([k, t]) => ({ k, t, v: '확인' + (rt(k) ? ' (참고: ' + rt(k) + ')' : '') })).concat([{ k: 'chg', t: '사양변경', v: V.chg ? '있음' : '없음' }, { k: 'req', t: '전산 요청사항', v: '확인' }, { k: 'asm', t: '조립 상태', v: '확인' }]);
       const btn = $('#qcs'); btn.disabled = true;
       try { await api('qc', { op: 'save', order: V.order, assembler: V.who ? V.who.id : '', items }); V.hist = [{ order: V.order, who: V.who ? V.who.name : '', by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
     };
@@ -22148,6 +22153,37 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-cam .shut{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:72px;height:72px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0;display:flex;align-items:center;justify-content:center}
 .pmx .qc-cam .shut i{display:block;width:54px;height:54px;border-radius:50%;background:#fff}
 .pmx .qc-cam .shut:active i{transform:scale(.9)}.pmx .qc-cam .shut:disabled{opacity:.5}
+</style>
+<style id="v3126-qc">
+@media(max-width:700px){body.qcm .czt{display:none}body.qcm .pmx{min-height:100dvh}}
+.pmx .pxhd.qch{display:flex;align-items:center;gap:8px;padding:10px 12px 22px!important}
+.pmx .qch .bk{background:none;color:#fff;font-size:26px;line-height:1;opacity:.8;padding:0 2px}
+.pmx .qch .tt{flex:1;min-width:0}.pmx .qch h1{font-size:20px}.pmx .qch .pxmeta{margin-top:3px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmx .qch .pxcn{padding:4px 10px}.pmx .qch .pxcn b{font-size:18px}.pmx .qch .pxcn small{font-size:10px}
+.pmx .qch .lo{background:rgba(255,255,255,.15);color:#fff;border-radius:8px;font-size:12px;font-weight:700;padding:6px 8px;flex:0 0 auto}
+.pmx .qc-go{display:flex;gap:6px}.pmx .qc-go .qc-in{flex:1;min-width:0;margin:0;height:46px}
+.pmx .qc-go .shoot{height:46px;padding:0 14px;border-radius:11px;background:#1e3a6b;color:#fff;font-weight:800;font-size:15px;white-space:nowrap}
+.pmx .qc-go .fd{height:46px;padding:0 12px;border-radius:11px;background:#e8edf7;color:#1e3a8a;font-weight:800;font-size:14px}
+.pmx .qc-note{font-size:11.5px;color:#94a3b8;margin-top:6px}
+.pmx .qc-oc{padding:8px 12px}.pmx .qc-ord{display:flex;align-items:center;gap:6px}.pmx .qc-ord .k{font-size:13px;color:#64748b;font-weight:700;white-space:nowrap}
+.pmx .qc-ord .qc-in{flex:1;min-width:0;margin:0;height:40px;font-size:19px;font-weight:900;border-color:transparent;background:#f6f8fc;padding:0 8px}
+.pmx .qc-ord .s{color:#15803d;font-weight:800;font-size:12px;white-space:nowrap}
+.pmx .qc-ord button{background:#e8edf7;color:#1e3a8a;font-weight:800;border-radius:9px;padding:8px 10px;font-size:12.5px;white-space:nowrap}
+.pmx .qc-oc .pxmsg{margin-top:6px;padding:7px 10px}
+.pmx .qc-st{padding:8px 12px}.pmx .qc-sh{display:flex;align-items:center;gap:7px;font-weight:900;font-size:15px;margin-bottom:2px}.pmx .qc-sh small{font-weight:500;color:#64748b;font-size:11.5px}.pmx .qc-sh .r{margin-left:auto;font-size:12.5px;color:#64748b}
+.pmx .qc-st .n,.pmx .qc-st1 .n{width:22px;height:22px;border-radius:50%;background:#1e3a6b;color:#fff;font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.pmx .qc-st .n.d,.pmx .qc-st1 .n.d{background:#16a34a}
+.pmx .qc-st .qc-ck3{padding:6px 0;gap:8px}.pmx .qc-st .qc-ck3 .i{flex-direction:row;align-items:center;gap:8px}.pmx .qc-st .qc-ck3 .c{font-size:15px;min-width:60px}
+.pmx .qc-st .qc-ck3 .rf{font-size:12px}.pmx .qc-ok3{height:40px;min-width:80px;font-size:15px;border-radius:10px}
+.pmx .qc-st .qc-chg3{margin-top:4px;padding:5px 8px;border-radius:10px;font-size:12.5px}.pmx .qc-st .qc-chg3 button{height:32px;font-size:13px;padding:0 10px}
+.pmx .qc-st1{display:flex;align-items:center;gap:8px;padding:9px 12px}.pmx .qc-st1 .tx{flex:1;min-width:0;display:flex;flex-direction:column}.pmx .qc-st1 .tx b{font-size:15px}.pmx .qc-st1 .tx small{font-size:11.5px;color:#64748b}
+.pmx .pxbd{gap:7px}
+.qc-ov{position:fixed;inset:0;z-index:9999;background:#000}.qc-ov video{width:100%;height:100%;object-fit:contain;display:block}
+.qc-ov .live{position:absolute;left:12px;top:calc(12px + env(safe-area-inset-top));background:rgba(0,0,0,.55);color:#fff;font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:99px}
+.qc-ov .x{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top));background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:99px;padding:8px 14px;font-weight:800;font-size:14px}
+.qc-ov .bar{position:absolute;right:12px;bottom:calc(52px + env(safe-area-inset-bottom));background:rgba(0,0,0,.55);color:#cbd5e1;font-size:12.5px;font-weight:800;padding:5px 10px;border-radius:99px}.qc-ov .bar:empty{display:none}.qc-ov .bar.on{background:#16a34a;color:#fff}
+.qc-ov .shut{position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%);width:76px;height:76px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0;display:flex;align-items:center;justify-content:center}
+.qc-ov .shut i{display:block;width:58px;height:58px;border-radius:50%;background:#fff}.qc-ov .shut:active i{transform:scale(.9)}.qc-ov .shut:disabled{opacity:.5}
 </style>
 </body>
 </html>
