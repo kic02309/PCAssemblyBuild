@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.49';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.51';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18830,7 +18830,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     QCPP = api('qc', { op: 'parts', ver: QCP ? ver : '' }).then(r => { if (r.same) return QCP; qcpSet(r.rows || []); try { localStorage.setItem('qcParts', JSON.stringify({ ver: r.ver, rows: r.rows || [] })); } catch (e) { } return QCP; }).catch(() => QCP);
     return QCPP;
   }
-  const QCP_KW = { cpu: /\[\s*CPU\s*\]|라이젠|ryzen|코어\s?i\d|core\s?i\d|ultra\s?\d|애슬론|EPYC|\[(AMD|INTEL)\]/i, mem: /메모리|DDR\s?[345]|PC[345]\s?-|\[RAM\]/i, ssd: /\[\s*SSD\s*\]|NVMe|M\.2\b|SSD/i, hdd: /HDD|하드|\[\s*HDD\s*\]|7200\s?RPM|5400\s?RPM|IRONWOLF|BarraCuda|WD\s?(BLUE|PURPLE|RED)/i };
+  const QCP_KW = { cpu: /\[\s*CPU\s*\]|라이젠|ryzen|코어\s?i\d|core\s?i\d|ultra\s?\d|애슬론|EPYC|\[(AMD|INTEL)\]/i, mem: /메모리|DDR\s?[345]|PC[345]\s?-|\[RAM\]/i, ssd: /\[\s*SSD\s*\]|NVMe|NYMe|M\.2|SSD/i, hdd: /HDD|하드|\[\s*HDD\s*\]|7200\s?RPM|5400\s?RPM|IRONWOLF|BarraCuda|WD\s?(BLUE|PURPLE|RED)/i };
   function qcpFind(t) {   // 줄 안의 6~8자리 숫자 → 목록 코드 · 그대로 맞으면 바로 · 잘림/숫자 1개 틀림은 줄 안에 그 분류 글자가 있을 때만 (v31.43)
     if (!QCP || !QCP.size) return null;
     const s = String(t || ''), T = s.match(/(?<!\d)\d{6,8}(?!\d)/g) || [], ok = r => r && QCP_KW[r.k] && QCP_KW[r.k].test(s) ? r : null;
@@ -18859,7 +18859,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const W = nm.split(' ').filter((w, i) => !(i === 0 && /[가-힣]/.test(w) && !/\d/.test(w)) && w.toUpperCase() !== b);   // 앞 한글 제조사 (삼성 · 에센코어 …) 빼기
     if (r.k === 'cpu') { const out = []; W.forEach((w, i) => { if (/[가-힣]/.test(w)) return; if (/^\d$/.test(w) && W[i - 1] !== 'Ultra') return; out.push(w); }); return out.slice(0, 4).join(' ') || nm; }
     if (r.k === 'mem') { const ddr = (nm.match(/DDR\d/i) || [''])[0].toUpperCase(), pc = nm.match(/PC\d-(\d{5})|DDR\d-(\d{5})/i), sp = pc ? Math.round(+(pc[1] || pc[2]) / 8) : ''; const key = W.find(w => /^[A-Z][A-Za-z\-]{2,}$/.test(w) && !/^(DDR\d|PC\d|CL\d+)$/i.test(w) && w.toUpperCase() !== b) || ''; return [key, ddr + (sp ? '-' + sp : '')].filter(Boolean).join(' '); }
-    const i = W.findIndex(w => /^M\.2$|^NVMe$|^SATA/i.test(w)); return (i > 0 ? W.slice(0, i) : W.slice(0, 3)).filter(w => !/[가-힣]/.test(w)).join(' ');
+    const i = W.findIndex(w => /^M\.2$|^NVMe$|^SATA/i.test(w)); return (i > 0 ? W.slice(0, i) : W.slice(0, 3)).filter(w => !/[가-힣]/.test(w) && !/^HDD$|^\d+(GB|TB)$/i.test(w)).join(' ');
   }
   function qcpObj(r, t, br) {
     const cp = (() => { const s = String(t || '').replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = s.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; })();
@@ -18868,9 +18868,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function qcCodeAdjust(L, PKG, out) {   // 메모리 · SSD · HDD : 같은 코드가 몇 번 · 어느 줄이 ⓟ(세트 코드 · [0] · 추가 장착)인지 보고 수량 · 변경을 다시 계산
     const occ = new Map();   // code → { r, base, add, rem, ctx }
     PKG = new Set(PKG); L.forEach(ln => { if (/조립\s?PC|PC_[A-Za-z]?\d|_[RIi]\d{3}|아이웍스|추천|품\s?1\s?개/i.test(ln)) (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { if (!QCP.has(c)) PKG.add(c.slice(-6)); }); });   // 세트(PC) 코드 = 묶음 줄의 코드
+    L.forEach((ln, i) => { (ln.match(/[\[【(]\s*\d{7,8}/g) || []).forEach(m => { const c = m.replace(/\D/g, '').slice(0, 7); if (!QCP.has(c)) PKG.add(c.slice(-6)); }); if (i < 8 && /^\s*1\s*[.,]/.test(ln)) (ln.match(/(?<!\d)\d{7}(?!\d)/g) || []).forEach(c => { if (!QCP.has(c)) PKG.add(c.slice(-6)); }); });   // v31.50 : [1380862] 괄호 속 세트 코드 · 1번 줄 코드
     L.forEach((ln, i) => {
-      for (const x of (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || [])) {
-        const r = QCP.get(x); if (!r || r.k === 'cpu') continue;
+      for (let x of (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || [])) {
+        let r = QCP.get(x);
+        if (!r && x.length === 7) { let h = null, n = 0; QCP.forEach((q, c) => { if (c.length !== 7 || q.k === 'cpu' || !QCP_KW[q.k].test(ln)) return; let d = 0; for (let j = 0; j < 7 && d < 2; j++) if (c[j] !== x[j]) d++; if (d === 1) { h = q; n++; } }); if (n === 1) r = h; }   // 숫자 1개 틀림 (그 줄에 분류 글자가 있을 때만)
+        if (!r || r.k === 'cpu') continue; x = r.c;
         if (new RegExp('[\\[【(]\\s*' + x).test(ln)) continue;   // [1338353] 처럼 괄호 안 = 안내 문구 속 코드
         const ctx = [L[i - 1] || '', ln, L[i + 1] || ''].join(' ');
         const isRef = /[\[【(]\s*0\s*[\]】)]/.test(ctx) || /추가\s*장착/.test(ctx) || [...PKG].some(c => c && ctx.replace(x, ' ').includes(c));
@@ -18881,12 +18884,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     });
     ['mem', 'ssd', 'hdd'].forEach(k => {
       const C = [...occ.values()].filter(o => o.r.k === k); if (!C.some(o => o.add || o.rem)) return;
+      if (C.some(o => o.add && !o.base)) C.forEach(o => { if (o.base && o.add) { o.rem += o.add; o.add = 0; } });   // v31.50 : 새 부품이 ⓟ로 들어오면, 원래 부품의 ⓟ 줄은 빠지는 줄(-1 취소선이 안 읽혀도)
       const net = o => Math.max(0, Math.max(o.base, 1) * (o.base ? 1 : 0) + o.add - o.rem);
       const live = C.filter(o => net(o) > 0).sort((a, b) => (b.add - a.add) || (net(b) - net(a))); if (!live.length) return;
       const top = live[0], n = net(top), cur = out[k], q = +((top.ctx.match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1);
       const o = qcpObj(top.r, top.ctx); o.n = top.base && top.add ? n : Math.max(n, q > 1 ? q : 1);
-      const gone = C.filter(z => z !== top && z.rem && !net(z)).map(z => qcpShort(z.r));
-      if (top.base && top.add) o.chg = `추가 +${top.add} (총 ${o.n}개)`; else if (top.add) o.chg = ['변경된 부품', gone.length ? '빠짐 ' + gone.join(', ') : ''].filter(Boolean).join(' · ');
+      const gone = C.filter(z => z !== top && z.rem && !net(z)).map(z => [qcpBrand(z.r), qcpShort(z.r), qcpCap(z.r)].filter(Boolean).join(' '));
+      if (top.base && top.add) o.chg = `추가 +${top.add} (총 ${o.n}개)`;
+      else if (top.add) o.chg = !C.some(z => z !== top && z.base) ? '추가 장착 (새 부품)' : ['변경된 부품', gone.length ? '빠짐 ' + gone.join(', ') : ''].filter(Boolean).join(' · ');   // v31.50 : 원래 없던 분류(HDD 등)에 새로 들어오면 추가
       if (!cur || !cur.byCode || cur.code !== o.code || (cur.n || 1) !== o.n || !!cur.chg !== !!o.chg) out[k] = o;
       if (live.length > 1) out[k].extra = live.slice(1).map(z => qcpShort(z.r) + (net(z) > 1 ? ' ×' + net(z) : ''));
     });
