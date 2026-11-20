@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.41';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.42';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18846,18 +18846,23 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const k = s.match(/(\d{1,4})\s?(GB?|TB?)\s*\(\s*(\d{1,3})\s?(GB?)\s*[*xX×]\s*(\d)\s*\)/i); if (k) return `${k[1]}${u(k[2])} (${k[3]}GB×${k[5]})`;
     const m = s.match(/\[\s*(\d{1,4})\s?(GB?|TB?)\s*\]/i) || s.match(/(?:^|[\s\[])(\d{1,4})\s?(GB|TB)(?=[\s\]\)]|$)/i); return m ? m[1] + u(m[2]) : ''; };
   const qcpBr = r => { const m = String(r.n || '').match(/^\s*\[([^\]]{1,20})\]/); return m && !/병행|정품|벌크/.test(m[1]) ? m[1].trim() : ''; };
-  function qcpShort(r) {   // 목록 이름 → 짧은 모델명
-    const nm = String(r.n || '').replace(/\[[^\]]*\]/g, ' ').replace(/▶[^◀]*◀/g, ' ').split('(')[0].replace(/\s+/g, ' ').trim(), W = nm.split(' ');
+  const QCP_BRN = { INTEL: 'Intel', 'WESTERN DIGITAL': 'WD', 'SK HYNIX': 'SK하이닉스', 'TEAM GROUP': 'TeamGroup', 'SAMSUNG': '삼성전자' };
+  function qcpBrand(r) {   // v31.42 : 제조사 = 목록 이름 맨 앞 [ ] (없으면 이름 첫 한글 · CPU는 AMD/Intel)
+    let b = qcpBr(r); if (b) b = QCP_BRN[b.toUpperCase()] || b;
+    if (!b && r.k === 'cpu') b = /라이젠|애슬론|EPYC|ryzen/i.test(r.n) ? 'AMD' : /코어|인텔|core|ultra/i.test(r.n) ? 'Intel' : '';
+    if (!b) { const w = String(r.n || '').replace(/\[[^\]]*\]/g, ' ').trim().split(/\s+/)[0] || ''; if (/^[가-힣A-Za-z]{2,}$/.test(w) && /[가-힣]/.test(w) && !/노트북/.test(w)) b = w; }
+    return b;
+  }
+  function qcpShort(r) {   // 목록 이름 → 짧은 모델명 (제조사 빼고)
+    const nm = String(r.n || '').replace(/\[[^\]]*\]/g, ' ').replace(/▶[^◀]*◀/g, ' ').split('(')[0].replace(/\s+/g, ' ').trim(), b = (qcpBrand(r) || '').toUpperCase();
+    const W = nm.split(' ').filter((w, i) => !(i === 0 && /[가-힣]/.test(w) && !/\d/.test(w)) && w.toUpperCase() !== b);   // 앞 한글 제조사 (삼성 · 에센코어 …) 빼기
     if (r.k === 'cpu') { const out = []; W.forEach((w, i) => { if (/[가-힣]/.test(w)) return; if (/^\d$/.test(w) && W[i - 1] !== 'Ultra') return; out.push(w); }); return out.slice(0, 4).join(' ') || nm; }
-    if (r.k === 'mem') { const ko = W[0] && /[가-힣]/.test(W[0]) && !/노트북/.test(W[0]) ? W[0] : ''; const ddr = (nm.match(/DDR\d/i) || [''])[0].toUpperCase(), pc = nm.match(/PC\d-(\d{5})|DDR\d-(\d{5})/i), sp = pc ? Math.round(+(pc[1] || pc[2]) / 8) : ''; const key = ko || qcpBr(r) || (W.find(w => /^[A-Z][A-Za-z\-]{2,}$/.test(w) && !/^(DDR\d|PC\d|CL\d+)$/i.test(w)) || ''); return [key, ddr + (sp ? '-' + sp : '')].filter(Boolean).join(' '); }
-    const i = W.findIndex(w => /^M\.2$|^NVMe$|^SATA/i.test(w)), md = (i > 0 ? W.slice(0, i) : W.slice(0, 3)).filter(w => !/[가-힣]/.test(w)).join(' '), b = qcpBr(r);
-    return (b && !md.toUpperCase().startsWith(b.toUpperCase()) && !/[가-힣]/.test(b) ? b + ' ' : '') + md;
+    if (r.k === 'mem') { const ddr = (nm.match(/DDR\d/i) || [''])[0].toUpperCase(), pc = nm.match(/PC\d-(\d{5})|DDR\d-(\d{5})/i), sp = pc ? Math.round(+(pc[1] || pc[2]) / 8) : ''; const key = W.find(w => /^[A-Z][A-Za-z\-]{2,}$/.test(w) && !/^(DDR\d|PC\d|CL\d+)$/i.test(w) && w.toUpperCase() !== b) || ''; return [key, ddr + (sp ? '-' + sp : '')].filter(Boolean).join(' '); }
+    const i = W.findIndex(w => /^M\.2$|^NVMe$|^SATA/i.test(w)); return (i > 0 ? W.slice(0, i) : W.slice(0, 3)).filter(w => !/[가-힣]/.test(w)).join(' ');
   }
   function qcpObj(r, t, br) {
     const cp = (() => { const s = String(t || '').replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = s.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; })();
-    const brand = r.k === 'cpu' ? (/라이젠|애슬론|EPYC|ryzen/i.test(r.n) ? 'AMD' : 'Intel') : '';
-    let name = qcpShort(r); if (r.k === 'mem' && br && !qcpBr(r) && !/[가-힣]/.test(name.split(' ')[0])) name = br + ' ' + name.replace(/^[A-Z][A-Za-z\-]{2,}\s+(?=DDR)/, '');   // 목록 이름에 제조사가 없으면 주문서 제조사
-    return { brand, name, cap: r.k === 'cpu' ? '' : (qcpCap(r) || cp), n: 1, code: r.c, byCode: true };
+    return { brand: qcpBrand(r) || br || '', name: qcpShort(r), cap: r.k === 'cpu' ? '' : (qcpCap(r) || cp), n: 1, code: r.c, byCode: true };
   }
   function qcParse(text, noCode) {
     text = text.replace(/[【［〔]/g, '[').replace(/[】］〕]/g, ']').replace(/（/g, '(').replace(/）/g, ')').replace(/：/g, ':');   // v31.24 : 전각 괄호
@@ -18962,10 +18967,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } else {
       const R = V.res = V.res || {}, P = V.P || {}, Q = qcRowsOf(V), NQ = Q.length, ok = Q.filter(([k]) => R[k]).length;
       const ref = k => { if (V.ref === 'busy' || V.busyK === k) return '<span class="rf busy">읽는 중…</span>'; if ((V.busyS || []).includes(k) && !P[k]) return '<span class="rf busy">더 자세히 읽는 중…</span>'; if (!V.ref) return '<span class="rf"></span>'; const x = P[k]; let t = '';   // v31.30 : 모델명 간단히 · 수량은 따로
-        if (x && x.byCode) t = k === 'cpu' ? [x.brand, x.name].filter(Boolean).join(' ') : x.name + (x.cap ? ' ' + x.cap : ' · 용량 ?');
-        else if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
+        let bh = ''; if (x && x.brand) { bh = `<b class="brn">${esc(x.brand)}</b>`; }   // v31.42 : 제조사 : 모델명
+        if (x && x.byCode) t = k === 'cpu' ? x.name : x.name + (x.cap ? ' ' + x.cap : ' · 용량 ?');
+        else if (x) { if (k === 'cpu') t = x.name || ''; else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = x.cap || ''; }
         const th = t ? (x && x.cap && k !== 'cpu' ? esc(t.slice(0, t.lastIndexOf(x.cap))) + '<b class="cap">' + esc(x.cap) + '</b>' : esc(t)) : '?';   // v31.32 : 용량 강조
-        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? '<em>변경</em>' : ''}${th}${x && x.byCode ? '<i class="cd" title="제품코드 ' + esc(x.code) + '">코드</i>' : ''}</span>`; };
+        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? '<em>변경</em>' : ''}${bh}${th}${x && x.byCode ? '<i class="cd" title="제품코드 ' + esc(x.code) + '">코드</i>' : ''}</span>`; };
       const qty = k => { if (k === 'cpu') return '<span class="qn x"></span>'; if (V.ref !== 'ok' || V.busyK === k || !P[k] || ((V.busyS || []).includes(k) && P[k].n === 0)) return '<span class="qn u">–</span>'; const x = P[k]; const n = x.n === 0 ? 0 : (x.n || 1); return `<span class="qn${n > 1 ? ' m' : !n ? ' u' : ''}">${n ? n : '?'}개</span>`; };
       const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">아래에서 고르세요</div>';
       const whoBox = V.who ? ''
@@ -18978,8 +18984,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === NQ ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/${NQ}</span></div>
         ${Q.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="hd"><span class="c">${t}</span>${ref(k)}</span><span class="ln">${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
 </div>
-        <div class="pxcard qc-st1"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>요청사항 확인</b><small>고객요청 · 특이사항 · 운송방법</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
-        <div class="pxcard qc-st1"><span class="n${V.s3 ? ' d' : ''}">3</span><span class="tx"><b>조립상태 확인</b><small>내부 선정리 · 나사 · 케이스 외관</small></span><button type="button" class="qc-ok3${V.s3 ? ' on' : ''}" data-qs="s3">${V.s3 ? '확인 ✓' : '확인'}</button></div>
+        <div class="pxcard qc-st1 s2"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>요청사항 확인</b><small>고객요청 · 특이사항 · 운송방법</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
+        <div class="pxcard qc-st1 s3"><span class="n${V.s3 ? ' d' : ''}">3</span><span class="tx"><b>조립상태 확인</b><small>내부 선정리 · 나사 · 케이스 외관</small></span><button type="button" class="qc-ok3${V.s3 ? ' on' : ''}" data-qs="s3">${V.s3 ? '확인 ✓' : '확인'}</button></div>
         </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < NQ || !V.s2 || !V.s3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>제품 ${ok}/${NQ} · 요청 ${V.s2 ? '✓' : '–'} · 조립 ${V.s3 ? '✓' : '–'}${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 완료</b></button></div></div>`;
     }
     bindQc();
@@ -22402,6 +22408,14 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .qcp-kpi b{font-size:28px;font-weight:900}.qcp-kpi span{color:var(--sub,#64748b)}.qcp-kpi .tot b{color:#1d4ed8}
 .qcp-kpi.sm{grid-template-columns:repeat(4,minmax(0,1fr))}.qcp-kpi.sm b{font-size:22px}
 .qcp-note{padding:12px 16px;line-height:1.7}
+.pmx .qc-ck3.v2 .rf .brn{font-weight:900;color:#1e3a8a;margin-right:5px}
+.pmx .qc-st .qc-ck3.v2 .hd{align-items:flex-start}.pmx .qc-st .qc-ck3.v2 .hd .rf{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;word-break:keep-all}
+/* v31.42 : 1 · 2 · 3단계 카드 색 구분 */
+.pmx .qc-st{background:#f1f6ff;border:1.5px solid #c7d8fb}.pmx .qc-st .n{background:#1d4ed8}.pmx .qc-st .qc-ck3{border-top-color:#dbe6fb}
+.pmx .qc-st1.s2{background:#eefaf3;border:1.5px solid #bfe8cf}.pmx .qc-st1.s2 .n{background:#15803d}
+.pmx .qc-st1.s3{background:#fff7ec;border:1.5px solid #f9d9a8}.pmx .qc-st1.s3 .n{background:#c2410c}
+.pmx .qc-st .n.d,.pmx .qc-st1 .n.d{box-shadow:0 0 0 3px #fff,0 0 0 5px #16a34a;background:#16a34a}
+.pmx .qc-st .qc-cam1,.pmx .qc-st .qn{background:#fff!important}
 </style>
 </body>
 </html>
