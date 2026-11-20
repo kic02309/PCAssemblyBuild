@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.24';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.25';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18959,7 +18959,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (S.view !== 'qc' || !document.body.contains(v)) { st.getTracks().forEach(t => t.stop()); return; }
     QCC.st = st; v.srcObject = st; try { await v.play(); } catch (e) { }
     try { const tr = st.getVideoTracks()[0], cp = tr.getCapabilities ? tr.getCapabilities() : {}; if (cp.focusMode && cp.focusMode.includes('continuous')) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) { }
-    say('카메라 켜짐');
+    say('카메라 켜짐'); try { const cam = v.closest('.pxcard'); if (cam) cam.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { }   // v31.25 : 찍기 버튼까지 한 화면에
     try { await qcZx(); if (window.__ZX && window.__ZX.wasm && !qcBar.ov) { qcBar.ov = 1; ZXingWASM.setZXingModuleOverrides({ locateFile: (p, pre) => p.endsWith('.wasm') ? window.__ZX.wasm : pre + p }); } } catch (e) { return say('바코드 도구를 못 불러왔습니다 · 번호를 입력하세요'); }
     if (!window.__qcWarm) { window.__qcWarm = 1; setTimeout(async () => { try { const c = document.createElement('canvas'); c.width = c.height = 64; await qcPaddle(c); } catch (e) { } }, 1500); }   // 부품 숫자 읽기 도구 미리 준비
     const c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true });
@@ -22141,7 +22141,7 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-wbox.none{color:#94a3b8;font-weight:600;font-size:15px}
 </style>
 <style id="v3123-qc">
-.pmx .qc-cam.full{height:min(68vh,620px);background:#000}
+.pmx .qc-cam.full{height:min(56svh,560px);background:#000}
 .pmx .qc-cam.full video{object-fit:contain}
 .pmx .qc-cam .bar{position:absolute;right:10px;top:10px;background:rgba(0,0,0,.55);color:#cbd5e1;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px}
 .pmx .qc-cam .bar:empty{display:none}.pmx .qc-cam .bar.on{background:#16a34a;color:#fff}
