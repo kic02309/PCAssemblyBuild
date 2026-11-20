@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.20';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.21';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18900,7 +18900,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="qc-note">사진은 저장하지 않습니다 · 바코드와 부품 숫자만 읽습니다</div></div>${hist}</div></div>`;
       bindQc(); qcCamStart(); return;
     } else if (V.step === 'done') {
-      main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>2차 검수 완료</b><div class="muted">${esc(V.order)} · 조립자 ${esc(V.who.name)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
+      main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>2차 검수 완료</b><div class="muted">${esc(V.order)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
     } else {
       const R = V.res = V.res || {}, P = V.P || {}, ok = QC3.filter(([k]) => R[k]).length;
       const ref = k => { if (V.ref === 'busy') return '<span class="rf busy">부품 숫자 읽는 중…</span>'; if (!V.ref) return ''; const x = P[k]; let t = '';
@@ -18914,22 +18914,21 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         : `${(V.near || []).length ? `<div class="qc-near"><small>혹시 이 주문인가요?</small>${V.near.map(x => `<button type="button" data-qn="${esc(x.order)}"><b>${esc(x.order)}</b> · ${esc(x.name)} <span>${esc(x.group)}</span></button>`).join('')}</div>` : ''}<div class="qc-ppl">${(V.ppl || []).map(x => `<button type="button" data-pu2="${esc(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="muted">고를 인원이 없습니다</span>'}</div>`;
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
-        <div class="pxcard"><div class="qc-kv${V.who ? ' found' : ''}">
+        <div class="pxcard"><div class="qc-kv found">
           <div class="kv"><span class="k">주문번호 :</span><span class="v"><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="주문번호 입력"></span></div>
           ${V.src === 'bar' ? '<div class="kv s"><span class="k"></span><span class="qc-src ok">바코드로 읽음 ✓</span></div>' : V.src === 'fix' ? '<div class="kv s"><span class="k"></span><span class="qc-src ok">비슷한 번호로 고침 ✓</span></div>' : ''}
-          <div class="kv"><span class="k">조 립 자 :</span><span class="v who">${whoV}</span></div>${V.who ? `<div class="kv s"><span class="k"></span><span class="qc-src ok">${V.who.auto ? '업무데이터에서 찾음 ✓' : '직접 선택 ✓'}</span></div>` : ''}
-        </div>${whoBox}${block}</div>
+        </div>${block}</div>
         <div class="pxcard"><div class="qc-lb">② 검수 체크 <small>주문서와 CMOS 비교</small><span class="r"><small>${ok}/3</small></span></div>
         ${QC3.map(([k, t]) => `<div class="qc-ck3${R[k] ? ' on' : ''}"><span class="i"><span class="c">${t}</span>${ref(k)}</span><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></div>`).join('')}
         <div class="qc-chg3${V.chg ? ' on' : ''}"><em>ⓟ</em><span>사양변경<small>${chgSeen && !V.chg ? '주문서에 ⓟ 줄이 보여요 — 확인하세요' : '주문서에 ⓟ 줄이 있을 때만'}</small></span><button type="button" id="qcchg">${V.chg ? '있음 ✓' : '있음'}</button></div>
         <div class="qc-tools"><button type="button" id="qcre">📷 다른 주문 검수</button></div></div>
-        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 3 || !V.who || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>${V.who ? '' : '조립자 · '}체크 ${ok}/3${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 저장</b></button></div></div>`;
+        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>체크 ${ok}/3${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 저장</b></button></div></div>`;
     }
     bindQc();
   }
   async function qcFindWho(V) {
     V.who = null; V.self = false; V.done = null; V.other = null; V.ship = false; V.near = []; V.cands = []; V.ppl = []; V.focused = 0; if (!/^\d{8,9}$/.test(V.order || '')) return;
-    try { const r = await api('qc', { op: 'find', order: V.order }); V.cands = (r.rows || []).filter(x => x.id !== S.me.id || (r.rows || []).length === 1); V.done = r.done || null; V.other = r.other || null; V.ship = !!r.ship; if (!V.cands.length && !V.ship) { try { V.near = (await api('qc', { op: 'near', order: V.order })).rows || []; } catch (e) { } } if (V.cands.length) V.who = Object.assign({ auto: true }, V.cands[0]); else if (!V.ship) { try { const all = (await api('qc', { op: 'people' })).rows || [], mine = all.filter(x => x.group === S.me.group); V.ppl = (mine.length ? mine : all).sort((p, q) => p.name.localeCompare(q.name, 'ko')); } catch (e) { V.ppl = []; } } V.self = !!(V.who && V.who.id === S.me.id); } catch (e) { }
+    try { const r = await api('qc', { op: 'find', order: V.order }); V.cands = (r.rows || []).filter(x => x.id !== S.me.id || (r.rows || []).length === 1); V.done = r.done || null; V.other = r.other || null; V.ship = !!r.ship; if (!V.cands.length && !V.ship) { try { V.near = (await api('qc', { op: 'near', order: V.order })).rows || []; } catch (e) { } } if (V.cands.length) V.who = Object.assign({ auto: true }, V.cands[0]);  V.self = !!(V.who && V.who.id === S.me.id); } catch (e) { }
   }
   async function qcPickWho(V) {
     let A = V.cands && V.cands.length > 1 ? V.cands.map(x => ({ id: x.id, name: x.name, group: x.group })) : null;
@@ -19002,7 +19001,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const P = V.P || {}, rt = k => { const x = P[k]; if (!x || V.ref !== 'ok') return ''; return [x.brand, x.name].filter(Boolean).join(' ') + (k !== 'cpu' ? ' × ' + (x.n || 1) : ''); };
       const items = QC3.map(([k, t]) => ({ k, t, v: '확인' + (rt(k) ? ' (참고: ' + rt(k) + ')' : '') })).concat([{ k: 'chg', t: '사양변경', v: V.chg ? '있음' : '없음' }]);
       const btn = $('#qcs'); btn.disabled = true;
-      try { await api('qc', { op: 'save', order: V.order, assembler: V.who.id, items }); V.hist = [{ order: V.order, who: V.who.name, by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
+      try { await api('qc', { op: 'save', order: V.order, assembler: V.who ? V.who.id : '', items }); V.hist = [{ order: V.order, who: V.who ? V.who.name : '', by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
     };
   }
   // ───────── v30.92 : 검수 현황 (매니저 · 팀장 · 관리자) — 처리 = 각자 입력한 주문번호(조립한 날 기준) · 검수 = 그중 검수된 주문 ─────────
