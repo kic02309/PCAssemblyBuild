@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.39';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.40';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18903,10 +18903,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         for (let k = i + 1; k < W.length && name.length < 4; k++) { let w = W[k].replace(/^Gen[b5S]*5?$/, 'Gen5'); if (/^[A-Z0-9][A-Za-z0-9+\-]{1,11}$/.test(w) && (/\d|-/.test(w) || QC_MBW.test(w))) name.push(w); else break; }
         k = 'mb'; o = { brand: br, name: name.join(' ') }; qcGuess(o, t);
       }
-      if (k) { if ((k === 'mem' || k === 'ssd') && qn > 1 && !neg) o.n = qn; items.push({ k, o, ref, neg, code }); }
+      if (k) { if ((k === 'mem' || k === 'ssd' || k === 'hdd') && qn > 1 && !neg) o.n = qn; items.push({ k, o, ref, neg, code }); }
     }
     const lab = o => [o.brand, o.name].filter(Boolean).join(' ');
-    ['cpu', 'mb', 'mem', 'ssd'].forEach(k => {
+    ['cpu', 'mb', 'mem', 'ssd', 'hdd'].forEach(k => {
       const L = [], notes = [];
       items.filter(x => x.k === k && !x.ref).forEach(x => { if (k !== 'mem' && L.some(z => lab(z.o) === lab(x.o))) { x.ref = 'dup'; x.neg = true; return; } const y = L.find(z => x.code && z.code === x.code); if (y) y.o.n = (y.o.n || 1) + 1; else L.push({ code: x.code, o: x.o }); });
       const pr = items.filter(x => x.k === k && x.ref && !x.neg);   // -1개를 못 읽었어도 : 원래 부품과 같은 이름 + 다른 변경 부품이 있으면 = 빠지는 줄
@@ -18921,10 +18921,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
     });
     // v31.36 : 줄로 못 묶였어도 글자 안에 목록 코드가 있으면 (그 줄 + 다음 줄에서 용량 · 수량)
-    ['cpu', 'mem', 'ssd'].forEach(k => { if (out[k] || !QCP || noCode) return; for (let i = 0; i < L.length; i++) { const pc = qcpFind(L[i]); if (!pc || pc.k !== k) continue; const t2 = L[i] + ' ' + (L[i + 1] || ''); out[k] = qcpObj(pc, t2); const q = +((L[i].match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1); if (k !== 'cpu' && q > 1) out[k].n = q; break; } });
+    ['cpu', 'mem', 'ssd', 'hdd'].forEach(k => { if (out[k] || !QCP || noCode) return; for (let i = 0; i < L.length; i++) { const pc = qcpFind(L[i]); if (!pc || pc.k !== k) continue; const t2 = L[i] + ' ' + (L[i + 1] || ''); out[k] = qcpObj(pc, t2); const q = +((L[i].match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1); if (k !== 'cpu' && q > 1) out[k].n = q; break; } });
     if (!noCode && QCP && ['cpu', 'mem', 'ssd'].some(k => out[k] && out[k].byCode)) {   // 코드로 찾은 부품 : 수량 · 용량은 글자로 읽은 값도 같이 봄
       const P0 = qcParse(raw0, true);
-      ['mem', 'ssd'].forEach(k => { const a = out[k], b = P0[k]; if (!a || !a.byCode || !b) return; if (!a.cap && b.cap) a.cap = b.cap; if ((a.n || 1) === 1 && !a.chg && (b.n > 1 || b.n === 0) && (!b.cap || b.cap === a.cap)) a.n = b.n; });
+      ['mem', 'ssd', 'hdd'].forEach(k => { const a = out[k], b = P0[k]; if (!a || !a.byCode || !b) return; if (!a.cap && b.cap) a.cap = b.cap; if ((a.n || 1) === 1 && !a.chg && (b.n > 1 || b.n === 0) && (!b.cap || b.cap === a.cap)) a.n = b.n; });
     }
     // v31.24 : 줄 구분이 깨져도 전체 글자에서 한 번 더 (CPU 모델 · 메모리 용량/속도) — 수량은 모르면 ?
     const all = text.replace(/\s+/g, ' ');
@@ -18960,7 +18960,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } else if (V.step === 'done') {
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>2차 검수 완료</b><div class="muted">${esc(V.order)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
     } else {
-      const R = V.res = V.res || {}, P = V.P || {}, ok = QC3.filter(([k]) => R[k]).length;
+      const R = V.res = V.res || {}, P = V.P || {}, Q = qcRowsOf(V), NQ = Q.length, ok = Q.filter(([k]) => R[k]).length;
       const ref = k => { if (V.ref === 'busy' || V.busyK === k) return '<span class="rf busy">읽는 중…</span>'; if ((V.busyS || []).includes(k) && !P[k]) return '<span class="rf busy">더 자세히 읽는 중…</span>'; if (!V.ref) return '<span class="rf"></span>'; const x = P[k]; let t = '';   // v31.30 : 모델명 간단히 · 수량은 따로
         if (x && x.byCode) t = k === 'cpu' ? [x.brand, x.name].filter(Boolean).join(' ') : x.name + (x.cap ? ' ' + x.cap : ' · 용량 ?');
         else if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
@@ -18975,12 +18975,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const block = V.self ? '<div class="pxmsg bad">본인이 조립한 주문은 검수할 수 없습니다</div>' : V.done ? `<div class="pxmsg info">이미 검수된 주문입니다 (${esc(V.done.by)} · ${esc(String(V.done.at).slice(5, 16))}) — 저장하면 새로 덮어씁니다</div>` : '';
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
         <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력">${V.src === 'bar' ? '<span class="s">✓ 바코드</span>' : V.src === 'fix' ? '<span class="s">✓ 고침</span>' : ''}<button type="button" id="qcre">↺ 초기화</button></div>${block}</div>
-        <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === 3 ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/3</span></div>
-        ${QC3.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="hd"><span class="c">${t}</span>${ref(k)}</span><span class="ln">${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
+        <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === NQ ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/${NQ}</span></div>
+        ${Q.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="hd"><span class="c">${t}</span>${ref(k)}</span><span class="ln">${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
 </div>
         <div class="pxcard qc-st1"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>요청사항 확인</b><small>고객요청 · 특이사항 · 운송방법</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
         <div class="pxcard qc-st1"><span class="n${V.s3 ? ' d' : ''}">3</span><span class="tx"><b>조립상태 확인</b><small>내부 선정리 · 나사 · 케이스 외관</small></span><button type="button" class="qc-ok3${V.s3 ? ' on' : ''}" data-qs="s3">${V.s3 ? '확인 ✓' : '확인'}</button></div>
-        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < 3 || !V.s2 || !V.s3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>제품 ${ok}/3 · 요청 ${V.s2 ? '✓' : '–'} · 조립 ${V.s3 ? '✓' : '–'}${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 완료</b></button></div></div>`;
+        </div><div class="pxbar"><button class="pxs pxsv" id="qcs" ${ok < NQ || !V.s2 || !V.s3 || V.self || !/^\d{8,9}$/.test(V.order || '') ? 'disabled' : ''}><small>제품 ${ok}/${NQ} · 요청 ${V.s2 ? '✓' : '–'} · 조립 ${V.s3 ? '✓' : '–'}${S.mpv || S.pv ? ' · 미리보기 (저장 안 됨)' : ''}</small><b>검수 완료</b></button></div></div>`;
     }
     bindQc();
   }
@@ -18998,7 +18998,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     });
   }
   const QC3 = [['cpu', 'CPU'], ['mem', '메모리'], ['ssd', '저장장치']];
-  const qcChgNames = V => QC3.filter(([k]) => V.P && V.P[k] && V.P[k].chg).map(([, t]) => t).join(' · ');
+  const qcRowsOf = V => V && V.P && V.P.hdd ? QC3.concat([['hdd', 'HDD']]) : QC3;   // v31.40 : 주문서에 HDD가 있을 때만 HDD 줄
+  const qcChgNames = V => qcRowsOf(V).filter(([k]) => V.P && V.P[k] && V.P[k].chg).map(([, t]) => t).join(' · ');
   function qcChgAuto(V) { }   // v31.33 : 사양변경 버튼 없앰 — 읽힌 ⓟ(변경) 부품이 자동 기록
   const QCC = { st: null, tm: 0, bar: '' };
   function qcCamStop() { clearTimeout(QCC.tm); QCC.tm = 0; if (QCC.st) { QCC.st.getTracks().forEach(t => t.stop()); QCC.st = null; } }
@@ -19025,7 +19026,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     };
     tick();
   }
-  const QC_TIP = { cpu: 'CPU 줄만 크게 찍으세요', mem: '메모리 줄만 크게 · 앞의 ○개까지 보이게', ssd: '저장장치 줄만 크게 찍으세요' };
+  const QC_TIP = { cpu: 'CPU 줄만 크게 찍으세요', mem: '메모리 줄만 크게 · 앞의 ○개까지 보이게', ssd: '저장장치 줄만 크게 찍으세요', hdd: 'HDD 줄만 크게 찍으세요' };
   function qcCamOpen(part) {   // v31.26 : 찍기 버튼 → 전체 화면 카메라 · v31.28 : part = 그 부품 줄만 다시 찍기
     qcCamClose(); QCC.part = typeof part === 'string' ? part : ''; const d = document.createElement('div'); d.className = 'qc-ov' + (QCC.part ? ' pt' : ''); d.id = 'qcov';
     d.innerHTML = '<video id="qcvid" playsinline muted autoplay></video><span class="live" id="qccs">카메라 켜는 중…</span><button type="button" class="x" id="qcx">✕ 닫기</button><span class="bar" id="qcbs"></span><button type="button" class="shut" id="qcshot" aria-label="찍기"><i></i></button>';
@@ -19121,14 +19122,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if ($('#qcs')) $('#qcs').onclick = async () => {
       if (S.mpv || S.pv) return toast('미리보기에서는 저장되지 않습니다', true);
       const P = V.P || {}, rt = k => { const x = P[k]; if (!x || V.ref !== 'ok') return ''; return [x.brand, x.name].filter(Boolean).join(' ') + (k !== 'cpu' ? ' × ' + (x.n || 1) : ''); };
-      const items = QC3.map(([k, t]) => ({ k, t, v: '확인' + (rt(k) ? ' (참고: ' + rt(k) + ')' : '') })).concat([{ k: 'chg', t: '사양변경', v: qcChgNames(V) ? '있음 (' + qcChgNames(V) + ')' : '없음' }, { k: 'req', t: '요청사항', v: '확인' }, { k: 'asm', t: '조립상태', v: '확인' }]);
+      const items = qcRowsOf(V).map(([k, t]) => ({ k, t, v: '확인' + (rt(k) ? ' (참고: ' + rt(k) + ')' : '') })).concat([{ k: 'chg', t: '사양변경', v: qcChgNames(V) ? '있음 (' + qcChgNames(V) + ')' : '없음' }, { k: 'req', t: '요청사항', v: '확인' }, { k: 'asm', t: '조립상태', v: '확인' }]);
       const btn = $('#qcs'); btn.disabled = true;
       try { await api('qc', { op: 'save', order: V.order, assembler: V.who ? V.who.id : '', items }); V.hist = [{ order: V.order, who: V.who ? V.who.name : '', by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
     };
   }
   // ───────── v31.36 : 제품코드 목록 (관리자) — CPU · 메모리 · SSD 코드 : 제품명 · 파일 / 붙여넣기로 추가 ─────────
-  const QCP_K = [['cpu', 'CPU'], ['mem', '메모리'], ['ssd', 'SSD']];
-  const qcpCat = s => { s = String(s || '').replace(/\s/g, '').toUpperCase(); return s === 'CPU' ? 'cpu' : /메모리|RAM|MEM/.test(s) ? 'mem' : /SSD|저장|NVME/.test(s) ? 'ssd' : ''; };
+  const QCP_K = [['cpu', 'CPU'], ['mem', '메모리'], ['ssd', 'SSD'], ['hdd', 'HDD']];
+  const qcpCat = s => { s = String(s || '').replace(/\s/g, '').toUpperCase(); return s === 'CPU' ? 'cpu' : /메모리|RAM|MEM/.test(s) ? 'mem' : /HDD|하드/.test(s) ? 'hdd' : /SSD|저장|NVME/.test(s) ? 'ssd' : ''; };
   function qcpRowsFrom(AOA, src, defK) {   // 표(행 배열) → [{c,k,n,s}] · 머리줄(제품코드 · 상품명/제품명 · 분류/카테고리)이 있으면 그 칸 · 카테고리 칸이 비면 위 줄 이어받기
     const out = []; let cat = '', H = null;
     AOA.forEach(r => {
@@ -19140,7 +19141,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       else { ci = cells.findIndex(x => /^\d{6,8}(\.0+)?$/.test(x)); if (ci < 0) { const k0 = qcpCat(cells[0]); if (k0) cat = k0; else if (cells[0] && cells[0].length < 12) cat = 'x'; return; } ni = ci + 1; kv = ci > 0 ? cells[0] : ''; }
       if (kv) { const k0 = kv.length <= 12 ? qcpCat(kv) : ''; cat = k0 || 'x'; }
       const k = kv || (H && H.k >= 0) || ci > 0 ? cat : (defK || cat), n = cells[ni] || '';
-      if (!['cpu', 'mem', 'ssd'].includes(k) || !n) return;
+      if (!['cpu', 'mem', 'ssd', 'hdd'].includes(k) || !n) return;
       out.push({ c: cells[ci].replace(/\.0+$/, ''), k, n, s: src });
     });
     return out;
@@ -19164,9 +19165,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const preview = add => {   // 등록 전 미리보기 → 등록
       const M = new Map(); add.forEach(r => M.set(r.c, r)); const L = [...M.values()], old = new Map(rows.map(r => [r.c, r]));
       const nw = L.filter(r => !old.has(r.c)), up = L.filter(r => old.has(r.c) && (old.get(r.c).n !== r.n || old.get(r.c).k !== r.k));
-      if (!L.length) return toast('CPU · 메모리 · SSD 줄을 찾지 못했습니다 (제품코드 · 제품명 칸 확인)', true);
+      if (!L.length) return toast('CPU · 메모리 · SSD · HDD 줄을 찾지 못했습니다 (제품코드 · 제품명 칸 확인)', true);
       const cnt = k => L.filter(r => r.k === k).length;
-      modal(`<h3>제품코드 등록 미리보기</h3><p>읽은 줄 <b>${L.length}</b>개 · CPU ${cnt('cpu')} · 메모리 ${cnt('mem')} · SSD ${cnt('ssd')}<br><b style="color:#16a34a">새로 추가 ${nw.length}</b> · <b style="color:#c2410c">이름 바뀜 ${up.length}</b> · 그대로 ${L.length - nw.length - up.length} <span class="muted">(기존 목록은 지우지 않습니다)</span></p>
+      modal(`<h3>제품코드 등록 미리보기</h3><p>읽은 줄 <b>${L.length}</b>개 · CPU ${cnt('cpu')} · 메모리 ${cnt('mem')} · SSD ${cnt('ssd')} · HDD ${cnt('hdd')}<br><b style="color:#16a34a">새로 추가 ${nw.length}</b> · <b style="color:#c2410c">이름 바뀜 ${up.length}</b> · 그대로 ${L.length - nw.length - up.length} <span class="muted">(기존 목록은 지우지 않습니다)</span></p>
         <div class="qcp-pv">${nw.concat(up).slice(0, 200).map(r => `<div><em class="${old.has(r.c) ? 'u' : 'n'}">${old.has(r.c) ? '변경' : '추가'}</em><b>${QCP_K.find(x => x[0] === r.k)[1]}</b><code>${esc(r.c)}</code><span>${esc(r.n)}</span></div>`).join('') || '<div class="muted">바뀌는 내용이 없습니다</div>'}</div>
         <div class="acts"><button data-c>취소</button><button class="primary" data-s ${nw.length + up.length ? '' : 'disabled'}>등록</button></div>`, (bg, close) => {
         $('[data-c]', bg).onclick = close;
