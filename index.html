@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.26';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.27';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -12550,7 +12550,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     modal(`<h3>업무 기록 · ${esc(x.name)} <small class="muted">${esc(x.group)} · ${dLabel(d)}</small></h3>
       <div class="m2info"><span>개인목표 환산 <b class="${m.v == null || !m.t ? '' : rateCls(m.v / m.t, x.ym) + 't'}">${m.v == null ? '-' : f2(m.v)}</b></span><span>목표 <b>${m.t || '-'}</b></span><span>달성률 <b class="${m.v == null || !m.t ? '' : rateCls(m.v / m.t, x.ym) + 't'}">${m.v == null || !m.t ? '-' : pct(m.v / m.t)}</b></span><span title="${esc(monthMiss.ym ? ymLabel(monthMiss.ym) + ' 귀속월 전체 · 오늘 저장된 근무기록 포함' : '귀속월 미설정')}">귀속월 미달 (오늘 포함) <b>${monthMiss.count == null ? '조회 불가' : monthMiss.count + '일'}</b></span></div>
       <div class="fld"><label>① 업무 특이사항 <label class="row" style="gap:4px;display:inline-flex;margin-left:8px;font-weight:400"><input type="checkbox" id="fna" ${f.na ? 'checked' : ''} ${ed ? '' : 'disabled'}>해당 없음</label></label><textarea id="fnt" maxlength="1000" placeholder="업무 특이사항을 입력하세요" ${ed ? '' : 'readonly'} ${f.na ? 'disabled' : ''}>${esc(f.note)}</textarea></div>
-      <div class="fld"><label>② 업무 피드백 <span class="muted" id="fbc">(${cnt(f.fb)}자 · ${m.v != null && m.t && m.v < m.t ? '미달성이라 공백 빼고 10자 이상' : '달성 인원은 선택'})</span></label><textarea id="ffb" maxlength="2000" style="min-height:90px" placeholder="업무 피드백을 입력하세요" ${ed ? '' : 'readonly'}>${esc(f.fb)}</textarea></div>
+      <div class="fld"><label>② 업무 피드백 <span class="muted" id="fbc">(${cnt(f.fb)}자 · ${m.v != null && m.t && m.v < m.t ? '미달성 · 피드백 또는 면담 중 하나 10자 이상' : '달성 인원은 선택'})</span></label><textarea id="ffb" maxlength="2000" style="min-height:90px" placeholder="업무 피드백을 입력하세요" ${ed ? '' : 'readonly'}>${esc(f.fb)}</textarea></div>
       <div class="fld mtfld"><label>③ 면담 내용 <span class="muted">(선택 · 공백 빼고 10자 이상 적으면 이 날 면담 1회)</span> ${mtPill(tk)}</label><textarea id="ftk" maxlength="2000" style="min-height:80px" placeholder="면담 내용을 입력하세요" ${ed ? '' : 'readonly'}>${esc(f.talk || '')}</textarea><small class="muted" id="ftkc">${mtCnt(f.talk) >= 10 ? '✓ 면담으로 기록됨' : '비워 두면 면담으로 세지 않습니다'} · 면담 내용은 작성 매니저 · 팀장 · 관리자만 봅니다</small></div>
       <div class="fld hlfld"><label>④ 건강 관리 <span class="muted">(날짜와 상관없이 계속 유지 · 바뀌면 고쳐 쓰기)</span><span style="flex:1"></span>${mgHl(uid).length ? `<button type="button" class="sm" id="hllog">변경 이력 ${mgHl(uid).length}건</button>` : ''}</label><textarea id="fhl" maxlength="1000" style="min-height:56px" placeholder="건강 관련 참고 사항을 입력하세요" ${ed ? '' : 'readonly'}>${esc((mgHlNow(uid) || {}).text || '')}</textarea><div class="hlft"><small class="muted">${mgHlNow(uid) ? `마지막 수정 ${esc(String(mgHlNow(uid).at).slice(5, 16))} · ${esc(mgHlNow(uid).by || '')}` : '아직 없음'} · 담당 매니저 · 팀장 · 관리자만 봅니다</small>${ed ? '<button type="button" class="sm" id="hlsave" disabled>건강 메모 저장</button>' : ''}</div></div>
       <div class="mtrec"><b>${esc(x.name)} 최근 기록 <small class="muted">최근 5건 · 면담 · 피드백 · 교육</small></b>${rec.slice(0, 5).map(r => `<div><span class="muted">${dLabel(r.date)}</span><em class="${r.k}">${r.k === 'talk' ? '면담' : r.k === 'fb' ? '피드백' : '교육'}</em><span>${esc(r.text)}</span></div>`).join('') || '<div class="muted">기록 없음</div>'}${rec.length > 5 ? `<button class="sm" id="mtall">전체 이력 ${rec.length}건 보기</button>` : ''}</div>
@@ -12570,7 +12570,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const na = $('#fna', bg).checked, note = $('#fnt', bg).value.trim(), fb = $('#ffb', bg).value.trim();
         if (!na && cnt(note) < 2 && cnt(fb) < 2 && cnt($('#ftk', bg).value) < 2) return toast('특이사항 · 피드백 · 면담 중 하나는 적거나 [해당 없음]을 고르세요', true);
         const talk = $('#ftk', bg).value.trim(), miss = m.v != null && m.t && m.v < m.t;
-        if (miss && cnt(fb) < 10) return toast('미달성 기록은 피드백을 공백 빼고 10자 이상 적어 주세요', true);
+        if (miss && cnt(fb) < 10 && cnt(talk) < 10) return toast('미달성 기록은 피드백 또는 면담 중 하나를 공백 빼고 10자 이상 적어 주세요', true);   // v31.27 : 면담만 적어도 됨
         if (talk && cnt(talk) < 10) return toast('면담 내용은 공백 빼고 10자 이상 (면담이 아니면 비워 두세요)', true);
         try { await api('mgFb', { userId: uid, date: d, note, na, fb, talk, status: '완료', rc: '', f7: m.v == null ? '' : Math.round(m.v * 100) / 100, tg: m.t || '' }); close(); toast('저장했습니다 (일일업무현황·현황에 반영)'); await mgLoad(true); if (S.view === 'mgr') drawMgr(); } catch (e) { toast(e.message, true); }
       });
