@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.35';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.36';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9182,11 +9182,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>',
   };
-  const SIDE_VIEWS = ['education', 'dash', 'manage', 'people', 'leave', 'hr', 'settings', 'admin', 'stats', 'mfg', 'acc', 'goal', 'ptarget', 'setperiod', 'setrates', 'setbackup', 'setimport', 'qcr'];
+  const SIDE_VIEWS = ['education', 'dash', 'manage', 'people', 'leave', 'hr', 'settings', 'admin', 'stats', 'mfg', 'acc', 'goal', 'ptarget', 'setperiod', 'setrates', 'setbackup', 'setimport', 'qcr', 'qcp'];
   // v30.81 : 운영 설정 = 인원 현황/관리 · 월 기간·마감 · 목표 · 항목별 분 · 백업·보관함 · 엑셀 가져오기 · 통계
   const SET_SECS = () => [['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()]];
   const isSetView = v => v === 'settings' || ['setperiod', 'setrates', 'setbackup', 'setimport'].includes(v);
-  const ADM_MENU = () => [['people', '인원 현황/관리', can('people')], ['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['goal', '목표', isAdm0() && !isRO()], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()], ['stats', '통계', can('stats')], ['qcr', '검수 내역', canQcr()]];
+  const ADM_MENU = () => [['people', '인원 현황/관리', can('people')], ['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['goal', '목표', isAdm0() && !isRO()], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()], ['stats', '통계', can('stats')], ['qcr', '검수 내역', canQcr()], ['qcp', '제품코드 목록', isAdm0()]];
   // v28 : 관리자 · 보기 전용 관리자 · 추가 권한 받은 매니저
   const isAdm0 = () => !!(S.me && S.me.role === '관리자');
   const isRO = () => !!(S.me && S.me.ro);
@@ -9282,7 +9282,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       canSp() && ['sp', 'sp', spTitle(), IC.spi],   // v29.57 : 소모품 관리 (조직도 밑)
       m.acc && ['acc', 'acc', ordered ? '사고 현황' : m.acc.scope === 'self' ? '내 사고' : '사고', IC.warn, '<i class="bd hide" id="acbd"></i>'],
       m.hr && ['hr', 'hr', '데이터 마감', IC.hr],
-      (canSettings() || canQcr()) && (ADM_MENU().filter(x => x[2]).every(x => ['stats', 'qcr'].includes(x[0])) ? ['adm', 'stats', '통계', IC.chart] : ['adm', canHub() ? 'admin' : 'settings', '운영 설정', IC.gear])   // v30.82 : 통계 권한만 있으면 메뉴 이름 = 통계
+      (canSettings() || canQcr()) && (ADM_MENU().filter(x => x[2]).every(x => ['stats', 'qcr', 'qcp'].includes(x[0])) ? ['adm', 'stats', '통계', IC.chart] : ['adm', canHub() ? 'admin' : 'settings', '운영 설정', IC.gear])   // v30.82 : 통계 권한만 있으면 메뉴 이름 = 통계
     ].filter(Boolean);
     if (!ordered) return items;
     const order = ['work', 'mgr', 'acc', 'leave', 'prod', 'video', 'education', 'org', 'sp', 'hr', 'adm'];
@@ -9359,7 +9359,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cur = S.view;     // v28.10 : 보기 전용의 [조직도] = 인원 화면의 조직도 탭
     $$('[data-v]').forEach(b => b.classList.toggle('on', (b.dataset.v === cur || (b.dataset.v === 'line' && cur === 'linestats') || (b.dataset.v === 'dash' && S.view === 'manage') || (b.dataset.v === 'admin' && (isSetView(S.view) || S.view === 'people' || S.view === 'stats' || S.view === 'goal'))) && !(S.target && S.target.id !== S.me.id && b.dataset.v === 'input')));
     if ($('.czn')) {                                                      // v28.17 : 분류 켜짐 + 위 막대 세부 메뉴
-      const v = S.view, cat = v === 'sp' ? 'sp' : v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'line', 'linestats', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'qcr', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(v) ? 'adm' : 'work';
+      const v = S.view, cat = v === 'sp' ? 'sp' : v === 'mgr' ? 'mgr' : v === 'wt' ? 'video' : ['prod', 'line', 'linestats', 'pmob'].includes(v) ? 'prod' : v === 'org' ? 'org' : ['education'].includes(v) ? 'education' : ['leave'].includes(v) ? 'leave' : v === 'hr' ? 'hr' : ['acc', 'accpre'].includes(v) ? 'acc' : ['admin', 'settings', 'people', 'stats', 'qcr', 'qcp', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(v) ? 'adm' : 'work';
       $$('.czr [data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
       let it = cat === 'work' ? (isManager() ? [['dash', '일일 업무현황'], ['manage', '월 업무현황'], ['input', '업무데이터 입력'], ['mfg', '제조 내역']].concat(isRO() ? [] : [['ptarget', '개인 목표']])
           : wtSelf() ? [['dash', '일일 업무현황'], ['wt', '월간 업무표']] : [['dash', '일일 업무현황'], ['input', '업무데이터 입력'], ['month', '월 통계 · 엑셀']])
@@ -9448,7 +9448,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       view = [S.admLast, ...ADM_MENU().map(x => x[0])].find(k => k && ok(k)) || 'settings';
     }
     if (view === 'settings') view = (SET_SECS().find(x => x[2]) || ['setperiod'])[0];   // v30.81 : 예전 '기간 · 백업 · 설정' 주소 → 첫 세부 메뉴
-    if (['people', 'stats', 'qcr', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(view)) S.admLast = view;
+    if (['people', 'stats', 'qcr', 'qcp', 'goal', 'setperiod', 'setrates', 'setbackup', 'setimport'].includes(view)) S.admLast = view;
     const lay = layoutOf(view);
     if (lay !== S.layout) shell(lay);
     if (lay === 'side' && !['input', 'month'].includes(view)) S.lastSide = view;     // 대신 입력에서 [돌아가기] = 그 전 관리 화면
@@ -9473,7 +9473,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'smob') { $('#proxy').innerHTML = ''; return canSmob() ? renderSmob() : go('dash'); }   // v29.53
     if (view === 'qc') { $('#proxy').innerHTML = ''; return canQc() ? renderQc() : go('dash'); }   // v30.90 : 조립 검수
     if (view === 'mhome') { $('#proxy').innerHTML = ''; return renderMhome(); }   // v30.91 : 휴대폰 첫 화면 메뉴
-    if (view === 'qcr') { $('#proxy').innerHTML = ''; return canQcr() ? renderQcr() : go('dash'); }   // v30.92 : 검수 현황
+    if (view === 'qcr') { $('#proxy').innerHTML = ''; return canQcr() ? renderQcr() : go('dash'); }
+    if (view === 'qcp') { $('#proxy').innerHTML = ''; return isAdm0() ? renderQcp() : go('dash'); }   // v31.36 : 제품코드 목록   // v30.92 : 검수 현황
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
     if (entering && (view === 'manage' || view === 'hr')) {
@@ -18818,10 +18819,43 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const QC_BYNAME = [[/\bKC\d{4}|\bNV[123]\b|FURY|\bA2000|RENEGADE/i, 'Kingston'], [/KLEVV|CRAS\b|\bGENUINE\b/i, 'ESSENCORE'], [/\bSN\d{3,4}|WD_?BLACK|WD\s?BLUE|WD\s?GREEN/i, 'WD'], [/\b9[0-9]0\s?(PRO|EVO)|\b9100\b|\bPM9|MAGICIAN/i, 'Samsung'], [/\bP3\s?PLUS|\bP3\b|\bP5\b|\bT500|\bT700|\bT705/i, 'Crucial'], [/OPTIMUS|ULTRA\s?PLUS|SANDISK/i, 'SanDisk'], [/\bMP600|\bMP700|VENGEANCE|DOMINATOR/i, 'Corsair'], [/TRIDENT|RIPJAWS|FLARE\s?X/i, 'G.SKILL'], [/T-?FORCE|\bDELTA\b|XTREEM|\bMP44|\bG70|\bG50/i, 'TeamGroup'], [/\bVIPER|\bSIGNATURE|\bP300|\bP400/i, 'PATRIOT'], [/\bROG\b|\bTUF\b|\bPRIME\b|\bPROART/i, 'ASUS'], [/\bMAG\b|\bMPG\b|\bMEG\b|TOMAHAWK|박격포|MORTAR|\bPRO\s?[ABZ]\d{3}/i, 'MSI'], [/AORUS|\bEAGLE\b|GAMING\s?X\b|\bAERO\b/i, 'GIGABYTE'], [/STEEL\s?LEGEND|PHANTOM|\bPRO\s?RS|RIPTIDE|\bLIVEMIXER/i, 'ASRock'], [/RYZEN|라이젠|\bX3D\b|\d{4}X3D|\bTHREADRIPPER/i, 'AMD'], [/\bCORE\s?(I\d|ULTRA)|\bI[3579]-\d{4,5}|ULTRA\s?[3579]\s?\d{3}|코어\s?(i|울트라)/i, 'Intel']];
   const qcFixTok = w => /\d/.test(w) && /^[A-Za-z0-9oO.+\-]{3,}$/.test(w) ? w.replace(/(?<=\d)[oO]|[oO](?=\d)/g, '0').replace(/[oO](?=0)|(?<=0)[oO]/g, '0').toUpperCase().replace(/NVME/, 'NVMe').replace(/^I([3579]-)/, 'i$1') : w;
   function qcGuess(o, t) { if (!o || o.brand) return; for (const [re, b] of QC_BYNAME) if (re.test(t)) { o.brand = b; return; } }
-  function qcParse(text) {
+  // ───────── v31.36 : 제품코드 목록 (CPU · 메모리 · SSD) — 주문서 줄 끝 7자리 코드로 정확한 이름 ─────────
+  let QCP = null, QCP6 = null, QCPP = null;
+  function qcpSet(rows) { QCP = new Map(); QCP6 = new Map(); (rows || []).forEach(r => { QCP.set(r.c, r); const s = r.c.slice(-6); QCP6.set(s, QCP6.has(s) ? null : r); }); }
+  function qcpLoad(force) {
+    if (QCPP && !force) return QCPP;
+    if (!QCP) { try { const c = JSON.parse(localStorage.getItem('qcParts') || 'null'); if (c && c.rows) qcpSet(c.rows); } catch (e) { } }
+    QCPP = api('qc', { op: 'parts' }).then(r => { qcpSet(r.rows || []); try { localStorage.setItem('qcParts', JSON.stringify({ ver: r.ver, rows: r.rows || [] })); } catch (e) { } return QCP; }).catch(() => QCP);
+    return QCPP;
+  }
+  function qcpFind(t) {   // 줄 안의 6~8자리 숫자 → 목록 코드 (그대로 · 앞자리 잘림 · 숫자 1개 틀림)
+    if (!QCP || !QCP.size) return null;
+    const T = String(t || '').match(/(?<!\d)\d{6,8}(?!\d)/g) || [];
+    for (const x of T) { if (QCP.has(x)) return QCP.get(x); }
+    for (const x of T) {
+      if (x.length === 8) { for (const s of [x.slice(0, 7), x.slice(1)]) if (QCP.has(s)) return QCP.get(s); }
+      if (x.length === 6 && QCP6.get(x)) return QCP6.get(x);
+      if (x.length === 7) { let hit = null, n = 0; QCP.forEach((r, c) => { if (c.length !== 7) return; let d = 0; for (let i = 0; i < 7 && d < 2; i++) if (c[i] !== x[i]) d++; if (d === 1) { hit = r; n++; } }); if (n === 1) return hit; }
+    }
+    return null;
+  }
+  function qcpShort(r) {   // 목록 이름 → 짧은 모델명
+    const nm = String(r.n || '').replace(/\[[^\]]*\]/g, ' ').split('(')[0].replace(/\s+/g, ' ').trim(), W = nm.split(' ');
+    if (r.k === 'cpu') { const out = []; W.forEach((w, i) => { if (/[가-힣]/.test(w)) return; if (/^\d$/.test(w) && W[i - 1] !== 'Ultra') return; out.push(w); }); return out.slice(0, 4).join(' ') || nm; }
+    if (r.k === 'mem') { const ko = W[0] && /[가-힣]/.test(W[0]) && !/노트북/.test(W[0]) ? W[0] : ''; const ddr = (nm.match(/DDR\d/i) || [''])[0].toUpperCase(), pc = nm.match(/PC\d-(\d{5})|DDR\d-(\d{5})/i), sp = pc ? Math.round(+(pc[1] || pc[2]) / 8) : ''; const key = ko || (W.find(w => /^[A-Z][A-Za-z\-]{2,}$/.test(w) && !/^(DDR\d|PC\d|CL\d+)$/i.test(w)) || ''); return [key, ddr + (sp ? '-' + sp : '')].filter(Boolean).join(' '); }
+    const i = W.findIndex(w => /^M\.2$|^NVMe$|^SATA/i.test(w)); return (i > 0 ? W.slice(0, i) : W.slice(0, 3)).filter(w => !/[가-힣]/.test(w)).join(' ');
+  }
+  function qcpObj(r, t, br) {
+    const cp = (() => { const s = String(t || '').replace(/(\d)\s*([GT])\s+B\b/gi, '$1$2B'); const m = s.match(/(?:^|[^\d])(\d{1,4})\s?(GB|TB)/i); return m ? (m[1] + m[2]).toUpperCase() : ''; })();
+    const brand = r.k === 'cpu' ? (/라이젠|애슬론|EPYC|ryzen/i.test(r.n) ? 'AMD' : 'Intel') : '';
+    let name = qcpShort(r); if (r.k === 'mem' && br && !/[가-힣]/.test(name.split(' ')[0])) name = br + ' ' + name.replace(/^[A-Z][A-Za-z\-]{2,}\s+(?=DDR)/, '');   // 목록 이름에 제조사가 없으면 주문서 제조사
+    return { brand, name, cap: r.k === 'cpu' ? '' : cp, n: 1, code: r.c, byCode: true };
+  }
+  function qcParse(text, noCode) {
     text = text.replace(/[【［〔]/g, '[').replace(/[】］〕]/g, ']').replace(/（/g, '(').replace(/）/g, ')').replace(/：/g, ':');   // v31.24 : 전각 괄호
     QC_KO.forEach(([re, en]) => { text = text.replace(re, en); });
-    text = text.replace(/(\d)\s*([GT])\s*\]?\s*(?:\d{6,7})?\s*\n\s*(?:\d+\s*개\s*)?\[?\s*B\b/gi, '$1$2B');   // [1T ↵ B] → 1TB
+    const raw0 = text;
+    text = text.replace(/(\d)\s*([GT])\s*\]?\s*(\d{6,7})?\s*\n\s*(?:\d+\s*개\s*)?\[?\s*B\b/gi, '$1$2B $3');   // [1T ↵ B] → 1TB (줄 끝 코드는 남김)
     const L = text.split('\n').map(x => x.trim()).filter(Boolean), blocks = []; let cur = null;
     const START = /[\[(]?[^\])\[(\s]{1,14}[\])]+\s*[\[(][^\])\[(]{1,14}[\])]/, CONT = /^[^\[(]*[\[(]?\s*\d+\s?(W|GB|TB)\s*[\])]/i;
     const START2 = /\[(AMD|INTEL)\]|(?:CPU|메인보드|메모리|SSD|그래픽카드|쿨러|케이스|파워|조립비|운영체제|조립PC)\s*[\])]/i;   // v31.19 : 괄호가 깨져도 새 줄로
@@ -18840,11 +18874,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let t = ref ? t0.replace(refm[0], ' ') : t0; if (!ref) for (const c of PKG) if (t0.includes(c)) { ref = c; t = t.split(c).join(' '); break; }   // ⓟ 줄 = 세트 상품코드가 같이 적힌 줄 (괄호가 깨져도)
       const neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test(t0);
       const qn = +((t0.match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1);   // v31.22 : 2개 = 수량 2
-      const code = (t.match(/(?:^|\s)\d{6,7}(?=\s|$)/g) || []).map(x => x.trim()).pop() || '';
+      let code = (t.match(/(?:^|\s)\d{6,7}(?=\s|$)/g) || []).map(x => x.trim()).pop() || '';
       let k = '', o = null;
+      const pc = noCode ? null : qcpFind(t);   // v31.36 : 제품코드 목록에 있는 코드면 분류 · 이름은 목록 그대로
       const br = brandOf(t), W = t.split(' ');
       const memX = /\bPC[45]\s?-+\s?\d{5}(?!\d)|(?<!\d)(17000|19200|21300|25600|28800|38400|41600|44800|48000|51200|54400)(?!\d)|CL\s?\d{2}(?!\d)|\[메모리\]|KLEVV|파인인포/i.test(t) && /\d{1,3}\s?GB/i.test(t);   // v31.24 : DDR 글자를 못 읽어도 메모리
-      if ((/DDR\s?[45]/i.test(t) || memX) && !/NVMe|M\.2\b|\[SS[DP]\]|RTX|GTX|RX\s?\d/i.test(t) && !(/\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/PC[45]-|\d\s?GB/i.test(t))) {
+      if (pc) { k = pc.k; o = qcpObj(pc, t, brandOf(t)); code = pc.c; }
+      else if ((/DDR\s?[45]/i.test(t) || memX) && !/NVMe|M\.2\b|\[SS[DP]\]|RTX|GTX|RX\s?\d/i.test(t) && !(/\b[ABZHXW]\d{3}[ME]?\b/.test(t) && !/PC[45]-|\d\s?GB/i.test(t))) {
         const pc = t.match(/(?<!\d)()(17000|19200|21300|25600|28800|38400|41600|44800|48000|51200|54400)(?!\d)/) || t.match(/PC([45])\s?-+\s?(\d{5})(?!\d)/i), sp = pc ? Math.round(+pc[2] / 8) : ((t.match(/\((\d{4})\)?/) || [])[1] || '');
         const ddr = ((t.match(/DDR\s?[45]/i) || [''])[0].replace(/\s/g, '').toUpperCase()) || (pc && pc[1] ? 'DDR' + pc[1] : sp ? (+sp >= 4800 ? 'DDR5' : 'DDR4') : 'DDR');
         k = 'mem'; o = { brand: br, name: [ddr + (sp ? '-' + sp : ''), cap(t)].filter(Boolean).join(' '), cap: cap(t), n: 1 }; qcGuess(o, t);
@@ -18876,6 +18912,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (L.length > 1) out[k].extra = L.slice(1).map(z => lab(z.o) + ((z.o.n || 1) > 1 ? ' ×' + z.o.n : ''));
 
     });
+    // v31.36 : 줄로 못 묶였어도 글자 안에 목록 코드가 있으면 (그 줄 + 다음 줄에서 용량 · 수량)
+    ['cpu', 'mem', 'ssd'].forEach(k => { if (out[k] || !QCP || noCode) return; for (let i = 0; i < L.length; i++) { const pc = qcpFind(L[i]); if (!pc || pc.k !== k) continue; const t2 = L[i] + ' ' + (L[i + 1] || ''); out[k] = qcpObj(pc, t2); const q = +((L[i].match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1); if (k !== 'cpu' && q > 1) out[k].n = q; break; } });
+    if (!noCode && QCP && ['cpu', 'mem', 'ssd'].some(k => out[k] && out[k].byCode)) {   // 코드로 찾은 부품 : 수량 · 용량은 글자로 읽은 값도 같이 봄
+      const P0 = qcParse(raw0, true);
+      ['mem', 'ssd'].forEach(k => { const a = out[k], b = P0[k]; if (!a || !a.byCode || !b) return; if (!a.cap && b.cap) a.cap = b.cap; if ((a.n || 1) === 1 && !a.chg && (b.n > 1 || b.n === 0) && (!b.cap || b.cap === a.cap)) a.n = b.n; });
+    }
     // v31.24 : 줄 구분이 깨져도 전체 글자에서 한 번 더 (CPU 모델 · 메모리 용량/속도) — 수량은 모르면 ?
     const all = text.replace(/\s+/g, ' ');
     if (!out.cpu) { const m = all.match(/(?:라이젠|Ryzen|AMD)[^\[\]]{0,30}?\b(\d{4,5}X3D|\d{4,5}[A-Z]{0,2})\b/i) || all.match(/\b(i[3579]-\d{4,5}[A-Z]{0,2})\b/i) || all.match(/\((\d{4,5}X3D|\d{4,5}[A-Z]?|i[3579]-?\d{4,5}[A-Z]?)\s*\/\s*\d{4}/i); if (m) out.cpu = { brand: /^i\d/i.test(m[1]) || /intel|인텔/i.test(all) && !/AMD|라이젠/i.test(all) ? 'Intel' : 'AMD', name: qcFixTok(m[1]) }; }
@@ -18896,6 +18938,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function renderQc() {
     const main = $('#main'), V = S.qcv = S.qcv || { step: 'start', hist: null };
     const today = S.today;
+    qcpLoad();
     if (!V.hist) { try { const [h, m] = await Promise.all([api('qc', { op: 'list', date: today }), api('qc', { op: 'mine' }).catch(() => ({}))]); V.hist = h.rows || []; V.got = m.got || 0; } catch (e) { V.hist = []; } if (S.view !== 'qc') return; }
     const head = `<div class="pxhd qch"><button id="qcback" class="bk" aria-label="메뉴">‹</button><div class="tt"><h1>2차 검수</h1><div class="pxmeta">${dLabel(today)} · 검수자 ${esc(S.me.name)}</div></div><button type="button" class="pxcn" id="qccnt"><b>${V.hist.length}</b><small>검수 수량 ›</small></button><button id="qclo" class="lo">로그아웃</button></div>`;
     const hl = L => L.map(h => `<div><span><b>${esc(h.order)}</b> · ${esc(h.who)}${h.date && h.date !== today ? ' <small class="muted">' + esc(dLabel(h.date)) + '</small>' : ''}</span><span class="ok-t">✓ ${esc(h.by || '')}</span></div>`).join('');
@@ -18911,9 +18954,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } else {
       const R = V.res = V.res || {}, P = V.P || {}, ok = QC3.filter(([k]) => R[k]).length;
       const ref = k => { if (V.ref === 'busy' || V.busyK === k) return '<span class="rf busy">읽는 중…</span>'; if ((V.busyS || []).includes(k) && !P[k]) return '<span class="rf busy">더 자세히 읽는 중…</span>'; if (!V.ref) return '<span class="rf"></span>'; const x = P[k]; let t = '';   // v31.30 : 모델명 간단히 · 수량은 따로
-        if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
+        if (x && x.byCode) t = k === 'cpu' ? [x.brand, x.name].filter(Boolean).join(' ') : x.name + (x.cap ? ' ' + x.cap : ' · 용량 ?');
+        else if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
         const th = t ? (x && x.cap && k !== 'cpu' ? esc(t.slice(0, t.lastIndexOf(x.cap))) + '<b class="cap">' + esc(x.cap) + '</b>' : esc(t)) : '?';   // v31.32 : 용량 강조
-        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? '<em>변경</em>' : ''}${th}</span>`; };
+        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? '<em>변경</em>' : ''}${th}${x && x.byCode ? '<i class="cd" title="제품코드 ' + esc(x.code) + '">코드</i>' : ''}</span>`; };
       const qty = k => { if (k === 'cpu') return '<span class="qn x"></span>'; if (V.ref !== 'ok' || V.busyK === k || !P[k] || ((V.busyS || []).includes(k) && P[k].n === 0)) return '<span class="qn u">–</span>'; const x = P[k]; const n = x.n === 0 ? 0 : (x.n || 1); return `<span class="qn${n > 1 ? ' m' : !n ? ' u' : ''}">${n ? n : '?'}개</span>`; };
       const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">아래에서 고르세요</div>';
       const whoBox = V.who ? ''
@@ -19014,6 +19058,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   async function qcRefRead(src, ord) {   // 부품 숫자만 참고로 (CPU 모델 · 메모리 용량×수량 · 저장장치 용량 · ⓟ)
     const V = S.qcv; let P = null;
+    try { await Promise.race([qcpLoad(), new Promise(r => setTimeout(r, 4000))]); } catch (e) { }
     try {
       let cv = src; if (src instanceof Blob) { const img = await createImageBitmap(src), sc = Math.min(1, 2400 / Math.max(img.width, img.height)); cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); }
       P = qcParse(await qcPaddle(cv));
@@ -19072,6 +19117,61 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const btn = $('#qcs'); btn.disabled = true;
       try { await api('qc', { op: 'save', order: V.order, assembler: V.who ? V.who.id : '', items }); V.hist = [{ order: V.order, who: V.who ? V.who.name : '', by: S.me.name, date: S.today }].concat(V.hist.filter(h => h.order !== V.order)); V.step = 'done'; renderQc(); } catch (e) { btn.disabled = false; toast(e.message, true); }
     };
+  }
+  // ───────── v31.36 : 제품코드 목록 (관리자) — CPU · 메모리 · SSD 코드 : 제품명 · 파일 / 붙여넣기로 추가 ─────────
+  const QCP_K = [['cpu', 'CPU'], ['mem', '메모리'], ['ssd', 'SSD']];
+  const qcpCat = s => { s = String(s || '').replace(/\s/g, '').toUpperCase(); return s === 'CPU' ? 'cpu' : /메모리|RAM|MEM/.test(s) ? 'mem' : /SSD|저장|NVME/.test(s) ? 'ssd' : ''; };
+  function qcpRowsFrom(AOA, src, defK) {   // 표(행 배열) → [{c,k,n,s}] · 카테고리 칸이 비면 위 줄 카테고리 이어받기
+    const out = []; let cat = '';
+    AOA.forEach(r => {
+      const cells = (r || []).map(x => String(x == null ? '' : x).trim()); if (!cells.some(Boolean)) return;
+      const ci = cells.findIndex(x => /^\d{6,8}(\.0+)?$/.test(x)); if (ci < 0) { const k0 = qcpCat(cells[0]); if (k0) cat = k0; else if (cells[0] && !/카테고리|제품코드/.test(cells.join(''))) cat = 'x'; return; }
+      if (ci > 0) { const k0 = qcpCat(cells[0]); cat = k0 || (cells[0] ? 'x' : cat); }
+      const k = ci > 0 ? cat : (defK || cat), n = cells[ci + 1] || '';
+      if (!['cpu', 'mem', 'ssd'].includes(k) || !n) return;
+      out.push({ c: cells[ci].replace(/\.0+$/, ''), k, n, s: src });
+    });
+    return out;
+  }
+  async function renderQcp() {
+    const main = $('#main'), V = S.qcpv = S.qcpv || { q: '' };
+    main.innerHTML = admHead('제품코드 목록', 'qcp') + '<div class="pgb"><div class="card muted" style="padding:30px">불러오는 중…</div></div>';
+    let rows = []; try { rows = (await api('qc', { op: 'parts' })).rows || []; qcpSet(rows); } catch (e) { main.innerHTML = admHead('제품코드 목록', 'qcp') + `<div class="pgb"><div class="warn">${esc(e.message)}</div></div>`; return; }
+    if (S.view !== 'qcp') return;
+    const draw = () => {
+      const q = V.q.trim().toLowerCase(), hit = r => !q || r.c.includes(q) || r.n.toLowerCase().includes(q);
+      $('#qcpBody').innerHTML = QCP_K.map(([k, tt]) => { const L = rows.filter(r => r.k === k && hit(r)); return `<div class="card qcp-col"><div class="qcp-h"><b>${tt}</b><span class="muted">${L.length}${q ? ' / ' + rows.filter(r => r.k === k).length : ''}개</span></div><div class="qcp-list">${L.map(r => `<div class="qcp-r"><code>${esc(r.c)}</code><span title="${esc(r.n)}${r.s ? ' · ' + esc(r.s) : ''}">${esc(r.n)}</span><button type="button" data-qpd="${esc(r.c)}" title="삭제">✕</button></div>`).join('') || '<div class="muted" style="padding:10px">없음</div>'}</div></div>`; }).join('');
+      $$('[data-qpd]', main).forEach(b => b.onclick = async () => { const r = rows.find(x => x.c === b.dataset.qpd); if (!(await confirmBox(`<b>${esc(r.c)}</b> ${esc(r.n)}<br>목록에서 지울까요?`, '삭제'))) return; try { await api('qc', { op: 'partsDel', code: r.c }); rows = rows.filter(x => x !== r); qcpSet(rows); try { localStorage.removeItem('qcParts'); } catch (e) { } draw(); } catch (e) { toast(e.message, true); } });
+    };
+    main.innerHTML = admHead('제품코드 목록', 'qcp', `<span class="muted">2차 검수에서 주문서 코드로 CPU · 메모리 · SSD 이름을 찾습니다 · 총 ${rows.length}개</span>`, `<input id="qcpQ" placeholder="코드 · 제품명 검색" value="${esc(V.q)}" style="width:200px"><input type="file" id="qcpF" accept=".xls,.xlsx,.csv" multiple hidden><button id="qcpFile">📄 파일 올리기</button><button id="qcpPaste">📋 붙여넣기</button>`) + '<div class="pgb"><div class="qcp-grid" id="qcpBody"></div></div>';
+    draw();
+    $('#qcpQ').oninput = e => { V.q = e.target.value; draw(); };
+    const preview = add => {   // 등록 전 미리보기 → 등록
+      const M = new Map(); add.forEach(r => M.set(r.c, r)); const L = [...M.values()], old = new Map(rows.map(r => [r.c, r]));
+      const nw = L.filter(r => !old.has(r.c)), up = L.filter(r => old.has(r.c) && (old.get(r.c).n !== r.n || old.get(r.c).k !== r.k));
+      if (!L.length) return toast('CPU · 메모리 · SSD 줄을 찾지 못했습니다 (제품코드 · 제품명 칸 확인)', true);
+      const cnt = k => L.filter(r => r.k === k).length;
+      modal(`<h3>제품코드 등록 미리보기</h3><p>읽은 줄 <b>${L.length}</b>개 · CPU ${cnt('cpu')} · 메모리 ${cnt('mem')} · SSD ${cnt('ssd')}<br><b style="color:#16a34a">새로 추가 ${nw.length}</b> · <b style="color:#c2410c">이름 바뀜 ${up.length}</b> · 그대로 ${L.length - nw.length - up.length} <span class="muted">(기존 목록은 지우지 않습니다)</span></p>
+        <div class="qcp-pv">${nw.concat(up).slice(0, 200).map(r => `<div><em class="${old.has(r.c) ? 'u' : 'n'}">${old.has(r.c) ? '변경' : '추가'}</em><b>${QCP_K.find(x => x[0] === r.k)[1]}</b><code>${esc(r.c)}</code><span>${esc(r.n)}</span></div>`).join('') || '<div class="muted">바뀌는 내용이 없습니다</div>'}</div>
+        <div class="acts"><button data-c>취소</button><button class="primary" data-s ${nw.length + up.length ? '' : 'disabled'}>등록</button></div>`, (bg, close) => {
+        $('[data-c]', bg).onclick = close;
+        $('[data-s]', bg).onclick = async () => { try { const r = await api('qc', { op: 'partsSave', rows: nw.concat(up) }); close(); toast(`등록했습니다 · 추가 ${r.new} · 변경 ${r.upd}`); try { localStorage.removeItem('qcParts'); } catch (e) { } QCPP = null; renderQcp(); } catch (e) { toast(e.message, true); } };
+      }, 'wide');
+    };
+    $('#qcpFile').onclick = () => $('#qcpF').click();
+    $('#qcpF').onchange = async e => {
+      const F = [...e.target.files]; e.target.value = ''; if (!F.length) return;
+      try { if (!window.XLSX) await loadLib('XLSX', 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'); } catch (x) { return toast('엑셀 도구를 못 불러왔습니다', true); }
+      let add = []; for (const f of F) { try { const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' }); wb.SheetNames.forEach(sn => { add = add.concat(qcpRowsFrom(XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: false, defval: '' }), f.name.replace(/\.[^.]+$/, '').slice(0, 30))); }); } catch (x) { toast(f.name + ' : 읽기 실패', true); } }
+      preview(add);
+    };
+    $('#qcpPaste').onclick = () => modal(`<h3>📋 붙여넣기로 추가</h3><p class="muted">엑셀에서 줄을 복사해 붙여넣으세요. <b>카테고리 · 제품코드 · 제품명</b> 3칸이면 자동 분류, <b>제품코드 · 제품명</b> 2칸이면 아래에서 분류를 고르세요.</p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><span>분류 (2칸일 때)</span><select id="qpK">${QCP_K.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div>
+      <textarea id="qpT" style="width:100%;min-height:220px;font-family:monospace" placeholder="CPU&#9;1013843&#9;라이젠7 라파엘 7800X3D ...&#10;1087288&#9;삼성 DDR5 PC5-44800"></textarea>
+      <div class="acts"><button data-c>취소</button><button class="primary" data-s>미리보기</button></div>`, (bg, close) => {
+      $('[data-c]', bg).onclick = close;
+      $('[data-s]', bg).onclick = () => { const A = $('#qpT', bg).value.split(/\r?\n/).map(l => l.split(/\t|\s{2,}|,(?=\s*\d{6,8}\b)/)); const add = qcpRowsFrom(A, '붙여넣기', $('#qpK', bg).value); close(); preview(add); };
+    }, 'wide');
   }
   // ───────── v30.92 : 검수 현황 (매니저 · 팀장 · 관리자) — 처리 = 각자 입력한 주문번호(조립한 날 기준) · 검수 = 그중 검수된 주문 ─────────
   const canQcr = () => !!(S.me && (isManager() || isRO()));
@@ -21006,7 +21106,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       let v0 = isRO() ? 'home' : !pend0 && isPhone() && !S.pcMode ? 'mhome' : isManager() && !pend0 ? 'dash' : wtSelf() ? 'wt' : canPmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'pmob' : canSmob() && !pend0 && window.matchMedia && matchMedia('(max-width:700px)').matches ? 'smob' : 'input';   // v28.63 : 라인 인원 폰 = 간편 입력
       try {                                                               // 새로고침(F5) : 보던 화면 그대로
         const lv = sessionStorage.getItem('lastView'), me = S.me;
-        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp', 'qcr'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'qc', 'mhome', 'qcr', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
+        const okv = isRO() ? ['home', 'dash', 'manage', 'stats', 'people', 'leave', 'acc', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'org', 'pa', 'sr', 'sp', 'qcr'].concat(dfStatCan() ? ['df'] : []) : ['input', 'month', 'leave', 'dash', 'acc', 'accpre', 'education', 'wt', 'mgr', 'prod', 'line', 'linestats', 'pmob', 'smob', 'qc', 'mhome', 'qcr', 'qcp', 'org', 'sp'].concat(canPa() ? ['pa'] : []).concat(srCan() ? ['sr'] : []).concat(dfCan() ? ['df'] : []).concat(isManager() ? ['manage', 'ptarget'] : []).concat(isAdm0() ? ['goal'] : []).concat(can('people') ? ['people'] : []).concat(canHub() ? ['admin'] : []).concat(can('stats') ? ['stats'] : []).concat(me.hr ? ['hr'] : []).concat(canSetPage() ? ['settings'] : []);
         if (!pre && !pend0 && lv && okv.includes(lv)) v0 = lv;
         history.replaceState({ v: v0 }, '');
       } catch (e) { }
@@ -22271,6 +22371,19 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .lo-hubmap2 label{display:flex;align-items:center;gap:10px;background:var(--panel,#fff);border:1px solid var(--line,#e2e8f0);border-radius:12px;padding:8px 10px}
 .lo-hubmap2 label b{flex:0 0 46px;font-size:18px;font-weight:900;text-align:center}
 .lo-hubmap2 select{flex:1;min-width:0;height:40px;font-size:15px}
+</style>
+<style id="v3136-qcp">
+.qcp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.qcp-col{padding:10px 12px}.qcp-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}.qcp-h b{font-size:16px}
+.qcp-list{max-height:calc(100vh - 230px);overflow:auto}
+.qcp-r{display:flex;align-items:center;gap:8px;padding:5px 2px;border-top:1px solid var(--line,#eef1f5);font-size:13px}
+.qcp-r code{flex:0 0 auto;font-weight:800;color:#1e40af;background:#eef3ff;border-radius:5px;padding:1px 6px}
+.qcp-r span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qcp-r button{flex:0 0 auto;border:0;background:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:2px 6px}.qcp-r button:hover{color:#dc2626}
+.qcp-pv{max-height:50vh;overflow:auto;border:1px solid var(--line,#e2e8f0);border-radius:10px;padding:6px 10px;font-size:13px}
+.qcp-pv div{display:flex;gap:8px;align-items:center;padding:3px 0}.qcp-pv em{font-style:normal;font-size:11px;font-weight:800;border-radius:5px;padding:1px 6px;color:#fff}.qcp-pv em.n{background:#16a34a}.qcp-pv em.u{background:#ea580c}
+.qcp-pv b{min-width:48px}.qcp-pv code{font-weight:800;color:#1e40af}
+.pmx .qc-ck3.v2 .rf .cd{font-style:normal;font-size:10.5px;font-weight:800;color:#15803d;background:#dcfce7;border-radius:5px;padding:0 5px;margin-left:5px;vertical-align:2px}
 </style>
 </body>
 </html>
