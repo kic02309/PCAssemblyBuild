@@ -23,7 +23,13 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -73,6 +79,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *  shot(save, tag)   고화질 1장 촬영 → save=true면 앨범(Pictures/조립검수)에 저장 → 그 사진을 다시 인식해서 결과 전달
  *  torch(on)         손전등
  *  beep(kind)        짧은 확인음 (ok | bad)
+ *  frame(state)      맞춤 틀 색: 0 대기(흰색) 1 읽는 중(노랑) 2 일치(초록) 3 불일치(빨강)
  *  version()         앱 버전
  * 결과는 window.__cam(json) 으로 전달:
  *  {k:"live"|"shot"|"err"|"state", w, h, ms, lines:[[text,l,t,r,b]...], codes:[[value,l,t,r,b]...], uri, tag, msg}
@@ -85,6 +92,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var root: LinearLayout
     private lateinit var previewView: PreviewView
+    private lateinit var camBox: FrameLayout
+    private lateinit var overlay: FrameOverlay
     private lateinit var web: WebView
 
     private var provider: ProcessCameraProvider? = null
@@ -98,7 +107,7 @@ class MainActivity : AppCompatActivity() {
             override fun onOrientationChanged(d: Int) {
                 if (d == ORIENTATION_UNKNOWN) return
                 val r = when (d) { in 45 until 135 -> Surface.ROTATION_270; in 135 until 225 -> Surface.ROTATION_180; in 225 until 315 -> Surface.ROTATION_90; else -> Surface.ROTATION_0 }
-                if (r != rot) { rot = r; analysisUse?.targetRotation = r; capture?.targetRotation = r }
+                if (r != rot) { rot = r; analysisUse?.targetRotation = r; capture?.targetRotation = r; runOnUiThread { overlay.setRot(r) } }
             }
         }
     }
@@ -142,7 +151,12 @@ class MainActivity : AppCompatActivity() {
             visibility = View.GONE
         }
         web = WebView(this)
-        root.addView(previewView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0))
+        overlay = FrameOverlay(this)
+        camBox = FrameLayout(this).apply { visibility = View.GONE }
+        camBox.addView(previewView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        camBox.addView(overlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        previewView.visibility = View.VISIBLE
+        root.addView(camBox, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0))
         root.addView(web, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
 
@@ -215,8 +229,9 @@ class MainActivity : AppCompatActivity() {
         mode = m
         paused = false
         val h = (root.height * pct.coerceIn(20, 90) / 100f).toInt()
-        previewView.layoutParams = (previewView.layoutParams as LinearLayout.LayoutParams).apply { height = h }
-        previewView.visibility = View.VISIBLE
+        camBox.layoutParams = (camBox.layoutParams as LinearLayout.LayoutParams).apply { height = h }
+        camBox.visibility = View.VISIBLE
+        overlay.setRot(rot); overlay.set(m, 0)
         root.requestLayout()
 
         if (provider != null && camera != null) { emit(JSONObject().put("k", "state").put("msg", "on")); return }
@@ -262,8 +277,8 @@ class MainActivity : AppCompatActivity() {
         try { provider?.unbindAll() } catch (_: Exception) {}
         camera = null
         capture = null
-        previewView.visibility = View.GONE
-        previewView.layoutParams = (previewView.layoutParams as LinearLayout.LayoutParams).apply { height = 0 }
+        camBox.visibility = View.GONE
+        camBox.layoutParams = (camBox.layoutParams as LinearLayout.LayoutParams).apply { height = 0 }
         root.requestLayout()
         emit(JSONObject().put("k", "state").put("msg", "off"))
     }
@@ -273,7 +288,7 @@ class MainActivity : AppCompatActivity() {
         val m = mode
         val now = SystemClock.elapsedRealtime()
         val media = proxy.image
-        if (m == "off" || paused || media == null || now - lastRun < 250 || !busy.compareAndSet(false, true)) {
+        if (m == "off" || m == "free" || paused || media == null || now - lastRun < 250 || !busy.compareAndSet(false, true)) {
             proxy.close(); return
         }
         lastRun = now
@@ -373,7 +388,8 @@ class MainActivity : AppCompatActivity() {
 
     // ───────────── JS 브리지 ─────────────
     inner class Bridge {
-        @JavascriptInterface fun start(pct: Int, m: String) { runOnUiThread { startCamera(pct, if (m == "cmos") "cmos" else "doc") } }
+        @JavascriptInterface fun start(pct: Int, m: String) { runOnUiThread { startCamera(pct, if (m == "cmos" || m == "free") m else "doc") } }
+        @JavascriptInterface fun frame(state: Int) { runOnUiThread { overlay.set(mode, state) } }
         @JavascriptInterface fun stop() { runOnUiThread { stopCamera() } }
         @JavascriptInterface fun pause(on: Boolean) { paused = on }
         @JavascriptInterface fun setMode(m: String) { mode = if (m == "cmos") "cmos" else if (m == "off") "off" else "doc" }
@@ -388,5 +404,58 @@ class MainActivity : AppCompatActivity() {
             }
         }
         @JavascriptInterface fun version(): String = appVersion()
+    }
+}
+
+/** 카메라 화면 위 맞춤 틀 — 전표는 세로 틀, CMOS는 모니터 모양 가로 틀 (휴대폰을 눕히면 같이 돌아감) */
+class FrameOverlay(ctx: Context) : View(ctx) {
+    private var mode = "off"
+    private var state = 0
+    private var rot = 0
+    private val dim = Paint().apply { color = Color.argb(110, 0, 0, 0) }
+    private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
+    private val txt = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textAlign = Paint.Align.CENTER; isFakeBoldText = true }
+    private val bg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(150, 0, 0, 0) }
+    init { isClickable = false; isFocusable = false }
+    fun set(m: String, s: Int) { mode = m; state = s; invalidate() }
+    fun setRot(r: Int) { rot = r; invalidate() }
+
+    override fun onDraw(c: Canvas) {
+        if (mode != "doc" && mode != "cmos") return
+        val W = width.toFloat(); val H = height.toFloat(); if (W <= 0 || H <= 0) return
+        val side = rot == 1 || rot == 3   // 휴대폰을 옆으로 눕힘
+        // 틀 비율(가로/세로, 화면 기준): 전표 = A4 세로, CMOS = 16:9 모니터
+        var ar = if (mode == "doc") 1f / 1.414f else 16f / 9f
+        if (side) ar = 1f / ar
+        var fw = W * 0.86f; var fh = fw / ar
+        if (fh > H * 0.86f) { fh = H * 0.86f; fw = fh * ar }
+        val l = (W - fw) / 2; val t = (H - fh) / 2
+        val r = RectF(l, t, l + fw, t + fh)
+        val hole = Path().apply { fillType = Path.FillType.EVEN_ODD; addRect(0f, 0f, W, H, Path.Direction.CW); addRoundRect(r, 18f, 18f, Path.Direction.CW) }
+        c.drawPath(hole, dim)
+        val col = when (state) { 1 -> Color.rgb(250, 204, 21); 2 -> Color.rgb(34, 197, 94); 3 -> Color.rgb(239, 68, 68); else -> Color.WHITE }
+        line.color = col; line.strokeWidth = W * 0.006f
+        c.drawRoundRect(r, 18f, 18f, line)
+        // 모서리 꺾쇠 (굵게)
+        line.strokeWidth = W * 0.014f
+        val k = minOf(fw, fh) * 0.12f
+        listOf(Pair(r.left, r.top), Pair(r.right, r.top), Pair(r.left, r.bottom), Pair(r.right, r.bottom)).forEach { (x, y) ->
+            val dx = if (x == r.left) k else -k; val dy = if (y == r.top) k else -k
+            c.drawLine(x, y, x + dx, y, line); c.drawLine(x, y, x, y + dy, line)
+        }
+        val msg = when (state) {
+            2 -> "✓ 인식 완료"
+            3 -> "✕ 사양 불일치"
+            1 -> "읽는 중… 그대로 들고 계세요"
+            else -> if (mode == "doc") "전표를 틀 안에 맞추세요" else "CMOS 화면을 틀 안에 맞추세요"
+        }
+        txt.textSize = W * 0.042f
+        val cx = r.centerX(); val cy = r.top + txt.textSize * 1.6f
+        val tw = txt.measureText(msg) / 2 + txt.textSize * 0.7f
+        c.save()
+        if (side) { c.rotate(if (rot == 1) 90f else -90f, r.centerX(), r.centerY()) }
+        c.drawRoundRect(RectF(cx - tw, cy - txt.textSize * 1.1f, cx + tw, cy + txt.textSize * 0.5f), 12f, 12f, bg)
+        c.drawText(msg, cx, cy, txt)
+        c.restore()
     }
 }

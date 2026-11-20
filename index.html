@@ -8674,7 +8674,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.74';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.75';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19700,6 +19700,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
   // ── 화면 ──
   function q1Reset() { S.q1 = { step: 'doc', order: '', P: null, live: null, sig: '', same: 0, t0: Date.now(), cm: {}, bad: {}, shots: 0, msg: '' }; }
+  function q1Frame(s) { try { if (window.PCABCam && typeof window.PCABCam.frame === 'function') window.PCABCam.frame(s); } catch (e) { } }   // 카메라 위 맞춤 틀 색 (0 흰 · 1 노랑 · 2 초록 · 3 빨강)
   function q1Cam(on, mode) { try { if (!window.PCABCam) return; if (on) window.PCABCam.start(on, mode); else window.PCABCam.stop(); } catch (e) { console.warn(e); } }
   window.__appBack = () => {
     if (S.view !== 'qc1' || !S.q1) return 'exit';
@@ -19718,6 +19719,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const r = q1ParseDoc(o); Q.live = r; if (r.order) Q.order = r.order;
       const P = r.P, sig = q1Sig(P), full = Q.order && P.cpu && P.mem && P.ssd;
       Q.same = full && sig === Q.sig ? Q.same + 1 : full ? 1 : 0; Q.sig = sig;
+      q1Frame(full ? 2 : (Q.order || P.cpu || P.mem || P.ssd) ? 1 : 0);
       if (Q.same >= 2 && !Q.busyShot) { Q.busyShot = true; Q.P = P; try { window.PCABCam.pause(true); window.PCABCam.beep('ok'); window.PCABCam.shot(true, '전표_' + Q.order); } catch (e) { } }
       q1Paint(); return;
     }
@@ -19736,6 +19738,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (v.st === 'bad') { const b = Q.bad[k]; Q.bad[k] = b && b.seen === v.seen ? { seen: v.seen, n: b.n + 1 } : { seen: v.seen, n: 1 }; if (Q.bad[k].n >= 2 && Q.cm[k] !== 'bad') { Q.cm[k] = 'bad'; try { window.PCABCam.beep('bad'); } catch (e) { } } }
       });
       const all = Object.keys(Q.E).every(k => Q.cm[k] === 'ok');
+      q1Frame(Object.values(Q.cm).includes('bad') ? 3 : all ? 2 : Object.values(Q.cm).includes('ok') ? 1 : 0);
       if (o.k === 'shot') { Q.busyShot = false; Q.shots++; if (all) return q1Finish('ok'); q1Paint(); return; }
       if (all && !Q.busyShot) { Q.busyShot = true; try { window.PCABCam.pause(true); window.PCABCam.shot(true, 'CMOS_' + Q.order); } catch (e) { q1Finish('ok'); } }
       q1Paint(); return;
@@ -19763,13 +19766,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }
     if (!S.q1) q1Reset();
     const Q = S.q1;
-    if (!paintOnly) { document.body.classList.add('appcam'); qcpLoad(); if (Q.step === 'doc') q1Cam(55, 'doc'); else if (Q.step === 'cmos' || Q.step === 'free') q1Cam(Q.step === 'free' ? 70 : 55, 'cmos'); }
+    if (!paintOnly) { document.body.classList.add('appcam'); qcpLoad(); if (Q.step === 'doc') q1Cam(55, 'doc'); else if (Q.step === 'cmos' || Q.step === 'free') q1Cam(Q.step === 'free' ? 70 : 55, Q.step === 'free' ? 'free' : 'cmos'); }
     const head = `<div class="q1-top"><b>1차 검수</b><span>${esc(S.me.name)}</span><button type="button" data-q1="logout">로그아웃</button></div>`;
     let body = '';
     if (Q.step === 'doc') {
       const P = (Q.live && Q.live.P) || {}, sec = Math.round((Date.now() - Q.t0) / 1000);
       const chip = (ok, label) => `<div class="q1-chip ${ok ? 'ok' : ''}"><span>${label}</span><b>${ok ? '✓' : '찾는 중…'}</b></div>`;
-      body = `<div class="q1-guide">전표를 카메라에 비추세요 · 다 읽히면 자동으로 찍힙니다</div>
+      body = `<div class="q1-guide">전표를 화면의 세로 틀에 맞추세요 · 다 읽히면 틀이 초록으로 바뀌고 자동으로 찍힙니다</div>
         ${chip(!!Q.order, Q.order ? '주문 ' + esc(Q.order) : '주문번호')}
         ${['cpu', 'mem', 'ssd'].map(k => chip(!!P[k], P[k] ? `${Q1_CAT[k]} · ${esc(P[k].code || '')} ${esc((P[k].name || '').slice(0, 22))}${k !== 'cpu' && (P[k].n || 1) > 1 ? ' ×' + P[k].n : ''}` : Q1_CAT[k])).join('')}
         ${P.hdd ? chip(true, 'HDD · ' + esc(P.hdd.code || '')) : ''}
@@ -19783,7 +19786,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <div class="q1-acts"><button type="button" data-q1="redoc">다시 찍기</button><button type="button" class="primary" data-q1="ok">맞음</button></div>`;
     } else if (Q.step === 'cmos') {
       const st = k => Q.cm[k] === 'ok' ? 'ok' : Q.cm[k] === 'bad' ? 'bad' : '';
-      body = `<div class="q1-guide">CMOS 첫 화면(EZ 모드)에 카메라를 대고 기다리세요 · ${esc(Q.order)}</div>
+      body = `<div class="q1-guide">CMOS 첫 화면(EZ 모드)을 가로 틀에 맞추세요 · 다 맞으면 자동으로 찍힙니다 · ${esc(Q.order)}</div>
         ${Object.keys(Q.E).map(k => `<div class="q1-chip ${st(k)}"><span>${Q1_CAT[k]} · ${esc(q1ExpLabel(k, Q.E))}</span><b>${Q.cm[k] === 'ok' ? '✓ 일치' : Q.cm[k] === 'bad' ? '✕ 화면 ' + esc(Q.bad[k].seen) : '찾는 중…'}</b></div>`).join('')}
         ${Object.values(Q.cm).includes('bad') ? '<div class="q1-acts"><button type="button" data-q1="recheck">다시 확인</button><button type="button" class="danger" data-q1="savebad">불일치로 저장</button></div>' : ''}
         ${Q.busyShot ? '<div class="q1-hint">일치 · CMOS 사진 저장 중…</div>' : ''}
@@ -19811,7 +19814,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         Q.order = ov; Q.E = q1Expect(Q.P || {}); if (!Object.keys(Q.E).length) return toast('대조할 사양이 없습니다. 다시 찍어 주세요', true);
         Q.cm = {}; Q.bad = {}; Q.step = 'cmos'; return renderQc1();
       }
-      if (a === 'recheck') { Object.keys(Q.cm).forEach(k => { if (Q.cm[k] === 'bad') delete Q.cm[k]; }); Q.bad = {}; try { window.PCABCam.pause(false); } catch (e) { } return q1Paint(); }
+      if (a === 'recheck') { q1Frame(1); Object.keys(Q.cm).forEach(k => { if (Q.cm[k] === 'bad') delete Q.cm[k]; }); Q.bad = {}; try { window.PCABCam.pause(false); } catch (e) { } return q1Paint(); }
       if (a === 'savebad') return q1Finish('bad');
       if (a === 'cmosshot') { Q.busyShot = true; try { window.PCABCam.pause(true); window.PCABCam.shot(true, 'CMOS_' + Q.order); } catch (e) { } setTimeout(() => { try { window.PCABCam.pause(false); } catch (e) { } }, 1500); return q1Paint(); }
       if (a === 'free') { Q.step = 'free'; Q.shots = 0; return renderQc1(); }
