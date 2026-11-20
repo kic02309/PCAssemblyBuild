@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.29';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.30';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18910,9 +18910,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd"><div class="pxcard qc-done"><div class="big">✅</div><b>2차 검수 완료</b><div class="muted">${esc(V.order)}<br>검수자 ${esc(S.me.name)}</div></div>${hist}</div><div class="pxbar"><button class="pxs pxsv" id="qcnext"><b>다음 검수</b></button></div></div>`;
     } else {
       const R = V.res = V.res || {}, P = V.P || {}, ok = QC3.filter(([k]) => R[k]).length;
-      const ref = k => { if (V.ref === 'busy' || V.busyK === k) return '<span class="rf busy">부품 숫자 읽는 중…</span>'; if (!V.ref) return ''; const x = P[k]; let t = '';
-        if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' ') + (x.cap ? '\u00a0×\u00a0' + (x.n === 0 ? '?' : (x.n || 1)) : ''); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
-        return `<span class="rf">${t ? '참고 · ' + esc(t) : '참고 · ?'}</span>${x && x.chg ? '<span class="rf chg">ⓟ 사양변경 보임</span>' : ''}`; };
+      const ref = k => { if (V.ref === 'busy' || V.busyK === k) return '<span class="rf busy">읽는 중…</span>'; if (!V.ref) return '<span class="rf"></span>'; const x = P[k]; let t = '';   // v31.30 : 모델명 간단히 · 수량은 따로
+        if (x) { if (k === 'cpu') t = [x.brand, x.name].filter(Boolean).join(' '); else if (k === 'mem') t = [(String(x.name || '').match(/DDR\d(-\d{4})?/i) || [''])[0], x.cap].filter(Boolean).join(' '); else t = [x.brand, x.cap].filter(Boolean).join(' '); }
+        return `<span class="rf${x && x.chg ? ' cg' : ''}">${x && x.chg ? '<em>ⓟ</em>' : ''}${t ? esc(t) : '?'}</span>`; };
+      const qty = k => { if (k === 'cpu' || V.ref !== 'ok' || V.busyK === k) return ''; const x = P[k]; if (!x) return ''; const n = x.n === 0 ? 0 : (x.n || 1); return `<span class="qn${n > 1 ? ' m' : !n ? ' u' : ''}">${n ? n : '?'}개</span>`; };
       const chgSeen = V.ref === 'ok' && QC3.some(([k]) => P[k] && P[k].chg);
       const whoV = V.who ? `<div class="qc-wbox"><b>${esc(V.who.name)}</b><span class="g">${esc(V.who.group || '')}</span>${(V.cands || []).length > 1 || !V.who.auto ? '<button type="button" class="qc-chg" id="qcwho">바꾸기</button>' : ''}</div>` : '<div class="qc-wbox none">아래에서 고르세요</div>';
       const whoBox = V.who ? ''
@@ -18923,7 +18924,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       main.innerHTML = `<div class="pmx">${head}<div class="pxbd">
         <div class="pxcard qc-oc"><div class="qc-ord"><span class="k">주문번호</span><input class="qc-in" id="qco" value="${esc(V.order || '')}" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="번호 입력">${V.src === 'bar' ? '<span class="s">✓ 바코드</span>' : V.src === 'fix' ? '<span class="s">✓ 고침</span>' : ''}<button type="button" id="qcre">📷 다시</button></div>${block}</div>
         <div class="pxcard qc-st"><div class="qc-sh"><span class="n${ok === 3 ? ' d' : ''}">1</span>제품 확인 <small>주문서 ↔ CMOS · 수량</small><span class="r">${ok}/3</span></div>
-        ${QC3.map(([k, t]) => `<div class="qc-ck3${R[k] ? ' on' : ''}"><span class="i"><span class="c">${t}</span>${ref(k)}</span><button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></div>`).join('')}
+        ${QC3.map(([k, t]) => `<div class="qc-ck3 v2${R[k] ? ' on' : ''}"><span class="c">${t}</span><span class="ln">${ref(k)}${qty(k)}<button type="button" class="qc-cam1" data-qcam="${k}" aria-label="${t} 다시 찍기">📷</button><button type="button" class="qc-ok3${R[k] ? ' on' : ''}" data-qk3="${k}">${R[k] ? '확인 ✓' : '확인'}</button></span></div>`).join('')}
         <div class="qc-chg3${V.chg ? ' on' : ''}"><em>ⓟ</em><span>${V.chg ? 'ⓟ 사양변경' + (qcChgNames(V) ? ' · ' + esc(qcChgNames(V)) : '') : chgSeen ? 'ⓟ 줄이 보여요 — 사양변경 확인' : '사양변경(ⓟ) 주문이면 누르기'}</span><button type="button" id="qcchg">${V.chg ? '있음 ✓' : '있음'}</button></div></div>
         <div class="pxcard qc-st1"><span class="n${V.s2 ? ' d' : ''}">2</span><span class="tx"><b>전산 요청사항 확인</b><small>주문서 요청사항 · 메모</small></span><button type="button" class="qc-ok3${V.s2 ? ' on' : ''}" data-qs="s2">${V.s2 ? '확인 ✓' : '확인'}</button></div>
         <div class="pxcard qc-st1"><span class="n${V.s3 ? ' d' : ''}">3</span><span class="tx"><b>조립 상태 확인</b><small>선정리 · 고정 · 외관 육안 확인</small></span><button type="button" class="qc-ok3${V.s3 ? ' on' : ''}" data-qs="s3">${V.s3 ? '확인 ✓' : '확인'}</button></div>
@@ -22213,6 +22214,14 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 .pmx .qc-cam1{width:40px;height:40px;border-radius:10px;background:#eef2f9!important;font-size:18px;flex:0 0 auto}
 .pmx .qc-cam1:active{background:#dbe3f2!important}
 .qc-ov.pt .live{background:#1d4ed8}
+.pmx .qc-st .qc-ck3.v2{display:block;padding:7px 0 6px}
+.pmx .qc-st .qc-ck3.v2 .c{display:block;font-size:12.5px;font-weight:800;color:#64748b;min-width:0;margin-bottom:3px}
+.pmx .qc-ck3.v2 .ln{display:flex;align-items:center;gap:6px}
+.pmx .qc-st .qc-ck3.v2 .rf{flex:1;min-width:0;font-size:16.5px;font-weight:800;color:#0f172a;-webkit-line-clamp:1;word-break:break-all}
+.pmx .qc-st .qc-ck3.v2 .rf.busy{color:#94a3b8;font-weight:600;font-style:italic;font-size:14px}
+.pmx .qc-ck3.v2 .rf em{font-style:normal;color:#fff;background:#ea580c;border-radius:5px;padding:0 5px;font-size:12px;margin-right:4px;vertical-align:2px}
+.pmx .qc-ck3.v2 .qn{flex:0 0 auto;min-width:46px;height:34px;border-radius:9px;background:#eef1f6;color:#334155;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.pmx .qc-ck3.v2 .qn.m{background:#ea580c;color:#fff}.pmx .qc-ck3.v2 .qn.u{background:#fff;border:2px dashed #cbd5e1;color:#94a3b8}
 .pmx .qch button.pxcn{color:#fff;font-family:inherit;cursor:pointer}.pmx .qch button.pxcn:active{background:rgba(255,255,255,.3)}
 .pmx .qc-st .qc-ck3 .rf{white-space:normal;word-break:keep-all;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:11.5px}.pmx .qc-st .qc-ck3 .c{min-width:54px;font-size:14.5px}
 </style>
