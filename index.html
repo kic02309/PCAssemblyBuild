@@ -8660,7 +8660,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.59';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.60';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16894,7 +16894,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       mode:last.mode==='one'||last.mode==='split'?last.mode:(r.cfg.lines.length>1?'split':'one'),
       single:r.cfg.lines.some(l=>l.id===last.single)?last.single:r.cfg.lines[0].id,pick:{},qty:{},open:{},busy:false};
     const users=[...r.users].sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    const uname=id=>r.users.find(u=>u.id===id)?.name||'기존 담당자';
+    const lineCrew=users.filter(u=>/라인/.test(u.group||''));   // v31.60 : 담당자 목록은 라인 그룹만 (다른 그룹은 '다른 그룹에서 찾기')
+    const crewOpts=(cur,taken)=>{const list=lineCrew.some(u=>u.id===cur)||!cur?lineCrew:[...lineCrew,...users.filter(u=>u.id===cur)];
+      return '<option value="">담당자 선택</option>'+list.map(u=>`<option value="${esc(u.id)}" ${u.id===cur?'selected':taken(u.id)?'disabled':''}>${esc(u.name)}${/라인/.test(u.group||'')?'':' · '+esc(u.group||'')}</option>`).join('')+'<option value="__more">＋ 다른 그룹에서 찾기…</option>';};
     const prepOf=line=>(r.prepared||[]).find(p=>p.line===line);
     const active=()=>Q.mode==='split'?Q.cfg.lines.map(l=>l.id):[Q.single];
     const btnRange=line=>{const m=hubMap(r),ns=Object.keys(m).filter(n=>r.stations.find(s=>s.id===m[n])?.line===line).map(Number).sort((a,b)=>a-b);
@@ -16913,7 +16915,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       return `<section class="loq-line" data-loq-line="${esc(line)}">${head}
         <div class="loq-r"><span class="loq-l">작업 세트</span><span><select data-loq-set="${esc(line)}">${Q.cfg.sets.map(s=>`<option value="${esc(s.id)}" ${s.id===setId?'selected':''}>${esc(loSetName(s.name))} · ${s.stages.length}공정</option>`).join('')}</select><small class="loq-sub">${stages.map(s=>esc(s.name)).join(' → ')}</small></span></div>
         <div class="loq-r"><span class="loq-l">담당자</span><span>${miss.length?`<b class="loq-bad">${esc(miss.join(', '))} 비어 있음</b>`:`<b class="loq-ok">${seats.reduce((n,x)=>n+x.seats.filter(s=>s.userId).length,0)}명 지정 ✓</b>`} <button type="button" data-loq-who="${esc(line)}">${Q.open[line]?'접기':'수정'}</button></span></div>
-        ${Q.open[line]?`<div class="loq-seats">${seats.map(x=>`<div><b>${esc(loStageNumber(stages,x.i))} ${esc(x.stage.name)}</b>${x.seats.length?x.seats.map(st=>`<label>${esc(st.id)}<select data-loq-seat="${esc(st.id)}"><option value="">담당자 선택</option>${users.map(u=>`<option value="${esc(u.id)}" ${u.id===st.userId?'selected':Q.cfg.stations.some(s=>s!==st&&s.userId===u.id)?'disabled':''}>${esc(u.name)} · ${esc(u.group||'')}</option>`).join('')}</select></label>`).join(''):'<small class="loq-bad">자리 없음 — [자리 · 세트 설정]에서 자리를 만드세요</small>'}</div>`).join('')}</div>`:''}
+        ${Q.open[line]?`<div class="loq-seats">${seats.map(x=>`<div><b>${esc(loStageNumber(stages,x.i))} ${esc(x.stage.name)}</b>${x.seats.length?x.seats.map(st=>`<label>${esc(st.id)}<select data-loq-seat="${esc(st.id)}" data-loq-stage="${x.i}" data-loq-ln="${esc(line)}">${crewOpts(st.userId,id=>Q.cfg.stations.some(s=>s!==st&&s.userId===id))}</select></label>`).join(''):`<label>새 자리<select data-loq-seat="" data-loq-stage="${x.i}" data-loq-ln="${esc(line)}">${crewOpts('',id=>Q.cfg.stations.some(s=>s.userId===id))}</select></label>`}</div>`).join('')}</div>`:''}
         <div class="loq-r"><span class="loq-l">제조건</span><span><select data-loq-row="${esc(line)}">${rowOpts}</select></span></div>
         ${row?`<div class="loq-r"><span class="loq-l">수량</span><span><input type="number" min="1" max="${Math.min(5000,left)}" step="1" inputmode="numeric" data-loq-qty="${esc(line)}" value="${esc(Q.qty[line]||'')}"> 대 <small class="loq-sub">남은 ${left}대</small></span></div>
         <div class="loq-r"><span class="loq-l">사양</span><span>${spec.specs.length?`<b class="loq-ok">사양 ${spec.specs.length}개${spec.serials.length?' · 시리얼 '+spec.serials.length+'개':''} 불러옴 ✓</b>`:`<b class="loq-bad">사양 없음</b> <button type="button" data-loq-spec="${esc(line)}">사양 붙여넣기</button>`}</span></div>`:''}
@@ -16943,7 +16945,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if($('#loqSingle',box))$('#loqSingle',box).onchange=e=>{Q.single=e.target.value;draw();};
         $$('[data-loq-set]',box).forEach(s=>s.onchange=()=>{const ln=Q.cfg.lines.find(l=>l.id===s.dataset.loqSet);if(r.batches.some(b=>b.line===ln.id&&+b.final<+b.q)){toast('진행 중인 배치가 있어 세트를 바꿀 수 없습니다.',true);return draw();}ln.setId=s.value;Q.dirty=true;draw();});
         $$('[data-loq-who]',box).forEach(b=>b.onclick=()=>{Q.open[b.dataset.loqWho]=!Q.open[b.dataset.loqWho];draw();});
-        $$('[data-loq-seat]',box).forEach(s=>s.onchange=()=>{const st=Q.cfg.stations.find(x=>x.id===s.dataset.loqSeat);if(st){st.userId=s.value;Q.dirty=true;}draw();});
+        $$('[data-loq-seat]',box).forEach(s=>s.onchange=()=>{
+          const g={cfg:Q.cfg,line:s.dataset.loqLn,dirty:false},stage=+s.dataset.loqStage,seat=s.dataset.loqSeat;
+          if(s.value==='__more')return loSearchGuidePerson(g,stage,seat,users,()=>{Q.dirty=Q.dirty||g.dirty;draw();});
+          if(!loGuideAssign(g,stage,seat,s.value))toast('이미 다른 자리에 배정됐거나 작업대 한도에 도달했습니다.',true);
+          Q.dirty=Q.dirty||g.dirty;draw();});
         $$('[data-loq-row]',box).forEach(s=>s.onchange=()=>{const line=s.dataset.loqRow;Q.pick[line]=s.value||undefined;Q.qty[line]='';const row=rowOf(line);if(row)Q.qty[line]=String(Math.min(5000,remain(row)));draw();});
         $$('[data-loq-qty]',box).forEach(i=>i.onchange=()=>{Q.qty[i.dataset.loqQty]=i.value;draw();});
         $$('[data-loq-spec]',box).forEach(b=>b.onclick=()=>{const row=rowOf(b.dataset.loqSpec);close();loMeta(Q.date,row,null);});
