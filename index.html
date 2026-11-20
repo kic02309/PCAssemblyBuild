@@ -8660,7 +8660,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.60';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.61';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17326,7 +17326,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   // v31.15 : 상황판 버튼 연결 — 아두이노(LINE1~LINE8 · 9600)를 Edge/크롬이 직접 읽어 N번 자리 완료 (중앙 실행기 없이)
   const HUB = { port: null, reader: null, on: false, stop: false, last: {}, q: [], busy: false, log: [], test: true, cnt: {}, raw: [] };
-  try { HUB.test = sessionStorage.getItem('loHubTest') !== '0'; } catch (e) { }
+  try { HUB.test = localStorage.getItem('loHubTest') !== '0'; } catch (e) { }   // v31.61 : 테스트/운영 모드도 이 PC에 기억
   const hubOk = () => !!(navigator.serial && window.isSecureContext);
   function hubDefaultMap(r) {
     const ord = (r?.cfg?.lines || []).map(l => l.id);
@@ -17384,13 +17384,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function hubOpen(port) {
     if (HUB.on) return;
     await port.open({ baudRate: 9600 }); HUB.port = port; HUB.on = true; HUB.stop = false; HUB.last = {};
-    try { sessionStorage.setItem('loHub', '1'); } catch (e) { }
+    try { localStorage.setItem('loHub', '1'); } catch (e) { }   // v31.61 : 이 PC 기억 → 재부팅 후 자동 연결
     hubPaint(); hubRead();
   }
-  async function hubClose() { HUB.stop = true; try { sessionStorage.removeItem('loHub'); } catch (e) { } try { await HUB.reader?.cancel(); } catch (e) { } }
+  async function hubClose() { HUB.stop = true; try { localStorage.removeItem('loHub'); } catch (e) { } try { await HUB.reader?.cancel(); } catch (e) { } }
   async function hubAuto() {   // 이 창에서 한 번 연결했으면 새로고침 · USB 다시 꽂을 때 자동으로 다시 연결
-    if (!hubOk() || HUB.on) return; let want = false; try { want = sessionStorage.getItem('loHub') === '1'; } catch (e) { } if (!want) return;
-    try { const ps = await navigator.serial.getPorts(); if (ps[0]) await hubOpen(ps[0]); } catch (e) { console.warn('hub auto', e); }
+    if (!hubOk() || HUB.on) return; let want = false; try { want = localStorage.getItem('loHub') === '1' || sessionStorage.getItem('loHub') === '1'; } catch (e) { } if (!want) return;
+    try { const ps = await navigator.serial.getPorts(); if (ps[0]) { await hubOpen(ps[0]); toast('버튼(아두이노) 자동 연결됨 · ' + (HUB.test ? '테스트 모드 (완료 안 됨)' : '운영 모드'), HUB.test); } } catch (e) { console.warn('hub auto', e); }
   }
   if (navigator.serial) navigator.serial.addEventListener('connect', () => setTimeout(hubAuto, 1500));
   function hubModal() {
@@ -17406,7 +17406,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ${HUB.log.length ? `<details class="lo-hublog"><summary>최근 버튼 기록 ${HUB.log.length}건</summary><ul>${HUB.log.map(l => `<li>${esc(l.t)} · ${l.n}번 · ${l.ok ? '✓ ' + esc(l.st) + ' 완료' : '✕ ' + esc(l.msg)}</li>`).join('')}</ul></details>` : ''}
       <div class="acts"><button data-c style="margin-right:auto">닫기</button><button data-hr>자리 배정 기본값</button><button data-hs>배정 저장</button>${HUB.on ? '<button data-hx>연결 끊기</button>' : '<button class="primary" data-ho>아두이노 연결</button>'}</div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
-      $('#loHubTest', bg).onchange = e => { HUB.test = e.target.checked; try { sessionStorage.setItem('loHubTest', HUB.test ? '1' : '0'); } catch (x) { } hubPaint(); toast(HUB.test ? '테스트 모드 : 버튼을 눌러도 완료되지 않습니다' : '운영 모드 : 버튼을 누르면 해당 자리가 완료됩니다', !HUB.test); };
+      $('#loHubTest', bg).onchange = e => { HUB.test = e.target.checked; try { localStorage.setItem('loHubTest', HUB.test ? '1' : '0'); } catch (x) { } hubPaint(); toast(HUB.test ? '테스트 모드 : 버튼을 눌러도 완료되지 않습니다' : '운영 모드 : 버튼을 누르면 해당 자리가 완료됩니다', !HUB.test); };
       $('[data-hs]', bg).onclick = () => { const o = {}; $$('[data-hb]', bg).forEach(x => { if (x.value) o[x.dataset.hb] = x.value; }); localStorage.setItem('loHubMap', JSON.stringify(o)); toast('버튼 배정을 저장했습니다 (이 PC)'); close(); };
       $('[data-hr]', bg).onclick = () => { localStorage.removeItem('loHubMap'); close(); hubModal(); };
       if ($('[data-hx]', bg)) $('[data-hx]', bg).onclick = async () => { await hubClose(); close(); };
