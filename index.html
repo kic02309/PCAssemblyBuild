@@ -8659,7 +8659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.38';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.39';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9186,9 +9186,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // v30.81 : 운영 설정 = 인원 현황/관리 · 월 기간·마감 · 목표 · 항목별 분 · 백업·보관함 · 엑셀 가져오기 · 통계
   const SET_SECS = () => [['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()]];
   const isSetView = v => v === 'settings' || ['setperiod', 'setrates', 'setbackup', 'setimport'].includes(v);
-  const ADM_MENU = () => [['people', '인원 현황/관리', can('people')], ['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['goal', '목표', isAdm0() && !isRO()], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()], ['stats', '통계', can('stats')], ['qcr', '검수 내역', canQcr()], ['qcp', '제품코드 목록', isAdm0()]];
+  const ADM_MENU = () => [['people', '인원 현황/관리', can('people')], ['setperiod', '월 기간 · 마감', !!(S.me && S.me.period)], ['goal', '목표', isAdm0() && !isRO()], ['setrates', '항목별 분', !!(S.me && S.me.period)], ['setbackup', '백업 · 보관함', can('hr')], ['setimport', '엑셀 가져오기', !isRO() && canSetPage()], ['stats', '통계', can('stats')], ['qcr', '검수 내역', canQcr()], ['qcp', '제품코드 목록', canQcp()]];
   // v28 : 관리자 · 보기 전용 관리자 · 추가 권한 받은 매니저
   const isAdm0 = () => !!(S.me && S.me.role === '관리자');
+  const canQcp = () => !!(S.me && S.me.role === '관리자' && !S.me.ro && !S.me.readonly && !S.pv && !S.mpv);   // v31.38 : 제품코드 목록 = 관리자(보기 전용 아님)만 · 매니저 · 팀장 · 이사 안 보임
   const isRO = () => !!(S.me && S.me.ro);
   const ulistReq = () => curPeriod() ? { ym: curPeriod().ym } : { start: S.today, end: S.today };   // v28.30 : 인원 목록만 필요할 때 (귀속월 없어도)
   const can = p => !!(S.me && (S.me.role === '관리자' || (S.me.perms || []).includes(p)));
@@ -9474,7 +9475,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'qc') { $('#proxy').innerHTML = ''; return canQc() ? renderQc() : go('dash'); }   // v30.90 : 조립 검수
     if (view === 'mhome') { $('#proxy').innerHTML = ''; return renderMhome(); }   // v30.91 : 휴대폰 첫 화면 메뉴
     if (view === 'qcr') { $('#proxy').innerHTML = ''; return canQcr() ? renderQcr() : go('dash'); }
-    if (view === 'qcp') { $('#proxy').innerHTML = ''; return isAdm0() ? renderQcp() : go('dash'); }   // v31.36 : 제품코드 목록   // v30.92 : 검수 현황
+    if (view === 'qcp') { $('#proxy').innerHTML = ''; return canQcp() ? renderQcp() : go('dash'); }   // v31.36 : 제품코드 목록   // v30.92 : 검수 현황
     if (view === 'input') return loadDay((opt && opt.date) || S.date || S.today);
     if (view === 'month') return renderMonth(opt && opt.ym);
     if (entering && (view === 'manage' || view === 'hr')) {
