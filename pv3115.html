@@ -17221,7 +17221,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     });
   }
   // v31.15 : 상황판 버튼 연결 — 아두이노(LINE1~LINE8 · 9600)를 Edge/크롬이 직접 읽어 N번 자리 완료 (중앙 실행기 없이)
-  const HUB = { port: null, reader: null, on: false, stop: false, last: {}, q: [], busy: false, log: [] };
+  const HUB = { port: null, reader: null, on: false, stop: false, last: {}, q: [], busy: false, log: [], test: true, cnt: {}, raw: [] };
+  try { HUB.test = sessionStorage.getItem('loHubTest') !== '0'; } catch (e) { }
   const hubOk = () => !!(navigator.serial && window.isSecureContext);
   function hubDefaultMap(r) {
     const ord = (r?.cfg?.lines || []).map(l => l.id);
@@ -17234,7 +17235,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const el = document.getElementById('loHubSt'); if (!el) return;
     const l = HUB.log[0];
     el.className = 'lo-hub-st' + (HUB.on ? ' on' : '');
-    el.innerHTML = HUB.on ? `● 버튼 연결됨${l ? ` · ${esc(l.t)} ${l.n}번 ${esc(l.ok ? '완료' : l.msg)}` : ' · 대기 중'}` : '○ 버튼 미연결';
+    el.className += HUB.on && HUB.test ? ' test' : '';
+    el.innerHTML = HUB.on ? `● 버튼 연결됨${HUB.test ? ' · 테스트 모드' : ''}${l ? ` · ${esc(l.t)} ${l.n}번 ${esc(HUB.test ? '신호' : l.ok ? '완료' : l.msg)}` : ' · 대기 중'}` : '○ 버튼 미연결';
   }
   function hubAdd(n, ok, msg, st) {
     HUB.log.unshift({ n, ok, msg, st: st?.id || '', t: new Date().toLocaleTimeString('ko-KR', { hour12: false }) }); HUB.log.length = Math.min(HUB.log.length, 30);
@@ -17254,7 +17256,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } finally { await loRefresh(LO.epoch, true); }
   }
   async function hubPump() { if (HUB.busy) return; HUB.busy = true; try { while (HUB.q.length) await hubDo(HUB.q.shift()); } finally { HUB.busy = false; } }
+  function hubLamp(n) {
+    const el = document.querySelector(`.lo-hublamp [data-lp="${n}"]`); if (el) { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); const c = el.querySelector('em'); if (c) c.textContent = HUB.cnt[n] || 0; }
+    const rw = document.getElementById('loHubRaw'); if (rw) rw.textContent = HUB.raw.slice(0, 8).join('\n') || '(아직 받은 신호 없음)';
+  }
   function hubHit(n) {
+    HUB.cnt[n] = (HUB.cnt[n] || 0) + 1; hubLamp(n);
+    if (HUB.test) { HUB.log.unshift({ n, ok: true, msg: '', st: '테스트', t: new Date().toLocaleTimeString('ko-KR', { hour12: false }) }); HUB.log.length = Math.min(HUB.log.length, 30); hubPaint(); return; }   // 테스트 모드 = 완료 안 함
     const now = Date.now(); if (now - (HUB.last[n] || 0) < 1200) return; HUB.last[n] = now;   // 같은 버튼 1.2초 안 = 무시
     if (S.view !== 'line' || !LO.data?.manage) { hubAdd(n, false, '상황판 화면이 아니라 무시했습니다'); return; }
     HUB.q.push(n); hubPump();
@@ -17264,7 +17272,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const rd = dec.readable.getReader(); HUB.reader = rd; let buf = '';
     try {
       for (;;) { const { value, done } = await rd.read(); if (done) break; buf += value; let i;
-        while ((i = buf.indexOf('\n')) >= 0) { const ln = buf.slice(0, i).trim(); buf = buf.slice(i + 1); const m = ln.match(/^LINE\s*([1-8])$/i); if (m) hubHit(+m[1]); }
+        while ((i = buf.indexOf('\n')) >= 0) { const ln = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (ln) { HUB.raw.unshift(new Date().toLocaleTimeString('ko-KR', { hour12: false }) + '  ' + ln.slice(0, 40)); HUB.raw.length = Math.min(HUB.raw.length, 20); const rw = document.getElementById('loHubRaw'); if (rw) rw.textContent = HUB.raw.slice(0, 8).join('\n'); } const m = ln.match(/^LINE\s*([1-8])$/i); if (m) hubHit(+m[1]); }
         if (buf.length > 200) buf = ''; }
     } catch (e) { console.warn('hub', e); }
     finally { try { rd.releaseLock(); } catch (e) { } await closed; try { await port.close(); } catch (e) { } HUB.on = false; HUB.reader = null; hubPaint(); if (!HUB.stop) toast('버튼(아두이노) 연결이 끊겼습니다. USB를 확인하세요', true); HUB.stop = false; }
@@ -17287,14 +17295,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const m = hubMap(r), opts = id => `<option value="">— 사용 안 함 —</option>` + r.stations.map(x => `<option value="${esc(x.id)}"${x.id === id ? ' selected' : ''}>${esc(x.id)} · ${esc(hubStName(r, x.id))}</option>`).join('');
     modal(`<h3>🔌 버튼 연결 <span class="muted" style="font-size:13px;font-weight:500">${HUB.on ? '● 연결됨' : '○ 미연결'}</span></h3>
       <p class="muted">아두이노 버튼 1~8번 신호(LINE1~LINE8)를 받아 아래 자리를 바로 완료합니다. 이 PC에서 상황판 창 하나만 연결하세요.</p>
+      <div class="lo-hubtest"><label><input type="checkbox" id="loHubTest"${HUB.test ? ' checked' : ''}> <b>테스트 모드</b> — 버튼을 눌러도 완료하지 않고 아래 불만 켜집니다</label>
+        <div class="lo-hublamp">${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<div data-lp="${n}"><b>${n}</b><em>${HUB.cnt[n] || 0}</em></div>`).join('')}</div>
+        <div class="muted" style="font-size:12px;margin:6px 0 2px">아두이노에서 받은 글자 (최근 8개)</div><pre id="loHubRaw">${esc(HUB.raw.slice(0, 8).join('\n') || '(아직 받은 신호 없음)')}</pre></div>
       <table class="list lo-hubmap"><thead><tr><th>버튼</th><th>완료할 자리</th></tr></thead><tbody>${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<tr><td><b>${n}번</b></td><td><select data-hb="${n}">${opts(m[n])}</select></td></tr>`).join('')}</tbody></table>
       ${HUB.log.length ? `<details class="lo-hublog"><summary>최근 버튼 기록 ${HUB.log.length}건</summary><ul>${HUB.log.map(l => `<li>${esc(l.t)} · ${l.n}번 · ${l.ok ? '✓ ' + esc(l.st) + ' 완료' : '✕ ' + esc(l.msg)}</li>`).join('')}</ul></details>` : ''}
       <div class="acts"><button data-c>닫기</button><button data-hr>자리 배정 기본값</button><button data-hs>배정 저장</button>${HUB.on ? '<button data-hx>연결 끊기</button>' : '<button class="primary" data-ho>아두이노 연결</button>'}</div>`, (bg, close) => {
       $('[data-c]', bg).onclick = close;
+      $('#loHubTest', bg).onchange = e => { HUB.test = e.target.checked; try { sessionStorage.setItem('loHubTest', HUB.test ? '1' : '0'); } catch (x) { } hubPaint(); toast(HUB.test ? '테스트 모드 : 버튼을 눌러도 완료되지 않습니다' : '운영 모드 : 버튼을 누르면 해당 자리가 완료됩니다', !HUB.test); };
       $('[data-hs]', bg).onclick = () => { const o = {}; $$('[data-hb]', bg).forEach(x => { if (x.value) o[x.dataset.hb] = x.value; }); localStorage.setItem('loHubMap', JSON.stringify(o)); toast('버튼 배정을 저장했습니다 (이 PC)'); close(); };
       $('[data-hr]', bg).onclick = () => { localStorage.removeItem('loHubMap'); close(); hubModal(); };
       if ($('[data-hx]', bg)) $('[data-hx]', bg).onclick = async () => { await hubClose(); close(); };
-      if ($('[data-ho]', bg)) $('[data-ho]', bg).onclick = async () => { try { const port = await navigator.serial.requestPort(); await hubOpen(port); toast('버튼 연결됨 · 1~8번을 눌러 확인하세요'); close(); } catch (e) { if (e && e.name !== 'NotFoundError') toast('연결 실패: ' + (e.message || e), true); } };
+      if ($('[data-ho]', bg)) $('[data-ho]', bg).onclick = async () => { try { const port = await navigator.serial.requestPort(); await hubOpen(port); toast('버튼 연결됨 · 1~8번을 눌러 확인하세요'); close(); hubModal(); } catch (e) { if (e && e.name !== 'NotFoundError') toast('연결 실패: ' + (e.message || e), true); } };
     });
   }
   function loDrawBoard() {
@@ -22007,7 +22019,14 @@ html[data-theme=dark] .lvs3 .lvov{background:#3a1d1d;color:#f4a9a4}html[data-the
 </style>
 <style id="v3115-hub">
 .lo-hub-st{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:8px;font-size:12.5px;font-weight:700;color:#64748b;background:#f1f4f9;white-space:nowrap}
-.lo-hub-st.on{color:#15803d;background:#e7f6ec}
+.lo-hub-st.on{color:#15803d;background:#e7f6ec}.lo-hub-st.on.test{color:#b45309;background:#fff1e0}
+.lo-hubtest{border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:8px 0 10px;background:#fafbfd}
+.lo-hublamp{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px}
+.lo-hublamp div{display:flex;flex-direction:column;align-items:center;justify-content:center;height:58px;border-radius:10px;background:#e9edf3;color:#475569;transition:background .6s,color .6s}
+.lo-hublamp b{font-size:20px;font-weight:900}.lo-hublamp em{font-style:normal;font-size:11px;font-weight:700}
+.lo-hublamp div.hit{animation:hublp 1.2s ease-out}
+@keyframes hublp{0%{background:#16a34a;color:#fff;transform:scale(1.06)}100%{background:#e9edf3;color:#475569;transform:none}}
+#loHubRaw{margin:0;padding:6px 8px;background:#0f172a;color:#a7f3d0;border-radius:8px;font-size:12px;min-height:40px;max-height:140px;overflow:auto;white-space:pre}
 .lo-hubmap td{padding:5px 8px}.lo-hubmap select{width:100%}
 .lo-hublog ul{max-height:200px;overflow:auto;margin:6px 0 0;padding-left:18px;font-size:12.5px}
 </style>
