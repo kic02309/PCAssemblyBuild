@@ -308,6 +308,7 @@ table.bd tfoot .bn{z-index:3;background:#dfe5ec}
 details.pp{margin-top:12px}details.pp>summary{cursor:pointer;font-size:15px;font-weight:700;padding:8px 2px;list-style:revert}details.pp>.card{margin-top:6px}
 .modal.wide{width:min(900px,94vw)}
 .lo-mon-easy{background:#eef5ff;border:1px solid #c7d8fb;border-radius:12px;padding:12px 14px;margin:6px 0 10px}.lo-mon-easy ol{margin:8px 0 0;padding-left:20px;line-height:1.8;font-size:14px}.lo-mon-easy small{color:var(--sub);font-size:12px}.lo-mon-manual summary{cursor:pointer;font-weight:700;margin:4px 0 8px}
+.lo-snd-chip{position:fixed;left:10px;bottom:10px;z-index:99998;font-size:12px;padding:4px 10px;border-radius:14px;background:rgba(30,58,100,.75);color:#dbeafe;border:1px solid #3b5b8a;opacity:.55}.lo-snd-chip:hover{opacity:1}
 .modal.lo-mon-modal{width:min(720px,96vw)}.lo-mon-list{display:flex;flex-direction:column;gap:8px}.lo-mon-row{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.lo-mon-no{width:36px;height:36px;border-radius:50%;background:#1e3a64;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800}.lo-mon-info small{display:block;color:var(--sub);font-size:12px}.lo-mon-badge{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:99999;background:rgba(15,35,64,.92);color:#fff;border-radius:24px;padding:28px 56px;text-align:center;pointer-events:none;font-weight:800}.lo-mon-badge b{display:block;font-size:120px;line-height:1}.lo-mon-badge span{font-size:26px}
 .modal.loq-modal{width:min(760px,96vw);max-height:calc(100dvh - 32px);overflow:auto}.loq-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.loq-top h3{margin:0}.loq-top button{font-size:13px}.loq-seg{display:grid;grid-template-columns:1fr 1fr;margin:12px 0 4px;border:1px solid var(--line);border-radius:9px;overflow:hidden}.loq-seg button{border:0;border-radius:0;padding:9px;font-weight:700;background:transparent}.loq-seg button[aria-pressed=true]{background:#1e3a64;color:#fff}.loq-pickline{display:flex;align-items:center;gap:8px;margin:8px 0 0}.loq-pickline select{width:auto}.loq-line{border:1px solid var(--line);border-radius:11px;padding:10px 14px;margin-top:10px;background:var(--card,#fff)}.loq-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.loq-hd b{font-size:16px}.loq-tg{font-size:12px;padding:2px 8px;border-radius:6px;background:#e6f1fb;color:#0c447c;font-weight:700}.loq-r{display:grid;grid-template-columns:80px minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.loq-l{color:var(--sub);font-size:13px}.loq-r select{width:100%}.loq-r input[type=number]{width:90px}.loq-sub{display:block;color:var(--sub);font-size:12px;margin-top:3px}.loq-ok{color:#11643d}.loq-bad{color:#b42318}.loq-seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;padding:8px 0;border-top:1px solid var(--line)}.loq-seats>div{display:flex;flex-direction:column;gap:4px;font-size:13px}.loq-seats label{font-size:12px;color:var(--sub)}.loq-ready{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;font-weight:700}.loq-msg{margin:12px 0 0;font-size:13px;color:var(--sub)}.loq-msg.loq-bad{color:#b42318}.modal.md{width:min(480px,94vw)}.modal .acts button{white-space:nowrap}
 table.imp td{padding:5px 10px}table.imp input[type=date]{padding:3px 5px}
@@ -8662,7 +8663,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.66';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.67';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16645,7 +16646,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         document.title=`모니터 ${n} · ${loMonSeat}`;
         const bd=document.createElement('div');bd.className='lo-mon-badge';bd.innerHTML=`<b>${esc(n)}</b><span>${ms?esc(loMonSeat+' · '+loLineName(ms.line)+' '+(+ms.stage+1)+'공정'+(ms.assignedName?' · '+ms.assignedName:'')):esc(loMonSeat)+' · 자리 없음 — 화면 뿌리기에서 다시 배정하세요'}</span>`;
         document.body.appendChild(bd);setTimeout(()=>bd.remove(),7000);
-        document.addEventListener('pointerdown',()=>{if(!document.fullscreenElement)(document.getElementById('loWork')||document.documentElement).requestFullscreen?.().catch(()=>{});},{once:true});
+        document.addEventListener('pointerdown',e=>{if(e.target.closest?.('.lo-snd-chip'))return;sndInit();if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});},{once:true});
+        const chip=document.createElement('button');chip.type='button';chip.className='lo-snd-chip';chip.textContent='🔊 소리';chip.onclick=()=>{sndInit();sndSettings();};document.body.appendChild(chip);
       }
       loWatch(epoch);
       hubAuto();   // v31.15 : 중앙 실행기 대신 버튼 직접 연결
@@ -16657,7 +16659,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try {
       const r=await loCall('get',{date:LO.date,pendingBatchId:LO.pending?.batchId});
       if(epoch!==LO.epoch||token!==S.token||seq!==LO.requestSeq||S.view!=='line')return;
-      LO.data=r;LO.last=Date.now();LO.offset=new Date(r.serverAt).getTime()-LO.last;LO.online=true;
+      LO.data=r;LO.last=Date.now();LO.offset=new Date(r.serverAt).getTime()-LO.last;LO.online=true;if(loMonSeat)sndCheck(r);
       loDrawBoard();if(LO.seat)loDrawWork();else loFollowTerminal(r);LO.monitor?.refresh();
     }catch(e){if(epoch!==LO.epoch||token!==S.token)return;LO.online=false;loStatus();if(!LO.data)$('#main').innerHTML=pageHead('상황판')+`<div class="pgb"><div class="warn">${esc(e.message)} <button id="loTry">다시 불러오기</button></div></div>`;if($('#loTry'))$('#loTry').onclick=()=>loRefresh(LO.epoch,true);}
   }
@@ -17405,6 +17407,53 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }
     LO_MON.cal=n=>{const seat=hm[n];if(!seat){const w=wins[cur];if(w&&!w.closed){const m=w.document.querySelector('.s');if(m)m.textContent=`스위치 ${n}에 연결된 자리가 없습니다 — [🔌 스위치 연결]에서 먼저 지정하거나 아래 자리를 누르세요`;}return;}pick(cur,seat);};
     next();
+  }
+  // v31.67 : 모니터 창 소리 — 자기 자리에 작업이 도착하면 '시작' 소리 (스위치 번호별 A~D) · 모니터 스피커 선택
+  const SND={ac:null,out:null};
+  const sndVol=()=>{try{const v=localStorage.getItem('loSndVol');return v==null?0.7:Math.max(0,Math.min(1,+v));}catch(e){return 0.7;}};
+  const sndMonN=()=>sessionStorage.getItem('loMonN')||'';
+  async function sndInit(){
+    if(!SND.ac){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;SND.ac=new AC();SND.out=SND.ac.createGain();const lp=SND.ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7000;SND.out.connect(lp);lp.connect(SND.ac.destination);
+      const d=SND.ac.createDelay();d.delayTime.value=0.09;const fb=SND.ac.createGain();fb.gain.value=0.22;const w=SND.ac.createGain();w.gain.value=0.15;lp.connect(d);d.connect(fb);fb.connect(d);d.connect(w);w.connect(SND.ac.destination);
+      let sink='';try{sink=localStorage.getItem('loMonSink'+sndMonN())||'';}catch(e){}
+      if(sink&&SND.ac.setSinkId){try{await SND.ac.setSinkId(sink);}catch(e){console.warn('sink',e);}}}
+    try{if(SND.ac.state!=='running')await SND.ac.resume();}catch(e){}
+    return SND.ac;
+  }
+  function sndEnv(g,t,a,peak,dec){g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak*sndVol(),t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+dec);}
+  function sndOsc(f,t,a,peak,dec,type,glide){const ac=SND.ac,o=ac.createOscillator(),g=ac.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(glide)o.frequency.exponentialRampToValueAtTime(glide,t+dec*0.6);sndEnv(g,t,a,peak,dec);o.connect(g).connect(SND.out);o.start(t);o.stop(t+a+dec+0.05);}
+  const SND_KIND={
+    A:t=>{[[1319,0,0.7],[1976,0.09,0.9]].forEach(([f,d,dec])=>[[1,1],[2.76,0.18],[5.4,0.05]].forEach(([m,a])=>sndOsc(f*m,t+d,0.004,0.32*a,dec/(m>1?2.2:1))));},   // 글라스
+    B:t=>{sndOsc(520,t,0.008,0.38,0.16,'sine',1040);sndOsc(780,t+0.13,0.008,0.38,0.22,'sine',1560);},   // 물방울
+    C:t=>{[[659,0,0.32],[988,0.12,0.45]].forEach(([f,d,dec])=>{sndOsc(f,t+d,0.02,0.34,dec);sndOsc(f*2,t+d,0.02,0.06,dec,'triangle');});},   // 소프트 체크
+    D:t=>{[1047,1319,1568].forEach((f,i)=>[[1,1],[3,0.22],[6.2,0.08]].forEach(([m,a])=>sndOsc(f*m,t+i*0.07,0.002,0.3*a,m>1?0.135:0.45)));}   // 실로폰
+  };
+  function sndLetter(r){   // 스위치 번호 1·5=A 2·6=B 3·7=C 4·8=D (스위치 없으면 모니터 번호)
+    const m=hubMap(r);let n=+Object.keys(m).find(k=>m[k]===loMonSeat)||+sndMonN()||1;return 'ABCD'[(n-1)%4];
+  }
+  async function sndPlay(letter){const ac=await sndInit();if(!ac||ac.state!=='running')return;SND_KIND[letter]?.(ac.currentTime+0.02);}
+  function sndCheck(r){   // 자기 자리에 새 작업(본체)이 도착하면 시작 소리
+    const st=r?.stations?.find(x=>x.id===loMonSeat),c=st?.current,k=c&&!c.pausedAt?`${c.batchId}:${c.seq}:${c.stage}`:'';
+    if(LO.sndKey!==undefined&&k&&k!==LO.sndKey)sndPlay(sndLetter(r));
+    LO.sndKey=k;
+  }
+  async function sndSettings(){
+    const r=LO.data;let outs=[],err='';
+    try{if(navigator.mediaDevices?.getUserMedia){const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());}}catch(e){err='마이크 권한을 허용해야 스피커 이름을 읽을 수 있습니다 (녹음은 하지 않습니다).';}
+    try{outs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audiooutput');}catch(e){}
+    let cur='';try{cur=localStorage.getItem('loMonSink'+sndMonN())||'';}catch(e){}
+    const can=!!(window.AudioContext&&AudioContext.prototype.setSinkId);
+    modal(`<h3>🔊 모니터 ${esc(sndMonN())} 소리</h3><p class="muted">이 자리에 작업이 도착하면 <b>시작 ${sndLetter(r)}</b> 소리가 납니다.</p>
+      ${can?`<label>스피커<select id="sndOut"><option value="">윈도우 기본 스피커</option>${outs.filter(d=>d.deviceId&&d.deviceId!=='default').map(d=>`<option value="${esc(d.deviceId)}" ${d.deviceId===cur?'selected':''}>${esc(d.label||'스피커')}</option>`).join('')}</select></label>`:'<p class="lo-error">이 브라우저는 스피커 선택을 지원하지 않아 기본 스피커로 나옵니다.</p>'}
+      ${err?`<p class="lo-error">${esc(err)}</p>`:''}
+      <label>음량 (모든 모니터 공통)<input type="range" id="sndVol" min="0" max="100" step="5" value="${Math.round(sndVol()*100)}"></label>
+      <div class="acts"><button data-c>닫기</button><button data-t>소리 테스트</button><button class="primary" data-s>저장</button></div>`,(bg,close)=>{
+      $('[data-c]',bg).onclick=close;
+      const apply=async()=>{const id=$('#sndOut',bg)?.value||'';try{localStorage.setItem('loMonSink'+sndMonN(),id);localStorage.setItem('loSndVol',String(+$('#sndVol',bg).value/100));}catch(e){}
+        const ac=await sndInit();if(ac?.setSinkId){try{await ac.setSinkId(id);}catch(e){toast('스피커를 바꾸지 못했습니다: '+e.message,true);}}};
+      $('[data-t]',bg).onclick=async()=>{await apply();sndPlay(sndLetter(r));};
+      $('[data-s]',bg).onclick=async()=>{await apply();close();toast('소리 설정을 저장했습니다 (이 모니터)');};
+    });
   }
   async function loMonitors(){
     const r=LO.data;if(!r?.manage)return;
