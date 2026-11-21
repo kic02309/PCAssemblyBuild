@@ -8721,7 +8721,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.97';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.98';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19810,8 +19810,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     { id: 'GIGABYTE', re: /GIGABYTE|AORUS|AORIS|Ea[sS][yY]\s*Mode|EASYMO|Q-Flash|Smart\s*Fan\s*[56]/i,
       mem: 'Memory 항목', ssd: 'Storage 부분 (SATA · M.2)', cpu: 'CPU 항목' },
     { id: 'BIOSTAR', re: /BIOSTAR|RACING/i, mem: 'Memory 항목', ssd: 'Storage 항목', cpu: 'CPU 항목' },
+    // v31.98 : 컴퓨존 메인보드 제조사 목록 추가분 (Colorful · MAXSUN · ECS · NZXT · Supermicro · 산업용) — 대부분 AMI Aptio 화면
+    { id: 'Colorful', re: /COLORFUL|iGame|BATTLE[-\s]?AX/i, mem: 'Memory 항목', ssd: 'Storage 항목 (SATA · NVMe)', cpu: 'CPU 항목' },
+    { id: 'MAXSUN', re: /MAXSUN|Terminator|iCraft/i, mem: 'Memory 항목', ssd: 'Storage 항목 (SATA · NVMe)', cpu: 'CPU 항목' },
+    { id: 'ECS', re: /\bECS\b|Elitegroup|LIVA/i, mem: 'Main 화면 Total Memory', ssd: 'Advanced → Storage', cpu: 'Main 화면 CPU' },
+    { id: 'NZXT', re: /NZXT/i, mem: 'Memory Information', ssd: 'Storage Information', cpu: 'System Information' },
+    { id: 'Supermicro', re: /Super\s*micro|SMCI|\bX1[1-3][A-Z]{2,4}\b/i, mem: 'Main 화면 Total Memory', ssd: 'Advanced → SATA / NVMe Configuration', cpu: 'Main 화면 CPU' },
+    { id: '산업용', re: /Advantech|AXLE|Khadas|IPC/i, mem: 'Main 화면 Total Memory', ssd: 'Advanced → Storage', cpu: 'Main 화면 CPU' },
     { id: 'ASUS', re: /UEFI\s*BIOS\s*Ut[il1]{1,4}ty|EZ\s*Mode|\bASUS\b|\bROG\b|\bTUF\b|\bPRIME\b|Q-Fan|DRAM\s*Statu/i,
-      mem: 'Information의 Total Memory · DRAM Status', ssd: 'Storage Information (SATA · M.2/NVMe)', cpu: '맨 위 Information의 CPU' }];
+      mem: 'Information의 Total Memory · DRAM Status', ssd: 'Storage Information (SATA · M.2/NVMe)', cpu: '맨 위 Information의 CPU' },
+    { id: 'AMI', re: /Aptio\s*Setup|American\s*Megatrends/i, mem: 'Main 화면 Total Memory', ssd: 'Advanced → Storage / NVMe', cpu: 'Main 화면 CPU' }];   // 제조사 표시 없는 일반 AMI 화면
   const c1Vendor = t => C1_VENDOR.find(v => v.re.test(t)) || null;
   // v31.84 : 저장장치 제조사 (전표 풀네임 ↔ CMOS 저장장치 줄) · 메모리 개수 (CMOS가 슬롯별로 보여줄 때)
   const Q1_BR = [['Samsung', /samsung|삼성/i], ['WD', /\bWD|western\s*digital|WDS\d|\bSN\d{3}/i], ['SanDisk', /sandisk|샌디스크|optimus|\bSDS/i], ['Crucial', /crucial|마이크론\s*crucial|\bCT\d{3,4}[A-Z]/i],
