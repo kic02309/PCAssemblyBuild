@@ -8721,7 +8721,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.02';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.03';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19426,7 +19426,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       pr.forEach(x => { if (L.some(z => lab(z.o) === lab(x.o)) && pr.some(y => y !== x && lab(y.o) !== lab(x.o))) x.neg = true; });
       items.filter(x => x.k === k && x.ref && x.ref !== 'skip').forEach(x => {
         if (x.neg) { let j = L.findIndex(z => x.code && z.code === x.code); if (j < 0) j = L.findIndex(z => !z.o.chg); if (j >= 0) { const z = L[j]; notes.push('빠짐 ' + lab(z.o)); if ((z.o.n || 1) > 1) z.o.n--; else L.splice(j, 1); } }
-        else { const y = L.find(z => x.code && z.code === x.code); if (y) { y.o.n = (y.o.n || 1) + 1; y.o.chg = '추가 +1 (총 ' + y.o.n + '개)'; } else { x.o.chg = '변경된 부품'; L.unshift({ code: x.code, o: x.o }); } }
+        else { const y = L.find(z => x.code && z.code === x.code); if (y) { y.o.n = (y.o.n || 1) + 1; y.o.chg = '추가 +1 (총 ' + y.o.n + '개)'; } else { x.o.chg = k === 'hdd' ? '추가 장착 (새 부품)' : '변경된 부품'; L.unshift({ code: x.code, o: x.o }); } }
       });
       if (!L.length) { if (notes.length) (out.gone = out.gone || {})[k] = notes.join(' · ').replace(/^빠짐\s*/, ''); return; }   // v32.02 : 통째로 빠짐 (HDD 등)
       out[k] = L[0].o; if (notes.length) out[k].chg = [out[k].chg, notes.join(' · ')].filter(Boolean).join(' · ');
@@ -20013,7 +20013,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if ((reg && !cur.reg) || (it.chg && /^변경/.test(it.chg) && !(cur.it.chg && /^변경/.test(cur.it.chg)))) { Q.items[k] = { it, reg }; (Q.arNew = Q.arNew || {})[k] = Date.now(); q1Snd('pop'); }
     });
     if (r.P && r.P.tags) Q.tags = { os: !!(r.P.tags.os || (Q.tags && Q.tags.os)), st: !!(r.P.tags.st || (Q.tags && Q.tags.st)) };
-    if (r.gone) Object.keys(r.gone).forEach(k => { if (k === 'hdd' && !Q.items[k]) { const g = (Q.goneC = Q.goneC || {}); g[k] = (g[k] || 0) + 1; if (g[k] >= 2) (Q.gone = Q.gone || {})[k] = r.gone[k]; } });
+    // v32.03 : HDD는 빠지는 주문이 없음 (추가만) → 통째로 빠짐 표시는 쓰지 않음 (오인식으로 막히는 것 방지)
     if (r.mark) Q.markN = (Q.markN || 0) + 1;
     q1Notices(Q);
     if (!q1DocDone(Q) && Q.t0 && !Q.slowLogged && Date.now() - Q.t0 > 40000) { Q.slowLogged = 1; q1Log('slow-doc', '40초 넘게 못 읽음: ' + ['order', 'cpu', 'mem', 'ssd'].filter(k => k === 'order' ? !Q.order : !Q.items[k]).join(',')); }
@@ -20024,7 +20024,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const rows = [], nm = it => esc(q1Short(String(q1Full(it) || '').replace(/\s*▶.*$/, '').replace(/파인인포\s*/, ''), 34));
     Q1K.forEach(k => { const x = Q.items[k]; if (!x) return; const c = q1Chg(x.it); if (!c) return; const it = x.it, ch = String(it.chg || '');
       if (c === '변경') { const old = (ch.match(/빠짐\s+(.+)$/) || [])[1]; rows.push(`<div class="cr"><em>${Q1_CAT[k]}</em>${old ? `<s>${esc(old.slice(0, 40))}</s> → ` : '새 부품 → '}<b>${nm(it)}${(it.n || 1) > 1 ? ' ×' + it.n : ''}</b></div>`); }
-      else if (c === '추가') rows.push(`<div class="cr"><em>${Q1_CAT[k]}</em>${nm(it)}<br><b>${k === 'mem' && q1MemLab(it) ? q1MemLab(it) + ' · ' : ''}총 ${Math.max(1, it.n || 1)}개 (1개 추가)</b></div>`);
+      else if (c === '추가') rows.push(`<div class="cr"><em>${Q1_CAT[k]}</em>${nm(it)}<br><b>${/새 부품/.test(ch) ? '새로 추가' + ((it.n || 1) > 1 ? ' ' + it.n + '개' : '') : (k === 'mem' && q1MemLab(it) ? q1MemLab(it) + ' · ' : '') + '총 ' + Math.max(1, it.n || 1) + '개 (1개 추가)'}</b></div>`);
       else rows.push(`<div class="cr"><em>${Q1_CAT[k]}</em>${nm(it)} · <b>총 ${Math.max(1, it.n || 1)}개 (1개 빠짐)</b></div>`); });
     Object.keys(Q.gone || {}).forEach(k => rows.push(`<div class="cr"><em>${Q1_CAT[k] || k}</em><s>${esc(String(Q.gone[k]).slice(0, 40))}</s> → <b>빠짐</b></div>`));
     return rows;
@@ -20216,7 +20216,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!L.length) return ''; const same = L.every(x => x.g === L[0].g), N = L.reduce((a, x) => a + x.n, 0);
     return same ? L[0].g + 'GB' + (N > 1 ? '×' + N : '') : L.map(x => x.g + 'GB' + (x.n > 1 ? '×' + x.n : '')).join('+');
   }
-  const q1ChgLab = (k, it) => { const c = q1Chg(it); if (!c) return ''; const m = String(it.chg || '').match(/총\s*(\d+)\s*개/); return Q1_CAT[k] + ' ' + c + (c === '추가' && m ? ' (총 ' + m[1] + '개)' : c === '빠짐' ? ' (총 ' + Math.max(1, it.n || 1) + '개)' : ''); };
+  const q1ChgLab = (k, it) => { const c = q1Chg(it); if (!c) return ''; const m = String(it.chg || '').match(/총\s*(\d+)\s*개/); return Q1_CAT[k] + ' ' + c + (c === '추가' && /새 부품/.test(it.chg) ? ' (새로)' : c === '추가' && m ? ' (총 ' + m[1] + '개)' : c === '빠짐' ? ' (총 ' + Math.max(1, it.n || 1) + '개)' : ''); };
   const q1TagPills = (Q, pill) => { const T = Q.tags || {}; return (T.os ? pill('tg', 'OS 설치') : '') + (T.st ? pill('tg', '안정화') : ''); };
   function q1Hud() {
     const Q = S.q1, pill = (cls, txt) => `<span class="${cls}">${txt}</span>`;
