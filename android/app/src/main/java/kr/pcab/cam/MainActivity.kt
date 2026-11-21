@@ -30,6 +30,9 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Bitmap
+import android.graphics.Matrix
+import android.graphics.ImageDecoder
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -45,6 +48,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
@@ -240,10 +244,11 @@ class MainActivity : AppCompatActivity() {
             try {
                 val p = fut.get()
                 provider = p
-                val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
+                val preview = Preview.Builder().setResolutionSelector(ResolutionSelector.Builder().setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY).build()).build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
                 val analysis = ImageAnalysis.Builder()
                     .setResolutionSelector(
                         ResolutionSelector.Builder()
+                            .setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY)
                             .setResolutionStrategy(ResolutionStrategy(Size(1920, 1080), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
                             .build()
                     )
@@ -253,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                 analysis.targetRotation = rot; analysisUse = analysis
                 val cap = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-                    .setResolutionSelector(ResolutionSelector.Builder().setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY).build())
+                    .setResolutionSelector(ResolutionSelector.Builder().setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY).setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY).build())
                     .build()
                 cap.targetRotation = rot
                 capture = cap
@@ -292,12 +297,11 @@ class MainActivity : AppCompatActivity() {
             proxy.close(); return
         }
         lastRun = now
-        val rot = proxy.imageInfo.rotationDegrees
-        val img = InputImage.fromMediaImage(media, rot)
-        val w = if (rot % 180 == 0) proxy.width else proxy.height
-        val h = if (rot % 180 == 0) proxy.height else proxy.width
+        val bmp: Bitmap = try { inFrame(rotate(proxy.toBitmap(), proxy.imageInfo.rotationDegrees)) } catch (e: Exception) { proxy.close(); busy.set(false); return }
+        proxy.close()
+        val img = InputImage.fromBitmap(bmp, 0)
+        val w = bmp.width; val h = bmp.height
         runRecognition(img, m == "doc") { out ->
-            proxy.close()
             busy.set(false)
             out.put("k", "live").put("w", w).put("h", h).put("ms", SystemClock.elapsedRealtime() - now)
             if (mode != "off" && !paused) emit(out)
@@ -332,6 +336,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun rotate(b: Bitmap, deg: Int): Bitmap {
+        if (deg % 360 == 0) return b
+        return Bitmap.createBitmap(b, 0, 0, b.width, b.height, Matrix().apply { postRotate(deg.toFloat()) }, true)
+    }
+    /**
+     * 틀 안만 잘라냄. b = 중력 기준으로 바로 선 사진(휴대폰을 눕혔으면 그만큼 돌아간 상태).
+     * 화면(세로 고정) 방향으로 되돌려 틀 위치로 자른 뒤, 다시 글자가 바로 서게 돌림. 틀보다 사방 6% 넉넉하게.
+     */
+    private fun inFrame(b: Bitmap): Bitmap {
+        val fr = overlay.fr ?: return b
+        val vw = overlay.vw; val vh = overlay.vh; if (vw <= 0f || vh <= 0f) return b
+        val extra = (360 - rot * 90) % 360
+        val d = rotate(b, (360 - extra) % 360)                   // 화면 방향
+        val iw = d.width.toFloat(); val ih = d.height.toFloat()
+        val s = maxOf(vw / iw, vh / ih); val dx = (vw - iw * s) / 2; val dy = (vh - ih * s) / 2   // 미리보기 FILL_CENTER
+        val mx = fr.width() * vw * 0.06f; val my = fr.height() * vh * 0.06f
+        val l = ((fr.left * vw - mx - dx) / s).coerceIn(0f, iw - 2); val t = ((fr.top * vh - my - dy) / s).coerceIn(0f, ih - 2)
+        val r = ((fr.right * vw + mx - dx) / s).coerceIn(l + 1, iw); val btm = ((fr.bottom * vh + my - dy) / s).coerceIn(t + 1, ih)
+        return Bitmap.createBitmap(d, l.toInt(), t.toInt(), (r - l).toInt().coerceAtLeast(1), (btm - t).toInt().coerceAtLeast(1), Matrix().apply { postRotate(extra.toFloat()) }, true)
+    }
+
     private fun takeShot(save: Boolean, tag: String) {
         val cap = capture
         if (cap == null) { emit(JSONObject().put("k", "err").put("msg", "이 기종은 고화질 촬영을 지원하지 않습니다.").put("tag", tag)); return }
@@ -349,7 +374,11 @@ class MainActivity : AppCompatActivity() {
                     val uri: Uri? = res.savedUri
                     if (uri == null) { emit(JSONObject().put("k", "shot").put("tag", tag).put("saved", false)); return }
                     try {
-                        val img = InputImage.fromFilePath(this@MainActivity, uri)
+                        val src = ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri)) { dec, info, _ ->
+                            val big = maxOf(info.size.width, info.size.height); var s = 1; while (big / (s * 2) >= 2600) s *= 2
+                            dec.setTargetSampleSize(s); dec.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                        }
+                        val img = InputImage.fromBitmap(inFrame(src), 0)
                         runRecognition(img, true) { out ->
                             out.put("k", "shot").put("tag", tag).put("saved", true).put("uri", uri.toString())
                                 .put("w", img.width).put("h", img.height).put("ms", SystemClock.elapsedRealtime() - t0)
@@ -369,12 +398,10 @@ class MainActivity : AppCompatActivity() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     val media = image.image
                     if (media == null) { image.close(); emit(JSONObject().put("k", "err").put("tag", tag).put("msg", "촬영 실패")); return }
-                    val rot = image.imageInfo.rotationDegrees
-                    val img = InputImage.fromMediaImage(media, rot)
-                    val w = if (rot % 180 == 0) image.width else image.height
-                    val h = if (rot % 180 == 0) image.height else image.width
+                    val bmp = try { inFrame(rotate(image.toBitmap(), image.imageInfo.rotationDegrees)) } catch (e: Exception) { image.close(); emit(JSONObject().put("k", "err").put("tag", tag).put("msg", "촬영 실패")); return }
+                    image.close()
+                    val img = InputImage.fromBitmap(bmp, 0); val w = bmp.width; val h = bmp.height
                     runRecognition(img, true) { out ->
-                        image.close()
                         out.put("k", "shot").put("tag", tag).put("saved", false).put("w", w).put("h", h).put("ms", SystemClock.elapsedRealtime() - t0)
                         emit(out)
                     }
@@ -417,11 +444,14 @@ class FrameOverlay(ctx: Context) : View(ctx) {
     private val txt = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textAlign = Paint.Align.CENTER; isFakeBoldText = true }
     private val bg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(150, 0, 0, 0) }
     init { isClickable = false; isFocusable = false }
-    fun set(m: String, s: Int) { mode = m; state = s; invalidate() }
+    @Volatile var fr: RectF? = null      // 틀 위치 (화면 대비 0~1) · 인식할 때 이 안만 자름
+    @Volatile var vw = 0f
+    @Volatile var vh = 0f
+    fun set(m: String, s: Int) { mode = m; state = s; if (m != "doc" && m != "cmos") fr = null; invalidate() }
     fun setRot(r: Int) { rot = r; invalidate() }
 
     override fun onDraw(c: Canvas) {
-        if (mode != "doc" && mode != "cmos") return
+        if (mode != "doc" && mode != "cmos") { fr = null; return }
         val W = width.toFloat(); val H = height.toFloat(); if (W <= 0 || H <= 0) return
         val side = rot == 1 || rot == 3   // 휴대폰을 옆으로 눕힘
         // 틀 비율(가로/세로, 화면 기준): 전표 = A4 세로, CMOS = 16:9 모니터
@@ -431,6 +461,7 @@ class FrameOverlay(ctx: Context) : View(ctx) {
         if (fh > H * 0.86f) { fh = H * 0.86f; fw = fh * ar }
         val l = (W - fw) / 2; val t = (H - fh) / 2
         val r = RectF(l, t, l + fw, t + fh)
+        vw = W; vh = H; fr = RectF(r.left / W, r.top / H, r.right / W, r.bottom / H)
         val hole = Path().apply { fillType = Path.FillType.EVEN_ODD; addRect(0f, 0f, W, H, Path.Direction.CW); addRoundRect(r, 18f, 18f, Path.Direction.CW) }
         c.drawPath(hole, dim)
         val col = when (state) { 1 -> Color.rgb(250, 204, 21); 2 -> Color.rgb(34, 197, 94); 3 -> Color.rgb(239, 68, 68); else -> Color.WHITE }
