@@ -8721,7 +8721,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.00';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.01';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20173,7 +20173,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const q1TitleHtml = () => { const [n, a, b] = q1Title(); return `<i>${n}</i><span><b>${esc(a)}</b><small>${esc(b)}</small></span>`; };
   // v31.99 : 사양 변경 · 추가 · OS 설치 · 안정화 표시
-  const q1Chg = it => { const c = String(it && it.chg || ''); return /^변경/.test(c) ? (/빠짐/.test(c) ? '변경' : '변경') : /^추가/.test(c) ? '추가' : ''; };
+  const q1Chg = it => { const c = String(it && it.chg || ''); return /^변경/.test(c) ? '변경' : /^추가/.test(c) ? '추가' : /빠짐/.test(c) ? '빠짐' : ''; };   // v32.01 : 2개 중 1개 빠짐도 표시
   function q1Notices(Q) {   // 새로 발견된 변경 · 태그 → 큰 알림 1번
     const N = Q.noted = Q.noted || {}, out = [];
     Q1K.forEach(k => { const x = Q.items[k], c = x && q1Chg(x.it); if (c && !N[k + c]) { N[k + c] = 1; out.push(q1ChgLab(k, x.it)); } });
@@ -20185,7 +20185,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!L.length) return ''; const same = L.every(x => x.g === L[0].g), N = L.reduce((a, x) => a + x.n, 0);
     return same ? L[0].g + 'GB' + (N > 1 ? '×' + N : '') : L.map(x => x.g + 'GB' + (x.n > 1 ? '×' + x.n : '')).join('+');
   }
-  const q1ChgLab = (k, it) => { const c = q1Chg(it); if (!c) return ''; const m = String(it.chg || '').match(/총\s*(\d+)\s*개/); return Q1_CAT[k] + ' ' + c + (c === '추가' && m ? ' (총 ' + m[1] + '개)' : ''); };
+  const q1ChgLab = (k, it) => { const c = q1Chg(it); if (!c) return ''; const m = String(it.chg || '').match(/총\s*(\d+)\s*개/); return Q1_CAT[k] + ' ' + c + (c === '추가' && m ? ' (총 ' + m[1] + '개)' : c === '빠짐' ? ' (총 ' + Math.max(1, it.n || 1) + '개)' : ''); };
   const q1TagPills = (Q, pill) => { const T = Q.tags || {}; return (T.os ? pill('tg', 'OS 설치') : '') + (T.st ? pill('tg', '안정화') : ''); };
   function q1Hud() {
     const Q = S.q1, pill = (cls, txt) => `<span class="${cls}">${txt}</span>`;
