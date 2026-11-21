@@ -331,7 +331,7 @@ html.q1camon,html.q1camon body,html.q1camon #app,html.q1camon .czb,html.q1camon 
 .q1c-top{background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.25));padding-bottom:8px}.q1c-tt{font-size:17px;font-weight:800;padding:8px 14px 6px;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 #q1hud{padding:0 12px;display:flex;flex-direction:column;gap:5px}.q1h-c{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:7px 11px;font-size:14px}.q1h-c span{color:#cbd5e1;white-space:nowrap}.q1h-c b{text-align:right;color:#94a3b8;font-weight:700;font-family:ui-monospace,monospace;font-size:14px}.q1h-c b i{display:block;font-style:normal;font-family:inherit;font-weight:500;font-size:11px;color:#cbd5e1;opacity:.85}
 .q1h-c.ok{background:rgba(5,46,22,.82);border-color:#22c55e}.q1h-c.ok b{color:#4ade80}.q1h-c.warn{background:rgba(66,32,6,.85);border-color:#f59e0b}.q1h-c.warn b{color:#fbbf24}.q1h-c.bad{background:rgba(69,10,10,.85);border-color:#ef4444}.q1h-c.bad b{color:#f87171}
-.q1h-one{background:rgba(5,46,22,.82);border:1px solid #22c55e;border-radius:10px;padding:8px 12px;font-weight:800;color:#bbf7d0}.q1h-one.badc{background:rgba(69,10,10,.85);border-color:#ef4444;color:#fecaca}.q1h-hint{font-size:14px;color:#fde68a;text-shadow:0 1px 3px rgba(0,0,0,.9);padding:2px 2px}.q1h-msg{background:rgba(120,53,15,.9);border-radius:10px;padding:7px 11px;font-size:13px;color:#fef3c7}
+.q1h-one{background:rgba(5,46,22,.82);border:1px solid #22c55e;border-radius:10px;padding:8px 12px;font-weight:800;color:#bbf7d0}.q1h-one.badc{background:rgba(69,10,10,.85);border-color:#ef4444;color:#fecaca}.q1h-pills{display:flex;flex-wrap:wrap;gap:5px}.q1h-pills span{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(15,23,42,.75);border:1px solid rgba(255,255,255,.2);color:#e2e8f0}.q1h-pills .ok{background:rgba(5,46,22,.85);border-color:#22c55e;color:#86efac}.q1h-pills .warn{background:rgba(66,32,6,.85);border-color:#f59e0b;color:#fbbf24}.q1h-pills .bad{background:rgba(69,10,10,.88);border-color:#ef4444;color:#fca5a5}.q1h-hint{font-size:14px;color:#fde68a;text-shadow:0 1px 3px rgba(0,0,0,.9);padding:2px 2px}.q1h-msg{background:rgba(120,53,15,.9);border-radius:10px;padding:7px 11px;font-size:13px;color:#fef3c7}
 .q1c-mid{flex:1}.q1c-bot{background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.55) 30%);padding:10px 14px 16px}.q1c-sub{text-align:center;margin-bottom:6px}.q1c-sub button{background:rgba(15,23,42,.7);color:#e2e8f0;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:6px 16px;font-size:13px}
 .q1c-acts{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}.q1c-acts button{padding:15px 10px;font-size:16px;font-weight:800;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(15,23,42,.72);color:#fff}.q1c-acts button.primary{background:#2563eb;border-color:#2563eb}
 .q1-flow{display:flex;flex-direction:column;gap:8px;margin:4px 0 14px}.q1-flow div{display:grid;grid-template-columns:30px 1fr;column-gap:10px;background:#fff;border:1px solid #e4e7ee;border-radius:12px;padding:11px 14px}.q1-flow i{grid-row:span 2;font-style:normal;width:26px;height:26px;border-radius:50%;background:#0f1e3d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;align-self:center}.q1-flow b{font-size:15px;color:#0f1e3d}.q1-flow span{font-size:12px;color:#64748b}
@@ -8695,7 +8695,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.80';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.81';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19870,11 +19870,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         h += chip(Q.order ? 'ok' : '', '주문번호', Q.order ? esc(Q.order) + ' ✓' : '찾는 중');
         ['cpu', 'mem', 'ssd', 'hdd'].forEach(k => { const x = Q.items[k]; if (!x && k === 'hdd') return;
           h += chip(x ? (x.reg ? 'ok' : 'warn') : '', Q1_CAT[k], x ? `${esc(x.it.code || '코드?')}${(x.it.n || 1) > 1 ? ' ×' + x.it.n : ''} ${x.reg ? '✓' : '미등록'}<i>${esc(q1Short(q1Full(x.it), 26))}</i>` : '찾는 중'); });
-      } else h += `<div class="q1h-one">✓ 전표 읽기 완료 · ${esc(Q.order)}</div><div class="q1h-hint">${esc(Q.fitHint || '전표 전체가 틀 안에 들어오게')}</div>`;
+      } else h += `<div class="q1h-one">✓ 전표 읽기 완료 · ${esc(Q.order)}</div><div class="q1h-pills">${Q1K.filter(k => Q.items[k]).map(k => `<span class="${Q.items[k].reg ? 'ok' : 'warn'}">${Q1_CAT[k]} ✓</span>`).join('')}</div><div class="q1h-hint">${esc(Q.fitHint || '전표 전체가 틀 안에 들어오게')}</div>`;
     } else if (Q.step === 'cmos') {
       if (Q.ph === 'read') Object.keys(Q.E).forEach(k => { const s = Q.cm[k]; h += chip(s === 'ok' ? 'ok' : s === 'bad' ? 'bad' : '', Q1_CAT[k] + ' · ' + esc(q1ExpLabel(k, Q.E)), s === 'ok' ? '✓ 일치' : s === 'bad' ? '✕ 화면 ' + esc(Q.bad[k].seen) : '찾는 중'); });
       else { const ks = Object.keys(Q.E), okn = ks.filter(k => Q.cm[k] === 'ok').length;
-        h += `<div class="q1h-one">${okn === ks.length ? '✓ 사양 모두 일치' : '사양 ' + okn + '/' + ks.length + ' 일치'}${Q.cshots ? ' · 사진 ' + Q.cshots + '장' : ''}</div><div class="q1h-hint">${esc(Q.fitHint || 'CMOS 화면 전체가 틀 안에 들어오게')}</div>`; }
+        h += `<div class="q1h-one ${okn === ks.length ? '' : 'badc'}">${okn === ks.length ? '✓ 사양 모두 일치' : '사양 ' + okn + '/' + ks.length + ' 일치'}${Q.cshots ? ' · 사진 ' + Q.cshots + '장' : ''}</div><div class="q1h-pills">${ks.map(k => { const s = Q.cm[k]; return `<span class="${s === 'ok' ? 'ok' : s === 'bad' ? 'bad' : ''}">${Q1_CAT[k]} ${s === 'ok' ? '✓' : s === 'bad' ? '✕ ' + esc(Q.bad[k].seen) : '?'}${Q.cov[k] ? ' 📷' : ''}</span>`; }).join('')}</div><div class="q1h-hint">${esc(Q.fitHint || 'CMOS 화면 전체가 틀 안에 들어오게')}</div>`; }
     } else if (Q.step === 'free') {
       h += `<div class="q1h-one ${Q.result === 'ok' ? 'okc' : 'badc'}">${Q.result === 'ok' ? '✓ 사양 일치' : '✕ 사양 불일치'} · ${esc(Q.order)} · ${Q.saved === true ? '저장됨' : Q.saved === false ? '저장 실패' : '저장 중…'}</div><div class="q1h-hint">본체 사진 ${Q.shots}장 · 앨범(조립검수 폴더)에 저장</div>`;
     }
