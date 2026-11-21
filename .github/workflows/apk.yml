@@ -36,7 +36,7 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk PCAB-Cam.apk
           gh release delete apk-latest -y --cleanup-tag || true
-          gh release create apk-latest PCAB-Cam.apk -t "조립 검수 카메라 1.0.${{ github.run_number }}" -n "자동 빌드 · ${{ github.sha }}" --latest
+          gh release create apk-latest PCAB-Cam.apk -t "조립 검수 1.0.${{ github.run_number }}" -n "자동 빌드 · ${{ github.sha }}" --latest
       - name: 결과 기록
         if: always()
         run: |

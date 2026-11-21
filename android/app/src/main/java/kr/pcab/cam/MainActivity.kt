@@ -11,6 +11,9 @@ import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.content.Intent
 import android.provider.MediaStore
 import android.util.Size
 import android.view.MotionEvent
@@ -233,6 +236,7 @@ class MainActivity : AppCompatActivity() {
         mode = m
         paused = false
         camBox.visibility = View.VISIBLE
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)   // 검수 중 화면 꺼짐 방지
         overlay.setRot(rot); overlay.setKind("", 0f, 1f)
         root.requestLayout()
 
@@ -276,6 +280,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopCamera() {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         mode = "off"
         try { provider?.unbindAll() } catch (_: Exception) {}
         camera = null
@@ -462,6 +467,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
         @JavascriptInterface fun version(): String = appVersion()
+        @JavascriptInterface fun versionCode(): Int = try { @Suppress("DEPRECATION") packageManager.getPackageInfo(packageName, 0).versionCode } catch (_: Exception) { 0 }
+        /** 확대 0~1 (0 = 기본) */
+        @JavascriptInterface fun zoom(r: Double) { runOnUiThread { try { camera?.cameraControl?.setLinearZoom(r.toFloat().coerceIn(0f, 1f)) } catch (_: Exception) {} } }
+        /** 밝기 보정 (EV, 예: -0.7 = 조금 어둡게 → 모니터 글자 번짐 줄임) */
+        @JavascriptInterface fun exposure(ev: Double) { runOnUiThread { try {
+            val c = camera ?: return@runOnUiThread; val st = c.cameraInfo.exposureState
+            if (!st.isExposureCompensationSupported) return@runOnUiThread
+            val step = st.exposureCompensationStep.toFloat(); val r = st.exposureCompensationRange
+            val idx = if (step > 0f) Math.round(ev.toFloat() / step).coerceIn(r.lower, r.upper) else 0
+            c.cameraControl.setExposureCompensationIndex(idx)
+        } catch (_: Exception) {} } }
+        /** 진동 (ms) */
+        @JavascriptInterface fun vibrate(ms: Int) { try {
+            @Suppress("DEPRECATION") val v = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+            v.vibrate(VibrationEffect.createOneShot(ms.toLong().coerceIn(10, 600), VibrationEffect.DEFAULT_AMPLITUDE))
+        } catch (_: Exception) {} }
+        /** 외부 브라우저로 열기 (앱 업데이트 받기) */
+        @JavascriptInterface fun openUrl(url: String) { runOnUiThread { try { if (url.startsWith("https://")) startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (_: Exception) {} } }
     }
 }
 
