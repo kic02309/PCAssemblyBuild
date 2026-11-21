@@ -8721,7 +8721,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.99';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.00';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19773,7 +19773,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     m = s.match(/Ultra[^0-9]{0,2}([3579S])([0-9]{3})(KF|K|F|H)?(Plus)?/i); if (m) return (m[2] + (m[3] || '')).toUpperCase();
     m = s.match(/i([3579])-?([0-9]{4,5})(KF|K|F|T)?/); if (m) return (m[2] + (m[3] || '')).toUpperCase(); return null; }
   const C1_MEMS = [4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256];
-  function c1Mem(t) { const f = t.replace(/\n/g, ' '); let m = f.match(/Mem\w{0,6}\s*(?:Size|Info)?\s*[:：]?\s*([0-9]{4,6})\s*MB/i); if (m) return { v: Math.round(+m[1] / 1024) };
+  function c1Mem(t) { const s = c1MemTot(t), f = t.replace(/\n/g, ' ');   // v32.00 : 총용량 줄이 있어도 슬롯 개수는 같이 셈
+    let n = 0, tot = 0; const re = /(?:DDR[45S]_?[AB][12]|DIMM_?[AB][12]?|\b[AB][12])\s*[:：]?\s*([A-Za-z\.]+)\s*([0-9]{1,5})\s*(GB|MB)/g; let r;
+    while ((r = re.exec(f))) { const v = r[3].toUpperCase() === 'MB' ? +r[2] / 1024 : +r[2]; if (v >= 2 && v <= 128) { tot += v; n++; } }
+    if (s && !s.slots && n && Math.round(tot) === s.v) return { v: s.v, slots: true, n, tot: true }; return s; }
+  function c1MemTot(t) { const f = t.replace(/\n/g, ' '); let m = f.match(/Mem\w{0,6}\s*(?:Size|Info)?\s*[:：]?\s*([0-9]{4,6})\s*MB/i); if (m) return { v: Math.round(+m[1] / 1024) };
     m = f.match(/(?:Total\s*)?Mem(?:ory)?\s*(?:Size|Information)?\s*[:：]?\s*([0-9]{1,3})\s*GB(?![0-9])/i); if (m && C1_MEMS.includes(+m[1])) return { v: +m[1] };   // v31.97 : ASRock 'Total Memory 16GB' 등
     m = f.match(/RAM\s*[:：]?\s*([0-9]{1,3})(?:\.[0-9])?\s*(?:GB|\()/i); if (m && C1_MEMS.includes(+m[1])) return { v: +m[1] };
     m = f.match(/RA[MN][A-Z]?\s*[:：]?[^G]{0,40}?(?<![0-9.])([0-9]{1,3})\s*GB(?![0-9])/i); if (m && C1_MEMS.includes(+m[1])) return { v: +m[1] };
@@ -19833,7 +19837,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const res = {}, cpu = c1Cpu(t), mem = c1Mem(t), dk = c1Disks(t);
     if (exp.cpu) { const f = c1CpuFind(t, exp.cpu), d = x => x.replace(/ ?PLUS/i, '').replace(/[A-Z]+$/, ''), sx = x => (x.replace(/ ?PLUS/i, '').match(/[A-Z0-9]*?([A-Z]*)$/) || [])[1] || '';
       if (f) res.cpu = { st: 'ok' }; else if (!cpu) res.cpu = { st: 'wait' }; else { const b = exp.cpu.toUpperCase(); res.cpu = d(cpu) === d(b) ? (sx(cpu) === sx(b) ? { st: 'ok' } : !sx(cpu) ? { st: 'wait' } : { st: 'bad', seen: cpu }) : { st: 'bad', seen: cpu }; } }
-    if (exp.mem) { res.mem = !mem ? { st: 'wait' } : mem.v === exp.mem ? { st: 'ok' } : (mem.slots && mem.v < exp.mem) ? { st: 'wait' } : { st: 'bad', seen: mem.v + 'GB' };
+    if (exp.mem) { res.mem = !mem ? { st: 'wait' } : mem.v === exp.mem ? { st: 'ok' } : (mem.slots && !mem.tot && mem.v < exp.mem) ? { st: 'wait' } : { st: 'bad', seen: mem.v + 'GB' };
       if (res.mem.st === 'ok' && mem.slots && x.memN) res.mem.w = mem.n === x.memN ? { st: 'ok' } : { st: 'diff', seen: mem.n + '개' }; }
     for (const k of ['ssd', 'hdd']) if (exp[k] && exp[k].length) { const have = dk.list.filter(d => k === 'hdd' ? d.hdd : !d.hdd).map(d => d.cap);
       const miss = exp[k].filter(c => { const i = have.indexOf(c); if (i >= 0) { have.splice(i, 1); return false; } return true; });
@@ -19856,7 +19860,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function q1Expect2(P) {   // 부가 확인 값 : 메모리 개수 · 저장장치 제조사
     const X = {}, full = it => q1Full(it) + ' ' + (it.brand || '');
-    if (P.mem && !(P.mem.extraO || []).length) X.memN = Math.max(1, P.mem.n || 1);
+    if (P.mem) X.memN = [P.mem].concat(P.mem.extraO || []).reduce((a, o) => a + Math.max(1, o.n || 1), 0);   // v32.00 : 섞인 메모리도 총 개수
     for (const k of ['ssd', 'hdd']) if (P[k]) X[k + 'Br'] = [P[k]].concat(P[k].extraO || []).map(o => q1BrandOf(full(o)));
     return X;
   }
@@ -20172,10 +20176,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1Chg = it => { const c = String(it && it.chg || ''); return /^변경/.test(c) ? (/빠짐/.test(c) ? '변경' : '변경') : /^추가/.test(c) ? '추가' : ''; };
   function q1Notices(Q) {   // 새로 발견된 변경 · 태그 → 큰 알림 1번
     const N = Q.noted = Q.noted || {}, out = [];
-    Q1K.forEach(k => { const x = Q.items[k], c = x && q1Chg(x.it); if (c && !N[k + c]) { N[k + c] = 1; out.push(Q1_CAT[k] + ' ' + c); } });
+    Q1K.forEach(k => { const x = Q.items[k], c = x && q1Chg(x.it); if (c && !N[k + c]) { N[k + c] = 1; out.push(q1ChgLab(k, x.it)); } });
     const T = Q.tags || {}; if (T.os && !N.os) { N.os = 1; out.push('OS 설치'); } if (T.st && !N.st) { N.st = 1; out.push('안정화'); }
     if (out.length) { q1Snd('done'); q1Cheer(out.join(' · ') + ' 있음', false, true); }
   }
+  function q1MemLab(it) {   // 전표 메모리 → 16GB×2 · 8GB+16GB
+    if (!it) return ''; const L = [it].concat(it.extraO || []).map(o => ({ g: q1GB(o.cap || q1Full(o)), n: Math.max(1, o.n || 1) })).filter(x => x.g);
+    if (!L.length) return ''; const same = L.every(x => x.g === L[0].g), N = L.reduce((a, x) => a + x.n, 0);
+    return same ? L[0].g + 'GB' + (N > 1 ? '×' + N : '') : L.map(x => x.g + 'GB' + (x.n > 1 ? '×' + x.n : '')).join('+');
+  }
+  const q1ChgLab = (k, it) => { const c = q1Chg(it); if (!c) return ''; const m = String(it.chg || '').match(/총\s*(\d+)\s*개/); return Q1_CAT[k] + ' ' + c + (c === '추가' && m ? ' (총 ' + m[1] + '개)' : ''); };
   const q1TagPills = (Q, pill) => { const T = Q.tags || {}; return (T.os ? pill('tg', 'OS 설치') : '') + (T.st ? pill('tg', '안정화') : ''); };
   function q1Hud() {
     const Q = S.q1, pill = (cls, txt) => `<span class="${cls}">${txt}</span>`;
@@ -20184,15 +20194,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     h += '<div class="q1p">';
     if (Q.step === 'doc') {
       h += pill(Q.order ? 'ok' : '', Q.order ? '주문 ✓ ' + esc(Q.order) : '주문번호');
-      Q1K.forEach(k => { const x = Q.items[k]; if (!x && k === 'hdd') return; h += pill(x ? (x.reg ? 'ok' : 'warn') : '', Q1_CAT[k] + (x ? (x.reg ? ' ✓' : ' 미등록') : '')); const c = x && q1Chg(x.it); if (c) h += pill('cg', Q1_CAT[k] + ' ' + c); });
+      Q1K.forEach(k => { const x = Q.items[k]; if (!x && k === 'hdd') return; const ml = k === 'mem' && x ? q1MemLab(x.it) : ''; h += pill(x ? (x.reg ? 'ok' : 'warn') : '', Q1_CAT[k] + (ml ? ' ' + ml : '') + (x ? (x.reg ? ' ✓' : ' 미등록') : '')); const c = x && q1ChgLab(k, x.it); if (c) h += pill('cg', c); });
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'cmos' && Q.E) {
       if (Q.vendor) h += pill('vd', esc(Q.vendor));
       Object.keys(Q.E).forEach(k => { const s = Q.cm[k], w = Q.w[k], cam = Q.cov[k] ? ' 📷' : '';
         const cg = Q.items[k] && q1Chg(Q.items[k].it) ? ' (' + q1Chg(Q.items[k].it) + ')' : '';
-        if (s === 'ok') h += pill(w && w.st === 'diff' ? 'warn' : 'ok', Q1_CAT[k] + ' ✓' + cg + (w && w.st === 'diff' ? (k === 'mem' ? ' 개수?' : ' 제조사?') : '') + cam);
+        const mn = k === 'mem' && (Q.E2 || {}).memN ? ' ' + Q.E.mem + 'GB (' + Q.E2.memN + '개)' : '';
+        if (s === 'ok') h += pill(w && w.st === 'diff' ? 'warn' : 'ok', Q1_CAT[k] + mn + ' ✓' + cg + (w && w.st === 'diff' ? (k === 'mem' ? ' · ' + esc(w.seen) + ' 꽂힘?' : ' 제조사?') : '') + cam);
         else if (s === 'bad') h += pill('bad', Q1_CAT[k] + cg + ' ✕ ' + esc(Q.bad[k].seen) + cam);
-        else h += pill('', Q1_CAT[k] + cg + ' ' + esc(q1ExpLabel(k, Q.E))); });
+        else h += pill('', Q1_CAT[k] + cg + ' ' + esc(k === 'mem' && mn ? mn.trim() : q1ExpLabel(k, Q.E))); });
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'free') {
       h += pill(Q.result === 'ok' ? 'ok' : 'bad', (Q.result === 'ok' ? '✓ 일치 · ' : '✕ 불일치 · ') + esc(Q.order)) + pill(Q.saved === false ? 'bad' : '', Q.saved === true ? '저장됨' : Q.saved === false ? '저장 실패' : '저장 중…') + pill('', '본체 ' + Q.shots + '장') + q1TagPills(Q, pill);
