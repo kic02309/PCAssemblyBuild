@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         const val START_URL = "https://kic02309.github.io/PCAssemblyBuild/?app=cam"
     }
 
-    private lateinit var root: LinearLayout
+    private lateinit var root: FrameLayout
     private lateinit var previewView: PreviewView
     private lateinit var camBox: FrameLayout
     private lateinit var overlay: FrameOverlay
@@ -145,10 +145,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#0F1E3D"))
-        }
+        // 카메라(전체 화면) 위에 웹 화면을 투명하게 겹침 → 안내·버튼은 웹이 카메라 위에 그림
+        root = FrameLayout(this).apply { setBackgroundColor(Color.parseColor("#0F1E3D")) }
         previewView = PreviewView(this).apply {
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE
             scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -160,8 +158,9 @@ class MainActivity : AppCompatActivity() {
         camBox.addView(previewView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         camBox.addView(overlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         previewView.visibility = View.VISIBLE
-        root.addView(camBox, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0))
-        root.addView(web, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(camBox, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        web.setBackgroundColor(Color.TRANSPARENT)
         setContentView(root)
 
         // 화면을 누르면 그 자리에 초점
@@ -188,7 +187,8 @@ class MainActivity : AppCompatActivity() {
         web.webViewClient = WebViewClient()
         web.webChromeClient = WebChromeClient()
         web.addJavascriptInterface(Bridge(), "PCABCam")
-        if (savedInstanceState == null) web.loadUrl(START_URL + "&t=" + System.currentTimeMillis())   // 켤 때마다 최신 화면 (웹 수정이 바로 반영되게) else web.restoreState(savedInstanceState)
+        // 켤 때마다 최신 화면 (웹 수정이 바로 반영되게)
+        if (savedInstanceState == null) web.loadUrl(START_URL + "&t=" + System.currentTimeMillis()) else web.restoreState(savedInstanceState)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -232,10 +232,8 @@ class MainActivity : AppCompatActivity() {
         }
         mode = m
         paused = false
-        val h = (root.height * pct.coerceIn(20, 90) / 100f).toInt()
-        camBox.layoutParams = (camBox.layoutParams as LinearLayout.LayoutParams).apply { height = h }
         camBox.visibility = View.VISIBLE
-        overlay.setRot(rot); overlay.set(m, 0)
+        overlay.setRot(rot); overlay.setKind("", 0f, 1f)
         root.requestLayout()
 
         if (provider != null && camera != null) { emit(JSONObject().put("k", "state").put("msg", "on")); return }
@@ -283,8 +281,7 @@ class MainActivity : AppCompatActivity() {
         camera = null
         capture = null
         camBox.visibility = View.GONE
-        camBox.layoutParams = (camBox.layoutParams as LinearLayout.LayoutParams).apply { height = 0 }
-        root.requestLayout()
+        overlay.setKind("", 0f, 1f)
         emit(JSONObject().put("k", "state").put("msg", "off"))
     }
 
@@ -416,7 +413,15 @@ class MainActivity : AppCompatActivity() {
     // ───────────── JS 브리지 ─────────────
     inner class Bridge {
         @JavascriptInterface fun start(pct: Int, m: String) { runOnUiThread { startCamera(pct, if (m == "cmos" || m == "free") m else "doc") } }
-        @JavascriptInterface fun frame(state: Int) { runOnUiThread { overlay.set(mode, state) } }
+        @JavascriptInterface fun frame(state: Int) { runOnUiThread { overlay.setState(state) } }
+        /** 맞춤 틀: kind = "" (없음 · 화면 전체 인식) / "doc" 세로 / "cmos" 가로 · top~bottom = 틀이 들어갈 세로 범위(0~1) · 틀이 있으면 틀 안만 인식 */
+        @JavascriptInterface fun setFrame(kind: String, top: Double, bottom: Double) { runOnUiThread { overlay.setKind(if (kind == "doc" || kind == "cmos") kind else "", top.toFloat(), bottom.toFloat()) } }
+        /** 화면 비율 위치(0~1)에 초점 */
+        @JavascriptInterface fun focus(x: Double, y: Double) { runOnUiThread {
+            val cam = camera ?: return@runOnUiThread
+            val pt = previewView.meteringPointFactory.createPoint((x * previewView.width).toFloat(), (y * previewView.height).toFloat())
+            cam.cameraControl.startFocusAndMetering(FocusMeteringAction.Builder(pt).build())
+        } }
         @JavascriptInterface fun stop() { runOnUiThread { stopCamera() } }
         @JavascriptInterface fun pause(on: Boolean) { paused = on }
         @JavascriptInterface fun setMode(m: String) { mode = if (m == "cmos") "cmos" else if (m == "off") "off" else "doc" }
@@ -447,7 +452,10 @@ class FrameOverlay(ctx: Context) : View(ctx) {
     @Volatile var fr: RectF? = null      // 틀 위치 (화면 대비 0~1) · 인식할 때 이 안만 자름
     @Volatile var vw = 0f
     @Volatile var vh = 0f
-    fun set(m: String, s: Int) { mode = m; state = s; if (m != "doc" && m != "cmos") fr = null; invalidate() }
+    private var band0 = 0f
+    private var band1 = 1f
+    fun setKind(k: String, top: Float, bottom: Float) { mode = k; state = 0; band0 = top.coerceIn(0f, 0.9f); band1 = bottom.coerceIn(band0 + 0.1f, 1f); if (k != "doc" && k != "cmos") fr = null; invalidate() }
+    fun setState(s: Int) { state = s; invalidate() }
     fun setRot(r: Int) { rot = r; invalidate() }
 
     override fun onDraw(c: Canvas) {
@@ -457,9 +465,10 @@ class FrameOverlay(ctx: Context) : View(ctx) {
         // 틀 비율(가로/세로, 화면 기준): 전표 = A4 세로, CMOS = 16:9 모니터
         var ar = if (mode == "doc") 1f / 1.414f else 16f / 9f
         if (side) ar = 1f / ar
-        var fw = W * 0.86f; var fh = fw / ar
-        if (fh > H * 0.86f) { fh = H * 0.86f; fw = fh * ar }
-        val l = (W - fw) / 2; val t = (H - fh) / 2
+        val bandH = H * (band1 - band0)
+        var fw = W * 0.88f; var fh = fw / ar
+        if (fh > bandH * 0.94f) { fh = bandH * 0.94f; fw = fh * ar }
+        val l = (W - fw) / 2; val t = H * band0 + (bandH - fh) / 2
         val r = RectF(l, t, l + fw, t + fh)
         vw = W; vh = H; fr = RectF(r.left / W, r.top / H, r.right / W, r.bottom / H)
         val hole = Path().apply { fillType = Path.FillType.EVEN_ODD; addRect(0f, 0f, W, H, Path.Direction.CW); addRoundRect(r, 18f, 18f, Path.Direction.CW) }
@@ -474,19 +483,5 @@ class FrameOverlay(ctx: Context) : View(ctx) {
             val dx = if (x == r.left) k else -k; val dy = if (y == r.top) k else -k
             c.drawLine(x, y, x + dx, y, line); c.drawLine(x, y, x, y + dy, line)
         }
-        val msg = when (state) {
-            2 -> "✓ 인식 완료"
-            3 -> "✕ 사양 불일치"
-            1 -> "읽는 중… 그대로 들고 계세요"
-            else -> if (mode == "doc") "전표를 틀 안에 맞추세요" else "CMOS 화면을 틀 안에 맞추세요"
-        }
-        txt.textSize = W * 0.042f
-        val cx = r.centerX(); val cy = r.top + txt.textSize * 1.6f
-        val tw = txt.measureText(msg) / 2 + txt.textSize * 0.7f
-        c.save()
-        if (side) { c.rotate(if (rot == 1) 90f else -90f, r.centerX(), r.centerY()) }
-        c.drawRoundRect(RectF(cx - tw, cy - txt.textSize * 1.1f, cx + tw, cy + txt.textSize * 0.5f), 12f, 12f, bg)
-        c.drawText(msg, cx, cy, txt)
-        c.restore()
     }
 }
