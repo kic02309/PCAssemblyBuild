@@ -294,12 +294,20 @@ class MainActivity : AppCompatActivity() {
             proxy.close(); return
         }
         lastRun = now
-        val bmp: Bitmap = try { inFrame(rotate(proxy.toBitmap(), proxy.imageInfo.rotationDegrees)) } catch (e: Exception) { proxy.close(); busy.set(false); return }
+        val pm = try { inFrameMap(rotate(proxy.toBitmap(), proxy.imageInfo.rotationDegrees)) } catch (e: Exception) { proxy.close(); busy.set(false); return }
         proxy.close()
+        val bmp = pm.first; val toView = pm.second
         val img = InputImage.fromBitmap(bmp, 0)
         val w = bmp.width; val h = bmp.height
         runRecognition(img, m == "doc") { out ->
             busy.set(false)
+            if (toView != null) {   // AR : 글자 칸마다 화면 위치(0~1) [x0,y0,x1,y1]
+                fun conv(a: JSONArray?): JSONArray { val o = JSONArray(); if (a == null) return o
+                    for (i in 0 until a.length()) { val e = a.getJSONArray(i); val r = RectF(e.getDouble(1).toFloat(), e.getDouble(2).toFloat(), e.getDouble(3).toFloat(), e.getDouble(4).toFloat()); toView.mapRect(r)
+                        o.put(JSONArray().put(r.left.toDouble()).put(r.top.toDouble()).put(r.right.toDouble()).put(r.bottom.toDouble())) }
+                    return o }
+                out.put("sl", conv(out.optJSONArray("lines"))).put("sc", conv(out.optJSONArray("codes")))
+            }
             out.put("k", "live").put("w", w).put("h", h).put("ms", SystemClock.elapsedRealtime() - now)
             if (mode != "off" && !paused) emit(out)
         }
@@ -341,17 +349,35 @@ class MainActivity : AppCompatActivity() {
      * 틀 안만 잘라냄. b = 중력 기준으로 바로 선 사진(휴대폰을 눕혔으면 그만큼 돌아간 상태).
      * 화면(세로 고정) 방향으로 되돌려 틀 위치로 자른 뒤, 다시 글자가 바로 서게 돌림. 틀보다 사방 6% 넉넉하게.
      */
-    private fun inFrame(b: Bitmap): Bitmap {
-        val fr = overlay.fr ?: return b
-        val vw = overlay.vw; val vh = overlay.vh; if (vw <= 0f || vh <= 0f) return b
+    private fun inFrame(b: Bitmap): Bitmap = inFrameMap(b).first
+
+    /**
+     * 틀 안만 잘라냄 + 잘라낸 사진의 점 → 화면 위치(0~1) 변환표 (AR 표시용).
+     * b = 중력 기준으로 바로 선 사진. 틀이 없으면 자르지 않고 변환표만 만듦.
+     */
+    private fun inFrameMap(b: Bitmap): Pair<Bitmap, Matrix?> {
+        val vw = overlay.vw.takeIf { it > 0f } ?: previewView.width.toFloat(); val vh = overlay.vh.takeIf { it > 0f } ?: previewView.height.toFloat()
+        if (vw <= 0f || vh <= 0f) return Pair(b, null)
         val extra = (360 - rot * 90) % 360
-        val d = rotate(b, (360 - extra) % 360)                   // 화면 방향
-        val iw = d.width.toFloat(); val ih = d.height.toFloat()
-        val s = maxOf(vw / iw, vh / ih); val dx = (vw - iw * s) / 2; val dy = (vh - ih * s) / 2   // 미리보기 FILL_CENTER
-        val mx = fr.width() * vw * 0.06f; val my = fr.height() * vh * 0.06f
-        val l = ((fr.left * vw - mx - dx) / s).coerceIn(0f, iw - 2); val t = ((fr.top * vh - my - dy) / s).coerceIn(0f, ih - 2)
-        val r = ((fr.right * vw + mx - dx) / s).coerceIn(l + 1, iw); val btm = ((fr.bottom * vh + my - dy) / s).coerceIn(t + 1, ih)
-        return Bitmap.createBitmap(d, l.toInt(), t.toInt(), (r - l).toInt().coerceAtLeast(1), (btm - t).toInt().coerceAtLeast(1), Matrix().apply { postRotate(extra.toFloat()) }, true)
+        val fr = overlay.fr
+        val dw = if (extra % 180 == 0) b.width.toFloat() else b.height.toFloat(); val dh = if (extra % 180 == 0) b.height.toFloat() else b.width.toFloat()
+        val s = maxOf(vw / dw, vh / dh); val dx = (vw - dw * s) / 2; val dy = (vh - dh * s) / 2   // 미리보기 FILL_CENTER
+        var l = 0f; var t = 0f; var w = dw; var h = dh
+        val out: Bitmap
+        if (fr != null) {
+            val d = rotate(b, (360 - extra) % 360)                   // 화면 방향
+            val mx = fr.width() * vw * 0.06f; val my = fr.height() * vh * 0.06f
+            l = ((fr.left * vw - mx - dx) / s).coerceIn(0f, dw - 2); t = ((fr.top * vh - my - dy) / s).coerceIn(0f, dh - 2)
+            val r = ((fr.right * vw + mx - dx) / s).coerceIn(l + 1, dw); val btm = ((fr.bottom * vh + my - dy) / s).coerceIn(t + 1, dh)
+            l = l.toInt().toFloat(); t = t.toInt().toFloat(); w = (r - l).toInt().coerceAtLeast(1).toFloat(); h = (btm - t).toInt().coerceAtLeast(1).toFloat()
+            out = Bitmap.createBitmap(d, l.toInt(), t.toInt(), w.toInt(), h.toInt(), Matrix().apply { postRotate(extra.toFloat()) }, true)
+        } else out = b
+        // 앞으로 : 잘린 조각(0..w,0..h)을 extra 만큼 돌린 뒤 0,0 으로 당김 → 그 반대로 되돌리면 조각 좌표 → +l,t → 화면
+        val fwd = Matrix().apply { postRotate(extra.toFloat()) }
+        val rr = RectF(0f, 0f, w, h); fwd.mapRect(rr); fwd.postTranslate(-rr.left, -rr.top)
+        val inv = Matrix(); if (!fwd.invert(inv)) return Pair(out, null)
+        inv.postTranslate(l, t); inv.postScale(s, s); inv.postTranslate(dx, dy); inv.postScale(1f / vw, 1f / vh)
+        return Pair(out, inv)
     }
 
     private fun takeShot(save: Boolean, tag: String) {
