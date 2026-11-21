@@ -348,6 +348,12 @@ html.q1camon,html.q1camon body,html.q1camon #app,html.q1camon .cz,html.q1camon .
 .q1-verdict{border-radius:12px;padding:12px 14px;font-weight:800;font-size:16px;margin-bottom:10px;color:#fff}.q1-verdict.ok{background:#16a34a}.q1-verdict.bad{background:#dc2626}
 .q1-row.rok{border-color:#86efac}.q1-row.rbad{border-color:#fca5a5;background:#fff7f7}.q1-row.rwait{border-color:#fcd34d;background:#fffdf5}
 .q1-vs{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #e4e7ee;font-size:13px;color:#64748b}.q1-vs b{color:#0f1e3d;font-size:14px}.q1-vs strong{font-size:18px}.rok .q1-vs strong{color:#16a34a}.rbad .q1-vs strong,.rbad .q1-vs span:nth-child(2) b{color:#dc2626}.rwait .q1-vs strong{color:#d97706}
+.q1-vh{display:flex;align-items:center;gap:6px;margin-bottom:8px}.q1-vh b{font-size:16px;color:#0f1e3d}.q1-chg{font-style:normal;font-size:11px;padding:1px 6px;border-radius:6px;background:#ffedd5;color:#9a3412}.q1-chg.add{background:#ede9fe;color:#5b21b6}
+.q1-res{margin-left:auto;font-size:13px;font-weight:800;padding:3px 10px;border-radius:999px}.q1-res.ok{background:#dcfce7;color:#15803d}.q1-res.warn{background:#fef3c7;color:#b45309}.q1-res.bad{background:#fee2e2;color:#b91c1c}.q1-res.wait{background:#f1f5f9;color:#64748b}
+.q1-vb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}.q1-vb .sd{background:#f1f5f9;border-radius:10px;padding:7px 10px;text-align:center}.q1-vb small{display:block;font-size:11px;color:#64748b}.q1-vb .sd b{font-size:21px;font-weight:900;color:#0f1e3d;letter-spacing:-.3px}.q1-vb i{font-style:normal;font-size:20px;font-weight:900;color:#94a3b8}
+.q1-vb .cm.ok{background:#dcfce7}.q1-vb .cm.ok b{color:#15803d}.q1-vb .cm.warn{background:#fef3c7}.q1-vb .cm.warn b{color:#b45309}.q1-vb .cm.bad{background:#fee2e2}.q1-vb .cm.bad b{color:#dc2626}.q1-vb .cm.wait b{color:#94a3b8;font-size:16px}.rbad .q1-vb i{color:#dc2626}
+.q1-pn{font-size:12px;color:#64748b;margin-top:7px;line-height:1.4}.q1-pn span{font-family:ui-monospace,monospace;font-weight:700;color:#15803d}
+.q1-row.rok{border-color:#86efac}.q1-row.rwarn{border-color:#fcd34d;background:#fffdf5}
 .q1-unreg{font-style:normal;font-size:11px;background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px}
 .q1-menu{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;z-index:50}.q1-menu>div{width:100%;background:#fff;border-radius:20px 20px 0 0;padding:18px 16px 22px;color:#1e293b}.q1-menu .nm{font-size:16px;font-weight:800;margin-bottom:4px}.q1-menu .sub{font-size:12px;color:#94a3b8;margin-bottom:14px}
 .modal.lo-mon-modal{width:min(720px,96vw)}.lo-mon-list{display:flex;flex-direction:column;gap:8px}.lo-mon-row{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.lo-mon-no{width:36px;height:36px;border-radius:50%;background:#1e3a64;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800}.lo-mon-info small{display:block;color:var(--sub);font-size:12px}.lo-mon-badge{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:99999;background:rgba(15,35,64,.92);color:#fff;border-radius:24px;padding:28px 56px;text-align:center;pointer-events:none;font-weight:800}.lo-mon-badge b{display:block;font-size:120px;line-height:1}.lo-mon-badge span{font-size:26px}
@@ -8704,7 +8710,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.87';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.88';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20024,12 +20030,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <div class="q1-verdict ${warn ? 'warn' : allOk ? 'ok' : 'bad'}">${warn ? '⚠ 용량은 모두 맞음 · 확인 필요 항목 있음' : allOk ? '✓ 사양 모두 일치' : '✕ 확인이 필요한 항목이 있습니다'}</div>
           ${t.os || t.st ? `<div class="q1-ord">${t.os ? '<span class="q1-tag">OS 설치</span>' : ''}${t.st ? '<span class="q1-tag">안정화</span>' : ''}</div>` : ''}
           ${ks.map(k => { const x = Q.items[k] || {}, it = x.it || {}, s = Q.cm[k];
-            return `<div class="q1-row ${s === 'ok' ? (Q.w[k] && Q.w[k].st === 'diff' ? 'rwait' : 'rok') : s === 'bad' ? 'rbad' : 'rwait'}"><div class="q1-r1"><b>${Q1_CAT[k]}${it.chg ? `<em class="${/^추가/.test(it.chg) ? 'add' : ''}">${/^추가/.test(it.chg) ? '추가' : '변경'}</em>` : ''}</b><span class="q1-cd">${esc(it.code || '—')}</span><span class="q1-qt">${it.n || 1}개</span></div>
-              <div class="q1-nm">${esc(q1Full(it) || '—')}${x.reg === false ? ' <em class="q1-unreg">미등록 코드</em>' : ''}${x.sheet ? ' <em class="q1-unreg">전체 사진에서 반영</em>' : ''}</div>
-              ${(x.extra || []).map(e => `<div class="q1-nm">+ <b>${esc(e.code || '')}</b> ${esc(q1Full(e))} ×${e.n || 1}</div>`).join('')}
-              <div class="q1-vs"><span>전표 <b>${esc(q1ExpLabel(k, Q.E))}</b></span><span>CMOS <b>${s === 'ok' ? esc(q1ExpLabel(k, Q.E)) : s === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</b></span><strong>${s === 'ok' ? (Q.w[k] && Q.w[k].st === 'diff' ? '⚠' : '✓') : s === 'bad' ? '✕' : '?'}</strong></div>
+            const wd = s === 'ok' && Q.w[k] && Q.w[k].st === 'diff', rs = s === 'bad' ? 'bad' : s !== 'ok' ? 'wait' : wd ? 'warn' : 'ok';
+            return `<div class="q1-row r${rs}"><div class="q1-vh"><b>${Q1_CAT[k]}</b>${it.chg ? `<em class="q1-chg ${/^추가/.test(it.chg) ? 'add' : ''}">${/^추가/.test(it.chg) ? '추가' : '변경'}</em>` : ''}<span class="q1-res ${rs}">${{ ok: '✓ 일치', warn: '⚠ 확인 필요', bad: '✕ 불일치', wait: '? 못 찾음' }[rs]}</span></div>
+              <div class="q1-vb"><div class="sd"><small>전표</small><b>${esc(q1ExpLabel(k, Q.E))}</b></div><i>${rs === 'bad' ? '≠' : rs === 'wait' ? '?' : '='}</i><div class="sd cm ${rs}"><small>CMOS</small><b>${s === 'ok' ? esc(q1ExpLabel(k, Q.E)) : s === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</b></div></div>
               ${s === 'ok' && (k === 'ssd' || k === 'hdd') && Q.E2[k + 'Br'] && Q.E2[k + 'Br'].some(Boolean) ? `<div class="q1-vs2 ${Q.w[k] && Q.w[k].st === 'diff' ? 'wd' : ''}">용량 ✓ 맞음 · ${!Q.w[k] || !Q.w[k].st ? '제조사 표시 없음' : Q.w[k].st === 'ok' ? '제조사 ✓ ' + esc(Q.E2[k + 'Br'].filter(Boolean).join('+')) : '제조사 ⚠ 확인 필요 (전표 ' + esc(Q.E2[k + 'Br'].filter(Boolean).join('+')) + ' · 화면 ' + esc(Q.w[k].seen) + ')'}</div>` : ''}
-              ${s === 'ok' && k === 'mem' && Q.w.mem && Q.w.mem.st ? `<div class="q1-vs2 ${Q.w.mem.st === 'diff' ? 'wd' : ''}">${Q.w.mem.st === 'diff' ? '개수 ⚠ 확인 필요 (전표 ' + (Q.E2.memN || 1) + '개 · 화면 ' + esc(Q.w.mem.seen) + ')' : '개수 ✓ ' + (Q.E2.memN || 1) + '개'}</div>` : ''}</div>`; }).join('')}
+              ${s === 'ok' && k === 'mem' && Q.w.mem && Q.w.mem.st ? `<div class="q1-vs2 ${Q.w.mem.st === 'diff' ? 'wd' : ''}">${Q.w.mem.st === 'diff' ? '개수 ⚠ 확인 필요 (전표 ' + (Q.E2.memN || 1) + '개 · 화면 ' + esc(Q.w.mem.seen) + ')' : '개수 ✓ ' + (Q.E2.memN || 1) + '개'}</div>` : ''}
+              <div class="q1-pn"><span>${esc(it.code || '—')}</span> · ${it.n || 1}개 · ${esc(q1Full(it) || '—')}${x.reg === false ? ' <em class="q1-unreg">미등록 코드</em>' : ''}${x.sheet ? ' <em class="q1-unreg">전체 사진에서 반영</em>' : ''}</div>
+              ${(x.extra || []).map(e => `<div class="q1-pn">+ <span>${esc(e.code || '')}</span> · ${e.n || 1}개 · ${esc(q1Full(e))}</div>`).join('')}</div>`; }).join('')}
           <div class="q1-bar"><div class="q1-acts three">${btn('redoc', '전표 다시')}${btn('recm', 'CMOS 다시')}${btn('confirm', warn ? '확인 후 확정' : allOk ? '확정' : '불일치로 확정', allOk ? 'primary' : 'danger')}</div></div>`;
       }
       $('#main').innerHTML = `<div class="q1 q1-${Q.step}">${steps}${Q.msg ? `<div class="q1-msg">${esc(Q.msg)}</div>` : ''}${body}</div>`;
