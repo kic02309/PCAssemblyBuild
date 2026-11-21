@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity() {
             override fun onOrientationChanged(d: Int) {
                 if (d == ORIENTATION_UNKNOWN) return
                 val r = when (d) { in 45 until 135 -> Surface.ROTATION_270; in 135 until 225 -> Surface.ROTATION_180; in 225 until 315 -> Surface.ROTATION_90; else -> Surface.ROTATION_0 }
-                if (r != rot) { rot = r; analysisUse?.targetRotation = r; capture?.targetRotation = r; runOnUiThread { overlay.setRot(r) } }
+                if (r != rot) { rot = r; analysisUse?.targetRotation = r; capture?.targetRotation = r; runOnUiThread { overlay.setRot(r) }; emit(JSONObject().put("k", "rot").put("r", r)) }   // 웹 화면 글자도 눕힌 방향에 맞춰 돌림
             }
         }
     }
@@ -237,7 +237,7 @@ class MainActivity : AppCompatActivity() {
         paused = false
         camBox.visibility = View.VISIBLE
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)   // 검수 중 화면 꺼짐 방지
-        overlay.setRot(rot); overlay.setKind("", 0f, 1f)
+        overlay.setRot(rot); overlay.setKind("", 0f, 1f); emit(JSONObject().put("k", "rot").put("r", rot))
         root.requestLayout()
 
         if (provider != null && camera != null) { emit(JSONObject().put("k", "state").put("msg", "on")); return }
@@ -493,7 +493,7 @@ class FrameOverlay(ctx: Context) : View(ctx) {
     private var mode = "off"
     private var state = 0
     private var rot = 0
-    private val dim = Paint().apply { color = Color.argb(110, 0, 0, 0) }
+    private val dim = Paint().apply { color = Color.argb(60, 0, 0, 0) }
     private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
     private val txt = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textAlign = Paint.Align.CENTER; isFakeBoldText = true }
     private val bg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(150, 0, 0, 0) }
@@ -522,15 +522,14 @@ class FrameOverlay(ctx: Context) : View(ctx) {
         vw = W; vh = H; fr = RectF(r.left / W, r.top / H, r.right / W, r.bottom / H)
         val hole = Path().apply { fillType = Path.FillType.EVEN_ODD; addRect(0f, 0f, W, H, Path.Direction.CW); addRoundRect(r, 18f, 18f, Path.Direction.CW) }
         c.drawPath(hole, dim)
-        val col = when (state) { 1 -> Color.rgb(250, 204, 21); 2 -> Color.rgb(34, 197, 94); 3 -> Color.rgb(239, 68, 68); else -> Color.WHITE }
-        line.color = col; line.strokeWidth = W * 0.006f
-        c.drawRoundRect(r, 18f, 18f, line)
-        // 모서리 꺾쇠 (굵게)
-        line.strokeWidth = W * 0.014f
-        val k = minOf(fw, fh) * 0.12f
+        val col = when (state) { 1 -> Color.rgb(250, 204, 21); 2 -> Color.rgb(74, 222, 128); 3 -> Color.rgb(239, 68, 68); else -> Color.WHITE }
+        // v1.0.12 : 스캔 틀 = 둥근 모서리 4개만 (B612 · 인스타 느낌)
+        line.color = col; line.strokeWidth = W * 0.011f; line.setShadowLayer(6f, 0f, 1f, Color.argb(90, 0, 0, 0))
+        val k = minOf(fw, fh) * 0.16f; val rr = minOf(k * 0.55f, 36f)
         listOf(Pair(r.left, r.top), Pair(r.right, r.top), Pair(r.left, r.bottom), Pair(r.right, r.bottom)).forEach { (x, y) ->
-            val dx = if (x == r.left) k else -k; val dy = if (y == r.top) k else -k
-            c.drawLine(x, y, x + dx, y, line); c.drawLine(x, y, x, y + dy, line)
+            val sx = if (x == r.left) 1f else -1f; val sy = if (y == r.top) 1f else -1f
+            val pth = Path().apply { moveTo(x, y + sy * k); lineTo(x, y + sy * rr); quadTo(x, y, x + sx * rr, y); lineTo(x + sx * k, y) }
+            c.drawPath(pth, line)
         }
     }
 }
