@@ -390,7 +390,8 @@ class MainActivity : AppCompatActivity() {
         if (cap == null) { emit(JSONObject().put("k", "err").put("msg", "이 기종은 고화질 촬영을 지원하지 않습니다.").put("tag", tag)); return }
         val t0 = SystemClock.elapsedRealtime()
         if (save) {
-            val name = "검수_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.KOREA).format(Date()) + (if (tag.isNotBlank()) "_$tag" else "")
+            // v1.0.14 : 웹이 "종류|파일이름"으로 주면 그 이름 그대로 (예: 29091416-1) · 같은 이름이 있으면 폰이 (1)을 붙임
+            val name = if (tag.contains("|")) tag.substringAfter("|") else "검수_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.KOREA).format(Date()) + (if (tag.isNotBlank()) "_$tag" else "")
             val values = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, name.replace(Regex("[^0-9A-Za-z가-힣_\\-]"), "_"))
                 put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
@@ -484,6 +485,16 @@ class MainActivity : AppCompatActivity() {
             v.vibrate(VibrationEffect.createOneShot(ms.toLong().coerceIn(10, 600), VibrationEffect.DEFAULT_AMPLITUDE))
         } catch (_: Exception) {} }
         /** 외부 브라우저로 열기 (앱 업데이트 받기) */
+        /** v1.0.14 : 카메라 화면은 상태바 · 아래 막대까지 꽉 차게 (투명) */
+        @JavascriptInterface fun immersive(on: Boolean) { runOnUiThread { try {
+            @Suppress("DEPRECATION") window.decorView.systemUiVisibility = if (on) (View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) else 0
+            val c = if (on) Color.TRANSPARENT else Color.rgb(15, 30, 61); window.statusBarColor = c; window.navigationBarColor = c
+        } catch (_: Exception) {} } }
+        /** 상태바 · 아래 막대 높이 (dp) → 웹이 버튼을 그만큼 띄움 */
+        @JavascriptInterface fun insets(): String = try {
+            val d = resources.displayMetrics.density; val w = window.decorView.rootWindowInsets
+            @Suppress("DEPRECATION") JSONObject().put("t", (w?.systemWindowInsetTop ?: 0) / d).put("b", (w?.stableInsetBottom ?: 0) / d).toString()
+        } catch (_: Exception) { "{\"t\":24,\"b\":24}" }
         @JavascriptInterface fun openUrl(url: String) { runOnUiThread { try { if (url.startsWith("https://")) startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (_: Exception) {} } }
     }
 }
