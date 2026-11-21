@@ -522,7 +522,7 @@ class FrameOverlay(ctx: Context) : View(ctx) {
         vw = W; vh = H; fr = RectF(r.left / W, r.top / H, r.right / W, r.bottom / H)
         val hole = Path().apply { fillType = Path.FillType.EVEN_ODD; addRect(0f, 0f, W, H, Path.Direction.CW); addRoundRect(r, 18f, 18f, Path.Direction.CW) }
         c.drawPath(hole, dim)
-        val col = when (state) { 1 -> Color.rgb(250, 204, 21); 2 -> Color.rgb(74, 222, 128); 3 -> Color.rgb(239, 68, 68); else -> Color.WHITE }
+        val col = when (state) { 1 -> Color.rgb(250, 204, 21); 2 -> Color.rgb(90, 155, 248); 3 -> Color.rgb(239, 68, 68); else -> Color.WHITE }
         // v1.0.12 : 스캔 틀 = 둥근 모서리 4개만 (B612 · 인스타 느낌)
         line.color = col; line.strokeWidth = W * 0.011f; line.setShadowLayer(6f, 0f, 1f, Color.argb(90, 0, 0, 0))
         val k = minOf(fw, fh) * 0.16f; val rr = minOf(k * 0.55f, 36f)
