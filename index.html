@@ -328,7 +328,7 @@ body.appcam,body.appcam .content,body.appcam #main{background:#f2f3f7!important;
 body.appcam .q1lg .lhero{min-height:40vh}body.appcam .q1lg .lbr{text-shadow:0 2px 10px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.9)}
 html.q1camon,html.q1camon body,html.q1camon #app,html.q1camon .cz,html.q1camon .czb,html.q1camon .content,html.q1camon #main{background:transparent!important}
 .q1,.q1c,.q1ask,.q1-menu{word-break:keep-all}.q1c{position:fixed;inset:0;display:flex;flex-direction:column;color:#fff;z-index:5;font-size:14px}
-.q1c-top{display:flex;align-items:center;gap:8px;padding:8px 10px 0}.q1c-top #q1tt{display:flex;align-items:center;gap:10px;min-width:0;word-break:keep-all}.q1c-top #q1tt i{flex:none;font-style:normal;width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center}.q1c-top #q1tt span{display:flex;flex-direction:column;min-width:0}.q1c-top #q1tt b{font-size:16px;font-weight:800;line-height:1.2}.q1c-top #q1tt small{font-size:12.5px;font-weight:500;opacity:.9;line-height:1.35;margin-top:1px}.q1c-top #q1tt{flex:1;background:rgba(15,30,61,.82);border-radius:16px;padding:8px 12px;font-size:14px;font-weight:700;line-height:1.3}.q1c-top .me{flex:none;width:32px;height:32px;border-radius:50%;background:rgba(15,30,61,.82);color:#dbe4f5;border:0;font-size:13px;font-weight:700;padding:0}
+.q1c-top{display:flex;align-items:center;gap:8px;padding:8px 10px 0}.q1c-top #q1tt{display:flex;align-items:center;gap:10px;min-width:0;word-break:keep-all}.q1c-top #q1tt i{flex:none;font-style:normal;width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center}.q1c-top #q1tt span{display:flex;flex-direction:column;min-width:0}.q1c-top #q1tt b{font-size:16px;font-weight:800;line-height:1.2}.q1c-top #q1tt small{font-size:12.5px;font-weight:500;opacity:.9;line-height:1.35;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.q1c-top #q1tt{flex:1;background:rgba(15,30,61,.82);border-radius:16px;padding:8px 12px;font-size:14px;font-weight:700;line-height:1.3}.q1c-top .me{flex:none;width:32px;height:32px;border-radius:50%;background:rgba(15,30,61,.82);color:#dbe4f5;border:0;font-size:13px;font-weight:700;padding:0}
 .q1c-mid{flex:1}.q1c-bot{padding:0 10px 14px}
 .q1p{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}.q1p span{font-size:13px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.45);color:#fff;line-height:1.2}.q1p .ok{background:#16a34a;border-color:#16a34a}.q1p .warn{background:#d97706;border-color:#d97706}.q1p .bad{background:#dc2626;border-color:#dc2626}
 .q1p-msg{display:inline-block;background:rgba(146,64,14,.92);border-radius:12px;padding:6px 11px;font-size:12px;margin-bottom:6px;color:#fff}
@@ -8721,7 +8721,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.95';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.96';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19723,7 +19723,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const APPCAM = /PCABCam\//.test(navigator.userAgent) || !!window.PCABCam;
   if (APPCAM) document.documentElement.classList.add('appcamhtml');
   const canQc1 = () => !!(S.me && S.me.role !== '일반' && !S.pv && !S.mpv);
-  const Q1_CAT = { cpu: 'CPU', mem: '메모리', ssd: 'SSD', hdd: 'HDD' };
+  const Q1_CAT = { cpu: 'CPU', mem: '메모리', ssd: '저장장치', hdd: 'HDD' };
   function q1Text(lines, minX) {   // 인식 줄 → 위에서 아래 · 왼쪽에서 오른쪽 순서 글자 (줄마다 한 줄)
     const L = (lines || []).filter(l => l && l[0] && (minX == null || l[1] >= minX)).map(l => ({ t: String(l[0]), x: +l[1], y: (+l[2] + +l[4]) / 2, h: Math.max(1, +l[4] - +l[2]) }));
     L.sort((a, b) => a.y - b.y);
@@ -19919,7 +19919,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function q1Intro(force) {
     try { if (!force && localStorage.getItem('q1intro') === '1') return; localStorage.setItem('q1intro', '1'); } catch (e) { }
-    const P = [['1', '전표 읽기', ['전표에 카메라를 가까이 대세요', '주문번호 · CPU · 메모리 · SSD를 하나씩 비추기', '읽힌 곳에 초록 체크가 붙어요']],
+    const P = [['1', '전표 읽기', ['전표에 카메라를 가까이 대세요', '주문번호 · CPU · 메모리 · 저장장치를 하나씩 비추기', '읽힌 곳에 초록 체크가 붙어요']],
       ['2', '전표 사진', ['넷 다 체크되면', '주문번호가 보이게 한 장 찍기']],
       ['3', 'CMOS 대조', ['CMOS 화면을 틀에 맞추면 자동 비교', '전부 일치하면 자동으로 찍혀요', '다르면 빨간 표시 → 부품 확인']],
       ['4', '본체 · 마감', ['본체를 찍고 [마감]', '초점: 화면 누르기', '확대: 오른쪽 위 1x 버튼 · 두 손가락']]];
@@ -20129,7 +20129,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1Title() {
     const Q = S.q1;
     // [단계 번호, 제목, 안내] — 제목은 짧게 한 줄, 안내는 아래 작은 글씨
-    if (Q.step === 'doc') return Q.ph === 'fit' ? ['1', '전표 사진', '주문번호가 보이게 한 장 찍으세요'] : ['1', '전표 읽기', '주문번호 · CPU · 메모리 · SSD 비추기'];
+    if (Q.step === 'doc') return Q.ph === 'fit' ? ['1', '전표 사진', '주문번호가 보이게 한 장 찍으세요'] : ['1', '전표 읽기', '주문번호 · CPU · 메모리 · 저장장치'];
     if (Q.step === 'cmos') return ['2', 'CMOS 대조', Q.fitHint || (q1AllOk(Q) ? 'CMOS 화면 전체가 틀 안에 들어오게' : 'CMOS 화면을 틀에 맞추세요')];
     if (Q.step === 'free') return ['3', '본체 촬영', '자유롭게 찍고 [마감]을 누르세요'];
     return ['', '', ''];
