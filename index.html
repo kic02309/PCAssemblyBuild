@@ -8711,7 +8711,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.89';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17532,9 +17532,20 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     bar.innerHTML=`<span><b>준비됨</b> ${list.map(p=>esc(loLineName(p.line)+' · '+p.label+' · '+p.request.q+'대')).join('<br>')}</span><button type="button" ${loCanStart()?'':'disabled'}>▶ 작업 시작</button>`;
     bar.querySelector('button').onclick=e=>loStartAll(e.currentTarget);
   }
-  function sndCheck(r){   // 자기 자리에 새 작업(본체)이 도착하면 시작 소리
+  // v31.90 : 안내 음성 (전체 멈춤 / 재개) — 모니터마다 정한 스피커로, 효과(울림) 없이 또렷하게
+  const SND_VOICE={pause:'sounds/lo_pause.mp3',resume:'sounds/lo_resume.mp3'};
+  async function sndVoice(name){
+    const ac=await sndInit();if(!ac||ac.state!=='running'||!SND_VOICE[name])return;
+    SND.buf=SND.buf||{};
+    try{if(!SND.buf[name]){const res=await fetch(SND_VOICE[name]+'?v=1');SND.buf[name]=await ac.decodeAudioData(await res.arrayBuffer());}
+      const src=ac.createBufferSource(),g=ac.createGain();src.buffer=SND.buf[name];g.gain.value=Math.min(1,sndVol()*1.25);src.connect(g).connect(ac.destination);src.start(ac.currentTime+0.05);}catch(e){console.warn('voice',e);}
+  }
+  function sndCheck(r){   // 자기 자리에 새 작업(본체)이 도착하면 시작 소리 · 관리자가 전체 멈춤/재개하면 안내 음성
     const st=r?.stations?.find(x=>x.id===loMonSeat),c=st?.current,k=c&&!c.pausedAt?`${c.batchId}:${c.seq}:${c.stage}`:'';
-    if(LO.sndKey!==undefined&&k&&k!==LO.sndKey)sndPlay(sndLetter(r));
+    const all=r?.allPausedAt?'p':'r';
+    if(LO.sndAll!==undefined&&all!==LO.sndAll)sndVoice(all==='p'?'pause':'resume');
+    LO.sndAll=all;
+    if(LO.sndKey!==undefined&&k&&k!==LO.sndKey&&all!=='p')sndPlay(sndLetter(r));
     LO.sndKey=k;
   }
   async function sndSettings(){
@@ -17547,11 +17558,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ${can?`<label>스피커<select id="sndOut"><option value="">윈도우 기본 스피커</option>${outs.filter(d=>d.deviceId&&d.deviceId!=='default').map(d=>`<option value="${esc(d.deviceId)}" ${d.deviceId===cur?'selected':''}>${esc(d.label||'스피커')}</option>`).join('')}</select></label>`:'<p class="lo-error">이 브라우저는 스피커 선택을 지원하지 않아 기본 스피커로 나옵니다.</p>'}
       ${err?`<p class="lo-error">${esc(err)}</p>`:''}
       <label>음량 (모든 모니터 공통)<input type="range" id="sndVol" min="0" max="100" step="5" value="${Math.round(sndVol()*100)}"></label>
+      <div class="acts" style="justify-content:flex-start"><button data-vp>🔈 '멈춤' 안내 듣기</button><button data-vr>🔈 '재개' 안내 듣기</button></div>
       <div class="acts"><button data-c>닫기</button><button data-t>소리 테스트</button><button class="primary" data-s>저장</button></div>`,(bg,close)=>{
       $('[data-c]',bg).onclick=close;
       const apply=async()=>{const id=$('#sndOut',bg)?.value||'';try{localStorage.setItem('loMonSink'+sndMonN(),id);localStorage.setItem('loSndVol',String(+$('#sndVol',bg).value/100));}catch(e){}
         const ac=await sndInit();if(ac?.setSinkId){try{await ac.setSinkId(id);}catch(e){toast('스피커를 바꾸지 못했습니다: '+e.message,true);}}};
       $('[data-t]',bg).onclick=async()=>{await apply();sndPlay(sndLetter(r));};
+      $('[data-vp]',bg).onclick=async()=>{await apply();sndVoice('pause');};$('[data-vr]',bg).onclick=async()=>{await apply();sndVoice('resume');};
       $('[data-s]',bg).onclick=async()=>{await apply();close();toast('소리 설정을 저장했습니다 (이 모니터)');};
     });
   }
