@@ -188,7 +188,7 @@ class MainActivity : AppCompatActivity() {
         web.webViewClient = WebViewClient()
         web.webChromeClient = WebChromeClient()
         web.addJavascriptInterface(Bridge(), "PCABCam")
-        if (savedInstanceState == null) web.loadUrl(START_URL) else web.restoreState(savedInstanceState)
+        if (savedInstanceState == null) web.loadUrl(START_URL + "&t=" + System.currentTimeMillis())   // 켤 때마다 최신 화면 (웹 수정이 바로 반영되게) else web.restoreState(savedInstanceState)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
