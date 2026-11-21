@@ -334,6 +334,15 @@ html.q1camon,html.q1camon body,html.q1camon #app,html.q1camon .cz,html.q1camon .
 .q1p-msg{display:inline-block;background:rgba(146,64,14,.92);border-radius:12px;padding:6px 11px;font-size:12px;margin-bottom:6px;color:#fff}
 .q1c-acts{display:grid;grid-template-columns:1fr 1.5fr;gap:8px}.q1c-acts button{padding:12px 10px;font-size:15px;font-weight:800;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:rgba(0,0,0,.45);color:#fff}.q1c-acts button.primary{background:#2563eb;border-color:#2563eb}
 .q1-vs2{margin-top:6px;font-size:12px;color:#15803d;background:#f0fdf4;border-radius:8px;padding:5px 9px}.q1-vs2.wd{color:#92400e;background:#fef3c7}.q1-verdict.warn{background:#d97706}
+.q1c #q1ar{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.q1m{position:absolute;border:2.5px solid #22c55e;border-radius:8px;transition:left .22s ease,top .22s ease,width .22s ease,height .22s ease;opacity:0;transform:scale(.85)}.q1m.in{opacity:1;transform:scale(1);transition:left .22s ease,top .22s ease,width .22s ease,height .22s ease,opacity .18s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.q1m i{position:absolute;right:-13px;top:50%;margin-top:-13px;width:26px;height:26px;border-radius:50%;background:#16a34a;color:#fff;font-style:normal;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
+.q1m b{position:absolute;left:0;bottom:calc(100% + 6px);white-space:nowrap;background:#16a34a;color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
+.q1m.r b{left:auto;right:0}.q1m.warn{border-color:#f59e0b}.q1m.warn i,.q1m.warn b{background:#d97706}.q1m.bad{border-color:#ef4444}.q1m.bad i,.q1m.bad b{background:#dc2626}.q1m.bad.in{animation:q1shake .35s}
+@keyframes q1shake{0%,100%{translate:0}25%{translate:-4px}75%{translate:4px}}
+.q1cheer{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;animation:q1cheer 1s ease forwards}.q1cheer i{width:84px;height:84px;border-radius:50%;background:#16a34a;color:#fff;font-style:normal;font-size:48px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(255,255,255,.9)}.q1cheer b{background:rgba(15,30,61,.85);padding:6px 14px;border-radius:999px;font-size:15px}.q1cheer.bad i{background:#dc2626}
+@keyframes q1cheer{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+.q1flash{position:absolute;inset:0;background:#fff;pointer-events:none;animation:q1flash .25s ease forwards}@keyframes q1flash{0%{opacity:.75}100%{opacity:0}}
 .q1-flow{display:flex;flex-direction:column;gap:8px;margin:4px 0 14px}.q1-flow div{display:grid;grid-template-columns:30px 1fr;column-gap:10px;background:#fff;border:1px solid #e4e7ee;border-radius:12px;padding:11px 14px}.q1-flow i{grid-row:span 2;font-style:normal;width:26px;height:26px;border-radius:50%;background:#0f1e3d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;align-self:center}.q1-flow b{font-size:15px;color:#0f1e3d}.q1-flow span{font-size:12px;color:#64748b}
 .q1-acts button.big{padding:18px 10px;font-size:18px}.q1-acts.three{grid-template-columns:1fr 1fr 1.4fr}
 .q1-verdict{border-radius:12px;padding:12px 14px;font-weight:800;font-size:16px;margin-bottom:10px;color:#fff}.q1-verdict.ok{background:#16a34a}.q1-verdict.bad{background:#dc2626}
@@ -8695,7 +8704,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v31.84';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v31.85';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19765,6 +19774,57 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1Short = (s, n) => { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
   const q1DocDone = Q => !!(Q.order && Q.items.cpu && Q.items.mem && Q.items.ssd);
 
+  // ── v31.85 : AR 표시 (카메라에 비친 글자 위에 체크) · 효과음 · 완료 효과 — 깔끔하게, 처음 잡힐 때만 톡 ──
+  let Q1AC = null;
+  function q1Snd(kind) {   // 짧고 경쾌한 소리 (휴대폰 안에서 바로 만듦)
+    try {
+      Q1AC = Q1AC || new (window.AudioContext || window.webkitAudioContext)(); if (Q1AC.state === 'suspended') Q1AC.resume();
+      const now = Q1AC.currentTime, N = { pop: [[880, 0, .07], [1320, .06, .09]], bad: [[330, 0, .12], [262, .13, .16]], done: [[784, 0, .09], [988, .08, .09], [1319, .16, .16]], shot: [[1800, 0, .03], [1200, .03, .04]] }[kind] || [];
+      N.forEach(([f, t0, d]) => { const o = Q1AC.createOscillator(), g = Q1AC.createGain(); o.type = kind === 'bad' ? 'triangle' : 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, now + t0); g.gain.exponentialRampToValueAtTime(kind === 'shot' ? 0.12 : 0.22, now + t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + d);
+        o.connect(g); g.connect(Q1AC.destination); o.start(now + t0); o.stop(now + t0 + d + 0.02); });
+    } catch (e) { q1Call('beep', kind === 'bad' ? 'bad' : 'ok'); }
+  }
+  function q1Cheer(txt, bad) {   // 화면 가운데 큰 체크 한 번 (0.9초)
+    const host = $('.q1c'); if (!host) return;
+    const el = document.createElement('div'); el.className = 'q1cheer' + (bad ? ' bad' : ''); el.innerHTML = `<i>${bad ? '!' : '✓'}</i><b>${esc(txt)}</b>`;
+    host.appendChild(el); setTimeout(() => el.remove(), 1000);
+  }
+  function q1Flash() { const host = $('.q1c'); if (!host) return; const el = document.createElement('div'); el.className = 'q1flash'; host.appendChild(el); setTimeout(() => el.remove(), 260); q1Snd('shot'); }
+  const q1Dig = s => String(s || '').replace(/\s+/g, '').toUpperCase();
+  function q1Ar(o) {
+    const Q = S.q1, layer = $('#q1ar'); if (!layer) return;
+    const M = [], L = o.lines || [], SL = o.sl || [], SC = o.sc || [];
+    const box = (i, arr) => arr[i] && arr[i].length === 4 ? arr[i] : null;
+    const add = (id, b, kind, label) => { if (b) M.push({ id, b, kind, label }); };
+    const findLine = test => { for (let i = 0; i < L.length; i++) if (test(String(L[i][0] || ''))) { const b = box(i, SL); if (b) return b; } return null; };
+    if (Q.step === 'doc') {
+      if (Q.order) { let b = null; (o.codes || []).forEach((c, i) => { if (!b && String(c[0] || '').replace(/\D/g, '') === Q.order) b = box(i, SC); }); add('order', b || findLine(s => q1Dig(s).includes(Q.order)), 'ok', null); }
+      Q1K.forEach(k => { const x = Q.items[k]; if (!x || !x.it.code) return; const nw = Q.arNew && Q.arNew[k] && Date.now() - Q.arNew[k] < 1800;
+        add('d' + k, findLine(s => q1Dig(s).includes(x.it.code)), x.reg ? 'ok' : 'warn', nw ? Q1_CAT[k] + ' ' + q1Short(q1Full(x.it), 18) : (x.reg ? null : '미등록 코드')); });
+    } else if (Q.step === 'cmos' && Q.E) {
+      Object.keys(Q.E).forEach(k => { const s = Q.cm[k], w = Q.w[k]; if (!s) return;
+        const exp = q1ExpLabel(k, Q.E), bad = s === 'bad', seen = bad ? q1Dig(Q.bad[k].seen) : '';
+        let b = null;
+        if (k === 'cpu') b = bad ? findLine(s2 => seen && q1Dig(s2).includes(seen)) : findLine(s2 => q1Dig(s2).includes(q1Dig(Q.E.cpu).replace(/[A-Z]+$/, '')));
+        else if (k === 'mem') b = findLine(s2 => /mem|ram|ddr|dimm/i.test(s2) && /\d\s*(GB|MB)/i.test(s2)) || findLine(s2 => /\d{4,6}\s*MB/i.test(s2));
+        else { const want = bad ? String(Q.bad[k].seen).split('+') : Q.E[k]; b = findLine(s2 => { const c = c1CapOf(s2); return c && want.includes(c.cap) && (k === 'hdd') === !!(c.hdd || /HDD/i.test(s2)); }); }
+        add('c' + k, b, bad ? 'bad' : w && w.st === 'diff' ? 'warn' : 'ok', bad ? '전표는 ' + exp : w && w.st === 'diff' ? (k === 'mem' ? '개수 확인' : '제조사 확인') : null); });
+    }
+    const now = Date.now(); Q.arSeen = Q.arSeen || {};
+    M.forEach(m => {
+      Q.arSeen[m.id] = now;
+      let el = layer.querySelector('[data-m="' + m.id + '"]');
+      if (!el) { el = document.createElement('div'); el.dataset.m = m.id; el.innerHTML = '<s></s><i></i><b></b>'; layer.appendChild(el); requestAnimationFrame(() => el.classList.add('in')); }
+      el.className = 'q1m ' + m.kind + (m.b[0] > 0.45 ? ' r' : '') + (el.classList.contains('in') ? ' in' : '');
+      const [x0, y0, x1, y1] = m.b, pad = 0.006;
+      el.style.left = ((x0 - pad) * 100) + '%'; el.style.top = ((y0 - pad) * 100) + '%'; el.style.width = ((x1 - x0 + pad * 2) * 100) + '%'; el.style.height = ((y1 - y0 + pad * 2) * 100) + '%';
+      el.querySelector('i').textContent = m.kind === 'bad' ? '✕' : m.kind === 'warn' ? '!' : '✓';
+      const lb = el.querySelector('b'); lb.textContent = m.label || ''; lb.style.display = m.label ? '' : 'none';
+    });
+    layer.querySelectorAll('.q1m').forEach(el => { if (now - (Q.arSeen[el.dataset.m] || 0) > 700) el.remove(); });
+  }
+
   window.__appBack = () => {
     if (S.view !== 'qc1' || !S.q1) return 'exit';
     const Q = S.q1;
@@ -19781,20 +19841,20 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1DocRead(o) {
     const Q = S.q1, r = q1ParseDoc(o);
     let bc = ''; for (const c of (o.codes || [])) { const v = String(c[0] || '').replace(/\D/g, ''); if (/^\d{8,9}$/.test(v)) { bc = v; break; } }
-    if (bc) { if (!Q.order) { Q.order = bc; q1Call('beep', 'ok'); } else if (bc !== Q.order) Q.msg = '다른 주문번호(' + bc + ')가 보입니다 · 같은 전표인지 확인하세요'; else if (/^다른 주문번호/.test(Q.msg || '')) Q.msg = ''; }
-    else if (r.order && !Q.order) { if (Q.ordC && Q.ordC.v === r.order) { Q.order = r.order; Q.ordC = null; q1Call('beep', 'ok'); } else Q.ordC = { v: r.order }; }
+    if (bc) { if (!Q.order) { Q.order = bc; q1Snd('pop'); } else if (bc !== Q.order) Q.msg = '다른 주문번호(' + bc + ')가 보입니다 · 같은 전표인지 확인하세요'; else if (/^다른 주문번호/.test(Q.msg || '')) Q.msg = ''; }
+    else if (r.order && !Q.order) { if (Q.ordC && Q.ordC.v === r.order) { Q.order = r.order; Q.ordC = null; q1Snd('pop'); } else Q.ordC = { v: r.order }; }
     Q1K.forEach(k => {
       const it = r.P && r.P[k]; if (!it || !(it.code || it.name)) return;
       const key = (it.code || it.name) + 'x' + (it.n || 1) + (it.chg ? '*' : '');
       const c = Q.cand[k]; Q.cand[k] = c && c.key === key ? { key, n: c.n + 1 } : { key, n: 1 };
       if (Q.cand[k].n < 2) return;
       const cur = Q.items[k], reg = q1Reg(it);
-      if (!cur) { Q.items[k] = { it, reg }; q1Call('beep', 'ok'); return; }
+      if (!cur) { Q.items[k] = { it, reg }; (Q.arNew = Q.arNew || {})[k] = Date.now(); q1Snd('pop'); return; }
       if (cur.it.code && cur.it.code === it.code) { if ((it.n || 1) > (cur.it.n || 1)) cur.it = Object.assign({}, cur.it, { n: it.n }); if (it.chg && !cur.it.chg) cur.it = Object.assign({}, cur.it, { chg: it.chg }); return; }
-      if ((reg && !cur.reg) || (it.chg && /^변경/.test(it.chg) && !(cur.it.chg && /^변경/.test(cur.it.chg)))) { Q.items[k] = { it, reg }; q1Call('beep', 'ok'); }
+      if ((reg && !cur.reg) || (it.chg && /^변경/.test(it.chg) && !(cur.it.chg && /^변경/.test(cur.it.chg)))) { Q.items[k] = { it, reg }; (Q.arNew = Q.arNew || {})[k] = Date.now(); q1Snd('pop'); }
     });
     if (r.P && r.P.tags) Q.tags = { os: !!(r.P.tags.os || (Q.tags && Q.tags.os)), st: !!(r.P.tags.st || (Q.tags && Q.tags.st)) };
-    if (q1DocDone(Q) && !Q.toFit) { Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read') { Q.ph = 'fit'; Q.fitC = null; renderQc1(); } }, 700); }
+    if (q1DocDone(Q) && !Q.toFit) { q1Snd('done'); q1Cheer('전표 읽기 완료'); Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read') { Q.ph = 'fit'; Q.fitC = null; renderQc1(); } }, 700); }
   }
   // 전표 : 틀 맞춰 찍기 — 틀 안에 주문번호 + 읽은 코드 2개 이상이 두 번 연속 보이면 전체가 들어온 것으로 보고 자동 촬영
   function q1DocFit(o) {
@@ -19805,7 +19865,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Q.fitC = ok ? (Q.fitC || 0) + 1 : 0;
     q1Frame(ok ? 2 : (ordOk || hits) ? 1 : 0);
     Q.fitHint = ok ? '그대로 들고 계세요…' : !ordOk ? '주문번호(바코드)가 틀 안에 보이게' : '전표 전체가 틀 안에 들어오게';
-    if (Q.fitC >= 2 && !Q.busyShot) { Q.busyShot = true; q1Call('pause', true); q1Call('beep', 'ok'); q1Call('shot', true, '전표_' + Q.order); }
+    if (Q.fitC >= 2 && !Q.busyShot) { Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, '전표_' + Q.order); }
   }
   // CMOS : 읽은 값 반영 (일치 = 바로 고정, 불일치 = 같은 값 두 번 연속일 때)
   function q1CmApply(R) {
@@ -19814,14 +19874,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const v = R[k]; if (!v) return;
       if (v.w) { const w = Q.w[k]; if (v.w.st === 'ok') Q.w[k] = { st: 'ok' }; else if (!w || w.st !== 'ok') { const c = w && w.seen === v.w.seen ? (w.c || 1) + 1 : 1; Q.w[k] = { st: c >= 2 ? 'diff' : (w && w.st) || '', seen: v.w.seen, c }; } }
       if (Q.cm[k] === 'ok') return;
-      if (v.st === 'ok') { Q.cm[k] = 'ok'; delete Q.bad[k]; q1Call('beep', 'ok'); return; }
-      if (v.st === 'bad') { const b = Q.bad[k]; Q.bad[k] = b && b.seen === v.seen ? { seen: v.seen, n: b.n + 1 } : { seen: v.seen, n: (b && b.n >= 2 && Q.cm[k] === 'bad') ? b.n : 1 }; if (Q.bad[k].n >= 2 && Q.cm[k] !== 'bad') { Q.cm[k] = 'bad'; q1Call('beep', 'bad'); } }
+      if (v.st === 'ok') { Q.cm[k] = 'ok'; delete Q.bad[k]; q1Snd('pop'); return; }
+      if (v.st === 'bad') { const b = Q.bad[k]; Q.bad[k] = b && b.seen === v.seen ? { seen: v.seen, n: b.n + 1 } : { seen: v.seen, n: (b && b.n >= 2 && Q.cm[k] === 'bad') ? b.n : 1 }; if (Q.bad[k].n >= 2 && Q.cm[k] !== 'bad') { Q.cm[k] = 'bad'; q1Snd('bad'); } }
     });
   }
   const q1CmDecided = Q => Object.keys(Q.E).every(k => Q.cm[k] === 'ok' || Q.cm[k] === 'bad');
   function q1CmRead(o) {
     const Q = S.q1; q1CmApply(c1Match(q1Text(o.lines), Q.E, Q.E2));
-    if (q1CmDecided(Q) && !Q.toFit) { Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'cmos' && Q.ph === 'read') { Q.ph = 'fit'; Q.fitC = null; renderQc1(); } }, 700); }
+    if (q1CmDecided(Q) && !Q.toFit) { const okA = Object.keys(Q.E).every(k => Q.cm[k] === 'ok'); q1Snd(okA ? 'done' : 'bad'); q1Cheer(okA ? '사양 일치' : '불일치 항목 있음', !okA); Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'cmos' && Q.ph === 'read') { Q.ph = 'fit'; Q.fitC = null; renderQc1(); } }, 700); }
   }
   // CMOS : 틀 맞춰 찍기 — 아직 사진에 안 담긴 항목이 틀 안에 보이면(2개 이상, 남은 게 1개면 1개) 두 번 연속일 때 자동 촬영 · 남으면 다음 화면 한 장 더
   function q1CmFit(o) {
@@ -19833,7 +19893,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Q.fitC = ok && Q.fitC && Q.fitC.sig === sig ? { sig, n: Q.fitC.n + 1 } : ok ? { sig, n: 1 } : null;
     q1Frame(ok ? (vis.some(k => Q.cm[k] === 'bad') ? 3 : 2) : vis.length ? 1 : 0);
     Q.fitHint = ok ? '그대로 들고 계세요…' : need.length ? 'CMOS 화면 전체가 틀 안에 들어오게' : '';
-    if (Q.fitC && Q.fitC.n >= 2 && !Q.busyShot) { Q.busyShot = true; Q.shotCov = vis.slice(); q1Call('pause', true); q1Call('shot', true, 'CMOS_' + Q.order + (Q.cshots ? '_' + (Q.cshots + 1) : '')); }
+    if (Q.fitC && Q.fitC.n >= 2 && !Q.busyShot) { Q.busyShot = true; Q.shotCov = vis.slice(); q1Call('pause', true); q1Flash(); q1Call('shot', true, 'CMOS_' + Q.order + (Q.cshots ? '_' + (Q.cshots + 1) : '')); }
   }
 
   window.__cam = o => {
@@ -19846,6 +19906,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (Q.step === 'doc') (Q.ph === 'fit' ? q1DocFit : q1DocRead)(o);
       else if (Q.step === 'cmos') (Q.ph === 'fit' ? q1CmFit : q1CmRead)(o);
       else return;
+      if (o.sl) q1Ar(o);
       q1Paint(); return;
     }
     if (o.k !== 'shot') return;
@@ -19943,7 +20004,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const acts = Q.step === 'doc' ? (Q.ph === 'read' ? btn('docreset', '다시 읽기') + btn('docnext', '사진 찍기로', q1DocDone(Q) ? 'primary' : '') : btn('docback', '다시 읽기') + btn('docshot', '수동 촬영', 'primary'))
         : Q.step === 'cmos' ? (Q.ph === 'read' ? btn('cmreset', '다시 읽기') + btn('cmnext', '사진 찍기로', q1CmDecided(Q) ? 'primary' : '') : btn('cmshot', '수동 촬영') + btn('tocmp', Q.cshots ? '비교 보기' : '찍지 않고 비교', 'primary'))
         : btn('freeshot', '촬영', 'primary') + btn('close', '마감');
-      $('#main').innerHTML = `<div class="q1c"><div class="q1c-top"><span id="q1tt">${esc(q1Title())}</span><button type="button" class="me" data-q1="menu">${esc((S.me.name || '?').slice(-2, -1) || S.me.name[0])}</button></div><div class="q1c-mid" id="q1mid"></div><div class="q1c-bot"><div id="q1hud">${q1Hud()}</div><div class="q1c-acts">${acts}</div></div></div>`;
+      $('#main').innerHTML = `<div class="q1c"><div class="q1c-top"><span id="q1tt">${esc(q1Title())}</span><button type="button" class="me" data-q1="menu">${esc((S.me.name || '?').slice(-2, -1) || S.me.name[0])}</button></div><div id="q1ar"></div><div class="q1c-mid" id="q1mid"></div><div class="q1c-bot"><div id="q1hud">${q1Hud()}</div><div class="q1c-acts">${acts}</div></div></div>`;
       const mode = Q.step === 'free' ? 'free' : Q.step === 'cmos' ? 'cmos' : 'doc';
       if (Q.camMode !== mode) { Q.camMode = mode; q1Cam(true, mode); } else q1Call('pause', false);
       requestAnimationFrame(() => { Q.bandSig = ''; q1Band(); if (Q.step === 'doc' || Q.step === 'cmos') q1Frame(0); });
@@ -19977,19 +20038,19 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       ev.stopPropagation();
       const a = b.dataset.q1; Q.msg = '';
       if (a === 'menu') { const m = document.createElement('div'); m.className = 'q1-menu'; m.innerHTML = `<div><div class="nm">${esc(S.me.name)}</div><div class="sub">조립 검수 · ${esc(APP_VER)}${q1Call('version') ? ' · 앱 ' + esc(q1Call('version')) : ''}</div><div class="q1-acts"><button type="button" data-m="x">닫기</button><button type="button" class="danger" data-m="out">로그아웃</button></div></div>`; document.body.appendChild(m); m.onclick = e2 => { const k = e2.target.dataset && e2.target.dataset.m; if (e2.target === m || k === 'x') m.remove(); if (k === 'out') { m.remove(); q1Cam(false); Q.camMode = null; logout(); } }; return; }
-      if (a === 'go') { Q.step = 'doc'; Q.ph = 'read'; return renderQc1(); }
+      if (a === 'go') { q1Snd('pop'); Q.step = 'doc'; Q.ph = 'read'; return renderQc1(); }
       if (a === 'docback') { Q.ph = 'read'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmreset') { Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; return renderQc1(); }
       if (a === 'docreset') { Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; return renderQc1(); }
       if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · SSD를 먼저 읽어 주세요'; return q1Paint(); } Q.ph = 'fit'; Q.fitC = null; return renderQc1(); }
-      if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Call('shot', true, '전표_' + (Q.order || '수동')); return; }
+      if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, '전표_' + (Q.order || '수동')); return; }
       if (a === 'cmnext') { Q.ph = 'fit'; Q.fitC = null; return renderQc1(); }
-      if (a === 'cmshot') { if (Q.busyShot) return; Q.busyShot = true; Q.shotCov = Object.keys(Q.E).filter(k => Q.cm[k]); q1Call('pause', true); q1Call('shot', true, 'CMOS_' + Q.order + (Q.cshots ? '_' + (Q.cshots + 1) : '')); return; }
+      if (a === 'cmshot') { if (Q.busyShot) return; Q.busyShot = true; Q.shotCov = Object.keys(Q.E).filter(k => Q.cm[k]); q1Call('pause', true); q1Flash(); q1Call('shot', true, 'CMOS_' + Q.order + (Q.cshots ? '_' + (Q.cshots + 1) : '')); return; }
       if (a === 'tocmp') { Q.step = 'cmp'; return renderQc1(); }
       if (a === 'redoc') { Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; return renderQc1(); }
       if (a === 'recm') { Q.step = 'cmos'; Q.ph = 'read'; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; return renderQc1(); }
       if (a === 'confirm') return q1Finish();
-      if (a === 'freeshot') { q1Call('shot', true, '본체_' + Q.order); return; }
+      if (a === 'freeshot') { q1Flash(); q1Call('shot', true, '본체_' + Q.order); return; }
       if (a === 'close') return q1Close();
     });
   }
