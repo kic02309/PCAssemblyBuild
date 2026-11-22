@@ -343,7 +343,7 @@ html.q1camon,html.q1camon body,html.q1camon #app,html.q1camon .cz,html.q1camon .
 .q1c .q1m:not(.warn):not(.bad){border-color:#5a9bf8}.q1c .q1m:not(.warn):not(.bad) i,.q1c .q1m:not(.warn):not(.bad) b{background:#3d86f2}.q1c .q1cheer:not(.bad):not(.info) i{background:#5a9bf8}.q1c .q1p .cg{background:#fff;border-color:#fff;color:#c2410c;text-shadow:none}.q1c .q1p .tg{background:#fff;border-color:#fff;color:#6d28d9;text-shadow:none}.q1c .q1p .vd{background:#fff;border-color:#fff;color:#0369a1;text-shadow:none}.q1c .q1p .warn{background:#f59e0b;border-color:#f59e0b;color:#fff;text-shadow:none}.q1c .q1p .bad{background:#ef4444;border-color:#ef4444;color:#fff;text-shadow:none}
 .q1gauge{--p:0%;position:relative;height:6px;margin:0 22px 12px;border-radius:6px;background:rgba(15,23,42,.4);overflow:hidden}.q1gauge>i{position:absolute;left:0;top:0;bottom:0;width:var(--p);border-radius:6px;background:linear-gradient(90deg,#8ab8fb,#5a9bf8);transition:width .35s ease}.q1gauge::after{content:'';position:absolute;top:0;bottom:0;width:40%;left:-40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);animation:q1scan 1.4s linear infinite}.q1gauge.full::after{display:none}.q1gauge.full>i{background:#5a9bf8;box-shadow:0 0 10px rgba(90,155,248,.9)}.q1gauge.off{visibility:hidden}@keyframes q1scan{0%{left:-40%}100%{left:100%}}
 .q1zm{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(126px + var(--sab,0px));z-index:6;min-width:38px;height:28px;padding:0 10px;border-radius:999px;border:0;background:rgba(0,0,0,.42);color:#fff;font-size:12px;font-weight:800}
-.q1shB{height:340px}.q1c .q1p-msg{display:inline-block;background:#fff;color:#b45309;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.q1shB{height:340px}.q1c .q1big{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#0f1e3d;border-radius:16px;padding:10px 18px;font-size:17px;font-weight:800;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.25)}.q1c .q1big.go{background:#5a9bf8;color:#fff;animation:q1pulse 1.1s ease-in-out infinite}.q1c .q1big .dt{display:inline-flex;gap:3px}.q1c .q1big .dt i{width:6px;height:6px;border-radius:50%;background:#5a9bf8;animation:q1dot 1s infinite}.q1c .q1big .dt i:nth-child(2){animation-delay:.15s}.q1c .q1big .dt i:nth-child(3){animation-delay:.3s}.q1c .q1p .wt{animation:q1blink 1.2s ease-in-out infinite}@keyframes q1dot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}@keyframes q1blink{0%,100%{opacity:1}50%{opacity:.35}}@keyframes q1pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}.q1sh.ready{animation:q1pulse 1.1s ease-in-out infinite}.q1prac .pr .cd{display:block;font-style:normal;font-size:11.5px;color:#64748b;font-weight:600;margin-top:1px}.q1c .q1p-msg{display:inline-block;background:#fff;color:#b45309;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 .q1bar{position:absolute;left:0;right:0;bottom:calc(26px + var(--sab,0px));display:flex;align-items:center;justify-content:center;gap:44px;z-index:6}
 .q1sm{width:54px;height:54px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.94);color:#111827;font-size:12px;font-weight:800;line-height:1.15;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}.q1sm.q1gap{background:none;box-shadow:none}.q1sm.bad{background:#ef4444;color:#fff}.q1sm.fin{background:#2563eb;color:#fff}.q1sm.hid{visibility:hidden}.q1th b{font-size:15px}
 .q1sh{--p:0%;width:86px;height:86px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.5);display:grid;place-items:center;transition:transform .12s}.q1sh i{width:68px;height:68px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 3px rgba(0,0,0,.06)}.q1sh.ready{background:#fff;box-shadow:0 0 0 3px #5a9bf8}.q1sh:active{transform:scale(.92)}
@@ -8748,7 +8748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.07';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.08';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20061,7 +20061,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     rows.push(['tag', 'OS · 안정화', [T.os ? 'OS 설치' : '', T.st ? '안정화' : ''].filter(Boolean).join(' · ') || '없음']);
     rows.push(['etc', '기타', '위에 없는 문제']);
     const host = $('#q1lay') || $('.q1c') || document.body, el = document.createElement('div'); el.className = 'q1ask q1prac';
-    el.innerHTML = `<div><b class="t">연습 결과 <small>${sec}초 · 틀린 줄을 누르세요</small></b>${rows.map(([k, l, v]) => `<button type="button" class="pr" data-k="${k}"><em>${l}</em><span>${esc(v)}</span></button>`).join('')}<div class="q1ask-b"><button type="button" class="danger" data-n>틀림 저장</button><button type="button" class="primary" data-y>맞음 ✓</button></div></div>`;
+    el.innerHTML = `<div><b class="t">연습 결과 <small>${sec}초 · 틀린 줄을 누르세요</small></b>${rows.map(([k, l, v]) => { const x = Q1K.includes(k) && Q.items[k], cd = x ? [x.it.code].concat((x.extra || x.it.extraO || []).map(z => z.code)).filter(Boolean).join(' · ') : ''; return `<button type="button" class="pr" data-k="${k}"><em>${l}</em><span>${esc(v)}${cd ? `<i class="cd">코드 ${esc(cd)}</i>` : ''}</span></button>`; }).join('')}<div class="q1ask-b"><button type="button" class="danger" data-n>틀림 저장</button><button type="button" class="primary" data-y>맞음 ✓</button></div></div>`;
     host.appendChild(el); const bad = new Set();
     el.querySelectorAll('.pr').forEach(b => b.onclick = () => { const k = b.dataset.k; bad.has(k) ? bad.delete(k) : bad.add(k); b.classList.toggle('on', bad.has(k)); q1Snd('pop'); });
     const send = ok => {
@@ -20289,9 +20289,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.msg) h += `<div class="q1p-msg">${esc(Q.msg)}</div>`;
     h += '<div class="q1p">';
     if (Q.step === 'doc') {
+      if (Q.ph === 'read' && !Q.chgAsk) { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; h = `<div class="q1big"><span class="dt"><i></i><i></i><i></i></span>전표 읽는 중 ${n}/4</div>` + h; }
+      else if (Q.ph === 'fit' && !Q.practice && !Q.chgAsk) h = '<div class="q1big go">📸 주문번호 보이게 한 장 찍으세요</div>' + h;
       const pp = k => Q.arNew && Q.arNew[k] && Date.now() - Q.arNew[k] < 700 ? ' pop' : '';
-      h += pill(Q.order ? 'ok' + pp('order') : '', Q.order ? '주문 ✓ ' + esc(Q.order) : '주문번호');
-      Q1K.forEach(k => { const x = Q.items[k]; if (!x && k === 'hdd') return; const ml = k === 'mem' && x ? q1MemLab(x.it) : ''; h += pill(x ? (x.reg ? 'ok' : 'warn') + pp(k) : '', Q1_CAT[k] + (ml ? ' ' + ml : '') + (x ? (x.reg ? ' ✓' : ' 미등록') : '')); const c = x && q1ChgLab(k, x.it); if (c) h += pill('cg', c); });
+      h += pill(Q.order ? 'ok' + pp('order') : 'wt', Q.order ? '주문 ✓ ' + esc(Q.order) : '주문번호');
+      Q1K.forEach(k => { const x = Q.items[k]; if (!x && k === 'hdd') return; const ml = k === 'mem' && x ? q1MemLab(x.it) : ''; h += pill(x ? (x.reg ? 'ok' : 'warn') + pp(k) : 'wt', Q1_CAT[k] + (ml ? ' ' + ml : '') + (x ? (x.reg ? ' ✓' : ' 미등록') : '')); const c = x && q1ChgLab(k, x.it); if (c) h += pill('cg', c); });
       Object.keys(Q.gone || {}).forEach(k => { h += pill('cg', (Q1_CAT[k] || k) + ' 빠짐'); });
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'cmos' && Q.E) {
