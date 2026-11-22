@@ -8748,7 +8748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.19';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.20';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19774,7 +19774,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1Order(o, txt) {
     for (const c of (o.codes || [])) { const v = String(c[0] || '').replace(/\D/g, ''); if (/^\d{8,9}$/.test(v)) return v; }
     const t = String(txt || '');   // v32.18 : 2로 시작 8자리 = 인터넷 · 1로 시작 9자리 = 매장 · 오픈마켓 주문번호 · '문빈호' 같은 깨진 글자도
-    const m = t.match(/(?:주문|문)\s*[번빈변반]\s*호\D{0,8}(\d{8,9})(?!\d)/) || t.match(/(?<![\d-])(2\d{7})(?![\d-])/) || t.match(/(?<![\d-])(1\d{8})(?![\d-])/);   // 1로 시작 9자리 = 매장 · 오픈마켓 주문
+    const m = t.match(/(?:주문|문)\s*[번빈변반]\s*호\D{0,8}(\d{8,9})(?!\d)/) || t.match(/(?<![\d-])(2\d{7})(?![\d-])/) || t.split('\n').slice(0, 4).join('\n').match(/(?<![\d-])(1\d{8})(?![\d-])/);   // 위 4줄 안에서만 (아래 품목 줄 숫자 오인 방지)   // 1로 시작 9자리 = 매장 · 오픈마켓 주문
     return m ? m[1] : '';
   }
   const Q1_MARK = /\[\s*1\d{6}\s*\]|\bZ\s?-\s?\d{1,3}\b/;   // v32.02 : 전표 변경 흔적 (음영 줄)
