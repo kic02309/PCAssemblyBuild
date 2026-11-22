@@ -8748,7 +8748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.39';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.40';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20180,7 +20180,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.practice) ['cpu', 'mem', 'ssd'].forEach(k => { ck = k; if (!Q.items[k] && !(Q.nob && Q.nob[k])) G.base.push(row(Q1_CAT[k], null, '못 읽음', '', 'old unk')); });
     Object.keys(Q.nob || {}).forEach(k => { ck = k; if (Q.nob[k] && !Q.items[k]) G.base.push(row(Q1_CAT[k], null, k === 'mem' ? '미구매 · 테스트 메모리로 CMOS 확인 (대조 안 함)' : '미구매 · 고객 부품 (대조 안 함)', '-', 'tg')); });
     
-    if (T.os) G.tag.push(row('OS 설치', null, '윈도우 설치 · 정품 인증 확인', '', 'tg')); if (T.st) G.tag.push(row('안정화', null, '안정화 테스트 진행', '', 'tg'));
+    if (T.os) G.tag.push(row('OS 설치', null, '윈도우 설치건', '', 'tg')); if (T.st) G.tag.push(row('안정화', null, '안정화 테스트 진행', '', 'tg'));
     const mx = Q.items.mem, memN = mx ? [mx.it].concat(mx.extra || mx.it.extraO || []).reduce((a, o) => a + Math.max(1, o.n || 1), 0) : 0;
     if (mx && (memN > 1 || q1Chg(mx.it))) sum.unshift('메모리 <u>' + memN + '개</u>' + (q1MemLab(mx.it) ? ' · ' + q1MemLab(mx.it) : ''));
     Object.keys(Q.nob || {}).forEach(k => { if (Q.nob[k] && !Q.items[k]) sum.push(Q1_CAT[k] + ' <u>미구매</u>'); });
