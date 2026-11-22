@@ -8748,7 +8748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.09';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.10';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20054,7 +20054,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (r.mark) Q.markN = (Q.markN || 0) + 1;
     q1Notices(Q);
     if (!q1DocDone(Q) && Q.t0 && !Q.slowLogged && Date.now() - Q.t0 > 40000) { Q.slowLogged = 1; q1Log('slow-doc', '40초 넘게 못 읽음: ' + ['order', 'cpu', 'mem', 'ssd'].filter(k => k === 'order' ? !Q.order : !Q.items[k]).join(',')); }
-    if (q1DocDone(Q) && !Q.toFit && !Q.chgAsk) { Q.tDoc = Q.tDoc || Date.now(); q1Snd('done'); q1Cheer('전표 읽기 완료'); Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read') q1GoFit(Q); }, 700); }
+    // v32.10 : 4개 다 읽어도 바로 넘어가지 않음 — 새 코드가 안 보인 지 2.5초 지나야 다음 (아래 변경 줄까지 비출 시간) · 셔터 누르면 바로
+    { const sc = Q.seenC = Q.seenC || new Set(); let nw = 0; (r.txt.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { if (!sc.has(c)) { sc.add(c); nw = 1; } }); if (nw) Q.lastNew = Date.now(); }
+    if (q1DocDone(Q) && !Q.tDone) { Q.tDone = Date.now(); q1Snd('done'); }
+    if (q1DocDone(Q) && !Q.toFit && !Q.chgAsk && Date.now() - Math.max(Q.tDone, Q.lastNew || 0) >= 2500) { Q.tDoc = Q.tDoc || Date.now(); q1Cheer('전표 읽기 완료'); Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read') q1GoFit(Q); }, 700); }
   }
   // v32.04 : 전표 읽기 연습 모드 (관리자 본인만) — 결과 카드 → 맞음 / 틀림(항목 선택) → 글자만 서버 저장 · 틀림이면 사진은 폰에만
   function q1PracCard(Q) {
@@ -20078,7 +20081,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       el.remove(); Q.pracDone = (Q.pracDone || 0) + 1; Q.pracOk = (Q.pracOk || 0) + (ok ? 1 : 0);
       if (photo) { Q.busyShot = true; Q.pracShot = 1; q1Flash(); q1Call('shot', true, photo); }
       else q1Call('pause', false);
-      Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.noted = {}; Q.toFit = null; Q.t0 = Date.now(); Q.ph = 'read';
+      Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.t0 = Date.now(); Q.ph = 'read';
       Q.msg = ok ? '' : '틀림 저장 · 사진은 폰에만 (' + photo + ')'; q1Snd(ok ? 'pop' : 'done'); renderQc1();
     };
     el.querySelector('[data-y]').onclick = () => send(true); el.querySelector('[data-n]').onclick = () => send(false);
@@ -20106,7 +20109,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     q1Call('pause', false);
     if (S.q1 !== Q) return;
     if (yes) { Q.chgOk = unread ? 'unread' : 'ok'; q1Log(unread ? 'chg-unread' : 'chg-ok', rows.length + '줄'); q1Snd('pop'); return go(); }
-    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.noted = {}; Q.toFit = null; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
+    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
   }
   // 전표 : 틀 맞춰 찍기 — 틀 안에 주문번호 + 읽은 코드 2개 이상이 두 번 연속 보이면 전체가 들어온 것으로 보고 자동 촬영
   function q1DocFit(o) {
@@ -20294,7 +20297,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.msg) h += `<div class="q1p-msg">${esc(Q.msg)}</div>`;
     h += '<div class="q1p">';
     if (Q.step === 'doc') {
-      if (Q.ph === 'read' && !Q.chgAsk) { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; h = `<div class="q1big"><span class="dt"><i></i><i></i><i></i></span>전표 읽는 중 ${n}/4</div>` + h; }
+      if (Q.ph === 'read' && !Q.chgAsk && Q.tDone) h = '<div class="q1big"><span class="dt"><i></i><i></i><i></i></span>아래 끝까지 비춰 주세요 · 다 봤으면 셔터</div>' + h;
+      else if (Q.ph === 'read' && !Q.chgAsk) { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; h = `<div class="q1big"><span class="dt"><i></i><i></i><i></i></span>전표 읽는 중 ${n}/4</div>` + h; }
       else if (Q.ph === 'fit' && !Q.practice && !Q.chgAsk) h = '<div class="q1big go">📸 주문번호 보이게 한 장 찍으세요</div>' + h;
       const pp = k => Q.arNew && Q.arNew[k] && Date.now() - Q.arNew[k] < 700 ? ' pop' : '';
       h += pill(Q.order ? 'ok' + pp('order') : 'wt', Q.order ? '주문 ✓ ' + esc(Q.order) : '주문번호');
@@ -20420,7 +20424,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'resume') { const SV = q1Saved(); if (!SV) return renderQc1(); q1Snd('pop'); Q1SAVE.forEach(k => { if (SV[k] !== undefined) Q[k] = SV[k]; }); Q.items = Q.items || {}; Q.cm = Q.cm || {}; Q.bad = Q.bad || {}; Q.w = Q.w || {}; Q.cov = Q.cov || {}; Q.E2 = Q.E2 || {}; Q.msg = '이어서 합니다 · 주문 ' + Q.order; return renderQc1(); }
       if (a === 'docback') { Q.ph = 'read'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmreset') { Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; Q.cheered = 0; Q.fitC = 0; return renderQc1(); }
-      if (a === 'docreset') { q1Unsave(); Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
+      if (a === 'docreset') { q1Unsave(); Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
       if (a === 'docnext' && Q.practice) { if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1PracCard(Q); }
       if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1GoFit(Q); }
       if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
@@ -20430,7 +20434,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const yes = await q1Ask(`<b class="t">불일치로 진행할까요?</b>${ks.map(k => `<p>${Q1_CAT[k]} — 전표 ${esc(q1ExpLabel(k, Q.E))} · 화면 ${Q.cm[k] === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</p>`).join('')}<small>진행하면 불일치로 기록되고 <b>검수자와 담당 매니저</b>에게 확인 알림이 갑니다.</small>`, '불일치로 진행', true);
         Q.asking = false; if (!yes) { q1Call('pause', false); return; } return q1CmShoot(true); }
       if (a === 'tocmp') { Q.step = 'cmp'; return renderQc1(); }
-      if (a === 'redoc') { q1Unsave(); Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
+      if (a === 'redoc') { q1Unsave(); Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
       if (a === 'recm') { Q.step = 'cmos'; Q.ph = 'read'; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; return renderQc1(); }
       if (a === 'confirm') return q1Finish();
       if (a === 'freeshot') { q1Flash(); q1Call('shot', true, q1Tag('본체', Q)); return; }
