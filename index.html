@@ -8748,7 +8748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.11';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.12';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20056,9 +20056,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     q1Notices(Q);
     if (!q1DocDone(Q) && Q.t0 && !Q.slowLogged && Date.now() - Q.t0 > 40000) { Q.slowLogged = 1; q1Log('slow-doc', '40초 넘게 못 읽음: ' + ['order', 'cpu', 'mem', 'ssd'].filter(k => k === 'order' ? !Q.order : !Q.items[k]).join(',')); }
     // v32.10 : 4개 다 읽어도 바로 넘어가지 않음 — 새 코드가 안 보인 지 2.5초 지나야 다음 (아래 변경 줄까지 비출 시간) · 셔터 누르면 바로
-    { const sc = Q.seenC = Q.seenC || new Set(); let nw = 0; (r.txt.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { if (!sc.has(c)) { sc.add(c); nw = 1; } }); if (nw) Q.lastNew = Date.now(); }
+    { const sc = Q.seenC = Q.seenC || new Set(); let nw = 0; (r.txt.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { const g = QCP && (QCP.get(c) || (c.length === 6 && qcp6(c))); if (g && !sc.has(g.c)) { sc.add(g.c); nw = 1; } }); if (nw) Q.lastNew = Date.now(); }   // v32.12 : 등록 부품 코드만 (깨진 숫자는 무시)
     if (q1DocDone(Q) && !Q.tDone) { Q.tDone = Date.now(); q1Snd('done'); }
-    if (q1DocDone(Q) && !Q.toFit && !Q.chgAsk && Date.now() - Math.max(Q.tDone, Q.lastNew || 0) >= 2500) { Q.tDoc = Q.tDoc || Date.now(); q1Cheer('전표 읽기 완료'); Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read') q1GoFit(Q); }, 700); }
+    if (q1DocDone(Q) && !Q.toFit && !Q.chgAsk && q1HoldLeft(Q) <= 0) { Q.tDoc = Q.tDoc || Date.now(); q1Cheer('전표 읽기 완료'); Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read') q1GoFit(Q); }, 700); }
   }
   // v32.04 : 전표 읽기 연습 모드 (관리자 본인만) — 결과 카드 → 맞음 / 틀림(항목 선택) → 글자만 서버 저장 · 틀림이면 사진은 폰에만
   function q1PracCard(Q) {
@@ -20099,6 +20099,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   // v32.11 : 오른쪽 위 모델 구역 '★ D-4(기본)' — 괄호(기본)가 있으면 변경 없음 · 괄호 없이 '★ D-1'만이면 변경 · OS · 안정화 중 하나는 꼭 있음
   // 폰은 (기본)을 '(기 본)' '( 号)' '(7号)' '(71号)'처럼 읽음 → 구역 뒤 괄호만 보고 판단
+  // 다 읽은 뒤 기다림 : 새 부품 코드가 2초 안 보이면 · 길어도 5초면 넘어감
+  const q1HoldLeft = Q => !Q.tDone ? 9 : Math.min(2000 - (Date.now() - Math.max(Q.tDone, Q.lastNew || 0)), 5000 - (Date.now() - Q.tDone)) / 1000;
   function q1BaseOf(txt) {
     const L = String(txt || '').split('\n');
     for (const ln of L) { const m = ln.match(/(?:★|\*|☆)\s*([A-W])\s?[-~—]\s?(\d{1,3})(.*)$/) || ln.match(/^\s*()([A-W])\s?[-~—]\s?\d{1,3}(\s*(?:[(（].*)?)$/); if (!m) continue;
@@ -20307,7 +20309,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.msg) h += `<div class="q1p-msg">${esc(Q.msg)}</div>`;
     h += '<div class="q1p">';
     if (Q.step === 'doc') {
-      if (Q.ph === 'read' && !Q.chgAsk && Q.tDone) h = '<div class="q1big"><span class="dt"><i></i><i></i><i></i></span>아래 끝까지 비춰 주세요 · 다 봤으면 셔터</div>' + h;
+      if (Q.ph === 'read' && !Q.chgAsk && Q.tDone) h = `<div class="q1big go">${Math.max(1, Math.ceil(q1HoldLeft(Q)))}초 후 자동 진행 · 바로 하려면 셔터</div>` + h;
       else if (Q.ph === 'read' && !Q.chgAsk) { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; h = `<div class="q1big"><span class="dt"><i></i><i></i><i></i></span>전표 읽는 중 ${n}/4</div>` + h; }
       else if (Q.ph === 'fit' && !Q.practice && !Q.chgAsk) h = '<div class="q1big go">📸 주문번호 보이게 한 장 찍으세요</div>' + h;
       const pp = k => Q.arNew && Q.arNew[k] && Date.now() - Q.arNew[k] < 700 ? ' pop' : '';
