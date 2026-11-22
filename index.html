@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.55';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20510,7 +20510,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (Q.set) h += pill('vd', '본체 ' + esc(qsetShort(Q.set)));
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'cmos' && Q.E) {
-      { const rd = Object.keys(Q.cmNew || {}).some(k => Date.now() - Q.cmNew[k] < 1500); h = `<div class="q1cf${rd ? ' on' : ''}"><i>CMOS 화면</i><b>모니터 화면이 틀을 가득 채우게 · 똑바로 · 반사 없이</b></div>` + h; }   // v32.55 : CMOS 촬영 틀 (화면 전체를 틀 안에)
+      { const rd = Object.keys(Q.cmNew || {}).some(k => Date.now() - Q.cmNew[k] < 1500); h = `<div class="q1cf${rd ? ' on' : ''}"><i>CMOS 화면</i><b>모니터 화면이 틀을 가득 채우게 · 글자가 보이는 각도로</b></div>` + h; }   // v32.55 : CMOS 촬영 틀 (화면 전체를 틀 안에)
       if (Q.vendor) h += pill('vd', esc(Q.vendor));
       Object.keys(Q.E).forEach(k => { const s = Q.cm[k], w = Q.w[k], cam = Q.cov[k] ? ' 📷' : '';
         const cg = Q.items[k] && q1Chg(Q.items[k].it) ? ' (' + q1Chg(Q.items[k].it) + ')' : '';
