@@ -8748,7 +8748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.10';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.11';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20052,6 +20052,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (r.P && r.P.tags) Q.tags = { os: !!(r.P.tags.os || (Q.tags && Q.tags.os)), st: !!(r.P.tags.st || (Q.tags && Q.tags.st)) };
     // v32.03 : HDD는 빠지는 주문이 없음 (추가만) → 통째로 빠짐 표시는 쓰지 않음 (오인식으로 막히는 것 방지)
     if (r.mark) Q.markN = (Q.markN || 0) + 1;
+    { const b = q1BaseOf(r.txt); if (b) { const K = Q.bk = Q.bk || { b: 0, n: 0 }; K[b]++; } }
     q1Notices(Q);
     if (!q1DocDone(Q) && Q.t0 && !Q.slowLogged && Date.now() - Q.t0 > 40000) { Q.slowLogged = 1; q1Log('slow-doc', '40초 넘게 못 읽음: ' + ['order', 'cpu', 'mem', 'ssd'].filter(k => k === 'order' ? !Q.order : !Q.items[k]).join(',')); }
     // v32.10 : 4개 다 읽어도 바로 넘어가지 않음 — 새 코드가 안 보인 지 2.5초 지나야 다음 (아래 변경 줄까지 비출 시간) · 셔터 누르면 바로
@@ -20075,13 +20076,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const send = ok => {
       if (!ok && !bad.size) { q1Snd('bad'); const t = el.querySelector('.t small'); if (t) t.textContent = '틀린 줄을 먼저 누르세요'; return; }
       const photo = ok ? '' : '연습_' + (Q.order || 'x') + '_' + new Date().toTimeString().slice(0, 8).replace(/:/g, '');
-      const got = { order: Q.order || '', tags: T, items: Object.fromEntries(Q1K.filter(k => Q.items[k]).map(k => { const it = Q.items[k].it; return [k, { code: it.code || '', name: q1Full(it), cap: it.cap || '', n: it.n || 1, chg: it.chg || '', reg: !!Q.items[k].reg, extra: (Q.items[k].extra || []).map(z => q1Full(z)) }]; })) };
+      const got = { order: Q.order || '', tags: T, base: q1Base(Q), bk: Q.bk || null, items: Object.fromEntries(Q1K.filter(k => Q.items[k]).map(k => { const it = Q.items[k].it; return [k, { code: it.code || '', name: q1Full(it), cap: it.cap || '', n: it.n || 1, chg: it.chg || '', reg: !!Q.items[k].reg, extra: (Q.items[k].extra || []).map(z => q1Full(z)) }]; })) };
       const lines = ((Q.lastO && Q.lastO.lines) || []).map(l => [String(l[0] || ''), ...l.slice(1, 5).map(v => Math.round(+v || 0))]);
       api('qc', { op: 'prac1', ok, wrong: [...bad].join(','), got, txt: Q.lastTxt || '', lines, sec, photo, appVer: q1Call('version') || '' }).then(r => { Q.pracN = r && r.n; }).catch(e => { Q.msg = '연습 기록 저장 실패 · ' + (e.message || e); });
       el.remove(); Q.pracDone = (Q.pracDone || 0) + 1; Q.pracOk = (Q.pracOk || 0) + (ok ? 1 : 0);
       if (photo) { Q.busyShot = true; Q.pracShot = 1; q1Flash(); q1Call('shot', true, photo); }
       else q1Call('pause', false);
-      Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.t0 = Date.now(); Q.ph = 'read';
+      Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.t0 = Date.now(); Q.ph = 'read';
       Q.msg = ok ? '' : '틀림 저장 · 사진은 폰에만 (' + photo + ')'; q1Snd(ok ? 'pop' : 'done'); renderQc1();
     };
     el.querySelector('[data-y]').onclick = () => send(true); el.querySelector('[data-n]').onclick = () => send(false);
@@ -20096,20 +20097,29 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Object.keys(Q.gone || {}).forEach(k => rows.push(`<div class="cr"><em>${Q1_CAT[k] || k}</em><s>${esc(String(Q.gone[k]).slice(0, 40))}</s> → <b>빠짐</b></div>`));
     return rows;
   }
+  // v32.11 : 오른쪽 위 모델 구역 '★ D-4(기본)' — 괄호(기본)가 있으면 변경 없음 · 괄호 없이 '★ D-1'만이면 변경 · OS · 안정화 중 하나는 꼭 있음
+  // 폰은 (기본)을 '(기 본)' '( 号)' '(7号)' '(71号)'처럼 읽음 → 구역 뒤 괄호만 보고 판단
+  function q1BaseOf(txt) {
+    const L = String(txt || '').split('\n');
+    for (const ln of L) { const m = ln.match(/(?:★|\*|☆)\s*([A-W])\s?[-~—]\s?(\d{1,3})(.*)$/) || ln.match(/^\s*()([A-W])\s?[-~—]\s?\d{1,3}(\s*(?:[(（].*)?)$/); if (!m) continue;
+      const rest = m[3].trim(); if (/^[(（]/.test(rest)) return 'b'; if (!rest) return 'n'; }
+    return '';
+  }
+  const q1Base = Q => { const K = Q.bk || {}; return K.b >= 2 && K.b > K.n ? 'b' : K.n >= 3 && !K.b ? 'n' : ''; };
   async function q1GoFit(Q) {
     const go = () => { Q.chgAsk = 0; Q.ph = 'fit'; Q.fitC = null; renderQc1(); };
     if (Q.practice) return q1PracCard(Q);
     if (Q.chgOk) return go();
-    const rows = q1ChgRows(Q), unread = !rows.length && (Q.markN || 0) >= 2;
+    const base = q1Base(Q), T = Q.tags || {}, rows = q1ChgRows(Q), unread = !rows.length && base !== 'b' && ((Q.markN || 0) >= 2 || (base === 'n' && !T.os && !T.st));
     if (!rows.length && !unread) return go();
     Q.chgAsk = 1; q1Call('pause', true); q1Snd(unread ? 'bad' : 'done');
     const yes = unread
-      ? await q1Ask(`<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">전표에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div><small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 전표가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
+      ? await q1Ask(base === 'n' ? `<b class="t">기본 모델이 아닌 전표입니다</b><div class="cr">모델 옆에 (기본)이 없어 사양 변경 · OS · 안정화 중 하나가 있어야 하는데 찾지 못했습니다.</div>` : `<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">전표에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div>`) + `<small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 전표가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
       : await q1Ask(`<b class="t">사양 변경 확인</b>${rows.join('')}<small>전표의 음영 줄과 같은지 확인하세요. CMOS는 바뀐 값으로 대조합니다.</small>`, '전표와 같음 ✓', false, '다시 읽기');
     q1Call('pause', false);
     if (S.q1 !== Q) return;
     if (yes) { Q.chgOk = unread ? 'unread' : 'ok'; q1Log(unread ? 'chg-unread' : 'chg-ok', rows.length + '줄'); q1Snd('pop'); return go(); }
-    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
+    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
   }
   // 전표 : 틀 맞춰 찍기 — 틀 안에 주문번호 + 읽은 코드 2개 이상이 두 번 연속 보이면 전체가 들어온 것으로 보고 자동 촬영
   function q1DocFit(o) {
@@ -20424,7 +20434,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'resume') { const SV = q1Saved(); if (!SV) return renderQc1(); q1Snd('pop'); Q1SAVE.forEach(k => { if (SV[k] !== undefined) Q[k] = SV[k]; }); Q.items = Q.items || {}; Q.cm = Q.cm || {}; Q.bad = Q.bad || {}; Q.w = Q.w || {}; Q.cov = Q.cov || {}; Q.E2 = Q.E2 || {}; Q.msg = '이어서 합니다 · 주문 ' + Q.order; return renderQc1(); }
       if (a === 'docback') { Q.ph = 'read'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmreset') { Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; Q.cheered = 0; Q.fitC = 0; return renderQc1(); }
-      if (a === 'docreset') { q1Unsave(); Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
+      if (a === 'docreset') { q1Unsave(); Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
       if (a === 'docnext' && Q.practice) { if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1PracCard(Q); }
       if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1GoFit(Q); }
       if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
@@ -20434,7 +20444,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const yes = await q1Ask(`<b class="t">불일치로 진행할까요?</b>${ks.map(k => `<p>${Q1_CAT[k]} — 전표 ${esc(q1ExpLabel(k, Q.E))} · 화면 ${Q.cm[k] === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</p>`).join('')}<small>진행하면 불일치로 기록되고 <b>검수자와 담당 매니저</b>에게 확인 알림이 갑니다.</small>`, '불일치로 진행', true);
         Q.asking = false; if (!yes) { q1Call('pause', false); return; } return q1CmShoot(true); }
       if (a === 'tocmp') { Q.step = 'cmp'; return renderQc1(); }
-      if (a === 'redoc') { q1Unsave(); Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
+      if (a === 'redoc') { q1Unsave(); Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
       if (a === 'recm') { Q.step = 'cmos'; Q.ph = 'read'; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; return renderQc1(); }
       if (a === 'confirm') return q1Finish();
       if (a === 'freeshot') { q1Flash(); q1Call('shot', true, q1Tag('본체', Q)); return; }
