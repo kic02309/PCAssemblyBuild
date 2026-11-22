@@ -20114,7 +20114,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!rows.length && !unread) return go();
     Q.chgAsk = 1; q1Call('pause', true); q1Snd(unread ? 'bad' : 'done');
     const yes = unread
-      ? await q1Ask(base === 'n' ? `<b class="t">기본 모델이 아닌 전표입니다</b><div class="cr">모델 옆에 (기본)이 없어 사양 변경 · OS · 안정화 중 하나가 있어야 하는데 찾지 못했습니다.</div>` : `<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">전표에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div>`) + `<small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 전표가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
+      ? await q1Ask((base === 'n' ? `<b class="t">기본 모델이 아닌 전표입니다</b><div class="cr">모델 옆에 (기본)이 없어 사양 변경 · OS · 안정화 중 하나가 있어야 하는데 찾지 못했습니다.</div>` : `<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">전표에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div>`) + `<small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 전표가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
       : await q1Ask(`<b class="t">사양 변경 확인</b>${rows.join('')}<small>전표의 음영 줄과 같은지 확인하세요. CMOS는 바뀐 값으로 대조합니다.</small>`, '전표와 같음 ✓', false, '다시 읽기');
     q1Call('pause', false);
     if (S.q1 !== Q) return;
