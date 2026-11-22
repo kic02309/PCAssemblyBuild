@@ -8748,7 +8748,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.45';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20170,12 +20170,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const G = { base: [], add: [], chg: [], hdd: [], tag: [] }, sum = [];
     Q1K.forEach(k => { ck = k; const x = Q.items[k]; if (!x) return; const nm = k === 'cpu' ? (it => q1CpuHi(nm0(it))) : nm0; const it = x.it, c = q1Chg(it), ch = String(it.chg || ''), n = Math.max(1, it.n || 1), C = Q1_CAT[k];
       const ex = (x.extra || it.extraO || []).filter(e => e && e.code !== it.code), tgt = k === 'hdd' ? G.hdd : null;
-      if (k === 'hdd') { (tgt).push(row('HDD 추가', it, nm(it), '+' + n + '개', 'add')); ex.forEach(e => tgt.push(row('HDD 추가', e, nm(e), '+' + Math.max(1, e.n || 1) + '개', 'add'))); { const L = [it].concat(ex), hn = L.reduce((a, o) => a + Math.max(1, o.n || 1), 0), cs = L.map(o => cap(o)).filter(Boolean); sum.push('HDD ' + (hn > 1 ? '<u>' + hn + '개</u>' + (cs.length ? ' (' + cs.join('+') + ')' : '') : '<u>' + (cs[0] || '1개') + '</u>')); } return; }
-      if (c === '변경') { const old = (ch.match(/빠짐\s+(.+)$/) || [])[1]; G.chg.push(row(C + ' 변경', it, nm(it), n + '개', 'new', '기본 ' + C + ' 빼고 이걸로 장착'));   // v32.38 : 빠지는 부품 줄은 안 보임 (취소선 줄은 잘 못 읽음)
+      if (k === 'hdd') { (tgt).push(row('HDD 추가', it, nm(it), '+' + n + '개', 'add', 'HDD 사양변경 (추가)')); ex.forEach(e => tgt.push(row('HDD 추가', e, nm(e), '+' + Math.max(1, e.n || 1) + '개', 'add'))); { const L = [it].concat(ex), hn = L.reduce((a, o) => a + Math.max(1, o.n || 1), 0), cs = L.map(o => cap(o)).filter(Boolean); sum.push('HDD ' + (hn > 1 ? '<u>' + hn + '개</u>' + (cs.length ? ' (' + cs.join('+') + ')' : '') : '<u>' + (cs[0] || '1개') + '</u>')); } return; }
+      if (c === '변경') { const old = (ch.match(/빠짐\s+(.+)$/) || [])[1]; G.chg.push(row(C + ' 변경', it, nm(it), n + '개', 'new', C + ' 사양변경 (교체)'));   // v32.38 : 빠지는 부품 줄은 안 보임 (취소선 줄은 잘 못 읽음)
         const oc = old ? cap({ cap: old }) : ''; sum.push(Q1_CAT[k] + ' ' + (oc && cap(it) ? oc + ' → <u>' + cap(it) + '</u>' : '<u>' + (cap(it) || '변경') + '</u>')); }
       else if (c === '추가') { const nw = /새 부품/.test(ch), a = +((ch.match(/\+\s*(\d+)/) || [])[1] || 1);
-        if (!nw && n - a > 0) G.base.push(row(C, it, nm(it), '기본 ' + (n - a) + '개')); G.add.push(row(C + ' 추가', it, nm(it), '+' + (nw ? n : a) + '개', 'add')); }
-      else if (c === '빠짐') { G.chg.push(row(C + ' 변경', it, nm(it), n + '개', 'new', '기본 ' + (n + 1) + '개 → ' + n + '개로 줄임')); }
+        if (!nw && n - a > 0) G.base.push(row(C, it, nm(it), '기본 ' + (n - a) + '개')); G.add.push(row(C + ' 추가', it, nm(it), '+' + (nw ? n : a) + '개', 'add', C + ' 사양변경 (추가)')); }
+      else if (c === '빠짐') { G.chg.push(row(C + ' 변경', it, nm(it), n + '개', 'new', C + ' 사양변경 (감소 ' + (n + 1) + '개 → ' + n + '개)')); }
       else G.base.push(row(C, it, nm(it), n + '개'));
       if (c !== '추가') ex.forEach(e => G.base.push(row(C, e, nm(e), Math.max(1, e.n || 1) + '개')));
       else ex.forEach(e => G.add.push(row(C + ' 추가', e, nm(e), '+' + Math.max(1, e.n || 1) + '개', 'add'))); });
