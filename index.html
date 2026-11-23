@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.69';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.70';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17689,6 +17689,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if(!w)return;LO_MON.wins[n]=w;
       let blank=true;try{blank=!w.location.href||w.location.href==='about:blank';}catch(e){blank=false;}
       if(blank){loMonOpenOne({availLeft:rc[0],availTop:rc[1],availWidth:rc[2],availHeight:rc[3]},seat,+n);opened++;}
+    });
+    // v32.70 : 자리가 없는 모니터(작업 안 함)도 '전체 열기'에서 같이 엶 — 이 PC(주 모니터)는 제외
+    let sw={};try{sw=JSON.parse(localStorage.getItem('loMonSw')||'{}')||{};}catch(e){}
+    Object.entries(rects).forEach(([n,rc])=>{
+      if(map[n]||!rc)return;
+      const cx=(window.screenX||0)+(window.outerWidth||0)/2,cy=(window.screenY||0)+(window.outerHeight||0)/2;
+      if(cx>=rc[0]&&cx<rc[0]+rc[2]&&cy>=rc[1]&&cy<rc[1]+rc[3])return;
+      const old=LO_MON.wins[n];if(old&&!old.closed)return;
+      if(loMonIdle({availLeft:rc[0],availTop:rc[1],availWidth:rc[2],availHeight:rc[3]},+n,sw[n]))opened++;
     });
     return opened;
   }
