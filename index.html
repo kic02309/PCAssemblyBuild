@@ -8850,7 +8850,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.89';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20435,7 +20435,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (k === 'cpu') b = bad ? findLine(s2 => seen && q1Dig(s2).includes(seen)) : findLine(s2 => q1Dig(s2).includes(q1Dig(Q.E.cpu).replace(/[A-Z]+$/, '')));
         else if (k === 'mem') b = findLine(s2 => /mem|ram|ddr|dimm/i.test(s2) && /\d\s*(GB|MB)/i.test(s2)) || findLine(s2 => /\d{4,6}\s*MB/i.test(s2));
         else { if (k === 'hddX' && !bad) return; const want = bad ? String(Q.bad[k].seen).replace(/\s*있음$/, '').split('+') : [].concat(Q.E[k] || []), hk = k === 'hdd' || k === 'hddX'; b = findLine(s2 => { const c = c1CapOf(s2); return c && want.includes(c.cap) && hk === !!(c.hdd || /HDD/i.test(s2)); }); }
-        if (b) b = b.slice(); add('c' + k, b, bad ? 'bad' : w && w.st === 'diff' ? 'warn' : 'ok', bad ? (k === 'hddX' ? 'HDD 빼야 함' : '전표는 ' + exp) : w && w.st === 'diff' ? (k === 'mem' ? '개수 확인' : '제조사 확인') : null); });
+        if (b) b = b.slice(); add('c' + k, b, bad ? 'bad' : w && w.st === 'diff' ? 'warn' : 'ok', bad ? (k === 'hddX' ? 'HDD 빼야 함' : '주문서 사양 (' + exp + ')') : w && w.st === 'diff' ? (k === 'mem' ? '개수 확인' : '제조사 확인') : null); });
     }
     if (Q.step === 'doc') {   // v32.50 : 네비 AR — 읽은 줄 밑에 빛나는 선 + 줄 왼쪽 위에 떠 있는 표지판 (줄 따라 움직임)
       const capOf = it => { const m = String(it.cap || q1Full(it) || '').match(/(\d+(?:\.\d+)?\s*(?:TB|GB))/i); return m ? m[1].replace(/\s/g, '').toUpperCase() : ''; };
