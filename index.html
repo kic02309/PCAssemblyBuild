@@ -384,6 +384,12 @@ html[data-rot="1"] .q1tt,html[data-rot="3"] .q1tt{padding-right:0}html[data-rot=
 .q1sh.ready{animation:q1rdy .7s ease-in-out infinite}@keyframes q1rdy{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(63,212,136,.8)}50%{transform:scale(1.1);box-shadow:0 0 0 14px rgba(63,212,136,0)}}
 html[data-rot="1"] .q1cl,html[data-rot="3"] .q1cl{grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}html[data-rot="1"] .q1cr,html[data-rot="3"] .q1cr{padding:4px 8px;gap:6px}html[data-rot="1"] .q1cr-v,html[data-rot="3"] .q1cr-v{font-size:13px}
 .q1of-g{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:7.5vw;font-weight:800;letter-spacing:.04em;color:rgba(255,255,255,.3);white-space:nowrap;font-variant-numeric:tabular-nums}html[data-rot="1"] .q1of-g,html[data-rot="3"] .q1of-g{font-size:7.5vh}.q1of.on .q1of-g{color:rgba(90,155,248,.55)}
+.q1m.ul{border:0!important;background:none!important;box-shadow:none!important;--c:#3b82f6;animation:none!important}
+.q1m.ul.c-cpu{--c:#3b82f6}.q1m.ul.c-mem{--c:#10b981}.q1m.ul.c-ssd{--c:#ec4899}.q1m.ul.c-hdd{--c:#f59e0b}
+.q1m.ul:after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:4px;border-radius:3px;background:var(--c);box-shadow:0 0 8px var(--c)}
+.q1m.ul.bad{--c:#ef4444}.q1m.ul.warn{--c:#f5b400}
+.q1m.ul i,.q1m.ul s{display:none}
+.q1m.ul b{position:absolute;left:0;top:100%;bottom:auto;margin-top:3px;font-size:11px;font-weight:800;color:#fff!important;background:var(--c)!important;border-radius:4px;padding:1px 6px;white-space:nowrap}
 .q1cl{display:flex!important;flex-wrap:wrap;gap:4px!important}.q1cr{padding:2px 7px!important;gap:5px!important;border-radius:8px!important;flex:0 1 auto;max-width:100%}.q1cr-s{font-size:10px!important;padding:1px 5px!important}.q1cr-v{font-size:12px!important}.q1cr-k{width:14px!important;font-size:14px!important}.q1cr em{font-size:11px!important}
 .q1mm{position:relative;z-index:5;margin:0 auto 6px;max-width:92%;background:rgba(160,30,30,.88);color:#fff;border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:3px;font-size:15px;pointer-events:auto}.q1mm b{font-size:16px}.q1mm div{display:flex;gap:8px;margin-top:4px}.q1mm button{flex:1;border:0;border-radius:9px;padding:8px;font-size:14px;font-weight:800;background:#fff;color:#a01e1e}.q1mm button.nx{background:rgba(255,255,255,.2);color:#fff}
 .q1rr{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.q1rr small{flex-basis:100%;color:#667;font-size:12px}.q1rr button{border:1px solid #c9d4e3;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700}
@@ -8844,7 +8850,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.87';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.88';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20416,7 +20422,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const Q = S.q1, layer = $('#q1ar'); if (!layer) return;
     const M = [], L = o.lines || [], SL = o.sl || [], SC = o.sc || [];
     const box = (i, arr) => arr[i] && arr[i].length === 4 ? arr[i] : null;
-    const add = (id, b, kind, label) => { if (b) M.push({ id, b, kind, label }); };
+    const add = (id, b, kind, label) => { if (b) M.push({ id, b, kind, label, ul: Q.step === 'cmos' ? String(id).slice(1).replace(/X$/, '') : '' }); };
     const findLine = test => { for (let i = 0; i < L.length; i++) if (test(String(L[i][0] || ''))) { const b = box(i, SL); if (b) return b; } return null; };
     if (Q.step === 'doc') {
       if (Q.order && q1V(Q, 'order')) { let b = null; (o.codes || []).forEach((c, i) => { if (!b && String(c[0] || '').replace(/\D/g, '') === Q.order) b = box(i, SC); }); add('order', b || findLine(s => q1Dig(s).includes(Q.order)), 'ok', null); }
@@ -20429,7 +20435,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (k === 'cpu') b = bad ? findLine(s2 => seen && q1Dig(s2).includes(seen)) : findLine(s2 => q1Dig(s2).includes(q1Dig(Q.E.cpu).replace(/[A-Z]+$/, '')));
         else if (k === 'mem') b = findLine(s2 => /mem|ram|ddr|dimm/i.test(s2) && /\d\s*(GB|MB)/i.test(s2)) || findLine(s2 => /\d{4,6}\s*MB/i.test(s2));
         else { if (k === 'hddX' && !bad) return; const want = bad ? String(Q.bad[k].seen).replace(/\s*있음$/, '').split('+') : [].concat(Q.E[k] || []), hk = k === 'hdd' || k === 'hddX'; b = findLine(s2 => { const c = c1CapOf(s2); return c && want.includes(c.cap) && hk === !!(c.hdd || /HDD/i.test(s2)); }); }
-        add('c' + k, b, bad ? 'bad' : w && w.st === 'diff' ? 'warn' : 'ok', bad ? (k === 'hddX' ? 'HDD 빼야 함' : '전표는 ' + exp) : w && w.st === 'diff' ? (k === 'mem' ? '개수 확인' : '제조사 확인') : null); });
+        if (b) b = b.slice(); add('c' + k, b, bad ? 'bad' : w && w.st === 'diff' ? 'warn' : 'ok', bad ? (k === 'hddX' ? 'HDD 빼야 함' : '전표는 ' + exp) : w && w.st === 'diff' ? (k === 'mem' ? '개수 확인' : '제조사 확인') : null); });
     }
     if (Q.step === 'doc') {   // v32.50 : 네비 AR — 읽은 줄 밑에 빛나는 선 + 줄 왼쪽 위에 떠 있는 표지판 (줄 따라 움직임)
       const capOf = it => { const m = String(it.cap || q1Full(it) || '').match(/(\d+(?:\.\d+)?\s*(?:TB|GB))/i); return m ? m[1].replace(/\s/g, '').toUpperCase() : ''; };
@@ -20453,7 +20459,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       Q.arSeen[m.id] = now;
       let el = layer.querySelector('[data-m="' + m.id + '"]');
       if (!el) { el = document.createElement('div'); el.dataset.m = m.id; el.innerHTML = '<s></s><i></i><b></b>'; layer.appendChild(el); requestAnimationFrame(() => el.classList.add('in')); }
-      el.className = 'q1m ' + m.kind + (m.nv ? ' nv c-' + (m.cat || 'ord') : m.b[0] > 0.45 ? ' r' : '') + (el.classList.contains('in') ? ' in' : '');
+      el.className = 'q1m ' + m.kind + (m.nv ? ' nv c-' + (m.cat || 'ord') : m.ul ? ' ul c-' + m.ul : m.b[0] > 0.45 ? ' r' : '') + (el.classList.contains('in') ? ' in' : '');   // v32.88 : CMOS = 색 밑줄
       const [x0, y0, x1, y1] = m.b, pad = 0.006;
       if (m.nv) el.style.setProperty('--lx', Math.round((x0 - pad) * layer.clientWidth) + 'px');   // v32.50 : 표지판은 화면 왼쪽 한 줄로
       el.style.left = ((x0 - pad) * 100) + '%'; el.style.top = ((y0 - pad) * 100) + '%'; el.style.width = ((x1 - x0 + pad * 2) * 100) + '%'; el.style.height = ((y1 - y0 + pad * 2) * 100) + '%';
