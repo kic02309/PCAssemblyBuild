@@ -8839,7 +8839,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.83';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.84';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20749,7 +20749,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Q.cmFill = fill;
     const nk = q1CmNew(Q), sig = nk.join(',');
     Q.pgC = nk.length && sig === Q.pgSig ? (Q.pgC || 0) + 1 : nk.length ? 1 : 0; Q.pgSig = sig;
-    const rdy = Q.pgC >= 2 && fill && !Q.busyShot && !Q.asking;
+    const rdy = Q.pgC >= 2 && !Q.busyShot && !Q.asking;   // v32.84 : 틀 채움은 안내만 (막지 않음 — 수동 촬영)
     Q.pgHint = ''; if (Q.shotK && Object.keys(Q.shotK).length && !all) { const miss = ks.filter(k => !Q.cm[k]).map(k => Q1_CAT[k] || k); if (miss.length) Q.pgHint = `${miss.join(' · ')}를 확인해 주세요 (다음 화면으로 넘기세요)`; }
     if (rdy !== !!Q.ready) { Q.ready = rdy; if (rdy) q1Snd('done'); q1ShutPaint(); q1Paint(); }
   }
@@ -20948,7 +20948,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1ShutState(Q) {   // [채움 %, 준비됨, 아래 한 줄]
     if (Q.step === 'doc' && Q.ph === 'read') { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; return [n * 25, q1DocDone(Q), Q.practice ? '다 읽으면 결과 카드가 떠요' : '다 읽으면 자동으로 다음 단계']; }
     if (Q.step === 'doc') return [100, Q.ph === 'fit' ? !!Q.docReady : true, Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '읽혔어요 · 셔터를 눌러 전표 1장' : '주문번호를 틀의 숫자 크기에 맞추세요') : '셔터를 눌러 전표 1장'];
-    if (Q.step === 'cmos' && Q.E) { const ks = Object.keys(Q.E), ok = ks.filter(k => Q.cm[k] === 'ok').length; return [ks.length ? Math.round(ok / ks.length * 100) : 0, q1CmNew(Q).length > 0 && Q.cmFill !== false, Q.ready ? '읽혔어요 · 셔터를 눌러 촬영' : '읽힌 항목이 체크되면 셔터로 촬영']; }
+    if (Q.step === 'cmos' && Q.E) { const ks = Object.keys(Q.E), ok = ks.filter(k => Q.cm[k] === 'ok').length; return [ks.length ? Math.round(ok / ks.length * 100) : 0, q1CmNew(Q).length > 0, Q.ready ? '읽혔어요 · 셔터를 눌러 촬영' : '읽힌 항목이 체크되면 셔터로 촬영']; }
     return [100, true, '가운데 셔터로 촬영'];
   }
   function q1ShutPaint() {
