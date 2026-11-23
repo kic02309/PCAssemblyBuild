@@ -8839,7 +8839,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.85';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.86';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19806,26 +19806,28 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (new RegExp('[\\[【(]\\s*' + x).test(ln)) continue;   // [1338353] 처럼 괄호 안 = 안내 문구 속 코드
         const ctx = [L[i - 1] || '', ln, L[i + 1] || ''].join(' ');
         const isRef = /[\[【(]\s*0\s*[\]】)]/.test(ctx) || /추가\s*장착/.test(ctx) || [...PKG].some(c => c && ctx.replace(x, ' ').includes(c));
-        const neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test((L[i - 1] || '') + ' ' + ln);
+        const pl = (L[i - 1] || '') + ' ' + ln, nm = pl.match(/(?:^|[^\d\w])[-−–~—]\s*([1-9]\d?)\s*[개7]/), neg = !!nm;   // v32.86 : -6개 도 빠지는 줄
+        const qm = ln.match(/(?:^|[^\d-])([1-9]\d?)\s*(?:개|7H|7ㅐ)/) || (L[i - 1] || '').match(/(?:^|[^\d-])([1-9]\d?)\s*(?:개|7H|7ㅐ)\s*$/), qh = qm ? +qm[1] : 0;   // 이 줄 수량 (ⓟ 줄 = 본체 전체 합계)
         const o = occ.get(x) || { r, base: 0, add: 0, rem: 0, ctx: ln + ' ' + (L[i + 1] || '') }; occ.set(x, o);
-        if (isRef) { if (neg) o.rem++; else o.add++; if (/추가\s*장착/.test(ctx)) o.extra = 1; } else { o.base++; if (!o.baseQty) { const bq = ln.match(/(?:^|[^\d-])([1-9])\s*(?:개|7H|7ㅐ)/); if (bq) o.baseQty = +bq[1]; } }
+        if (isRef) { if (neg) { o.rem++; o.remQty = (o.remQty || 0) + +nm[1]; } else { o.add++; if (qh) o.addQty = (o.addQty || 0) + qh; } if (/추가\s*장착/.test(ctx)) o.extra = 1; } else { o.base++; if (!o.baseQty && qh && qh < 10) o.baseQty = qh; }
       }
     });
     ['mem', 'ssd', 'hdd'].forEach(k => {
       const C = [...occ.values()].filter(o => o.r.k === k); if (!C.some(o => o.add || o.rem)) return;
-      if (C.some(o => o.add && !o.base)) C.forEach(o => { if (o.base && o.add) { o.rem += o.add; o.add = 0; } });   // v31.50 : 새 부품이 ⓟ로 들어오면, 원래 부품의 ⓟ 줄은 빠지는 줄(-1 취소선이 안 읽혀도)
+      if (C.some(o => o.add && !o.base)) C.forEach(o => { if (o.base && o.add) { o.rem += o.add; o.remQty = (o.remQty || 0) + (o.addQty || 0); o.add = 0; o.addQty = 0; } });
+      let bN = bodyN; if (bN <= 1) { const z = C.find(z => z.base && z.baseQty && z.remQty && z.remQty % z.baseQty === 0 && z.remQty / z.baseQty > 1); if (z) bN = z.remQty / z.baseQty; }   // 품 N개를 못 읽으면 : 빠지는 수량 ÷ 원래 1대당 수량
+      const per = q => !q ? 0 : bN > 1 && q % bN === 0 ? q / bN : bN > 1 ? 0 : q;   // 본체 전체 합계 → 1대당   // v31.50 : 새 부품이 ⓟ로 들어오면, 원래 부품의 ⓟ 줄은 빠지는 줄(-1 취소선이 안 읽혀도)
       const net = o => Math.max(0, Math.max(o.base, 1) * (o.base ? 1 : 0) + o.add - o.rem);
       const live = C.filter(o => net(o) > 0).sort((a, b) => (b.add - a.add) || (net(b) - net(a))); if (!live.length) return;
       const top = live[0], n = net(top), cur = out[k], q = +((top.ctx.match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1);
       const o = qcpObj(top.r, top.ctx); o.n = top.base && top.add ? n : Math.max(n, q > 1 ? q : 1);
-      if (top.add && !top.base) {   // v32.85 : ⓟ 줄 수량은 본체 전체 합계(예: 6개 ÷ 품 3개 = 1대당 2개). 안 읽히면 빠지는 부품의 원래 1대당 수량 사용
-        let pb = 0; const qq = q > 1 ? q : 0;
-        if (bodyN > 1 && qq >= bodyN && qq % bodyN === 0) pb = qq / bodyN;
-        else if (!qq) { const rm = C.find(z => z !== top && z.rem && z.baseQty > 0); if (rm) pb = rm.baseQty; }
+      if (top.add && !top.base) {   // v32.85~86 : ⓟ 줄 수량은 본체 전체 합계(예: 6개 ÷ 3대 = 1대당 2개). 안 읽히면 빠지는 부품의 원래 1대당 수량
+        let pb = per(top.addQty);
+        if (!pb) { const rm = C.find(z => z !== top && z.rem && z.baseQty > 0); if (rm) pb = rm.baseQty; }
         if (pb > 0) o.n = pb;
-      }
+      } else if (top.base && top.add && top.baseQty) { const pa = per(top.addQty) || top.add; o.n = top.baseQty + pa; }   // v32.86 : 같은 부품 추가 = 원래 1대당 수량 + 추가 1대당 수량
       const gone = C.filter(z => z !== top && z.rem && !net(z)).map(z => [qcpBrand(z.r), qcpShort(z.r), qcpCap(z.r)].filter(Boolean).join(' '));
-      if (top.base && top.add) o.chg = `추가 +${top.add} (총 ${o.n}개)`;
+      if (top.base && top.add) o.chg = `추가 +${o.n - (top.baseQty || top.base)} (총 ${o.n}개)`;
       else if (top.add) o.chg = top.extra || (k === 'hdd' && !C.some(z => z !== top && z.base)) ? '추가 장착 (새 부품)' : ['변경된 부품', gone.length ? '빠짐 ' + gone.join(', ') : ''].filter(Boolean).join(' · ');   // v31.56 : 메모리 · SSD에 새 코드가 ⓟ로 오면 변경 (주문서에 '추가 장착'이 적힌 경우만 추가)   // v31.50 : 원래 없던 분류(HDD 등)에 새로 들어오면 추가
       if (!cur || !cur.byCode || cur.code !== o.code || (cur.n || 1) !== o.n || !!cur.chg !== !!o.chg) out[k] = o;
       if (live.length > 1) out[k].extra = live.slice(1).map(z => qcpShort(z.r) + (net(z) > 1 ? ' ×' + net(z) : ''));
