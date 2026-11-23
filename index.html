@@ -364,9 +364,9 @@ html[data-rot="1"] .q1tt,html[data-rot="3"] .q1tt{padding-right:0}html[data-rot=
 .q1c #q1ar{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 /* v32.78 : CMOS 세팅 안내 + 사양 목록 */
 .q1gd{position:absolute;left:0;right:0;bottom:0;z-index:40;padding:18px 18px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(8,14,28,.82),rgba(8,14,28,.96));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:22px 22px 0 0;color:#fff;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
-.q1gd-o small{display:block;font-size:13px;color:#9fc3e6;letter-spacing:.08em}.q1gd-o b{display:block;font-size:42px;font-weight:800;letter-spacing:.06em;color:#7be0a8;font-variant-numeric:tabular-nums}
-.q1gd-t{font-size:19px;font-weight:800}.q1gd-s{font-size:13px;color:#c5d6ea;line-height:1.5}
-.q1gd-go{width:100%;border:0;border-radius:14px;background:#1f6bff;color:#fff;font-size:20px;font-weight:800;padding:14px}.q1gd-re{border:0;background:transparent;color:#ffb066;font-size:13px;text-decoration:underline;padding:6px}
+.q1gd-o{width:100%;display:flex;align-items:baseline;justify-content:space-between}.q1gd-o small{display:block;font-size:13px;color:#9fc3e6;letter-spacing:.08em}.q1gd-o b{display:block;font-size:28px;font-weight:800;letter-spacing:.06em;color:#7be0a8;font-variant-numeric:tabular-nums}
+.q1gd-t{font-size:17px;font-weight:800;line-height:1.4}.q1gd-s{font-size:13px;color:#c5d6ea;line-height:1.5}
+.q1gd-go{width:100%;border:0;border-radius:14px;background:#1f6bff;color:#fff;font-size:19px;font-weight:800;padding:12px}.q1gd-re{border:0;background:transparent;color:#ffb066;font-size:13px;text-decoration:underline;padding:6px}
 .q1cl{flex-basis:100%;display:grid;gap:5px;margin-top:4px}
 .q1cr{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.08);border-left:4px solid var(--cc);color:#e8f1ff}
 .q1cr-s{font-style:normal;font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--cc);color:#0b1b2e;flex:none}
@@ -8863,7 +8863,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.7';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.8';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21036,9 +21036,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1BodyLine(Q) { const N = Q.bodyN || 1; if (N < 2) return ''; const P = q1Part(Q), D = Q.varDone || { chg: 0, base: 0 };
     return `<div class="q1gd-b">본체 <b>${Q.bodyI || 1}/${N}</b>${P ? ` · 남은 것 변경 ${Math.max(0, P.chg - D.chg)}대 · 기본 ${Math.max(0, P.base - D.base)}대` : ''}</div>`; }
   function q1GuideHtml(Q) {   // v32.78 : 주문번호 확인 + CMOS 세팅 안내
-    return `<div class="q1gd" id="q1gd"><div class="q1gd-o"><small>찍힌 주문번호</small><b>${esc(Q.order || '—')}</b></div>
-      ${q1BodyLine(Q)}<div class="q1gd-t">날짜를 맞추고 CPU · 메모리 · 저장장치가 보이게 세팅하세요</div><div class="q1gd-s">세팅한 뒤 모니터 화면을 틀에 맞추면 읽힌 항목이 체크됩니다 · 체크되면 직접 셔터를 누르세요</div>
-      <button type="button" class="q1gd-go" data-q1="cmgo">시작</button><button type="button" class="q1gd-re" data-q1="redoc">주문번호가 달라요 · 주문서 다시 읽기</button></div>`;
+    return `<div class="q1gd" id="q1gd"><div class="q1gd-o"><small>주문번호</small><b>${esc(Q.order || '—')}</b></div>
+      ${q1BodyLine(Q)}<div class="q1gd-t">날짜 맞추고 CPU · 메모리 · 저장장치가<br>보이게 세팅</div>
+      <button type="button" class="q1gd-go" data-q1="cmgo">시작</button><button type="button" class="q1gd-re" data-q1="redoc">번호가 달라요 · 다시 읽기</button></div>`;
   }
   function q1Band() {   // 틀이 들어갈 세로 범위 = 위 한 줄 아래 ~ 아래 표시 위
     const Q = S.q1, kind = Q.step === 'cmos' && Q.ph === 'fit' ? 'cmos' : '';
