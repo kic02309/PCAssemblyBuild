@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.63';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16895,7 +16895,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         document.title=`모니터 ${n} · ${loMonSeat}`;
         const bd=document.createElement('div');bd.className='lo-mon-badge';bd.innerHTML=`<b>${esc(n)}</b><span>${ms?esc(loMonSeat+' · '+loLineName(ms.line)+' '+(+ms.stage+1)+'공정'+(ms.assignedName?' · '+ms.assignedName:'')):esc(loMonSeat)+' · 작업 안 함 (이 자리는 오늘 사용하지 않습니다)'}</span>`;
         document.body.appendChild(bd);setTimeout(()=>bd.remove(),7000);
-        document.addEventListener('pointerdown',e=>{if(e.target.closest?.('.lo-snd-chip'))return;sndInit();if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});},{once:true});
+        const monFs=e=>{if(e.type==='keydown'&&(e.ctrlKey||e.metaKey||e.key==='F11'))return;if(e.target.closest?.('.lo-snd-chip'))return;sndInit();if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});document.removeEventListener('pointerdown',monFs);document.removeEventListener('keydown',monFs);};   // v32.64 : 클릭뿐 아니라 아무 키(Enter 등)로도 전체화면
+        document.addEventListener('pointerdown',monFs);document.addEventListener('keydown',monFs);
         const chip=document.createElement('button');chip.type='button';chip.className='lo-snd-chip';chip.textContent='🔊 소리';chip.onclick=()=>{sndInit();sndSettings();};document.body.appendChild(chip);
       }
       loWatch(epoch);
@@ -17700,7 +17701,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let w=null;try{w=window.open('about:blank','loMon'+n,`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);}catch(e){}
     if(!w)return false;LO_MON.wins[n]=w;
     try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}
-    try{w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>모니터 ${d||n} · 작업 안 함</title></head><body style="margin:0;background:#0b1220;color:#64748b;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center;cursor:pointer"><div style="font-size:120px;font-weight:900;color:#475569">작업 안 함</div><div style="font-size:30px;margin-top:16px">${d?'모니터 '+d+' · ':''}이 모니터는 오늘 사용하지 않습니다</div><script>document.addEventListener('pointerdown',function(){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(function(){});},{once:true});<\/script></body></html>`);w.document.close();}catch(e){}
+    try{w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>모니터 ${d||n} · 작업 안 함</title></head><body style="margin:0;background:#0b1220;color:#64748b;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center;cursor:pointer"><div style="font-size:120px;font-weight:900;color:#475569">작업 안 함</div><div style="font-size:30px;margin-top:16px">${d?'모니터 '+d+' · ':''}이 모니터는 오늘 사용하지 않습니다</div><script>function f(){if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(function(){});document.removeEventListener('pointerdown',f);document.removeEventListener('keydown',f);}document.addEventListener('pointerdown',f);document.addEventListener('keydown',f);<\/script></body></html>`);w.document.close();}catch(e){}
     return true;
   }
   // v31.64 : 모니터 맞추기 — 모니터마다 창을 띄우고, 차례로 "이 모니터 앞 스위치 누르기"(또는 자리 클릭)로 실제 자리를 맞춤
