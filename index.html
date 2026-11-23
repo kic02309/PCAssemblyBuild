@@ -412,6 +412,9 @@ html[data-rot="1"] .q1tip,html[data-rot="3"] .q1tip{margin-bottom:50px}
 .q1chk{color:#fde047;font-size:16px;font-weight:800;margin:0 0 8px;text-align:center}.q1tip.on{display:block;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:16px;font-weight:800}
 /* v33.16 : 가운데 안내 글씨 키움 · '아래로 천천히' 는 칩 위 자리에 들어가 겹치지 않음 */
 .q1tip.on{font-size:22px!important;padding:11px 20px!important;font-weight:900!important}.q1c .q1navd{position:static!important;transform:none!important;left:auto;bottom:auto;margin:2px auto 8px;font-size:17px;line-height:1.1}.q1c .q1navd i{font-size:28px}.q1c .q1p span{font-size:13px;padding:4px 11px}
+/* v33.23 : 폰 브라우저 — 업무 화면(안정화·라인생산·검수) 위 공통 막대(브랜드·이름·로그아웃) 숨김(화면 자체 머리글과 중복) · 줄바꿈 긴 칩 글씨 맞춤 */
+@media(max-width:700px){body.pmobm .czt{display:none!important}}
+.pmx .pxc.sm{font-size:10.5px!important;letter-spacing:-.04em;line-height:1.15;white-space:nowrap}
 /* v33.22 : 1차 검수 앱 안내 — 기존 순서(세로 목록) 그대로, 글씨를 줄여 주소창에 안 잘리고 한 장에 · 앱 받기는 맨 아래 */
 @media(max-width:800px){.q1ap{max-height:calc(100dvh - 40px);overflow-y:auto}.q1ap-hd{margin-bottom:4px;gap:8px}.q1ap-ic{width:34px;height:34px;border-radius:10px}.q1ap-hd b{font-size:15px}.q1ap-hd small{font-size:11px}.q1ap-d{font-size:11.5px;margin:0 0 6px;line-height:1.35}.q1ap-f{display:flex!important;flex-direction:column;gap:4px;margin:0 0 6px}.q1ap-f>div{background:none;border:0;padding:0;gap:6px}.q1ap-f span{font-size:14px;width:18px}.q1ap-f p{font-size:10.5px;line-height:1.3}.q1ap-f b{font-size:11.5px;display:inline;margin-right:4px}.q1ap-s{display:flex!important;flex-direction:column;gap:4px;margin:0 0 6px}.q1ap-st{padding:5px 8px;gap:8px;border-radius:9px}.q1ap-st i{width:19px;height:19px;font-size:11px}.q1ap-st span{font-size:11.5px;line-height:1.25}.q1ap-st small{display:inline;font-size:10px;margin:0 0 0 6px}.q1ap-tg{margin:0 0 8px}.q1ap-tg span{font-size:10px;padding:3px 7px}.q1ap-dl{font-size:15px;padding:10px;margin:0 0 6px;border-radius:12px}.q1ap-dl small{font-size:10px}.q1ap .acts{margin-top:4px}}
 /* v33.19 : 폰 브라우저 로그인 첫 화면 — 위 이미지를 줄여 스크롤 없이 로그인 칸까지 한 화면에 */
@@ -8880,7 +8883,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.22';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.23';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
