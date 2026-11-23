@@ -8854,7 +8854,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.95';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.96';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20943,7 +20943,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1PracOn = () => !!S.me;   // v32.53 : 베타 — 전체 직원 연습 가능
   const q1TitleHtml = () => { const Q = S.q1, [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order && q1V(Q, 'order') ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k] && q1V(Q, k)).length;
-    const tip = Q.card === 'spec' ? '👀 아래 사양이 주문서와 같은지 확인하세요' : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 읽혔어요 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 읽혔어요 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
+    const tip = Q.card === 'spec' ? '👀 아래 사양이 주문서와 같은지 확인하세요' : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 주문번호 인식 완료 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 사양 인식 완료 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
       : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 사양 인식 완료 · 가운데 [다음]을 누르세요' : `${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
     Q._tip = tip;   // v32.94 : 할 일 안내는 카메라 버튼 위 가운데 (#q1tip) · 위에는 단계 이름만
     return `<div class="q1mini"><em>${Q.practice ? '연' : si}</em>${esc(a)}${tip ? '' : ` <u>· ${esc(b)}</u>`}</div>`; };   // v32.50 : 위 안내 한 줄로 작게
@@ -21008,8 +21008,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1CmNew = Q => Object.keys(Q.E || {}).filter(k => Q.cm[k] === 'ok' && q1V(Q, '@' + k) && !(Q.shotK || {})[k]);   // v32.82 : 읽혔는데 아직 사진에 안 담은 항목
   function q1ShutState(Q) {   // [채움 %, 준비됨, 아래 한 줄]
     if (Q.step === 'doc' && Q.ph === 'read') { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; return [n * 25, q1DocShown(Q), Q.practice ? '다 읽으면 결과 카드가 떠요' : '다 읽으면 [다음]']; }
-    if (Q.step === 'doc') return [100, Q.ph === 'fit' ? !!Q.docReady : true, Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '읽혔어요 · 셔터를 눌러 주문서 1장' : '주문번호를 틀의 숫자 크기에 맞추세요') : '셔터를 눌러 주문서 1장'];
-    if (Q.step === 'cmos' && Q.E) { const ks = Object.keys(Q.E), ok = ks.filter(k => Q.cm[k] === 'ok').length; return [ks.length ? Math.round(ok / ks.length * 100) : 0, q1CmNew(Q).length > 0, Q.ready ? '읽혔어요 · 셔터를 눌러 촬영' : '읽힌 항목이 체크되면 셔터로 촬영']; }
+    if (Q.step === 'doc') return [100, Q.ph === 'fit' ? !!Q.docReady : true, Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '주문번호 인식 완료 · 셔터를 눌러 주문서 1장' : '주문번호를 틀의 숫자 크기에 맞추세요') : '셔터를 눌러 주문서 1장'];
+    if (Q.step === 'cmos' && Q.E) { const ks = Object.keys(Q.E), ok = ks.filter(k => Q.cm[k] === 'ok').length; return [ks.length ? Math.round(ok / ks.length * 100) : 0, q1CmNew(Q).length > 0, Q.ready ? '사양 인식 완료 · 셔터를 눌러 촬영' : '읽힌 항목이 체크되면 셔터로 촬영']; }
     return [100, true, '가운데 셔터로 촬영'];
   }
   function q1ShutPaint() {
