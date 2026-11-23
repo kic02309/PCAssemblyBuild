@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.58';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.59';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17808,17 +17808,29 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try{sd=await window.getScreenDetails();}catch(e){return toast('[창 관리] 권한을 허용해야 모니터를 읽을 수 있습니다. 주소창 왼쪽 자물쇠 → 사이트 설정 → 창 관리 → 허용',true);}
     const screens=[...sd.screens].sort((a,b)=>(a.top-b.top)||(a.left-b.left));
     const sts=loMonStations(r),map=loMonMap();
-    const seatName=st=>`${st.id} · ${loLineLabel(st.line)} ${+st.stage+1}공정${st.assignedName?' · '+st.assignedName:''}`;
+    const hmI=hubMap(r),swNo=id=>+Object.keys(hmI).find(k=>hmI[k]===id)||0;   // v32.59 : 자리 이름 앞에 스위치(표지) 번호
+    const seatName=st=>`${swNo(st.id)?swNo(st.id)+'번 · ':''}${st.id} · ${loLineLabel(st.line)} ${+st.stage+1}공정${st.assignedName?' · '+st.assignedName:''}`;
     const opts=cur=>'<option value="">사용 안 함</option>'+sts.map(st=>`<option value="${esc(st.id)}" ${st.id===cur?'selected':''}>${esc(seatName(st))}</option>`).join('');
     modal(`<h3>🖥 모니터 연동</h3>
       <div class="lo-mon-easy"><b>처음이거나 화면이 엉뚱한 모니터에 뜨면</b> → <button type="button" class="primary" data-mc>🎯 모니터 맞추기</button>
         <ol><li>모든 모니터에 큰 번호가 뜨고, <b>노란 화면</b>이 차례로 넘어갑니다.</li><li>노란 화면이 된 모니터 앞의 <b>스위치를 누르세요</b>. <small>스위치가 없으면 그 모니터에서 자리를 마우스로 클릭</small></li><li>모두 끝나면 자동으로 작업 화면이 열리고, 다음부터는 <b>[화면 열기]</b> 한 번이면 됩니다.</li></ol></div>
-      <details class="lo-mon-manual"><summary>직접 고르기 (모니터 ${screens.length}대)</summary>
+      <details class="lo-mon-manual" open><summary>직접 고르기 (모니터 ${screens.length}대)</summary>
+      <div style="margin:8px 0"><button type="button" class="primary" data-mid>🔢 모니터 번호 보기</button> <small>누르면 모든 모니터에 5초간 큰 번호가 뜹니다. 모니터에 뜬 번호가 아래 같은 번호 줄입니다 → 그 모니터의 표지 번호에 맞는 자리를 고르세요</small></div>
       <div class="lo-mon-list">${screens.map((s,i)=>`<label class="lo-mon-row"><span class="lo-mon-no">${i+1}</span><span class="lo-mon-info">${s.isPrimary?'<b>주 모니터</b> · ':''}${esc(s.label||'모니터')}<small>위치 ${s.left}, ${s.top} · ${s.width}×${s.height}</small></span><select data-lo-mon="${i+1}">${opts(map[i+1]??(s===sd.currentScreen?'':(sts[i-(screens.indexOf(sd.currentScreen)>=0&&screens.indexOf(sd.currentScreen)<i?1:0)]?.id||'')))}</select></label>`).join('')}</div></details>
       <p id="loMonMsg" class="lo-error" role="status"></p>
       <div class="acts"><button data-c style="margin-right:auto">닫기</button><button data-mx>열린 창 모두 닫기</button><button data-ms>배정 저장</button><button class="primary" data-mo>화면 열기</button></div>`,(bg,close)=>{
       $('[data-c]',bg).onclick=close;
       const collect=()=>{const o={};$$('[data-lo-mon]',bg).forEach(x=>{o[x.dataset.loMon]=x.value;});try{localStorage.setItem('loMonMap',JSON.stringify(o));}catch(e){}loMonSaveRects(screens);return o;};
+      $('[data-mid]',bg).onclick=()=>{   // v32.59 : 모든 모니터에 윈도우 모니터 번호를 크게 5초간 표시
+        const ws=[];
+        screens.forEach((s,i)=>{let w=null;try{w=window.open('about:blank','loMonId'+(i+1),`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);}catch(e){}
+          if(!w)return;ws.push(w);
+          try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}
+          try{w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>모니터 ${i+1}</title></head><body style="margin:0;background:#0f172a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center"><div style="font-size:320px;font-weight:900;line-height:1">${i+1}</div><div style="font-size:34px;color:#94a3b8;margin-top:14px">목록의 ${i+1}번 줄 · 5초 뒤 자동으로 닫힙니다</div></body></html>`);w.document.close();}catch(e){}
+        });
+        $('#loMonMsg',bg).textContent=ws.length<screens.length?`창 ${screens.length-ws.length}개가 막혔습니다. 주소창 오른쪽 팝업 차단 표시 → 항상 허용 후 다시 누르세요.`:'';
+        setTimeout(()=>ws.forEach(w=>{try{w.close();}catch(e){}}),5000);
+      };
       $('[data-ms]',bg).onclick=()=>{collect();toast('모니터 배정을 저장했습니다 (이 PC)');};
       $('[data-mc]',bg).onclick=()=>{if(!HUB.on)toast('스위치가 연결되어 있지 않아 마우스 클릭으로 맞춥니다. 각 모니터에서 자리를 눌러 주세요.');close();loMonCalibrate(screens,sts,map);};
       $('[data-mx]',bg).onclick=()=>{Object.values(LO_MON.wins).forEach(w=>{try{w.close();}catch(e){}});LO_MON.wins={};toast('열린 작업 화면 창을 닫았습니다');};
