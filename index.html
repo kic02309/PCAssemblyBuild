@@ -8839,7 +8839,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.84';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.85';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19795,6 +19795,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function qcCodeAdjust(L, PKG, out) {   // 메모리 · SSD · HDD : 같은 코드가 몇 번 · 어느 줄이 ⓟ(세트 코드 · [0] · 추가 장착)인지 보고 수량 · 변경을 다시 계산
     const occ = new Map();   // code → { r, base, add, rem, ctx }
+    let bodyN = 1; for (let i = 0; i < Math.min(L.length, 14); i++) { const bm = String(L[i]).match(/품\s*([1-9]\d?)\s*(?:개|7H|7ㅐ)/); if (bm) { bodyN = +bm[1]; break; } }   // v32.85 : 본체 여러 대 — 품 3개
     PKG = new Set(PKG); L.forEach(ln => { if (/조립\s?PC|PC_[A-Za-z]?\d|_[RIi]\d{3}|아이웍스|추천|품\s?1\s?개/i.test(ln)) (ln.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { if (!QCP.has(c)) PKG.add(c.slice(-6)); }); });   // 세트(PC) 코드 = 묶음 줄의 코드
     L.forEach((ln, i) => { (ln.match(/[\[【(]\s*\d{7,8}/g) || []).forEach(m => { const c = m.replace(/\D/g, '').slice(0, 7); if (!QCP.has(c)) PKG.add(c.slice(-6)); }); if (i < 8 && /^\s*1\s*[.,]/.test(ln)) (ln.match(/(?<!\d)\d{7}(?!\d)/g) || []).forEach(c => { if (!QCP.has(c)) PKG.add(c.slice(-6)); }); });   // v31.50 : [1380862] 괄호 속 세트 코드 · 1번 줄 코드
     L.forEach((ln, i) => {
@@ -19807,7 +19808,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const isRef = /[\[【(]\s*0\s*[\]】)]/.test(ctx) || /추가\s*장착/.test(ctx) || [...PKG].some(c => c && ctx.replace(x, ' ').includes(c));
         const neg = /(?:^|[^\d\w])[-−–~—]\s*1\s*[개7]/.test((L[i - 1] || '') + ' ' + ln);
         const o = occ.get(x) || { r, base: 0, add: 0, rem: 0, ctx: ln + ' ' + (L[i + 1] || '') }; occ.set(x, o);
-        if (isRef) { if (neg) o.rem++; else o.add++; if (/추가\s*장착/.test(ctx)) o.extra = 1; } else o.base++;
+        if (isRef) { if (neg) o.rem++; else o.add++; if (/추가\s*장착/.test(ctx)) o.extra = 1; } else { o.base++; if (!o.baseQty) { const bq = ln.match(/(?:^|[^\d-])([1-9])\s*(?:개|7H|7ㅐ)/); if (bq) o.baseQty = +bq[1]; } }
       }
     });
     ['mem', 'ssd', 'hdd'].forEach(k => {
@@ -19817,6 +19818,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const live = C.filter(o => net(o) > 0).sort((a, b) => (b.add - a.add) || (net(b) - net(a))); if (!live.length) return;
       const top = live[0], n = net(top), cur = out[k], q = +((top.ctx.match(/(?:^|[^\d-])([1-9])\s*개/) || [])[1] || 1);
       const o = qcpObj(top.r, top.ctx); o.n = top.base && top.add ? n : Math.max(n, q > 1 ? q : 1);
+      if (top.add && !top.base) {   // v32.85 : ⓟ 줄 수량은 본체 전체 합계(예: 6개 ÷ 품 3개 = 1대당 2개). 안 읽히면 빠지는 부품의 원래 1대당 수량 사용
+        let pb = 0; const qq = q > 1 ? q : 0;
+        if (bodyN > 1 && qq >= bodyN && qq % bodyN === 0) pb = qq / bodyN;
+        else if (!qq) { const rm = C.find(z => z !== top && z.rem && z.baseQty > 0); if (rm) pb = rm.baseQty; }
+        if (pb > 0) o.n = pb;
+      }
       const gone = C.filter(z => z !== top && z.rem && !net(z)).map(z => [qcpBrand(z.r), qcpShort(z.r), qcpCap(z.r)].filter(Boolean).join(' '));
       if (top.base && top.add) o.chg = `추가 +${top.add} (총 ${o.n}개)`;
       else if (top.add) o.chg = top.extra || (k === 'hdd' && !C.some(z => z !== top && z.base)) ? '추가 장착 (새 부품)' : ['변경된 부품', gone.length ? '빠짐 ' + gone.join(', ') : ''].filter(Boolean).join(' · ');   // v31.56 : 메모리 · SSD에 새 코드가 ⓟ로 오면 변경 (주문서에 '추가 장착'이 적힌 경우만 추가)   // v31.50 : 원래 없던 분류(HDD 등)에 새로 들어오면 추가
@@ -20552,7 +20559,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!q1DocDone(Q) && Q.t0 && !Q.slowLogged && Date.now() - Q.t0 > 40000) { Q.slowLogged = 1; q1Log('slow-doc', '40초 넘게 못 읽음: ' + ['order', 'cpu', 'mem', 'ssd'].filter(k => k === 'order' ? !Q.order : !Q.items[k]).join(',')); }
     // v32.10 : 4개 다 읽어도 바로 넘어가지 않음 — 새 코드가 안 보인 지 2.5초 지나야 다음 (아래 변경 줄까지 비출 시간) · 셔터 누르면 바로
     { const sc = Q.seenC = Q.seenC || new Set(); let nw = 0; (r.txt.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { const g = QCP && (QCP.get(c) || (c.length === 6 && qcp6(c))); if (g && !sc.has(g.c)) { sc.add(g.c); nw = 1; } }); if (nw) Q.lastNew = Date.now(); }   // v32.12 : 등록 부품 코드만 (깨진 숫자는 무시)
-    if (q1DocDone(Q) && !Q.tDone) { Q.tDone = Date.now(); q1Snd('done'); }
+    if (q1DocDone(Q) && !Q.tDone) { Q.tDone = Date.now(); q1Snd('done'); try { q1Log('doc-spec', Q.order + ' ' + Q1K.map(k => Q.items[k] ? k + ':' + (Q.items[k].it.code || '?') + 'x' + (Q.items[k].it.n || 1) + (Q.items[k].it.chg ? '*' : '') : '').filter(Boolean).join(' ')); } catch (e) { } }
     if (q1DocDone(Q) && !Q.toFit && !Q.chgAsk && q1HoldLeft(Q) <= 0) { Q.tDoc = Q.tDoc || Date.now(); q1Cheer('전표 읽기 완료'); Q.toFit = setTimeout(() => { Q.toFit = null; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read') { if (Q.practice) q1GoFit(Q); else { Q.ph = 'fit'; Q.fitC = null; renderQc1(); } } }, 700); }   // v32.48 : 전표 다 읽으면 바로 주문번호 비추기 → 자동 촬영 → 확인 카드
   }
   // v32.04 : 전표 읽기 연습 모드 (관리자 본인만) — 결과 카드 → 맞음 / 틀림(항목 선택) → 글자만 서버 저장 · 틀림이면 사진은 폰에만
