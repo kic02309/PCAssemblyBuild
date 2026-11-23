@@ -8862,7 +8862,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.3';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.4';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21068,7 +21068,6 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const L = Q.step === 'doc' ? sm(Q.ph === 'read' ? 'docreset' : 'docback', '다시<br>읽기') : Q.step === 'cmos' ? sm('cmreset', '다시<br>읽기') : `<div class="q1sm q1th" id="q1th">${lab('본체<br><b>' + (Q.shots || 0) + '</b>장')}</div>`;
       const Rb = Q.step === 'doc' ? gap : Q.step === 'cmos' ? sm('cmforce', '불일치<br>진행', 'bad') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
       $('#main').innerHTML = `<div class="q1c"><div id="q1ar"></div><div class="q1c-mid" id="q1mid"></div><div class="q1shT"></div><div class="q1shB"></div>
-        <div class="q1ic"><button type="button" class="q1icb" data-q1="menu">${lab(esc((S.me.name || '?').slice(-2, -1) || S.me.name[0]))}</button></div>
         <div class="q1lay" id="q1lay"><div class="q1tt" id="q1tt">${q1TitleHtml()}</div><div class="q1sp"></div><div class="q1tip" id="q1tip"></div><div class="q1gauge" id="q1gauge"><i></i></div><div id="q1hud">${q1Hud()}</div></div>
         <button type="button" class="q1zm" data-q1="zoom">${lab(['1x', '1.5x', '2x'][Q.zi || 0])}</button>
         <div class="q1bar">${L}<button type="button" class="q1sh" data-q1="shut" id="q1sh"><i></i></button>${Rb}</div>${Q.step === 'cmos' && Q.ph === 'guide' ? q1GuideHtml(Q) : ''}</div>`;
