@@ -8835,7 +8835,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.79';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.80';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20365,12 +20365,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ── v31.85 : AR 표시 (카메라에 비친 글자 위에 체크) · 효과음 · 완료 효과 — 깔끔하게, 처음 잡힐 때만 톡 ──
   let Q1AC = null;
   function q1Snd(kind) {   // 짧고 경쾌한 소리 (휴대폰 안에서 바로 만듦) + 진동
-    q1Call('vibrate', { pop: 25, done: 90, bad: 260, shot: 15 }[kind] || 20);
+    q1Call('vibrate', { pop: 25, done: 140, bad: 260, shot: 220 }[kind] || 20);
     try {
       Q1AC = Q1AC || new (window.AudioContext || window.webkitAudioContext)(); if (Q1AC.state === 'suspended') Q1AC.resume();
-      const now = Q1AC.currentTime, N = { pop: [[880, 0, .07], [1320, .06, .09]], bad: [[330, 0, .12], [262, .13, .16]], done: [[784, 0, .09], [988, .08, .09], [1319, .16, .16]], shot: [[1800, 0, .03], [1200, .03, .04]] }[kind] || [];
+      const now = Q1AC.currentTime, N = { pop: [[880, 0, .07], [1320, .06, .09]], bad: [[330, 0, .12], [262, .13, .16]], done: [[784, 0, .09], [988, .08, .09], [1319, .16, .16]], shot: [[2400, 0, .05], [1500, .04, .06], [900, .11, .12], [1800, .24, .05], [1100, .28, .10]] }[kind] || [];
       N.forEach(([f, t0, d]) => { const o = Q1AC.createOscillator(), g = Q1AC.createGain(); o.type = kind === 'bad' ? 'triangle' : 'sine'; o.frequency.value = f;
-        g.gain.setValueAtTime(0.0001, now + t0); g.gain.exponentialRampToValueAtTime(kind === 'shot' ? 0.12 : 0.22, now + t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + d);
+        g.gain.setValueAtTime(0.0001, now + t0); g.gain.exponentialRampToValueAtTime(kind === 'shot' ? 0.6 : kind === 'done' ? 0.4 : 0.22, now + t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + d);
         o.connect(g); g.connect(Q1AC.destination); o.start(now + t0); o.stop(now + t0 + d + 0.02); });
     } catch (e) { q1Call('beep', kind === 'bad' ? 'bad' : 'ok'); }
   }
