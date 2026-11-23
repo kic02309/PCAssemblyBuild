@@ -383,6 +383,7 @@ html[data-rot="1"] .q1tt,html[data-rot="3"] .q1tt{padding-right:0}html[data-rot=
 @keyframes q1shake{0%,100%{translate:0}25%{translate:-4px}75%{translate:4px}}
 .q1sh.ready{animation:q1rdy .7s ease-in-out infinite}@keyframes q1rdy{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(63,212,136,.8)}50%{transform:scale(1.1);box-shadow:0 0 0 14px rgba(63,212,136,0)}}
 html[data-rot="1"] .q1cl,html[data-rot="3"] .q1cl{grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}html[data-rot="1"] .q1cr,html[data-rot="3"] .q1cr{padding:4px 8px;gap:6px}html[data-rot="1"] .q1cr-v,html[data-rot="3"] .q1cr-v{font-size:13px}
+.q1of-g{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:7.5vw;font-weight:800;letter-spacing:.04em;color:rgba(255,255,255,.3);white-space:nowrap;font-variant-numeric:tabular-nums}html[data-rot="1"] .q1of-g,html[data-rot="3"] .q1of-g{font-size:7.5vh}.q1of.on .q1of-g{color:rgba(90,155,248,.55)}
 .q1cd{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:46}.q1cd b{font-size:150px;line-height:1;font-weight:900;color:#fff;text-shadow:0 0 0 #000,0 4px 24px rgba(0,0,0,.7);-webkit-text-stroke:3px rgba(15,30,61,.8);animation:q1cdp 1s ease-out infinite}.q1cd small{background:rgba(15,30,61,.85);color:#fff;font-size:16px;font-weight:800;padding:5px 14px;border-radius:999px}@keyframes q1cdp{0%{transform:scale(1.35);opacity:.5}30%{transform:scale(1);opacity:1}100%{transform:scale(.95);opacity:.9}}
 .q1cheer{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;animation:q1cheer 1s ease forwards}.q1cheer i{width:84px;height:84px;border-radius:50%;background:#16a34a;color:#fff;font-style:normal;font-size:48px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(255,255,255,.9)}.q1cheer b{background:rgba(15,30,61,.85);padding:6px 14px;border-radius:999px;font-size:15px}.q1cheer.bad i{background:#dc2626}.q1cheer.info i{background:#ea580c}
 @keyframes q1cheer{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
@@ -8838,7 +8839,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.82';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.83';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20707,7 +20708,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!Q.tDoc2) Q.tDoc2 = Date.now();
     const was = !!Q.ofOn, wasFar = !!Q.farHint; Q.ofOn = hit && near; Q.farHint = hit && !near; Q.fitC = Q.ofOn ? (Q.fitC || 0) + 1 : 0;
     if (was !== Q.ofOn || wasFar !== Q.farHint) q1Paint();
-    q1Count(Q, Q.ofOn && !Q.busyShot, () => { Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); });
+    const rdy = !!(Q.ofOn && Q.fitC >= 2 && !Q.busyShot);   // v32.82 : 자동 촬영 없음 — 틀의 숫자 크기에 맞으면 셔터 깜빡 + "찍으세요"
+    if (rdy !== !!Q.docReady) { Q.docReady = rdy; if (rdy) q1Snd('done'); q1ShutPaint(); q1Paint(); }
   }
 
   // CMOS : 읽은 값 반영 (일치 = 바로 고정, 불일치 = 같은 값 두 번 연속일 때)
@@ -20882,7 +20884,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1PracOn = () => !!S.me;   // v32.53 : 베타 — 전체 직원 연습 가능
   const q1TitleHtml = () => { const Q = S.q1, [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k]).length;
-    const tip = Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.farHint ? '주문번호를 더 가까이 대 주세요' : Q.ofOn ? '그대로 2초 들고 계세요' : '주문번호를 틀에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 읽혔어요 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
+    const tip = Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 읽혔어요 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 읽혔어요 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
       : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (Q.tDone ? `✓ 다 읽음 · ${Math.max(1, Math.ceil(q1HoldLeft(Q)))}초 후 진행` : `${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
     return `<div class="q1mini"><em>${Q.practice ? '연' : si}</em>${esc(a)} <u>· ${esc(tip || b)}</u></div>`; };   // v32.50 : 위 안내 한 줄로 작게
   // v31.99 : 사양 변경 · 추가 · OS 설치 · 안정화 표시
@@ -20909,7 +20911,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.step === 'doc') {
       if (Q.ph === 'read' && !Q.chgAsk && !Q.tDone && Q.t0 && Date.now() - Q.t0 > 1500) h = '<div class="q1navd"><i>⌄</i><i>⌄</i><i>⌄</i>아래로 천천히</div>' + h;
       if (Q.ph === 'read' && !Q.chgAsk && !Q.tDone) { h = (Q.t0 && Date.now() - Q.t0 > 8000 ? '<div class="q1nbhint">미구매 부품은 그 칩을 길게 누르세요</div>' : '') + h; }
-      else if (Q.ph === 'fit' && !Q.practice && !Q.chgAsk) h = `<div class="q1of${Q.ofOn ? ' on' : ''}"><i>주문번호</i></div>` + h;
+      else if (Q.ph === 'fit' && !Q.practice && !Q.chgAsk) h = `<div class="q1of${Q.ofOn ? ' on' : ''}"><i>주문번호</i><b class="q1of-g">00000000</b></div>` + h;
       const pp = k => Q.arNew && Q.arNew[k] && Date.now() - Q.arNew[k] < 700 ? ' pop' : '';
       h += pill(Q.order ? 'ok' + pp('order') : 'wt', Q.order ? '주문 ✓ ' + esc(Q.order) : '주문번호');
       Q1K.forEach(k => { const x = Q.items[k]; if (!x && k === 'hdd') return; if (!x && Q.nob && Q.nob[k]) { h += `<span class="nb" data-nb="${k}">${Q1_CAT[k]} 미구매</span>`; return; } if (!x) { h += `<span class="wt" data-nb="${k}">${Q1_CAT[k]}</span>`; return; } const ml = k === 'mem' && x ? q1MemLab(x.it) : ''; h += pill(x ? (x.reg ? 'ok' : 'warn') + pp(k) : 'wt', Q1_CAT[k] + (ml ? ' ' + ml : '') + (x ? (x.reg ? ' ✓' : ' 미등록') : '')); const c = x && q1ChgLab(k, x.it); if (c) h += pill('cg', c); });
@@ -20945,7 +20947,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1CmNew = Q => Object.keys(Q.E || {}).filter(k => Q.cm[k] === 'ok' && !(Q.shotK || {})[k]);   // v32.82 : 읽혔는데 아직 사진에 안 담은 항목
   function q1ShutState(Q) {   // [채움 %, 준비됨, 아래 한 줄]
     if (Q.step === 'doc' && Q.ph === 'read') { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; return [n * 25, q1DocDone(Q), Q.practice ? '다 읽으면 결과 카드가 떠요' : '다 읽으면 자동으로 다음 단계']; }
-    if (Q.step === 'doc') return [100, true, '셔터를 눌러 전표 1장'];
+    if (Q.step === 'doc') return [100, Q.ph === 'fit' ? !!Q.docReady : true, Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '읽혔어요 · 셔터를 눌러 전표 1장' : '주문번호를 틀의 숫자 크기에 맞추세요') : '셔터를 눌러 전표 1장'];
     if (Q.step === 'cmos' && Q.E) { const ks = Object.keys(Q.E), ok = ks.filter(k => Q.cm[k] === 'ok').length; return [ks.length ? Math.round(ok / ks.length * 100) : 0, q1CmNew(Q).length > 0 && Q.cmFill !== false, Q.ready ? '읽혔어요 · 셔터를 눌러 촬영' : '읽힌 항목이 체크되면 셔터로 촬영']; }
     return [100, true, '가운데 셔터로 촬영'];
   }
@@ -20978,7 +20980,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $('#main').innerHTML = `<div class="q1"><h2>1차 검수</h2><p>1차 검수는 <b>조립 검수 앱</b>(안드로이드)에서 사용합니다.</p><p><a class="btn primary" href="https://github.com/kic02309/PCAssemblyBuild/releases/download/apk-latest/PCAB-Cam.apk">앱 받기 (APK)</a></p></div>`; return;
     }
     if (!S.q1 || !S.q1.step || S.q1.step === 'confirm' || S.q1.step === 'done') q1Reset();
-    const Q = S.q1; Q.bandSig = ''; Q.cdT = 0; Q.tDoc2 = 0; q1Save();
+    const Q = S.q1; Q.bandSig = ''; Q.cdT = 0; Q.tDoc2 = 0; Q.docReady = false; Q.ready = false; q1Save();
     document.body.classList.add('appcam'); qcpLoad();
     const cam = Q.step === 'doc' || Q.step === 'cmos' || Q.step === 'free';
     document.documentElement.classList.toggle('q1camon', cam); document.body.classList.toggle('q1camon', cam);
