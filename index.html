@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.59';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.60';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17714,7 +17714,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       b.querySelector('[data-q]').onclick=()=>stop(true);
     };
     const next=()=>{cur=screens.findIndex((s,i)=>res[i]===undefined);if(cur<0)return finish();wins.forEach((w,i)=>paint(i));};
-    const pick=(i,seat)=>{if(seat)Object.keys(res).forEach(k=>{if(res[k]===seat&&+k!==i)delete res[k];});res[i]=seat;next();};
+    const persist=()=>{try{const o=loMonMap();screens.forEach((x,j)=>{if(res[j]!==undefined)o[j+1]=res[j]||'';else if(o[j+1]!==undefined&&!(j in res))o[j+1]=o[j+1];});localStorage.setItem('loMonMap',JSON.stringify(o));loMonSaveRects(screens);}catch(e){}};   // v32.60 : 한 칸 맞출 때마다 바로 저장 (끝까지 안 가도 유지)
+    const pick=(i,seat)=>{const o0=loMonMap();if(seat)Object.keys(res).forEach(k=>{if(res[k]===seat&&+k!==i){delete res[k];o0[+k+1]='';}});Object.keys(o0).forEach(k=>{if(seat&&+k!==i+1&&o0[k]===seat&&res[+k-1]===undefined)o0[k]='';});try{localStorage.setItem('loMonMap',JSON.stringify(o0));}catch(e){}res[i]=seat;persist();next();};
     const stop=closeAll=>{LO_MON.cal=null;if(closeAll)wins.forEach(w=>{try{w.close();}catch(e){}});};
     const finish=()=>{
       const o={};screens.forEach((s,i)=>{o[i+1]=res[i]||'';});
