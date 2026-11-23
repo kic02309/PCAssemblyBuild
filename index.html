@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.66';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.67';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16536,6 +16536,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function lopCall(op,data,real){
     const p=lopLoad();if(!p)return real(op,data);
     data=data||{};
+    if(p.srcDate&&data.date&&['get','probe','sources','prepare','meta'].includes(op))data={...data,date:p.srcDate};   // v32.67 : 연습 중에는 항상 연습 날짜의 제조건·라인 사용
     if(['can','watch','modelPhraseGet','stats'].includes(op))return real(op,data);   // 읽기만
     if(op==='sources')return lopSources(p,data.date,real);
     if(op==='get'||op==='probe'){
@@ -16879,7 +16880,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if(reset){LO.date=null;LO.statsFrom=null;LO.statsTo=null;LO.data=null;LO.pending=null;LO.autoWorkBatch=null;LO.selectedBatch=null;LO.starting=null;LO.busy=false;S.loCan=false;try{sessionStorage.removeItem('linePending');sessionStorage.removeItem('lineWorkSeat');}catch(e){}}
   }
   async function renderLine() {
-    loStop();LO.date=LO.date||S.today;const epoch=LO.epoch;
+    loStop();LO.date=LO.date||(lopOn()?lopLoad()?.srcDate:'')||S.today;   // v32.67 : 새로고침(F5) 후에도 연습 날짜 유지
+    const epoch=LO.epoch;
     $('#main').innerHTML=pageHead('상황판')+'<div class="pgb"><div class="card">상황판을 불러오는 중입니다…</div></div>';
     try{const p=JSON.parse(sessionStorage.getItem('linePending')||'null');if(p?.uid===S.me.id)LO.pending=p.request;}catch(e){}
     await loRefresh(epoch,true);
