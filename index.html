@@ -410,6 +410,8 @@ html[data-rot="1"] .q1tip,html[data-rot="3"] .q1tip{margin-bottom:50px}
 .q1cr.bad{background:rgba(120,20,20,.72)!important;box-shadow:inset 0 0 0 1px #f09595!important}.q1cr.bad em{color:#fff!important;font-size:12.5px!important;white-space:nowrap}.q1cr.bad em small,.q1cr-o{font-size:.8em;color:#f7c1c1;font-weight:700;margin-right:3px;font-style:normal}.q1cr.bad em b{color:#fac775;font-weight:800}
 .q1sm.glow{animation:q1glow 1.1s ease-in-out infinite}@keyframes q1glow{0%,100%{box-shadow:0 0 0 0 rgba(226,75,74,.7)}50%{box-shadow:0 0 0 12px rgba(226,75,74,0)}}
 .q1chk{color:#fde047;font-size:16px;font-weight:800;margin:0 0 8px;text-align:center}.q1tip.on{display:block;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:16px;font-weight:800}
+/* v33.16 : 가운데 안내 글씨 키움 · '아래로 천천히' 는 칩 위 자리에 들어가 겹치지 않음 */
+.q1tip.on{font-size:22px!important;padding:11px 20px!important;font-weight:900!important}.q1c .q1navd{position:static!important;transform:none!important;left:auto;bottom:auto;margin:2px auto 8px;font-size:17px;line-height:1.1}.q1c .q1navd i{font-size:28px}.q1c .q1p span{font-size:13px;padding:4px 11px}
 .q1cd{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:46}.q1cd b{font-size:150px;line-height:1;font-weight:900;color:#fff;text-shadow:0 0 0 #000,0 4px 24px rgba(0,0,0,.7);-webkit-text-stroke:3px rgba(15,30,61,.8);animation:q1cdp 1s ease-out infinite}.q1cd small{background:rgba(15,30,61,.85);color:#fff;font-size:16px;font-weight:800;padding:5px 14px;border-radius:999px}@keyframes q1cdp{0%{transform:scale(1.35);opacity:.5}30%{transform:scale(1);opacity:1}100%{transform:scale(.95);opacity:.9}}
 .q1cheer{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;animation:q1cheer 1s ease forwards}.q1cheer i{width:84px;height:84px;border-radius:50%;background:#16a34a;color:#fff;font-style:normal;font-size:48px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(255,255,255,.9)}.q1cheer b{background:rgba(15,30,61,.85);padding:6px 14px;border-radius:999px;font-size:15px}.q1cheer.bad i{background:#dc2626}.q1cheer.info i{background:#ea580c}
 @keyframes q1cheer{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
@@ -8867,7 +8869,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.15';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.16';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
