@@ -8821,7 +8821,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.77';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17476,7 +17476,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         <p class="lo-guide-summary">${locked?'진행 중인 배치가 있어 공정 순서는 현재 설정을 사용합니다.':'현재 설정을 불러왔습니다. 본체를 다음 사람에게 넘기는 지점에서만 세부 작업을 추가하세요. 최대 8개 작업을 설정할 수 있습니다.'}</p>
         <div class="lo-guide-tools"><button id="loGuideConfig" type="button" ${guide.dirty?'disabled':''}>자리 · 작업 세트 설정</button> <button id="loGuideOrder" type="button" ${guide.dirty?'disabled':''}>📋 순서표 편집</button><small>세트를 바꾸거나 자리 구조를 관리할 때만 사용합니다.</small></div>
         <p class="lo-meta-help" id="loPhraseStatus">문구와 예상시간은 이번 작업에 적용됩니다. [공정 문구 설정]에서 라인별 기본값으로 저장할 수 있습니다.</p><div class="lo-guide-rows">${structure}</div>`:`<p class="lo-guide-summary">${esc(loLineName(line))} · 오늘 작업할 사람을 순서대로 확인하세요.</p>
-        <div class="lo-guide-tools">${r.admin?'<button id="loGuideTerminal" type="button">이 PC 작업대 지정</button>':''}<small>공용 PC 지정은 사용할 PC에서 합니다. 새 작업대는 설정이 적용된 뒤 지정할 수 있습니다.</small></div>
+        <div class="lo-guide-tools">${loTermAdmin(r)?'<button id="loGuideTerminal" type="button">이 PC 작업대 지정</button>':''}<small>공용 PC 지정은 사용할 PC에서 합니다. 새 작업대는 설정이 적용된 뒤 지정할 수 있습니다.</small></div>
         <div class="lo-guide-rows">${assignments}</div>`}
       </div>
       <div class="lo-guide-foot">${step===2?'<p id="loGuideMissing" class="lo-error" role="status"></p>':''}
@@ -18085,7 +18085,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/octet-stream'}));a.download='모니터_전체화면.bat';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
       toast('모니터_전체화면.bat 을 내려받았습니다. 바탕화면에 두고 모니터 창을 연 뒤 더블클릭하세요');};
     const expected=loCentralSession?.id;
-    if(expected&&r.admin&&r.terminalStation!==expected&&r.stations.some(st=>st.id===expected)){
+    if(expected&&loTermAdmin(r)&&r.terminalStation!==expected&&r.stations.some(st=>st.id===expected)){
       const button=document.createElement('button');
       button.type='button';
       button.textContent='이 창을 '+expected+' 작업대로 지정';
@@ -18288,6 +18288,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const LO_SW_SVG='<svg viewBox="0 0 300 300" aria-hidden="true"><defs><linearGradient id="nwPl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a4058"/><stop offset="1" stop-color="#16263a"/></linearGradient><radialGradient id="nwDg" cx=".38" cy=".3" r=".9"><stop offset="0" stop-color="#9af5c6"/><stop offset=".45" stop-color="#3fd488"/><stop offset="1" stop-color="#17934f"/></radialGradient><radialGradient id="nwDr" cx=".4" cy=".35" r=".9"><stop offset="0" stop-color="#ff9a98"/><stop offset=".5" stop-color="#e24b4a"/><stop offset="1" stop-color="#a62625"/></radialGradient></defs>'+
     '<g class="si"><rect x="6" y="6" width="288" height="288" rx="46" fill="url(#nwPl)" stroke="#527c9d" stroke-width="5"/><circle cx="150" cy="150" r="118" fill="#0d1b2b" stroke="#3a5a7a" stroke-width="4"/><circle cx="150" cy="150" r="104" fill="#14532d"/><ellipse cx="150" cy="176" rx="96" ry="84" fill="#0c3a20"/><circle cx="150" cy="138" r="92" fill="url(#nwDg)"/><ellipse cx="118" cy="92" rx="44" ry="17" fill="#e8fff2" opacity=".55"/><text x="150" y="176" text-anchor="middle" font-size="130" font-weight="800" fill="#06361d" font-family="sans-serif">@N</text></g>'+
     '<g class="sp"><rect x="6" y="6" width="288" height="288" rx="46" fill="url(#nwPl)" stroke="#e24b4a" stroke-width="5"/><circle cx="150" cy="150" r="140" fill="#e24b4a" opacity=".22"/><circle cx="150" cy="150" r="118" fill="#0d1b2b" stroke="#e24b4a" stroke-width="4"/><circle cx="150" cy="150" r="104" fill="#5a1717"/><circle cx="150" cy="156" r="88" fill="url(#nwDr)"/><ellipse cx="124" cy="116" rx="38" ry="13" fill="#ffd5d4" opacity=".45"/><text x="150" y="194" text-anchor="middle" font-size="124" font-weight="800" fill="#fff" font-family="sans-serif">@N</text></g></svg>';
+  const loTermAdmin=r=>!!(r&&(r.admin||(r.manage&&(r.cfg?.managers||[]).includes(S.me?.id))));   // v32.77 : 공용 PC 작업대 지정 = 관리자 + 라인 운영 관리자
   function loSwNo(st) {   // 이 모니터에 연결된 스위치 번호
     try{const n=sessionStorage.getItem('loMonN'),sw=JSON.parse(localStorage.getItem('loMonSw')||'{}')[n];if(sw)return String(sw);}catch(e){}
     try{const m=hubMap(LO.data),k=Object.keys(m).find(x=>m[x]===st.id);if(k)return k;}catch(e){}
@@ -19113,7 +19114,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
 
   // v28.64 : 계산 방법 · 설정 · 이 날 계산 근거 (매니저 · 관리자 · 팀장 · 이사 · 입력 권한자)
-  const prShowHelp = P => !!(P && (P.edit || S.me.role === '관리자' || S.me.role === '매니저' || isRO()));
+  const prShowHelp = P => !!(P && (P.edit || S.me.role === '관리자' || S.me.role === '매니저' || S.loMgr || isRO()));
   const PRL = ['A', 'B', 'C', 'D', 'E', 'F'];
   function prCfgLine() {
     const c = ((S.prCfg || {}).cfg) || {};
@@ -19175,7 +19176,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       };
     });
   }
-  async function prWho() { try { const rights=await loCall('can');S.loCan=!!rights.can;S.loStatsCan=rights.canStats??S.loCan; } catch(e) { S.loCan=false;S.loStatsCan=false; } if (S.me.role === '관리자' || S.me.role === '매니저') return; try { S.prEd = !!(await api('prWho')).editor; } catch (e) { S.prEd = false; } }
+  async function prWho() { try { const rights=await loCall('can');S.loCan=!!rights.can;S.loStatsCan=rights.canStats??S.loCan;S.loMgr=!!rights.manage; } catch(e) { S.loCan=false;S.loStatsCan=false; } if (S.me.role === '관리자' || S.me.role === '매니저') return; try { S.prEd = !!(await api('prWho')).editor; } catch (e) { S.prEd = false; } }
   // ---------- PC 화면
   async function renderProd(opt) {
     S.prv = S.prv || { d: S.today }; if (opt && opt.date) S.prv.d = opt.date;
