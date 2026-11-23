@@ -8854,7 +8854,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.94';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.95';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20936,7 +20936,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     else if (Q.step === 'cmos' && Q.ph === 'fit' && Q.E) { k0 = Object.keys(Q.E).find(k => Q.cm[k] === 'ok' && !Q.vis['@' + k]) || ''; key = k0 ? '@' + k0 : ''; if (key) (Q.cmNew = Q.cmNew || {})[k0] = Date.now(); }
     if (!key) return;
     Q.vis[key] = Date.now(); q1Snd('pop');
-    if (Q.step === 'doc' && q1DocShown(Q) && !Q.allCheer) { Q.allCheer = 1; setTimeout(() => { if (S.q1 === Q && Q.step === 'doc') { q1Snd('done'); q1Cheer('다 읽었어요'); q1Paint(); } }, 350); }
+    if (Q.step === 'doc' && q1DocShown(Q) && !Q.allCheer) { Q.allCheer = 1; setTimeout(() => { if (S.q1 === Q && Q.step === 'doc') { q1Snd('done'); q1Cheer('사양 인식 완료'); q1Paint(); } }, 350); }
     q1ShutPaint(); q1Paint();
   }
   setInterval(q1VisTick, 500);
@@ -20944,7 +20944,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1TitleHtml = () => { const Q = S.q1, [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order && q1V(Q, 'order') ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k] && q1V(Q, k)).length;
     const tip = Q.card === 'spec' ? '👀 아래 사양이 주문서와 같은지 확인하세요' : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 읽혔어요 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 읽혔어요 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
-      : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 다 읽었어요 · 가운데 [다음]을 누르세요' : `${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
+      : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 사양 인식 완료 · 가운데 [다음]을 누르세요' : `${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
     Q._tip = tip;   // v32.94 : 할 일 안내는 카메라 버튼 위 가운데 (#q1tip) · 위에는 단계 이름만
     return `<div class="q1mini"><em>${Q.practice ? '연' : si}</em>${esc(a)}${tip ? '' : ` <u>· ${esc(b)}</u>`}</div>`; };   // v32.50 : 위 안내 한 줄로 작게
   // v31.99 : 사양 변경 · 추가 · OS 설치 · 안정화 표시
