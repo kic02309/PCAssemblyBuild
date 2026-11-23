@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.58';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17687,7 +17687,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return opened;
   }
   function loMonOpenOne(s,seat,n){
-    const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+n+'&x='+s.availLeft+'&y='+s.availTop+'&w='+s.availWidth+'&h='+s.availHeight;
+    const hmN=(()=>{try{const hm=hubMap(LO.data);return +Object.keys(hm).find(k=>hm[k]===seat)||n;}catch(e){return n;}})();   // v32.58 : 모니터 번호 = 그 자리의 스위치 번호 (윈도우 모니터 순서가 아니라 표지 번호로 표시)
+    const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+hmN+'&x='+s.availLeft+'&y='+s.availTop+'&w='+s.availWidth+'&h='+s.availHeight;
     const old=LO_MON.wins[n];let w=null;
     if(old&&!old.closed){try{old.location.replace(url);w=old;}catch(e){w=null;}}   // v31.65 : 이미 열린 창은 주소만 바꿈 (팝업 차단 안 걸림)
     if(!w)w=window.open(url,'loMon'+n,`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);
@@ -17704,7 +17705,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       'body.cur{background:#713f12}body.cur .m{color:#fde047}body.ok{background:#14532d}';
     const paint=i=>{const w=wins[i];if(!w||w.closed)return;const d=w.document,b=d.body;if(!b)return;
       const done=res[i]!==undefined;b.className=done?'ok':i===cur?'cur':'';
-      b.innerHTML=`<div class="n">${i+1}</div><div class="m">${done?(res[i]?'✓ '+esc(seatTxt(res[i])):'이 모니터는 사용 안 함'):i===cur?'지금 이 모니터 앞의 스위치를 눌러 주세요':'잠시 기다려 주세요'}</div>
+      const sw=(id=>+Object.keys(hm).find(k=>hm[k]===id)||0)(res[i]);
+      b.innerHTML=`<div class="n">${done?(res[i]?(sw||'✓'):'–'):'?'}</div><div class="m">${done?(res[i]?'✓ '+esc(seatTxt(res[i])):'이 모니터는 사용 안 함'):i===cur?'지금 이 모니터 앞의 스위치를 눌러 주세요':'잠시 기다려 주세요'}</div>
         <div class="s">${i===cur&&!done?'스위치가 없으면 아래에서 이 모니터 자리를 누르세요':'자리를 바꾸려면 아래에서 누르세요'}</div>
         <div class="g">${sts.map(st=>`<button data-s="${esc(st.id)}" class="${res[i]===st.id?'on':''}">${esc(seatTxt(st.id))}</button>`).join('')}<button data-s="">사용 안 함</button></div>
         <button class="x" data-q>그만하기</button>`;
