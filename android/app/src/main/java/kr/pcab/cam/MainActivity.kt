@@ -526,8 +526,10 @@ class FrameOverlay(ctx: Context) : View(ctx) {
         var ar = if (mode == "doc") 1f / 1.414f else 16f / 9f
         if (side) ar = 1f / ar
         val bandH = H * (band1 - band0)
-        var fw = W * 0.88f; var fh = fw / ar
-        if (fh > bandH * 0.94f) { fh = bandH * 0.94f; fw = fh * ar }
+        // v1.0.x : 가로로 눕혔을 때는 틀을 최대한 크게 (제목·사양표는 틀 위에 반투명으로 겹침)
+        var fw = W * (if (side) 0.97f else 0.88f); var fh = fw / ar
+        val cap = if (side) 0.99f else 0.94f
+        if (fh > bandH * cap) { fh = bandH * cap; fw = fh * ar }
         val l = (W - fw) / 2; val t = H * band0 + (bandH - fh) / 2
         val r = RectF(l, t, l + fw, t + fh)
         vw = W; vh = H; fr = RectF(r.left / W, r.top / H, r.right / W, r.bottom / H)
