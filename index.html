@@ -395,6 +395,9 @@ html[data-rot="1"] .q1cl,html[data-rot="3"] .q1cl{grid-auto-flow:column;grid-aut
 .q1rr{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.q1rr small{flex-basis:100%;color:#667;font-size:12px}.q1rr button{border:1px solid #c9d4e3;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700}
 .q1gd-b{font-size:14px;color:#ffd24d;font-weight:700}.q1gd-b b{font-size:18px}
 .q1mini{font-size:12px!important}
+.q1sh.nx i{display:grid;place-items:center;font:800 20px/1 sans-serif;color:#1d4ed8;transition:opacity .2s}.q1sh.nx i:after{content:attr(data-t);display:block;transition:transform .3s ease}.q1sh.nx:not(.ready) i{opacity:.4}
+html[data-rot="1"] .q1sh.nx i:after{transform:rotate(90deg)}html[data-rot="3"] .q1sh.nx i:after{transform:rotate(-90deg)}
+.q1mini u{text-decoration:none!important;display:block;margin-top:3px;font-size:15px;font-weight:800;color:#fde047}
 .q1cd{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:46}.q1cd b{font-size:150px;line-height:1;font-weight:900;color:#fff;text-shadow:0 0 0 #000,0 4px 24px rgba(0,0,0,.7);-webkit-text-stroke:3px rgba(15,30,61,.8);animation:q1cdp 1s ease-out infinite}.q1cd small{background:rgba(15,30,61,.85);color:#fff;font-size:16px;font-weight:800;padding:5px 14px;border-radius:999px}@keyframes q1cdp{0%{transform:scale(1.35);opacity:.5}30%{transform:scale(1);opacity:1}100%{transform:scale(.95);opacity:.9}}
 .q1cheer{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;animation:q1cheer 1s ease forwards}.q1cheer i{width:84px;height:84px;border-radius:50%;background:#16a34a;color:#fff;font-style:normal;font-size:48px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(255,255,255,.9)}.q1cheer b{background:rgba(15,30,61,.85);padding:6px 14px;border-radius:999px;font-size:15px}.q1cheer.bad i{background:#dc2626}.q1cheer.info i{background:#ea580c}
 @keyframes q1cheer{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
@@ -8850,7 +8853,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.92';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.93';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20708,11 +20711,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.chgOk) return go();
     const base = q1Base(Q), T = Q.tags || {}, rows = q1ChgRows(Q), unread = !rows.length && base !== 'b' && ((Q.markN || 0) >= 2 || (base === 'n' && !T.os && !T.st));
     // v32.87 : 사양 확인 카드는 모든 주문에 (주문번호 찍기 전에 확인)
-    Q.chgAsk = 1; q1Call('pause', true); q1Snd(unread ? 'bad' : 'done');
+    Q.chgAsk = 1; Q.card = unread ? '' : 'spec'; q1Paint(); q1Call('pause', true); q1Snd(unread ? 'bad' : 'done');
     const yes = unread
       ? await q1Ask((base === 'n' ? `<b class="t">기본 모델이 아닌 주문서입니다</b><div class="cr">모델 옆에 (기본)이 없어 사양 변경 · OS · 안정화 중 하나가 있어야 하는데 찾지 못했습니다.</div>` : `<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">주문서에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div>`) + `<small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 주문서가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
       : await q1Ask(q1SpecCard(Q) + `<div class="q1rr"><small>틀린 항목만 다시 읽기</small>${q1DocKeys(Q).map(k => `<button type="button" data-rr="${k}">${Q1_AB[k] || k}</button>`).join('')}</div>`, '맞음 · 주문번호 찍기', false, '전부 다시 읽기');
-    q1Call('pause', false);
+    Q.card = ''; q1Call('pause', false);
     if (S.q1 !== Q) return;
     if (typeof yes === 'string' && yes.indexOf('rr:') === 0) {   // v32.87 : 그 항목만 다시 읽기 (읽은 건 그대로)
       const k = yes.slice(3); if (k === 'order') { Q.order = ''; Q.ordC = null; } else { delete Q.items[k]; if (Q.cand) delete Q.cand[k]; }
@@ -20937,8 +20940,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1PracOn = () => !!S.me;   // v32.53 : 베타 — 전체 직원 연습 가능
   const q1TitleHtml = () => { const Q = S.q1, [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order && q1V(Q, 'order') ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k] && q1V(Q, k)).length;
-    const tip = Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 읽혔어요 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 읽혔어요 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
-      : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 다 읽었어요 · [다음]을 누르세요' : `${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
+    const tip = Q.card === 'spec' ? '👀 아래 사양이 주문서와 같은지 확인하세요' : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 읽혔어요 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 읽혔어요 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
+      : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 다 읽었어요 · 가운데 [다음]을 누르세요' : `${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
     return `<div class="q1mini"><em>${Q.practice ? '연' : si}</em>${esc(a)} <u>· ${esc(tip || b)}</u></div>`; };   // v32.50 : 위 안내 한 줄로 작게
   // v31.99 : 사양 변경 · 추가 · OS 설치 · 안정화 표시
   const q1Chg = it => { const c = String(it && it.chg || ''); return /^변경/.test(c) ? '변경' : /^추가/.test(c) ? '추가' : /빠짐/.test(c) ? '빠짐' : ''; };   // v32.01 : 2개 중 1개 빠짐도 표시
@@ -21012,6 +21015,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const c = $('#q1cap'); if (c && c.textContent !== cap) c.textContent = cap;
     const f = $('[data-q1="cmforce"]'); if (f) f.classList.toggle('hid', Q.step === 'cmos' && q1AllOk(Q));
     const th = $('#q1th b'); if (th) th.textContent = Q.shots || 0;
+    const nx = Q.step === 'doc' && Q.ph === 'read', sI = sh.querySelector('i'); sh.classList.toggle('nx', nx); if (sI) sI.dataset.t = nx ? (Q.practice ? '결과' : '다음') : '';
   }
   const q1Part = Q => { for (const k of Q1K) { const x = Q.items[k]; if (x && x.it.part) return x.it.part; } return null; };
   function q1BodyLine(Q) { const N = Q.bodyN || 1; if (N < 2) return ''; const P = q1Part(Q), D = Q.varDone || { chg: 0, base: 0 };
@@ -21048,7 +21052,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       // v32.05 : B612 · 인스타 느낌 (화이트) — 위아래 그늘 · 점 3개 단계 · 큰 동그라미 셔터 · 가로로 눕히면 글자가 바로 서게 회전
       const lab = s => `<span class="q1rl">${s}</span>`, sm = (a, s, cls) => `<button type="button" class="q1sm ${cls || ''}" data-q1="${a}">${lab(s)}</button>`, gap = '<span class="q1sm q1gap"></span>';
       const L = Q.step === 'doc' ? sm(Q.ph === 'read' ? 'docreset' : 'docback', '다시<br>읽기') : Q.step === 'cmos' ? sm('cmreset', '다시<br>읽기') : `<div class="q1sm q1th" id="q1th">${lab('본체<br><b>' + (Q.shots || 0) + '</b>장')}</div>`;
-      const Rb = Q.step === 'doc' ? (Q.ph === 'read' ? sm('docnext', Q.practice ? '결과' : '다음') : gap) : Q.step === 'cmos' ? sm('cmforce', '불일치<br>진행', 'bad') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
+      const Rb = Q.step === 'doc' ? gap : Q.step === 'cmos' ? sm('cmforce', '불일치<br>진행', 'bad') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
       $('#main').innerHTML = `<div class="q1c"><div id="q1ar"></div><div class="q1c-mid" id="q1mid"></div><div class="q1shT"></div><div class="q1shB"></div>
         <div class="q1ic"><button type="button" class="q1icb" data-q1="menu">${lab(esc((S.me.name || '?').slice(-2, -1) || S.me.name[0]))}</button></div>
         <div class="q1lay" id="q1lay"><div class="q1tt" id="q1tt">${q1TitleHtml()}</div><div class="q1sp"></div><div class="q1gauge" id="q1gauge"><i></i></div><div id="q1hud">${q1Hud()}</div></div>
