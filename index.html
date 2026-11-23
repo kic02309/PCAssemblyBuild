@@ -8850,7 +8850,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.90';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.91';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20660,7 +20660,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const only = sum.length === 1 && mx && /^메모리 <u>\d/.test(sum[0]);
     return `<div class="q1g"><div class="hd"><div><small>주문번호</small><b>${esc(Q.order || '못 읽음')}</b></div>${q1SetNote(Q)}</div>` + G.base.join('') + G.add.join('') + G.chg.join('') + G.hdd.join('') + G.tag.join('')   // v32.34 : 묶음 제목 없앰 (수량 밑 '변경 · 추가 · 빠짐'과 중복)
       + (sum.length ? `<div class="sum"><small><em>※</em>${only ? '메모리 장착 수량' : '꼭 확인'}</small>${sum.join(' · ')}</div>` : '')
-      + (Q.practice ? '' : `<button type="button" class="rp" data-rp>⚠ 전표와 다르게 읽었으면 · 오류 보내기</button><div class="rpx" hidden><div class="pkt">다르게 읽은 곳을 고르세요 (고른 부품은 CMOS에서 직접 확인)</div><div class="pks">${[['order', '주문번호'], ['cpu', 'CPU'], ['mem', '메모리'], ['ssd', '저장장치'], ['hdd', 'HDD'], ['chg', '사양변경'], ['tag', 'O/S·안정화'], ['etc', '기타']].map(([k, l]) => `<button type="button" class="pk" data-rk="${k}">${l}</button>`).join('')}</div><button type="button" class="rps" data-rps>오류 보내고 넘어가기</button></div>`) + '</div>';
+      + (Q.practice ? '' : `<button type="button" class="rp" data-rp>⚠ 주문서와 다르게 읽었으면 · 오류 보내기</button><div class="rpx" hidden><div class="pkt">다르게 읽은 곳을 고르세요 (고른 부품은 CMOS에서 직접 확인)</div><div class="pks">${[['order', '주문번호'], ['cpu', 'CPU'], ['mem', '메모리'], ['ssd', '저장장치'], ['hdd', 'HDD'], ['chg', '사양변경'], ['tag', 'O/S·안정화'], ['etc', '기타']].map(([k, l]) => `<button type="button" class="pk" data-rk="${k}">${l}</button>`).join('')}</div><button type="button" class="rps" data-rps>오류 보내고 넘어가기</button></div>`) + '</div>';
   }
   function q1SetNote(Q) {   // 본체 모델 참고 + 모델명 CPU와 다르면 참고 문구 (막지 않음)
     if (!Q.set) return ''; const cp = qsetCpu(Q.set), cx = Q.items.cpu, nmC = cx ? String(q1Full(cx.it)).replace(/\s/g, '').toUpperCase() : '';
@@ -20794,7 +20794,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const ks = Object.keys(Q.E), wd = ks.filter(k => Q.w[k] && Q.w[k].st === 'diff');
     if (!forced && wd.length) {   // 용량은 맞고 제조사 · 개수만 다름 → 한 번 확인
       q1Call('pause', true); Q.asking = true;
-      const yes = await q1Ask(`<b class="t">확인이 필요합니다</b>${wd.map(k => `<p>${Q1_CAT[k]} · ${k === 'mem' ? '개수' : '제조사'} — 전표 ${esc(k === 'mem' ? (Q.E2.memN || 1) + '개' : (Q.E2[k + 'Br'] || []).filter(Boolean).join('+'))} · 화면 ${esc(Q.w[k].seen)}</p>`).join('')}<small>본체를 확인했다면 진행하세요.</small>`, '확인했음 · 진행');
+      const yes = await q1Ask(`<b class="t">확인이 필요합니다</b>${wd.map(k => `<p>${Q1_CAT[k]} · ${k === 'mem' ? '개수' : '제조사'} — 주문서 사양 ${esc(k === 'mem' ? (Q.E2.memN || 1) + '개' : (Q.E2[k + 'Br'] || []).filter(Boolean).join('+'))} · 화면 ${esc(Q.w[k].seen)}</p>`).join('')}<small>본체를 확인했다면 진행하세요.</small>`, '확인했음 · 진행');
       Q.asking = false; if (!yes) { Q.fitC = 0; q1Call('pause', false); return; }
     }
     Q.busyShot = true; Q.forced = !!forced; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('CMOS', Q));
@@ -20867,7 +20867,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const result = ks.length && ks.every(k => Q.cm[k] === 'ok') ? 'ok' : 'bad';
     Q.result = result; Q.saved = null; Q.step = 'free'; Q.shots = 0; q1Unsave(); renderQc1();
     if (result === 'ok') setTimeout(() => q1Cheer('사양 일치 · 저장'), 120);
-    { const P = q1Part(Q); if (P) { const D = Q.varDone = Q.varDone || { chg: 0, base: 0 }, v = Object.keys(Q.altHit || {}).length ? 'base' : 'chg'; D[v]++; if (D[v] > P[v]) setTimeout(() => q1Cheer((v === 'chg' ? '변경' : '기본') + ' 사양이 전표보다 많아요 · 확인하세요', true, true), 1300); } }   // v32.87
+    { const P = q1Part(Q); if (P) { const D = Q.varDone = Q.varDone || { chg: 0, base: 0 }, v = Object.keys(Q.altHit || {}).length ? 'base' : 'chg'; D[v]++; if (D[v] > P[v]) setTimeout(() => q1Cheer((v === 'chg' ? '변경' : '기본') + ' 사양이 주문서보다 많아요 · 확인하세요', true, true), 1300); } }   // v32.87
     const seen = {}; ks.forEach(k => { seen[k] = { st: Q.cm[k] || 'wait', seen: Q.bad[k] ? Q.bad[k].seen : '' }; if (Q.w[k] && Q.w[k].st) seen[k].w = { st: Q.w[k].st, seen: Q.w[k].seen || '' }; });
     const codes = {}; Q1K.forEach(k => { if (Q.items[k]) codes[k] = { code: Q.items[k].it.code || '', n: Q.items[k].it.n || 1, reg: Q.items[k].reg }; });
     seen.meta = { body: (Q.bodyI || 1) + '/' + (Q.bodyN || 1), alt: Object.keys(Q.altHit || {}), man: Object.keys(Q.man || {}), nob: Object.keys(Q.nob || {}).filter(k => Q.nob[k]), chgOk: Q.chgOk || '', tags: { os: !!(Q.tags && Q.tags.os), st: !!(Q.tags && Q.tags.st), chg: Q1K.filter(k => Q.items[k] && q1Chg(Q.items[k].it)).concat(Object.keys(Q.gone || {}).map(k => k + '빠짐')) }, vendor: Q.vendor || '', auto: !!Q.autoShot, forced: !!Q.forced, sec: Q.t0 ? Math.round((Date.now() - Q.t0) / 1000) : 0, docSec: Q.tDoc && Q.t0 ? Math.round((Q.tDoc - Q.t0) / 1000) : 0 };
@@ -21076,15 +21076,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           <div class="q1-bar"><div class="q1-acts one"><button type="button" class="primary big" data-q1="go">1단계 전표 확인 시작</button></div>${q1PracOn() ? '<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="prac">연습 모드 · 전표 읽기만</button></div>' : ''}</div>`;
       } else if (Q.step === 'cmp') {
         const ks = Object.keys(Q.E), allOk = ks.every(k => Q.cm[k] === 'ok'), t = Q.tags || {}, warn = allOk && ks.some(k => Q.w[k] && Q.w[k].st === 'diff');
-        body = `<div class="q1-title"><b>전표 ↔ CMOS 비교</b><span>주문 ${esc(Q.order)}</span></div>
+        body = `<div class="q1-title"><b>주문서 사양 ↔ CMOS 비교</b><span>주문 ${esc(Q.order)}</span></div>
           <div class="q1-verdict ${warn ? 'warn' : allOk ? 'ok' : 'bad'}">${warn ? '⚠ 용량은 모두 맞음 · 확인 필요 항목 있음' : allOk ? '✓ 사양 모두 일치' : '✕ 확인이 필요한 항목이 있습니다'}</div>
           ${t.os || t.st ? `<div class="q1-ord">${t.os ? '<span class="q1-tag">OS 설치</span>' : ''}${t.st ? '<span class="q1-tag">안정화</span>' : ''}</div>` : ''}
           ${ks.map(k => { const x = Q.items[k] || {}, it = x.it || {}, s = Q.cm[k];
             const wd = s === 'ok' && Q.w[k] && Q.w[k].st === 'diff', rs = s === 'bad' ? 'bad' : s !== 'ok' ? 'wait' : wd ? 'warn' : 'ok';
             return `<div class="q1-row r${rs}"><div class="q1-vh"><b>${Q1_CAT[k]}</b>${it.chg ? `<em class="q1-chg ${/^추가/.test(it.chg) ? 'add' : ''}">${/^추가/.test(it.chg) ? '추가' : '변경'}</em>` : ''}<span class="q1-res ${rs}">${{ ok: '✓ 일치', warn: '⚠ 확인 필요', bad: '✕ 불일치', wait: '? 못 찾음' }[rs]}</span></div>
-              <div class="q1-vb"><div class="sd"><small>전표</small><b>${esc(q1ExpLabel(k, Q.E))}</b></div><i>${rs === 'bad' ? '≠' : rs === 'wait' ? '?' : '='}</i><div class="sd cm ${rs}"><small>CMOS</small><b>${s === 'ok' ? esc(q1ExpLabel(k, Q.E)) : s === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</b></div></div>
-              ${s === 'ok' && (k === 'ssd' || k === 'hdd') && Q.E2[k + 'Br'] && Q.E2[k + 'Br'].some(Boolean) ? `<div class="q1-vs2 ${Q.w[k] && Q.w[k].st === 'diff' ? 'wd' : ''}">용량 ✓ 맞음 · ${!Q.w[k] || !Q.w[k].st ? '제조사 표시 없음' : Q.w[k].st === 'ok' ? '제조사 ✓ ' + esc(Q.E2[k + 'Br'].filter(Boolean).join('+')) : '제조사 ⚠ 확인 필요 (전표 ' + esc(Q.E2[k + 'Br'].filter(Boolean).join('+')) + ' · 화면 ' + esc(Q.w[k].seen) + ')'}</div>` : ''}
-              ${s === 'ok' && k === 'mem' && Q.w.mem && Q.w.mem.st ? `<div class="q1-vs2 ${Q.w.mem.st === 'diff' ? 'wd' : ''}">${Q.w.mem.st === 'diff' ? '개수 ⚠ 확인 필요 (전표 ' + (Q.E2.memN || 1) + '개 · 화면 ' + esc(Q.w.mem.seen) + ')' : '개수 ✓ ' + (Q.E2.memN || 1) + '개'}</div>` : ''}
+              <div class="q1-vb"><div class="sd"><small>주문서 사양</small><b>${esc(q1ExpLabel(k, Q.E))}</b></div><i>${rs === 'bad' ? '≠' : rs === 'wait' ? '?' : '='}</i><div class="sd cm ${rs}"><small>CMOS</small><b>${s === 'ok' ? esc(q1ExpLabel(k, Q.E)) : s === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</b></div></div>
+              ${s === 'ok' && (k === 'ssd' || k === 'hdd') && Q.E2[k + 'Br'] && Q.E2[k + 'Br'].some(Boolean) ? `<div class="q1-vs2 ${Q.w[k] && Q.w[k].st === 'diff' ? 'wd' : ''}">용량 ✓ 맞음 · ${!Q.w[k] || !Q.w[k].st ? '제조사 표시 없음' : Q.w[k].st === 'ok' ? '제조사 ✓ ' + esc(Q.E2[k + 'Br'].filter(Boolean).join('+')) : '제조사 ⚠ 확인 필요 (주문서 사양 ' + esc(Q.E2[k + 'Br'].filter(Boolean).join('+')) + ' · 화면 ' + esc(Q.w[k].seen) + ')'}</div>` : ''}
+              ${s === 'ok' && k === 'mem' && Q.w.mem && Q.w.mem.st ? `<div class="q1-vs2 ${Q.w.mem.st === 'diff' ? 'wd' : ''}">${Q.w.mem.st === 'diff' ? '개수 ⚠ 확인 필요 (주문서 사양 ' + (Q.E2.memN || 1) + '개 · 화면 ' + esc(Q.w.mem.seen) + ')' : '개수 ✓ ' + (Q.E2.memN || 1) + '개'}</div>` : ''}
               <div class="q1-pn"><span>${esc(it.code || '—')}</span> · ${it.n || 1}개 · ${esc(q1Full(it) || '—')}${x.reg === false ? ' <em class="q1-unreg">미등록 코드</em>' : ''}${x.sheet ? ' <em class="q1-unreg">전체 사진에서 반영</em>' : ''}</div>
               ${(x.extra || []).map(e => `<div class="q1-pn">+ <span>${esc(e.code || '')}</span> · ${e.n || 1}개 · ${esc(q1Full(e))}</div>`).join('')}</div>`; }).join('')}
           <div class="q1-bar"><div class="q1-acts three">${btn('redoc', '전표 다시')}${btn('recm', 'CMOS 다시')}${btn('confirm', warn ? '확인 후 확정' : allOk ? '확정' : '불일치로 확정', allOk ? 'primary' : 'danger')}</div></div>`;
@@ -21123,7 +21123,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'cmnext') { Q.ph = 'fit'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmshot') { Q.autoShot = false; return q1CmShoot(); }
       if (a === 'cmforce') { const ks = Object.keys(Q.E).filter(k => Q.cm[k] !== 'ok'); q1Call('pause', true); Q.asking = true;
-        const yes = await q1Ask(`<b class="t">불일치로 진행할까요?</b>${ks.map(k => `<p>${Q1_CAT[k]} — 전표 ${esc(q1ExpLabel(k, Q.E))} · 화면 ${Q.cm[k] === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</p>`).join('')}<small>진행하면 불일치로 기록되고 <b>검수자와 담당 매니저</b>에게 확인 알림이 갑니다.</small>`, '불일치로 진행', true);
+        const yes = await q1Ask(`<b class="t">불일치로 진행할까요?</b>${ks.map(k => `<p>${Q1_CAT[k]} — 주문서 사양 ${esc(q1ExpLabel(k, Q.E))} · 화면 ${Q.cm[k] === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</p>`).join('')}<small>진행하면 불일치로 기록되고 <b>검수자와 담당 매니저</b>에게 확인 알림이 갑니다.</small>`, '불일치로 진행', true);
         Q.asking = false; if (!yes) { q1Call('pause', false); return; } return q1CmShoot(true); }
       if (a === 'tocmp') { Q.step = 'cmp'; return renderQc1(); }
       if (a === 'redoc') { q1Unsave(); Q.vis = {}; Q.allCheer = 0; Q.bodyN = 0; Q.bodyI = 1; Q.varDone = null; Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
@@ -21160,13 +21160,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const why = k === 'hddX' ? 'HDD가 빠져야 하는데 장착되어 있음'
           : ch ? '사양변경 미반영 의심 — 변경 전 부품이 장착됐을 수 있음'
           : k === 'mem' ? '메모리 용량·개수 확인 (테스트 메모리 · 누락 의심)'
-          : SN[k].st === 'wait' ? 'CMOS 화면에서 못 찾음 — 인식 문제일 수도 있음' : '전표와 다른 부품 장착 의심';
+          : SN[k].st === 'wait' ? 'CMOS 화면에서 못 찾음 — 인식 문제일 수도 있음' : '주문서 사양과 다른 부품 장착 의심';
         return { cat: (Q1_CAT[base] || base) + (ch ? ' <em>사양변경</em>' : ''), exp, got: SN[k].seen || '못 찾음', st: ST[SN[k].st] || SN[k].st, why }; }); };
     const card = x => { const L = lines(x), M = (x.seen && x.seen.meta) || {};
       return `<div class="q1al-r"><div class="q1al-h"><span class="q1al-o">주문 <b>${esc(x.order)}</b></span><span class="q1al-t">${esc(String(x.at || '').replace('T', ' ').slice(5, 16))}</span></div>
         <div class="q1al-w">조립 <b>${esc(x.who || '미확인')}</b>${x.grp ? ' · ' + esc(x.grp) : ''} &nbsp;·&nbsp; 검수 <b>${esc(x.by || '')}</b></div>
-        <table class="q1al-tb"><thead><tr><th>부품</th><th>전표</th><th>CMOS 화면</th></tr></thead><tbody>${L.map(l => `<tr><td>${l.cat}</td><td class="e">${esc(l.exp)}</td><td class="g">${esc(l.got)} <i>${esc(l.st)}</i></td></tr><tr class="why"><td colspan="3">→ ${esc(l.why)}</td></tr>`).join('') || '<tr><td colspan="3">상세 내용 없음</td></tr>'}</tbody></table>
-        ${(M.man || []).length ? `<div class="q1al-n">※ 검수자가 전표 인식 오류를 보고한 부품: ${esc(M.man.map(k => Q1_CAT[k] || k).join(', '))}</div>` : ''}
+        <table class="q1al-tb"><thead><tr><th>부품</th><th>주문서 사양</th><th>CMOS 화면</th></tr></thead><tbody>${L.map(l => `<tr><td>${l.cat}</td><td class="e">${esc(l.exp)}</td><td class="g">${esc(l.got)} <i>${esc(l.st)}</i></td></tr><tr class="why"><td colspan="3">→ ${esc(l.why)}</td></tr>`).join('') || '<tr><td colspan="3">상세 내용 없음</td></tr>'}</tbody></table>
+        ${(M.man || []).length ? `<div class="q1al-n">※ 검수자가 주문서 인식 오류를 보고한 부품: ${esc(M.man.map(k => Q1_CAT[k] || k).join(', '))}</div>` : ''}
         <button class="q1al-ok" data-ack="${esc(String(x.id))}">확인했습니다</button></div>`; };
     modal(`<div class="q1al-top"><span class="q1al-ic">⚠</span><div><b>1차 검수 불일치로 진행됨</b><small>${rows.length}건 · 검수자가 [불일치 진행]을 눌렀습니다 · 확인을 눌러야 사라집니다</small></div></div><div class="q1al">${rows.map(card).join('')}</div><div class="acts"><button data-n>나중에 (10분)</button></div>`, (bg, close) => {
       bg._lock = true; bg.classList.add('q1al-bg');
