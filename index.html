@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.62';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.63';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17710,11 +17710,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const css='body{margin:0;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'+
       '.n{font-size:160px;font-weight:900;line-height:1}.m{font-size:34px;font-weight:800;margin:18px 30px}.s{font-size:20px;color:#94a3b8}.g{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:26px 40px 0}'+
       'button{font-size:20px;font-weight:700;padding:12px 18px;border-radius:12px;border:2px solid #475569;background:#1e293b;color:#e2e8f0;cursor:pointer}button.on{border-color:#22c55e;background:#14532d}.x{margin-top:22px;font-size:16px;background:none;border:1px solid #475569}'+
-      'body.cur{background:#713f12}body.cur .m{color:#fde047}body.ok{background:#14532d}';
+      'body.cur{background:#713f12}body.cur .m{color:#fde047}body.ok{background:#14532d}.w{font-size:88px;font-weight:900;color:#dcfce7;margin:6px 30px 0;line-height:1.1}.ok .n{color:#86efac}.ok .m{font-size:30px;color:#bbf7d0}';
     const paint=i=>{const w=wins[i];if(!w||w.closed)return;const d=w.document,b=d.body;if(!b)return;
       const done=res[i]!==undefined;b.className=done?'ok':i===cur?'cur':'';
       const swn=sw[i]||(id=>+Object.keys(hm).find(k=>hm[k]===id)||0)(res[i]);
-      b.innerHTML=`<div class="n">${done?(swn||(res[i]?'✓':'–')):'?'}</div><div class="m">${done?(res[i]?'✓ '+esc(seatTxt(res[i])):(sw[i]?'✓ 스위치 '+sw[i]+'번 연결됨 · 오늘은 자리 없음 (작업 안 함)':'이 모니터는 사용 안 함')):i===cur?'지금 이 모니터 앞의 스위치를 눌러 주세요':'잠시 기다려 주세요'}</div>
+      b.innerHTML=`<div class="n">${done?(swn||(res[i]?'✓':'–')):'?'}</div>${done&&res[i]?`<div class="w">${esc(sts.find(x=>x.id===res[i])?.assignedName||'담당 없음')}</div>`:''}<div class="m">${done?(res[i]?'✓ 연동 완료 · 스위치 '+(swn||'')+'번 · '+esc(seatTxt(res[i])):(sw[i]?'✓ 스위치 '+sw[i]+'번 연결됨 · 오늘은 자리 없음 (작업 안 함)':'이 모니터는 사용 안 함')):i===cur?'지금 이 모니터 앞의 스위치를 눌러 주세요':'잠시 기다려 주세요'}</div>
         <div class="s">${i===cur&&!done?'스위치가 없으면 아래에서 이 모니터 자리를 누르세요':'자리를 바꾸려면 아래에서 누르세요'}</div>
         <div class="g">${sts.map(st=>`<button data-s="${esc(st.id)}" class="${res[i]===st.id?'on':''}">${esc(seatTxt(st.id))}</button>`).join('')}<button data-s="">사용 안 함</button></div>
         <button class="x" data-q>그만하기</button>`;
