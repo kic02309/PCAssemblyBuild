@@ -412,6 +412,9 @@ html[data-rot="1"] .q1tip,html[data-rot="3"] .q1tip{margin-bottom:50px}
 .q1chk{color:#fde047;font-size:16px;font-weight:800;margin:0 0 8px;text-align:center}.q1tip.on{display:block;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:16px;font-weight:800}
 /* v33.16 : 가운데 안내 글씨 키움 · '아래로 천천히' 는 칩 위 자리에 들어가 겹치지 않음 */
 .q1tip.on{font-size:22px!important;padding:11px 20px!important;font-weight:900!important}.q1c .q1navd{position:static!important;transform:none!important;left:auto;bottom:auto;margin:2px auto 8px;font-size:17px;line-height:1.1}.q1c .q1navd i{font-size:28px}.q1c .q1p span{font-size:13px;padding:4px 11px}
+/* v33.18 : 폰 브라우저 첫 메뉴 화면 — 앱처럼 위 막대 없이 꽉 차게 */
+@media(max-width:700px){body.mhomev,body.mhomev .content,body.mhomev #main{background:#f2f3f7!important;margin:0!important;padding:0!important;min-height:100dvh}body.mhomev .czt{display:none!important}}
+.pmx .mh-card[data-mh=lock]{opacity:.55}.pmx .mh-card[data-mh=lock] .go{font-size:18px}
 /* v33.17 : 사양 카드 긴 제품명 — 길이에 따라 글씨를 줄이고 줄 수를 늘려 풀네임이 보이게 */
 .q1g .tx.sm div{font-size:8.8px!important;-webkit-line-clamp:3!important;letter-spacing:-.5px!important}.q1g .tx.xs div{font-size:7.8px!important;-webkit-line-clamp:4!important;letter-spacing:-.5px!important}
 .q1cd{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:46}.q1cd b{font-size:150px;line-height:1;font-weight:900;color:#fff;text-shadow:0 0 0 #000,0 4px 24px rgba(0,0,0,.7);-webkit-text-stroke:3px rgba(15,30,61,.8);animation:q1cdp 1s ease-out infinite}.q1cd small{background:rgba(15,30,61,.85);color:#fff;font-size:16px;font-weight:800;padding:5px 14px;border-radius:999px}@keyframes q1cdp{0%{transform:scale(1.35);opacity:.5}30%{transform:scale(1);opacity:1}100%{transform:scale(.95);opacity:.9}}
@@ -8873,7 +8876,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.17';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.18';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9692,7 +9695,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (view === 'df') { $('#proxy').innerHTML = ''; return dfCan() ? renderDf() : go('dash'); }    // v29.81 : 조립 불량 관리
     if (view === 'sp') { $('#proxy').innerHTML = ''; return canSp() ? renderSp() : go('dash'); }   // v29.57 : 소모품 관리
     if (view === 'mgr') { $('#proxy').innerHTML = ''; return canMgr() ? renderMgr(opt) : go('dash'); }   // v28.59
-    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob' || view === 'qc' || view === 'qc1' || view === 'mhome'); document.body.classList.toggle('qcm', view === 'qc' || view === 'qc1'); if (view !== 'qc1') { try { if (window.PCABCam) window.PCABCam.stop(); } catch (e) { } document.documentElement.classList.remove('q1camon'); document.body.classList.remove('q1camon'); if (S.q1) S.q1.camMode = null; } if (view !== 'qc') { try { qcCamClose(); } catch (e) { } }
+    document.body.classList.toggle('pmobm', view === 'pmob' || view === 'smob' || view === 'qc' || view === 'qc1' || view === 'mhome'); document.body.classList.toggle('qcm', view === 'qc' || view === 'qc1'); document.body.classList.toggle('mhomev', view === 'mhome'); if (view !== 'qc1') { try { if (window.PCABCam) window.PCABCam.stop(); } catch (e) { } document.documentElement.classList.remove('q1camon'); document.body.classList.remove('q1camon'); if (S.q1) S.q1.camMode = null; } if (view !== 'qc') { try { qcCamClose(); } catch (e) { } }
     if (view === 'org') { $('#proxy').innerHTML = ''; return renderOrgView(); }
     if (view === 'line') { $('#proxy').innerHTML=''; return canLine() ? renderLine() : go('dash'); }
     if (view === 'linestats') { $('#proxy').innerHTML=''; return canLine() ? renderLineStats() : go('dash'); }
@@ -19134,7 +19137,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
 
   // ================================================================ v28.62 : 생산업무 (라인 공동실적 → 개인 배분) + 모바일 입력
   const PR_CS = ['A', 'B', 'C', 'D', 'E', 'F'], PR_CL = ['A', 'B', 'C', 'D', 'E', 'F', '없음'], PR_OTH = ['포장지원', '정리지원', '청소', '담당/교육', '불량처리', '기타시간'];
-  const canPmob = () => !!(S.me && !isRO() && (S.me.group === '라인' || S.prEd || S.mpv === 'pmob'));
+  const canPmob = () => !!(S.me && !isRO() && (S.me.group === '라인' || S.prEd || S.me.role === '관리자' || S.mpv === 'pmob'));   // v33.18 : 관리자 포함
   const canProd = () => !!(S.me && (S.me.role === '관리자' || S.me.role === '매니저' || S.prEd || S.me.group === '라인' || isRO()));   // 보기 = 라인 · 매니저 · 관리자 · 팀장 / 입력 · 확정은 서버가 정함
   const prUid = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   // 사양표 붙여넣기 → 제조번호 · 모델 · 수량 · 케이스 · 쿨러 · 파워 (여러 건 한 번에) — 못 읽으면 빈칸 + '확인 필요' (추측 금지)
@@ -19664,7 +19667,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     };
   }
   // ================================================================ v29.53 : 안정화 업무 (폰 입력) — 주문번호 + 업무 체크 → 본인 오늘 입력표에 한 줄 추가
-  const canSmob = () => !!(S.me && !isRO() && (S.me.group === '안정화' || S.mpv === 'smob'));
+  const canSmob = () => !!(S.me && !isRO() && (S.me.group === '안정화' || S.me.role === '관리자' || S.mpv === 'smob'));   // v33.18 : 관리자 포함
   const SM_A = [['AG', '검수'], ['AH', '완충1'], ['AI', '완충2'], ['AT', '개인포장']];
   const SM_OS = [['AD', '안정화'], ['AA', 'O/S'], ['AB', 'DOEM + M'], ['AC', 'OS 재인증'], ['AE', '안정화 설치<br>+ OS삭제'], ['AF', 'Bios+Up']];
   const SM_OP = [['AJ', '옵1'], ['AK', '옵2'], ['AL', '옵3'], ['AM', '옵4']];
@@ -19688,10 +19691,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const card = (v, ic, bg, t, sub, main1) => `<button type="button" class="mh-card${main1 ? ' main' : ''}" data-mh="${v}"><span class="ic" style="background:${bg}">${ic}</span><span class="tx"><b>${t}</b><small>${sub}</small></span><span class="go">›</span></button>`;
     const W = [];
     const grp = me.group || '';
-    if (canSmob()) W.push(['smob', '🔧', '#f3eefe', '안정화 업무', '주문번호 · 작업 입력']);
-    if (canPmob()) W.push(['pmob', '🏭', '#fff4e5', '라인생산', '간편 입력']);
-    if (canQc()) W.push(['qc', '✅', '#e8eefb', '2차 검수', '주문서 찍고 4가지 체크']);
-    if (!APPCAM && !S.mpv) W.push(['qc1app', Q1_ICON.replace('q1ap-ic', 'q1ap-ic sm'), 'transparent', '1차 검수 앱 <em class="mh-beta">안드로이드 · 베타</em>', '앱 받기 · 주문서 ↔ CMOS 자동 대조']);   // v32.53
+    // v33.18 : 4개 메뉴는 항상 보임 · 권한 없으면 자물쇠 (누르면 안내)
+    const lk = (v, ic, bg, t, sub, ok, why) => W.push(ok ? [v, ic, bg, t, sub] : ['lock', '🔒', '#eceff4', t, why]);
+    lk('smob', '🔧', '#f3eefe', '안정화 업무', '주문번호 · 작업 입력', canSmob(), '권한 없음 · 안정화 담당만');
+    lk('pmob', '🏭', '#fff4e5', '라인생산', '간편 입력', canPmob(), '권한 없음 · 라인 담당만');
+    W.push([APPCAM ? 'qc1' : 'qc1app', Q1_ICON.replace('q1ap-ic', 'q1ap-ic sm'), 'transparent', '1차 검수 <em class="mh-beta">베타버전</em>', APPCAM ? '주문서 ↔ CMOS 자동 대조' : '안드로이드 앱 받기 · 주문서 ↔ CMOS 자동 대조']);
+    lk('qc', '✅', '#e8eefb', '2차 검수', '주문서 찍고 4가지 체크', canQc(), '권한 없음 · 매니저 이상');
     if (!mgr) W.push(['input', '📝', '#eef6f0', '업무데이터 보기', '오늘 입력 내용 확인 (보기 전용)']);
     if (!mgr) W.push(['month', '📅', '#eef6f0', '이번 달 내 실적', '월 업무현황 · 달성률 (보기 전용)']);
     if (mgr) W.push(['qcr', '📋', '#eef6f0', '검수 내역', '2차 검수율 · 그룹별 · 검수자별']);
@@ -19699,10 +19704,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const M = [];
     main.innerHTML = `<div class="pmx"><div class="pxhd"><div class="pxkr"><span class="pxk">PC ASSEMBLY WORK</span><span class="pxlk"><button id="mhpc">PC 화면</button><button id="mhlo">로그아웃</button></span></div>
       <div class="pxr"><div><h1>조립팀 업무데이터</h1><div class="pxmeta">${dLabel(S.today)} · ${esc(me.name)}${grp ? ' · ' + esc(grp) : ''}</div></div></div></div>
-      <div class="pxbd"><div class="mh-grid">${W.map((x, i) => card(...x, i === 0)).join('')}</div>
+      <div class="pxbd"><div class="mh-grid">${(i1 => W.map((x, i) => card(...x, i === i1)).join(''))(W.findIndex(x => x[0] !== 'lock'))}</div>
       ${M.length ? `<div class="mh-sec">관리</div><div class="mh-grid">${M.map(x => card(...x)).join('')}</div>` : ''}
       </div></div>`;
-    $$('[data-mh]', main).forEach(b => b.onclick = () => b.dataset.mh === 'qc1app' ? q1AppInfo() : go(b.dataset.mh));
+    $$('[data-mh]', main).forEach(b => b.onclick = () => b.dataset.mh === 'lock' ? toast('권한이 없습니다 · 필요하면 관리자에게 문의하세요', true) : b.dataset.mh === 'qc1app' ? q1AppInfo() : go(b.dataset.mh));
     $('#mhpc').onclick = () => { S.pcMode = 1; go(mgr ? 'dash' : 'input'); };
     $('#mhlo').onclick = () => logout();
   }
@@ -19732,7 +19737,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('#grid input[data-f="o"]').forEach(inp => { const k = String(inp.value || '').replace(/\D/g, ''), x = M[k], td = inp.closest('td'); if (!td) return; td.classList.toggle('qc2', !!x); if (x) td.dataset.qt = `✓ 2차 검수 ${x.by} · ${String(x.at).slice(5, 16).replace('-', '/')}`; else delete td.dataset.qt; });
   }
   // ───────── v30.90 : 조립 검수 (휴대폰) — 주문서 사진은 글자 읽는 데만 쓰고 저장하지 않음 ─────────
-  const canQc = () => !!(S.me && (!isRO() || S.mpv === 'qc'));
+  const canQc = () => !!(S.me && ((!isRO() && (S.me.role === '매니저' || S.me.role === '관리자')) || S.mpv === 'qc'));   // v33.18 : 2차 검수 = 매니저 이상
   const QC_ROWS = [['cpu', 'CPU'], ['mb', '메인보드'], ['mem', '메모리'], ['ssd', '저장장치']];
   function qcTess() {
     if (window.Tesseract) return Promise.resolve();
