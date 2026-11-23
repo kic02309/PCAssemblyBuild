@@ -8759,7 +8759,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.70';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.71';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17841,9 +17841,34 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <details class="lo-mon-manual" open><summary>직접 고르기 (모니터 ${screens.length}대)</summary>
       <div style="margin:8px 0"><button type="button" class="primary" data-mid>🔢 모니터 번호 보기</button> <small>누르면 모든 모니터에 5초간 큰 번호가 뜹니다. 모니터에 뜬 번호가 아래 같은 번호 줄입니다 → 그 모니터의 표지 번호에 맞는 자리를 고르세요</small></div>
       <div class="lo-mon-list">${screens.map((s,i)=>`<label class="lo-mon-row"><span class="lo-mon-no">${i+1}</span><span class="lo-mon-info">${s.isPrimary?'<b>주 모니터</b> · ':''}${esc(s.label||'모니터')}<small>위치 ${s.left}, ${s.top} · ${s.width}×${s.height}</small></span><select data-lo-mon="${i+1}">${opts((map[i+1]||(swMap[i+1]&&hmI[swMap[i+1]])||map[i+1])??(s===sd.currentScreen?'':(sts[i-(screens.indexOf(sd.currentScreen)>=0&&screens.indexOf(sd.currentScreen)<i?1:0)]?.id||'')))}</select></label>`).join('')}</div></details>
+      <details class="lo-mon-manual"><summary>🔊 모니터 내장 스피커 맞추기</summary>
+      <div style="margin:8px 0"><button type="button" class="primary" data-sndload>🔊 스피커 불러오기</button> <small>누르면 모니터마다 [🔈 테스트] 소리가 나는 스피커를 고를 수 있습니다. 한 번 저장하면 이 PC에 남습니다 (소리 종류 A~D는 스위치 번호로 자동)</small></div>
+      <div id="loSndList" class="lo-mon-list"></div></details>
       <p id="loMonMsg" class="lo-error" role="status"></p>
       <div class="acts"><button data-c style="margin-right:auto">닫기</button><button data-mx>열린 창 모두 닫기</button><button data-ms>배정 저장</button><button class="primary" data-mo>화면 열기</button></div>`,(bg,close)=>{
       $('[data-c]',bg).onclick=close;
+      $('[data-sndload]',bg).onclick=async()=>{   // v32.71 : 모니터별 내장 스피커 선택을 연동 창 한 곳에서
+        let err='',outs=[];
+        try{const st=await navigator.mediaDevices.getUserMedia({audio:true});st.getTracks().forEach(t=>t.stop());}catch(e){err='마이크 권한을 허용해야 스피커 이름이 보입니다 (녹음은 하지 않습니다).';}
+        try{outs=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='audiooutput'&&x.deviceId&&x.deviceId!=='default'&&x.deviceId!=='communications');}catch(e){}
+        const can=!!(window.AudioContext&&AudioContext.prototype.setSinkId);
+        const list=$('#loSndList',bg);
+        if(!can||!outs.length){list.innerHTML=`<p class="lo-error">${esc(err||(can?'스피커를 찾지 못했습니다.':'이 브라우저는 스피커 선택을 지원하지 않습니다 (크롬·엣지 최신 버전).'))}</p>`;return;}
+        const keyOf=i=>swMap[i+1]||(map[i+1]&&swNo(map[i+1]))||i+1;
+        const guess=s=>{const l=String(s.label||'').trim().toLowerCase();if(!l||l.length<3)return '';return outs.find(o=>String(o.label||'').toLowerCase().includes(l))?.deviceId||'';};
+        list.innerHTML=(err?`<p class="lo-error">${esc(err)}</p>`:'')+screens.map((s,i)=>{
+          if(s.isPrimary||s===sd.currentScreen)return '';
+          const k=keyOf(i);let cur='';try{cur=localStorage.getItem('loMonSink'+k)||'';}catch(e){}
+          const sel=cur||guess(s);
+          return `<label class="lo-mon-row"><span class="lo-mon-no">${k}</span><span class="lo-mon-info">모니터 ${k}번 스피커</span><select data-snd="${k}"><option value="">윈도우 기본 스피커</option>${outs.map(o=>`<option value="${esc(o.deviceId)}" ${o.deviceId===sel?'selected':''}>${esc(o.label||'스피커')}</option>`).join('')}</select><button type="button" data-sndt="${k}">🔈 테스트</button></label>`;}).join('')+'<div class="acts"><button type="button" class="primary" data-sndsave>스피커 저장</button></div>';
+        $$('[data-sndt]',list).forEach(b=>b.onclick=async()=>{
+          const id=$(`[data-snd="${b.dataset.sndt}"]`,list).value;
+          try{const ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.setSinkId)await ac.setSinkId(id);await ac.resume();
+            [[880,0],[1320,0.18]].forEach(([f,d])=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.setValueAtTime(0.0001,ac.currentTime+d);g.gain.linearRampToValueAtTime(0.4*sndVol(),ac.currentTime+d+0.01);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+d+0.5);o.connect(g).connect(ac.destination);o.start(ac.currentTime+d);o.stop(ac.currentTime+d+0.55);});
+            setTimeout(()=>ac.close().catch(()=>{}),1500);}catch(e){toast('소리를 내지 못했습니다: '+e.message,true);}
+        });
+        $('[data-sndsave]',list).onclick=()=>{$$('[data-snd]',list).forEach(x=>{try{localStorage.setItem('loMonSink'+x.dataset.snd,x.value);}catch(e){}});toast('모니터별 스피커를 저장했습니다 (이 PC) · 모니터 창을 다시 열면 적용됩니다');};
+      };
       const collect=()=>{const o={};$$('[data-lo-mon]',bg).forEach(x=>{o[x.dataset.loMon]=x.value;});try{localStorage.setItem('loMonMap',JSON.stringify(o));}catch(e){}loMonSaveRects(screens);return o;};
       $('[data-mid]',bg).onclick=()=>{   // v32.59 : 모든 모니터에 윈도우 모니터 번호를 크게 5초간 표시
         const ws=[];
