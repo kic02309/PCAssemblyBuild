@@ -8854,7 +8854,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.97';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.98';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20979,7 +20979,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (Q.set) h += pill('vd', '본체 ' + esc(qsetShort(Q.set)));
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'cmos' && Q.E) {
-      { const rd = Object.keys(Q.cmNew || {}).some(k => Date.now() - Q.cmNew[k] < 1500); h = `<div class="q1cf${rd ? ' on' : ''}"><i>CMOS 화면</i><b>모니터 화면이 틀을 가득 채우게 · 글자가 보이는 각도로</b></div>` + h; }   // v32.55 : CMOS 촬영 틀 (화면 전체를 틀 안에)
+      { const rd = Object.keys(Q.cmNew || {}).some(k => Date.now() - Q.cmNew[k] < 1500); }   // v32.98 : 웹 점선 틀 제거 — 앱이 그리는 모서리 틀(실제 인식 영역) 하나만   // v32.55 : CMOS 촬영 틀 (화면 전체를 틀 안에)
       if (Q.vendor) h += pill('vd', esc(Q.vendor));
       { const CC = { cpu: '#4da3ff', mem: '#5fd38d', ssd: '#ff7aa8', hdd: '#ffd24d' };   // v32.78 : 전표처럼 사양 목록 — 읽히는 대로 체크
         h += '<div class="q1cl">' + Object.keys(Q.E).map(k => { const s0 = Q.cm[k], s = s0 === 'ok' && !q1V(Q, '@' + k) ? '' : s0, w = Q.w[k], cam = Q.cov[k] ? ' 📷' : '';
