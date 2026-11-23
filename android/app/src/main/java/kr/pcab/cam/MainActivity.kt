@@ -35,6 +35,8 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.graphics.Typeface
+import java.io.ByteArrayOutputStream
 import android.graphics.ImageDecoder
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -84,6 +86,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *  stop()            카메라 끄기
  *  pause(on)         실시간 인식 잠시 멈춤/재개 (카메라 화면은 유지)
  *  shot(save, tag)   고화질 1장 촬영 → save=true면 앨범(Pictures/조립검수)에 저장 → 그 사진을 다시 인식해서 결과 전달
+ *  stamp(uri, json)  저장된 사진 위에 주문번호 박스 + 사양 결과 칩을 그려 같은 파일에 덮어쓰기 (json: {order, items:[{st:"ok|bad|wait", t:"문구"}]})
  *  torch(on)         손전등
  *  beep(kind)        짧은 확인음 (ok | bad)
  *  frame(state)      맞춤 틀 색: 0 대기(흰색) 1 읽는 중(노랑) 2 일치(초록) 3 불일치(빨강)
@@ -442,6 +445,62 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // v1.0.x : 저장된 CMOS 사진 위에 주문번호(좌상단 파랑) + 사양 결과 칩(좌하단)을 그려서 같은 파일에 덮어씀
+    private fun stampPhoto(uriStr: String, json: String) {
+        try {
+            val j = JSONObject(json); val order = j.optString("order"); val arr = j.optJSONArray("items") ?: JSONArray()
+            val uri = Uri.parse(uriStr)
+            val bmp = ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri)) { dec, info, _ ->
+                val big = maxOf(info.size.width, info.size.height); var s = 1; while (big / s > 4600) s *= 2
+                dec.setTargetSampleSize(s); dec.allocator = ImageDecoder.ALLOCATOR_SOFTWARE; dec.isMutableRequired = true
+            }
+            val cv = Canvas(bmp); val W = bmp.width.toFloat(); val H = bmp.height.toFloat(); val u = W / 1600f
+            val fill = Paint(Paint.ANTI_ALIAS_FLAG); val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2f * u }
+            val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = Typeface.DEFAULT_BOLD }
+            val pad = 14f * u; val rad = 12f * u; val mg = 26f * u
+            if (order.isNotBlank()) {
+                tp.textSize = 34f * u; tp.color = Color.WHITE
+                val t = "주문번호  $order"; val tw = tp.measureText(t); val fm = tp.fontMetrics; val th = fm.descent - fm.ascent
+                val r = RectF(mg, mg, mg + tw + 2 * pad + 6f * u, mg + th + 2 * pad)
+                fill.color = Color.argb(205, 20, 90, 200); line.color = Color.argb(200, 170, 210, 255)
+                cv.drawRoundRect(r, rad, rad, fill); cv.drawRoundRect(r, rad, rad, line)
+                cv.drawText(t, r.left + pad + 3f * u, r.top + pad - fm.ascent, tp)
+            }
+            val n = arr.length(); tp.textSize = 30f * u
+            val fm = tp.fontMetrics; val th = fm.descent - fm.ascent; val ch = th + 2 * pad; val gap = 10f * u; val ic = th * 0.8f
+            val maxW = W * 0.66f
+            var y = H - mg - ch
+            for (i in n - 1 downTo 0) {
+                val o = arr.getJSONObject(i); val st = o.optString("st"); var t = o.optString("t")
+                while (t.length > 4 && tp.measureText(t) + ic + 3 * pad > maxW) t = t.substring(0, t.length - 2) + "…"
+                val cw = tp.measureText(t) + ic + 3 * pad
+                val r = RectF(mg, y, mg + cw, y + ch)
+                val (f, s2, tc) = when (st) {
+                    "ok" -> Triple(Color.argb(200, 12, 70, 40), Color.argb(170, 120, 220, 160), Color.rgb(225, 250, 235))
+                    "bad" -> Triple(Color.argb(210, 130, 25, 25), Color.argb(200, 255, 150, 150), Color.rgb(255, 232, 232))
+                    else -> Triple(Color.argb(205, 110, 80, 10), Color.argb(190, 255, 210, 120), Color.rgb(255, 240, 210))
+                }
+                fill.color = f; line.color = s2; cv.drawRoundRect(r, rad, rad, fill); cv.drawRoundRect(r, rad, rad, line)
+                val ip = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 4f * u; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND; color = tc }
+                val ix = r.left + pad; val iy = r.top + (ch - ic) / 2
+                val p = Path()
+                when (st) {
+                    "ok" -> { p.moveTo(ix, iy + ic * 0.55f); p.lineTo(ix + ic * 0.38f, iy + ic * 0.92f); p.lineTo(ix + ic, iy + ic * 0.12f) }
+                    "bad" -> { p.moveTo(ix + ic * 0.1f, iy + ic * 0.1f); p.lineTo(ix + ic * 0.9f, iy + ic * 0.9f); p.moveTo(ix + ic * 0.9f, iy + ic * 0.1f); p.lineTo(ix + ic * 0.1f, iy + ic * 0.9f) }
+                    else -> { p.moveTo(ix + ic * 0.5f, iy + ic * 0.1f); p.lineTo(ix + ic * 0.5f, iy + ic * 0.62f); p.moveTo(ix + ic * 0.5f, iy + ic * 0.9f); p.lineTo(ix + ic * 0.5f, iy + ic * 0.92f) }
+                }
+                cv.drawPath(p, ip)
+                tp.color = tc; cv.drawText(t, ix + ic + pad, r.top + pad - fm.ascent, tp)
+                y -= ch + gap
+            }
+            val bos = ByteArrayOutputStream(); bmp.compress(Bitmap.CompressFormat.JPEG, 92, bos)
+            contentResolver.openOutputStream(uri, "wt")?.use { it.write(bos.toByteArray()) } ?: throw Exception("파일을 열 수 없음")
+            emit(JSONObject().put("k", "stamp").put("saved", true))
+        } catch (e: Throwable) {
+            emit(JSONObject().put("k", "stamp").put("saved", false).put("msg", e.message ?: e.javaClass.simpleName))
+        }
+    }
+
     // ───────────── JS 브리지 ─────────────
     inner class Bridge {
         @JavascriptInterface fun start(pct: Int, m: String) { runOnUiThread { startCamera(pct, if (m == "cmos" || m == "free") m else "doc") } }
@@ -458,6 +517,7 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface fun pause(on: Boolean) { paused = on }
         @JavascriptInterface fun setMode(m: String) { mode = if (m == "cmos") "cmos" else if (m == "off") "off" else "doc" }
         @JavascriptInterface fun shot(save: Boolean, tag: String) { runOnUiThread { takeShot(save, tag) } }
+        @JavascriptInterface fun stamp(uri: String, json: String) { camExec.execute { stampPhoto(uri, json) } }
         @JavascriptInterface fun torch(on: Boolean) { runOnUiThread { camera?.cameraControl?.enableTorch(on) } }
         @JavascriptInterface fun beep(kind: String) {
             runOnUiThread {
