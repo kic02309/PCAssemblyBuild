@@ -398,7 +398,7 @@ html[data-rot="1"] .q1cl,html[data-rot="3"] .q1cl{grid-auto-flow:column;grid-aut
 .q1sh.nx i{display:grid;place-items:center;font:800 20px/1 sans-serif;color:#1d4ed8;transition:opacity .2s}.q1sh.nx i:after{content:attr(data-t);display:block;transition:transform .3s ease}.q1sh.nx:not(.ready) i{opacity:.4}
 html[data-rot="1"] .q1sh.nx i:after{transform:rotate(90deg)}html[data-rot="3"] .q1sh.nx i:after{transform:rotate(-90deg)}
 .q1m.nv,.q1m.nv.in{transition:top .3s ease,height .3s ease,opacity .18s,transform .25s cubic-bezier(.3,1.6,.5,1)!important}
-.q1tip{display:none;align-self:center;margin:0 auto 10px;max-width:94%;text-align:center;background:rgba(10,14,24,.78);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fde047;font-size:17px;font-weight:800;line-height:1.3;word-break:keep-all;padding:9px 16px;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.45);border:1.5px solid rgba(253,224,71,.5);pointer-events:none}.q1tip.on{display:block;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:16px;font-weight:800}
+.q1tip{display:none;align-self:center;margin:0 auto 10px;max-width:94%;text-align:center;background:rgba(10,14,24,.78);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fde047;font-size:17px;font-weight:800;line-height:1.3;word-break:keep-all;padding:9px 16px;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.45);border:1.5px solid rgba(253,224,71,.5);pointer-events:none}.q1chk{color:#fde047;font-size:16px;font-weight:800;margin:0 0 8px;text-align:center}.q1tip.on{display:block;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:16px;font-weight:800}
 .q1cd{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:46}.q1cd b{font-size:150px;line-height:1;font-weight:900;color:#fff;text-shadow:0 0 0 #000,0 4px 24px rgba(0,0,0,.7);-webkit-text-stroke:3px rgba(15,30,61,.8);animation:q1cdp 1s ease-out infinite}.q1cd small{background:rgba(15,30,61,.85);color:#fff;font-size:16px;font-weight:800;padding:5px 14px;border-radius:999px}@keyframes q1cdp{0%{transform:scale(1.35);opacity:.5}30%{transform:scale(1);opacity:1}100%{transform:scale(.95);opacity:.9}}
 .q1cheer{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;animation:q1cheer 1s ease forwards}.q1cheer i{width:84px;height:84px;border-radius:50%;background:#16a34a;color:#fff;font-style:normal;font-size:48px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(255,255,255,.9)}.q1cheer b{background:rgba(15,30,61,.85);padding:6px 14px;border-radius:999px;font-size:15px}.q1cheer.bad i{background:#dc2626}.q1cheer.info i{background:#ea580c}
 @keyframes q1cheer{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
@@ -8854,7 +8854,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.98';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.99';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20717,7 +20717,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Q.chgAsk = 1; Q.card = unread ? '' : 'spec'; q1Paint(); q1Call('pause', true); q1Snd(unread ? 'bad' : 'done');
     const yes = unread
       ? await q1Ask((base === 'n' ? `<b class="t">기본 모델이 아닌 주문서입니다</b><div class="cr">모델 옆에 (기본)이 없어 사양 변경 · OS · 안정화 중 하나가 있어야 하는데 찾지 못했습니다.</div>` : `<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">주문서에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div>`) + `<small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 주문서가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
-      : await q1Ask(q1SpecCard(Q) + `<div class="q1rr"><small>틀린 항목만 다시 읽기</small>${q1DocKeys(Q).map(k => `<button type="button" data-rr="${k}">${Q1_AB[k] || k}</button>`).join('')}</div>`, '맞음 · 주문번호 찍기', false, '전부 다시 읽기');
+      : await q1Ask('<div class="q1chk">👀 사양이 주문서와 같은지 확인하세요</div>' + q1SpecCard(Q) + `<div class="q1rr"><small>틀린 항목만 다시 읽기</small>${q1DocKeys(Q).map(k => `<button type="button" data-rr="${k}">${Q1_AB[k] || k}</button>`).join('')}</div>`, '맞음 · 주문번호 찍기', false, '전부 다시 읽기');
     Q.card = ''; q1Call('pause', false);
     if (S.q1 !== Q) return;
     if (typeof yes === 'string' && yes.indexOf('rr:') === 0) {   // v32.87 : 그 항목만 다시 읽기 (읽은 건 그대로)
@@ -20943,7 +20943,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1PracOn = () => !!S.me;   // v32.53 : 베타 — 전체 직원 연습 가능
   const q1TitleHtml = () => { const Q = S.q1, [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order && q1V(Q, 'order') ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k] && q1V(Q, k)).length;
-    const tip = Q.card === 'spec' ? '👀 아래 사양이 주문서와 같은지 확인하세요' : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 주문번호 인식 완료 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 사양 인식 완료 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
+    const tip = Q.card === 'spec' ? ' ' : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 주문번호 인식 완료 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 사양 인식 완료 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
       : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 사양 인식 완료 · 가운데 [다음]을 누르세요' : `${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
     Q._tip = tip;   // v32.94 : 할 일 안내는 카메라 버튼 위 가운데 (#q1tip) · 위에는 단계 이름만
     return `<div class="q1mini"><em>${Q.practice ? '연' : si}</em>${esc(a)}${tip ? '' : ` <u>· ${esc(b)}</u>`}</div>`; };   // v32.50 : 위 안내 한 줄로 작게
@@ -21004,7 +21004,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.step === 'doc' || Q.step === 'cmos') h = h.replace(/저장장치/g, 'SSD').replace(/메모리/g, 'MEM').replace(/주문 ✓ \d+/, '주문 ✓').replace(/(본체 [^ <(]+) \([^)]*\)/, '$1');   // v32.49 : 칩은 짧게 (자세한 건 확인 카드에)
     return h + '</div>';
   }
-  function q1Paint() { const el = $('#q1hud'), tt = $('#q1tt'); if (S.view === 'qc1' && el) { const h = q1Hud(); if (el._h !== h) { el._h = h; el.innerHTML = h; } const th = q1TitleHtml(); if (tt && tt._h !== th) { tt._h = th; tt.innerHTML = th; } const tp = $('#q1tip'), tx = S.q1._tip || ''; if (tp && tp._h !== tx) { tp._h = tx; tp.textContent = tx; tp.classList.toggle('on', !!tx); } q1ShutPaint(); q1Band(); } }
+  function q1Paint() { const el = $('#q1hud'), tt = $('#q1tt'); if (S.view === 'qc1' && el) { const h = q1Hud(); if (el._h !== h) { el._h = h; el.innerHTML = h; } const th = q1TitleHtml(); if (tt && tt._h !== th) { tt._h = th; tt.innerHTML = th; } const tp = $('#q1tip'), tx = (S.q1._tip || '').trim(); if (tp && tp._h !== tx) { tp._h = tx; tp.textContent = tx; tp.classList.toggle('on', !!tx); } q1ShutPaint(); q1Band(); } }
   const q1CmNew = Q => Object.keys(Q.E || {}).filter(k => Q.cm[k] === 'ok' && q1V(Q, '@' + k) && !(Q.shotK || {})[k]);   // v32.82 : 읽혔는데 아직 사진에 안 담은 항목
   function q1ShutState(Q) {   // [채움 %, 준비됨, 아래 한 줄]
     if (Q.step === 'doc' && Q.ph === 'read') { const n = (Q.order ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items[k]).length; return [n * 25, q1DocShown(Q), Q.practice ? '다 읽으면 결과 카드가 떠요' : '다 읽으면 [다음]']; }
