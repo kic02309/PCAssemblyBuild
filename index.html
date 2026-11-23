@@ -4178,8 +4178,8 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 /* v32.74 : 새 모니터 작업 화면 (1920x1080 기준 화면을 창 크기에 맞춰 축소) */
 #loWork.nw{padding:0;overflow:hidden;display:block}
 #loWork .nw-canvas{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;display:flex;flex-direction:column;gap:14px;padding:14px;box-sizing:border-box}
-.nw-head{display:flex;align-items:center;min-height:98px}
-.nw-who{display:flex;align-items:center;gap:34px;margin-right:auto}
+.nw-head{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.2fr);gap:14px;align-items:center;min-height:98px}   /* v33.16 : 오른쪽 위 빈 자리에 제조 · 현재 작업 · 제품코드 */
+.nw-who{display:flex;align-items:center;gap:30px;min-width:0;white-space:nowrap}
 .nw-who .no{display:flex;align-items:baseline;gap:8px;padding:2px 26px 6px;border-radius:12px;background:#2563a8;color:#fff;font-size:30px;font-weight:700}.nw-who .no b{font-size:62px;font-weight:800}
 .nw-who .nm{font-size:60px;font-weight:800;color:#fff;letter-spacing:.04em}.nw-who .ln{font-size:30px;color:#9fc3e6;font-weight:600}
 .nw-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.2fr);gap:14px;min-height:0;flex:1}
@@ -4196,23 +4196,25 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 .nw-right{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:14px;min-height:0}
 .nw-spec{display:flex;flex-direction:column;min-height:0;padding:14px 18px;border:1px solid #526b8e;border-radius:11px;background:#10203766;overflow:hidden}
 .nw-chips{display:grid;grid-template-columns:1.05fr 1fr 1.05fr;gap:12px}
-/* v33.15 : 세 칸 높이 · 글자 줄 맞춤 (제조 · 현재 작업 · 제품코드) */
-.nw-chip{border:1px solid #527c9d;border-radius:10px;background:#0f2a47;height:68px;box-sizing:border-box;padding:0 18px;display:flex;align-items:center;gap:14px;justify-content:center;white-space:nowrap;overflow:hidden}
-.nw-chip small{color:#c5ddf4;font-size:22px;font-weight:700;line-height:1;white-space:nowrap}.nw-chip b{font-size:40px;color:#fff;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}.nw-chip b span{font-size:30px;color:#9fc3e6}
+/* v33.16 : 세 칸 — 글자(라벨) 크기·숫자 크기를 모두 같게, 같은 줄 기준선에 맞춤 */
+.nw-chip{border:1px solid #527c9d;border-radius:10px;background:#0f2a47;height:76px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+.nw-chip .cv{display:flex;align-items:baseline;gap:14px;line-height:1}
+.nw-chip small{color:#c5ddf4;font-size:26px;font-weight:700;line-height:1;white-space:nowrap}.nw-chip b{font-size:46px;font-weight:800;color:#fff;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}.nw-chip b span{color:#9fc3e6;font-weight:700}
 .nw-chip.code{border-color:#6fa6dc;background:#143a63}.nw-chip.code b{color:#cdeaff}
-.nw-model{font-size:32px;font-weight:700;margin:6px 4px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.nw-model{font-size:36px;font-weight:700;line-height:1.15;margin:4px 0 12px;padding:0 28px;color:#fff;overflow:hidden;white-space:nowrap;text-align:left}   /* v33.16 : 모델명 — 항상 한 줄 · 적당한 크기 · 좌우 여백 (길면 글씨만 줄임) */
 .nw-tblwrap{flex:1;min-height:0;overflow:hidden}
-.nw-tbl{width:100%;border-collapse:collapse;font-size:26px;table-layout:fixed}
-.nw-tbl th{background:#1e3a5c;color:#dbe8f5;font-size:21px;padding:5px;border:1px solid #2b4d75}
-.nw-tbl td{border:1px solid #223f61;padding:2px 10px;color:#dbe8f5;overflow:hidden;text-overflow:clip;white-space:nowrap}
+.nw-tbl{width:100%;height:100%;border-collapse:collapse;font-size:26px;table-layout:fixed;border:2px solid #7ea3cc}.nw-tbl thead tr{height:44px}   /* v33.16 : 남는 높이를 행마다 똑같이 나눔 */
+.nw-tbl th{background:#1e3a5c;color:#e6f0fb;font-size:var(--nfs,22px);padding:5px;border:1px solid #6f95bd;border-bottom:2px solid #7ea3cc}
+.nw-tbl td{border:1px solid #5d86b3;padding:2px 10px;color:#dbe8f5;overflow:hidden;text-overflow:clip;white-space:nowrap}
 .nw-tbl td.n{font-size:var(--nfs,24px);line-height:1.18}.nw-tbl td.n.wrap{white-space:normal;word-break:keep-all;overflow-wrap:break-word}
 .nw-tbl td.c{text-align:center;padding:4px 10px}
-.nw-tbl .cat{box-sizing:border-box;width:150px;min-height:38px;justify-content:center;margin:0 auto;padding:3px 10px;border-radius:6px;background:rgba(120,170,220,.17);border:1px solid #3d628a;color:#c4dcf4;display:flex;flex-direction:column;align-items:center;gap:2px}
-.nw-tbl .cat .l{display:flex;justify-content:space-between;width:100%;font-size:19px;font-weight:800}
-.nw-tbl .cat em{font-style:normal;font-size:14px;letter-spacing:.14em;color:#8fb3d6;font-weight:700}
+.nw-tbl .cat{box-sizing:border-box;width:100%;min-height:38px;justify-content:center;margin:0 auto;padding:3px 10px;color:hsl(var(--h,210) 90% 72%);display:flex;flex-direction:column;align-items:center;gap:2px}   /* v33.16 : 네모 박스 없음 · 글자색 = 부품 고유색 */
+.nw-tbl .cat .l{display:flex;justify-content:space-between;width:100%;font-size:min(var(--nfs,19px),19px);font-weight:800}
+.nw-tbl .cat em{font-style:normal;font-size:14px;letter-spacing:.14em;color:hsl(var(--h,210) 70% 68%);font-weight:700}
+.nw-tbl th.sp{letter-spacing:.9em;padding-left:calc(5px + .9em)}   /* 구  분 · 제  품  명 (글자 사이 띄움) */
 .nw-tbl td.n.f{color:hsl(var(--h) 90% 70%);font-weight:800}
-.nw-tbl td.k{text-align:center;color:#9fb6d0;font-size:22px}
-.nw-tbl td.q{text-align:center;color:#6f86a3;font-size:24px}.nw-tbl td.q .hi{display:inline-block;min-width:44px;padding:0 10px;border-radius:8px;background:#e24b4a;color:#fff;font-weight:800}
+.nw-tbl td.k{text-align:center;color:#9fb6d0;font-size:var(--nfs,22px)}
+.nw-tbl td.q{text-align:center;color:#6f86a3;font-size:var(--nfs,22px)}.nw-tbl td.q .hi{display:inline-block;min-width:44px;padding:0 10px;border-radius:8px;background:#e24b4a;color:#fff;font-weight:800}
 .nw-clock{display:flex;align-items:center;gap:30px;padding:6px 24px;border:1px solid #526b8e;border-radius:11px;background:#0a1a2e}
 .nw-clk-main{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .nw-lbl{font-size:26px;font-weight:700;color:#9fc3e6;letter-spacing:4px}
@@ -8869,7 +8871,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.16';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.17';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18358,16 +18360,18 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   window.addEventListener('message',e=>{const d=e.data;if(e.origin===location.origin&&d&&typeof d.loSwPress==='string'&&loCurrentSeat()?.id===d.loSwPress)loSwFlash();});
   window.addEventListener('resize',()=>{const r=document.getElementById('loWork');if(r)loNwScale(r);});
-  function loFitSpecNames(root) {   // v33.15 : 제품명을 줄임표(…) 없이 전부 보이게 — 한 줄에 들어가는 가장 큰 글씨로, 그래도 넘치면 두 줄 + 더 작게
+  function loFitSpecNames(root) {   // v33.16 : 모델명 · 제품명 모두 항상 한 줄 풀네임 (줄임표 없음) — 한 줄에 들어가는 가장 큰 글씨로 맞춤
+    const model=root.querySelector('.nw-model');
+    if(model){let m=36;model.style.fontSize=m+'px';while(m>12&&model.scrollWidth>model.clientWidth+1){m-=1;model.style.fontSize=m+'px';}}   // 풀네임 · 한 줄 (넘치면 글씨를 줄임)
     const tbl=root.querySelector('.nw-tbl'),wrap=root.querySelector('.nw-tblwrap');if(!tbl||!wrap)return;
     const cells=[...tbl.querySelectorAll('td.n')];if(!cells.length)return;
     const set=s=>tbl.style.setProperty('--nfs',s+'px'),fit1=()=>cells.every(c=>c.scrollWidth<=c.clientWidth+1);
-    let fs=24;set(fs);
-    for(;fs>=15;fs-=.5){set(fs);if(fit1())return;}
-    cells.forEach(c=>c.classList.add('wrap'));
-    for(fs=22;fs>=13;fs-=.5){set(fs);if(wrap.scrollHeight<=wrap.clientHeight+1)return;}
+    cells.forEach(c=>c.classList.remove('wrap'));
+    for(let fs=24;fs>=11;fs-=.5){set(fs);if(fit1())break;}   // 제품명은 항상 한 줄 풀네임 — 안 들어가면 글씨를 줄임
+    const trs=[...tbl.querySelectorAll('tbody tr')],th=tbl.querySelector('thead')?.offsetHeight||0;   // 행 높이를 모두 똑같이
+    if(trs.length){const h=Math.max(30,Math.floor((wrap.clientHeight-th-4)/trs.length));trs.forEach(tr=>{tr.style.height=h+'px';});}
   }
-  function loDrawWork() {
+    function loDrawWork() {
     const r=LO.data,st=loCurrentSeat();if(!st){loStopPartFit();document.getElementById('loWork')?.remove();LO.seat=null;clearInterval(LO.clock);document.body.classList.remove('lo-work-open');return;}
     const u=loWorkUnit(st),b=r.batches.find(x=>x.id===u?.batchId);
     const lineWaiting=u?[]:r.batches.filter(batch=>batch.line===st.line&&batch.final<batch.q);
@@ -18403,7 +18407,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const catCell=cool?'':key==='cpu'&&ordered.some(isCool)?`<td class="c" rowspan="${1+ordered.filter(isCool).length}"><div class="cat"><span class="l">${letters('CPU')}</span><em>+ COOLER</em></div></td>`:`<td class="c"><div class="cat"><span class="l">${letters(en||String(x.kind||'').replace(/\s+/g,''))}</span></div></td>`;
       const fc=focus.includes(key)||(cool&&focus.includes('cpu'));
       const pq=perSet(q);   // v33.15 : 사양표 수량 = 1세트 기준 (본체 20대여도 메모리 2개)
-      return `<tr style="--h:${loPartHue(x.kind)}">${catCell}<td class="n${fc?' f':''}">${esc(x.name)}</td><td class="k">${esc(x.code||'—')}</td><td class="q">${pq>=2?`<span class="hi">${esc(pq)}</span>`:esc(pq===''?'미기록':pq)}</td></tr>`;}).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>';
+      return `<tr style="--h:${loPartHue(x.kind)}">${catCell}<td class="n f">${esc(x.name)}</td><td class="k">${esc(x.code||'—')}</td><td class="q">${pq>=2?`<span class="hi">${esc(pq)}</span>`:esc(pq===''?'미기록':pq)}</td></tr>`;}).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>';
     // v33.15 : 현재 작업 숫자 유지 — 이 자리에서 마지막으로 진행한 번호를 같은 제조건이 이어지는 동안 계속 보여 줌 (모니터 창들이 같이 쓰도록 localStorage)
     const seqKey=(r.practice?'p:':'r:')+st.id;let seqShown=null;
     try{const all=JSON.parse(localStorage.getItem('loLastSeq')||'{}')||{},c=all[seqKey];
@@ -18413,10 +18417,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }catch(e){if(u&&b)seqShown={seq:u.seq,q:b.q};}
     const cautionText=caution||'',dur=Math.max(12,Math.round(cautionText.length*0.35+10));
     const stateLine=supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용';
-    const html=`<div class="nw-canvas"><div class="nw-head"><div class="nw-who"><span class="no"><b>${esc(swNo||seatNumber)}</b>번 모니터</span><span class="nm">${esc(st.assignedName||'미배정')}</span><span class="ln">${esc(loLineName(st.line))} · ${esc(st.id)}${stateLine}</span></div></div>
+    const html=`<div class="nw-canvas"><div class="nw-head"><div class="nw-who"><span class="no"><b>${esc(swNo||seatNumber)}</b>번 모니터</span><span class="nm">${esc(st.assignedName||'미배정')}</span><span class="ln">${esc(loLineName(st.line))} · ${esc(st.id)}${stateLine}</span></div><div class="nw-chips"><div class="nw-chip"><span class="cv"><small>제조</small><b>${esc(identity?.no||'—')}</b></span></div><div class="nw-chip"><span class="cv"><small>현재 작업</small><b>${seqShown?`${seqShown.seq}<span> / ${seqShown.q}</span>`:preview?`—<span> / ${preview.q}</span>`:next?`—<span> / ${next.q}</span>`:'—'}</b></span></div><div class="nw-chip code"><span class="cv"><small>제품코드</small><b>${esc(meta?.code||'—')}</b></span></div></div></div>
     <div class="nw-grid"><aside class="nw-steps"><div class="nw-title"><small>작업내용</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</div><ol style="font-size:${fs}px">${items.map((t,k)=>`<li><i style="width:${Math.round(fs*1.17)}px;height:${Math.round(fs*1.17)}px;font-size:${Math.round(fs*.65)}px">${k+1}</i><span>${esc(t)}</span></li>`).join('')}</ol></aside>
-    <div class="nw-right"><section class="nw-spec"><div class="nw-chips"><div class="nw-chip"><small>제조</small><b>${esc(identity?.no||'—')}</b></div><div class="nw-chip"><small>현재 작업</small><b>${seqShown?`${seqShown.seq}<span> / ${seqShown.q}</span>`:preview?`—<span> / ${preview.q}</span>`:next?`—<span> / ${next.q}</span>`:'—'}</b></div><div class="nw-chip code"><small>제품코드</small><b>${esc(meta?.code||'—')}</b></div></div>
-    <div class="nw-model">${esc(identity?.model||'대기 작업 없음')}</div><div class="nw-tblwrap"><table class="nw-tbl"><colgroup><col style="width:19%"><col><col style="width:15%"><col style="width:8%"></colgroup><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${specRows}</tbody></table></div></section>
+    <div class="nw-right"><section class="nw-spec"><div class="nw-model">${esc(identity?.model||'대기 작업 없음')}</div><div class="nw-tblwrap"><table class="nw-tbl"><colgroup><col style="width:15%"><col><col style="width:11%"><col style="width:6%"></colgroup><thead><tr><th class="sp">구분</th><th class="sp">제품명</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${specRows}</tbody></table></div></section>
     <section class="nw-clock lo-stopwatch" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><div class="nw-clk-main"><div class="nw-lbl">⏱ 소요시간</div><div id="loElapsed" class="lo-elapsed" role="timer" aria-label="소요시간">${['분','초','1/100초'].map((label,k)=>`${k?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div>${expectedSeconds>0?`<div class="nw-std"><div id="loBar" class="hp ok" data-seconds="${expectedSeconds}"><i></i><u></u><span class="tx"><b>${expectedSeconds}</b>초 <small>/ ${expectedSeconds}초</small></span></div></div>`:''}
     ${b?.paused_at?'<div class="nw-note">일시정지 · 재개하면 이어서 측정</div>':''}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="nw-note" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></div>
     <div class="nw-sw" id="loSw" data-pressed="${Date.now()<(LO.swUntil||0)}">${LO_SW_SVG.replace(/@N/g,esc(swNo||seatNumber))}</div>${editable?`<button id="loDone" class="lo-done" hidden ${u?'':'disabled'}>✓</button>`:''}</section></div></div>
