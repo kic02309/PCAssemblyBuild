@@ -8821,7 +8821,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.75';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.76';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18319,7 +18319,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const meta=b?.meta||next?.meta||preview?.meta;
     const stage=b?.set_data.stages[u.stage]||next?.set_data?.stages?.[st.stage]||loLineStages(st.line)[st.stage],focus=loWorkFocus(stage);
     const {instructions,caution,defaultCaution}=loWorkPhrases(r,st,b||next,stage,preview,meta);
-    const expectedSeconds=Number(stage?.expectedSeconds||preview?.stageTexts?.[st.stage]?.expectedSeconds||0);
+    const expectedSeconds=Number(stage?.expectedSeconds||preview?.stageTexts?.[st.stage]?.expectedSeconds||loStageDefault(loLineStages(st.line),+st.stage)?.sec||0);
     const editable=loCanWork(st),pendingHere=editable&&LO.pending?.station===st.id;
     const supervised=editable&&st.supervisedComplete;
     const plan=(r.prepared||[]).find(p=>p.line===st.line);
@@ -18330,7 +18330,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let root=document.getElementById('loWork');if(!root){root=document.createElement('section');root.id='loWork';root.tabIndex=-1;document.body.append(root);}
     document.body.classList.add('lo-work-open');
     const swNo=loSwNo(st),EN={cpu:'CPU',메인보드:'MAINBOARD',메모리:'MEMORY',ssd:'STORAGE',그래픽카드:'GRAPHICS',vga:'GRAPHICS',gpu:'GRAPHICS',파워:'POWER',케이스:'CASE',cpu쿨러:'COOLER'};
-    const items=Array.isArray(stage?.items)&&stage.items.length?stage.items:(instructions?String(instructions).split(/\n+/).map(x=>x.trim()).filter(Boolean):[]);
+    const dflt=loStageDefault(loLineStages(st.line),+st.stage),items=Array.isArray(stage?.items)&&stage.items.length?stage.items:dflt?dflt.items:(instructions?String(instructions).split(/\n+/).map(x=>x.trim()).filter(Boolean):[]);
     const per=(600-10*Math.max(0,items.length-1))/Math.max(1,items.length),fs=Math.max(22,Math.min(46,Math.floor(per*.52)));
     const specs=meta?.specs||[],isCool=x=>loPartKey(x.kind)==='cpu쿨러',ordered=[];
     specs.forEach(x=>{if(!isCool(x))ordered.push(x);if(loPartKey(x.kind)==='cpu')specs.filter(isCool).forEach(c=>ordered.push(c));});
@@ -18779,6 +18779,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function loBatchAction(op,b) {
     modal(`<h3>${op==='ack'?'원본 변경 확인 · 기존 배치 유지':'작업 순서 변경'}</h3><p>${esc(b.snapshot.no)} · ${esc(b.snapshot.model)} · 기존 계획 ${b.q}</p>${op==='ack'?`<div class="warn">원본 수정·삭제 내용을 확인한 뒤 기존 배치의 사양·계획 수량을 유지합니다. 원본이나 기존 실적을 고치지 않습니다.</div><p>현재 원본: ${esc(b.currentSource?JSON.stringify({no:b.currentSource.no,model:b.currentSource.model,q:b.currentSource.q}):'삭제됨')}<br>배치 원본: ${esc(JSON.stringify({no:b.snapshot.no,model:b.snapshot.model,q:b.q}))}</p><label>확인 사유<input id="loActionValue" maxlength="300"></label>`:`<label>작업 순서<input id="loActionValue" type="number" value="${b.rank}"></label>`}<div class="acts"><button data-c>취소</button><button data-s class="primary">확인 · 저장</button></div>`,(bg,close)=>{const rev=LO.data.revision;$('[data-c]',bg).onclick=close;$('[data-s]',bg).onclick=async()=>{const btn=$('[data-s]',bg);btn.disabled=true;try{await loCall(op,{batchId:b.id,rev,sourceHash:b.currentSourceHash,reason:$('#loActionValue',bg).value,rank:+$('#loActionValue',bg).value});close();await loRefresh(LO.epoch,true);}catch(e){toast(e.message,true);}finally{btn.disabled=false;}};});
   }
+  const LO_OT_DEFAULT=[   // 상단 조립(4공정) 기본 순서표 — 서버에 저장된 값이 없을 때만 쓰는 기본값
+    {items:['케이스박스 분리','측면커버 분리','철사 제거','후면 브라켓 체결','스탠드 오프 체결','전면 패널 선정리','후면팬 선정리'],sec:120,people:1},
+    {items:['i/0 쉴드체결','보드장착','전면패널연결','후면팬연결'],sec:120,people:1},
+    {items:['파워장착','파워선정리','USB 3.0 연결'],sec:120,people:1},
+    {items:['화면출력체크','제품상태확인','측면커버결합','스티커부착','제품포장','앵글적재'],sec:120,people:1}];
+  const loStageDefault=(stages,i)=>stages?.length===4?LO_OT_DEFAULT[i]:null;
   function loOrderTable(onSaved) {   // v32.73 : 순서표 편집 — 공정별 세부 작업 목록 · 시간(초) · 인원 (작업 세트별)
     const r=LO.data;if(!r?.cfg)return toast('상황판을 불러온 뒤 열어 주세요.',true);
     if(!r.manage)return toast('라인 운영 관리자만 편집할 수 있습니다.',true);
@@ -18788,6 +18794,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       <div id="loOtBody" class="lo-ot-body"></div>
       <div class="acts"><small id="loOtMsg"></small><button data-c>닫기</button><button data-s class="primary">💾 순서표 저장</button></div>`,(bg,close)=>{
       bg._lock=true;
+      let filled=false;
+      cfg.sets.forEach(x=>x.stages.forEach((st,i)=>{const d=loStageDefault(x.stages,i);   // 비어 있는 공정은 기본 순서표로 채움 (저장해야 적용)
+        if(d&&!(Array.isArray(st.items)&&st.items.length)&&!st.expectedSeconds&&!st.people){st.items=[...d.items];st.expectedSeconds=d.sec;st.people=d.people;filled=true;}}));
+      if(filled)$('#loOtMsg',bg).textContent='기본 순서표가 채워져 있습니다. [순서표 저장]을 눌러야 적용됩니다.';
       const stages=()=>cfg.sets.find(x=>x.id===setId)?.stages||[];
       const draw=()=>{
         $('#loOtBody',bg).innerHTML=stages().map((st,i)=>{st.items=Array.isArray(st.items)?st.items:[];
