@@ -3958,13 +3958,13 @@ html[data-theme=dark] .czn button.lo-parent-on{color:#7aa7ff;box-shadow:inset 0 
 .modal.lo-config{width:min(1120px,calc(100vw - 24px));max-width:none;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;padding:0;overflow:hidden;background:var(--panel);color:var(--ink);border-radius:16px!important}
 .lo-config-head,.lo-config-foot{flex:none;padding:14px 20px;background:var(--panel)}
 .lo-config-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line)}
-.lo-ot-set{display:flex;gap:10px;align-items:center;margin:6px 0 10px}.lo-ot-body{max-height:62vh;overflow:auto;display:grid;gap:10px}
+.modal.lo-ot-modal{width:min(760px,94vw);max-width:none}.lo-ot-set{display:flex;gap:10px;align-items:center;margin:6px 0 10px}.lo-ot-body{max-height:62vh;overflow:auto;display:grid;gap:10px}
 .lo-ot-stage{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.03)}
-.lo-ot-stage header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}.lo-ot-stage header b{font-size:18px;flex:1;min-width:140px}
-.lo-ot-stage header label{display:flex;align-items:center;gap:6px;font-size:13px}.lo-ot-stage header input{width:78px}
-.lo-ot-stage ol{list-style:none;margin:0;padding:0;display:grid;gap:5px}.lo-ot-stage li{display:flex;align-items:center;gap:6px}
-.lo-ot-stage li .n{width:42px;text-align:right;font-weight:700;opacity:.7}.lo-ot-stage li input{flex:1;min-width:0}
-.lo-ot-stage li button,.lo-ot-add{padding:3px 9px}.lo-ot-add{margin-top:6px}
+.lo-ot-stage .lo-ot-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}.lo-ot-h b{font-size:17px;flex:1;min-width:140px}
+.lo-ot-h label{display:flex;align-items:center;gap:6px;font-size:13px;margin:0}.modal .lo-ot-h input{width:80px;height:34px;box-sizing:border-box}
+.lo-ot-stage ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}.lo-ot-stage li{display:flex;align-items:center;gap:6px}
+.lo-ot-stage li .n{width:42px;text-align:right;font-weight:700;opacity:.7;flex:none}.modal .lo-ot-stage li input{flex:1;min-width:0;width:auto;height:34px;box-sizing:border-box}
+.lo-ot-stage li button{padding:4px 10px;flex:none}.lo-ot-add{margin-top:8px;padding:5px 12px}
 
 .lo-config .lo-config-head h3{font-size:19px;margin:0 0 4px}.lo-config-head p,.lo-config-note{font-size:12px;color:var(--sub);margin:0;line-height:1.5}
 .lo-config-head button,.lo-config button{white-space:nowrap}
@@ -8821,7 +8821,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.74';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.75';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18791,9 +18791,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const stages=()=>cfg.sets.find(x=>x.id===setId)?.stages||[];
       const draw=()=>{
         $('#loOtBody',bg).innerHTML=stages().map((st,i)=>{st.items=Array.isArray(st.items)?st.items:[];
-          return `<section class="lo-ot-stage" data-ot="${i}"><header><b>${i+1}. ${esc(st.name||'공정')}</b>
+          return `<section class="lo-ot-stage" data-ot="${i}"><div class="lo-ot-h"><b>${i+1}. ${esc(st.name||'공정')}</b>
             <label>시간(초)<input type="number" min="1" max="3600" data-otf="expectedSeconds" value="${st.expectedSeconds??''}"></label>
-            <label>인원<input type="number" min="1" max="20" data-otf="people" value="${st.people??''}"></label></header>
+            <label>인원<input type="number" min="1" max="20" data-otf="people" value="${st.people??''}"></label></div>
             <ol>${st.items.map((t,j)=>`<li data-oi="${j}"><span class="n">${i+1}-${j+1}</span><input type="text" maxlength="80" data-oti value="${esc(t)}" placeholder="세부 작업"><button type="button" data-otup ${j?'':'disabled'}>↑</button><button type="button" data-otdn ${j<st.items.length-1?'':'disabled'}>↓</button><button type="button" data-otdel>✕</button></li>`).join('')}</ol>
             <button type="button" class="lo-ot-add" data-otadd>＋ 세부 작업 추가</button></section>`;}).join('')||'<p>이 세트에 공정이 없습니다.</p>';
         $$('[data-ot]',bg).forEach(sec=>{const st=stages()[+sec.dataset.ot];
@@ -18816,7 +18816,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         catch(err){toast(err.message||'저장하지 못했습니다',true);e.target.disabled=false;}
       };
       draw();
-    });
+    },'lo-ot-modal');
   }
   function loConfig(onSaved) {
     const r=LO.data,cfg=JSON.parse(JSON.stringify(r.cfg));
