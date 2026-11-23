@@ -4129,6 +4129,60 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 .lo-stopwatch .lo-time-part small{font-size:13px;font-weight:500;color:#bbd3ee;line-height:1.3}
 .lo-stopwatch p{font-size:13px}
 .lo-work-head .lo-work-admin{margin-left:auto;white-space:nowrap}
+/* v32.74 : 새 모니터 작업 화면 (1920x1080 기준 화면을 창 크기에 맞춰 축소) */
+#loWork.nw{padding:0;overflow:hidden;display:block}
+#loWork .nw-canvas{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;display:flex;flex-direction:column;gap:14px;padding:14px;box-sizing:border-box}
+.nw-head{display:flex;align-items:center;min-height:98px}
+.nw-who{display:flex;align-items:center;gap:34px;margin-right:auto}
+.nw-who .no{display:flex;align-items:baseline;gap:8px;padding:2px 26px 6px;border-radius:12px;background:#2563a8;color:#fff;font-size:30px;font-weight:700}.nw-who .no b{font-size:62px;font-weight:800}
+.nw-who .nm{font-size:60px;font-weight:800;color:#fff;letter-spacing:.04em}.nw-who .ln{font-size:30px;color:#9fc3e6;font-weight:600}
+.nw-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.2fr);gap:14px;min-height:0;flex:1}
+.nw-steps{display:flex;flex-direction:column;gap:14px;min-height:0;padding:18px;border:1px solid #3a6590;border-radius:12px;background:linear-gradient(160deg,#16314f,#0f233b)}
+.nw-title{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:16px 30px 20px;border-radius:12px;background:linear-gradient(135deg,#2563a8,#1b4a80);box-shadow:inset 0 0 0 1px #6fa6dc}
+.nw-title small{padding:4px 18px;border-radius:99px;background:rgba(255,255,255,.2);color:#e3f1ff;font-size:24px;font-weight:700;letter-spacing:.08em}
+.nw-title h1{margin:0;font-size:76px;line-height:1.1;color:#fff;overflow-wrap:anywhere}
+.nw-title .lo-work-state{font-size:26px;margin-top:4px}
+.nw-steps ol{list-style:none;margin:0;padding:0 0 0 44px;display:grid;gap:10px;flex:1;min-height:0;grid-auto-rows:minmax(0,1fr)}
+.nw-steps li{--c:#4d9be0;display:flex;align-items:center;gap:22px;padding:0 24px;border-radius:10px;border-left:6px solid var(--c);background:linear-gradient(90deg,color-mix(in srgb,var(--c) 15%,transparent),rgba(255,255,255,.05) 45%);font-weight:600;color:#eaf5ff;overflow:hidden}
+.nw-steps li i{font-style:normal;display:grid;place-items:center;border-radius:50%;background:var(--c);color:#0b1b2e;font-weight:800;flex:none}
+.nw-steps li span{min-width:0;overflow-wrap:anywhere;line-height:1.15}
+.nw-steps li:nth-child(7n+1){--c:#4d9be0}.nw-steps li:nth-child(7n+2){--c:#2fc4b2}.nw-steps li:nth-child(7n+3){--c:#5fcf6b}.nw-steps li:nth-child(7n+4){--c:#e8c53a}.nw-steps li:nth-child(7n+5){--c:#f0903a}.nw-steps li:nth-child(7n+6){--c:#ef6f9a}.nw-steps li:nth-child(7n+7){--c:#a584f0}
+.nw-right{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:14px;min-height:0}
+.nw-spec{display:flex;flex-direction:column;min-height:0;padding:14px 18px;border:1px solid #526b8e;border-radius:11px;background:#10203766;overflow:hidden}
+.nw-chips{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px}
+.nw-chip{border:1px solid #527c9d;border-radius:10px;background:#0f2a47;padding:4px 18px;display:flex;align-items:baseline;gap:14px;justify-content:center}
+.nw-chip small{color:#c5ddf4;font-size:20px;font-weight:700}.nw-chip b{font-size:40px;color:#fff;line-height:1.1}.nw-chip b span{font-size:30px;color:#9fc3e6}
+.nw-chip.code{border-color:#6fa6dc;background:#143a63}.nw-chip.code b{color:#cdeaff}
+.nw-model{font-size:32px;font-weight:700;margin:6px 4px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.nw-tblwrap{flex:1;min-height:0;overflow:hidden}
+.nw-tbl{width:100%;border-collapse:collapse;font-size:26px;table-layout:fixed}
+.nw-tbl th{background:#1e3a5c;color:#dbe8f5;font-size:21px;padding:5px;border:1px solid #2b4d75}
+.nw-tbl td{border:1px solid #223f61;padding:2px 10px;color:#dbe8f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nw-tbl td.c{text-align:center;padding:4px 10px}
+.nw-tbl .cat{width:150px;margin:0 auto;padding:3px 10px;border-radius:6px;background:rgba(120,170,220,.17);border:1px solid #3d628a;color:#c4dcf4;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nw-tbl .cat .l{display:flex;justify-content:space-between;width:100%;font-size:19px;font-weight:800}
+.nw-tbl .cat em{font-style:normal;font-size:14px;letter-spacing:.14em;color:#8fb3d6;font-weight:700}
+.nw-tbl td.n.f{color:hsl(var(--h) 90% 70%);font-weight:800}
+.nw-tbl td.k{text-align:center;color:#9fb6d0;font-size:22px}
+.nw-tbl td.q{text-align:center;color:#6f86a3;font-size:24px}.nw-tbl td.q .hi{display:inline-block;min-width:44px;padding:0 10px;border-radius:8px;background:#e24b4a;color:#fff;font-weight:800}
+.nw-clock{display:flex;align-items:center;gap:30px;padding:6px 24px;border:1px solid #526b8e;border-radius:11px;background:#0a1a2e}
+.nw-clk-main{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.nw-lbl{font-size:26px;font-weight:700;color:#9fc3e6;letter-spacing:4px}
+#loWork .nw-clock.lo-stopwatch .lo-elapsed{font-size:94px!important;line-height:.95;gap:10px}#loWork .nw-clock .lo-time-part small{font-size:18px}
+.nw-std{width:100%}
+.hp{position:relative;height:48px;border-radius:16px;background:#0a1a2d;border:2px solid #2b4d75;overflow:hidden}
+.hp i{position:absolute;left:0;top:0;bottom:0;width:100%;border-radius:14px 0 0 14px;background:var(--c);box-shadow:inset 0 14px 0 rgba(255,255,255,.18);transform-origin:0 0;transition:transform 1s linear}
+.hp u{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 3px),rgba(6,16,30,.55) calc(10% - 3px),rgba(6,16,30,.55) 10%)}
+.hp.ok{--c:#33c47a}.hp.mid{--c:#f0b43a}.hp.low{--c:#e24b4a}.hp.over{--c:#e24b4a;border-color:#e24b4a}.hp.over i{border-radius:14px}
+.hp .tx{position:absolute;left:20px;top:0;bottom:0;display:flex;align-items:center;gap:6px;font-size:22px;color:#fff;paint-order:stroke fill;-webkit-text-stroke:5px #07131f}
+.hp .tx b{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}.hp .tx small{font-size:20px;color:#d6e6f7;font-weight:600}
+.nw-sw{width:230px;flex:none}.nw-sw svg{display:block;width:230px;height:230px}.nw-sw .sp{display:none}.nw-sw[data-pressed="true"] .sp{display:inline}.nw-sw[data-pressed="true"] .si{display:none}
+.nw-note{font-size:20px;color:#bbd3ee;text-align:center}
+.nw-caution{border:2px solid #e4bb29;background:#2c2b20;border-radius:9px;display:flex;align-items:center;gap:24px;padding:0 30px;height:84px;font-size:46px;overflow:hidden}
+.nw-caution b{color:#ffd55e;white-space:nowrap;font-size:42px}
+.nw-tick{flex:1;min-width:0;overflow:hidden;white-space:nowrap}.nw-tick span{display:inline-block;padding-left:100%;animation:nwTick var(--dur,20s) linear infinite;will-change:transform}
+@keyframes nwTick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+
 .lo-model-identity{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:12px 0}
 .lo-model-head .lo-model-identity h2{margin:0;font-size:clamp(27px,3.3vw,60px);overflow-wrap:anywhere}
 .lo-model-code{display:inline-flex;gap:8px;align-items:baseline;padding:5px 12px;border:1px solid #6eaad6;border-radius:7px;background:#153754;color:#d6f0ff;font-size:clamp(19px,2vw,34px);font-weight:800;overflow-wrap:anywhere}
@@ -8767,7 +8821,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v32.73';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v32.74';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17955,6 +18009,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function hubHit(n) {
     HUB.cnt[n] = (HUB.cnt[n] || 0) + 1; hubLamp(n);
     if (LO_MON.cal) { LO_MON.cal(n); return; }   // v31.64 : 모니터 맞추기 중 = 완료 안 하고 자리 맞추기에만 사용
+    loSwPress(n);   // v32.74 : 화면의 스위치 그림 눌림 표시
     if (HUB.test && !lopOn()) { HUB.log.unshift({ n, ok: true, msg: '', st: '테스트', t: new Date().toLocaleTimeString('ko-KR', { hour12: false }) }); HUB.log.length = Math.min(HUB.log.length, 30); hubPaint(); return; }   // 테스트 모드 = 완료 안 함
     const now = Date.now(); if (now - (HUB.last[n] || 0) < 1200) return; HUB.last[n] = now;   // 같은 버튼 1.2초 안 = 무시
     if (S.view !== 'line' || !LO.data?.manage) { hubAdd(n, false, '상황판 화면이 아니라 무시했습니다'); return; }
@@ -18230,6 +18285,30 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     fit();
     LO.partFit=new ResizeObserver(fit);LO.partFit.observe(scroll);
   }
+  const LO_SW_SVG='<svg viewBox="0 0 300 300" aria-hidden="true"><defs><linearGradient id="nwPl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a4058"/><stop offset="1" stop-color="#16263a"/></linearGradient><radialGradient id="nwDg" cx=".38" cy=".3" r=".9"><stop offset="0" stop-color="#9af5c6"/><stop offset=".45" stop-color="#3fd488"/><stop offset="1" stop-color="#17934f"/></radialGradient><radialGradient id="nwDr" cx=".4" cy=".35" r=".9"><stop offset="0" stop-color="#ff9a98"/><stop offset=".5" stop-color="#e24b4a"/><stop offset="1" stop-color="#a62625"/></radialGradient></defs>'+
+    '<g class="si"><rect x="6" y="6" width="288" height="288" rx="46" fill="url(#nwPl)" stroke="#527c9d" stroke-width="5"/><circle cx="150" cy="150" r="118" fill="#0d1b2b" stroke="#3a5a7a" stroke-width="4"/><circle cx="150" cy="150" r="104" fill="#14532d"/><ellipse cx="150" cy="176" rx="96" ry="84" fill="#0c3a20"/><circle cx="150" cy="138" r="92" fill="url(#nwDg)"/><ellipse cx="118" cy="92" rx="44" ry="17" fill="#e8fff2" opacity=".55"/><text x="150" y="176" text-anchor="middle" font-size="130" font-weight="800" fill="#06361d" font-family="sans-serif">@N</text></g>'+
+    '<g class="sp"><rect x="6" y="6" width="288" height="288" rx="46" fill="url(#nwPl)" stroke="#e24b4a" stroke-width="5"/><circle cx="150" cy="150" r="140" fill="#e24b4a" opacity=".22"/><circle cx="150" cy="150" r="118" fill="#0d1b2b" stroke="#e24b4a" stroke-width="4"/><circle cx="150" cy="150" r="104" fill="#5a1717"/><circle cx="150" cy="156" r="88" fill="url(#nwDr)"/><ellipse cx="124" cy="116" rx="38" ry="13" fill="#ffd5d4" opacity=".45"/><text x="150" y="194" text-anchor="middle" font-size="124" font-weight="800" fill="#fff" font-family="sans-serif">@N</text></g></svg>';
+  function loSwNo(st) {   // 이 모니터에 연결된 스위치 번호
+    try{const n=sessionStorage.getItem('loMonN'),sw=JSON.parse(localStorage.getItem('loMonSw')||'{}')[n];if(sw)return String(sw);}catch(e){}
+    try{const m=hubMap(LO.data),k=Object.keys(m).find(x=>m[x]===st.id);if(k)return k;}catch(e){}
+    return sessionStorage.getItem('loMonN')||'';
+  }
+  function loNwScale(root) {   // 1920x1080 화면을 창 크기에 맞춰 줄이거나 늘림
+    const c=root.querySelector('.nw-canvas');if(!c)return;
+    const w=root.clientWidth||innerWidth,h=root.clientHeight||innerHeight,k=Math.min(w/1920,h/1080);
+    c.style.transform=`translate(${Math.round((w-1920*k)/2)}px,${Math.round((h-1080*k)/2)}px) scale(${k})`;
+  }
+  function loSwFlash() {   // 스위치를 눌렀을 때 화면의 버튼 그림을 잠깐 적색으로
+    LO.swUntil=Date.now()+800;const el=document.getElementById('loSw');if(el)el.dataset.pressed='true';
+    clearTimeout(LO.swT);LO.swT=setTimeout(()=>{const e=document.getElementById('loSw');if(e)e.dataset.pressed='false';},800);
+  }
+  function loSwPress(n) {   // 8번 PC 본창에서 스위치 신호를 받으면 해당 자리 화면(자기 창 + 열린 모니터 창)에 알림
+    let sid='';try{sid=hubMap(LO.data)[n];}catch(e){}if(!sid)return;
+    if(loCurrentSeat()?.id===sid)loSwFlash();
+    try{Object.values(LO_MON.wins||{}).forEach(w=>{try{if(w&&!w.closed)w.postMessage({loSwPress:sid},location.origin);}catch(e){}});}catch(e){}
+  }
+  window.addEventListener('message',e=>{const d=e.data;if(e.origin===location.origin&&d&&typeof d.loSwPress==='string'&&loCurrentSeat()?.id===d.loSwPress)loSwFlash();});
+  window.addEventListener('resize',()=>{const r=document.getElementById('loWork');if(r)loNwScale(r);});
   function loDrawWork() {
     const r=LO.data,st=loCurrentSeat();if(!st){loStopPartFit();document.getElementById('loWork')?.remove();LO.seat=null;clearInterval(LO.clock);document.body.classList.remove('lo-work-open');return;}
     const u=loWorkUnit(st),b=r.batches.find(x=>x.id===u?.batchId);
@@ -18250,17 +18329,33 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const seatNumber=loSeatLabel(st);
     let root=document.getElementById('loWork');if(!root){root=document.createElement('section');root.id='loWork';root.tabIndex=-1;document.body.append(root);}
     document.body.classList.add('lo-work-open');
-    root.innerHTML=`<div class="lo-work-head"><div class="lo-work-operator">${esc(loLineName(st.line))} · ${esc(st.assignedName||'미배정')}${supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용'}</div>${pauseControl?`<div class="lo-work-admin">${pauseControl}</div>`:''}${editable&&!supervised?'<button id="loSwitchConfig">스위치 설정</button>':''}<button id="loFull">⛶ 전체화면</button><button id="loExit">나가기</button></div>
-    <div class="lo-work-grid"><section class="lo-spec-card"><div class="lo-model-head"><div class="lo-model-top"><b>제조번호 ${esc(identity?.no||'—')} · ${u&&b?'현재 작업 '+u.seq+' / '+b.q:preview?'준비 '+preview.q+'대':'현재 작업 —'}</b>${meta?.code?`<div class="lo-model-code"><small>제품코드</small>${esc(meta.code)}</div>`:''}</div><div class="lo-model-identity"><h2>${esc(identity?.model||'대기 작업 없음')}</h2></div>${b?.set_data.name?`<small>${esc(loSetName(b.set_data.name))}</small>`:''}</div><h3>전체 부품 사양${focus.length?'<small>이 공정의 확인 부품을 색으로 표시</small>':''}</h3><div class="lo-spec-scroll"><table><colgroup><col><col><col><col></colgroup><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${meta?.specs?.map(x=>`<tr class="${focus.includes(loPartKey(x.kind))?'lo-focus':''}" style="--lo-part-hue:${loPartHue(x.kind)}"><th scope="row"><span class="lo-part-kind lo-fit-part">${esc(x.kind)}</span></th><td><span class="lo-part-name lo-fit-part">${esc(x.name)}</span></td><td>${esc(x.code||'—')}</td><td>${esc(x.q||'미기록')}</td></tr>`).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>'}</tbody></table></div></section>
-    <aside class="lo-complete-card"><header class="lo-work-focus"><small>${esc(seatNumber)}번 작업 · 모니터 ${esc(st.id)}</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</header><section class="lo-stopwatch" aria-labelledby="loStopwatchTitle" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><h2 id="loStopwatchTitle">⏱ 공정 스톱워치${expectedSeconds>0?`<span id="loExpected" class="lo-expected" data-seconds="${expectedSeconds}">기준 ${expectedSeconds}초</span>`:''}</h2><div id="loElapsed" class="lo-elapsed" role="timer" aria-labelledby="loStopwatchTitle">${['분','초','1/100초'].map((label,i)=>`${i?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div><p>${b?.paused_at?'일시정지 · 재개하면 이어서 측정':u?.readyAt?'진행 중 · 현재 제품부터 경과시간':preview?'시작 대기 · 작업이 배정되면 측정 시작':'작업 대기 · 작업을 받으면 자동 시작'}</p></section>${instructions?`<p><b>완료 기준</b> · ${esc(instructions)}</p>`:''}<div class="lo-work-count">담당자 오늘 처리 <b>${st.todayCount}</b>건</div>${editable?`<button id="loDone" class="lo-done" ${u?'':'disabled'}>✓ 작업 완료<small>${supervised?'완료 시 이 자리 담당자의 실적으로 기록됩니다':'본체를 넘길 때 스위치 또는 버튼'}</small></button>`:'<p><b>조회 전용</b> · 공정 현황과 사양을 확인할 수 있습니다.</p>'}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="lo-work-connection" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></aside></div>
-    ${caution?`<div class="lo-caution"><b>⚠ ${defaultCaution?'라인 기본 주의사항':'주의사항'}</b><span>${esc(caution)}</span></div>`:''}<div class="lo-work-foot">공정 신호 기준 · 시리얼 실물 대조 없음 · 순번은 실물을 확정 식별하지 않습니다.</div>`;
+    const swNo=loSwNo(st),EN={cpu:'CPU',메인보드:'MAINBOARD',메모리:'MEMORY',ssd:'STORAGE',그래픽카드:'GRAPHICS',vga:'GRAPHICS',gpu:'GRAPHICS',파워:'POWER',케이스:'CASE',cpu쿨러:'COOLER'};
+    const items=Array.isArray(stage?.items)&&stage.items.length?stage.items:(instructions?String(instructions).split(/\n+/).map(x=>x.trim()).filter(Boolean):[]);
+    const per=(600-10*Math.max(0,items.length-1))/Math.max(1,items.length),fs=Math.max(22,Math.min(46,Math.floor(per*.52)));
+    const specs=meta?.specs||[],isCool=x=>loPartKey(x.kind)==='cpu쿨러',ordered=[];
+    specs.forEach(x=>{if(!isCool(x))ordered.push(x);if(loPartKey(x.kind)==='cpu')specs.filter(isCool).forEach(c=>ordered.push(c));});
+    if(!specs.some(x=>loPartKey(x.kind)==='cpu'))specs.filter(isCool).forEach(c=>ordered.push(c));
+    const letters=t=>[...t].map(c=>`<b>${esc(c)}</b>`).join('');
+    const specRows=ordered.map(x=>{const key=loPartKey(x.kind),cool=key==='cpu쿨러'&&ordered.some(y=>loPartKey(y.kind)==='cpu'),en=EN[key],q=String(x.q??'');
+      const catCell=cool?'':key==='cpu'&&ordered.some(isCool)?`<td class="c" rowspan="${1+ordered.filter(isCool).length}"><div class="cat"><span class="l">${letters('CPU')}</span><em>+ COOLER</em></div></td>`:`<td class="c"><div class="cat"><span class="l">${en?letters(en):esc(x.kind)}</span></div></td>`;
+      const fc=focus.includes(key)||(cool&&focus.includes('cpu'));
+      return `<tr style="--h:${loPartHue(x.kind)}">${catCell}<td class="n${fc?' f':''}">${esc(x.name)}</td><td class="k">${esc(x.code||'—')}</td><td class="q">${+q>=2?`<span class="hi">${esc(q)}</span>`:esc(q||'미기록')}</td></tr>`;}).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>';
+    const cautionText=caution||'',dur=Math.max(12,Math.round(cautionText.length*0.35+10));
+    const stateLine=supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용';
+    const html=`<div class="nw-canvas"><div class="nw-head"><div class="nw-who"><span class="no"><b>${esc(swNo||seatNumber)}</b>번 모니터</span><span class="nm">${esc(st.assignedName||'미배정')}</span><span class="ln">${esc(loLineName(st.line))} · ${esc(st.id)}${stateLine}</span></div></div>
+    <div class="nw-grid"><aside class="nw-steps"><div class="nw-title"><small>작업내용</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</div><ol style="font-size:${fs}px">${items.map((t,k)=>`<li><i style="width:${Math.round(fs*1.17)}px;height:${Math.round(fs*1.17)}px;font-size:${Math.round(fs*.65)}px">${k+1}</i><span>${esc(t)}</span></li>`).join('')}</ol></aside>
+    <div class="nw-right"><section class="nw-spec"><div class="nw-chips"><div class="nw-chip"><small>제조번호</small><b>${esc(identity?.no||'—')}</b></div><div class="nw-chip"><small>현재 작업</small><b>${u&&b?`${u.seq}<span> / ${b.q}</span>`:preview?`—<span> / ${preview.q}</span>`:'—'}</b></div><div class="nw-chip code"><small>제품코드</small><b>${esc(meta?.code||'—')}</b></div></div>
+    <div class="nw-model">${esc(identity?.model||'대기 작업 없음')}</div><div class="nw-tblwrap"><table class="nw-tbl"><colgroup><col style="width:19%"><col><col style="width:15%"><col style="width:8%"></colgroup><thead><tr><th>구분</th><th>제품명 · 사양</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${specRows}</tbody></table></div></section>
+    <section class="nw-clock lo-stopwatch" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><div class="nw-clk-main"><div class="nw-lbl">⏱ 소요시간</div><div id="loElapsed" class="lo-elapsed" role="timer" aria-label="소요시간">${['분','초','1/100초'].map((label,k)=>`${k?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div>${expectedSeconds>0?`<div class="nw-std"><div id="loBar" class="hp ok" data-seconds="${expectedSeconds}"><i></i><u></u><span class="tx"><b>${expectedSeconds}</b>초 <small>/ ${expectedSeconds}초</small></span></div></div>`:''}
+    ${b?.paused_at?'<div class="nw-note">일시정지 · 재개하면 이어서 측정</div>':''}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="nw-note" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></div>
+    <div class="nw-sw" id="loSw" data-pressed="${Date.now()<(LO.swUntil||0)}">${LO_SW_SVG.replace(/@N/g,esc(swNo||seatNumber))}</div>${editable?`<button id="loDone" class="lo-done" hidden ${u?'':'disabled'}>✓</button>`:''}</section></div></div>
+    ${cautionText?`<div class="nw-caution"><b>⚠ ${defaultCaution?'라인 기본 주의사항':'주의사항'}</b><div class="nw-tick"><span style="--dur:${dur}s">${esc(cautionText)}</span></div></div>`:''}</div>`;
+    root.classList.add('nw');
+    if(LO.nwHtml===html&&root.firstElementChild){loNwScale(root);loTick();loStatus();return;}
+    LO.nwHtml=html;root.innerHTML=html;loNwScale(root);
     loBindControls(root);
-    $('#loExit',root).onclick=loCloseWork;$('#loFull',root).onclick=()=>root.requestFullscreen?.().catch(()=>toast('브라우저 전체화면을 열 수 없습니다',true));
     if(editable)$('#loDone',root).onclick=()=>loComplete();
-    if(editable&&!supervised)$('#loSwitchConfig',root).onclick=loSwitchConfig;
     if($('#loRetry',root))$('#loRetry',root).onclick=()=>loComplete(true);
-    const pause=$('[data-lo-pause]',root);if(pause)pause.onclick=()=>loToggleBatchPause(controlsBatch,pause);
-    loFitPartLabels(root);
     if(!document.querySelector('.modal-bg'))root.focus({preventScroll:true});
     loTick();loStatus();
   }
@@ -18272,13 +18367,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const pausedAt=Date.parse(batch?batch.paused_at:unit?.pausedAt);
     const until=Number.isFinite(pausedAt)?pausedAt:Date.now()+LO.offset;
     const centiseconds=Number.isFinite(activeAt)?Math.max(0,Math.floor((until-activeAt)/10)):0;
-    const expected=document.getElementById('loExpected');
-    if(expected){
-      const seconds=Number(expected.dataset.seconds),overdue=centiseconds>seconds*100;
-      const stopwatch=el.closest('.lo-stopwatch'),state=String(overdue);
-      if(stopwatch.dataset.overdue!==state){
-        stopwatch.dataset.overdue=state;
-        expected.textContent=overdue?'기준 시간 초과 · '+seconds+'초':'기준 '+seconds+'초';
+    const bar=document.getElementById('loBar');
+    if(bar){
+      const total=Number(bar.dataset.seconds),sec=Math.floor(centiseconds/100);
+      if(bar.dataset.sec!==String(sec)){   // 1초에 한 번만 갱신 (가벼움)
+        bar.dataset.sec=String(sec);
+        const over=sec>=total,left=Math.max(0,total-sec),pct=left/total*100;
+        bar.className='hp '+(over?'over':pct>50?'ok':pct>=20?'mid':'low');
+        bar.firstElementChild.style.transform=`scaleX(${over?1:Math.max(0,(left-1)/total)})`;
+        bar.lastElementChild.innerHTML=over?`<b>+${sec-total}</b>초 <small>초과 / ${total}초</small>`:`<b>${left}</b>초 <small>/ ${total}초</small>`;
+        el.closest('.lo-stopwatch').dataset.overdue=String(over);
       }
     }
     const parts=[Math.floor(centiseconds/6000),Math.floor(centiseconds/100)%60,centiseconds%100];
@@ -18325,7 +18423,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if(!document.getElementById('loWork').contains(e.target)||e.target.closest?.('input,textarea,select,[contenteditable="true"],.modal-bg')||document.querySelector('.modal-bg')||e.ctrlKey||e.altKey||e.metaKey)return;
     const st=loCurrentSeat();
     if(!loCanWork(st))return;
-    e.preventDefault();if(st.supervisedComplete||e.repeat||LO.held.has(e.code))return;LO.held.add(e.code);loComplete();
+    e.preventDefault();if(st.supervisedComplete||e.repeat||LO.held.has(e.code))return;LO.held.add(e.code);loSwFlash();loComplete();
   });
   document.addEventListener('keyup',e=>{if(LO.held.has(e.code)){e.preventDefault();LO.held.delete(e.code);LO.blockedUntil=Math.max(LO.blockedUntil,Date.now()+400);}});
   window.addEventListener('blur',()=>{LO.held.clear();LO.blockedUntil=Date.now()+1000;});
