@@ -415,6 +415,51 @@ html[data-rot="1"] .q1tip,html[data-rot="3"] .q1tip{margin-bottom:50px}
 /* v33.25 : 주문서 읽기 단계는 위 단계 막대 없음 (비면 빈 알약 안 보이게) */
 .q1ask .q1pcm{display:block;width:100%;margin-top:10px;padding:14px 10px;border:0;border-radius:12px;background:#0b5cd5;color:#fff;font-weight:800;font-size:16px}.q1gd-go small{display:block;font-size:11px;font-weight:600;opacity:.8}
 .q1tt:empty,.q1c-top #q1tt:empty{display:none!important}
+/* v33.36 : CMOS 대조 — 작은 한 줄 사양표(주문서 | CMOS) · 단계 표시는 표 바로 위 · 불일치는 가운데 안내 · 최종 리스트 · 사진 보기 */
+.q1cw{flex-basis:100%;display:flex;flex-direction:column;align-items:flex-start;gap:3px;max-width:100%;text-align:left}
+.q1st{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:2px 10px 2px 3px;border-radius:999px;background:rgba(14,20,28,.78);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:12px;font-weight:800;line-height:1.25}
+.q1st i{font-style:normal;width:17px;height:17px;border-radius:50%;background:#4d8dff;display:grid;place-items:center;font-size:11px}
+.q1st-o{font-weight:500;color:#c9d4e2;font-size:11px}
+.q1st em{flex-basis:100%;font-style:normal;color:#ffe066;font-size:11px;font-weight:700;padding:0 0 1px 3px}
+.q1xl{display:flex;flex-direction:column;gap:3px;width:100%}
+.q1x{display:flex;align-items:center;gap:6px;min-height:26px;padding:2px 8px 2px 4px;border-radius:9px;background:rgba(14,20,28,.74);border:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap;font-size:13px}
+.q1x-t{flex:none;min-width:52px;text-align:center;padding:1px 8px;border-radius:999px;background:var(--cc);color:#fff;font-size:11px;font-weight:800}
+.q1x-a,.q1x-b{display:flex;align-items:baseline;gap:5px;min-width:0}
+.q1x-a{flex:1.5}.q1x-b{flex:1}
+.q1x small{flex:none;font-size:9.5px;font-weight:600;color:rgba(255,255,255,.58)}
+.q1x em{font-style:normal;font-weight:800;font-size:13px;overflow:hidden;text-overflow:ellipsis}
+.q1x-m{font-style:normal;font-size:.82em;font-weight:800;opacity:.85;margin-right:3px}
+.q1x-w{text-decoration:none;color:#ffd27a;font-size:11px;font-weight:700}
+.q1x-dv{flex:none;width:1px;height:16px;background:rgba(255,255,255,.28)}
+.q1x-k{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900;text-decoration:none;color:#fff}
+.q1x.x-ok{background:rgba(18,112,66,.78);border-color:#62e3a4}.q1x.x-ok .q1x-b em{color:#c8ffe3}.q1x.x-ok .q1x-k{background:#2fbf7a}
+.q1x.x-wn{background:rgba(120,84,10,.82);border-color:#f0b43a}.q1x.x-wn .q1x-k{background:#f0b43a;color:#3b2a00}
+.q1x.x-no{background:rgba(132,24,30,.86);border-color:#ff9f9d}.q1x.x-no .q1x-b em{color:#ffd27a}.q1x.x-no .q1x-k{background:#e5484d}
+.q1x.x-wt .q1x-b em{color:rgba(255,255,255,.5);font-weight:500}
+html:not([data-rot="1"]):not([data-rot="3"]) .q1x small{display:none}
+html[data-rot="1"] .q1cw,html[data-rot="3"] .q1cw{position:absolute;left:calc(56px + var(--sat,0px));bottom:30px;width:min(480px,62%);flex-basis:auto;margin:0;z-index:3;pointer-events:none}
+html[data-rot="1"] .q1tip,html[data-rot="3"] .q1tip{margin-bottom:170px}
+html[data-rot="1"] .q1p-msg,html[data-rot="3"] .q1p-msg{position:absolute;top:10px;left:50%;transform:translateX(-50%);margin:0;white-space:nowrap;z-index:4}
+.q1sm.err{background:#e05a2f;color:#fff}
+.q1bp{position:absolute;left:50%;top:30%;transform:translateX(-50%);width:min(320px,86%);padding:9px 14px 10px;border-radius:16px;background:rgba(128,20,28,.95);border:2px solid #ff9f9d;color:#fff;text-align:center;box-shadow:0 6px 22px rgba(0,0,0,.4);pointer-events:auto;z-index:8}
+.q1bp h4{margin:0;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px}
+.q1bp h4 i{font-style:normal;width:22px;height:22px;border-radius:50%;background:#fff;color:#c0262c;display:grid;place-items:center;font-size:15px}
+.q1bp p{margin:5px 0 0;font-size:17px;font-weight:600}.q1bp p b{font-weight:800}.q1bp p u{text-decoration:none;color:#ffd27a;font-weight:800}.q1bp p small{font-size:12px;color:#ffd0d0}
+.q1bp p.s2{font-size:12.5px;color:#ffe1e0;font-weight:500}
+html[data-rot="1"] .q1bp,html[data-rot="3"] .q1bp{left:calc(50% - 50px);top:16%}
+.q1fin{display:grid;gap:7px;margin:10px 0;max-height:46vh;overflow:auto}
+.q1gl{position:fixed;inset:0;background:#fff;z-index:60;display:flex;flex-direction:column}
+.q1gl-h{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + var(--sat,0px)) 14px 10px;border-bottom:1px solid #e5e9ef;font-weight:800;font-size:16px}
+.q1gl-h button{border:0;background:#eef2f7;border-radius:999px;padding:7px 14px;font-weight:700}
+.q1gl-g{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;align-content:start}
+.q1gl-g>div{position:relative;aspect-ratio:1;background:#eef2f7;overflow:hidden}
+.q1gl-g img{width:100%;height:100%;object-fit:cover;display:block}
+.q1gl-g small{position:absolute;left:0;right:0;bottom:0;padding:10px 4px 2px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q1gl-v{position:fixed;inset:0;background:#000;z-index:70;display:flex;flex-direction:column}
+.q1gl-v img{flex:1;min-height:0;object-fit:contain;width:100%}
+.q1gl-v>div{display:flex;justify-content:space-between;align-items:center;padding:10px 14px calc(12px + var(--sab,0px));color:#fff;font-size:13px}
+.q1gl-v button{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:8px 16px;font-weight:700}
+.q1gl-e{grid-column:1/-1;padding:40px 20px;text-align:center;color:#667;font-size:14px;line-height:1.6}
 /* v33.24 : 라인생산 저장 버튼이 작은 알약으로 쪼그라드는 문제 — 하단 바 버튼은 칸 전체 폭 */
 .pmx .pxbar>button{width:100%;box-sizing:border-box}
 /* v33.23 : 폰 브라우저 — 업무 화면(안정화·라인생산·검수) 위 공통 막대(브랜드·이름·로그아웃) 숨김(화면 자체 머리글과 중복) · 줄바꿈 긴 칩 글씨 맞춤 */
@@ -8892,7 +8937,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.35';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.36';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20333,7 +20378,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       for (let j = i; j >= Math.max(0, i - 3); j--) { const r = qcpFind(L.slice(Math.max(0, j - 1), j + 1).join(' ')); if (!r || !Q1K.includes(r.k)) continue; const it = M[r.k];
         if (it && it.code === r.c) { if (!it.chg) it.chg = '변경 (주문서 Z 표시)'; } else if (!it || !it.code || !q1Reg(it)) M[r.k] = Object.assign(qcpObj(r, ''), { n: 1, chg: '변경 (주문서 Z 표시)' }); break; } }); } catch (e) { }
     try { q1QtyFix(o.lines || [], M); } catch (e) { }
-    const bm = txt.match(/품\s*([1-9]\d?)\s*(?:개|7H|7ㅐ)/);   // v32.87 : 본체 수
+    const bm = (() => { const L8 = String(txt || '').split('\n').slice(0, 8); for (const ln of L8) { const m = ln.match(/^[^가-힣A-Za-z]{0,8}품\s*([1-9]\d?)\s*(?:개|7H|7ㅐ)/); if (m) return m; } return null; })();   // v32.87 : 본체 수 · v33.36 : 위쪽 줄 맨 앞 '품 N개'만 (모델명 숫자 · 둘째 장 글자 제외)
     return { order: q1Order(o, txt), P: M, txt, gone: P && P.gone, mark: Q1_MARK.test(txt), set: qsetFind(txt), body: bm ? +bm[1] : 0 };
   }
   const q1Sig = P => ['cpu', 'mem', 'ssd', 'hdd'].map(k => P && P[k] ? (P[k].code || P[k].name || '?') + 'x' + (P[k].n || 1) + (P[k].chg ? '*' : '') : '').join('|');
@@ -20635,7 +20680,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   // 전표 : 가까이 읽기 — 항목마다 같은 값이 두 번 연속이면 체크(등록 코드 = 초록, 미등록 = 노랑) · 체크는 유지
   function q1DocRead(o) {
-    const Q = S.q1, r = q1ParseDoc(o); if (r.body > 1 && r.body > (Q.bodyN || 1)) Q.bodyN = r.body;
+    const Q = S.q1, r = q1ParseDoc(o); if (r.body > 1 && r.body > (Q.bodyN || 1) && !q1DocDone(Q)) Q.bodyN = r.body;   // v33.36 : 첫 장에서 사양을 다 읽은 뒤에는 본체 수 고정 (둘째 장이 바꾸지 못하게)
     if (Q.practice) Q.lastO = { lines: o.lines, w: o.w, h: o.h };
     Q.lastTxt = r.txt; Q.lastLines = (o.lines || []).slice(0, 160);   // v32.48 : 오류 보고용 (실제 검수도)
     let bc = ''; for (const c of (o.codes || [])) { const v = String(c[0] || '').replace(/\D/g, ''); if (/^\d{8,9}$/.test(v)) { bc = v; break; } }
@@ -20908,6 +20953,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       q1Call('stamp', o.uri, JSON.stringify({ order: Q.order || '', items }));
     } catch (e) { q1Log('stamp', String(e && e.message || e)); }
   }
+  function q1CmReport(Q, ks) {   // v33.36 : CMOS 불일치 오류 보내기 — 읽은 글자만 서버로 (사진 X)
+    try { const got = { kind: 'cmos', order: Q.order || '', expect: Q.E, exp2: Q.E2 || null, cm: Q.cm, bad: Q.bad, vendor: Q.vendor || '' };
+      api('qc', { op: 'report1', order: Q.order || '', wrong: ('cmos:' + ks.join(',')).slice(0, 190), got, txt: String(Q.lastCmTxt || '').slice(0, 8000), lines: null, appVer: q1Call('version') || '' }).catch(e => q1Log('report-fail', String(e && e.message || e)));
+      q1Log('cmos-report', Q.order + ' ' + ks.map(k => k + ':' + (Q.cm[k] === 'bad' ? Q.bad[k].seen : '못찾음')).join(' '));
+    } catch (e) { q1Log('report-fail', String(e && e.message || e)); }
+  }
   async function q1CmShoot(forced) {
     const Q = S.q1; if (Q.busyShot) return;
     const ks = Object.keys(Q.E), wd = ks.filter(k => Q.w[k] && Q.w[k].st === 'diff');
@@ -20926,6 +20977,26 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       host.appendChild(el); const done = v => { el.remove(); res(v); };
       el.querySelector('[data-x]').onclick = () => done(false); el.querySelector('[data-y]').onclick = () => done(true); el.querySelectorAll('[data-rr]').forEach(b => { b.onclick = () => done('rr:' + b.dataset.rr); });
     });
+  }
+
+  const q1BlurMin = () => { const v = parseFloat(localStorage.getItem('q1blur')); return isFinite(v) ? v : 28; };   // v33.36 : 선명도 점수(높을수록 선명) 이 값보다 낮으면 흔들린 사진 — 현장 사진으로 조정 가능 (localStorage q1blur)
+  async function q1Gallery() {   // v33.36 : 앱이 저장한 'Pictures/조립검수' 사진 보기 (새 앱 필요 · 구버전 앱은 안내)
+    const raw = q1Call('photoList', 90);
+    const host = document.createElement('div'); host.className = 'q1gl';
+    host.innerHTML = '<div class="q1gl-h"><span>조립검수 사진</span><button type="button" data-x>닫기</button></div><div class="q1gl-g" id="q1glg"></div>';
+    document.body.appendChild(host); host.querySelector('[data-x]').onclick = () => host.remove();
+    const g = host.querySelector('#q1glg');
+    if (raw === undefined || raw === null) { g.innerHTML = '<div class="q1gl-e">사진 보기는 앱을 새 버전으로 업데이트하면 사용할 수 있어요.<br>검수 시작 화면의 [업데이트]를 눌러 주세요.</div>'; return; }
+    let L = []; try { L = JSON.parse(raw) || []; } catch (e) { }
+    if (!L.length) { g.innerHTML = '<div class="q1gl-e">아직 저장된 사진이 없어요.</div>'; return; }
+    const fmt = t => { const d = new Date(t * 1000); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    L.forEach(o => { const c = document.createElement('div'); c.innerHTML = `<small>${esc(o.n)} · ${fmt(o.t)}</small>`; c.onclick = () => q1GalView(o, fmt); g.appendChild(c); o._c = c; });
+    for (let i = 0; i < L.length; i++) { if (!host.isConnected) return; const o = L[i], u = q1Call('photoThumb', o.u, 260); if (u) { const im = document.createElement('img'); im.src = u; o._c.insertBefore(im, o._c.firstChild); } if (i % 6 === 5) await new Promise(r => setTimeout(r, 0)); }
+  }
+  function q1GalView(o, fmt) {
+    const v = document.createElement('div'); v.className = 'q1gl-v'; v.innerHTML = `<img alt=""><div><span>${esc(o.n)} · ${fmt(o.t)}</span><button type="button" data-x>닫기</button></div>`;
+    document.body.appendChild(v); v.querySelector('[data-x]').onclick = () => v.remove();
+    setTimeout(() => { const u = q1Call('photoFull', o.u, 1800); if (u && v.isConnected) v.querySelector('img').src = u; }, 30);
   }
 
   window.__cam = o => {
@@ -20947,6 +21018,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (o.k !== 'shot') return;
     Q.busyShot = false;
     if (/^연습_/.test(o.tag || '')) { Q.pracShot = 0; q1Call('pause', false); q1Paint(); return; }
+    if (o.saved && typeof o.sharp === 'number' && (Q.step === 'free' || (Q.step === 'doc' && /^전표/.test(o.tag || ''))) && o.sharp < q1BlurMin()) {   // v33.36 : 흔들린 사진은 지우고 다시 찍게 함 (구버전 앱은 sharp 없음 → 건너뜀)
+      q1Log('blur', Q.step + ' ' + o.sharp.toFixed(1) + ' ' + (o.tag || '')); if (o.uri) q1Call('photoDelete', o.uri); q1Snd('bad'); q1Call('pause', false);
+      q1Cheer('흔들렸어요 · 다시 찍어 주세요', true, true); q1Paint(); return; }
     if (/^전표/.test(o.tag || '') && Q.step === 'doc') {
       if (o.lines && o.lines.length) {   // 전표 전체 사진으로 한 번 더 : 사양 변경 · 추가 · 빠짐 · 같은 종류 두 번째 부품 (2차 검수와 같은 규칙)
         const r = q1ParseDoc(o), notes = [];
@@ -21057,9 +21131,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1PracOn = () => !!S.me;   // v32.53 : 베타 — 전체 직원 연습 가능
   const q1TitleHtml = () => { const Q = S.q1; const [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order && q1V(Q, 'order') ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k] && q1V(Q, k)).length;
-    const tip = Q.card === 'spec' ? ' ' : Q.step === 'cmos' && Q.ph !== 'guide' && Q.badN ? `✕ 불일치 ${Q.badN}개 · [다시 읽기] 또는 [불일치 진행]` : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 주문번호 인식 완료 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 사양 인식 완료 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
+    const tip = Q.card === 'spec' ? ' ' : Q.step === 'cmos' && Q.ph !== 'guide' && Q.badN ? (Q.badHide === q1BadSig(Q) ? `✕ 불일치 ${Q.badN}개 · [다시 읽기] 또는 [오류 보내기]` : ' ') : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 주문번호 인식 완료 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 사양 인식 완료 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
       : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 사양 인식 완료 · 가운데 [다음]을 누르세요' : `주문서 ${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
     Q._tip = tip;   // v32.94 : 할 일 안내는 카메라 버튼 위 가운데 (#q1tip) · 위에는 단계 이름만
+    if (Q.step === 'cmos' && Q.ph !== 'guide') return '';   // v33.36 : CMOS 대조 단계 표시는 사양표 바로 위(q1Hud)로
     if (Q.step === 'doc' && Q.ph === 'read' && !Q.practice) return '';   // v33.31 : 위 단계 막대는 없애되 가운데 안내(_tip)는 계속 갱신 (v33.25 에서 안내가 멈추던 버그)
     return `<div class="q1mini"><em>${Q.practice ? '연' : si}</em>${esc(a)}${tip ? '' : ` <u>· ${esc(Q.step === 'cmos' && Q.ph === 'guide' ? 'CMOS를 세팅한 뒤 [시작]' : b)}</u>`}</div>`; };   // v32.50 : 위 안내 한 줄로 작게
   // v31.99 : 사양 변경 · 추가 · OS 설치 · 안정화 표시
@@ -21078,6 +21153,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   const q1ChgLab = (k, it) => { const c = q1Chg(it); if (!c) return ''; const m = String(it.chg || '').match(/총\s*(\d+)\s*개/); return Q1_CAT[k] + ' ' + c + (c === '추가' && /새 부품/.test(it.chg) ? ' (새로)' : c === '추가' && m ? ' (총 ' + m[1] + '개)' : c === '빠짐' ? ' (총 ' + Math.max(1, it.n || 1) + '개)' : ''); };
   const q1TagPills = (Q, pill) => { const T = Q.tags || {}; return (T.os ? pill('tg', 'O/S 설치') : '') + (T.st ? pill('tg', T.osdel ? '안정화 + O/S 삭제' : '안정화') : ''); };
+  const q1BadSig = Q => Object.keys(Q.E || {}).filter(k => Q.cm[k] === 'bad').map(k => k + ':' + ((Q.bad[k] || {}).seen || '')).join('|');
+  function q1BadPop(Q, bk) {   // v33.36 : 어느 항목이 · 주문서 ≠ CMOS · 다시 확인 (누르면 잠시 접힘)
+    const sh = k => { const mn = k === 'mem' && (Q.E2 || {}).memN ? Q.E.mem + 'GB (' + Q.E2.memN + '개)' : ''; return mn || q1ExpLabel(k, Q.E); };
+    const rows = bk.map(k => `<p>${bk.length > 1 ? `<small>${esc(Q1_CAT[k] || k)}</small> ` : ''}주문서 <b>${esc(sh(k))}</b> ≠ CMOS <u>${esc((Q.bad[k] || {}).seen || '')}</u></p>`).join('');
+    return `<div class="q1bp" onclick="window.q1BadHide&&window.q1BadHide()"><h4><i>!</i>${esc(bk.map(k => Q1_CAT[k] || k).join(' · '))} 사양 불일치</h4>${rows}<p class="s2">사양을 다시 확인해주세요~!</p></div>`;
+  }
+  window.q1BadHide = () => { const Q = S.q1; if (!Q || !Q.E) return; Q.badHide = q1BadSig(Q); q1Paint(); };
   function q1Hud() {
     const Q = S.q1, pill = (cls, txt) => `<span class="${cls}">${txt}</span>`;
     if (Q.step === 'cmos' && Q.ph === 'guide') return '';   // v33.6 : 시작 안내 중에는 사양표를 숨김
@@ -21095,17 +21177,20 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     } else if (Q.step === 'cmos' && Q.E) {
       { const rd = Object.keys(Q.cmNew || {}).some(k => Date.now() - Q.cmNew[k] < 1500); }   // v32.98 : 웹 점선 틀 제거 — 앱이 그리는 모서리 틀(실제 인식 영역) 하나만   // v32.55 : CMOS 촬영 틀 (화면 전체를 틀 안에)
       if (Q.vendor) h += pill('vd', esc(Q.vendor));
-      { const CC = { cpu: '#4da3ff', mem: '#5fd38d', ssd: '#ff7aa8', hdd: '#ffd24d' };   // v32.78 : 전표처럼 사양 목록 — 읽히는 대로 체크
-        h += '<div class="q1cl">' + Object.keys(Q.E).map(k => { const s0 = Q.cm[k], s = s0 === 'ok' && !q1V(Q, '@' + k) ? '' : s0, w = Q.w[k], cam = Q.cov[k] ? ' 📷' : '';
+      { const CC = { cpu: '#3d8bff', mem: '#2fbf7a', ssd: '#e8588a', hdd: '#e6b422' };   // v33.36 : 한 줄 작은 사양표 — 주문서 | CMOS 나란히 · 읽힌 줄만 초록
+        const [sn, st1, hb] = q1Title(), anyRead = Object.keys(Q.E).some(k => Q.cm[k]), hint = Q._tip || anyRead || Q.badN ? '' : hb;
+        h += '<div class="q1cw"><div class="q1st"><i>' + esc(sn) + '</i>' + esc(st1) + (Q.order ? ' <b class="q1st-o">주문 ' + esc(Q.order) + '</b>' : '') + (hint ? '<em>' + esc(hint) + '</em>' : '') + '</div><div class="q1xl">' + Object.keys(Q.E).map(k => {
+          const s0 = Q.cm[k], s = s0 === 'ok' && !q1V(Q, '@' + k) ? '' : s0, w = Q.w[k], cam = Q.cov[k] ? ' 📷' : '';
           const cg = Q.items[k] && q1Chg(Q.items[k].it) ? ' (' + q1Chg(Q.items[k].it) + ')' : '';
           const mn = k === 'mem' && (Q.E2 || {}).memN ? ' ' + Q.E.mem + 'GB (' + Q.E2.memN + '개)' : '';
           const cp = Q.cmNew && Q.cmNew[k] && Date.now() - Q.cmNew[k] < 700 ? ' pop' : '';
           const alt = Q.EA && JSON.stringify(Q.EA[k]) !== JSON.stringify(Q.E[k]), lab = esc((Q.altHit && Q.altHit[k] ? '기본 ' + q1ExpLabel(k, Q.EA) : (k === 'mem' && mn ? mn.trim() : q1ExpLabel(k, Q.E)) + (alt ? ' / 기본 ' + q1ExpLabel(k, Q.EA) : ''))), warn = s === 'ok' && w && w.st === 'diff';
-          const st = s === 'ok' ? (warn ? 'warn' : 'ok') : s === 'bad' ? 'bad' : 'wt';
-          const note = s === 'ok' ? (warn ? (k === 'mem' ? esc(w.seen) + ' 꽂힘?' : '제조사?') : '') : s === 'bad' ? `<small>→ 화면</small> <b>${esc(Q.bad[k].seen)}</b>` : '';
+          const st = s === 'ok' ? (warn ? 'x-wn' : 'x-ok') : s === 'bad' ? 'x-no' : 'x-wt';
+          const mk = (m => m ? `<i class="q1x-m">${esc(m)}</i>` : '')(q1MakerOf((Q.items[k] || {}).it));
+          const seen = s === 'ok' ? lab + (warn ? `<u class="q1x-w"> ${k === 'mem' ? esc(w.seen) + ' 꽂힘?' : '제조사?'}</u>` : '') : s === 'bad' ? esc(Q.bad[k].seen) : '읽는 중 ···';
           const cc = CC[String(k).replace(/\d+$/, '')] || '#9fb6d0';
-          return `<div class="q1cr ${st}${cp}" style="--cc:${cc}"><i class="q1cr-s">${Q1_AB[k] || esc(k)}</i><span class="q1cr-v">${s === 'bad' ? '<small class="q1cr-o">주문서</small>' : ''}${(mk => mk ? `<i class="q1cr-m">${esc(mk)}</i>` : '')(q1MakerOf((Q.items[k] || {}).it))}${lab}${esc(cg)}${cam}</span>${note ? `<em>${note}</em>` : ''}<b class="q1cr-k">${s === 'ok' ? '✓' : s === 'bad' ? '✕' : ''}</b></div>`; }).join('') + '</div>'; }
-      { const bk = Object.keys(Q.E).filter(k => Q.cm[k] === 'bad'); Q.badN = bk.length; }   // v33.12 : 큰 불일치 박스 제거 — 칩에 표시 · 아래 [다시 읽기]/[불일치 진행]
+          return `<div class="q1x ${st}${cp}" style="--cc:${cc}"><b class="q1x-t">${Q1_AB[k] || esc(k)}</b><div class="q1x-a"><small>주문서</small><em>${mk}${lab}${esc(cg)}${cam}</em></div><i class="q1x-dv"></i><div class="q1x-b"><small>CMOS</small><em>${seen}</em></div><u class="q1x-k">${s === 'ok' ? '✓' : s === 'bad' ? '✕' : ''}</u></div>`; }).join('') + '</div></div>'; }
+      { const bk = Object.keys(Q.E).filter(k => Q.cm[k] === 'bad'); Q.badN = bk.length; if (bk.length && Q.badHide !== q1BadSig(Q)) h += q1BadPop(Q, bk); }   // v33.36 : 불일치 = 화면 가운데 안내   // v33.12 : 큰 불일치 박스 제거 — 칩에 표시 · 아래 [다시 읽기]/[불일치 진행]
       Object.keys(Q.nob || {}).forEach(k => { if (Q.nob[k]) h += pill('nb', esc(q1NobLab(k))); });
       Object.keys(Q.man || {}).forEach(k => { h += pill('nb', esc((Q1_CAT[k] || k) + ' · 직접 확인 (오류 보고)')); });
       h += q1TagPills(Q, pill);
@@ -21131,7 +21216,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     sh.style.setProperty('--p', p + '%'); sh.classList.toggle('ready', !!ok);
     const g = $('#q1gauge'); if (g) { g.style.setProperty('--p', p + '%'); g.classList.toggle('full', !!ok); g.classList.toggle('off', Q.step === 'free' || (Q.step === 'doc' && Q.ph !== 'read')); }
     const c = $('#q1cap'); if (c && c.textContent !== cap) c.textContent = cap;
-    const f = $('[data-q1="cmforce"]'); if (f) { f.classList.toggle('hid', Q.step === 'cmos' && q1AllOk(Q)); f.classList.toggle('glow', Q.step === 'cmos' && !!Q.badN); }
+    const f = $('[data-q1="cmerr"]'); if (f) { f.classList.toggle('hid', Q.step === 'cmos' && q1AllOk(Q)); f.classList.toggle('glow', Q.step === 'cmos' && !!Q.badN); }
     const th = $('#q1th b'); if (th) th.textContent = Q.shots || 0;
     const nx = Q.step === 'doc' && Q.ph === 'read', sI = sh.querySelector('i'); sh.classList.toggle('nx', nx); if (sI) sI.dataset.t = nx ? (Q.practice ? '결과' : '다음') : '';
   }
@@ -21172,7 +21257,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       // v32.05 : B612 · 인스타 느낌 (화이트) — 위아래 그늘 · 점 3개 단계 · 큰 동그라미 셔터 · 가로로 눕히면 글자가 바로 서게 회전
       const lab = s => `<span class="q1rl">${s}</span>`, sm = (a, s, cls) => `<button type="button" class="q1sm ${cls || ''}" data-q1="${a}">${lab(s)}</button>`, gap = '<span class="q1sm q1gap"></span>';
       const L = Q.step === 'doc' ? sm(Q.ph === 'read' ? 'docreset' : 'docback', '다시<br>읽기') : Q.step === 'cmos' ? sm('cmreset', '다시<br>읽기') : `<div class="q1sm q1th" id="q1th">${lab('본체<br><b>' + (Q.shots || 0) + '</b>장')}</div>`;
-      const Rb = Q.step === 'doc' ? gap : Q.step === 'cmos' ? sm('cmforce', '불일치<br>진행', 'bad') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
+      const Rb = Q.step === 'doc' ? gap : Q.step === 'cmos' ? sm('cmerr', '오류<br>보내기', 'err') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
       $('#main').innerHTML = `<div class="q1c"><div id="q1ar"></div><div class="q1c-mid" id="q1mid"></div><div class="q1shT"></div><div class="q1shB"></div>
         <div class="q1lay" id="q1lay"><div class="q1tt" id="q1tt">${q1TitleHtml()}</div><div class="q1sp"></div><div class="q1tip" id="q1tip"></div><div class="q1gauge" id="q1gauge"><i></i></div><div id="q1hud">${q1Hud()}</div></div>
         <button type="button" class="q1zm" data-q1="zoom">${lab(['1x', '1.5x', '2x'][Q.zi || 0])}</button>
@@ -21226,13 +21311,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           if (Q.busyShot || Q.asking) return; if (Q.practice) return q1PracCmEnd(Q); const nk = q1CmNew(Q);
           if (q1CmShownAll(Q)) { Q.autoShot = false; Q.ready = false; return q1CmShoot(); }
           if (nk.length && (Q.cshots || 0) < 1) { Q.partial = nk; nk.forEach(k => (Q.shotK = Q.shotK || {})[k] = 1); Q.ready = false; Q.busyShot = true; q1Call('pause', true); q1Flash(); return q1Call('shot', true, q1TagCm(Q)); }
-          Q.msg = nk.length ? '남은 항목이 안 읽혔어요 · 화면을 넘겨 확인하거나 [불일치 진행]' : '읽힌 항목이 없어요 · 사양 글자에 한 뼘 거리로 가까이 대 주세요'; return q1Paint(); }
+          Q.msg = nk.length ? '남은 항목이 안 읽혔어요 · 화면을 넘겨 확인하거나 [오류 보내기]' : '읽힌 항목이 없어요 · 사양 글자에 한 뼘 거리로 가까이 대 주세요'; return q1Paint(); }
         if (Q.step === 'free') { q1Flash(); q1Call('shot', true, q1Tag('본체', Q)); return; }
         return;
       }
       if (a === 'intro') return q1Intro(true);
       if (a === 'update') { q1Call('openUrl', Q1_APK); return; }
-      if (a === 'menu') { const m = document.createElement('div'); m.className = 'q1-menu'; m.innerHTML = `<div><div class="nm">${esc(S.me.name)}</div><div class="sub">조립 검수 · ${esc(APP_VER)}${q1Call('version') ? ' · 앱 ' + esc(q1Call('version')) : ''}</div><div class="q1-acts one" style="margin-bottom:8px"><button type="button" data-m="intro">사용법 다시 보기</button></div><div class="q1-acts"><button type="button" data-m="x">닫기</button><button type="button" class="danger" data-m="out">로그아웃</button></div></div>`; document.body.appendChild(m); m.onclick = e2 => { const k = e2.target.dataset && e2.target.dataset.m; if (e2.target === m || k === 'x') m.remove(); if (k === 'intro') { m.remove(); q1Intro(true); } if (k === 'out') { m.remove(); q1Cam(false); Q.camMode = null; logout(); } }; return; }
+      if (a === 'menu') { const m = document.createElement('div'); m.className = 'q1-menu'; m.innerHTML = `<div><div class="nm">${esc(S.me.name)}</div><div class="sub">조립 검수 · ${esc(APP_VER)}${q1Call('version') ? ' · 앱 ' + esc(q1Call('version')) : ''}</div><div class="q1-acts one" style="margin-bottom:8px"><button type="button" data-m="gal">조립검수 사진 보기</button></div><div class="q1-acts one" style="margin-bottom:8px"><button type="button" data-m="intro">사용법 다시 보기</button></div><div class="q1-acts"><button type="button" data-m="x">닫기</button><button type="button" class="danger" data-m="out">로그아웃</button></div></div>`; document.body.appendChild(m); m.onclick = e2 => { const k = e2.target.dataset && e2.target.dataset.m; if (e2.target === m || k === 'x') m.remove(); if (k === 'gal') { m.remove(); q1Gallery(); } if (k === 'intro') { m.remove(); q1Intro(true); } if (k === 'out') { m.remove(); q1Cam(false); Q.camMode = null; logout(); } }; return; }
       if (a === 'prac') { q1Snd('pop'); q1Unsave(); Q.practice = true; Q.step = 'doc'; Q.ph = 'read'; Q.t0 = Date.now(); Q.pracDone = 0; Q.pracOk = 0; api('qc', { op: 'prac1stat' }).then(r => { Q.pracN = r && r.n; q1Paint(); }).catch(() => {}); return renderQc1(); }
       if (a === 'go') { q1Snd('pop'); q1Unsave(); Q.step = 'doc'; Q.ph = 'read'; Q.t0 = Date.now(); Q.tDoc = 0; Q.slowLogged = 0; return renderQc1(); }
       if (a === 'resume') { const SV = q1Saved(); if (!SV) return renderQc1(); q1Snd('pop'); Q1SAVE.forEach(k => { if (SV[k] !== undefined) Q[k] = SV[k]; }); if (Q.step === 'doc' && Q.ph === 'fit') Q.ph = 'read'; Q.items = Q.items || {}; Q.cm = Q.cm || {}; Q.bad = Q.bad || {}; Q.w = Q.w || {}; Q.cov = Q.cov || {}; Q.E2 = Q.E2 || {}; Q.msg = '이어서 합니다 · 주문 ' + Q.order; return renderQc1(); }
@@ -21245,15 +21330,19 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
       if (a === 'cmnext') { Q.ph = 'fit'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmshot') { Q.autoShot = false; return q1CmShoot(); }
-      if (a === 'cmforce') { const ks = Object.keys(Q.E).filter(k => Q.cm[k] !== 'ok'); q1Call('pause', true); Q.asking = true;
-        const yes = await q1Ask(`<b class="t">불일치로 진행할까요?</b>${ks.map(k => `<p>${Q1_CAT[k]} — 주문서 사양 ${esc(q1ExpLabel(k, Q.E))} · 화면 ${Q.cm[k] === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</p>`).join('')}<small>진행하면 불일치로 기록되고 <b>검수자와 담당 매니저</b>에게 확인 알림이 갑니다.</small>`, '불일치로 진행', true);
-        Q.asking = false; if (!yes) { q1Call('pause', false); return; } return q1CmShoot(true); }
+      if (a === 'cmerr') { const ks = Object.keys(Q.E).filter(k => Q.cm[k] !== 'ok'); if (!ks.length) { Q.msg = '모두 일치했습니다 · 보낼 오류가 없습니다'; return q1Paint(); }   // v33.36 : 불일치는 잠김 — 앱이 잘못 읽은 경우만 오류 보내고 진행
+        q1Call('pause', true); Q.asking = true;
+        const yes = await q1Ask(`<b class="t">오류를 보내고 진행할까요?</b>${ks.map(k => `<p>${Q1_CAT[k]} — 주문서 ${esc(q1ExpLabel(k, Q.E))} · 화면 ${Q.cm[k] === 'bad' ? esc(Q.bad[k].seen) : '못 찾음'}</p>`).join('')}<small>실제 사양이 다르면 부품을 다시 확인하세요. 앱이 잘못 읽은 것이면 보내고 진행하세요 · <b>불일치로 기록</b>되고 담당 매니저에게 확인 알림이 갑니다.</small>`, '오류 보내고 진행', true, '다시 확인');
+        Q.asking = false; if (!yes) { q1Call('pause', false); return; } q1CmReport(Q, ks); return q1CmShoot(true); }
       if (a === 'tocmp') { Q.step = 'cmp'; return renderQc1(); }
       if (a === 'redoc') { q1Unsave(); Q.vis = {}; Q.allCheer = 0; Q.bodyN = 0; Q.bodyI = 1; Q.varDone = null; Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
       if (a === 'recm') { if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; }); Q.step = 'cmos'; Q.ph = 'read'; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; return renderQc1(); }
       if (a === 'confirm') return q1Finish();
       if (a === 'freeshot') { q1Flash(); q1Call('shot', true, q1Tag('본체', Q)); return; }
-      if (a === 'close') return q1Close();
+      if (a === 'close') {   // v33.36 : 변경 · 추가 · 빠짐이 있는 주문은 마감 때 최종 리스트를 한 번 보여줌
+        const rows = q1ChgRows(Q), last = !((Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN);
+        if (rows.length && last && !Q.practice) { const yes = await q1Ask(`<b class="t">최종 사양 확인</b><small>주문 ${esc(Q.order || '')}${(Q.bodyN || 1) > 1 ? ' · 본체 ' + Q.bodyN + '대 · 1대 기준' : ''}</small><div class="q1fin">${rows.join('')}</div><small>변경된 부품이 모두 장착됐는지 확인하세요.</small>`, '확인 · 마감', false, '돌아가기'); if (!yes) return; }
+        return q1Close(); }
     });
   }
   // v32.52 : 1차 검수 불일치 알림 — 조립자 담당 매니저에게만 · 10초 안에 · 알림음 · 무엇이 안 맞는지 표로

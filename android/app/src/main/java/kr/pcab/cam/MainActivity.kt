@@ -388,6 +388,40 @@ class MainActivity : AppCompatActivity() {
         return Pair(out, inv)
     }
 
+    /** v1.0.x : 선명도 점수(0~100, 높을수록 선명) — 가로 800px 로 줄여 회색조 변화량을 5x5 흐림 뒤와 비교 (흐린 사진일수록 흐려져도 변화가 안 줄어 점수가 낮음) */
+    private fun sharpScore(src: Bitmap): Double {
+        val w = 800; val h = maxOf(8, (src.height * w.toFloat() / src.width).toInt())
+        val sm = Bitmap.createScaledBitmap(src, w, h, true)
+        val px = IntArray(w * h); sm.getPixels(px, 0, w, 0, 0, w, h); if (sm !== src) sm.recycle()
+        val a = FloatArray(w * h) { i -> val c = px[i]; 0.299f * ((c shr 16) and 255) + 0.587f * ((c shr 8) and 255) + 0.114f * (c and 255) }
+        val tmp = FloatArray(w * h); val b = FloatArray(w * h)
+        for (y in 0 until h) for (x in 0 until w) { var t = 0f; for (d in -2..2) t += a[y * w + (x + d).coerceIn(0, w - 1)]; tmp[y * w + x] = t / 5f }
+        for (y in 0 until h) for (x in 0 until w) { var t = 0f; for (d in -2..2) t += tmp[(y + d).coerceIn(0, h - 1) * w + x]; b[y * w + x] = t / 5f }
+        fun grad(m: FloatArray): Double { var g = 0.0; for (y in 0 until h - 1) for (x in 0 until w - 1) { val i = y * w + x; g += Math.abs(m[i + 1] - m[i]) + Math.abs(m[i + w] - m[i]) }; return g }
+        val g1 = grad(a); if (g1 <= 0.0) return 0.0
+        return (1.0 - grad(b) / g1) * 100.0
+    }
+
+    private fun photoRows(limit: Int): String {
+        val arr = org.json.JSONArray()
+        val q = contentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.DATE_ADDED),
+            MediaStore.Images.Media.RELATIVE_PATH + " LIKE ?", arrayOf("Pictures/조립검수%"), MediaStore.Images.Media.DATE_ADDED + " DESC")
+        q?.use { c -> var n = 0; while (c.moveToNext() && n < limit) {
+            val id = c.getLong(0); val u = android.content.ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+            arr.put(JSONObject().put("u", u.toString()).put("n", c.getString(1) ?: "").put("t", c.getLong(2))); n++ } }
+        return arr.toString()
+    }
+    private fun photoData(uri: String, px: Int, q: Int): String {
+        val u = Uri.parse(uri)
+        val bmp = ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, u)) { dec, info, _ ->
+            val big = maxOf(info.size.width, info.size.height); var s = 1; while (big / (s * 2) >= px) s *= 2
+            dec.setTargetSampleSize(s); dec.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+        }
+        val bo = ByteArrayOutputStream(); bmp.compress(Bitmap.CompressFormat.JPEG, q, bo)
+        return "data:image/jpeg;base64," + android.util.Base64.encodeToString(bo.toByteArray(), android.util.Base64.NO_WRAP)
+    }
+
     private fun takeShot(save: Boolean, tag: String) {
         val cap = capture
         if (cap == null) { emit(JSONObject().put("k", "err").put("msg", "이 기종은 고화질 촬영을 지원하지 않습니다.").put("tag", tag)); return }
@@ -410,8 +444,10 @@ class MainActivity : AppCompatActivity() {
                             val big = maxOf(info.size.width, info.size.height); var s = 1; while (big / (s * 2) >= 2600) s *= 2
                             dec.setTargetSampleSize(s); dec.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                         }
+                        val sharp = try { sharpScore(src) } catch (_: Throwable) { -1.0 }
                         val img = InputImage.fromBitmap(inFrame(src), 0)
                         runRecognition(img, true) { out ->
+                            if (sharp >= 0) out.put("sharp", Math.round(sharp * 10) / 10.0)
                             out.put("k", "shot").put("tag", tag).put("saved", true).put("uri", uri.toString())
                                 .put("w", img.width).put("h", img.height).put("ms", SystemClock.elapsedRealtime() - t0)
                             emit(out)
@@ -527,6 +563,10 @@ class MainActivity : AppCompatActivity() {
                 } catch (_: Exception) {}
             }
         }
+        @JavascriptInterface fun photoList(limit: Int): String = try { photoRows(limit) } catch (e: Throwable) { "[]" }
+        @JavascriptInterface fun photoThumb(uri: String, px: Int): String = try { photoData(uri, px, 70) } catch (e: Throwable) { "" }
+        @JavascriptInterface fun photoFull(uri: String, px: Int): String = try { photoData(uri, px, 85) } catch (e: Throwable) { "" }
+        @JavascriptInterface fun photoDelete(uri: String): Boolean = try { contentResolver.delete(Uri.parse(uri), null, null) > 0 } catch (e: Throwable) { false }
         @JavascriptInterface fun version(): String = appVersion()
         @JavascriptInterface fun versionCode(): Int = try { @Suppress("DEPRECATION") packageManager.getPackageInfo(packageName, 0).versionCode } catch (_: Exception) { 0 }
         /** 확대 0~1 (0 = 기본) */
