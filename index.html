@@ -8892,7 +8892,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.30';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.31';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21053,11 +21053,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   setInterval(q1VisTick, 100);
   const q1PracOn = () => !!S.me;   // v32.53 : 베타 — 전체 직원 연습 가능
-  const q1TitleHtml = () => { const Q = S.q1; if (Q && Q.step === 'doc' && Q.ph === 'read' && !Q.practice) return ''; const [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
+  const q1TitleHtml = () => { const Q = S.q1; const [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order && q1V(Q, 'order') ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k] && q1V(Q, k)).length;
     const tip = Q.card === 'spec' ? ' ' : Q.step === 'cmos' && Q.ph !== 'guide' && Q.badN ? `✕ 불일치 ${Q.badN}개 · [다시 읽기] 또는 [불일치 진행]` : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 주문번호 인식 완료 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 사양 인식 완료 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
       : Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk ? (q1DocShown(Q) ? '✓ 사양 인식 완료 · 가운데 [다음]을 누르세요' : `주문서 ${nR}/4 읽는 중`) : '';   // v32.50 : 할 일 안내는 위 제목 아래 (노란 굵은 글씨)
     Q._tip = tip;   // v32.94 : 할 일 안내는 카메라 버튼 위 가운데 (#q1tip) · 위에는 단계 이름만
+    if (Q.step === 'doc' && Q.ph === 'read' && !Q.practice) return '';   // v33.31 : 위 단계 막대는 없애되 가운데 안내(_tip)는 계속 갱신 (v33.25 에서 안내가 멈추던 버그)
     return `<div class="q1mini"><em>${Q.practice ? '연' : si}</em>${esc(a)}${tip ? '' : ` <u>· ${esc(Q.step === 'cmos' && Q.ph === 'guide' ? 'CMOS를 세팅한 뒤 [시작]' : b)}</u>`}</div>`; };   // v32.50 : 위 안내 한 줄로 작게
   // v31.99 : 사양 변경 · 추가 · OS 설치 · 안정화 표시
   const q1Chg = it => { const c = String(it && it.chg || ''); return /^변경/.test(c) ? '변경' : /^추가/.test(c) ? '추가' : /빠짐/.test(c) ? '빠짐' : ''; };   // v32.01 : 2개 중 1개 빠짐도 표시
