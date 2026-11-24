@@ -4202,6 +4202,8 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 .nw-steps{display:flex;flex-direction:column;gap:14px;min-height:0;padding:18px;border:1px solid #3a6590;border-radius:12px;background:linear-gradient(160deg,#16314f,#0f233b)}
 .nw-title{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:16px 30px 20px;border-radius:12px;background:linear-gradient(135deg,#2563a8,#1b4a80);box-shadow:inset 0 0 0 1px #6fa6dc}
 .nw-title{position:relative}.nw-mbtns{position:absolute;right:24px;top:16px;width:250px;display:flex;flex-direction:column;gap:10px;z-index:3}#loWork .nw-mbtns button{font:inherit;font-size:30px;font-weight:800;height:68px;padding:0;line-height:1;border-radius:14px;border:2px solid;color:#fff;cursor:pointer}#loWork .nw-mbtns .nw-go{background:#0f9d58;border-color:#5ee0a0}#loWork .nw-mbtns .nw-st{background:#c9801a;border-color:#ffd27a}#loWork .nw-mbtns button:disabled{opacity:.4;cursor:default}#loWork .nw-mbtns .nw-go:disabled{background:#2a4f3f;border-color:#3f6b58;color:#9fb8ab}#loWork .nw-mbtns .nw-st:disabled{background:#4d4330;border-color:#6b5f46;color:#b8ac94}
+.nw-pband{position:absolute;left:0;right:0;top:0;height:120px;z-index:20;background:#c9801a;border-bottom:6px solid #ffd27a;display:flex;align-items:center;justify-content:center;gap:40px;color:#fff;font-size:76px;font-weight:900}.nw-pband small{font-size:36px;font-weight:600;color:#fff3d6}
+#loWork.nw-allpause::after{content:'';position:absolute;inset:0;border:14px solid #ffd27a;pointer-events:none;z-index:30}#loWork.nw-allpause .nw-head,#loWork.nw-allpause .nw-grid{filter:saturate(.35) brightness(.6)}
 .nw-title small{padding:4px 18px;border-radius:99px;background:rgba(255,255,255,.2);color:#e3f1ff;font-size:24px;font-weight:700;letter-spacing:.08em}
 .nw-title h1{margin:0;font-size:76px;line-height:1.1;color:#fff;overflow-wrap:anywhere}
 .nw-title .lo-work-state{font-size:26px;margin-top:4px}
@@ -8888,7 +8890,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.26';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.27';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18439,14 +18441,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     }catch(e){if(u&&b)seqShown={seq:u.seq,q:b.q};}
     const cautionText=caution||'',dur=Math.max(12,Math.round(cautionText.length*0.35+10));
     const stateLine=supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용';
-    const html=`<div class="nw-canvas"><div class="nw-head"><div class="nw-who"><span class="no"><b>${esc(swNo||seatNumber)}</b>번 모니터</span><span class="nm">${esc(st.assignedName||'미배정')}</span><span class="ln">${esc(loLineName(st.line))} · ${esc(st.id)}${stateLine}</span></div><div class="nw-chips"><div class="nw-chip"><span class="cv"><small>제조</small><b>${esc(identity?.no||'—')}</b></span></div><div class="nw-chip"><span class="cv"><small>현재 작업</small><b>${seqShown?`${seqShown.seq}<span> / ${seqShown.q}</span>`:preview?`—<span> / ${preview.q}</span>`:next?`—<span> / ${next.q}</span>`:'—'}</b></span></div><div class="nw-chip code"><span class="cv"><small>제품코드</small><b>${esc(meta?.code||'—')}</b></span></div></div></div>
+    const html=`<div class="nw-canvas">${r.allPausedAt?'<div class="nw-pband">⏸ 전체 멈춤<small>재개되면 이어서 진행</small></div>':''}<div class="nw-head"><div class="nw-who"><span class="no"><b>${esc(swNo||seatNumber)}</b>번 모니터</span><span class="nm">${esc(st.assignedName||'미배정')}</span><span class="ln">${esc(loLineName(st.line))} · ${esc(st.id)}${stateLine}</span></div><div class="nw-chips"><div class="nw-chip"><span class="cv"><small>제조</small><b>${esc(identity?.no||'—')}</b></span></div><div class="nw-chip"><span class="cv"><small>현재 작업</small><b>${seqShown?`${seqShown.seq}<span> / ${seqShown.q}</span>`:preview?`—<span> / ${preview.q}</span>`:next?`—<span> / ${next.q}</span>`:'—'}</b></span></div><div class="nw-chip code"><span class="cv"><small>제품코드</small><b>${esc(meta?.code||'—')}</b></span></div></div></div>
     <div class="nw-grid"><aside class="nw-steps"><div class="nw-title"><small>작업내용</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}${monBtns}</div><ol style="font-size:${fs}px">${items.map((t,k)=>`<li><i style="width:${Math.round(fs*1.17)}px;height:${Math.round(fs*1.17)}px;font-size:${Math.round(fs*.65)}px">${k+1}</i><span>${esc(t)}</span></li>`).join('')}</ol></aside>
     <div class="nw-right"><section class="nw-spec"><div class="nw-model">${esc(identity?.model||'대기 작업 없음')}</div><div class="nw-tblwrap"><table class="nw-tbl"><colgroup><col style="width:15%"><col><col style="width:11%"><col style="width:6%"></colgroup><thead><tr><th class="sp">구분</th><th class="sp">제품명</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${specRows}</tbody></table></div></section>
     <section class="nw-clock lo-stopwatch" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><div class="nw-clk-main"><div class="nw-lbl">⏱ 소요시간</div><div id="loElapsed" class="lo-elapsed" role="timer" aria-label="소요시간">${['분','초','1/100초'].map((label,k)=>`${k?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div>${expectedSeconds>0?`<div class="nw-std"><div id="loBar" class="hp ok" data-seconds="${expectedSeconds}"><i></i><u></u><span class="tx"><b>${expectedSeconds}</b>초 <small>/ ${expectedSeconds}초</small></span></div></div>`:''}
     ${b?.paused_at?'<div class="nw-note">일시정지 · 재개하면 이어서 측정</div>':''}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="nw-note" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></div>
     <div class="nw-sw" id="loSw" data-pressed="${Date.now()<(LO.swUntil||0)}">${LO_SW_SVG.replace(/@N/g,esc(swNo||seatNumber))}</div>${editable?`<button id="loDone" class="lo-done" hidden ${u?'':'disabled'}>✓</button>`:''}</section></div></div>
     ${cautionText?`<div class="nw-caution"><b>⚠ ${defaultCaution?'라인 기본 주의사항':'주의사항'}</b><div class="nw-tick"><span style="--dur:${dur}s">${esc(cautionText)}</span></div></div>`:''}</div>`;
-    root.classList.add('nw');
+    root.classList.add('nw');root.classList.toggle('nw-allpause',!!r.allPausedAt);   // v33.27 : 전체 멈춤 — 위 띠 + 노란 테두리 + 어둡게
     if(LO.nwHtml===html&&root.firstElementChild){loNwScale(root);loTick();loStatus();return;}
     LO.nwHtml=html;root.innerHTML=html;loNwScale(root);loFitSpecNames(root);
     loBindControls(root);$$('[data-lo-startall]',root).forEach(button=>button.onclick=()=>loStartAll(button));
