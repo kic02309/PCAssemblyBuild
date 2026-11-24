@@ -8938,7 +8938,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.37';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.38';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21288,7 +21288,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         body = `${Q1UPD ? `<div class="q1-upd"><div><b>새 버전 ${esc(Q1UPD)}</b><span>더 좋아진 앱으로 업데이트하세요</span></div><button type="button" data-q1="update">업데이트</button></div>` : ''}${QN ? `<div class="q1-chip warn"><span>폰에 보관 중인 검수 ${QN}건</span><b>연결되면 자동 전송</b></div>` : ''}${SV ? `<div class="q1-resume"><div><b>진행 중인 검수</b><span>주문 ${esc(SV.order)} · ${{ doc: '① 주문서 확인', cmos: '② CMOS 사양체크', cmp: '비교 확인' }[SV.step] || ''} 단계</span></div><button type="button" class="primary" data-q1="resume">이어서 하기</button></div>` : ''}<div class="q1-title"><b>새 검수</b></div>
           <div class="q1-flow"><div><i>1</i><b>주문서 확인</b><span>가까이 비춰 읽기 → 주문서 1장 촬영</span></div><div><i>2</i><b>CMOS 사양체크</b><span>틀에 맞추면 대조 → 전부 일치하면 자동 촬영</span></div><div><i>3</i><b>본체 촬영</b><span>본체 자유 촬영 → 마감</span></div></div>
           ${L && L.order ? `<div class="q1-chip ${L.result === 'ok' ? 'ok' : 'bad'}"><span>방금 검수 · ${esc(L.order)}</span><b>${L.result === 'ok' ? '✓ 일치' : '✕ 불일치'} · 본체 ${L.shots || 0}장</b></div>` : ''}
-          <div class="q1-bar"><div class="q1-acts one"><button type="button" class="primary big" data-q1="go">1단계 주문서 확인 시작</button></div>${q1PracOn() ? '<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="prac">연습 모드 · 주문서 읽기만</button></div>' : ''}</div>`;
+          <div class="q1-bar"><div class="q1-acts one"><button type="button" class="primary big" data-q1="go">1단계 주문서 확인 시작</button></div>${q1PracOn() ? '<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="prac">연습 모드 · 주문서 읽기만</button></div>' : ''}<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="gal">📷 조립검수 사진 보기</button></div></div>`;
       } else if (Q.step === 'cmp') {
         const ks = Object.keys(Q.E), allOk = ks.every(k => Q.cm[k] === 'ok'), t = Q.tags || {}, warn = allOk && ks.some(k => Q.w[k] && Q.w[k].st === 'diff');
         body = `<div class="q1-title"><b>주문서 사양 ↔ CMOS 비교</b><span>주문 ${esc(Q.order)}</span></div>
