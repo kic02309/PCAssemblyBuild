@@ -8892,7 +8892,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.33';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.34';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -18294,7 +18294,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       loTick();
       const now=Date.now();
       if(now>=nextStatus){nextStatus=now+250;loStatus();}
-    },50);
+    },100);   // v33.34 : 갱신 0.05초 → 0.1초
     loTick();
   }
   function loCloseWork() {
@@ -18452,7 +18452,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const html=`<div class="nw-canvas">${pmode?`<div class="nw-pband">${{pause:'⏸ 전체 멈춤<small>재개되면 이어서 진행</small>',prep:'작업 준비중<small>준비 완료 · 곧 시작합니다</small>',end:'✓ 작업 종료<small>'+(seqShown&&seqShown.seq>=seqShown.q?seqShown.seq+' / '+seqShown.q+' 완료':'이 라인 작업을 모두 마쳤습니다')+'</small>'}[pmode]}</div>`:''}<div class="nw-head"><div class="nw-who"><span class="no"><b>${esc(swNo||seatNumber)}</b>번 모니터</span><span class="nm">${esc(st.assignedName||'미배정')}</span><span class="ln">${esc(loLineName(st.line))} · ${esc(st.id)}${stateLine}</span></div><div class="nw-chips"><div class="nw-chip"><span class="cv"><small>제조</small><b>${esc(identity?.no||'—')}</b></span></div><div class="nw-chip"><span class="cv"><small>현재 작업</small><b>${seqShown?`${seqShown.seq}<span> / ${seqShown.q}</span>`:preview?`—<span> / ${preview.q}</span>`:next?`—<span> / ${next.q}</span>`:'—'}</b></span></div><div class="nw-chip code"><span class="cv"><small>제품코드</small><b>${esc(meta?.code||'—')}</b></span></div></div></div>
     <div class="nw-grid"><aside class="nw-steps"><div class="nw-title"><small>작업내용</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}${monBtns}</div><ol style="font-size:${fs}px">${items.map((t,k)=>`<li><i style="width:${Math.round(fs*1.17)}px;height:${Math.round(fs*1.17)}px;font-size:${Math.round(fs*.65)}px">${k+1}</i><span>${esc(t)}</span></li>`).join('')}</ol></aside>
     <div class="nw-right"><section class="nw-spec"><div class="nw-model">${esc(identity?.model||'대기 작업 없음')}</div><div class="nw-tblwrap"><table class="nw-tbl"><colgroup><col style="width:15%"><col><col style="width:11%"><col style="width:6%"></colgroup><thead><tr><th class="sp">구분</th><th class="sp">제품명</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${specRows}</tbody></table></div></section>
-    <section class="nw-clock lo-stopwatch" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><div class="nw-clk-main"><div class="nw-lbl">⏱ 소요시간</div><div id="loElapsed" class="lo-elapsed" role="timer" aria-label="소요시간">${['분','초','1/100초'].map((label,k)=>`${k?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div>${expectedSeconds>0?`<div class="nw-std"><div id="loBar" class="hp ok" data-seconds="${expectedSeconds}"><i></i><u></u><span class="tx"><b>${expectedSeconds}</b>초 <small>/ ${expectedSeconds}초</small></span></div></div>`:''}
+    <section class="nw-clock lo-stopwatch" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><div class="nw-clk-main"><div class="nw-lbl">⏱ 소요시간</div><div id="loElapsed" class="lo-elapsed" role="timer" aria-label="소요시간">${['분','초','1/10초'].map((label,k)=>`${k?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div>${expectedSeconds>0?`<div class="nw-std"><div id="loBar" class="hp ok" data-seconds="${expectedSeconds}"><i></i><u></u><span class="tx"><b>${expectedSeconds}</b>초 <small>/ ${expectedSeconds}초</small></span></div></div>`:''}
     ${b?.paused_at?'<div class="nw-note">일시정지 · 재개하면 이어서 측정</div>':''}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="nw-note" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></div>
     <div class="nw-sw" id="loSw" data-pressed="${Date.now()<(LO.swUntil||0)}">${LO_SW_SVG.replace(/@N/g,esc(swNo||seatNumber))}</div>${editable?`<button id="loDone" class="lo-done" hidden ${u?'':'disabled'}>✓</button>`:''}</section></div></div>
     ${cautionText?`<div class="nw-caution"><b>⚠ ${defaultCaution?'라인 기본 주의사항':'주의사항'}</b><div class="nw-tick"><span style="--dur:${dur}s">${esc(cautionText)}</span></div></div>`:''}</div>`;
@@ -18485,9 +18485,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         el.closest('.lo-stopwatch').dataset.overdue=String(over);
       }
     }
-    const parts=[Math.floor(centiseconds/6000),Math.floor(centiseconds/100)%60,centiseconds%100];
+    const parts=[Math.floor(centiseconds/6000),Math.floor(centiseconds/100)%60,Math.floor(centiseconds/10)%10];   // v33.34 : 1/100초 → 1/10초 (한 자리)
     el.querySelectorAll('[data-lo-time]').forEach((field,i)=>{
-      const display=String(parts[i]).padStart(2,'0');
+      const display=String(parts[i]).padStart(i===2?1:2,'0');
       if(field.textContent!==display)field.textContent=display;
     });
   }
