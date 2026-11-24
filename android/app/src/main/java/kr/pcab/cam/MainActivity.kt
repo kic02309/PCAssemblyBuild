@@ -262,8 +262,8 @@ class MainActivity : AppCompatActivity() {
                 analysis.setAnalyzer(camExec) { proxy -> analyze(proxy) }
                 analysis.targetRotation = rot; analysisUse = analysis
                 val cap = ImageCapture.Builder()
-                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-                    .setResolutionSelector(ResolutionSelector.Builder().setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY).setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY).build())
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)   // 속도 우선 : 누른 뒤 저장까지 지연 줄임
+                    .setResolutionSelector(ResolutionSelector.Builder().setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY).setResolutionStrategy(ResolutionStrategy(Size(3840, 2160), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER)).build())   // 약 830만 화소 (글자 읽기에 충분 · 용량 절감)
                     .build()
                 cap.targetRotation = rot
                 capture = cap
