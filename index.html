@@ -4201,6 +4201,7 @@ html[data-theme=dark] .lo-meta-status[data-saved=true]{color:#8ad5c6}
 .nw-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.2fr);gap:14px;min-height:0;flex:1}
 .nw-steps{display:flex;flex-direction:column;gap:14px;min-height:0;padding:18px;border:1px solid #3a6590;border-radius:12px;background:linear-gradient(160deg,#16314f,#0f233b)}
 .nw-title{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:16px 30px 20px;border-radius:12px;background:linear-gradient(135deg,#2563a8,#1b4a80);box-shadow:inset 0 0 0 1px #6fa6dc}
+.nw-title{position:relative}.nw-mbtns{position:absolute;right:24px;top:16px;width:250px;display:flex;flex-direction:column;gap:10px;z-index:3}#loWork .nw-mbtns button{font:inherit;font-size:30px;font-weight:800;height:68px;padding:0;line-height:1;border-radius:14px;border:2px solid;color:#fff;cursor:pointer}#loWork .nw-mbtns .nw-go{background:#0f9d58;border-color:#5ee0a0}#loWork .nw-mbtns .nw-st{background:#c9801a;border-color:#ffd27a}#loWork .nw-mbtns button:disabled{opacity:.4;cursor:default}#loWork .nw-mbtns .nw-go:disabled{background:#2a4f3f;border-color:#3f6b58;color:#9fb8ab}#loWork .nw-mbtns .nw-st:disabled{background:#4d4330;border-color:#6b5f46;color:#b8ac94}
 .nw-title small{padding:4px 18px;border-radius:99px;background:rgba(255,255,255,.2);color:#e3f1ff;font-size:24px;font-weight:700;letter-spacing:.08em}
 .nw-title h1{margin:0;font-size:76px;line-height:1.1;color:#fff;overflow-wrap:anywhere}
 .nw-title .lo-work-state{font-size:26px;margin-top:4px}
@@ -8887,7 +8888,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.25';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.26';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -17041,8 +17042,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try {
       const r=await loCall('get',{date:LO.date,pendingBatchId:LO.pending?.batchId});
       if(epoch!==LO.epoch||token!==S.token||seq!==LO.requestSeq||S.view!=='line')return;
-      LO.data=r;LO.last=Date.now();LO.offset=new Date(r.serverAt).getTime()-LO.last;LO.online=true;if(loMonSeat){sndCheck(r);loMonPrepBar(r);}
-      loDrawBoard();if(LO.seat)loDrawWork();else loFollowTerminal(r);LO.monitor?.refresh();lopPaint();
+      LO.data=r;LO.last=Date.now();LO.offset=new Date(r.serverAt).getTime()-LO.last;LO.online=true;if(loMonSeat){sndCheck(r);document.getElementById('loMonPrep')?.remove();}
+      loDrawBoard();
+      if(loMonSeat&&!LO.seat){const ms=r.stations.find(x=>x.id===loMonSeat);if(ms)loOpen(loMonSeat,ms.canComplete?'work':'view',false);}   // v33.26 : 모니터 창은 작업 화면이 사라져도 자동으로 다시 엶
+      if(LO.seat)loDrawWork();else loFollowTerminal(r);LO.monitor?.refresh();lopPaint();
     }catch(e){if(epoch!==LO.epoch||token!==S.token)return;LO.online=false;loStatus();if(!LO.data)$('#main').innerHTML=pageHead('상황판')+`<div class="pgb"><div class="warn">${esc(e.message)} <button id="loTry">다시 불러오기</button></div></div>`;if($('#loTry'))$('#loTry').onclick=()=>loRefresh(LO.epoch,true);}
   }
   function createLineNotifications(options) {
@@ -17184,6 +17187,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const st=loCurrentSeat(),b=LO.data?.batches.find(x=>x.id===st?.current?.batchId);
     const btn=document.getElementById('loDone');if(btn)btn.disabled=!!LO.data?.allPausedAt||!fresh||LO.busy||!loCanWork(st)||!st?.current||!!b?.paused_at||!!b?.sourceChanged||!!LO.pending||Date.now()<LO.blockedUntil;
     $$('[data-lo-start-prepared]').forEach(button=>{button.disabled=!loCanStart();});
+    $$('[data-lo-startall]').forEach(button=>{button.disabled=!loCanStart()||!(LO.data?.prepared||[]).length;});
   }
   function loStageHue(name) {
     let hash=2166136261;
@@ -18287,6 +18291,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     loTick();
   }
   function loCloseWork() {
+    if(loMonSeat)return;   // v33.26 : 모니터 창은 작업 화면 유지
     if(LO.busy)return toast('서버 응답을 기다리고 있습니다',true);
     loStopPartFit();
     const root=document.getElementById('loWork');if(document.fullscreenElement===root)document.exitFullscreen().catch(()=>{});
@@ -18425,6 +18430,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const pq=perSet(q);   // v33.15 : 사양표 수량 = 1세트 기준 (본체 20대여도 메모리 2개)
       return `<tr style="--h:${loPartHue(x.kind)}">${catCell}<td class="n f">${esc(x.name)}</td><td class="k">${esc(x.code||'—')}</td><td class="q">${pq>=2?`<span class="hi">${esc(pq)}</span>`:esc(pq===''?'미기록':pq)}</td></tr>`;}).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>';
     // v33.15 : 현재 작업 숫자 유지 — 이 자리에서 마지막으로 진행한 번호를 같은 제조건이 이어지는 동안 계속 보여 줌 (모니터 창들이 같이 쓰도록 localStorage)
+    const monBtns=loMonSeat&&r.manage?`<div class="nw-mbtns"><button type="button" class="nw-go" data-lo-startall ${loCanStart()&&(r.prepared||[]).length?'':'disabled'}>▶ 작업 시작</button><button type="button" class="nw-st" data-lo-toggle-all ${r.batches.some(b=>b.final<b.q&&(r.allPausedAt?b.paused_by_all:!b.paused_at))?'':'disabled'}>${r.allPausedAt?'▶ 전체 재개':'⏸ 전체 멈춤'}</button></div>`:'';   // v33.26 : 모니터 창 전용 시작·멈춤 버튼
     const seqKey=(r.practice?'p:':'r:')+st.id;let seqShown=null;
     try{const all=JSON.parse(localStorage.getItem('loLastSeq')||'{}')||{},c=all[seqKey];
       if(u&&b){seqShown={seq:u.seq,q:b.q};if(!c||c.b!==b.id||c.seq!==u.seq){all[seqKey]={b:b.id,seq:u.seq};localStorage.setItem('loLastSeq',JSON.stringify(all));}}
@@ -18434,7 +18440,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cautionText=caution||'',dur=Math.max(12,Math.round(cautionText.length*0.35+10));
     const stateLine=supervised?' · 담당자 대신 완료 가능':editable?'':' · 조회 전용';
     const html=`<div class="nw-canvas"><div class="nw-head"><div class="nw-who"><span class="no"><b>${esc(swNo||seatNumber)}</b>번 모니터</span><span class="nm">${esc(st.assignedName||'미배정')}</span><span class="ln">${esc(loLineName(st.line))} · ${esc(st.id)}${stateLine}</span></div><div class="nw-chips"><div class="nw-chip"><span class="cv"><small>제조</small><b>${esc(identity?.no||'—')}</b></span></div><div class="nw-chip"><span class="cv"><small>현재 작업</small><b>${seqShown?`${seqShown.seq}<span> / ${seqShown.q}</span>`:preview?`—<span> / ${preview.q}</span>`:next?`—<span> / ${next.q}</span>`:'—'}</b></span></div><div class="nw-chip code"><span class="cv"><small>제품코드</small><b>${esc(meta?.code||'—')}</b></span></div></div></div>
-    <div class="nw-grid"><aside class="nw-steps"><div class="nw-title"><small>작업내용</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}</div><ol style="font-size:${fs}px">${items.map((t,k)=>`<li><i style="width:${Math.round(fs*1.17)}px;height:${Math.round(fs*1.17)}px;font-size:${Math.round(fs*.65)}px">${k+1}</i><span>${esc(t)}</span></li>`).join('')}</ol></aside>
+    <div class="nw-grid"><aside class="nw-steps"><div class="nw-title"><small>작업내용</small><h1>${esc(stage?.name||'공정')}</h1>${status?`<div class="lo-work-state">${status}</div>`:''}${monBtns}</div><ol style="font-size:${fs}px">${items.map((t,k)=>`<li><i style="width:${Math.round(fs*1.17)}px;height:${Math.round(fs*1.17)}px;font-size:${Math.round(fs*.65)}px">${k+1}</i><span>${esc(t)}</span></li>`).join('')}</ol></aside>
     <div class="nw-right"><section class="nw-spec"><div class="nw-model">${esc(identity?.model||'대기 작업 없음')}</div><div class="nw-tblwrap"><table class="nw-tbl"><colgroup><col style="width:15%"><col><col style="width:11%"><col style="width:6%"></colgroup><thead><tr><th class="sp">구분</th><th class="sp">제품명</th><th>제품코드</th><th>수량</th></tr></thead><tbody>${specRows}</tbody></table></div></section>
     <section class="nw-clock lo-stopwatch" data-running="${!!u?.readyAt&&!b?.paused_at}" data-paused="${!!b?.paused_at}"><div class="nw-clk-main"><div class="nw-lbl">⏱ 소요시간</div><div id="loElapsed" class="lo-elapsed" role="timer" aria-label="소요시간">${['분','초','1/100초'].map((label,k)=>`${k?'<span aria-hidden="true">:</span>':''}<span class="lo-time-part"><b data-lo-time>00</b><small>${label}</small></span>`).join('')}</div>${expectedSeconds>0?`<div class="nw-std"><div id="loBar" class="hp ok" data-seconds="${expectedSeconds}"><i></i><u></u><span class="tx"><b>${expectedSeconds}</b>초 <small>/ ${expectedSeconds}초</small></span></div></div>`:''}
     ${b?.paused_at?'<div class="nw-note">일시정지 · 재개하면 이어서 측정</div>':''}${pendingHere?'<div class="lo-result" role="status">이전 완료 요청의 결과를 확인하세요.</div><button id="loRetry" class="lo-retry">완료 결과 다시 확인</button>':''}<p id="loWorkConnection" class="nw-note" role="status" hidden>연결을 확인 중입니다. 연결이 복구되면 완료 처리가 가능합니다.</p></div>
@@ -18443,7 +18449,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     root.classList.add('nw');
     if(LO.nwHtml===html&&root.firstElementChild){loNwScale(root);loTick();loStatus();return;}
     LO.nwHtml=html;root.innerHTML=html;loNwScale(root);loFitSpecNames(root);
-    loBindControls(root);
+    loBindControls(root);$$('[data-lo-startall]',root).forEach(button=>button.onclick=()=>loStartAll(button));
     if(editable)$('#loDone',root).onclick=()=>loComplete();
     if($('#loRetry',root))$('#loRetry',root).onclick=()=>loComplete(true);
     if(!document.querySelector('.modal-bg'))root.focus({preventScroll:true});
@@ -18508,7 +18514,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     });
   }
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&LO.seat&&!document.querySelector('.modal-bg')){loCloseWork();return;}
+    if(e.key==='Escape'&&LO.seat&&!loMonSeat&&!document.querySelector('.modal-bg')){loCloseWork();return;}   // v33.26 : 모니터 창은 Esc로 닫히지 않음
     const key=localStorage.getItem('lineSwitchCode');if(!key||e.code!==key||!LO.seat||!document.getElementById('loWork')||document.hidden)return;
     if(!document.getElementById('loWork').contains(e.target)||e.target.closest?.('input,textarea,select,[contenteditable="true"],.modal-bg')||document.querySelector('.modal-bg')||e.ctrlKey||e.altKey||e.metaKey)return;
     const st=loCurrentSeat();
