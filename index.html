@@ -452,14 +452,20 @@ html[data-rot="1"] .q1bp,html[data-rot="3"] .q1bp{left:calc(50% - 50px);top:16%}
 .q1gl{position:fixed;inset:0;background:#fff;z-index:60;display:flex;flex-direction:column}
 .q1gl-h{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + var(--sat,0px)) 14px 10px;border-bottom:1px solid #e5e9ef;font-weight:800;font-size:16px}
 .q1gl-h button{border:0;background:#eef2f7;border-radius:999px;padding:7px 14px;font-weight:700}
-.q1gl-g{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;align-content:start}
-.q1gl-g>div{position:relative;aspect-ratio:1;background:#eef2f7;overflow:hidden}
-.q1gl-g img{width:100%;height:100%;object-fit:cover;display:block}
-.q1gl-g small{position:absolute;left:0;right:0;bottom:0;padding:10px 4px 2px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q1gl-g{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px 2px calc(12px + var(--sab,0px));align-content:start;grid-auto-rows:auto}
+.q1gl-g>div:not(.q1gl-d):not(.q1gl-e){position:relative;height:0;padding-top:100%;background:#eef2f7;overflow:hidden}
+.q1gl-g>div img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.q1gl-g small{position:absolute;left:0;right:0;bottom:0;padding:12px 4px 2px;font-size:9.5px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q1gl-d{grid-column:1/-1;padding:12px 8px 4px;font-size:13px;font-weight:800;color:#334155;background:#fff;position:sticky;top:0;z-index:2}
 .q1gl-v{position:fixed;inset:0;background:#000;z-index:70;display:flex;flex-direction:column}
-.q1gl-v img{flex:1;min-height:0;object-fit:contain;width:100%}
-.q1gl-v>div{display:flex;justify-content:space-between;align-items:center;padding:10px 14px calc(12px + var(--sab,0px));color:#fff;font-size:13px}
-.q1gl-v button{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:8px 16px;font-weight:700}
+.q1gl-s{flex:1;min-height:0;overflow:hidden;display:grid;place-items:center}
+.q1gl-s img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center;will-change:transform;-webkit-user-drag:none;user-select:none}
+.q1gl-f{display:flex;align-items:center;gap:10px;padding:8px 12px calc(12px + var(--sab,0px));color:#fff;font-size:12px}
+.q1gl-f span{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q1gl-f button{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px}
+.q1-set{margin:14px 14px 0!important;padding:12px;border-radius:16px;background:#fff;border:1px solid #e2e8f0}.q1-set>b{display:block;font-size:13px;margin-bottom:8px}
+.q1-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}.q1-seg button{border:1.5px solid #cbd5e1;background:#f8fafc;border-radius:10px;padding:10px 4px;font-weight:700;font-size:13px;color:#334155}.q1-seg button.on{background:#2f5de0;border-color:#2f5de0;color:#fff}
+.q1-set small{display:block;text-align:center;margin-top:10px;color:#94a3b8;font-size:11px}
 .q1gl-e{grid-column:1/-1;padding:40px 20px;text-align:center;color:#667;font-size:14px;line-height:1.6}
 /* v33.24 : 라인생산 저장 버튼이 작은 알약으로 쪼그라드는 문제 — 하단 바 버튼은 칸 전체 폭 */
 .pmx .pxbar>button{width:100%;box-sizing:border-box}
@@ -8938,7 +8944,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.38';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.39';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20507,7 +20513,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // v32.07 : 카메라 화면은 상태바까지 꽉 차게 · 상태바/아래 막대 높이만큼 버튼을 띄움
   function q1Immersive(on) { q1Call('immersive', !!on); setTimeout(() => { let I = { t: 24, b: 24 }; try { I = JSON.parse(q1Call('insets') || '{}'); } catch (e) { } const R = document.documentElement.style; R.setProperty('--sat', (on ? Math.round(+I.t || 24) : 0) + 'px'); R.setProperty('--sab', (on ? Math.round(+I.b || 0) : 0) + 'px'); const Q = S.q1; if (Q) { Q.bandSig = ''; q1Band(); } }, 250); }
   // v32.07 : 사진 파일 이름 = 주문번호-1, -2, -3 … (전표 → CMOS → 본체 순서)
-  const q1TagCm = Q => { const n = Q.cmPic = (Q.cmPic || 0) + 1, od = Q.order || '주문없음'; return 'CMOS_' + od + '|' + od + '_CMOS' + (n > 1 ? '_' + n : ''); };   // v33.13 : 파일 이름 = 주문번호_CMOS
+  const q1TagCm = Q => { const n = Q.cmPic = (Q.cmPic || 0) + 1, od = Q.order || '주문없음'; return 'CMOS_' + od + '|' + od + '_CMOS-' + n; };   // v33.13 : 파일 이름 = 주문번호_CMOS
   const q1Tag = (kind, Q) => kind + '_' + (Q.order || '수동') + '|' + (Q.order || '주문없음') + '-' + (Q.picN = (Q.picN || 0) + 1);
   const q1Reg = it => !!(it && it.code && QCP && QCP.has(it.code));
   const q1PAlt = P => { const ks = Object.keys(P).filter(k => P[k] && P[k].alt); if (!ks.length) return null; const A = Object.assign({}, P); ks.forEach(k => { A[k] = P[k].alt; }); return A; };   // v32.87 : 기본 사양(일부 본체만 변경일 때)
@@ -20851,12 +20857,14 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   });
   // v33.13 : 주문번호 따로 찍기 없음 — [맞음] 뒤 앨범 저장 없이 한 번 읽어 사양 변경 · 추가를 다시 확인하고 바로 CMOS 로 (주문번호는 CMOS 사진에 같이 저장)
   function q1DocSnap(Q) { if (Q.busyShot) return; Q.busyShot = true; Q.msg = ''; q1Call('pause', true); q1Call('shot', false, q1Tag('전표', Q)); }
+  const q1CardMode = () => { try { const v = localStorage.getItem('q1card'); return v === 'cmos' || v === 'off' ? v : 'doc'; } catch (e) { return 'doc'; } };   // v33.39 : 사양 확인 카드 — doc(주문서 다음) / cmos(CMOS 다음) / off(안 나옴) · 폰마다 저장
   async function q1GoFit(Q, next) {
     const go = () => { Q.chgAsk = 0; if (next) return next(); q1DocSnap(Q); };
     if (Q.practice) return q1PracCard(Q);
     if (Q.chgOk) return go();
     const base = q1Base(Q), T = Q.tags || {}, rows = q1ChgRows(Q), unread = !rows.length && base !== 'b' && ((Q.markN || 0) >= 2 || (base === 'n' && !T.os && !T.st));
     // v32.87 : 사양 확인 카드는 모든 주문에 (주문번호 찍기 전에 확인)
+    if (!unread && q1CardMode() !== 'doc') { Q.chgOk = Q.chgOk || 'ok'; return go(); }   // v33.39 : 카드를 뒤로 미루거나 건너뜀
     Q.chgAsk = 1; Q.card = unread ? '' : 'spec'; q1Paint(); q1Call('pause', true); q1Snd(unread ? 'bad' : 'done');
     const yes = unread
       ? await q1Ask((base === 'n' ? `<b class="t">기본 모델이 아닌 주문서입니다</b><div class="cr">모델 옆에 (기본)이 없어 사양 변경 · OS · 안정화 중 하나가 있어야 하는데 찾지 못했습니다.</div>` : `<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">주문서에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div>`) + `<small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 주문서가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
@@ -20941,14 +20949,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q.practice && Q.pracCm && q1CmDecided(Q) && !Q.pracEnd) { Q.pracEnd = 1; setTimeout(() => { if (S.q1 === Q) q1PracCmEnd(Q); }, 700); }   // v33.30 : CMOS 연습 — 결정되면 결과 카드
   }
   // v33.13 : 저장된 CMOS 사진 위에 주문번호(좌상단 파랑) + 사양 결과 칩(좌하단) 을 앱이 그려 넣음 (구버전 앱은 stamp 가 없어 그냥 건너뜀)
-  function q1Stamp(o, keys) {
+  function q1Stamp(o, keys, all) {   // v33.39 : all = 마지막 사진 → 앞 사진(1번)에서 이미 읽은 항목도 목록에 남김
     try {
       const Q = S.q1; if (!Q || !o || !o.uri || !Q.E) return;
-      const items = keys.map(k => {
+      const full = all ? Object.keys(Q.E) : keys, items = full.map(k => {
         const s = Q.cm[k], mn = k === 'mem' && (Q.E2 || {}).memN ? Q.E.mem + 'GB (' + Q.E2.memN + '개)' : '';
         const lab = Q.altHit && Q.altHit[k] ? '기본 ' + q1ExpLabel(k, Q.EA) : (mn || q1ExpLabel(k, Q.E)), mk = q1MakerOf((Q.items[k] || {}).it), nm = (Q1_AB[k] || k) + ' · ';
-        if (s === 'ok') return { st: 'ok', t: nm + [mk, lab].filter(Boolean).join(' ') };
-        if (s === 'bad') return { st: 'bad', t: nm + '주문서 ' + lab + ' → 화면 ' + ((Q.bad[k] || {}).seen || '') };
+        const pv = all && keys.indexOf(k) < 0 ? ' · 1번 사진' : '';
+        if (s === 'ok') return { st: 'ok', t: nm + [mk, lab].filter(Boolean).join(' ') + pv };
+        if (s === 'bad') return { st: 'bad', t: nm + '주문서 ' + lab + ' → 화면 ' + ((Q.bad[k] || {}).seen || '') + pv };
         return { st: 'wait', t: nm + [mk, lab].filter(Boolean).join(' ') + ' (못 찾음)' };
       });
       q1Call('stamp', o.uri, JSON.stringify({ order: Q.order || '', items }));
@@ -20986,8 +20995,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     try { const r = q1Call('photoList', 1); if (r === undefined || r === null) return; const L = JSON.parse(r) || []; if (!L.length) return;
       const u = q1Call('photoThumb', L[0].u, 120); if (!u) return; b.style.backgroundImage = 'url(' + u + ')'; b.style.display = ''; } catch (e) { }
   }
-  async function q1Gallery() {   // v33.36 : 앱이 저장한 'Pictures/조립검수' 사진 보기 (새 앱 필요 · 구버전 앱은 안내)
-    const raw = q1Call('photoList', 90);
+  async function q1Gallery() {   // v33.39 : 날짜별 · 정사각 칸 · 크게 보기에서 넘기기/확대 (구버전 앱은 안내)
+    const raw = q1Call('photoList', 150);
     const host = document.createElement('div'); host.className = 'q1gl';
     host.innerHTML = '<div class="q1gl-h"><span>조립검수 사진</span><button type="button" data-x>닫기</button></div><div class="q1gl-g" id="q1glg"></div>';
     document.body.appendChild(host); host.querySelector('[data-x]').onclick = () => host.remove();
@@ -20995,14 +21004,35 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (raw === undefined || raw === null) { g.innerHTML = '<div class="q1gl-e">사진 보기는 앱을 새 버전으로 업데이트하면 사용할 수 있어요.<br>검수 시작 화면의 [업데이트]를 눌러 주세요.</div>'; return; }
     let L = []; try { L = JSON.parse(raw) || []; } catch (e) { }
     if (!L.length) { g.innerHTML = '<div class="q1gl-e">아직 저장된 사진이 없어요.</div>'; return; }
-    const fmt = t => { const d = new Date(t * 1000); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
-    L.forEach(o => { const c = document.createElement('div'); c.innerHTML = `<small>${esc(o.n)} · ${fmt(o.t)}</small>`; c.onclick = () => q1GalView(o, fmt); g.appendChild(c); o._c = c; });
-    for (let i = 0; i < L.length; i++) { if (!host.isConnected) return; const o = L[i], u = q1Call('photoThumb', o.u, 260); if (u) { const im = document.createElement('img'); im.src = u; o._c.insertBefore(im, o._c.firstChild); } if (i % 6 === 5) await new Promise(r => setTimeout(r, 0)); }
+    const hm = t => { const d = new Date(t * 1000); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    const dl = t => { const d = new Date(t * 1000), n = new Date(), k = x => x.getFullYear() * 400 + x.getMonth() * 32 + x.getDate(), y = new Date(n.getTime() - 864e5); return k(d) === k(n) ? '오늘' : k(d) === k(y) ? '어제' : (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; };
+    let last = '';
+    L.forEach((o, i) => { const lb = dl(o.t); if (lb !== last) { last = lb; const h = document.createElement('div'); h.className = 'q1gl-d'; h.textContent = lb; g.appendChild(h); }
+      const c = document.createElement('div'); c.innerHTML = `<small>${esc(String(o.n).replace(/\.jpe?g$/i, ''))}</small>`; c.onclick = () => q1GalView(L, i, hm); g.appendChild(c); o._c = c; });
+    for (let i = 0; i < L.length; i++) { if (!host.isConnected) return; const o = L[i], u = q1Call('photoThumb', o.u, 300); if (u) { const im = document.createElement('img'); im.src = u; o._c.insertBefore(im, o._c.firstChild); } if (i % 6 === 5) await new Promise(r => setTimeout(r, 0)); }
   }
-  function q1GalView(o, fmt) {
-    const v = document.createElement('div'); v.className = 'q1gl-v'; v.innerHTML = `<img alt=""><div><span>${esc(o.n)} · ${fmt(o.t)}</span><button type="button" data-x>닫기</button></div>`;
-    document.body.appendChild(v); v.querySelector('[data-x]').onclick = () => v.remove();
-    setTimeout(() => { const u = q1Call('photoFull', o.u, 1800); if (u && v.isConnected) v.querySelector('img').src = u; }, 30);
+  function q1GalView(L, i0, hm) {   // 좌우로 밀어 넘기기 · 두 손가락 확대 · 두 번 탭 확대/원래 · 확대 중에는 끌어서 이동
+    let i = i0, sc = 1, tx = 0, ty = 0, pts = new Map(), d0 = 0, sc0 = 1, sx = 0, sy = 0, tp = 0;
+    const v = document.createElement('div'); v.className = 'q1gl-v';
+    v.innerHTML = '<div class="q1gl-s"><img alt="" draggable="false"></div><div class="q1gl-f"><button type="button" data-p>◀</button><span></span><button type="button" data-n>▶</button><button type="button" data-x>닫기</button></div>';
+    document.body.appendChild(v);
+    const im = v.querySelector('img'), sp = v.querySelector('.q1gl-f span'), st = v.querySelector('.q1gl-s');
+    const ap = () => { im.style.transform = `translate(${tx}px,${ty}px) scale(${sc})`; };
+    const show = n => { if (n < 0 || n >= L.length) return; i = n; sc = 1; tx = ty = 0; ap(); im.removeAttribute('src'); sp.textContent = `${esc(String(L[i].n).replace(/\.jpe?g$/i, ''))} · ${hm(L[i].t)} (${i + 1}/${L.length})`; const my = i; setTimeout(() => { if (my !== i || !v.isConnected) return; const u = q1Call('photoFull', L[my].u, 1800); if (u) im.src = u; }, 20); };
+    v.querySelector('[data-x]').onclick = () => v.remove(); v.querySelector('[data-p]').onclick = () => show(i - 1); v.querySelector('[data-n]').onclick = () => show(i + 1);
+    st.style.touchAction = 'none';
+    const dist = () => { const a = [...pts.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
+    st.onpointerdown = e => { st.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { d0 = dist(); sc0 = sc; } sx = e.clientX; sy = e.clientY; };
+    st.onpointermove = e => { if (!pts.has(e.pointerId)) return; const pr = pts.get(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { sc = Math.min(6, Math.max(1, sc0 * dist() / (d0 || 1))); if (sc === 1) { tx = ty = 0; } ap(); }
+      else if (sc > 1) { tx += e.clientX - pr.x; ty += e.clientY - pr.y; ap(); } };
+    const up = e => { const had = pts.has(e.pointerId); pts.delete(e.pointerId); if (!had) return;
+      if (pts.size === 0 && sc === 1) { const dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) return show(i + (dx < 0 ? 1 : -1));
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) { const t = Date.now(); if (t - tp < 320) { sc = 2.5; tx = ty = 0; ap(); tp = 0; } else tp = t; return; } }
+      else if (pts.size === 0 && sc > 1 && Math.abs(e.clientX - sx) < 10 && Math.abs(e.clientY - sy) < 10) { const t = Date.now(); if (t - tp < 320) { sc = 1; tx = ty = 0; ap(); tp = 0; } else tp = t; } };
+    st.onpointerup = up; st.onpointercancel = up;
+    show(i0);
   }
 
   window.__cam = o => {
@@ -21056,7 +21086,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         const R = q1CmMatch(Q, q1Text(o.lines)), ks = Object.keys(Q.E), need = ks.filter(k => !(Q.shotK || {})[k]), n = need.filter(k => R[k] && R[k].st === 'ok').length;
         if (Q.autoShot && n < Math.min(2, need.length) && (Q.retryN || 0) < 1) { Q.retryN = (Q.retryN || 0) + 1; Q.cshots--; Q.busyShot = false; Q.fitC = 0; Q.autoShot = false; q1Log('blur-retry', Q.order + ' ' + n + '/' + need.length); q1Call('pause', false); q1Cheer('사진이 흐려요 · 다시 찍습니다', false, true); return q1Paint(); }
         q1CmApply(R); }
-      { const ks0 = Object.keys(Q.E), nd = ks0.filter(k => !(Q.shotK || {})[k]); q1Stamp(o, nd.length ? nd : ks0); }
+      { const ks0 = Object.keys(Q.E), nd = ks0.filter(k => !(Q.shotK || {})[k]); q1Stamp(o, nd.length ? nd : ks0, nd.length > 0 && nd.length < ks0.length); }
       return q1Finish();   // v31.93 : 비교 화면 없음 — 일치면 정상, [불일치로 진행]이면 불일치 기록 + 검수자·담당 매니저 알림
     }
     if (Q.step === 'free') { Q.shots++; if (!o.saved) Q.msg = '저장하지 못했습니다'; q1Paint(); }
@@ -21067,6 +21097,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const result = ks.length && ks.every(k => Q.cm[k] === 'ok') ? 'ok' : 'bad';
     Q.result = result; Q.saved = null; Q.step = 'free'; Q.shots = 0; q1Unsave(); renderQc1();
     if (result === 'ok') setTimeout(() => q1Cheer('사양 일치 · 저장'), 120);
+    if (q1CardMode() === 'cmos' && !Q.practice && (Q.bodyI || 1) === 1 && Q.chgOk !== 'unread') setTimeout(async () => {   // v33.39 : CMOS 다음에 사양 확인 카드
+      if (S.q1 !== Q) return; q1Call('pause', true); Q.asking = true;
+      await q1Ask('<div class="q1chk">👀 사양이 주문서와 같은지 확인하세요</div>' + q1SpecCard(Q), '맞음', false, '닫기');
+      Q.asking = false; if (S.q1 === Q) q1Call('pause', false); }, 900);
     { const P = q1Part(Q); if (P) { const D = Q.varDone = Q.varDone || { chg: 0, base: 0 }, v = Object.keys(Q.altHit || {}).length ? 'base' : 'chg'; D[v]++; if (D[v] > P[v]) setTimeout(() => q1Cheer((v === 'chg' ? '변경' : '기본') + ' 사양이 주문서보다 많아요 · 확인하세요', true, true), 1300); } }   // v32.87
     const seen = {}; ks.forEach(k => { seen[k] = { st: Q.cm[k] || 'wait', seen: Q.bad[k] ? Q.bad[k].seen : '' }; if (Q.w[k] && Q.w[k].st) seen[k].w = { st: Q.w[k].st, seen: Q.w[k].seen || '' }; });
     const codes = {}; Q1K.forEach(k => { if (Q.items[k]) codes[k] = { code: Q.items[k].it.code || '', n: Q.items[k].it.n || 1, reg: Q.items[k].reg }; });
@@ -21258,7 +21292,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cam = Q.step === 'doc' || Q.step === 'cmos' || Q.step === 'free';
     document.documentElement.classList.toggle('q1camon', cam); document.body.classList.toggle('q1camon', cam);
     const SI = { start: -1, doc: 0, cmos: 1, cmp: 1, free: 2 }[Q.step], SN = ['주문서 확인', 'CMOS 사양체크', '본체 촬영'];
-    const steps = `<div class="q1-steps">${SN.map((n, i) => `${i ? `<span class="ln ${i <= SI ? 'done' : ''}"></span>` : ''}<span class="st ${i < SI ? 'done' : i === SI ? 'on' : ''}"><i>${i < SI ? '✓' : i + 1}</i>${n}</span>`).join('')}<button type="button" class="me" data-q1="menu">${esc((S.me.name || '?').slice(-2, -1) || S.me.name[0])}</button></div>`;
+    const steps = `<div class="q1-steps">${SN.map((n, i) => `${i ? `<span class="ln ${i <= SI ? 'done' : ''}"></span>` : ''}<span class="st ${i < SI ? 'done' : i === SI ? 'on' : ''}"><i>${i < SI ? '✓' : i + 1}</i>${n}</span>`).join('')}</div>`;
     const btn = (a, label, cls) => `<button type="button" data-q1="${a}" class="${cls || ''}">${label}</button>`;
     if (cam) {
       // v32.05 : B612 · 인스타 느낌 (화이트) — 위아래 그늘 · 점 3개 단계 · 큰 동그라미 셔터 · 가로로 눕히면 글자가 바로 서게 회전
@@ -21288,7 +21322,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         body = `${Q1UPD ? `<div class="q1-upd"><div><b>새 버전 ${esc(Q1UPD)}</b><span>더 좋아진 앱으로 업데이트하세요</span></div><button type="button" data-q1="update">업데이트</button></div>` : ''}${QN ? `<div class="q1-chip warn"><span>폰에 보관 중인 검수 ${QN}건</span><b>연결되면 자동 전송</b></div>` : ''}${SV ? `<div class="q1-resume"><div><b>진행 중인 검수</b><span>주문 ${esc(SV.order)} · ${{ doc: '① 주문서 확인', cmos: '② CMOS 사양체크', cmp: '비교 확인' }[SV.step] || ''} 단계</span></div><button type="button" class="primary" data-q1="resume">이어서 하기</button></div>` : ''}<div class="q1-title"><b>새 검수</b></div>
           <div class="q1-flow"><div><i>1</i><b>주문서 확인</b><span>가까이 비춰 읽기 → 주문서 1장 촬영</span></div><div><i>2</i><b>CMOS 사양체크</b><span>틀에 맞추면 대조 → 전부 일치하면 자동 촬영</span></div><div><i>3</i><b>본체 촬영</b><span>본체 자유 촬영 → 마감</span></div></div>
           ${L && L.order ? `<div class="q1-chip ${L.result === 'ok' ? 'ok' : 'bad'}"><span>방금 검수 · ${esc(L.order)}</span><b>${L.result === 'ok' ? '✓ 일치' : '✕ 불일치'} · 본체 ${L.shots || 0}장</b></div>` : ''}
-          <div class="q1-bar"><div class="q1-acts one"><button type="button" class="primary big" data-q1="go">1단계 주문서 확인 시작</button></div>${q1PracOn() ? '<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="prac">연습 모드 · 주문서 읽기만</button></div>' : ''}<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="gal">📷 조립검수 사진 보기</button></div></div>`;
+          <div class="q1-bar"><div class="q1-acts one"><button type="button" class="primary big" data-q1="go">1단계 주문서 확인 시작</button></div>${q1PracOn() ? '<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="prac">연습 모드 · 주문서 읽기만</button></div>' : ''}<div class="q1-acts one" style="margin-top:8px"><button type="button" class="big" data-q1="gal">📷 조립검수 사진 보기</button></div></div>
+          <div class="q1-set"><b>사양 확인 카드 (이 폰)</b><div class="q1-seg">${[['doc', '주문서 다음'], ['cmos', 'CMOS 다음'], ['off', '안 나옴']].map(([v, l]) => `<button type="button" data-q1="cardm" data-v="${v}" class="${q1CardMode() === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+            <div class="q1-acts"><button type="button" data-q1="intro">사용법 다시 보기</button><button type="button" class="danger" data-q1="logout">로그아웃</button></div>
+            <small>${esc(S.me.name || '')} · 조립 검수 · ${esc(APP_VER)}${q1Call('version') ? ' · 앱 ' + esc(q1Call('version')) : ''}</small></div>`;
       } else if (Q.step === 'cmp') {
         const ks = Object.keys(Q.E), allOk = ks.every(k => Q.cm[k] === 'ok'), t = Q.tags || {}, warn = allOk && ks.some(k => Q.w[k] && Q.w[k].st === 'diff');
         body = `<div class="q1-title"><b>주문서 사양 ↔ CMOS 비교</b><span>주문 ${esc(Q.order)}</span></div>
@@ -21310,7 +21347,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     $$('[data-q1]').forEach(b => b.onclick = async ev => {
       ev.stopPropagation();
       const a = b.dataset.q1; Q.msg = '';
-      if (a === 'gal') { q1Gallery(); return; }   // v33.37 : 셔터 옆 마지막 사진 미리보기
+      if (a === 'gal') { q1Gallery(); return; }
+      if (a === 'cardm') { try { localStorage.setItem('q1card', b.dataset.v); } catch (e) { } return renderQc1(); }   // v33.39
+      if (a === 'intro') { q1Intro(true); return; }
+      if (a === 'logout') { q1Cam(false); Q.camMode = null; logout(); return; }   // v33.37 : 셔터 옆 마지막 사진 미리보기
       if (a === 'zoom') { Q.zi = ((Q.zi || 0) + 1) % 3; Q.zf = [0, 0.25, 0.5][Q.zi]; q1Call('zoom', Q.zf); b.innerHTML = `<span class="q1rl">${['1x', '1.5x', '2x'][Q.zi]}</span>`; return; }
       if (a === 'shut') {   // 가운데 셔터 = 단계별 할 일
         if (Q.step === 'doc') { const x = $(`[data-q1="${Q.ph === 'read' ? 'docnext' : 'docshot'}"]`); if (x) return x.click(); if (Q.ph === 'read') { if (Q.practice) return q1PracCard(Q); if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; return q1GoFit(Q); } if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
