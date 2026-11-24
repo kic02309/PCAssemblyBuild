@@ -8892,7 +8892,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.32';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.33';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -16541,7 +16541,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const h=new URLSearchParams(location.hash.slice(1)),id=h.get('loMon');
       if(id&&/^[A-Za-z0-9_-]{1,64}$/.test(id)){
         sessionStorage.setItem('lineWorkSeat',JSON.stringify({id,mode:'work'}));sessionStorage.setItem('lastView','line');
-        sessionStorage.setItem('loMonSeat',id);sessionStorage.setItem('loMonN',h.get('loMonN')||'');
+        sessionStorage.setItem('loMonSeat',id);sessionStorage.setItem('loMonN',h.get('loMonN')||'');sessionStorage.setItem('loMonW',h.get('loMonW')||'');
         if(h.has('x'))sessionStorage.setItem('loMonRect',JSON.stringify([+h.get('x'),+h.get('y'),+h.get('w'),+h.get('h')]));
         history.replaceState(history.state,'',location.pathname+location.search);
       }
@@ -17026,7 +17026,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const st=LO.data?.stations.find(x=>x.id===remembered?.id);
       if(st)loOpen(st.id,remembered.mode==='work'&&st.canComplete?'work':'view',false);
       if(loMonSeat&&!LO.monShown){LO.monShown=true;   // v31.62 : 모니터 창 — 큰 번호로 어느 모니터인지 표시 · 한 번 클릭하면 전체화면
-        const n=sessionStorage.getItem('loMonN')||'',ms=LO.data?.stations.find(x=>x.id===loMonSeat);
+        const n=sessionStorage.getItem('loMonW')||sessionStorage.getItem('loMonN')||'',ms=LO.data?.stations.find(x=>x.id===loMonSeat);
         document.title=`모니터 ${n} · ${loMonSeat}`;
         const bd=document.createElement('div');bd.className='lo-mon-badge';bd.innerHTML=`<b>${esc(n)}</b><span>${ms?esc(loMonSeat+' · '+loLineName(ms.line)+' '+(+ms.stage+1)+'공정'+(ms.assignedName?' · '+ms.assignedName:'')):esc(loMonSeat)+' · 작업 안 함 (이 자리는 오늘 사용하지 않습니다)'}</span>`;
         document.body.appendChild(bd);setTimeout(()=>bd.remove(),7000);
@@ -17034,6 +17034,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         document.addEventListener('pointerdown',monFs);document.addEventListener('keydown',monFs);
         const monAutoFs=async()=>{try{if(document.fullscreenElement)return;let o={};try{const sd=await window.getScreenDetails?.();if(sd?.currentScreen)o={screen:sd.currentScreen};}catch(e){}await document.documentElement.requestFullscreen(o);LO.monAutoFs=1;}catch(e){}};   // v32.65 : 창이 열리면 사용자 조작 없이 전체화면 시도 (되면 클릭 불필요, 안 되면 키/클릭 한 번)
         [900,2600,5000].forEach(t=>setTimeout(monAutoFs,t));
+        setInterval(()=>{if(!document.hidden&&!LO.busy&&S.view==='line'&&S.token)loRefresh(LO.epoch,true);},8000);   // v33.33 : 알림이 빠져도 8초 안에 시간·상태를 다시 맞춤
+        setInterval(async()=>{try{const t=await (await fetch(location.pathname+'?_='+Date.now(),{cache:'no-store'})).text();const m=t.match(/const APP_VER = '([^']+)'/);if(m&&m[1]!==APP_VER&&!document.querySelector('.modal-bg'))location.reload();}catch(e){}},60000);   // v33.33 : 새 버전이 올라오면 모니터 창이 스스로 다시 불러옴
         const chip=document.createElement('button');chip.type='button';chip.className='lo-snd-chip';chip.textContent='🔊 소리';chip.onclick=()=>{sndInit();sndSettings();};document.body.appendChild(chip);
       }
       loWatch(epoch);
@@ -17852,7 +17854,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function loMonOpenOne(s,seat,n){
     const hmN=(()=>{try{const hm=hubMap(LO.data);return +Object.keys(hm).find(k=>hm[k]===seat)||n;}catch(e){return n;}})();   // v32.58 : 모니터 번호 = 그 자리의 스위치 번호 (윈도우 모니터 순서가 아니라 표지 번호로 표시)
-    const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+hmN+'&x='+s.availLeft+'&y='+s.availTop+'&w='+s.availWidth+'&h='+s.availHeight;
+    const url=location.origin+location.pathname+'#loMon='+encodeURIComponent(seat)+'&loMonN='+hmN+'&loMonW='+n+'&x='+s.availLeft+'&y='+s.availTop+'&w='+s.availWidth+'&h='+s.availHeight;
     const old=LO_MON.wins[n];let w=null;
     if(old&&!old.closed){try{old.location.replace(url);w=old;}catch(e){w=null;}}   // v31.65 : 이미 열린 창은 주소만 바꿈 (팝업 차단 안 걸림)
     if(!w)w=window.open(url,'loMon'+n,`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);
@@ -17863,7 +17865,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     let w=null;try{w=window.open('about:blank','loMon'+n,`popup=yes,left=${s.availLeft},top=${s.availTop},width=${s.availWidth},height=${s.availHeight}`);}catch(e){}
     if(!w)return false;LO_MON.wins[n]=w;
     try{w.moveTo(s.availLeft,s.availTop);w.resizeTo(s.availWidth,s.availHeight);}catch(e){}
-    try{w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>모니터 ${d||n} · 작업 안 함</title></head><body style="margin:0;background:#3a2a1e;color:#f5d9b8;height:100vh;display:flex;flex-direction:column;font-family:system-ui,'Malgun Gothic',sans-serif;cursor:pointer;overflow:hidden"><div style="display:flex;justify-content:space-between;align-items:center;background:#5a4129;padding:2.2vh 3.5vw"><div style="font-size:9vh;font-weight:800;letter-spacing:.02em">조립팀 라인 생산</div><div style="font-size:9vh;font-weight:800;color:#e8b273">${d||n}번 모니터</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><svg viewBox="0 0 100 100" style="height:42vh;width:42vh" fill="none" stroke="#e8b273" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 40H70V62A20 20 0 0 1 50 82H40A20 20 0 0 1 20 62Z"/><path d="M70 46H76A9 9 0 0 1 76 64H70"/><path d="M14 90H76"/><path d="M32 30Q27 23 32 16"/><path d="M45 30Q40 23 45 16"/><path d="M58 30Q53 23 58 16"/></svg><div style="font-size:17vh;font-weight:800;line-height:1.05;margin-top:1vh">휴식 중</div><div style="font-size:5vh;margin-top:2.5vh;color:#c99a68">이 자리는 오늘 작업이 없습니다</div></div><script>function af(){try{if(document.fullscreenElement)return;var p=window.getScreenDetails?window.getScreenDetails().then(function(sd){return {screen:sd.currentScreen};}).catch(function(){return {};}):Promise.resolve({});p.then(function(o){return document.documentElement.requestFullscreen(o);}).catch(function(){});}catch(e){}}setTimeout(af,900);setTimeout(af,2600);function f(){if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(function(){});document.removeEventListener('pointerdown',f);document.removeEventListener('keydown',f);}document.addEventListener('pointerdown',f);document.addEventListener('keydown',f);<\/script></body></html>`);w.document.close();}catch(e){}
+    try{w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>모니터 ${n} · 작업 안 함</title></head><body style="margin:0;background:#3a2a1e;color:#f5d9b8;height:100vh;display:flex;flex-direction:column;font-family:system-ui,'Malgun Gothic',sans-serif;cursor:pointer;overflow:hidden"><div style="display:flex;justify-content:space-between;align-items:center;background:#5a4129;padding:2.2vh 3.5vw"><div style="font-size:9vh;font-weight:800;letter-spacing:.02em">조립팀 라인 생산</div><div style="font-size:9vh;font-weight:800;color:#e8b273">${n}번 모니터</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><svg viewBox="0 0 100 100" style="height:42vh;width:42vh" fill="none" stroke="#e8b273" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 40H70V62A20 20 0 0 1 50 82H40A20 20 0 0 1 20 62Z"/><path d="M70 46H76A9 9 0 0 1 76 64H70"/><path d="M14 90H76"/><path d="M32 30Q27 23 32 16"/><path d="M45 30Q40 23 45 16"/><path d="M58 30Q53 23 58 16"/></svg><div style="font-size:17vh;font-weight:800;line-height:1.05;margin-top:1vh">휴식 중</div><div style="font-size:5vh;margin-top:2.5vh;color:#c99a68">이 자리는 오늘 작업이 없습니다</div></div><script>function af(){try{if(document.fullscreenElement)return;var p=window.getScreenDetails?window.getScreenDetails().then(function(sd){return {screen:sd.currentScreen};}).catch(function(){return {};}):Promise.resolve({});p.then(function(o){return document.documentElement.requestFullscreen(o);}).catch(function(){});}catch(e){}}setTimeout(af,900);setTimeout(af,2600);function f(){if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(function(){});document.removeEventListener('pointerdown',f);document.removeEventListener('keydown',f);}document.addEventListener('pointerdown',f);document.addEventListener('keydown',f);<\/script></body></html>`);w.document.close();}catch(e){}
     return true;
   }
   // v31.64 : 모니터 맞추기 — 모니터마다 창을 띄우고, 차례로 "이 모니터 앞 스위치 누르기"(또는 자리 클릭)로 실제 자리를 맞춤
@@ -18365,7 +18367,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     '<g class="si"><rect x="6" y="6" width="288" height="288" rx="46" fill="url(#nwPl)" stroke="#527c9d" stroke-width="5"/><circle cx="150" cy="150" r="118" fill="#0d1b2b" stroke="#3a5a7a" stroke-width="4"/><circle cx="150" cy="150" r="104" fill="#14532d"/><ellipse cx="150" cy="176" rx="96" ry="84" fill="#0c3a20"/><circle cx="150" cy="138" r="92" fill="url(#nwDg)"/><ellipse cx="118" cy="92" rx="44" ry="17" fill="#e8fff2" opacity=".55"/><text x="150" y="176" text-anchor="middle" font-size="130" font-weight="800" fill="#06361d" font-family="sans-serif">@N</text></g>'+
     '<g class="sp"><rect x="6" y="6" width="288" height="288" rx="46" fill="url(#nwPl)" stroke="#e24b4a" stroke-width="5"/><circle cx="150" cy="150" r="140" fill="#e24b4a" opacity=".22"/><circle cx="150" cy="150" r="118" fill="#0d1b2b" stroke="#e24b4a" stroke-width="4"/><circle cx="150" cy="150" r="104" fill="#5a1717"/><circle cx="150" cy="156" r="88" fill="url(#nwDr)"/><ellipse cx="124" cy="116" rx="38" ry="13" fill="#ffd5d4" opacity=".45"/><text x="150" y="194" text-anchor="middle" font-size="124" font-weight="800" fill="#fff" font-family="sans-serif">@N</text></g></svg>';
   const loTermAdmin=r=>!!(r&&(r.admin||(r.manage&&(r.cfg?.managers||[]).includes(S.me?.id))));   // v32.77 : 공용 PC 작업대 지정 = 관리자 + 라인 운영 관리자
-  function loSwNo(st) {   // 이 모니터에 연결된 스위치 번호
+  function loSwNo(st) {   // 이 모니터 번호 (v33.33 : 모니터 창 번호 = 실제 모니터 순번 · 휴식 창과 겹치지 않음)
+    try{const w=sessionStorage.getItem('loMonW');if(w)return String(w);}catch(e){}
     try{const n=sessionStorage.getItem('loMonN'),sw=JSON.parse(localStorage.getItem('loMonSw')||'{}')[n];if(sw)return String(sw);}catch(e){}
     try{const m=hubMap(LO.data),k=Object.keys(m).find(x=>m[x]===st.id);if(k)return k;}catch(e){}
     return sessionStorage.getItem('loMonN')||'';
@@ -18435,7 +18438,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const pq=perSet(q);   // v33.15 : 사양표 수량 = 1세트 기준 (본체 20대여도 메모리 2개)
       return `<tr style="--h:${loPartHue(x.kind)}">${catCell}<td class="n f">${esc(x.name)}</td><td class="k">${esc(x.code||'—')}</td><td class="q">${pq>=2?`<span class="hi">${esc(pq)}</span>`:esc(pq===''?'미기록':pq)}</td></tr>`;}).join('')||'<tr><td colspan="4">앞 공정의 완료 또는 제조건 배치를 기다리고 있습니다.</td></tr>';
     // v33.15 : 현재 작업 숫자 유지 — 이 자리에서 마지막으로 진행한 번호를 같은 제조건이 이어지는 동안 계속 보여 줌 (모니터 창들이 같이 쓰도록 localStorage)
-    const monBtns=loMonSeat&&r.manage?`<div class="nw-mbtns"><button type="button" class="nw-go" data-lo-startall ${loCanStart()&&(r.prepared||[]).length?'':'disabled'}>▶ 작업 시작</button><button type="button" class="nw-st" data-lo-toggle-all ${r.batches.some(b=>b.final<b.q&&(r.allPausedAt?b.paused_by_all:!b.paused_at))?'':'disabled'}>${r.allPausedAt?'▶ 전체 재개':'⏸ 전체 멈춤'}</button></div>`:'';   // v33.26 : 모니터 창 전용 시작·멈춤 버튼
+    const monBtns=loMonSeat&&r.manage&&(+st.stage===loLineStages(st.line).length-1)?`<div class="nw-mbtns"><button type="button" class="nw-go" data-lo-startall ${loCanStart()&&(r.prepared||[]).length?'':'disabled'}>▶ 작업 시작</button><button type="button" class="nw-st" data-lo-toggle-all ${r.batches.some(b=>b.final<b.q&&(r.allPausedAt?b.paused_by_all:!b.paused_at))?'':'disabled'}>${r.allPausedAt?'▶ 전체 재개':'⏸ 전체 멈춤'}</button></div>`:'';   // v33.26 : 모니터 창 전용 시작·멈춤 버튼
     const seqKey=(r.practice?'p:':'r:')+st.id;let seqShown=null;
     try{const all=JSON.parse(localStorage.getItem('loLastSeq')||'{}')||{},c=all[seqKey];
       if(u&&b){seqShown={seq:u.seq,q:b.q};if(!c||c.b!==b.id||c.seq!==u.seq){all[seqKey]={b:b.id,seq:u.seq};localStorage.setItem('loLastSeq',JSON.stringify(all));}}
