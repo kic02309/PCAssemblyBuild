@@ -7634,7 +7634,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function getMonth(month, part, act) {
     const r = await api(act || 'hrMonth', { month, part: part || '' });
     const checks=new Map();
-    if(month==='2026-10' && r.rawSrc && r.rawSrc.src==='web' && A.C){
+    if(act!=='hrRank' && month==='2026-10' && r.rawSrc && r.rawSrc.src==='web' && A.C){   // v33.42 : 순위표(매니저 포함)는 제조 환산 재확인이 필요 없음
       try{const live=await api('listUsers',{ym:month,hr:1});for(const u of live.users||[]){if(!(u.items||[]).some(it=>it.sum&&it.sum.mfgCalc===1&&it.sum.mf>0))continue;const m=A.C.calcMonth(u.items,u.target,A.minsYm(month));checks.set(String(u.name).replace(/\s/g,''),{average:m.f7,manufacturing:m.mq});}}catch(e){toast('제조 환산 재확인을 하지 못했습니다. SQL 적용 상태를 확인하세요.',1);}
     }
     const b = H.build(r);
@@ -8995,7 +8995,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.41';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.42';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
