@@ -2508,6 +2508,7 @@ html.q1v2 .q1bp p{font-size:14px!important}html.q1v2 .q1bp p u{color:#ff9a9d!imp
 .q1v2c .r>small{color:rgba(255,255,255,.5);font-size:11px}
 .q1v2c .fn{display:none;flex-basis:100%;margin:2px 0 2px 16px;font-size:11.5px;line-height:1.4;color:rgba(255,255,255,.78);background:rgba(255,255,255,.06);border-radius:10px;padding:7px 10px;white-space:normal}
 .q1v2c .r.op{background:rgba(77,163,255,.1);border-radius:12px}.q1v2c .r.op .fn{display:block}
+.q1v2bn{font-size:12px;color:#ffd27a;background:rgba(255,210,122,.1);border-radius:10px;padding:6px 10px;margin:0 0 6px}.q1v2bn b{color:#fff}
 .q1v2c .hint{font-size:11px;color:rgba(255,255,255,.45);text-align:center;margin-top:6px}
 html.q1v2 .q1ask:has(.q1v2c)>div{background:rgba(22,25,31,.74)!important;-webkit-backdrop-filter:blur(22px) saturate(1.3)!important;backdrop-filter:blur(22px) saturate(1.3)!important;border:0!important;border-radius:24px!important;color:#fff!important}
 html.q1v2 .q1ask:has(.q1v2c) .q1ask-b button{border:0;border-radius:14px;background:rgba(255,255,255,.12);color:#fff;font-weight:700}html.q1v2 .q1ask:has(.q1v2c) .q1ask-b .primary{background:#3e91ff}
@@ -9061,7 +9062,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.45';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20693,11 +20694,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const capOf = it => { const m = String(it.cap || q1Full(it) || '').match(/(\d+(?:\.\d+)?\s*(?:TB|GB))/i); return m ? m[1].replace(/\s/g, '').toUpperCase() : ''; };
       const cpuOf = it => { const m = String(q1Full(it) || '').match(/(?<![\dA-Za-z])(\d{4,5}X3D|\d{4,5}(?:GT|GE|XT|KF|K|F|G|X|T)?)(?![\dA-Za-z])/i) || String(q1Full(it) || '').match(/울트라\s*\d.*?(\d{3}[A-Z]{0,2})(?![\dA-Za-z])/i); return m ? m[1] : ''; };
       M.forEach(m => { m.nv = 1;
-        if (m.id === 'order') { m.label = '주문 ' + Q.order; m.cat = 'ord'; return; }
+        if (m.id === 'order') { m.label = '주문 ' + Q.order + (Q1V2 && (Q.bodyN || 1) > 1 && !M.some(z => z.id === 'set') ? ' · 본체 ' + Q.bodyN + '대' : ''); m.cat = 'ord'; return; }
         const k = m.id.slice(1), x = Q.items[k]; if (!x) return; const c = q1Chg(x.it), SHN = { cpu: 'CPU', mem: '메모리', ssd: '저장장치', hdd: 'HDD' }[k] || k;
         const val = k === 'cpu' ? cpuOf(x.it) : k === 'mem' ? q1MemLab(x.it) : capOf(x.it);
         m.cat = k; if (m.kind === 'warn') m.label = SHN + ' 미등록'; else { m.label = SHN + (val ? ' ' + val : ''); if (c) { m.kind = 'chg'; m.chg = c; } } });
-      if (Q.set) { const c7 = Q.set.c, b = findLine(s2 => { const d = String(s2).replace(/\D/g, ''); return d.includes(c7) || d.includes(c7.slice(-6)); }); if (b) M.push({ id: 'set', b, kind: 'set', cat: 'set', label: '본체 ' + qsetShort(Q.set).replace(/\s*\(.*$/, ''), nv: 1 }); }
+      if (Q.set) { const c7 = Q.set.c, b = findLine(s2 => { const d = String(s2).replace(/\D/g, ''); return d.includes(c7) || d.includes(c7.slice(-6)); }); if (b) M.push({ id: 'set', b, kind: 'set', cat: 'set', label: '본체 ' + qsetShort(Q.set).replace(/\s*\(.*$/, '') + (Q1V2 && (Q.bodyN || 1) > 1 ? ' · ' + Q.bodyN + '대' : ''), nv: 1 }); }   // v33.46 : 조립QC — 본체 수량
       const T = Q.tags || {}, hasC = (s2, L2) => L2.some(c => new RegExp('(?<!\\d)' + c + '(?!\\d)').test(s2));
       if (T.os) { const b = findLine(s2 => hasC(s2, QC_TAG.os) || /운영체제|Windows\s?1[01]|윈도우/i.test(s2)); if (b) M.push({ id: 'os', b, kind: 'os', cat: 'os', label: 'O/S 설치', nv: 1 }); }
       if (T.st) { const b = findLine(s2 => hasC(s2, QC_TAG.st) || /안정화/.test(s2)); if (b) M.push({ id: 'st', b, kind: 'st', cat: 'st', label: T.osdel ? '안정화+O/S삭제' : '안정화', nv: 1 }); }
@@ -20911,7 +20912,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const row = (k, lab, mk, sp, q, full, warn) => `<div class="r" onclick="this.classList.toggle('op')"><i style="background:${col[k] || '#888'}"></i><span>${esc(lab)}</span><em>${mk ? '<b>' + esc(mk) + '</b>' : ''}${esc(sp)}${warn ? '<u>' + esc(warn) + '</u>' : ''}</em><small>${esc(q || '')}</small>${full ? '<div class="fn">' + esc(full) + '</div>' : ''}</div>`;
     let h = '';
     if (Q.order) h += row('order', '주문', '', Q.order, '', '', '');
-    if (Q.set) h += row('set', '본체', '', qsetShort(Q.set), '', '', '');
+    if (Q.set) h += row('set', '본체', '', qsetShort(Q.set), (Q.bodyN || 1) > 1 ? Q.bodyN + '대' : '', '', '');
     Q1K.forEach(k => { const x = Q.items && Q.items[k]; if (!x) return; const it = x.it, full = q1Full(it);
       const sp = k === 'cpu' ? (cpuOf(full) || q1Short(it.name || full, 16)) : k === 'mem' ? (((String(full).match(/DDR\d/i) || [''])[0].toUpperCase() + ' ' + (q1MemLab(it) || it.cap || '')).trim()) : (it.cap || q1Short(it.name || full, 16));
       const warn = !x.reg ? '미등록' : (q1ChgLab(k, it) || '');
@@ -20919,7 +20920,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const T = Q.tags || {};
     if (T.os) h += row('os', 'O/S', '', '설치', '', '', '');
     if (T.st) h += row('st', '안정화', '', T.osdel ? '안정화 + O/S 삭제' : '안정화', '', '', '');
-    return `<div class="q1v2c"><h5><b>사양 확인</b>주문서와 같나요?</h5>${h}<div class="hint">항목을 누르면 전체 이름이 보여요</div></div>`;
+    const bn = (Q.bodyN || 1) > 1 ? `<div class="q1v2bn">본체 <b>${Q.bodyN}대</b> · 1대 기준 사양</div>` : '';
+    return `<div class="q1v2c"><h5><b>사양 확인</b>주문서와 같나요?</h5>${bn}${h}<div class="hint">항목을 누르면 전체 이름이 보여요</div></div>`;
   }
   function q1SpecCard(Q) {
     const T = Q.tags || {}, nm0 = it => q1MkHi(q1CapHi(esc(String(q1Full(it) || '').replace(/\s*▶.*$/, '')))), cap = it => { const m = String(it.cap || q1Full(it) || '').match(/(\d+(?:\.\d+)?\s*(?:TB|GB))/i); return m ? m[1].replace(/\s/g, '').toUpperCase() : ''; };
@@ -21459,7 +21461,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (Q.vendor) h += pill('vd', esc(Q.vendor));
       { const CC = { cpu: '#3d8bff', mem: '#2fbf7a', ssd: '#e8588a', hdd: '#e6b422' };   // v33.36 : 한 줄 작은 사양표 — 주문서 | CMOS 나란히 · 읽힌 줄만 초록
         const [sn, st1, hb] = q1Title(), anyRead = Object.keys(Q.E).some(k => Q.cm[k]), hint = Q._tip || anyRead || Q.badN ? '' : hb;
-        h += '<div class="q1cw"><div class="q1st"><i>' + esc(sn) + '</i>' + esc(st1) + (Q.order ? ' <b class="q1st-o">주문 ' + esc(Q.order) + '</b>' : '') + (hint ? '<em>' + esc(hint) + '</em>' : '') + '</div><div class="q1xl">' + Object.keys(Q.E).map(k => {
+        h += '<div class="q1cw"><div class="q1st"><i>' + esc(sn) + '</i>' + esc(st1) + (Q.order ? ' <b class="q1st-o">주문 ' + esc(Q.order) + (Q1V2 && (Q.bodyN || 1) > 1 ? ' · 본체 ' + (Q.bodyI || 1) + '/' + Q.bodyN : '') + '</b>' : '') + (hint ? '<em>' + esc(hint) + '</em>' : '') + '</div><div class="q1xl">' + Object.keys(Q.E).map(k => {
           const s0 = Q.cm[k], s = s0 === 'ok' && !q1V(Q, '@' + k) ? '' : s0, w = Q.w[k], cam = Q.cov[k] ? ' 📷' : '';
           const cg = Q.items[k] && q1Chg(Q.items[k].it) ? ' (' + q1Chg(Q.items[k].it) + ')' : '';
           const mn = k === 'mem' && (Q.E2 || {}).memN ? ' ' + Q.E.mem + 'GB (' + Q.E2.memN + '개)' : '';
