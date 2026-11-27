@@ -9079,7 +9079,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.58';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.59';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21134,7 +21134,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Q.chgAsk = 1; Q.card = unread ? '' : 'spec'; q1Paint(); q1Call('pause', true); q1Snd(unread ? 'bad' : 'done');
     const yes = unread
       ? await q1Ask((base === 'n' ? `<b class="t">기본 모델이 아닌 주문서입니다</b><div class="cr">모델 옆에 (기본)이 없어 사양 변경 · OS · 안정화 중 하나가 있어야 하는데 찾지 못했습니다.</div>` : `<b class="t">변경 줄을 못 읽었습니다</b><div class="cr">주문서에 변경 표시(음영 줄)가 보이는데 바뀐 내용을 읽지 못했습니다.</div>`) + `<small>[다시 읽기] 후 음영 줄을 가까이 비추세요. 변경이 없는 주문서가 확실할 때만 진행하세요.</small>`, '변경 없음 확인 · 진행', true, '다시 읽기')
-      : Q1V2 ? await q1Ask(q1V2Card(Q), '맞음', false, '다시 읽기')
+      : Q1V2 ? await q1Ask(q1V2Card(Q), '맞음', false, '다시 읽기', 1)
       : await q1Ask('<div class="q1chk">👀 사양이 주문서와 같은지 확인하세요</div>' + q1SpecCard(Q) + `<div class="q1rr"><small>틀린 항목만 다시 읽기</small>${q1DocKeys(Q).map(k => `<button type="button" data-rr="${k}">${Q1_AB[k] || k}</button>`).join('')}</div>`, '맞음', false, '전부 다시 읽기');
     Q.card = ''; q1Call('pause', false);
     if (S.q1 !== Q) return;
@@ -21251,9 +21251,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Q.busyShot = true; Q.forced = !!forced; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1TagCm(Q));
     if (forced) q1Log('forced', Q.order + ' ' + Object.keys(Q.E).filter(k => Q.cm[k] !== 'ok').map(k => k + ':' + (Q.cm[k] === 'bad' ? Q.bad[k].seen : '못찾음')).join(' '));
   }
-  function q1Ask(html, okLabel, danger, noLabel) {   // 카메라 화면 위 확인 창
+  function q1Ask(html, okLabel, danger, noLabel, flat) {   // 카메라 화면 위 확인 창 · flat = 가로로 돌리지 않음 (v33.59 : 조립QC 사양 카드)
     return new Promise(res => {
-      const host = $('#q1lay') || $('.q1c') || document.body, el = document.createElement('div'); el.className = 'q1ask';
+      const host = (flat && $('.q1c')) || $('#q1lay') || $('.q1c') || document.body, el = document.createElement('div'); el.className = 'q1ask';
       el.innerHTML = `<div>${html}<div class="q1ask-b"><button type="button" data-x>${esc(noLabel || '취소')}</button><button type="button" class="${danger ? 'danger' : 'primary'}" data-y>${esc(okLabel)}</button></div></div>`;
       host.appendChild(el); const done = v => { el.remove(); res(v); };
       el.querySelector('[data-x]').onclick = () => done(false); el.querySelector('[data-y]').onclick = () => done(true); el.querySelectorAll('[data-rr]').forEach(b => { b.onclick = () => done('rr:' + b.dataset.rr); });
@@ -21683,7 +21683,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'settings') { q1Settings(); return; }
       if (a === 'resx') { q1Unsave(); Q.v2res = ''; const r = $('.q1v2r'); if (r) r.remove(); return; }   // v33.50 : 이어서 하기 지우기
       if (a === 'v2set') { q1V2Set(); return; }
-      if (a === 'spec') { if (!Q.order || Q.asking) return; Q.asking = true; q1Call('pause', true); await q1Ask(q1V2Card(Q).replace('class="q1v2c"', 'class="q1v2c q1v2only"'), '닫기', false); Q.asking = false; if (S.q1 === Q) q1Call('pause', false); return; }   // v33.48 : 언제든 사양표 보기
+      if (a === 'spec') { if (!Q.order || Q.asking) return; Q.asking = true; q1Call('pause', true); await q1Ask(q1V2Card(Q).replace('class="q1v2c"', 'class="q1v2c q1v2only"'), '닫기', false, '', 1); Q.asking = false; if (S.q1 === Q) q1Call('pause', false); return; }   // v33.48 : 언제든 사양표 보기
       if (a === 'cardm') { try { localStorage.setItem('q1card', b.dataset.v); } catch (e) { } return renderQc1(); }   // v33.39
       if (a === 'intro') { q1Intro(true); return; }
       if (a === 'logout') { q1Cam(false); Q.camMode = null; logout(); return; }   // v33.37 : 셔터 옆 마지막 사진 미리보기
