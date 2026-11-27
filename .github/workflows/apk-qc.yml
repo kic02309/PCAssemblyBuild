@@ -29,6 +29,7 @@ jobs:
           sed -i 's/android:label="조립 검수"/android:label="조립QC"/' android/app/src/main/AndroidManifest.xml
           sed -i 's#PCAssemblyBuild/?app=cam"#PCAssemblyBuild/?app=cam\&ui=2"#' android/app/src/main/java/kr/pcab/cam/MainActivity.kt
           sed -i 's#PCABCam/${appVersion()}"#PCABCam/${appVersion()} PCABQC/1"#' android/app/src/main/java/kr/pcab/cam/MainActivity.kt
+          cp android/qc-icon/ic_fg.xml android/qc-icon/ic_bg.xml android/app/src/main/res/drawable/   # 조립QC 아이콘 (렌즈 + QC)
           grep -n 'applicationId' android/app/build.gradle.kts; grep -n 'android:label' android/app/src/main/AndroidManifest.xml; grep -n 'START_URL =' android/app/src/main/java/kr/pcab/cam/MainActivity.kt
           grep -q 'kr.pcab.qc' android/app/build.gradle.kts && grep -q '조립QC' android/app/src/main/AndroidManifest.xml && grep -q 'ui=2' android/app/src/main/java/kr/pcab/cam/MainActivity.kt && grep -q 'PCABQC/1' android/app/src/main/java/kr/pcab/cam/MainActivity.kt
       - name: APK 빌드
