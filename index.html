@@ -9078,7 +9078,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.55';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20659,6 +20659,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1Tag = (kind, Q) => kind + '_' + (Q.order || '수동') + '|' + (Q.order || '주문없음') + '-' + (Q.picN = (Q.picN || 0) + 1);
   const q1Reg = it => !!(it && it.code && QCP && QCP.has(it.code));
   const q1PAlt = P => { const ks = Object.keys(P).filter(k => P[k] && P[k].alt); if (!ks.length) return null; const A = Object.assign({}, P); ks.forEach(k => { A[k] = P[k].alt; }); return A; };   // v32.87 : 기본 사양(일부 본체만 변경일 때)
+  function q1DocLike(Q, txt) {   // v33.56 : 주문서 화면인지 — 주문번호 · [부품] 표시 · 상품 코드(7자리) 여러 개
+    const t = String(txt || ''); if (!t) return false;
+    if (Q.order && t.includes(Q.order)) return true;
+    if ((t.match(/[\[【]\s*(CPU|메모리|SSD|HDD|메인보드|그래픽|파워|케이스|쿨러|운영체제|조립비|추천조립)/gi) || []).length >= 2) return true;
+    if ((t.match(/(?<![\d.])1\d{6}(?![\d.])/g) || []).length >= 3) return true;
+    return /주문번호|고\s*객\s*명|합계금액|운송방법/.test(t); }
   function q1CmMatch(Q, txt) { const R = c1Match(txt, Q.E, Q.E2); if (Q.EA) { const RA = c1Match(txt, Q.EA, Q.E2A); Object.keys(Q.E).forEach(k => { if (JSON.stringify(Q.E[k]) === JSON.stringify(Q.EA[k])) return; if (RA[k] && RA[k].st === 'ok' && !(R[k] && R[k].st === 'ok')) { R[k] = RA[k]; (Q.altHit = Q.altHit || {})[k] = 1; } else if (R[k] && R[k].st === 'ok' && Q.altHit) delete Q.altHit[k]; }); } return R; }
   const q1P = Q => { const P = {}; Q1K.forEach(k => { const x = Q.items[k]; if (x) P[k] = x.extra && x.extra.length ? Object.assign({}, x.it, { extraO: x.extra }) : x.it; }); if (Q.gone) P.gone = Q.gone; return P; };
   const q1Short = (s, n) => { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
@@ -21180,7 +21186,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // v31.93 : CMOS 는 처음부터 틀 — 틀 안 화면을 전표와 대조 · 전부 일치하면 자동 촬영 · 아니면 [불일치로 진행]
   const q1AllOk = Q => { const ks = Object.keys(Q.E || {}); return ks.length > 0 && ks.every(k => Q.cm[k] === 'ok'); };
   function q1CmFit(o) {
-    const txt = q1Text(o.lines), Q = S.q1, R = q1CmMatch(Q, txt); q1CmApply(R);
+    const txt = q1Text(o.lines), Q = S.q1;
+    if (q1DocLike(Q, txt)) { if (Date.now() - (Q.docLikeT || 0) > 4000) { Q.docLikeT = Date.now(); Q.msg = '주문서가 보여요 · CMOS(BIOS) 화면을 비춰 주세요'; q1Paint(); } return; }   // v33.56 : CMOS 단계에서 주문서 글자로 일치 처리되던 문제
+    const R = q1CmMatch(Q, txt); q1CmApply(R);
     if (/M\.?2|SATA|NVMe|[0-9]\s*[GT]B/i.test(txt)) Q.cmTxtLast = txt;   // v33.45 : 지연 로그용 — 마지막으로 저장장치 글자가 보였던 화면
     if (!Q.vendor) { const v = c1Vendor(txt); if (v) Q.vendor = v.id; }
     const ks = Object.keys(Q.E), all = q1AllOk(Q), vis = ks.filter(k => R[k] && R[k].st !== 'wait');
