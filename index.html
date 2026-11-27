@@ -9078,7 +9078,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.52';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.53';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21522,6 +21522,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1V2Tick() {   // v33.48 : 조립QC — 자동 넘어가기 · 이어서 하기 띠 정리
     const Q = S.q1; if (!Q1V2 || !Q || S.view !== 'qc1') return;
     if (Q.order || Q.step !== 'doc') { const r = $('.q1v2r'); if (r) r.remove(); }
+    const gv = $('#q1gv'); if (gv) { let bd = gv.querySelector('b'); const n = Q.step === 'free' ? (Q.shots || 0) : 0;   // v33.53 : 본체 사진 장수 배지 — 찍을 때마다 갱신 (0이면 숨김)
+      if (n) { if (!bd) { bd = document.createElement('b'); gv.appendChild(bd); } if (bd.textContent !== String(n)) bd.textContent = n; } else if (bd) bd.remove(); }
     const ok = Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk && !Q.asking && !Q.practice && q1DocShown(Q) && q1AutoOn();
     if (ok && !Q.autoT) Q.autoT = setTimeout(() => { Q.autoT = 0; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk && !Q.asking && q1DocShown(Q) && q1AutoOn()) { const b = $('#q1sh'); if (b) b.click(); } }, 2000);
     if (!ok && Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } }
@@ -21603,7 +21605,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const lab = s => `<span class="q1rl">${s}</span>`, sm = (a, s, cls) => `<button type="button" class="q1sm ${cls || ''}" data-q1="${a}">${lab(s)}</button>`, gap = '<span class="q1sm q1gap"></span>';
       const L = Q.step === 'doc' ? sm(Q.ph === 'read' ? 'docreset' : 'docback', '다시<br>읽기') : Q.step === 'cmos' ? sm('cmreset', '다시<br>읽기') : `<div class="q1sm q1th" id="q1th">${lab('본체<br><b>' + (Q.shots || 0) + '</b>장')}</div>`;
       const Rb = Q.step === 'doc' ? gap : Q.step === 'cmos' ? sm('cmerr', '오류<br>보내기', 'err') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
-      const thB = `<button type="button" class="q1v2th" data-q1="gal" id="q1gv">${Q.step === 'free' ? `<b>${Q.shots || 0}</b>` : ''}</button>`;
+      const thB = `<button type="button" class="q1v2th" data-q1="gal" id="q1gv">${Q.step === 'free' && Q.shots ? `<b>${Q.shots}</b>` : ''}</button>`;
       const v2re = Q.step === 'doc' ? (Q.ph === 'read' ? 'docreset' : 'docback') : 'cmreset', v2fin = (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음 ' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감';
       const v2st = `<div class="q1v2st"><button type="button" class="sp" data-q1="spec"${Q.order ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>사양표</button>${Q.step === 'free' ? `<button type="button" class="fin" data-q1="close">${v2fin}</button>` : `<button type="button" class="re" data-q1="${v2re}">다시 읽기</button>`}</div>`;   // v33.48 : 조립QC 오른쪽 = 사양표 / 다시 읽기(본체 단계는 마감)
       const BL = Q1V2 ? thB : L, BR = Q1V2 ? v2st + (Q.step === 'cmos' ? '<button type="button" data-q1="cmerr" hidden></button>' : '') : Rb;   // v33.44 : 조립QC — 왼쪽 사진 · 가운데 셔터 · 오른쪽 다시 읽기 (오류 보내기는 불일치 팝업 안)
