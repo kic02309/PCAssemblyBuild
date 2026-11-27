@@ -9078,7 +9078,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.51';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.52';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -9088,9 +9088,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const ymLabel = ym => ym ? (ym.slice(2, 4) + '년 ' + (+ym.slice(5, 7)) + '월') : '';
   const dLabel = s => { const d = new Date(s + 'T00:00:00'); return (d.getMonth() + 1) + '/' + d.getDate() + '(' + C.WD[d.getDay()] + ')'; };
   const APP = $('#app');
+  // v33.52 : 조립QC(2번째 검수 앱) 판별 — 앱 자체 표시 PCABQC 가 가장 확실 · 예전 설치본은 주소 ui=2 · 저장소 표시
+  const IS_QC = /PCABCam\//.test(navigator.userAgent) && (() => { const u = /PCABQC\//.test(navigator.userAgent), q = /[?&]ui=2\b/.test(location.search); try { if (u || q) localStorage.setItem('q1v2', '1'); return u || q || localStorage.getItem('q1v2') === '1'; } catch (e) { return u || q; } })();
 
   const S = {
-    token: sessionStorage.getItem('tk') || '', me: null, periods: [], today: C.ymd(new Date()),
+    token: sessionStorage.getItem('tk') || (IS_QC ? (() => { try { return localStorage.getItem('tkq') || ''; } catch (e) { return ''; } })() : ''),   // v33.52 : 조립QC 는 앱을 닫아도 로그인 유지 (서버 14시간 제한) me: null, periods: [], today: C.ymd(new Date()),
     view: 'input', target: null, date: null, day: null, dirty: false, saving: false, timer: null,
     monthYm: null, manageYm: null, manageGroup: '',
   };
@@ -9551,7 +9553,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           if (r.again) await confirmBox('이미 등록된 계정 <b>' + esc(r.me.name) + '</b>(으)로 로그인합니다.<br>다음부터는 [로그인] 탭을 쓰세요.', '알겠습니다');
           else toast(r.me.name + ' · ' + r.me.group + '(으)로 등록되었습니다');
         }
-        S.token = r.token; sessionStorage.setItem('tk', r.token);
+        S.token = r.token; sessionStorage.setItem('tk', r.token); if (IS_QC) { try { localStorage.setItem('tkq', r.token); } catch (e) { } }
         await boot(r,{freshLogin:true});
         if (S._mustChange) { const w = S._mustChange === 'weak'; S._mustChange = false; changePin(w ? '쉬운 비밀번호(같은 숫자 · 연속 숫자)는 이제 쓸 수 없습니다. <b>새 번호로 바꿔 주세요.</b>' : '관리자가 준 <b>임시 비밀번호</b>입니다. 새 번호로 바꾸세요.', true); }
       } catch (e) { toast(e.message, true); busy = false; go.disabled = false; go.textContent = label; }
@@ -9590,7 +9592,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (window.ACC) window.ACC.reset();
     if (window.EDU) window.EDU.reset(); updateEduBadge._shownFor=null;
     if (window.HR) window.HR.reset();
-    sessionStorage.removeItem('tk'); try { sessionStorage.removeItem('lastView'); } catch (e) { }
+    sessionStorage.removeItem('tk'); try { sessionStorage.removeItem('lastView'); localStorage.removeItem('tkq'); } catch (e) { }
     renderLogin();
   }
 
@@ -20482,7 +20484,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // 앱(PCABCam)이 카메라 + 휴대폰 내장 글자/바코드 인식을 맡고, 판정 · 화면은 여기서 한다.
   const APPCAM = /PCABCam\//.test(navigator.userAgent) || !!window.PCABCam;
   // v33.43 : 조립QC (2번째 검수 앱) — 앱이 ?ui=2 로 열면 켜짐 · 앱마다 저장소가 따로라 기존 앱에는 영향 없음
-  const Q1V2 = APPCAM && (() => { try { if (/[?&]ui=2\b/.test(location.search)) localStorage.setItem('q1v2', '1'); return localStorage.getItem('q1v2') === '1'; } catch (e) { return /[?&]ui=2\b/.test(location.search); } })();
+  const Q1V2 = APPCAM && IS_QC;   // v33.52 : 앱 자체 표시(PCABQC) 우선 — 주소 · 저장소 표시는 예전 설치본 대비
   if (Q1V2) document.documentElement.classList.add('q1v2');
   const q1PK = k => Q1V2 && S.me ? k + ':' + (S.me.id || S.me.name || '') : k;   // 조립QC 는 설정을 사람별로 저장
   const q1BadMode = () => { if (!Q1V2) return 'go'; try { return localStorage.getItem(q1PK('q1bad')) === 'go' ? 'go' : 'stop'; } catch (e) { return 'stop'; } };   // 불일치 : stop = 진행 불가 · go = 오류 보내고 계속
