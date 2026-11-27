@@ -9078,7 +9078,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.56';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.57';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20651,6 +20651,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1B = () => window.PCABCam || null;
   function q1Call(fn, ...a) { try { const b = q1B(); if (b && typeof b[fn] === 'function') return b[fn](...a); } catch (e) { console.warn('PCABCam.' + fn, e); } }
   const q1Frame = s => q1Call('frame', s);
+  function q1CamRestart(Q) {   // v33.57 : 카메라 다시 켜기 — 1분에 3번까지
+    const now = Date.now(); Q.camRs = (Q.camRs || []).filter(t => now - t < 60000); if (Q.camRs.length >= 3) return false; Q.camRs.push(now);
+    const m = Q.camMode || 'doc'; try { q1Call('stop'); } catch (e) { } setTimeout(() => { if (S.q1 === Q && S.view === 'qc1') { q1Cam(true, m); Q.camMode = m; } }, 350); return true; }
+  document.addEventListener('visibilitychange', () => { const Q = S.q1; if (document.hidden || !APPCAM || S.view !== 'qc1' || !Q || !Q.camMode) return; setTimeout(() => { if (!document.hidden && S.q1 === Q && Q.camMode) { q1Cam(true, Q.camMode); if (Q.asking || Q.busyShot) q1Call('pause', true); } }, 300); });   // v33.57 : 앱으로 돌아오면 카메라 다시 연결
   function q1Cam(on, mode) { if (on) q1Call('start', 100, mode); else q1Call('stop'); q1Immersive(on); }
   // v32.07 : 카메라 화면은 상태바까지 꽉 차게 · 상태바/아래 막대 높이만큼 버튼을 띄움
   function q1Immersive(on) { q1Call('immersive', !!on); setTimeout(() => { let I = { t: 24, b: 24 }; try { I = JSON.parse(q1Call('insets') || '{}'); } catch (e) { } const R = document.documentElement.style; R.setProperty('--sat', (on ? Math.round(+I.t || 24) : 0) + 'px'); R.setProperty('--sab', (on ? Math.round(+I.b || 0) : 0) + 'px'); const Q = S.q1; if (Q) { Q.bandSig = ''; q1Band(); } }, 250); }
@@ -21305,7 +21309,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (o && o.k === 'rot') { document.documentElement.dataset.rot = String(o.r === 1 || o.r === 3 ? o.r : 0); if (S.q1) { S.q1.bandSig = ''; requestAnimationFrame(() => q1Band()); } return; }
     if (S.view !== 'qc1' || !S.q1 || !o) return;
     const Q = S.q1;
-    if (o.k === 'err') { q1Log('cam', (o.tag || '') + ' ' + (o.msg || '')); Q.msg = o.msg || '카메라 오류'; Q.busyShot = false; q1Call('pause', false); q1Paint(); return; }
+    if (o.k === 'err') { q1Log('cam', (o.tag || '') + ' ' + (o.msg || '')); Q.busyShot = false; Q.shotErrT = Date.now(); Q.autoOff = 1;   // v33.57 : 실패하면 자동 넘어가기 멈춤 (2초마다 다시 찍던 문제)
+      if (/closed|not bound|valid camera|disconnected|in use/i.test(o.msg || '') && q1CamRestart(Q)) { Q.msg = '카메라를 다시 켰어요 · 한 번 더 눌러 주세요'; q1Paint(); return; }   // v33.57 : 휴대폰이 카메라를 닫았으면 다시 켬
+      Q.msg = o.msg || '카메라 오류'; q1Call('pause', false); q1Paint(); return; }
     if (o.k === 'stamp') { if (!o.saved) q1Log('stamp', o.msg || ''); return; }
     if (o.k === 'state') return;
     if (o.k === 'live') {
@@ -21531,7 +21537,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const Q = S.q1; if (!Q1V2 || !Q || S.view !== 'qc1') return;
     if (Q.order || Q.step !== 'doc') { const r = $('.q1v2r'); if (r) r.remove(); }
 
-    const ok = Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk && !Q.asking && !Q.practice && q1DocShown(Q) && q1AutoOn();
+    const ok = Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk && !Q.asking && !Q.practice && !Q.autoOff && !Q.busyShot && q1DocShown(Q) && q1AutoOn();
     if (ok && !Q.autoT) Q.autoT = setTimeout(() => { Q.autoT = 0; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk && !Q.asking && q1DocShown(Q) && q1AutoOn()) { const b = $('#q1sh'); if (b) b.click(); } }, 2000);
     if (!ok && Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } }
   function q1Paint() { q1V2Tick(); const el = $('#q1hud'), tt = $('#q1tt'); if (S.view === 'qc1' && el) { const h = q1Hud(); if (el._h !== h) { el._h = h; el.innerHTML = h; } const th = q1TitleHtml(); if (tt && tt._h !== th) { tt._h = th; tt.innerHTML = th; } const tp = $('#q1tip'), tx = (S.q1._tip || '').trim(); if (tp && tp._h !== tx) { tp._h = tx; if (Q1V2) tp.innerHTML = tx; else tp.textContent = tx; tp.classList.toggle('on', !!tx); } q1ShutPaint(); q1Band(); } }
@@ -21702,7 +21708,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'docback') { Q.ph = 'read'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmgo') { q1Snd('pop'); Q.ph = 'fit'; Q.fitC = 0; Q.retryN = 0; Q.ready = false; Q.pgC = 0; q1CdClear(Q); Q.tCm = Date.now(); return renderQc1(); }
       if (a === 'cmreset') { if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; }); Q.ready = false; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; Q.cheered = 0; Q.fitC = 0; return renderQc1(); }
-      if (a === 'docreset') { if (Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } q1Unsave(); Q.vis = {}; Q.mixS = null; Q.mixC = null; Q.mixShown = 0; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
+      if (a === 'docreset') { if (Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } Q.autoOff = 0; q1Unsave(); Q.vis = {}; Q.mixS = null; Q.mixC = null; Q.mixShown = 0; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
       if (a === 'docnext' && Q.practice) { if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1PracCard(Q); }
       if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; return q1GoFit(Q); }
       if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
