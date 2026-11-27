@@ -2540,6 +2540,13 @@ html.q1v2 .q1x.x-wn .q1x-b em{color:#b45309!important}
 html.q1v2 .q1x.x-wt .q1x-b em{color:#c26a00!important;font-weight:700!important}
 html.q1v2 .q1x.x-no{background:rgba(229,62,68,.16)!important}html.q1v2 .q1x.x-no .q1x-b em{color:#c62828!important;font-weight:800!important}html.q1v2 .q1x.x-no .q1x-t{color:#c62828!important}
 html.q1v2 .q1gauge{display:none!important}/* v33.58 : 조립QC = 에너지바 숨김 (셔터 링으로 진행 표시) */
+html.q1v2 .q1bp.q1bp3{background:rgba(22,24,30,.52)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:18px!important;padding:10px 12px!important;width:min(292px,90%)!important;text-align:left;text-shadow:0 1px 3px rgba(0,0,0,.6);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+html.q1v2 .q1bp3 h4{justify-content:flex-start;font-size:13.5px!important;gap:6px}html.q1v2 .q1bp3 h4 i{width:18px;height:18px;font-size:12px;text-shadow:none}
+.q1bp3 .v{font-size:15px;font-weight:800;margin-top:3px}.q1bp3 .v u{text-decoration:none;color:#ff9a9d}.q1bp3 .v small{font-size:11px;color:#cfd3da;font-weight:600}.q1bp3 .q{font-size:11.5px;color:#d5d8de;margin:6px 0}
+html.q1v2 .q1bp3 .q1bp-b{gap:6px;margin-top:0}html.q1v2 .q1bp3 .q1bp-b button{padding:7px 2px;font-size:12px;border-radius:11px;line-height:1.25;background:rgba(255,255,255,.14)}html.q1v2 .q1bp3 .q1bp-b button small{display:block;font-size:10px;font-weight:500;color:#e2e5ea}
+html.q1v2 .q1bp3 .q1bp-b .d{background:rgba(62,145,255,.55)}html.q1v2 .q1bp3 .q1bp-b .e{background:rgba(229,72,77,.75)}
+html[data-rot="1"].q1v2 .q1bp3,html[data-rot="3"].q1v2 .q1bp3{left:calc(56px + min(340px,48%) + 14px + var(--sat,0px));top:auto;bottom:28px;transform:none;width:min(292px,max(232px,calc(100% - 56px - min(340px,48%) - 24px - 196px)))!important}
+html.q1v2 #q1hud:has(.q1bp3) .q1tg{display:none}
 html.q1v2 .q1st{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 html.q1v2.q1dk .q1xl{box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 html.q1v2.q1dk .q1x,html.q1v2.q1dk .q1x em{text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.7)}
@@ -9079,7 +9086,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.59';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.60';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19980,8 +19987,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const qcFixTok = w => /\d/.test(w) && /^[A-Za-z0-9oO.+\-]{3,}$/.test(w) ? w.replace(/(?<=\d)[oO]|[oO](?=\d)/g, '0').replace(/[oO](?=0)|(?<=0)[oO]/g, '0').toUpperCase().replace(/NVME/, 'NVMe').replace(/^I([3579]-)/, 'i$1') : w;
   function qcGuess(o, t) { if (!o || o.brand) return; for (const [re, b] of QC_BYNAME) if (re.test(t)) { o.brand = b; return; } }
   // ───────── v31.36 : 제품코드 목록 (CPU · 메모리 · SSD) — 주문서 줄 끝 7자리 코드로 정확한 이름 ─────────
-  let QCP = null, QCP6 = null, QCPF = null, QCPP = null;
-  function qcpSet(rows) { QCP = new Map(); QCP6 = new Map(); QCPF = new Map(); (rows || []).forEach(r => { QCP.set(r.c, r); const s = r.c.slice(-6); QCP6.set(s, QCP6.has(s) ? null : r); const f = r.c.slice(0, 6); QCPF.set(f, QCPF.has(f) ? null : r); }); }
+  let QCP = null, QCP6 = null, QCPF = null, QCPP = null, QCX = new Map();   // v33.60 : QCX = 메인보드 · 그래픽카드 (부품 읽기 표 QCP 와 따로 — 기존 읽기 규칙에 영향 없음)
+  function qcpSet(rows) { QCP = new Map(); QCP6 = new Map(); QCPF = new Map(); QCX = new Map(); (rows || []).forEach(r => { if (r.k === 'mb' || r.k === 'vga') { QCX.set(r.c, r); return; } QCP.set(r.c, r); const s = r.c.slice(-6); QCP6.set(s, QCP6.has(s) ? null : r); const f = r.c.slice(0, 6); QCPF.set(f, QCPF.has(f) ? null : r); }); }
   const qcp6 = x => { const a = QCP6 && QCP6.get(x), b = QCPF && QCPF.get(x); return a && b && a !== b ? null : a || b || null; };   // v32.09 : 6자리 = 앞 1 빠짐 또는 끝자리 빠짐 · 둘 다 다른 코드면 버림
   // v32.21 : 본체 모델 목록 (추천 · 웍스 · 프리미엄) — 세트 코드 → 모델명 (참고 표시용)
   let QSET = null, QSET6 = null;
@@ -20408,8 +20415,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     };
   }
   // ───────── v31.36 : 제품코드 목록 (관리자) — CPU · 메모리 · SSD 코드 : 제품명 · 파일 / 붙여넣기로 추가 ─────────
-  const QCP_K = [['cpu', 'CPU'], ['mem', '메모리'], ['ssd', 'SSD'], ['hdd', 'HDD']];
-  const qcpCat = s => { s = String(s || '').replace(/\s/g, '').toUpperCase(); return s === 'CPU' ? 'cpu' : /메모리|RAM|MEM/.test(s) ? 'mem' : /HDD|하드/.test(s) ? 'hdd' : /SSD|저장|NVME/.test(s) ? 'ssd' : ''; };
+  const QCP_K = [['cpu', 'CPU'], ['mem', '메모리'], ['ssd', 'SSD'], ['hdd', 'HDD'], ['mb', '메인보드'], ['vga', '그래픽카드']];
+  const qcpCat = s => { s = String(s || '').replace(/\s/g, '').toUpperCase(); return s === 'CPU' ? 'cpu' : /메인보드|마더보드|MAINBOARD|MOTHERBOARD/.test(s) ? 'mb' : /그래픽|VGA|GPU/.test(s) ? 'vga' : /메모리|RAM|MEM/.test(s) ? 'mem' : /HDD|하드/.test(s) ? 'hdd' : /SSD|저장|NVME/.test(s) ? 'ssd' : ''; };
   function qcpRowsFrom(AOA, src, defK) {   // 표(행 배열) → [{c,k,n,s}] · 머리줄(제품코드 · 상품명/제품명 · 분류/카테고리)이 있으면 그 칸 · 카테고리 칸이 비면 위 줄 이어받기
     const out = []; let cat = '', H = null;
     AOA.forEach(r => {
@@ -20421,7 +20428,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       else { ci = cells.findIndex(x => /^\d{6,8}(\.0+)?$/.test(x)); if (ci < 0) { const k0 = qcpCat(cells[0]); if (k0) cat = k0; else if (cells[0] && cells[0].length < 12) cat = 'x'; return; } ni = ci + 1; kv = ci > 0 ? cells[0] : (cells.slice(ni + 1).find(x => x && x.length <= 12 && qcpCat(x)) || ''); }
       if (kv) { const k0 = kv.length <= 12 ? qcpCat(kv) : ''; cat = k0 || 'x'; }
       const k = kv || (H && H.k >= 0) || ci > 0 ? cat : (defK || cat), n = cells[ni] || '';
-      if (!['cpu', 'mem', 'ssd', 'hdd'].includes(k) || !n) return;
+      if (!['cpu', 'mem', 'ssd', 'hdd', 'mb', 'vga'].includes(k) || !n) return;
       out.push({ c: cells[ci].replace(/\.0+$/, ''), k, n, s: src });
     });
     return out;
@@ -20434,11 +20441,11 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const cnt = k => rows.filter(r => r.k === k).length;
     main.innerHTML = admHead('제품코드 목록', 'qcp', `<span class="muted">2차 검수에서 주문서 제품코드로 부품 이름을 찾습니다</span>`, `<input type="file" id="qcpF" accept=".xls,.xlsx,.csv" multiple hidden><button id="qcpFile" class="primary">📄 파일로 추가</button><button id="qcpPaste">📋 붙여넣기</button>`) +
       `<div class="pgb"><div class="qcp-kpi">${QCP_K.map(([k, tt]) => `<div class="card"><small>${tt}</small><b>${cnt(k).toLocaleString()}</b><span>개</span></div>`).join('')}<div class="card tot"><small>합계</small><b>${rows.length.toLocaleString()}</b><span>개</span></div></div>
-      <div class="card qcp-note">${last ? `마지막 등록 <b>${esc(last.at)}</b> · ${esc(last.by)}` : rows.length ? '' : '아직 등록된 코드가 없습니다'}<br><span class="muted">새 엑셀을 올리면 <b>목록에 없는 코드만</b> 추가합니다 (이미 있는 코드는 그대로) · 분류 칸이 CPU · 메모리 · SSD · HDD인 줄만 씁니다</span></div><div class="card qcp-note" id="qsetBox">본체 모델 불러오는 중…</div></div>`;
+      <div class="card qcp-note">${last ? `마지막 등록 <b>${esc(last.at)}</b> · ${esc(last.by)}` : rows.length ? '' : '아직 등록된 코드가 없습니다'}<br><span class="muted">새 엑셀을 올리면 <b>목록에 없는 코드만</b> 추가합니다 (이미 있는 코드는 그대로) · 분류 칸이 CPU · 메모리 · SSD · HDD · 메인보드 · 그래픽카드인 줄만 씁니다</span></div><div class="card qcp-note" id="qsetBox">본체 모델 불러오는 중…</div></div>`;
     const preview = add => {   // 없는 코드만 → 등록
       const M = new Map(); add.forEach(r => { if (!M.has(r.c)) M.set(r.c, r); }); const old = new Set(rows.map(r => r.c));
       const L = [...M.values()], nw = L.filter(r => !old.has(r.c)), c = k => nw.filter(r => r.k === k).length;
-      if (!L.length) return toast('CPU · 메모리 · SSD · HDD 줄을 찾지 못했습니다 (제품코드 · 상품명 · 분류 칸 확인)', true);
+      if (!L.length) return toast('CPU · 메모리 · SSD · HDD · 메인보드 · 그래픽카드 줄을 찾지 못했습니다 (제품코드 · 상품명 · 분류 칸 확인)', true);
       modal(`<h3>제품코드 추가</h3><p>읽은 코드 <b>${L.length.toLocaleString()}</b>개 중 이미 있는 코드 ${(L.length - nw.length).toLocaleString()}개는 건너뜁니다.</p>
         <div class="qcp-kpi sm">${QCP_K.map(([k, tt]) => `<div class="card"><small>${tt}</small><b style="color:${c(k) ? '#16a34a' : 'inherit'}">+${c(k)}</b></div>`).join('')}</div>
         <div class="acts"><button data-c>취소</button><button class="primary" data-s ${nw.length ? '' : 'disabled'}>${nw.length ? `새 코드 ${nw.length.toLocaleString()}개 추가` : '추가할 코드 없음'}</button></div>`, (bg, close) => {
@@ -20804,7 +20811,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return 'exit';
   };
   // v31.89 : 진행 상황을 폰에 저장 → 앱을 껐다 켜도 [이어서 하기] (하루 지나면 버림)
-  const Q1SAVE = ['step', 'ph', 'order', 'picN', 'items', 'tags', 'gone', 'chgOk', 'E', 'E2', 'cm', 'bad', 'w', 'cov', 'cshots', 'docShot', 'shots', 'result', 'saved', 'bodyN', 'bodyI', 'set'];
+  const Q1SAVE = ['step', 'ph', 'order', 'picN', 'items', 'tags', 'gone', 'chgOk', 'E', 'E2', 'cm', 'bad', 'w', 'cov', 'cshots', 'docShot', 'shots', 'result', 'saved', 'bodyN', 'bodyI', 'set', 'mb', 'vga', 'mbSee', 'vgaSee'];
   function q1Save() { try { const Q = S.q1; if (!Q || Q.practice || !Q.order || !['doc', 'cmos', 'cmp'].concat(Q1V2 ? ['free'] : []).includes(Q.step)) return; /* v33.54 : 조립QC 는 본체 촬영 단계도 저장 */ const o = { t: Date.now(), me: S.me && S.me.id }; Q1SAVE.forEach(k => { o[k] = Q[k]; }); if (o.step === 'cmp') o.step = 'cmos'; if (o.step === 'cmos') o.ph = 'fit'; localStorage.setItem('q1prog', JSON.stringify(o)); } catch (e) { } }
   function q1Saved() { try { const o = JSON.parse(localStorage.getItem('q1prog') || 'null'); if (!o || !o.order || Date.now() - o.t > 864e5 || (S.me && o.me && o.me !== S.me.id)) return null; return o; } catch (e) { return null; } }
   const q1Unsave = () => { try { localStorage.removeItem('q1prog'); } catch (e) { } };
@@ -20860,7 +20867,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     // v32.03 : HDD는 빠지는 주문이 없음 (추가만) → 통째로 빠짐 표시는 쓰지 않음 (오인식으로 막히는 것 방지)
     if (r.mark) Q.markN = (Q.markN || 0) + 1;
     if (r.set && !Q.set) Q.set = r.set;
-    if (Q1V2) q1MixCheck(Q, r);
+    if (Q1V2) { q1MixCheck(Q, r); q1MbVga(Q, r.txt); }
     if (/운송료|표준거래|택배비|(?<!\d)1\s*\/\s*1(?!\d)/.test(r.txt)) { Q.endN = (Q.endN || 0) + 1; Q.endT = Q.endT || Date.now(); }
     if (Q.order && (Q.endN || 0) >= 2 && Date.now() - Q.endT > 3000 && !Q.chgAsk && !q1DocDone(Q) && Q1K.some(k => Q.items[k]) && (!Q.nobAsked || Date.now() - Q.nobAsked > 20000)) q1NobAsk(Q);
     { const b = q1BaseOf(r.txt); if (b) { const K = Q.bk = Q.bk || { b: 0, n: 0 }; K[b]++; } }
@@ -20874,7 +20881,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // v32.04 : 전표 읽기 연습 모드 (관리자 본인만) — 결과 카드 → 맞음 / 틀림(항목 선택) → 글자만 서버 저장 · 틀림이면 사진은 폰에만
   // v33.30 : 연습 초기화 · CMOS 연습 (사진 저장 없음 · 결과는 현장 기록에 prac-cmos 로)
   function q1PracReset(Q) {
-    Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.t0 = Date.now(); Q.ph = 'read';
+    Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.t0 = Date.now(); Q.ph = 'read';
     Q.pracCm = 0; Q.pracEnd = 0; Q.E = null; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.fitHint = ''; if (Q.step === 'cmos') Q.step = 'doc';
   }
   function q1PracToCmos(Q) {
@@ -20938,7 +20945,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1CpuHi = h => { h = String(h); const re = /(?<![\dA-Za-z])(\d{4,5}X3D|\d{4,5}(?:GT|GE|XT|KF|K|F|G|X|T)?)(?![\dA-Za-z])/i;   // v32.26 : CPU 모델 강조 (7500F · 14400F · 울트라 225F)
     if (re.test(h)) return h.replace(re, '<b class="cap cpu">$1</b>'); return /울트라|ultra/i.test(h) ? h.replace(/(?<![\dA-Za-z.])(\d{3}(?:KF|K|F|H|T)?)(?![\dA-Za-z])/, '<b class="cap cpu">$1</b>') : h; };
   function q1V2Card(Q) {   // v33.44 : 조립QC 사양 확인 — 제조사 + 핵심 사양 · 누르면 전체 이름
-    const col = { order: '#facc15', set: '#7c3aed', cpu: '#3b82f6', mem: '#10b981', ssd: '#ec4899', hdd: '#f59e0b', os: '#0ea5e9', st: '#ef4444' };
+    const col = { order: '#facc15', set: '#7c3aed', cpu: '#3b82f6', mem: '#10b981', ssd: '#ec4899', hdd: '#f59e0b', mb: '#a78bfa', vga: '#22c55e', os: '#0ea5e9', st: '#ef4444' };
     const cpuOf = t => { const m = String(t || '').match(/(?<![\dA-Za-z])(\d{4,5}X3D|\d{4,5}(?:GT|GE|XT|KF|K|F|G|X|T)?)(?![\dA-Za-z])/i) || String(t || '').match(/울트라\s*\d.*?(\d{3}[A-Z]{0,2})(?![\dA-Za-z])/i); return m ? m[1].toUpperCase() : ''; };
     const row = (k, lab, mk, sp, q, full, warn) => `<div class="r" onclick="this.classList.toggle('op')"><i style="background:${col[k] || '#888'}"></i><span>${esc(lab)}</span><em>${mk ? '<b>' + esc(mk) + '</b>' : ''}${esc(sp)}${warn ? '<u>' + esc(warn) + '</u>' : ''}</em><small>${esc(q || '')}</small>${full ? '<div class="fn">' + esc(full) + '</div>' : ''}</div>`;
     let h = '';
@@ -20948,6 +20955,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const sp = k === 'cpu' ? (cpuOf(full) || q1Short(it.name || full, 16)) : k === 'mem' ? (((String(full).match(/DDR\d/i) || [''])[0].toUpperCase() + ' ' + (q1MemLab(it) || it.cap || '')).trim()) : (it.cap || q1Short(it.name || full, 16));
       const warn = !x.reg ? '미등록' : (q1ChgLab(k, it) || '');
       h += row(k, Q1_CAT[k], it.brand || '', sp, Math.max(1, it.n || 1) + '개', full, warn); });
+    if (Q.mb) h += row('mb', '보드', Q.mb.br || '', qxMbShort(Q.mb.n), '', Q.mb.n, Q.mb.c ? '' : '');
+    if (Q.vga) h += row('vga', '그래픽', Q.vga.br || '', qxVgaShort(Q.vga.n), '', Q.vga.n, '');
     const T = Q.tags || {};
     if (T.os) h += row('os', 'O/S', '', '설치', '', '', '');
     if (T.st) h += row('st', '안정화', '', T.osdel ? '안정화 + O/S 삭제' : '안정화', '', '', '');
@@ -21142,7 +21151,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const k = yes.slice(3); if (k === 'order') { Q.order = ''; Q.ordC = null; } else { delete Q.items[k]; if (Q.cand) delete Q.cand[k]; }
       if (Q.vis) delete Q.vis[k]; Q.chgAsk = 0; Q.tDone = 0; Q.allCheer = 0; Q.ph = 'read'; Q.msg = (Q1_AB[k] || k) + ' 줄을 다시 비춰 주세요'; q1Log('reread', k); return renderQc1(); }
     if (yes) { Q.chgOk = Q.chgOk === 'report' ? 'report' : unread ? 'unread' : 'ok'; q1Log(unread ? 'chg-unread' : 'chg-ok', rows.length + '줄'); q1Snd('pop'); return go(); }
-    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
+    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
   }
   // 전표 : 틀 맞춰 찍기 — 틀 안에 주문번호 + 읽은 코드 2개 이상이 두 번 연속 보이면 전체가 들어온 것으로 보고 자동 촬영
   // v32.49 : 전표 사진 — 화면 가운데 '주문번호' 틀 안에 읽어 둔 주문번호가 두 번 연속 보이면 자동 촬영 (부품 코드 · 전표 전체는 안 봄)
@@ -21195,7 +21204,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (q1DocLike(Q, txt)) { if (Date.now() - (Q.docLikeT || 0) > 4000) { Q.docLikeT = Date.now(); Q.msg = '주문서가 보여요 · CMOS(BIOS) 화면을 비춰 주세요'; q1Paint(); } return; }   // v33.56 : CMOS 단계에서 주문서 글자로 일치 처리되던 문제
     const R = q1CmMatch(Q, txt); q1CmApply(R);
     if (/M\.?2|SATA|NVMe|[0-9]\s*[GT]B/i.test(txt)) Q.cmTxtLast = txt;   // v33.45 : 지연 로그용 — 마지막으로 저장장치 글자가 보였던 화면
-    if (!Q.vendor) { const v = c1Vendor(txt); if (v) Q.vendor = v.id; }
+    if (Q1V2) q1MbSee(Q, txt);
+    if (!Q.vendor) { const v = c1Vendor(String(txt || '').replace(/[\[【][^\]】\n]{0,24}[\]】]/g, ' ')); if (v) Q.vendor = v.id; }   // v33.60 : 주문서의 [MSI] 같은 괄호 글자로는 안 정함
     const ks = Object.keys(Q.E), all = q1AllOk(Q), vis = ks.filter(k => R[k] && R[k].st !== 'wait');
     if (all && q1CmShownAll(Q) && !Q.cheered) { Q.cheered = 1; q1Snd('done'); q1Cheer('사양 일치'); setTimeout(() => { if (S.q1 === Q && Q.step === 'cmos') renderQc1(); }, 50); }
     let fill = true; { const SL = (o.sl || []).filter(b => b && b.length === 4);   // v32.81 : 모니터 글자가 틀을 충분히 채울 때만 (멀거나 작게 보이면 안 찍음)
@@ -21251,6 +21261,48 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     Q.busyShot = true; Q.forced = !!forced; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1TagCm(Q));
     if (forced) q1Log('forced', Q.order + ' ' + Object.keys(Q.E).filter(k => Q.cm[k] !== 'ok').map(k => k + ':' + (Q.cm[k] === 'bad' ? Q.bad[k].seen : '못찾음')).join(' '));
   }
+  // v33.60 : 메인보드 · 그래픽카드 — 주문서에서 같이 읽고 (코드 목록 → 없으면 글자) CMOS 보드 제조사 · 본체 사진 그래픽 종류와 비교 (못 보면 그냥 통과)
+  const qxFam = n => /지포스|GeForce|\bRTX\b|\bGTX\b/i.test(n) ? 'GEFORCE' : /라데온|Radeon|\bRX\s?\d{3,4}/i.test(n) ? 'RADEON' : /인텔\s*Arc|\bArc\s*[AB]\d/i.test(n) ? 'ARC' : '';
+  const qxBr = n => ((String(n || '').match(/^\s*\[([^\]]+)\]/) || [])[1] || '').trim();
+  const qxMbN = b => String(b || '').toUpperCase().split(/\s+/)[0];
+  const Q1_FAM = { GEFORCE: '지포스', RADEON: '라데온', ARC: '인텔 Arc' };
+  const qxVgaShort = n => { const m = String(n || '').match(/\b(RTX|GTX|RX)\s*(\d{3,4})\s*(Ti\s*SUPER|Ti|SUPER|XTX|XT|GRE)?/i) || String(n || '').match(/\bArc\s*([AB]\d{3})/i); return m ? m[0].replace(/\s+/g, ' ').trim() : q1Short(String(n || '').replace(/^\s*\[[^\]]*\]\s*/, ''), 18); };
+  const qxMbShort = n => q1Short(String(n || '').replace(/^\s*\[[^\]]*\]\s*/, '').replace(/^\[[^\]]*\]\s*/, '').replace(/\(.*$/, '').replace(/\s+(코잇|대원씨티에스|인텍앤컴퍼니|STCOM|제이씨현|피씨디렉트|디앤디컴|에즈윈|도우정보|명인일렉트로닉스).*$/, '').trim(), 22);
+  function q1MbVga(Q, txt) {
+    const t = String(txt || '');
+    (t.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { const r = QCX && QCX.get(c); if (!r) return;
+      if (r.k === 'mb' && (!Q.mb || !Q.mb.c)) Q.mb = { c, n: r.n, br: qxBr(r.n) };
+      if (r.k === 'vga' && (!Q.vga || !Q.vga.c)) Q.vga = { c, n: r.n, br: qxBr(r.n), fam: qxFam(r.n) }; });
+    if (!Q.mb) { const m = t.match(/[\[【]\s*(ASUS|MSI|GIGABYTE|ASRock|BIOSTAR|Colorful|MAXSUN|ECS|NZXT)\s*[\]】]\s*([^\n\[]{0,40}?\b[ABHQWXZ][3-8]\d0[EIM]?(?![A-Za-z0-9])[^\n\[]{0,20})/i); if (m) Q.mb = { c: '', n: '[' + m[1] + '] ' + m[2].trim(), br: m[1] }; }   // 코드 못 읽으면 [제조사] + 칩셋 글자
+    if (!Q.vga) { const m = t.match(/[\[【]\s*([A-Za-z]{2,12})\s*[\]】]\s*([^\n\[]{0,8}(지포스|라데온|GeForce|Radeon)[^\n\[]{0,30})/i); if (m) Q.vga = { c: '', n: '[' + m[1] + '] ' + m[2].trim(), br: m[1], fam: qxFam(m[3]) }; }
+  }
+  const Q1_MBV = [['MSI', /CLICK\s*BIOS|M-FLASH|GAME\s*BOOST/i], ['ASUS', /UEFI\s*BIOS\s*Ut[il1]{1,4}ty|Ai\s*Tweaker|Q-Fan\s*Control/i], ['GIGABYTE', /Q-Flash|Easy\s*Mode|Smart\s*Fan\s*[56]/i], ['ASROCK', /ASRock|Instant\s*Flash/i], ['BIOSTAR', /BIOSTAR/i]];   // BIOS 화면에만 나오는 글자 (부품 이름 · 주문서 글자로는 안 정함)
+  function q1MbSee(Q, txt) {
+    if (!Q.mb || !Q.mb.br || Q.asking) return; const exp = qxMbN(Q.mb.br); if (!Q1_MBV.some(v => v[0] === exp)) return;
+    const S2 = Q.mbSee = Q.mbSee || { c: {} }; if (S2.st) return;
+    const hit = Q1_MBV.filter(v => v[1].test(txt)).map(v => v[0]); if (hit.length !== 1) return; const v = hit[0]; S2.c[v] = (S2.c[v] || 0) + 1; if (S2.c[v] < 2) return;
+    S2.st = v === exp ? 'ok' : 'bad'; S2.v = v; S2.exp = exp; if (S2.st === 'ok') return;
+    q1Log('mbdiff', Q.order + ' 주문서 ' + exp + ' (' + String(Q.mb.n || '').slice(0, 50) + ') / CMOS ' + v); q1Snd('bad'); q1MbAsk(Q); }
+  async function q1MbAsk(Q) { const S2 = Q.mbSee; Q.asking = true; q1Call('pause', true);
+    const yes = await q1Ask(`<b class="t">보드 제조사가 다릅니다</b><p>주문서 ${esc(S2.exp)} · CMOS 화면 ${esc(S2.v)}</p><small>본체가 바뀌었거나 다른 모델로 조립됐을 수 있어요 · 본체와 주문서를 확인하세요</small>`, '확인했음 · 기록하고 계속', true, '다시 읽기');
+    Q.asking = false; if (S.q1 !== Q) return; if (!yes) Q.mbSee = null; else q1Log('mbdiff-go', Q.order + ' ' + S2.exp + '≠' + S2.v); q1Call('pause', false); q1Paint(); }
+  function q1MbRow(Q) { if (!Q1V2 || !Q.mb || !Q.mb.br) return ''; const S2 = Q.mbSee || {}, st = S2.st === 'ok' ? 'x-ok' : S2.st === 'bad' ? 'x-no' : 'x-wt';
+    return `<div class="q1x ${st}" style="--cc:#a78bfa"><b class="q1x-t">보드</b><div class="q1x-a"><small>주문서</small><em><i class="q1x-m">${esc(Q.mb.br)}</i>${esc(qxMbShort(Q.mb.n))}</em></div><i class="q1x-dv"></i><div class="q1x-b"><small>CMOS</small><em>${S2.st ? esc(S2.v) : '—'}</em></div><u class="q1x-k">${S2.st === 'ok' ? '✓' : S2.st === 'bad' ? '✕' : ''}</u></div>`; }
+  function q1VgaSee(Q, txt) {   // 본체 사진 단계 — 그래픽카드 위 GEFORCE / RADEON 글자가 보일 때만
+    if (!Q1V2 || !Q.vga || !Q.vga.fam || Q.asking) return; const S2 = Q.vgaSee = Q.vgaSee || { c: {} }; if (S2.st) return;
+    const t = String(txt || ''), hit = [/GE\s?FORCE/i.test(t) ? 'GEFORCE' : '', /RADEON/i.test(t) ? 'RADEON' : ''].filter(Boolean); if (hit.length !== 1) return;
+    const v = hit[0]; S2.c[v] = (S2.c[v] || 0) + 1; if (S2.c[v] < 2) return; S2.st = v === Q.vga.fam ? 'ok' : 'bad'; S2.v = v; S2.exp = Q.vga.fam;
+    if (S2.st === 'ok') { q1Log('vga-ok', Q.order + ' ' + v); q1Paint(); return; }
+    q1Log('vgadiff', Q.order + ' 주문서 ' + Q.vga.fam + ' (' + String(Q.vga.n || '').slice(0, 50) + ') / 본체 ' + v); q1Snd('bad');
+    (async () => { Q.asking = true; q1Call('pause', true); const yes = await q1Ask(`<b class="t">그래픽카드 종류가 다릅니다</b><p>주문서 ${esc(Q1_FAM[S2.exp] || S2.exp)} · 본체 ${esc(S2.v)}</p><small>다른 그래픽카드가 꽂혔을 수 있어요 · 본체와 주문서를 확인하세요</small>`, '확인했음 · 기록하고 계속', true, '다시 보기');
+      Q.asking = false; if (S.q1 !== Q) return; if (!yes) Q.vgaSee = null; else q1Log('vgadiff-go', Q.order); q1Call('pause', false); q1Paint(); })(); }
+  function q1FixDone(Q, back) {   // v33.60 : 주문서 한 줄 다시 읽기 끝 → CMOS 로 (맞았던 항목은 그대로)
+    const F = Q.fix; if (!F) return; Q.fix = null;
+    if (back || !Q.items[F.k]) Q.items[F.k] = F.old; else q1Log('docfix-ok', Q.order + ' ' + F.k + ' → ' + String(q1Full(Q.items[F.k].it) || '').slice(0, 80));
+    const PP = q1P(Q), PA = q1PAlt(PP); Q.E = q1Expect(PP); Q.E2 = q1Expect2(PP); Q.EA = PA ? q1Expect(PA) : null; Q.E2A = PA ? q1Expect2(PA) : null;
+    Object.keys(Q.man || {}).forEach(m => Object.keys(Q.E).forEach(k => { if (k === m || k.indexOf(m) === 0) delete Q.E[k]; }));
+    Q.cm = {}; Object.keys(F.keep).forEach(x => { if (x in Q.E) Q.cm[x] = 'ok'; }); Q.bad = {}; Q.w = {}; Q.ready = false; Q.cheered = 0; Q.fitC = 0; Q.badHide = '';
+    Q.step = 'cmos'; Q.ph = 'fit'; Q.tCm = Date.now(); Q.slowCm = 0; Q.msg = back ? '' : (Q1_CAT[F.k] || F.k) + ' 다시 읽음 · CMOS를 다시 비춰 주세요'; q1Snd('pop'); renderQc1(); }
   function q1Ask(html, okLabel, danger, noLabel, flat) {   // 카메라 화면 위 확인 창 · flat = 가로로 돌리지 않음 (v33.59 : 조립QC 사양 카드)
     return new Promise(res => {
       const host = (flat && $('.q1c')) || $('#q1lay') || $('.q1c') || document.body, el = document.createElement('div'); el.className = 'q1ask';
@@ -21320,6 +21372,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (Q.chgAsk) return;
       if (Q.step === 'doc') { if (Q.ph === 'read') q1DocRead(o); else if (Q.ph === 'fit' && !Q.practice) q1DocFit(o); }   // v32.48 : 주문번호 비추면 자동 촬영 (셔터도 됨)
       else if (Q.step === 'cmos') { if (Q.ph === 'guide') return; q1CmFit(o); }
+      else if (Q.step === 'free') { q1VgaSee(Q, q1Text(o.lines)); return; }   // v33.60 : 본체 사진 단계 — 그래픽 종류 (앱 1.0.3 이상)
       else return;
       if (o.sl) q1Ar(o);
       q1Paint(); return;
@@ -21378,7 +21431,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     { const P = q1Part(Q); if (P) { const D = Q.varDone = Q.varDone || { chg: 0, base: 0 }, v = Object.keys(Q.altHit || {}).length ? 'base' : 'chg'; D[v]++; if (D[v] > P[v]) setTimeout(() => q1Cheer((v === 'chg' ? '변경' : '기본') + ' 사양이 주문서보다 많아요 · 확인하세요', true, true), 1300); } }   // v32.87
     const seen = {}; ks.forEach(k => { seen[k] = { st: Q.cm[k] || 'wait', seen: Q.bad[k] ? Q.bad[k].seen : '' }; if (Q.w[k] && Q.w[k].st) seen[k].w = { st: Q.w[k].st, seen: Q.w[k].seen || '' }; });
     const codes = {}; Q1K.forEach(k => { if (Q.items[k]) codes[k] = { code: Q.items[k].it.code || '', n: Q.items[k].it.n || 1, reg: Q.items[k].reg }; });
-    seen.meta = { body: (Q.bodyI || 1) + '/' + (Q.bodyN || 1), alt: Object.keys(Q.altHit || {}), man: Object.keys(Q.man || {}), nob: Object.keys(Q.nob || {}).filter(k => Q.nob[k]), chgOk: Q.chgOk || '', tags: { os: !!(Q.tags && Q.tags.os), st: !!(Q.tags && Q.tags.st), chg: Q1K.filter(k => Q.items[k] && q1Chg(Q.items[k].it)).concat(Object.keys(Q.gone || {}).map(k => k + '빠짐')) }, vendor: Q.vendor || '', auto: !!Q.autoShot, forced: !!Q.forced, sec: Q.t0 ? Math.round((Date.now() - Q.t0) / 1000) : 0, docSec: Q.tDoc && Q.t0 ? Math.round((Q.tDoc - Q.t0) / 1000) : 0 };
+    seen.meta = { body: (Q.bodyI || 1) + '/' + (Q.bodyN || 1), alt: Object.keys(Q.altHit || {}), man: Object.keys(Q.man || {}), nob: Object.keys(Q.nob || {}).filter(k => Q.nob[k]), chgOk: Q.chgOk || '', tags: { os: !!(Q.tags && Q.tags.os), st: !!(Q.tags && Q.tags.st), chg: Q1K.filter(k => Q.items[k] && q1Chg(Q.items[k].it)).concat(Object.keys(Q.gone || {}).map(k => k + '빠짐')) }, vendor: Q.vendor || '', mb: Q.mb ? { br: Q.mb.br, c: Q.mb.c || '', see: Q.mbSee && Q.mbSee.st ? Q.mbSee.v : '' } : null, vga: Q.vga ? { fam: Q.vga.fam, c: Q.vga.c || '', see: Q.vgaSee && Q.vgaSee.st ? Q.vgaSee.v : '' } : null, auto: !!Q.autoShot, forced: !!Q.forced, sec: Q.t0 ? Math.round((Date.now() - Q.t0) / 1000) : 0, docSec: Q.tDoc && Q.t0 ? Math.round((Q.tDoc - Q.t0) / 1000) : 0 };
     const job = { order: Q.order, result, expect: Object.assign({}, Q.E, { codes, x: Q.E2 }), seen, appVer: q1Call('version') || '', t: Date.now() };
     const r = await q1Send(job);
     if (S.q1 === Q) { Q.who = r.who || ''; Q.saved = r.ok ? true : 'queued'; if (!r.ok) Q.msg = '인터넷 연결이 불안정해 폰에 보관했습니다 · 연결되면 자동으로 보냅니다'; }
@@ -21484,8 +21537,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1BadPop(Q, bk) {   // v33.36 : 어느 항목이 · 주문서 ≠ CMOS · 다시 확인 (누르면 잠시 접힘)
     const sh = k => { const mn = k === 'mem' && (Q.E2 || {}).memN ? Q.E.mem + 'GB (' + Q.E2.memN + '개)' : ''; return mn || q1ExpLabel(k, Q.E); };
     const rows = bk.map(k => `<p>${bk.length > 1 ? `<small>${esc(Q1_CAT[k] || k)}</small> ` : ''}주문서 <b>${esc(sh(k))}</b> ≠ CMOS <u>${esc((Q.bad[k] || {}).seen || '')}</u></p>`).join('');
-    if (Q1V2) { const stop = q1BadMode() === 'stop';   // v33.44 : 조립QC — 팝업 안에서 다시 읽기 / 오류 보내기
-      return `<div class="q1bp" onclick="window.q1BadHide&&window.q1BadHide()"><h4><i>!</i>${esc(bk.map(k => Q1_CAT[k] || k).join(' · '))} 사양 불일치</h4>${rows}<p class="s2">${stop ? '진행 불가 (점검 요망) · 부품을 확인하세요' : '앱이 잘못 읽었으면 오류를 보내고 계속하세요'}</p><div class="q1bp-b"><button type="button" onclick="event.stopPropagation();window.q1Do&&window.q1Do('cmreset')">다시 읽기</button><button type="button" class="e" onclick="event.stopPropagation();window.q1Do&&window.q1Do('cmerr')">${stop ? '오류 보내기' : '오류 보내고 계속'}</button></div></div>`; }
+    if (Q1V2) { const stop = q1BadMode() === 'stop', k0 = bk[0], s0 = q1Short((Q.bad[k0] || {}).seen || '', 12), e0 = q1Short(sh(k0), 12), fx = k0 !== 'hddX' && Q.items && Q.items[k0];   // v33.60 : 조립QC — 작게 · 반투명 · 손에 든 주문서로 판정 (주문서 다시 읽기 / 오류 보내기 / 화면 다시)
+      const go = a => `onclick="event.stopPropagation();window.q1Do&&window.q1Do('${a}')"`;
+      return `<div class="q1bp q1bp3" onclick="window.q1BadHide&&window.q1BadHide()"><h4><i>!</i>${esc(bk.map(k => Q1_CAT[k] || k).join(' · '))} 불일치</h4>${bk.map(k => `<div class="v">${bk.length > 1 ? `<small>${esc(Q1_CAT[k] || k)}</small> ` : ''}주문서 ${esc(sh(k))} ≠ CMOS <u>${esc((Q.bad[k] || {}).seen || '')}</u></div>`).join('')}<div class="q">${fx ? '손에 든 주문서는?' : stop ? '진행 불가 · 부품을 확인하세요' : '앱이 잘못 읽었으면 오류를 보내고 계속하세요'}</div><div class="q1bp-b">${fx ? `<button type="button" class="d" ${go('cmfix')}>${esc(s0)}예요<small>주문서 다시 읽기</small></button>` : ''}<button type="button" class="e" ${go('cmerr')}>${fx ? esc(e0) + ' 맞아요' : '오류 보내기'}<small>${stop ? '오류 보내기' : '오류 보내고 계속'}</small></button><button type="button" ${go('cmreset')}>화면 다시<small>CMOS 다시 읽기</small></button></div></div>`; }
     return `<div class="q1bp" onclick="window.q1BadHide&&window.q1BadHide()"><h4><i>!</i>${esc(bk.map(k => Q1_CAT[k] || k).join(' · '))} 사양 불일치</h4>${rows}<p class="s2">사양을 다시 확인해주세요~!</p></div>`;
   }
   window.q1Spec = () => window.q1Do('spec');
@@ -21507,7 +21561,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'cmos' && Q.E) {
       { const rd = Object.keys(Q.cmNew || {}).some(k => Date.now() - Q.cmNew[k] < 1500); }   // v32.98 : 웹 점선 틀 제거 — 앱이 그리는 모서리 틀(실제 인식 영역) 하나만   // v32.55 : CMOS 촬영 틀 (화면 전체를 틀 안에)
-      if (Q.vendor) h += pill('vd', esc(Q.vendor));
+      if (Q.vendor && !(Q1V2 && Q.mb)) h += pill('vd', esc(Q.vendor));
       { const CC = { cpu: '#3d8bff', mem: '#2fbf7a', ssd: '#e8588a', hdd: '#e6b422' };   // v33.36 : 한 줄 작은 사양표 — 주문서 | CMOS 나란히 · 읽힌 줄만 초록
         const [sn, st1, hb] = q1Title(), anyRead = Object.keys(Q.E).some(k => Q.cm[k]), hint = Q1V2 || Q._tip || anyRead || Q.badN ? '' : hb;   // v33.49 : 조립QC 는 가운데 안내 알약으로
         h += '<div class="q1cw"' + (Q1V2 ? ' onclick="window.q1Spec&&window.q1Spec()"' : '') + '><div class="q1st"><i>' + esc(sn) + '</i>' + esc(st1) + (Q.order ? ' <b class="q1st-o">주문 ' + esc(Q.order) + (Q1V2 && (Q.bodyN || 1) > 1 ? ' · 본체 ' + (Q.bodyI || 1) + '/' + Q.bodyN : '') + '</b>' : '') + (hint ? '<em>' + esc(hint) + '</em>' : '') + '</div><div class="q1xl">' + Object.keys(Q.E).map(k => {
@@ -21520,13 +21574,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           const mk = (m => m ? `<i class="q1x-m">${esc(m)}</i>` : '')(q1MakerOf((Q.items[k] || {}).it));
           const seen = s === 'ok' ? lab + (warn ? `<u class="q1x-w"> ${k === 'mem' ? esc(w.seen) + ' 꽂힘?' : '제조사?'}</u>` : '') : s === 'bad' ? esc(Q.bad[k].seen) : Q1V2 ? q1V2Wait(Q, k) : '읽는 중 ···';
           const cc = CC[String(k).replace(/\d+$/, '')] || '#9fb6d0';
-          return `<div class="q1x ${st}${cp}" style="--cc:${cc}"><b class="q1x-t">${Q1_AB[k] || esc(k)}</b><div class="q1x-a"><small>주문서</small><em>${mk}${lab}${esc(cg)}${cam}</em></div><i class="q1x-dv"></i><div class="q1x-b"><small>CMOS</small><em>${seen}</em></div><u class="q1x-k">${s === 'ok' ? '✓' : s === 'bad' ? '✕' : ''}</u></div>`; }).join('') + '</div></div>'; }
+          return `<div class="q1x ${st}${cp}" style="--cc:${cc}"><b class="q1x-t">${Q1_AB[k] || esc(k)}</b><div class="q1x-a"><small>주문서</small><em>${mk}${lab}${esc(cg)}${cam}</em></div><i class="q1x-dv"></i><div class="q1x-b"><small>CMOS</small><em>${seen}</em></div><u class="q1x-k">${s === 'ok' ? '✓' : s === 'bad' ? '✕' : ''}</u></div>`; }).join('') + q1MbRow(Q) + '</div></div>'; }
       { const bk = Object.keys(Q.E).filter(k => Q.cm[k] === 'bad'); Q.badN = bk.length; if (bk.length && Q.badHide !== q1BadSig(Q)) h += q1BadPop(Q, bk); }   // v33.36 : 불일치 = 화면 가운데 안내   // v33.12 : 큰 불일치 박스 제거 — 칩에 표시 · 아래 [다시 읽기]/[불일치 진행]
       Object.keys(Q.nob || {}).forEach(k => { if (Q.nob[k]) h += pill('nb', esc(q1NobLab(k))); });
       Object.keys(Q.man || {}).forEach(k => { h += pill('nb', esc((Q1_CAT[k] || k) + ' · 직접 확인 (오류 보고)')); });
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'free') {
-      h += pill(Q.result === 'ok' ? 'ok' : 'bad', (Q.result === 'ok' ? '✓ 일치 · ' : '✕ 불일치 · ') + esc(Q.order)) + pill(Q.saved === false ? 'bad' : '', Q.saved === true ? '저장됨' : Q.saved === false ? '저장 실패' : '저장 중…') + (Q1V2 ? ((Q.bodyN || 1) > 1 ? pill('', '본체 ' + (Q.bodyI || 1) + '/' + Q.bodyN + '대') : '') + pill('', '사진 ' + (Q.shots || 0) + '장') : pill('', '본체 ' + Q.shots + '장')) + q1TagPills(Q, pill);   // v33.54 : 조립QC — 사진 장수와 본체 대수를 나눠 표시
+      h += pill(Q.result === 'ok' ? 'ok' : 'bad', (Q.result === 'ok' ? '✓ 일치 · ' : '✕ 불일치 · ') + esc(Q.order)) + pill(Q.saved === false ? 'bad' : '', Q.saved === true ? '저장됨' : Q.saved === false ? '저장 실패' : '저장 중…') + (Q1V2 ? ((Q.bodyN || 1) > 1 ? pill('', '본체 ' + (Q.bodyI || 1) + '/' + Q.bodyN + '대') : '') + pill('', '사진 ' + (Q.shots || 0) + '장') + (Q.vgaSee && Q.vgaSee.st ? pill(Q.vgaSee.st === 'ok' ? 'ok' : 'bad', (Q.vgaSee.st === 'ok' ? '그래픽 ✓ ' : '그래픽 ✕ ') + esc(Q1_FAM[Q.vgaSee.v] || Q.vgaSee.v)) : '') : pill('', '본체 ' + Q.shots + '장')) + q1TagPills(Q, pill);   // v33.54 : 조립QC — 사진 장수와 본체 대수를 나눠 표시
     }
     if (Q.step === 'doc') h = h.replace(/<span class="(?:ok|warn|wt)[^"]*"(?: data-nb="[a-z]+")?>[^<]*<\/span>/g, m => /data-nb/.test(m) && !/ok/.test(m) ? m : '');   // v32.50 : 읽은 사양 칩은 전표 위 체크로 대신
     if (Q.step === 'doc' && Q.arTags) { if (Q.arTags.set) h = h.replace(/<span class="vd">본체[^<]*<\/span>/, ''); if (Q.arTags.os) h = h.replace(/<span class="tg">O\/S 설치<\/span>/, ''); if (Q.arTags.st) h = h.replace(/<span class="tg">안정화[^<]*<\/span>/, ''); h = h.replace(/<span class="cg[^"]*">[^<]*<\/span>/g, ''); }
@@ -21621,8 +21675,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const Rb = Q.step === 'doc' ? gap : Q.step === 'cmos' ? sm('cmerr', '오류<br>보내기', 'err') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
       const thB = `<button type="button" class="q1v2th" data-q1="gal" id="q1gv"></button>`;   // v33.54 : 장수 배지 없음 (위 알약에 사진 N장)
       const v2re = Q.step === 'doc' ? (Q.ph === 'read' ? 'docreset' : 'docback') : 'cmreset', v2fin = (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음 ' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감';
-      const v2st = `<div class="q1v2st"><button type="button" class="sp" data-q1="spec"${Q.order ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>사양표</button>${Q.step === 'free' ? `<button type="button" class="fin" data-q1="close">${v2fin}</button>` : `<button type="button" class="re" data-q1="${v2re}">다시 읽기</button>`}</div>`;   // v33.48 : 조립QC 오른쪽 = 사양표 / 다시 읽기(본체 단계는 마감)
-      const BL = Q1V2 ? thB : L, BR = Q1V2 ? v2st + (Q.step === 'cmos' ? '<button type="button" data-q1="cmerr" hidden></button>' : '') : Rb;   // v33.44 : 조립QC — 왼쪽 사진 · 가운데 셔터 · 오른쪽 다시 읽기 (오류 보내기는 불일치 팝업 안)
+      const v2st = `<div class="q1v2st"><button type="button" class="sp" data-q1="spec"${Q.order ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>사양표</button>${Q.step === 'free' ? `<button type="button" class="fin" data-q1="close">${v2fin}</button>` : (Q.fix && Q.step === 'doc' ? `<button type="button" class="re" data-q1="fixx">취소</button>` : `<button type="button" class="re" data-q1="${v2re}">다시 읽기</button>`)}</div>`;   // v33.48 : 조립QC 오른쪽 = 사양표 / 다시 읽기(본체 단계는 마감)
+      const BL = Q1V2 ? thB : L, BR = Q1V2 ? v2st + (Q.step === 'cmos' ? '<button type="button" data-q1="cmerr" hidden></button><button type="button" data-q1="cmfix" hidden></button>' : '') : Rb;   // v33.44 : 조립QC — 왼쪽 사진 · 가운데 셔터 · 오른쪽 다시 읽기 (오류 보내기는 불일치 팝업 안)
       $('#main').innerHTML = `<div class="q1c"><div id="q1ar"></div><div class="q1c-mid" id="q1mid"></div><div class="q1shT"></div><div class="q1shB"></div>
         <div class="q1lay" id="q1lay"><div class="q1tt" id="q1tt">${q1TitleHtml()}</div><div class="q1sp"></div><div class="q1tip" id="q1tip"></div><div class="q1gauge" id="q1gauge"><i></i></div><div id="q1hud">${q1Hud()}</div></div>
         <button type="button" class="q1zm" data-q1="zoom">${lab(['1x', '1.5x', '2x'][Q.zi || 0])}</button>${Q1V2 ? '' : '<button type="button" class="q1gv" data-q1="gal" id="q1gv" style="display:none"></button>'}
@@ -21689,7 +21743,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'logout') { q1Cam(false); Q.camMode = null; logout(); return; }   // v33.37 : 셔터 옆 마지막 사진 미리보기
       if (a === 'zoom') { Q.zi = ((Q.zi || 0) + 1) % 3; Q.zf = [0, 0.25, 0.5][Q.zi]; q1Call('zoom', Q.zf); b.innerHTML = `<span class="q1rl">${['1x', '1.5x', '2x'][Q.zi]}</span>`; return; }
       if (a === 'shut') {   // 가운데 셔터 = 단계별 할 일
-        if (Q.step === 'doc') { const x = $(`[data-q1="${Q.ph === 'read' ? 'docnext' : 'docshot'}"]`); if (x) return x.click(); if (Q.ph === 'read') { if (Q.practice) return q1PracCard(Q); if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; return q1GoFit(Q); } if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
+        if (Q.step === 'doc') { const x = $(`[data-q1="${Q.ph === 'read' ? 'docnext' : 'docshot'}"]`); if (x) return x.click(); if (Q.ph === 'read') { if (Q.practice) return q1PracCard(Q); if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; if (Q.fix) return q1FixDone(Q); return q1GoFit(Q); } if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
         if (Q.step === 'cmos' && Q.ph === 'guide') return;
         if (Q.step === 'cmos') {   // v32.82 : 수동 촬영 — 전부 읽혔으면 마지막 1장, 일부만이면 지금 화면 1장 먼저
           if (Q.busyShot || Q.asking) return; if (Q.practice) return q1PracCmEnd(Q); const nk = q1CmNew(Q);
@@ -21708,10 +21762,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'resume') { const SV = q1Saved(); Q.v2res = ''; if (!SV) return renderQc1(); q1Snd('pop'); Q1SAVE.forEach(k => { if (SV[k] !== undefined) Q[k] = SV[k]; }); if (Q.step === 'doc' && Q.ph === 'fit') Q.ph = 'read'; Q.items = Q.items || {}; Q.cm = Q.cm || {}; Q.bad = Q.bad || {}; Q.w = Q.w || {}; Q.cov = Q.cov || {}; Q.E2 = Q.E2 || {}; Q.msg = '이어서 합니다 · 주문 ' + Q.order; return renderQc1(); }
       if (a === 'docback') { Q.ph = 'read'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmgo') { q1Snd('pop'); Q.ph = 'fit'; Q.fitC = 0; Q.retryN = 0; Q.ready = false; Q.pgC = 0; q1CdClear(Q); Q.tCm = Date.now(); return renderQc1(); }
+      if (a === 'cmfix') { const k = Object.keys(Q.E).find(x => Q.cm[x] === 'bad' && x !== 'hddX' && Q.items[x]); if (!k) { Q.msg = '다시 읽을 항목이 없습니다'; return q1Paint(); }   // v33.60 : 손에 든 주문서가 CMOS 와 같음 → 앱이 주문서를 잘못 읽음 · 그 줄만 다시
+        q1Log('docfix', Q.order + ' ' + k + ' 주문서(앱) ' + q1ExpLabel(k, Q.E) + ' / CMOS ' + ((Q.bad[k] || {}).seen || '') + ' | ' + String(q1Full(Q.items[k].it) || '').slice(0, 80));
+        const keep = {}; Object.keys(Q.cm).forEach(x => { if (Q.cm[x] === 'ok') keep[x] = 'ok'; });
+        Q.fix = { k, keep, old: Q.items[k] }; delete Q.items[k]; if (Q.cand) delete Q.cand[k]; if (Q.vis) { delete Q.vis[k]; delete Q.vis['@' + k]; }
+        Q.step = 'doc'; Q.ph = 'read'; Q.tDone = 0; Q.allCheer = 0; Q.autoOff = 0; Q.badHide = ''; Q.msg = (Q1_CAT[k] || k) + ' 줄만 다시 비춰 주세요 · 다 읽으면 CMOS로 바로 돌아가요'; return renderQc1(); }
+      if (a === 'fixx') return q1FixDone(Q, 1);
       if (a === 'cmreset') { if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; }); Q.ready = false; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; Q.cheered = 0; Q.fitC = 0; return renderQc1(); }
-      if (a === 'docreset') { if (Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } Q.autoOff = 0; q1Unsave(); Q.vis = {}; Q.mixS = null; Q.mixC = null; Q.mixShown = 0; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
+      if (a === 'docreset') { if (Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } Q.autoOff = 0; q1Unsave(); Q.vis = {}; Q.mixS = null; Q.mixC = null; Q.mixShown = 0; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
       if (a === 'docnext' && Q.practice) { if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1PracCard(Q); }
-      if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; return q1GoFit(Q); }
+      if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; if (Q.fix) return q1FixDone(Q); return q1GoFit(Q); }
       if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
       if (a === 'cmnext') { Q.ph = 'fit'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmshot') { Q.autoShot = false; return q1CmShoot(); }
@@ -21723,7 +21783,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (stop) { Q.msg = '오류를 보냈습니다 · 점검 후 [다시 읽기]로 맞춰 주세요'; q1Call('pause', false); return q1Paint(); }
         return q1CmShoot(true); }
       if (a === 'tocmp') { Q.step = 'cmp'; return renderQc1(); }
-      if (a === 'redoc') { q1Unsave(); Q.vis = {}; Q.allCheer = 0; Q.bodyN = 0; Q.bodyI = 1; Q.varDone = null; Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
+      if (a === 'redoc') { q1Unsave(); Q.vis = {}; Q.allCheer = 0; Q.bodyN = 0; Q.bodyI = 1; Q.varDone = null; Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
       if (a === 'recm') { if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; }); Q.step = 'cmos'; Q.ph = 'read'; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; return renderQc1(); }
       if (a === 'confirm') return q1Finish();
       if (a === 'freeshot') { q1Flash(); q1Call('shot', true, q1Tag('본체', Q)); return; }
