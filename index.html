@@ -9105,7 +9105,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.66';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20676,6 +20676,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const X = {}, full = it => q1Full(it) + ' ' + (it.brand || '');
     if (P.mem) { const L = [P.mem].concat(P.mem.extraO || []), G = L.filter(o => q1GB(o.cap || q1Full(o)) > 0);   // v33.65 : 용량을 못 읽는 줄(빠진 부품 · 다른 부품)은 개수에서 뺌 — 용량 합계와 같은 줄만 셈
       X.memN = (G.length ? G : L.slice(0, 1)).reduce((a, o) => a + Math.max(1, o.n || 1), 0);
+      { const tot = (G.length ? G : L).reduce((a, o) => a + q1GB(o.cap || q1Full(o)) * Math.max(1, o.n || 1), 0), per = X.memN ? tot / X.memN : 0;   // v33.66 : 이상한 값 확인 — 한 개 용량이 말이 안 되면 개수 확인을 빼고 기록
+        if (tot && (X.memN > 8 || ![2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128].includes(per))) { try { q1Log('sanity', '메모리 개수 확인 필요: 합계 ' + tot + 'GB / ' + X.memN + '개 → 개수 확인 안 함 | ' + L.map(o => (o.code || '?') + 'x' + (o.n || 1)).join(', ')); } catch (e) { } delete X.memN; } }
       if (G.length < L.length) try { q1Log('mem-extra', 'GB 없는 메모리 줄 제외: ' + L.filter(o => !G.includes(o)).map(o => (o.code || '?') + ' ' + String(q1Full(o) || '').slice(0, 50)).join(' / ')); } catch (e) { } }   // v32.00 : 섞인 메모리도 총 개수
     for (const k of ['ssd', 'hdd']) if (P[k]) X[k + 'Br'] = [P[k]].concat(P[k].extraO || []).map(o => q1BrandOf(full(o)));
     return X;
@@ -20686,6 +20688,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   // ── 화면 (v31.80 : 단계별 전체 화면 카메라 · 가까이 읽기 → 틀 맞춰 찍기) ──
   // 흐름 : 시작 → ① 전표 (가까이 읽기 → 틀 맞춰 찍기) → ② CMOS (가까이 읽기 → 틀 맞춰 찍기, 1~2장) → 비교·확정 → ③ 본체 자유 촬영 → 마감
   const Q1K = ['cpu', 'mem', 'ssd', 'hdd'];
+  if (/[?&]qtest=1/.test(location.search)) window.__q1t = { qcpSet: r => qcpSet(r), qcParse: t => qcParse(t), q1Expect: P => q1Expect(P), q1Expect2: P => q1Expect2(P), c1Match: (t, e, x) => c1Match(t, e, x), q1DocLike: (Q, t) => q1DocLike(Q, t), q1MbVga: (Q, t) => (q1MbVga(Q, t), Q), mbv: t => Q1_MBV.filter(v => v[1].test(t)).map(v => v[0]), vgaShort: n => qxVgaShort(n), vendor: t => (c1Vendor(String(t || '').replace(/[\[【][^\]】\n]{0,24}[\]】]/g, ' ')) || {}).id || '' };   // v33.66 : 시험 묶음 (tests/qc1) — 주소에 ?qtest=1 일 때만
   function q1Reset() { S.q1 = { step: 'start', ph: 'read', order: '', ordC: null, items: {}, cand: {}, E: null, E2: {}, cm: {}, bad: {}, w: {}, cov: {}, fitC: null, shots: 0, cshots: 0, msg: '', last: S.q1 && S.q1.last }; }
   const q1B = () => window.PCABCam || null;
   function q1Call(fn, ...a) { try { const b = q1B(); if (b && typeof b[fn] === 'function') return b[fn](...a); } catch (e) { console.warn('PCABCam.' + fn, e); } }
@@ -20899,6 +20902,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (r.mark) Q.markN = (Q.markN || 0) + 1;
     if (r.set && !Q.set) Q.set = r.set;
     if (Q1V2) { q1MixCheck(Q, r); q1MbVga(Q, r.txt); }
+    { const DL = Q.docL = Q.docL || []; String(r.txt || '').split('\n').forEach(l => { l = l.trim(); if (l.length > 2 && DL.length < 150 && !DL.includes(l)) DL.push(l); }); }   // v33.66 : 시험 묶음용 — 주문서에서 읽은 글자
     if (/운송료|표준거래|택배비|(?<!\d)1\s*\/\s*1(?!\d)/.test(r.txt)) { Q.endN = (Q.endN || 0) + 1; Q.endT = Q.endT || Date.now(); }
     if (Q.order && (Q.endN || 0) >= 2 && Date.now() - Q.endT > 3000 && !Q.chgAsk && !q1DocDone(Q) && Q1K.some(k => Q.items[k]) && (!Q.nobAsked || Date.now() - Q.nobAsked > 20000)) q1NobAsk(Q);
     { const b = q1BaseOf(r.txt); if (b) { const K = Q.bk = Q.bk || { b: 0, n: 0 }; K[b]++; } }
@@ -20906,13 +20910,13 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!q1DocDone(Q) && Q.t0 && !Q.slowLogged && Date.now() - Q.t0 > 40000) { Q.slowLogged = 1; q1Log('slow-doc', '40초 넘게 못 읽음: ' + ['order', 'cpu', 'mem', 'ssd'].filter(k => k === 'order' ? !Q.order : !Q.items[k]).join(',')); }
     // v32.10 : 4개 다 읽어도 바로 넘어가지 않음 — 새 코드가 안 보인 지 2.5초 지나야 다음 (아래 변경 줄까지 비출 시간) · 셔터 누르면 바로
     { const sc = Q.seenC = Q.seenC || new Set(); let nw = 0; (r.txt.match(/(?<!\d)\d{6,7}(?!\d)/g) || []).forEach(c => { const g = QCP && (QCP.get(c) || (c.length === 6 && qcp6(c))); if (g && !sc.has(g.c)) { sc.add(g.c); nw = 1; } }); if (nw) Q.lastNew = Date.now(); }   // v32.12 : 등록 부품 코드만 (깨진 숫자는 무시)
-    if (q1DocDone(Q) && !Q.tDone) { Q.tDone = Date.now(); try { q1Log('doc-spec', Q.order + ((Q.bodyN || 1) > 1 ? ' [본체' + Q.bodyN + '대]' : '') + ' ' + Q1K.map(k => Q.items[k] ? k + ':' + (Q.items[k].it.code || '?') + 'x' + (Q.items[k].it.n || 1) + (Q.items[k].it.chg ? '*' : '') + ((Q.items[k].extra || []).length ? '+' + Q.items[k].extra.map(e => (e.code || '?') + 'x' + (e.n || 1)).join('+') : '') : '').filter(Boolean).join(' ')); } catch (e) { } }
+    if (q1DocDone(Q) && !Q.tDone) { try { const c = Q.items.cpu && Q.items.cpu.it; if (c && (c.n || 1) > (Q.bodyN || 1)) q1Log('sanity', (Q.order || '?') + ' CPU 수량 ' + c.n + '개 · 본체 ' + (Q.bodyN || 1) + '대'); } catch (e) { } try { q1Log('doc-txt', (Q.order || '?') + '\n' + (Q.docL || []).join('\n').slice(0, 1980)); } catch (e) { } Q.tDone = Date.now(); try { q1Log('doc-spec', Q.order + ((Q.bodyN || 1) > 1 ? ' [본체' + Q.bodyN + '대]' : '') + ' ' + Q1K.map(k => Q.items[k] ? k + ':' + (Q.items[k].it.code || '?') + 'x' + (Q.items[k].it.n || 1) + (Q.items[k].it.chg ? '*' : '') + ((Q.items[k].extra || []).length ? '+' + Q.items[k].extra.map(e => (e.code || '?') + 'x' + (e.n || 1)).join('+') : '') : '').filter(Boolean).join(' ')); } catch (e) { } }
     if (q1DocDone(Q)) Q.tDoc = Q.tDoc || Date.now();   // v32.87 : 자동으로 넘어가지 않음 — 다 보여준 뒤 [다음]   // v32.48 : 전표 다 읽으면 바로 주문번호 비추기 → 자동 촬영 → 확인 카드
   }
   // v32.04 : 전표 읽기 연습 모드 (관리자 본인만) — 결과 카드 → 맞음 / 틀림(항목 선택) → 글자만 서버 저장 · 틀림이면 사진은 폰에만
   // v33.30 : 연습 초기화 · CMOS 연습 (사진 저장 없음 · 결과는 현장 기록에 prac-cmos 로)
   function q1PracReset(Q) {
-    Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.t0 = Date.now(); Q.ph = 'read';
+    Q.chgAsk = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.docL = null; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.t0 = Date.now(); Q.ph = 'read';
     Q.pracCm = 0; Q.pracEnd = 0; Q.E = null; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.fitHint = ''; if (Q.step === 'cmos') Q.step = 'doc';
   }
   function q1PracToCmos(Q) {
@@ -21182,7 +21186,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const k = yes.slice(3); if (k === 'order') { Q.order = ''; Q.ordC = null; } else { delete Q.items[k]; if (Q.cand) delete Q.cand[k]; }
       if (Q.vis) delete Q.vis[k]; Q.chgAsk = 0; Q.tDone = 0; Q.allCheer = 0; Q.ph = 'read'; Q.msg = (Q1_AB[k] || k) + ' 줄을 다시 비춰 주세요'; q1Log('reread', k); return renderQc1(); }
     if (yes) { Q.chgOk = Q.chgOk === 'report' ? 'report' : unread ? 'unread' : 'ok'; q1Log(unread ? 'chg-unread' : 'chg-ok', rows.length + '줄'); q1Snd('pop'); return go(); }
-    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
+    Q.chgAsk = 0; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.docL = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.toFit = null; Q.vis = {}; Q.allCheer = 0; Q.msg = '음영 줄(변경 부품)을 가까이 비춰 다시 읽어 주세요'; renderQc1();
   }
   // 전표 : 틀 맞춰 찍기 — 틀 안에 주문번호 + 읽은 코드 2개 이상이 두 번 연속 보이면 전체가 들어온 것으로 보고 자동 촬영
   // v32.49 : 전표 사진 — 화면 가운데 '주문번호' 틀 안에 읽어 둔 주문번호가 두 번 연속 보이면 자동 촬영 (부품 코드 · 전표 전체는 안 봄)
@@ -21240,7 +21244,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (Q1V2) q1MbSee(Q, txt);
     if (!Q.vendor) { const v = c1Vendor(String(txt || '').replace(/[\[【][^\]】\n]{0,24}[\]】]/g, ' ')); if (v) Q.vendor = v.id; }   // v33.60 : 주문서의 [MSI] 같은 괄호 글자로는 안 정함
     const ks = Object.keys(Q.E), all = q1AllOk(Q), vis = ks.filter(k => R[k] && R[k].st !== 'wait');
-    if (all && q1CmShownAll(Q) && !Q.cheered) { Q.cheered = 1; q1Snd('done'); q1Cheer('사양 일치'); setTimeout(() => { if (S.q1 === Q && Q.step === 'cmos') renderQc1(); }, 50); }
+    if (all && q1CmShownAll(Q) && !Q.cheered) { Q.cheered = 1; try { q1Log('cm-txt', (Q.order || '?') + ' ' + JSON.stringify(Q.E) + (Q.E2 && Q.E2.memN ? ' memN' + Q.E2.memN : '') + '\n' + String(txt || '').slice(0, 1700)); } catch (e) { } q1Snd('done'); q1Cheer('사양 일치'); setTimeout(() => { if (S.q1 === Q && Q.step === 'cmos') renderQc1(); }, 50); }
     let fill = true; { const SL = (o.sl || []).filter(b => b && b.length === 4);   // v32.81 : 모니터 글자가 틀을 충분히 채울 때만 (멀거나 작게 보이면 안 찍음)
       if (SL.length >= 3) { const x0 = Math.min(...SL.map(b => b[0])), x1 = Math.max(...SL.map(b => b[2])), y0 = Math.min(...SL.map(b => b[1])), y1 = Math.max(...SL.map(b => b[3])), w = x1 - x0, h = y1 - y0; fill = Math.min(w, h) >= 0.4 && Math.max(w, h) >= 0.6; }
       if (!fill && Q.tCm && Date.now() - Q.tCm > 25000) fill = true; }
@@ -21805,7 +21809,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         Q.step = 'doc'; Q.ph = 'read'; Q.tDone = 0; Q.allCheer = 0; Q.autoOff = 0; Q.badHide = ''; Q.msg = (Q1_CAT[k] || k) + ' 줄만 다시 비춰 주세요 · 다 읽으면 CMOS로 바로 돌아가요'; return renderQc1(); }
       if (a === 'fixx') return q1FixDone(Q, 1);
       if (a === 'cmreset') { if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; }); Q.ready = false; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; Q.cheered = 0; Q.fitC = 0; return renderQc1(); }
-      if (a === 'docreset') { if (Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } Q.autoOff = 0; q1Unsave(); Q.vis = {}; Q.mixS = null; Q.mixC = null; Q.mixShown = 0; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
+      if (a === 'docreset') { if (Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } Q.autoOff = 0; q1Unsave(); Q.vis = {}; Q.mixS = null; Q.mixC = null; Q.mixShown = 0; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.docL = null; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
       if (a === 'docnext' && Q.practice) { if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1PracCard(Q); }
       if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; if (Q.fix) return q1FixDone(Q); return q1GoFit(Q); }
       if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
@@ -21819,7 +21823,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
         if (stop) { Q.msg = '오류를 보냈습니다 · 점검 후 [다시 읽기]로 맞춰 주세요'; q1Call('pause', false); return q1Paint(); }
         return q1CmShoot(true); }
       if (a === 'tocmp') { Q.step = 'cmp'; return renderQc1(); }
-      if (a === 'redoc') { q1Unsave(); Q.vis = {}; Q.allCheer = 0; Q.bodyN = 0; Q.bodyI = 1; Q.varDone = null; Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
+      if (a === 'redoc') { q1Unsave(); Q.vis = {}; Q.allCheer = 0; Q.bodyN = 0; Q.bodyI = 1; Q.varDone = null; Q.step = 'doc'; Q.ph = 'read'; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.mb = null; Q.vga = null; Q.mbSee = null; Q.vgaSee = null; Q.docL = null; Q.tags = null; Q.gone = null; Q.goneC = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.chgOk = null; Q.noted = {}; return renderQc1(); }
       if (a === 'recm') { if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; }); Q.step = 'cmos'; Q.ph = 'read'; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; return renderQc1(); }
       if (a === 'confirm') return q1Finish();
       if (a === 'freeshot') { q1Flash(); q1Call('shot', true, q1Tag('본체', Q)); return; }

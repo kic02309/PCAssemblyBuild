@@ -1,0 +1,240 @@
+[
+ {
+  "id": "CPU 코드 조각을 모델로 잡지 않음 (29127340 · 90954)",
+  "fn": "expect",
+  "P": {
+   "cpu": {
+    "code": "1290954",
+    "name": "90954",
+    "brand": "AMD",
+    "n": 1
+   }
+  },
+  "expect": {
+   "cpu": "9600X"
+  }
+ },
+ {
+  "id": "CPU 5600 (29136211)",
+  "fn": "expect",
+  "P": {
+   "cpu": {
+    "code": "1294309",
+    "name": "",
+    "brand": "AMD",
+    "n": 1
+   }
+  },
+  "expect": {
+   "cpu": "5600"
+  }
+ },
+ {
+  "id": "메모리 합계 16GB×2 = 32",
+  "fn": "expect",
+  "P": {
+   "mem": {
+    "code": "1181691",
+    "n": 2
+   }
+  },
+  "expect": {
+   "mem": 32
+  }
+ },
+ {
+  "id": "메모리 개수 — 용량 없는 줄 제외 (29136211 · 3개 오류)",
+  "fn": "expect2",
+  "P": {
+   "mem": {
+    "code": "1221380",
+    "n": 2,
+    "extraO": [
+     {
+      "code": "",
+      "name": "메모리 변경",
+      "n": 1
+     }
+    ]
+   }
+  },
+  "expect": {
+   "memN": 2
+  }
+ },
+ {
+  "id": "메모리 개수 — 보통 2개",
+  "fn": "expect2",
+  "P": {
+   "mem": {
+    "code": "1181691",
+    "n": 2
+   }
+  },
+  "expect": {
+   "memN": 2
+  }
+ },
+ {
+  "id": "메모리 개수 — 말이 안 되면 개수 확인 안 함",
+  "fn": "expect2",
+  "P": {
+   "mem": {
+    "code": "",
+    "name": "DDR5 10GB",
+    "n": 3
+   }
+  },
+  "expect": {
+   "memN": null
+  }
+ },
+ {
+  "id": "주문서 화면 걸러냄 (CMOS 단계)",
+  "fn": "doclike",
+  "order": "29127340",
+  "text": "주문번호 29127340\n[추천조립PC] 품 1개 1358675\n[CPU] [AMD] 라이젠5 그래니트 9600X 1개 1290954\n[메인보드] [MSI] PRO B650M-P 1개 1028287\n[메모리] [에센코어] KLEVV DDR5 2개 1181691",
+  "expect": {
+   "v": true
+  }
+ },
+ {
+  "id": "BIOS 화면은 주문서 아님",
+  "fn": "doclike",
+  "order": "29127340",
+  "text": "CLICK BIOS X\nCPU: AMD Ryzen 5 9600X 6-Core Processor\nMemory Size: 32768MB\nKingston SKC3000S1024G 1024GB",
+  "expect": {
+   "v": false
+  }
+ },
+ {
+  "id": "주문서에서 보드 · 그래픽 읽기",
+  "fn": "mbvga",
+  "text": "[메인보드] [MSI] PRO B650M-P (AMD B650/M- 1개 1028287 ATX)\n[그래픽카드] [GIGABYTE] 라데온 RX 7600 GAMING OC D6 8GB 1개",
+  "expect": {
+   "mb": "MSI",
+   "vga": "RADEON"
+  }
+ },
+ {
+  "id": "파워 줄(A850GL)을 보드로 잡지 않음",
+  "fn": "mbvga",
+  "text": "[파워] [MSI] MAG A850GL PCIE5 1개",
+  "expect": {
+   "mb": null
+  }
+ },
+ {
+  "id": "BIOS 제조사 — CLICK BIOS = MSI",
+  "fn": "mbv",
+  "text": "CLICK BIOS X\nCPU: AMD Ryzen 5 9600X",
+  "expect": {
+   "v": "MSI"
+  }
+ },
+ {
+  "id": "BIOS 제조사 — SSD 이름(AORUS)로 정하지 않음",
+  "fn": "mbv",
+  "text": "GIGABYTE AORUS Gen4 SSD 1TB",
+  "expect": {
+   "v": ""
+  }
+ },
+ {
+  "id": "안내용 제조사 — 주문서 [MSI] 괄호로 정하지 않음",
+  "fn": "vendor",
+  "text": "[MSI] PRO B650M-P (AMD B650/M-ATX)",
+  "expect": {
+   "v": ""
+  }
+ },
+ {
+  "id": "그래픽 짧은 이름",
+  "fn": "vgashort",
+  "text": "[MSI] 지포스 RTX 5060 Ti 벤투스 2X OC 플러스 D7 8GB",
+  "expect": {
+   "v": "RTX 5060 Ti"
+  }
+ },
+ {
+  "id": "CMOS 대조 — 모두 일치",
+  "fn": "match",
+  "P": {
+   "cpu": {
+    "code": "1290954",
+    "n": 1
+   },
+   "mem": {
+    "code": "1181691",
+    "n": 2
+   },
+   "ssd": {
+    "code": "1347330",
+    "n": 1
+   }
+  },
+  "text": "CLICK BIOS X\nCPU: AMD Ryzen 5 9600X 6-Core Processor\nMemory Size: 32768MB\nM.2_1: Kingston SKC3000S1024G (1024GB)",
+  "expect": {
+   "cpu.st": "ok",
+   "mem.st": "ok",
+   "ssd.st": "ok"
+  }
+ },
+ {
+  "id": "CMOS 대조 — 다른 PC(14900K·16GB)",
+  "fn": "match",
+  "P": {
+   "cpu": {
+    "code": "1290954",
+    "n": 1
+   },
+   "mem": {
+    "code": "1181691",
+    "n": 2
+   },
+   "ssd": {
+    "code": "1347330",
+    "n": 1
+   }
+  },
+  "text": "CPU: Intel(R) Core(TM) i9-14900K\nMemory Size: 16384MB\nM.2_1: Kingston SKC3000S1024G (1024GB)",
+  "expect": {
+   "cpu.st": "bad",
+   "cpu.seen": "14900K",
+   "mem.st": "bad",
+   "mem.seen": "16GB",
+   "ssd.st": "ok"
+  }
+ },
+ {
+  "id": "CMOS 대조 — 메모리 개수 3개(잘못된 기대값)여도 2개 PC 통과",
+  "fn": "match",
+  "P": {
+   "cpu": {
+    "code": "1294309",
+    "n": 1
+   },
+   "mem": {
+    "code": "1221380",
+    "n": 2,
+    "extraO": [
+     {
+      "code": "",
+      "name": "메모리 변경",
+      "n": 1
+     }
+    ]
+   },
+   "ssd": {
+    "code": "1295714",
+    "n": 1
+   }
+  },
+  "text": "CPU: AMD Ryzen 5 5600 6-Core Processor\nMemory Size: 32768MB\nDIMMA1: 16384MB DIMMB1: 16384MB\nM.2_1: ADATA LEGEND 710 (512GB)",
+  "expect": {
+   "cpu.st": "ok",
+   "mem.st": "ok",
+   "ssd.st": "ok"
+  }
+ }
+]
