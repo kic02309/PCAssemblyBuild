@@ -2508,6 +2508,11 @@ html.q1v2 .q1bp p{font-size:14px!important}html.q1v2 .q1bp p u{color:#ff9a9d!imp
 .q1v2c .r>small{color:rgba(255,255,255,.5);font-size:11px}
 .q1v2c .fn{display:none;flex-basis:100%;margin:2px 0 2px 16px;font-size:11.5px;line-height:1.4;color:rgba(255,255,255,.78);background:rgba(255,255,255,.06);border-radius:10px;padding:7px 10px;white-space:normal}
 .q1v2c .r.op{background:rgba(77,163,255,.1);border-radius:12px}.q1v2c .r.op .fn{display:block}
+.q1mxw{color:#fff;text-align:left}.q1mxw h4{margin:0 0 4px;font-size:17px;color:#ffd27a;display:flex;align-items:center;gap:8px}.q1mxw h4 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:#f59e0b;color:#111;display:grid;place-items:center;font-size:15px;font-weight:900}
+.q1mxw .o{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:10px}.q1mxw-pc{display:flex;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.07);margin-bottom:6px;font-size:13px}.q1mxw-pc b{color:#7dc0ff}
+.q1mxw p{font-size:13.5px;line-height:1.5;margin:10px 2px 0;color:rgba(255,255,255,.88)}.q1mxw p u{text-decoration:none;color:#ffd27a;font-weight:700}.q1mxw p.big{font-size:18px;font-weight:800;color:#fff;margin-top:6px}.q1mxw small{display:block;font-size:11.5px;color:rgba(255,255,255,.5);margin-top:6px}
+html.q1v2 .q1ask:has(.q1mxw)>div{background:rgba(22,25,31,.82)!important;-webkit-backdrop-filter:blur(22px)!important;backdrop-filter:blur(22px)!important;border:0!important;border-radius:24px!important;color:#fff!important}
+html.q1v2 .q1ask:has(.q1mxw) .q1ask-b button{border:0;border-radius:14px;background:rgba(255,255,255,.12);color:#fff;font-weight:700}html.q1v2 .q1ask:has(.q1mxw) .q1ask-b .primary{background:#f59e0b;color:#111}
 .q1v2bn{font-size:12px;color:#ffd27a;background:rgba(255,210,122,.1);border-radius:10px;padding:6px 10px;margin:0 0 6px}.q1v2bn b{color:#fff}
 .q1v2c .hint{font-size:11px;color:rgba(255,255,255,.45);text-align:center;margin-top:6px}
 html.q1v2 .q1ask:has(.q1v2c)>div{background:rgba(22,25,31,.74)!important;-webkit-backdrop-filter:blur(22px) saturate(1.3)!important;backdrop-filter:blur(22px) saturate(1.3)!important;border:0!important;border-radius:24px!important;color:#fff!important}
@@ -9062,7 +9067,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.46';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.47';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -19971,6 +19976,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     if (!QSET) { try { const c = JSON.parse(localStorage.getItem('qcSets') || 'null'); if (c) qsetSet(c); } catch (e) { } }
     return api('qc', { op: 'sets' }).then(r => { qsetSet(r.rows || []); try { localStorage.setItem('qcSets', JSON.stringify(r.rows || [])); } catch (e) { } return r; }).catch(() => null);
   }
+  function qsetAll(txt) { const out = []; if (!QSET || !QSET.size) return out; for (const x of (String(txt || '').match(/(?<!\d)\d{6,7}(?!\d)/g) || [])) { const o = x.length === 7 ? QSET.get(x) : QSET6.get(x); if (o && !out.includes(o)) out.push(o); } return out; }   // v33.47 : 주문서에 보이는 본체(세트) 모두
   function qsetFind(txt) { if (!QSET || !QSET.size) return null; for (const x of (String(txt || '').match(/(?<!\d)\d{6,7}(?!\d)/g) || [])) { const o = x.length === 7 ? QSET.get(x) : QSET6.get(x); if (o) return o; } return null; }
   const qsetShort = o => { const m = String(o.m || ''), p = m.match(/\((.*)\)/), a = m.match(/PC_([A-Za-z]?\d+\w*)/) || m.match(/(아이웍스\s?[\dA-Z]-\d+)/); return a ? a[1] + (p ? ' (' + p[1] + ')' : '') : m.replace(/^(게이밍|사무용)\s*/, ''); };
   const qsetCpu = o => { const m = String(o.m || '').match(/\(([^/)]+)\//); return m ? m[1].trim() : ''; };
@@ -20830,6 +20836,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     // v32.03 : HDD는 빠지는 주문이 없음 (추가만) → 통째로 빠짐 표시는 쓰지 않음 (오인식으로 막히는 것 방지)
     if (r.mark) Q.markN = (Q.markN || 0) + 1;
     if (r.set && !Q.set) Q.set = r.set;
+    if (Q1V2) q1MixCheck(Q, r);
     if (/운송료|표준거래|택배비|(?<!\d)1\s*\/\s*1(?!\d)/.test(r.txt)) { Q.endN = (Q.endN || 0) + 1; Q.endT = Q.endT || Date.now(); }
     if (Q.order && (Q.endN || 0) >= 2 && Date.now() - Q.endT > 3000 && !Q.chgAsk && !q1DocDone(Q) && Q1K.some(k => Q.items[k]) && (!Q.nobAsked || Date.now() - Q.nobAsked > 20000)) q1NobAsk(Q);
     { const b = q1BaseOf(r.txt); if (b) { const K = Q.bk = Q.bk || { b: 0, n: 0 }; K[b]++; } }
@@ -21506,6 +21513,23 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1BodyLine(Q) { const N = Q.bodyN || 1; if (N < 2) return ''; const P = q1Part(Q), D = Q.varDone || { chg: 0, base: 0 };
     return `<div class="q1gd-b">본체 <b>${Q.bodyI || 1}/${N}</b>${P ? ` · 남은 것 변경 ${Math.max(0, P.chg - D.chg)}대 · 기본 ${Math.max(0, P.base - D.base)}대` : ''}</div>`; }
   const q1GdMode = () => { if (!Q1V2) return 'auto'; try { const v = localStorage.getItem(q1PK('q1gd')); return v === 'skip' || v === 'tap' ? v : 'auto'; } catch (e) { return 'auto'; } };   // v33.45 : 주문번호 안내 — auto 3초 · skip 안 보임 · tap 직접 시작
+  function q1MixCheck(Q, r) {   // v33.47 : 조립QC — 서로 다른 본체가 섞인 주문(웍스·추천·일반 조합)은 앱으로 진행하지 않음
+    if (Q.mixShown || Q.practice) return;
+    const S1 = Q.mixS = Q.mixS || {}, C1 = Q.mixC = Q.mixC || {};
+    qsetAll(r.txt).forEach(o => { S1[o.c] = S1[o.c] || { o, n: 0 }; S1[o.c].n++; });
+    const cp = r.P && r.P.cpu; if (cp && !cp.chg) [cp].concat(cp.extraO || []).forEach(o => { if (!o || !o.code) return; C1[o.code] = C1[o.code] || { o, n: 0 }; C1[o.code].n++; });   // 변경(취소선) CPU 는 제외
+    const sets = Object.values(S1).filter(x => x.n >= 2), cpus = Object.values(C1).filter(x => x.n >= 2);
+    if (sets.length < 2 && cpus.length < 2) return;
+    Q.mixShown = 1; q1MixAsk(Q, sets, cpus); }
+  async function q1MixAsk(Q, sets, cpus) {
+    q1Call('pause', true); q1Snd('bad'); try { q1Log('mixed', (Q.order || '?') + ' 본체 ' + sets.map(x => x.o.c).join(',') + ' · CPU ' + cpus.map(x => x.o.code).join(',')); } catch (e) { }
+    const cpuOf = o => { const m = String(q1Full(o) || '').match(/(\d{4,5}X3D|\d{4,5}(?:GT|GE|XT|KF|K|F|G|X|T)?|울트라\s*\d\s*\d{3}[A-Z]{0,2})/i); return m ? m[1] : q1Short(o.name || q1Full(o), 14); };
+    const rows = (sets.length >= 2 ? sets.map(x => qsetShort(x.o)) : cpus.map(x => 'CPU ' + cpuOf(x.o))).map((t, i) => `<div class="q1mxw-pc"><b>본체 ${i + 1}</b><span>${esc(t)}</span></div>`).join('');
+    const yes = await q1Ask(`<div class="q1mxw"><h4><i>!</i>조립QC로 진행하지 않는 주문</h4><div class="o">주문 ${esc(Q.order || '')}</div>${rows}<p>서로 다른 본체가 섞인 주문(웍스 · 추천 · 일반 조합)은 <u>조립QC 앱으로 진행하지 않습니다.</u></p><p class="big">기본 카메라로 진행하세요.</p><small>잘못 감지된 것 같으면 [다시 읽기]</small></div>`, '확인 · 처음으로', false, '다시 읽기');
+    if (S.q1 !== Q) return;
+    if (yes) { q1Unsave(); const last = Q.last; q1Reset(); S.q1.last = last; S.q1.msg = '혼합 주문 ' + (Q.order || '') + ' · 기본 카메라로 진행하세요'; return renderQc1(); }
+    const b = $('[data-q1="docreset"]'); if (b) b.click(); else { q1Call('pause', false); }
+  }
   function q1GuideHtml(Q) {   // v32.78 : 주문번호 확인 + CMOS 세팅 안내
     const gm = q1GdMode(); if (gm === 'skip') { setTimeout(() => { const b = $('[data-q1="cmgo"]'); if (b && S.q1 === Q && Q.ph === 'guide') b.click(); }, 0); }
     if (!Q.gdArm && gm === 'auto') Q.gdArm = setTimeout(() => { Q.gdArm = 0; if (S.q1 === Q && Q.step === 'cmos' && Q.ph === 'guide') { const b = $('[data-q1="cmgo"]'); if (b) b.click(); } }, 3000);   // v33.30 : 3초 뒤 자동 시작 (단계 줄이기)
@@ -21632,7 +21656,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (a === 'docback') { Q.ph = 'read'; Q.fitC = null; return renderQc1(); }
       if (a === 'cmgo') { q1Snd('pop'); Q.ph = 'fit'; Q.fitC = 0; Q.retryN = 0; Q.ready = false; Q.pgC = 0; q1CdClear(Q); Q.tCm = Date.now(); return renderQc1(); }
       if (a === 'cmreset') { if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; }); Q.ready = false; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; Q.cheered = 0; Q.fitC = 0; return renderQc1(); }
-      if (a === 'docreset') { q1Unsave(); Q.vis = {}; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
+      if (a === 'docreset') { q1Unsave(); Q.vis = {}; Q.mixS = null; Q.mixC = null; Q.mixShown = 0; Q.allCheer = 0; Q.order = ''; Q.ordC = null; Q.items = {}; Q.cand = {}; Q.tags = null; Q.gone = null; Q.markN = 0; Q.tDone = 0; Q.bk = null; Q.set = null; Q.nob = null; Q.man = null; Q.endN = 0; Q.endT = 0; Q.nobAsked = 0; Q.seenC = null; Q.lastNew = 0; Q.noted = {}; Q.t0 = Date.now(); return renderQc1(); }
       if (a === 'docnext' && Q.practice) { if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } return q1PracCard(Q); }
       if (a === 'docnext') { if (!q1DocDone(Q)) { Q.msg = '주문번호 · CPU · 메모리 · 저장장치를 먼저 읽어 주세요'; return q1Paint(); } if (Q.toFit) { clearTimeout(Q.toFit); Q.toFit = null; } if (!q1DocShown(Q)) return; return q1GoFit(Q); }
       if (a === 'docshot') { if (Q.busyShot) return; Q.busyShot = true; q1Call('pause', true); q1Flash(); q1Call('shot', true, q1Tag('전표', Q)); return; }
