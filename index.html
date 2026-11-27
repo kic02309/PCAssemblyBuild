@@ -2478,7 +2478,7 @@ table.m2t td.m2who,table.m2t th.m2who{min-width:320px;max-width:520px;text-align
 
 /* v33.43 : 조립QC (html.q1v2) — 주문서 = 렌즈형 알약 · CMOS = 유리 카드 · 맞음 파란 글씨 · 틀림 빨간 음영 */
 .q1v2g{position:absolute;right:12px;top:calc(12px + var(--sat,0px));z-index:7;width:42px;height:42px;border-radius:50%;border:0;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font-size:21px;line-height:42px;padding:0}
-.q1v2r{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(150px + var(--sab,0px));z-index:7;border:0;border-radius:999px;padding:8px 15px;background:rgba(0,0,0,.58);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:600;white-space:nowrap}.q1v2r b{color:#7dc0ff}
+.q1v2r{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(150px + var(--sab,0px));z-index:7;display:flex;align-items:center;border-radius:999px;padding:0 4px 0 0;background:rgba(0,0,0,.58);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);white-space:nowrap}.q1v2r button{border:0;background:none;color:#fff;font-size:13px;font-weight:600;padding:8px 6px 8px 15px;font-family:inherit}.q1v2r b{color:#7dc0ff}.q1v2r .x{width:28px;height:28px;padding:0;margin-left:2px;border-radius:50%;background:rgba(255,255,255,.18);font-size:12px}
 html.q1v2 .q1c .q1p{align-items:flex-end;gap:6px}
 html.q1v2 .q1c .q1p .q1cw{width:min(330px,100%)}
 html.q1v2 .q1c .q1p span{font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:999px;background:rgba(18,22,28,.58)!important;border:0!important;color:#7dc0ff!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);text-shadow:none}
@@ -9074,7 +9074,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.49';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.50';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21417,7 +21417,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const ks = ['order'].concat(Q1K.filter(k => k !== 'hdd' && !(Q.nob && Q.nob[k])));
     const left = ks.filter(k => k === 'order' ? !(Q.order && q1V(Q, 'order')) : !(Q.items && Q.items[k] && q1V(Q, k)));
     const n = ks.length - left.length;
-    return left.length ? `${n}/${ks.length} 읽는 중 · <span class="q1v2lf">${left.map(k => k === 'order' ? '주문번호' : Q1_CAT[k]).join(' · ')} 남음</span>` : `${n}/${ks.length} 읽는 중`; };
+    return `${n}/${ks.length} 읽는 중`; };   // v33.50 : 남은 항목은 아래 회색 칩이 보여 줌
   const q1TitleHtml = () => { const Q = S.q1; const [n, a, b] = q1Title(), si = { doc: 1, cmos: 2, cmp: 2, free: 3 }[Q.step] || 1;   // v32.05 : 점 3개 단계 + 큰 제목 한 줄
     const nR = (Q.order && q1V(Q, 'order') ? 1 : 0) + ['cpu', 'mem', 'ssd'].filter(k => Q.items && Q.items[k] && q1V(Q, k)).length;
     const tip = Q.card === 'spec' ? ' ' : Q.step === 'cmos' && Q.ph !== 'guide' && Q.badN ? (Q.badHide === q1BadSig(Q) ? `✕ 불일치 ${Q.badN}개 · [다시 읽기] 또는 [오류 보내기]` : ' ') : Q.step === 'doc' && Q.ph === 'fit' && !Q.practice ? (Q.docReady ? '📸 주문번호 인식 완료 · 셔터를 눌러 찍으세요' : Q.farHint ? '숫자 크기에 맞게 더 가까이 대 주세요' : '주문번호를 틀의 숫자 크기에 맞춰 주세요') : Q.step === 'cmos' && Q.ready ? '📸 사양 인식 완료 · 셔터를 눌러 사진을 찍으세요' : Q.step === 'cmos' && Q.pgHint ? '📸 ' + Q.pgHint
@@ -21594,7 +21594,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       $('#main').innerHTML = `<div class="q1c"><div id="q1ar"></div><div class="q1c-mid" id="q1mid"></div><div class="q1shT"></div><div class="q1shB"></div>
         <div class="q1lay" id="q1lay"><div class="q1tt" id="q1tt">${q1TitleHtml()}</div><div class="q1sp"></div><div class="q1tip" id="q1tip"></div><div class="q1gauge" id="q1gauge"><i></i></div><div id="q1hud">${q1Hud()}</div></div>
         <button type="button" class="q1zm" data-q1="zoom">${lab(['1x', '1.5x', '2x'][Q.zi || 0])}</button>${Q1V2 ? '' : '<button type="button" class="q1gv" data-q1="gal" id="q1gv" style="display:none"></button>'}
-        <div class="q1bar">${BL}<button type="button" class="q1sh" data-q1="shut" id="q1sh"><i></i></button>${BR}</div>${Q1V2 ? `<button type="button" class="q1v2g" data-q1="v2set" aria-label="설정">⚙</button>${Q.v2res && Q.step === 'doc' && !Q.order ? `<button type="button" class="q1v2r" data-q1="resume">진행 중 <b>${esc(Q.v2res)}</b> · 이어서 하기 ›</button>` : ''}` : ''}${Q.step === 'cmos' && Q.ph === 'guide' ? q1GuideHtml(Q) : ''}</div>`;
+        <div class="q1bar">${BL}<button type="button" class="q1sh" data-q1="shut" id="q1sh"><i></i></button>${BR}</div>${Q1V2 ? `<button type="button" class="q1v2g" data-q1="v2set" aria-label="설정">⚙</button>${Q.v2res && Q.step === 'doc' && !Q.order ? `<div class="q1v2r"><button type="button" data-q1="resume">진행 중 <b>${esc(Q.v2res)}</b> · 이어서 하기 ›</button><button type="button" class="x" data-q1="resx" aria-label="지우기">✕</button></div>` : ''}` : ''}${Q.step === 'cmos' && Q.ph === 'guide' ? q1GuideHtml(Q) : ''}</div>`;
       q1ShutPaint(); q1Paint(); setTimeout(q1GvRefresh, 250);
       const mode = Q.step === 'free' ? 'free' : Q.step === 'cmos' ? 'cmos' : 'doc';
       if (Q.camMode !== mode) { Q.camMode = mode; q1Cam(true, mode); Q.zi = 0; } else q1Call('pause', false);
@@ -21649,6 +21649,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const a = b.dataset.q1; Q.msg = '';
       if (a === 'gal') { q1Gallery(); return; }
       if (a === 'settings') { q1Settings(); return; }
+      if (a === 'resx') { q1Unsave(); Q.v2res = ''; const r = $('.q1v2r'); if (r) r.remove(); return; }   // v33.50 : 이어서 하기 지우기
       if (a === 'v2set') { q1V2Set(); return; }
       if (a === 'spec') { if (!Q.order || Q.asking) return; Q.asking = true; q1Call('pause', true); await q1Ask(q1V2Card(Q).replace('class="q1v2c"', 'class="q1v2c q1v2only"'), '닫기', false); Q.asking = false; if (S.q1 === Q) q1Call('pause', false); return; }   // v33.48 : 언제든 사양표 보기
       if (a === 'cardm') { try { localStorage.setItem('q1card', b.dataset.v); } catch (e) { } return renderQc1(); }   // v33.39
