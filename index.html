@@ -9105,7 +9105,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.64';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.65';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20674,7 +20674,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function q1Expect2(P) {   // 부가 확인 값 : 메모리 개수 · 저장장치 제조사
     const X = {}, full = it => q1Full(it) + ' ' + (it.brand || '');
-    if (P.mem) X.memN = [P.mem].concat(P.mem.extraO || []).reduce((a, o) => a + Math.max(1, o.n || 1), 0);   // v32.00 : 섞인 메모리도 총 개수
+    if (P.mem) { const L = [P.mem].concat(P.mem.extraO || []), G = L.filter(o => q1GB(o.cap || q1Full(o)) > 0);   // v33.65 : 용량을 못 읽는 줄(빠진 부품 · 다른 부품)은 개수에서 뺌 — 용량 합계와 같은 줄만 셈
+      X.memN = (G.length ? G : L.slice(0, 1)).reduce((a, o) => a + Math.max(1, o.n || 1), 0);
+      if (G.length < L.length) try { q1Log('mem-extra', 'GB 없는 메모리 줄 제외: ' + L.filter(o => !G.includes(o)).map(o => (o.code || '?') + ' ' + String(q1Full(o) || '').slice(0, 50)).join(' / ')); } catch (e) { } }   // v32.00 : 섞인 메모리도 총 개수
     for (const k of ['ssd', 'hdd']) if (P[k]) X[k + 'Br'] = [P[k]].concat(P[k].extraO || []).map(o => q1BrandOf(full(o)));
     return X;
   }
@@ -21231,7 +21233,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const Q1EFIX = new WeakSet();
   function q1CmFit(o) {
     const txt = q1Text(o.lines), Q = S.q1;
-    if (Q.E && Q.items && !Q1EFIX.has(Q.E)) { Q1EFIX.add(Q.E); try { const e2 = q1Expect(q1P(Q)); if (e2.cpu && Q.E.cpu !== e2.cpu) { q1Log('cpu-exp', Q.order + ' 기대값 ' + Q.E.cpu + ' → ' + e2.cpu); Q.E.cpu = e2.cpu; delete Q.cm.cpu; delete Q.bad.cpu; } } catch (e) { } }   // v33.61 : 이어서 하기로 불러온 잘못된 CPU 기대값 고침
+    if (Q.E && Q.items && !Q1EFIX.has(Q.E)) { Q1EFIX.add(Q.E); try { const e2 = q1Expect(q1P(Q)); if (e2.cpu && Q.E.cpu !== e2.cpu) { q1Log('cpu-exp', Q.order + ' 기대값 ' + Q.E.cpu + ' → ' + e2.cpu); Q.E.cpu = e2.cpu; delete Q.cm.cpu; delete Q.bad.cpu; } const x2 = q1Expect2(q1P(Q)); if (Q.E2 && x2.memN && Q.E2.memN !== x2.memN) { Q.E2.memN = x2.memN; if (Q.cm.mem !== 'ok') { delete Q.cm.mem; delete Q.bad.mem; } } } catch (e) { } }   // v33.61 : 이어서 하기로 불러온 잘못된 CPU 기대값 고침
     if (q1DocLike(Q, txt)) { if (Date.now() - (Q.docLikeT || 0) > 4000) { Q.docLikeT = Date.now(); Q.msg = '주문서가 보여요 · CMOS(BIOS) 화면을 비춰 주세요'; q1Paint(); } return; }   // v33.56 : CMOS 단계에서 주문서 글자로 일치 처리되던 문제
     const R = q1CmMatch(Q, txt); q1CmApply(R);
     if (/M\.?2|SATA|NVMe|[0-9]\s*[GT]B/i.test(txt)) Q.cmTxtLast = txt;   // v33.45 : 지연 로그용 — 마지막으로 저장장치 글자가 보였던 화면
