@@ -9086,7 +9086,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.60';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.61';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20636,7 +20636,9 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const E = {}, full = it => q1Full(it);
     if (P.cpu) { const n = full(P.cpu) + ' ' + (P.cpu.name || ''); let m;
       if (/울트라|ultra/i.test(n)) { const L = n.match(/(?<![\dA-Z])(\d{3}(?:KF|K|F|H)?)(?![\dA-Z])/gi); if (L) E.cpu = L[L.length - 1].toUpperCase(); }
-      if (!E.cpu && (m = n.match(/(?<![\dA-Z])(\d{4,5}X3D|\d{4,5}(?:GT|GE|XT|KF|K|F|G|X|T)?)(?![\dA-Z])/i))) E.cpu = m[1].toUpperCase(); }
+      if (!E.cpu) { const cd = String(P.cpu.code || ''), L = [...n.matchAll(/(?<![\dA-Z])(\d{4,5}X3D|\d{4,5}(?:GT|GE|XT|KF|K|F|G|X|T)?)(?![\dA-Z])/gi)].map(x => x[1].toUpperCase());
+        const ok = L.filter(v => !(/^\d+$/.test(v) && (v.length === 5 && !/^1[0-4]\d{3}$/.test(v) || (cd && cd.endsWith(v)))));   // v33.61 : 제품코드 조각(1290954 → 90954)을 CPU 모델로 잡던 문제
+        if (ok.length) E.cpu = ok[0]; else if (L.length) { q1Log('cpu-exp', 'CPU 모델 못 찾음: ' + n.slice(0, 120)); } } }
     const parts = k => [P[k]].concat(P[k].extraO || []);
     if (P.mem) { let tot = 0; parts('mem').forEach(o => { const g = q1GB(o.cap || full(o)); if (g) tot += g * Math.max(1, o.n || 1); }); if (tot) E.mem = Math.round(tot); }
     if (P.gone && P.gone.hdd && !P.hdd) E.hddX = 1;   // v32.02 : HDD 빠짐 = 화면에 HDD가 있으면 불일치
@@ -21286,7 +21288,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   async function q1MbAsk(Q) { const S2 = Q.mbSee; Q.asking = true; q1Call('pause', true);
     const yes = await q1Ask(`<b class="t">보드 제조사가 다릅니다</b><p>주문서 ${esc(S2.exp)} · CMOS 화면 ${esc(S2.v)}</p><small>본체가 바뀌었거나 다른 모델로 조립됐을 수 있어요 · 본체와 주문서를 확인하세요</small>`, '확인했음 · 기록하고 계속', true, '다시 읽기');
     Q.asking = false; if (S.q1 !== Q) return; if (!yes) Q.mbSee = null; else q1Log('mbdiff-go', Q.order + ' ' + S2.exp + '≠' + S2.v); q1Call('pause', false); q1Paint(); }
-  function q1MbRow(Q) { if (!Q1V2 || !Q.mb || !Q.mb.br) return ''; const S2 = Q.mbSee || {}, st = S2.st === 'ok' ? 'x-ok' : S2.st === 'bad' ? 'x-no' : 'x-wt';
+  function q1MbRow(Q) { if (!Q1V2 || !Q.mb || !Q.mb.br || !Q.mbSee || Q.mbSee.st !== 'bad') return ''; const S2 = Q.mbSee || {}, st = S2.st === 'ok' ? 'x-ok' : S2.st === 'bad' ? 'x-no' : 'x-wt';
     return `<div class="q1x ${st}" style="--cc:#a78bfa"><b class="q1x-t">보드</b><div class="q1x-a"><small>주문서</small><em><i class="q1x-m">${esc(Q.mb.br)}</i>${esc(qxMbShort(Q.mb.n))}</em></div><i class="q1x-dv"></i><div class="q1x-b"><small>CMOS</small><em>${S2.st ? esc(S2.v) : '—'}</em></div><u class="q1x-k">${S2.st === 'ok' ? '✓' : S2.st === 'bad' ? '✕' : ''}</u></div>`; }
   function q1VgaSee(Q, txt) {   // 본체 사진 단계 — 그래픽카드 위 GEFORCE / RADEON 글자가 보일 때만
     if (!Q1V2 || !Q.vga || !Q.vga.fam || Q.asking) return; const S2 = Q.vgaSee = Q.vgaSee || { c: {} }; if (S2.st) return;
