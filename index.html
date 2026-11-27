@@ -9078,7 +9078,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.53';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.55';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -20793,15 +20793,15 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     return 'exit';
   };
   // v31.89 : 진행 상황을 폰에 저장 → 앱을 껐다 켜도 [이어서 하기] (하루 지나면 버림)
-  const Q1SAVE = ['step', 'ph', 'order', 'picN', 'items', 'tags', 'gone', 'chgOk', 'E', 'E2', 'cm', 'bad', 'w', 'cov', 'cshots', 'docShot'];
-  function q1Save() { try { const Q = S.q1; if (!Q || Q.practice || !Q.order || !['doc', 'cmos', 'cmp'].includes(Q.step)) return; const o = { t: Date.now(), me: S.me && S.me.id }; Q1SAVE.forEach(k => { o[k] = Q[k]; }); if (o.step === 'cmp') o.step = 'cmos'; if (o.step === 'cmos') o.ph = 'fit'; localStorage.setItem('q1prog', JSON.stringify(o)); } catch (e) { } }
+  const Q1SAVE = ['step', 'ph', 'order', 'picN', 'items', 'tags', 'gone', 'chgOk', 'E', 'E2', 'cm', 'bad', 'w', 'cov', 'cshots', 'docShot', 'shots', 'result', 'saved', 'bodyN', 'bodyI', 'set'];
+  function q1Save() { try { const Q = S.q1; if (!Q || Q.practice || !Q.order || !['doc', 'cmos', 'cmp'].concat(Q1V2 ? ['free'] : []).includes(Q.step)) return; /* v33.54 : 조립QC 는 본체 촬영 단계도 저장 */ const o = { t: Date.now(), me: S.me && S.me.id }; Q1SAVE.forEach(k => { o[k] = Q[k]; }); if (o.step === 'cmp') o.step = 'cmos'; if (o.step === 'cmos') o.ph = 'fit'; localStorage.setItem('q1prog', JSON.stringify(o)); } catch (e) { } }
   function q1Saved() { try { const o = JSON.parse(localStorage.getItem('q1prog') || 'null'); if (!o || !o.order || Date.now() - o.t > 864e5 || (S.me && o.me && o.me !== S.me.id)) return null; return o; } catch (e) { return null; } }
   const q1Unsave = () => { try { localStorage.removeItem('q1prog'); } catch (e) { } };
   function q1NextBody(Q) {   // v32.87 : 같은 주문 다음 본체 — 전표는 다시 안 읽음
     Q.bodyI = (Q.bodyI || 1) + 1; Q.cm = {}; Q.bad = {}; Q.w = {}; Q.cov = {}; Q.cshots = 0; Q.shotK = {}; Q.pgC = 0; Q.pgSig = ''; Q.shots = 0; Q.result = null; Q.saved = null; Q.ready = false; Q.cheered = 0; Q.forced = false; Q.autoShot = false; Q.partial = null; Q.altHit = {}; Q.busyShot = false; Q.fitC = 0; Q.msg = '';
     if (Q.vis) Object.keys(Q.vis).forEach(k => { if (k[0] === '@') delete Q.vis[k]; });
     Q.step = 'cmos'; Q.ph = 'guide'; Q.tCm = Date.now(); q1Snd('pop'); renderQc1(); }
-  function q1Close() { const Q = S.q1; if ((Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN) return q1NextBody(Q); const last = { order: Q.order, result: Q.result, shots: Q.shots }; q1Reset(); S.q1.last = last; renderQc1(); }
+  function q1Close() { const Q = S.q1; if ((Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN) return q1NextBody(Q); const last = { order: Q.order, result: Q.result, shots: Q.shots }; q1Unsave(); q1Reset(); S.q1.last = last; renderQc1(); }
 
   // v32.19 : 왼쪽 수량 칸 '2개'를 코드와 같은 높이에서 찾아 수량으로 (기본 사양 메모리 2개 등 — 코드는 한 번만 찍힘)
   function q1QtyFix(lines, M) {
@@ -21061,12 +21061,12 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1OpVal = () => { try { const v = parseInt(localStorage.getItem(q1PK('q1op')), 10); return isFinite(v) ? Math.max(0, Math.min(100, v)) : 88; } catch (e) { return 88; } };
   function q1OpApply() { if (!Q1V2) return; const v = q1OpVal(), h = document.documentElement; h.style.setProperty('--q1a', (v / 100).toFixed(2)); h.classList.toggle('q1dk', v < 40); }   // v33.45 : 표 바탕 진하기 — 40% 아래면 흰 글씨
   const q1AutoOn = () => { if (!Q1V2) return false; try { const v = localStorage.getItem(q1PK('q1auto')); return v ? v === 'auto' : q1CardMode() !== 'off'; } catch (e) { return false; } };   // v33.48 : 인식 완료 후 2초 뒤 자동 (확인 카드를 끈 사람은 기본 수동)
-  async function q1V2AskResume(Q, SV) {   // v33.51 : 조립QC — 끝내지 못한 검수 : 새로 시작 / 이어서 진행
+  async function q1V2AskResume(Q, SV, quick) {   // v33.51 : 조립QC — 끝내지 못한 검수 : 새로 시작 / 이어서 진행
     if (S.q1 !== Q || Q.order || Q.asking) return;
     const mins = Math.max(0, Math.round((Date.now() - (SV.t || Date.now())) / 60000)), ago = mins < 1 ? '방금' : mins < 60 ? mins + '분 전' : Math.round(mins / 60) + '시간 전';
-    const stg = SV.step === 'cmos' ? '② CMOS 대조' : '① 주문서';
+    const stg = SV.step === 'free' ? '③ 본체 촬영' : SV.step === 'cmos' ? '② CMOS 대조' : '① 주문서';
     Q.asking = true; q1Call('pause', true);
-    const yes = await q1Ask(`<div class="q1v2rs"><h4><i>↺</i>진행 중이던 검수가 있어요</h4><div class="bx"><div>주문<b class="o">${esc(SV.order)}</b></div><div>멈춘 단계<b>${stg}</b></div><div>시간<b>${ago}</b></div></div><small>새로 시작을 누르면 이 기록은 지워집니다.</small></div>`, '이어서 진행', false, '새로 시작');
+    const yes = quick ? true : await q1Ask(`<div class="q1v2rs"><h4><i>↺</i>진행 중이던 검수가 있어요</h4><div class="bx"><div>주문<b class="o">${esc(SV.order)}</b></div><div>멈춘 단계<b>${stg}</b></div><div>시간<b>${ago}</b></div></div><small>새로 시작을 누르면 이 기록은 지워집니다.</small></div>`, '이어서 진행', false, '새로 시작');
     Q.asking = false; if (S.q1 !== Q) return;
     if (!yes) { q1Unsave(); q1Call('pause', false); return; }
     q1Snd('pop'); Q1SAVE.forEach(k => { if (SV[k] !== undefined) Q[k] = SV[k]; }); if (Q.step === 'doc' && Q.ph === 'fit') Q.ph = 'read';
@@ -21348,7 +21348,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       { const ks0 = Object.keys(Q.E), nd = ks0.filter(k => !(Q.shotK || {})[k]); q1Stamp(o, nd.length ? nd : ks0, nd.length > 0 && nd.length < ks0.length); }
       return q1Finish();   // v31.93 : 비교 화면 없음 — 일치면 정상, [불일치로 진행]이면 불일치 기록 + 검수자·담당 매니저 알림
     }
-    if (Q.step === 'free') { Q.shots++; if (!o.saved) Q.msg = '저장하지 못했습니다'; else if (Q1V2 && o.uri && Q.order) { try { q1Call('stamp', o.uri, JSON.stringify({ order: Q.order, items: [] })); } catch (e) { } } q1Paint(); }   // v33.45 : 조립QC 본체 사진도 주문번호
+    if (Q.step === 'free') { Q.shots++; q1Save(); if (!o.saved) Q.msg = '저장하지 못했습니다'; else if (Q1V2 && o.uri && Q.order) { try { q1Call('stamp', o.uri, JSON.stringify({ order: Q.order, items: [] })); } catch (e) { } } q1Paint(); }   // v33.45 : 조립QC 본체 사진도 주문번호
   };
 
   async function q1Finish() {
@@ -21511,7 +21511,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       Object.keys(Q.man || {}).forEach(k => { h += pill('nb', esc((Q1_CAT[k] || k) + ' · 직접 확인 (오류 보고)')); });
       h += q1TagPills(Q, pill);
     } else if (Q.step === 'free') {
-      h += pill(Q.result === 'ok' ? 'ok' : 'bad', (Q.result === 'ok' ? '✓ 일치 · ' : '✕ 불일치 · ') + esc(Q.order)) + pill(Q.saved === false ? 'bad' : '', Q.saved === true ? '저장됨' : Q.saved === false ? '저장 실패' : '저장 중…') + pill('', '본체 ' + Q.shots + '장') + q1TagPills(Q, pill);
+      h += pill(Q.result === 'ok' ? 'ok' : 'bad', (Q.result === 'ok' ? '✓ 일치 · ' : '✕ 불일치 · ') + esc(Q.order)) + pill(Q.saved === false ? 'bad' : '', Q.saved === true ? '저장됨' : Q.saved === false ? '저장 실패' : '저장 중…') + (Q1V2 ? ((Q.bodyN || 1) > 1 ? pill('', '본체 ' + (Q.bodyI || 1) + '/' + Q.bodyN + '대') : '') + pill('', '사진 ' + (Q.shots || 0) + '장') : pill('', '본체 ' + Q.shots + '장')) + q1TagPills(Q, pill);   // v33.54 : 조립QC — 사진 장수와 본체 대수를 나눠 표시
     }
     if (Q.step === 'doc') h = h.replace(/<span class="(?:ok|warn|wt)[^"]*"(?: data-nb="[a-z]+")?>[^<]*<\/span>/g, m => /data-nb/.test(m) && !/ok/.test(m) ? m : '');   // v32.50 : 읽은 사양 칩은 전표 위 체크로 대신
     if (Q.step === 'doc' && Q.arTags) { if (Q.arTags.set) h = h.replace(/<span class="vd">본체[^<]*<\/span>/, ''); if (Q.arTags.os) h = h.replace(/<span class="tg">O\/S 설치<\/span>/, ''); if (Q.arTags.st) h = h.replace(/<span class="tg">안정화[^<]*<\/span>/, ''); h = h.replace(/<span class="cg[^"]*">[^<]*<\/span>/g, ''); }
@@ -21522,8 +21522,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1V2Tick() {   // v33.48 : 조립QC — 자동 넘어가기 · 이어서 하기 띠 정리
     const Q = S.q1; if (!Q1V2 || !Q || S.view !== 'qc1') return;
     if (Q.order || Q.step !== 'doc') { const r = $('.q1v2r'); if (r) r.remove(); }
-    const gv = $('#q1gv'); if (gv) { let bd = gv.querySelector('b'); const n = Q.step === 'free' ? (Q.shots || 0) : 0;   // v33.53 : 본체 사진 장수 배지 — 찍을 때마다 갱신 (0이면 숨김)
-      if (n) { if (!bd) { bd = document.createElement('b'); gv.appendChild(bd); } if (bd.textContent !== String(n)) bd.textContent = n; } else if (bd) bd.remove(); }
+
     const ok = Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk && !Q.asking && !Q.practice && q1DocShown(Q) && q1AutoOn();
     if (ok && !Q.autoT) Q.autoT = setTimeout(() => { Q.autoT = 0; if (S.q1 === Q && Q.step === 'doc' && Q.ph === 'read' && !Q.chgAsk && !Q.asking && q1DocShown(Q) && q1AutoOn()) { const b = $('#q1sh'); if (b) b.click(); } }, 2000);
     if (!ok && Q.autoT) { clearTimeout(Q.autoT); Q.autoT = 0; } }
@@ -21592,8 +21591,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const Q = S.q1; Q.bandSig = ''; Q.cdT = 0; Q.tDoc2 = 0; Q.docReady = false; Q.ready = false; q1Save();
     q1OpApply();
     if (Q1V2 && Q.step === 'start') {   // v33.43 : 조립QC — 메뉴 없이 바로 주문서 카메라 (진행 중 검수는 위 띠로 이어하기)
-      q1Flush(); const SV = q1Saved(), L0 = Q.last; Q.v2res = ''; if (SV) setTimeout(() => q1V2AskResume(Q, SV), 300);   // v33.51 : 이어하기는 처음에 한 번 묻기 Q.step = 'doc'; Q.ph = 'read'; Q.t0 = Date.now(); Q.tDoc = 0; Q.slowLogged = 0;
-      if (L0 && L0.order && !Q.v2res) Q.msg = '방금 검수 ' + L0.order + ' · ' + (L0.result === 'ok' ? '✓ 일치' : '✕ 불일치') + ' · 본체 ' + (L0.shots || 0) + '장'; }
+      q1Flush(); const SV = q1Saved(), L0 = Q.last; Q.v2res = ''; if (SV) setTimeout(() => q1V2AskResume(Q, SV, Date.now() - (SV.t || 0) < 6e5), 300); Q.step = 'doc'; Q.ph = 'read'; Q.t0 = Date.now(); Q.tDoc = 0; Q.slowLogged = 0;   /* v33.51 이어하기는 처음에 한 번 묻기 · v33.54 10분 안에 돌아오면 묻지 않고 이어서 */
+      if (L0 && L0.order && !Q.v2res) Q.msg = '방금 검수 ' + L0.order + ' · ' + (L0.result === 'ok' ? '✓ 일치' : '✕ 불일치') + ' · 사진 ' + (L0.shots || 0) + '장'; }
     document.body.classList.add('appcam'); qcpLoad();
     const cam = Q.step === 'doc' || Q.step === 'cmos' || Q.step === 'free';
     document.documentElement.classList.toggle('q1camon', cam); document.body.classList.toggle('q1camon', cam);
@@ -21605,7 +21604,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const lab = s => `<span class="q1rl">${s}</span>`, sm = (a, s, cls) => `<button type="button" class="q1sm ${cls || ''}" data-q1="${a}">${lab(s)}</button>`, gap = '<span class="q1sm q1gap"></span>';
       const L = Q.step === 'doc' ? sm(Q.ph === 'read' ? 'docreset' : 'docback', '다시<br>읽기') : Q.step === 'cmos' ? sm('cmreset', '다시<br>읽기') : `<div class="q1sm q1th" id="q1th">${lab('본체<br><b>' + (Q.shots || 0) + '</b>장')}</div>`;
       const Rb = Q.step === 'doc' ? gap : Q.step === 'cmos' ? sm('cmerr', '오류<br>보내기', 'err') : sm('close', (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음<br>' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감', 'fin');
-      const thB = `<button type="button" class="q1v2th" data-q1="gal" id="q1gv">${Q.step === 'free' && Q.shots ? `<b>${Q.shots}</b>` : ''}</button>`;
+      const thB = `<button type="button" class="q1v2th" data-q1="gal" id="q1gv"></button>`;   // v33.54 : 장수 배지 없음 (위 알약에 사진 N장)
       const v2re = Q.step === 'doc' ? (Q.ph === 'read' ? 'docreset' : 'docback') : 'cmreset', v2fin = (Q.bodyN || 1) > 1 && (Q.bodyI || 1) < Q.bodyN ? '다음 ' + ((Q.bodyI || 1) + 1) + '/' + Q.bodyN : '마감';
       const v2st = `<div class="q1v2st"><button type="button" class="sp" data-q1="spec"${Q.order ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>사양표</button>${Q.step === 'free' ? `<button type="button" class="fin" data-q1="close">${v2fin}</button>` : `<button type="button" class="re" data-q1="${v2re}">다시 읽기</button>`}</div>`;   // v33.48 : 조립QC 오른쪽 = 사양표 / 다시 읽기(본체 단계는 마감)
       const BL = Q1V2 ? thB : L, BR = Q1V2 ? v2st + (Q.step === 'cmos' ? '<button type="button" data-q1="cmerr" hidden></button>' : '') : Rb;   // v33.44 : 조립QC — 왼쪽 사진 · 가운데 셔터 · 오른쪽 다시 읽기 (오류 보내기는 불일치 팝업 안)
