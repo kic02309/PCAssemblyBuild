@@ -2548,6 +2548,9 @@ html.q1v2 .q1bp3 .q1bp-b .d{background:rgba(62,145,255,.55)}html.q1v2 .q1bp3 .q1
 html[data-rot="1"].q1v2 .q1bp3,html[data-rot="3"].q1v2 .q1bp3{left:calc(56px + min(340px,48%) + 14px + var(--sat,0px));top:auto;bottom:28px;transform:none;width:min(292px,max(232px,calc(100% - 56px - min(340px,48%) - 24px - 196px)))!important}
 html.q1v2 #q1hud:has(.q1bp3) .q1tg{display:none}
 html.q1v2 .q1c:has(.q1bp3) .q1zm{visibility:hidden}
+html.q1v2 .q1sh.bad{animation:none!important;background:#fff!important;box-shadow:0 0 0 5px #e5484d!important}html.q1v2 .q1sh.bad i{opacity:.75}
+.q1v2st{position:relative}.q1v2bd{position:absolute;left:-6px;right:-6px;bottom:100%;margin-bottom:7px;text-align:center;font-size:11.5px;font-weight:800;color:#ffb4b6;background:rgba(0,0,0,.5);border-radius:9px;padding:4px 2px;white-space:nowrap}
+.q1bpw{flex-basis:100%;display:flex;justify-content:center;margin-bottom:8px}html.q1v2 .q1bpw .q1bp3{position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;transform:none!important;margin:0}
 html.q1v2 .q1st{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 html.q1v2.q1dk .q1xl{box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 html.q1v2.q1dk .q1x,html.q1v2.q1dk .q1x em{text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.7)}
@@ -9087,7 +9090,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.62';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.63';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21554,6 +21557,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const Q = S.q1, pill = (cls, txt) => `<span class="${cls}">${txt}</span>`;
     if (Q.step === 'cmos' && Q.ph === 'guide') return '';   // v33.6 : 시작 안내 중에는 사양표를 숨김
     let h = '';
+    if (Q1V2 && Q.msg) { if (Q._mT0 !== Q.msg) { Q._mT0 = Q.msg; Q._mT = Date.now(); setTimeout(() => { if (S.q1 === Q) q1Paint(); }, 5100); } else if (Date.now() - Q._mT > 5000) { Q.msg = ''; Q._mT0 = ''; } }   // v33.63 : 조립QC 안내는 5초 뒤 사라짐
     if (Q.msg) h += `<div class="q1p-msg">${esc(Q.msg)}</div>`;
     h += '<div class="q1p">';
     if (Q.step === 'doc') {
@@ -21569,6 +21573,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       if (Q.vendor && !(Q1V2 && Q.mb)) h += pill('vd', esc(Q.vendor));
       { const CC = { cpu: '#3d8bff', mem: '#2fbf7a', ssd: '#e8588a', hdd: '#e6b422' };   // v33.36 : 한 줄 작은 사양표 — 주문서 | CMOS 나란히 · 읽힌 줄만 초록
         const [sn, st1, hb] = q1Title(), anyRead = Object.keys(Q.E).some(k => Q.cm[k]), hint = Q1V2 || Q._tip || anyRead || Q.badN ? '' : hb;   // v33.49 : 조립QC 는 가운데 안내 알약으로
+        { const bk = Object.keys(Q.E).filter(k => Q.cm[k] === 'bad'); if (Q1V2 && bk.length && Q.badHide !== q1BadSig(Q) && !/^[13]$/.test(document.documentElement.dataset.rot || '')) h += '<div class="q1bpw">' + q1BadPop(Q, bk) + '</div>'; }   // v33.63 : 세로 = 표 위 (틀 아래)
         h += '<div class="q1cw"' + (Q1V2 ? ' onclick="window.q1Spec&&window.q1Spec()"' : '') + '><div class="q1st"><i>' + esc(sn) + '</i>' + esc(st1) + (Q.order ? ' <b class="q1st-o">주문 ' + esc(Q.order) + (Q1V2 && (Q.bodyN || 1) > 1 ? ' · 본체 ' + (Q.bodyI || 1) + '/' + Q.bodyN : '') + '</b>' : '') + (hint ? '<em>' + esc(hint) + '</em>' : '') + '</div><div class="q1xl">' + Object.keys(Q.E).map(k => {
           const s0 = Q.cm[k], s = s0 === 'ok' && !q1V(Q, '@' + k) ? '' : s0, w = Q.w[k], cam = Q.cov[k] ? ' 📷' : '';
           const cg = Q.items[k] && q1Chg(Q.items[k].it) ? ' (' + q1Chg(Q.items[k].it) + ')' : '';
@@ -21580,7 +21585,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
           const seen = s === 'ok' ? lab + (warn ? `<u class="q1x-w"> ${k === 'mem' ? esc(w.seen) + ' 꽂힘?' : '제조사?'}</u>` : '') : s === 'bad' ? esc(Q.bad[k].seen) : Q1V2 ? q1V2Wait(Q, k) : '읽는 중 ···';
           const cc = CC[String(k).replace(/\d+$/, '')] || '#9fb6d0';
           return `<div class="q1x ${st}${cp}" style="--cc:${cc}"><b class="q1x-t">${Q1_AB[k] || esc(k)}</b><div class="q1x-a"><small>주문서</small><em>${mk}${lab}${esc(cg)}${cam}</em></div><i class="q1x-dv"></i><div class="q1x-b"><small>CMOS</small><em>${seen}</em></div><u class="q1x-k">${s === 'ok' ? '✓' : s === 'bad' ? '✕' : ''}</u></div>`; }).join('') + q1MbRow(Q) + '</div></div>'; }
-      { const bk = Object.keys(Q.E).filter(k => Q.cm[k] === 'bad'); Q.badN = bk.length; if (bk.length && Q.badHide !== q1BadSig(Q)) h += q1BadPop(Q, bk); }   // v33.36 : 불일치 = 화면 가운데 안내   // v33.12 : 큰 불일치 박스 제거 — 칩에 표시 · 아래 [다시 읽기]/[불일치 진행]
+      { const bk = Object.keys(Q.E).filter(k => Q.cm[k] === 'bad'); Q.badN = bk.length; if (bk.length && Q.badHide !== q1BadSig(Q) && !(Q1V2 && !/^[13]$/.test(document.documentElement.dataset.rot || ''))) h += q1BadPop(Q, bk); }   // v33.36 : 불일치 = 화면 가운데 안내   // v33.12 : 큰 불일치 박스 제거 — 칩에 표시 · 아래 [다시 읽기]/[불일치 진행]
       Object.keys(Q.nob || {}).forEach(k => { if (Q.nob[k]) h += pill('nb', esc(q1NobLab(k))); });
       Object.keys(Q.man || {}).forEach(k => { h += pill('nb', esc((Q1_CAT[k] || k) + ' · 직접 확인 (오류 보고)')); });
       h += q1TagPills(Q, pill);
@@ -21610,7 +21615,8 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   function q1ShutPaint() {
     const Q = S.q1, sh = $('#q1sh'); if (!sh) return; const [p, ok, cap] = q1ShutState(Q);
-    sh.style.setProperty('--p', p + '%'); sh.classList.toggle('ready', !!ok);
+    sh.style.setProperty('--p', p + '%'); const bd = Q1V2 && Q.step === 'cmos' && Q.badN > 0; sh.classList.toggle('ready', !!ok && !bd); sh.classList.toggle('bad', !!bd);
+    if (Q1V2) { const st = $('.q1v2st'); if (st) { let e = st.querySelector('.q1v2bd'); if (!e) { e = document.createElement('div'); e.className = 'q1v2bd'; st.appendChild(e); } const t = bd ? '✕ 불일치 ' + Q.badN + '개' : ''; if (e.textContent !== t) e.textContent = t; e.hidden = !bd; } }   // v33.63 : 불일치면 셔터 링 빨강 + 개수
     const g = $('#q1gauge'); if (g) { g.style.setProperty('--p', p + '%'); g.classList.toggle('full', !!ok); g.classList.toggle('off', Q.step === 'free' || (Q.step === 'doc' && Q.ph !== 'read')); }
     const c = $('#q1cap'); if (c && c.textContent !== cap) c.textContent = cap;
     const f = $('[data-q1="cmerr"]'); if (f) { f.classList.toggle('hid', Q.step === 'cmos' && q1AllOk(Q)); f.classList.toggle('glow', Q.step === 'cmos' && !!Q.badN); }
@@ -21648,7 +21654,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   function q1Band() {   // 틀이 들어갈 세로 범위 = 위 한 줄 아래 ~ 아래 표시 위
     const Q = S.q1, kind = Q.step === 'cmos' && Q.ph === 'fit' ? 'cmos' : '';
     const side = /^[13]$/.test(document.documentElement.dataset.rot || ''), H = window.innerHeight || 1;
-    const top = side ? $('.q1ic') : $('#q1tt'), bot = side ? $('.q1zm') : $('#q1gauge');
+    const top = side ? $('.q1ic') : $('#q1tt'), bot = side ? $('.q1zm') : Q1V2 ? ($('#q1hud .q1bpw') || $('#q1hud .q1cw') || $('#q1hud .q1p') || $('#q1gauge')) : $('#q1gauge');   // v33.63 : 조립QC 세로 = 표(또는 불일치 창) 위까지 (에너지바 숨김 뒤 기본값으로 떨어지던 문제)
     let tp = top ? top.getBoundingClientRect().bottom / H + 0.01 : 0.08, b = bot ? bot.getBoundingClientRect().top / H - 0.01 : 0.85;
     if (side && kind === 'cmos') { const br = $('.q1bar'); tp = 0.02; b = br ? br.getBoundingClientRect().top / H - 0.005 : 0.85; }   // v32.102 : 가로 = 틀을 최대한 크게 (위 제목 줄 위까지 · 아래는 셔터 줄 위까지)
     if (!(tp >= 0 && b <= 1 && b - tp >= 0.3)) { tp = 0.08; b = 0.85; }   // 화면이 그려지는 중이면 기본값
