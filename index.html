@@ -20694,7 +20694,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
       const capOf = it => { const m = String(it.cap || q1Full(it) || '').match(/(\d+(?:\.\d+)?\s*(?:TB|GB))/i); return m ? m[1].replace(/\s/g, '').toUpperCase() : ''; };
       const cpuOf = it => { const m = String(q1Full(it) || '').match(/(?<![\dA-Za-z])(\d{4,5}X3D|\d{4,5}(?:GT|GE|XT|KF|K|F|G|X|T)?)(?![\dA-Za-z])/i) || String(q1Full(it) || '').match(/울트라\s*\d.*?(\d{3}[A-Z]{0,2})(?![\dA-Za-z])/i); return m ? m[1] : ''; };
       M.forEach(m => { m.nv = 1;
-        if (m.id === 'order') { m.label = '주문 ' + Q.order + (Q1V2 && (Q.bodyN || 1) > 1 && !M.some(z => z.id === 'set') ? ' · 본체 ' + Q.bodyN + '대' : ''); m.cat = 'ord'; return; }
+        if (m.id === 'order') { m.label = '주문 ' + Q.order + (Q1V2 && (Q.bodyN || 1) > 1 && !Q.set ? ' · 본체 ' + Q.bodyN + '대' : ''); m.cat = 'ord'; return; }
         const k = m.id.slice(1), x = Q.items[k]; if (!x) return; const c = q1Chg(x.it), SHN = { cpu: 'CPU', mem: '메모리', ssd: '저장장치', hdd: 'HDD' }[k] || k;
         const val = k === 'cpu' ? cpuOf(x.it) : k === 'mem' ? q1MemLab(x.it) : capOf(x.it);
         m.cat = k; if (m.kind === 'warn') m.label = SHN + ' 미등록'; else { m.label = SHN + (val ? ' ' + val : ''); if (c) { m.kind = 'chg'; m.chg = c; } } });
