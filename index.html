@@ -2547,6 +2547,7 @@ html.q1v2 .q1bp3 .q1bp-b{gap:6px;margin-top:0}html.q1v2 .q1bp3 .q1bp-b button{pa
 html.q1v2 .q1bp3 .q1bp-b .d{background:rgba(62,145,255,.55)}html.q1v2 .q1bp3 .q1bp-b .e{background:rgba(229,72,77,.75)}
 html[data-rot="1"].q1v2 .q1bp3,html[data-rot="3"].q1v2 .q1bp3{left:calc(56px + min(340px,48%) + 14px + var(--sat,0px));top:auto;bottom:28px;transform:none;width:min(292px,max(232px,calc(100% - 56px - min(340px,48%) - 24px - 196px)))!important}
 html.q1v2 #q1hud:has(.q1bp3) .q1tg{display:none}
+html.q1v2 .q1c:has(.q1bp3) .q1zm{visibility:hidden}
 html.q1v2 .q1st{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 html.q1v2.q1dk .q1xl{box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 html.q1v2.q1dk .q1x,html.q1v2.q1dk .q1x em{text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.7)}
@@ -9086,7 +9087,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.61';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.62';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21201,8 +21202,10 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   }
   // v31.93 : CMOS 는 처음부터 틀 — 틀 안 화면을 전표와 대조 · 전부 일치하면 자동 촬영 · 아니면 [불일치로 진행]
   const q1AllOk = Q => { const ks = Object.keys(Q.E || {}); return ks.length > 0 && ks.every(k => Q.cm[k] === 'ok'); };
+  const Q1EFIX = new WeakSet();
   function q1CmFit(o) {
     const txt = q1Text(o.lines), Q = S.q1;
+    if (Q.E && Q.items && !Q1EFIX.has(Q.E)) { Q1EFIX.add(Q.E); try { const e2 = q1Expect(q1P(Q)); if (e2.cpu && Q.E.cpu !== e2.cpu) { q1Log('cpu-exp', Q.order + ' 기대값 ' + Q.E.cpu + ' → ' + e2.cpu); Q.E.cpu = e2.cpu; delete Q.cm.cpu; delete Q.bad.cpu; } } catch (e) { } }   // v33.61 : 이어서 하기로 불러온 잘못된 CPU 기대값 고침
     if (q1DocLike(Q, txt)) { if (Date.now() - (Q.docLikeT || 0) > 4000) { Q.docLikeT = Date.now(); Q.msg = '주문서가 보여요 · CMOS(BIOS) 화면을 비춰 주세요'; q1Paint(); } return; }   // v33.56 : CMOS 단계에서 주문서 글자로 일치 처리되던 문제
     const R = q1CmMatch(Q, txt); q1CmApply(R);
     if (/M\.?2|SATA|NVMe|[0-9]\s*[GT]B/i.test(txt)) Q.cmTxtLast = txt;   // v33.45 : 지연 로그용 — 마지막으로 저장장치 글자가 보였던 화면
