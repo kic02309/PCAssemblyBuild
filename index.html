@@ -2520,6 +2520,10 @@ html.q1v2 .q1ask:has(.q1mxw) .q1ask-b button{border:0;border-radius:14px;backgro
 html.q1v2 .q1cw{pointer-events:auto;cursor:pointer}
 .q1ask:has(.q1v2only) [data-x]{display:none}
 html.q1v2 .q1ask:has(.q1v2only) .q1ask-b{display:flex!important;justify-content:flex-end}html.q1v2 .q1ask:has(.q1v2only) .q1ask-b [data-y]{width:48%;flex:none}
+.q1v2rs{color:#fff;text-align:left}.q1v2rs h4{margin:0 0 10px;font-size:17px;display:flex;align-items:center;gap:8px}.q1v2rs h4 i{font-style:normal;width:26px;height:26px;border-radius:50%;background:#3e91ff;display:grid;place-items:center;font-size:15px}
+.q1v2rs .bx{background:rgba(255,255,255,.1);border-radius:14px;padding:10px 12px}.q1v2rs .bx div{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:rgba(255,255,255,.6)}.q1v2rs .bx b{color:#fff;font-weight:700}.q1v2rs .bx b.o{color:#7dc0ff;font-size:15px}.q1v2rs small{display:block;margin-top:8px;font-size:11.5px;color:rgba(255,255,255,.5)}
+html.q1v2 .q1ask:has(.q1v2rs)>div{background:rgba(22,25,31,.38)!important;-webkit-backdrop-filter:blur(26px) saturate(1.4)!important;backdrop-filter:blur(26px) saturate(1.4)!important;box-shadow:0 10px 30px rgba(0,0,0,.25)!important;text-shadow:0 1px 3px rgba(0,0,0,.6);border:0!important;border-radius:24px!important;color:#fff!important}
+html.q1v2 .q1ask:has(.q1v2rs) .q1ask-b{display:flex;gap:8px;margin-top:12px}html.q1v2 .q1ask:has(.q1v2rs) .q1ask-b button{flex:1;height:48px;border:0;border-radius:14px;background:rgba(255,255,255,.16);color:#fff;font-weight:700;font-size:14px}html.q1v2 .q1ask:has(.q1v2rs) .q1ask-b .primary{background:#3e91ff}
 .q1v2bn{font-size:12px;color:#ffd27a;background:rgba(255,210,122,.1);border-radius:10px;padding:6px 10px;margin:0 0 6px}.q1v2bn b{color:#fff}
 .q1v2c .hint{font-size:11px;color:rgba(255,255,255,.45);text-align:center;margin-top:6px}
 html.q1v2 .q1ask:has(.q1v2c)>div{background:rgba(22,25,31,.74)!important;-webkit-backdrop-filter:blur(22px) saturate(1.3)!important;backdrop-filter:blur(22px) saturate(1.3)!important;border:0!important;border-radius:24px!important;color:#fff!important}
@@ -9074,7 +9078,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
  * ============================================================ */
 (function () {
   'use strict';
-  const APP_VER = 'v33.50';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
+  const APP_VER = 'v33.51';   // 화면 버전 (로그인 화면 · 왼쪽 위 로고에 표시)
   const C = window.Core;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -21055,6 +21059,16 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
   const q1OpVal = () => { try { const v = parseInt(localStorage.getItem(q1PK('q1op')), 10); return isFinite(v) ? Math.max(0, Math.min(100, v)) : 88; } catch (e) { return 88; } };
   function q1OpApply() { if (!Q1V2) return; const v = q1OpVal(), h = document.documentElement; h.style.setProperty('--q1a', (v / 100).toFixed(2)); h.classList.toggle('q1dk', v < 40); }   // v33.45 : 표 바탕 진하기 — 40% 아래면 흰 글씨
   const q1AutoOn = () => { if (!Q1V2) return false; try { const v = localStorage.getItem(q1PK('q1auto')); return v ? v === 'auto' : q1CardMode() !== 'off'; } catch (e) { return false; } };   // v33.48 : 인식 완료 후 2초 뒤 자동 (확인 카드를 끈 사람은 기본 수동)
+  async function q1V2AskResume(Q, SV) {   // v33.51 : 조립QC — 끝내지 못한 검수 : 새로 시작 / 이어서 진행
+    if (S.q1 !== Q || Q.order || Q.asking) return;
+    const mins = Math.max(0, Math.round((Date.now() - (SV.t || Date.now())) / 60000)), ago = mins < 1 ? '방금' : mins < 60 ? mins + '분 전' : Math.round(mins / 60) + '시간 전';
+    const stg = SV.step === 'cmos' ? '② CMOS 대조' : '① 주문서';
+    Q.asking = true; q1Call('pause', true);
+    const yes = await q1Ask(`<div class="q1v2rs"><h4><i>↺</i>진행 중이던 검수가 있어요</h4><div class="bx"><div>주문<b class="o">${esc(SV.order)}</b></div><div>멈춘 단계<b>${stg}</b></div><div>시간<b>${ago}</b></div></div><small>새로 시작을 누르면 이 기록은 지워집니다.</small></div>`, '이어서 진행', false, '새로 시작');
+    Q.asking = false; if (S.q1 !== Q) return;
+    if (!yes) { q1Unsave(); q1Call('pause', false); return; }
+    q1Snd('pop'); Q1SAVE.forEach(k => { if (SV[k] !== undefined) Q[k] = SV[k]; }); if (Q.step === 'doc' && Q.ph === 'fit') Q.ph = 'read';
+    Q.items = Q.items || {}; Q.cm = Q.cm || {}; Q.bad = Q.bad || {}; Q.w = Q.w || {}; Q.cov = Q.cov || {}; Q.E2 = Q.E2 || {}; Q.msg = '이어서 합니다 · 주문 ' + Q.order; q1Call('pause', false); renderQc1(); }
   function q1V2Set() {   // v33.43 : 조립QC 설정 — 반투명 패널 · 사람별 저장
     const old = $('#q1vs'); if (old) old.remove();
     const el = document.createElement('div'); el.id = 'q1vs'; el.className = 'q1vs';
@@ -21574,7 +21588,7 @@ window.EDU={init(o){A=o;},render,reset,guard,notice,noticePop};
     const Q = S.q1; Q.bandSig = ''; Q.cdT = 0; Q.tDoc2 = 0; Q.docReady = false; Q.ready = false; q1Save();
     q1OpApply();
     if (Q1V2 && Q.step === 'start') {   // v33.43 : 조립QC — 메뉴 없이 바로 주문서 카메라 (진행 중 검수는 위 띠로 이어하기)
-      q1Flush(); const SV = q1Saved(), L0 = Q.last; Q.v2res = SV ? SV.order : ''; Q.step = 'doc'; Q.ph = 'read'; Q.t0 = Date.now(); Q.tDoc = 0; Q.slowLogged = 0;
+      q1Flush(); const SV = q1Saved(), L0 = Q.last; Q.v2res = ''; if (SV) setTimeout(() => q1V2AskResume(Q, SV), 300);   // v33.51 : 이어하기는 처음에 한 번 묻기 Q.step = 'doc'; Q.ph = 'read'; Q.t0 = Date.now(); Q.tDoc = 0; Q.slowLogged = 0;
       if (L0 && L0.order && !Q.v2res) Q.msg = '방금 검수 ' + L0.order + ' · ' + (L0.result === 'ok' ? '✓ 일치' : '✕ 불일치') + ' · 본체 ' + (L0.shots || 0) + '장'; }
     document.body.classList.add('appcam'); qcpLoad();
     const cam = Q.step === 'doc' || Q.step === 'cmos' || Q.step === 'free';
