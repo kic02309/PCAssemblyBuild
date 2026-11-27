@@ -298,7 +298,7 @@ class MainActivity : AppCompatActivity() {
         val m = mode
         val now = SystemClock.elapsedRealtime()
         val media = proxy.image
-        if (m == "off" || m == "free" || paused || media == null || now - lastRun < 250 || !busy.compareAndSet(false, true)) {
+        if (m == "off" || paused || media == null || now - lastRun < (if (m == "free") 700 else 250) || !busy.compareAndSet(false, true)) {   // free(본체 사진) = 글자만 · 0.7초마다 (그래픽카드 GEFORCE/RADEON 확인)
             proxy.close(); return
         }
         lastRun = now
